@@ -1,0 +1,473 @@
+{
+    "name": "E2E Clickup - space tags",
+    "description": "Space tag lifecycle: CreateSpaceTag, FindSpaceTags, UpdateSpaceTag, DeleteSpaceTag.",
+    "type": "automation",
+    "notes": {},
+    "flow": {
+        "f0f6a5c2-cd30-477c-b3b1-b9cf0016da04": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 0,
+            "source": {},
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "f506de9f-f419-457d-b0ec-1f0b813eeff8": {
+            "type": "appmixer.utils.controls.SetVariable",
+            "x": 272,
+            "y": 0,
+            "source": {
+                "in": {
+                    "f0f6a5c2-cd30-477c-b3b1-b9cf0016da04": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "f0f6a5c2-cd30-477c-b3b1-b9cf0016da04": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "variables": {}
+                                },
+                                "lambda": {
+                                    "variables": {
+                                        "ADD": [
+                                            {
+                                                "type": "text",
+                                                "name": "spaceId",
+                                                "text": "90151198160"
+                                            },
+                                            {
+                                                "type": "text",
+                                                "name": "tagName",
+                                                "text": "e2e space tag"
+                                            },
+                                            {
+                                                "type": "text",
+                                                "name": "updatedTagName",
+                                                "text": "e2e space tag updated"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "c8cd1cb6-6ef6-44e9-a741-d53de7c7a492": {
+            "type": "appmixer.clickup.core.CreateSpaceTag",
+            "x": 480,
+            "y": 128,
+            "source": {
+                "in": {
+                    "f506de9f-f419-457d-b0ec-1f0b813eeff8": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "f506de9f-f419-457d-b0ec-1f0b813eeff8": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "spaceId": {
+                                        "d706e131-5fc6-4c7d-96d2-5da43c86b3be": {
+                                            "variable": "$.f506de9f-f419-457d-b0ec-1f0b813eeff8.out.spaceId",
+                                            "functions": []
+                                        }
+                                    },
+                                    "name": {
+                                        "87758eb3-c26d-4c22-8bfe-3912c38df05e": {
+                                            "variable": "$.f506de9f-f419-457d-b0ec-1f0b813eeff8.out.tagName",
+                                            "functions": []
+                                        }
+                                    },
+                                    "foregroundColor": {},
+                                    "backgroundColor": {}
+                                },
+                                "lambda": {
+                                    "spaceId": "{{{d706e131-5fc6-4c7d-96d2-5da43c86b3be}}}",
+                                    "name": "{{{87758eb3-c26d-4c22-8bfe-3912c38df05e}}}",
+                                    "foregroundColor": "#ffffff",
+                                    "backgroundColor": "#0197a7"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "b4bb9f0e-e4e3-4fe8-9652-d58993dcf7f2": {
+            "type": "appmixer.clickup.core.FindSpaceTags",
+            "x": 688,
+            "y": 256,
+            "source": {
+                "in": {
+                    "c8cd1cb6-6ef6-44e9-a741-d53de7c7a492": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "c8cd1cb6-6ef6-44e9-a741-d53de7c7a492": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "spaceId": {
+                                        "4a49435e-ff10-4f31-98d6-a337783296da": {
+                                            "variable": "$.f506de9f-f419-457d-b0ec-1f0b813eeff8.out.spaceId",
+                                            "functions": []
+                                        }
+                                    },
+                                    "outputType": {}
+                                },
+                                "lambda": {
+                                    "spaceId": "{{{4a49435e-ff10-4f31-98d6-a337783296da}}}",
+                                    "outputType": "array"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "a61bd1c9-df27-4374-b2e6-c7cc3cc689d3": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 896,
+            "y": 256,
+            "source": {
+                "in": {
+                    "b4bb9f0e-e4e3-4fe8-9652-d58993dcf7f2": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "label": "Assert FindSpaceTags",
+            "config": {
+                "transform": {
+                    "in": {
+                        "b4bb9f0e-e4e3-4fe8-9652-d58993dcf7f2": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "adb9e302-1fe4-46ee-94b6-47e970b74b82": {
+                                            "variable": "$.b4bb9f0e-e4e3-4fe8-9652-d58993dcf7f2.out.result",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{adb9e302-1fe4-46ee-94b6-47e970b74b82}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "bbbdad2d-df01-4aa8-aaf8-cd98ac28feef": {
+            "type": "appmixer.clickup.core.UpdateSpaceTag",
+            "x": 896,
+            "y": 384,
+            "source": {
+                "in": {
+                    "b4bb9f0e-e4e3-4fe8-9652-d58993dcf7f2": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "b4bb9f0e-e4e3-4fe8-9652-d58993dcf7f2": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "spaceId": {
+                                        "d7e6c59e-cbe1-40c7-881d-72bbe6f6870a": {
+                                            "variable": "$.f506de9f-f419-457d-b0ec-1f0b813eeff8.out.spaceId",
+                                            "functions": []
+                                        }
+                                    },
+                                    "tagName": {
+                                        "91070287-8a79-4e53-901d-a7ba14d03256": {
+                                            "variable": "$.f506de9f-f419-457d-b0ec-1f0b813eeff8.out.tagName",
+                                            "functions": []
+                                        }
+                                    },
+                                    "newName": {
+                                        "36e5ee6b-e04f-4ff0-a677-83698355d2d6": {
+                                            "variable": "$.f506de9f-f419-457d-b0ec-1f0b813eeff8.out.updatedTagName",
+                                            "functions": []
+                                        }
+                                    },
+                                    "foregroundColor": {},
+                                    "backgroundColor": {}
+                                },
+                                "lambda": {
+                                    "spaceId": "{{{d7e6c59e-cbe1-40c7-881d-72bbe6f6870a}}}",
+                                    "tagName": "{{{91070287-8a79-4e53-901d-a7ba14d03256}}}",
+                                    "newName": "{{{36e5ee6b-e04f-4ff0-a677-83698355d2d6}}}",
+                                    "foregroundColor": "#ffffff",
+                                    "backgroundColor": "#0197a7"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "d85df576-b90c-4166-a5ac-2c0eed9a6c57": {
+            "type": "appmixer.clickup.core.FindSpaceTags",
+            "x": 1104,
+            "y": 512,
+            "source": {
+                "in": {
+                    "bbbdad2d-df01-4aa8-aaf8-cd98ac28feef": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "label": "FindSpaceTags after update",
+            "config": {
+                "transform": {
+                    "in": {
+                        "bbbdad2d-df01-4aa8-aaf8-cd98ac28feef": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "spaceId": {
+                                        "875871fb-9274-449d-956a-c3bed5cad5f6": {
+                                            "variable": "$.f506de9f-f419-457d-b0ec-1f0b813eeff8.out.spaceId",
+                                            "functions": []
+                                        }
+                                    },
+                                    "outputType": {}
+                                },
+                                "lambda": {
+                                    "spaceId": "{{{875871fb-9274-449d-956a-c3bed5cad5f6}}}",
+                                    "outputType": "array"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "15be77b4-c753-498b-8561-f0762f1b3558": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1312,
+            "y": 512,
+            "source": {
+                "in": {
+                    "d85df576-b90c-4166-a5ac-2c0eed9a6c57": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "label": "Assert UpdateSpaceTag",
+            "config": {
+                "transform": {
+                    "in": {
+                        "d85df576-b90c-4166-a5ac-2c0eed9a6c57": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "f6e34ee1-dc12-435c-870c-f2cea0e8723d": {
+                                            "variable": "$.d85df576-b90c-4166-a5ac-2c0eed9a6c57.out.result",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{f6e34ee1-dc12-435c-870c-f2cea0e8723d}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "648e9750-c874-4e53-ac2c-2f10ea6ec100": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 1520,
+            "y": 640,
+            "source": {
+                "in": {
+                    "a61bd1c9-df27-4374-b2e6-c7cc3cc689d3": [
+                        "out"
+                    ],
+                    "15be77b4-c753-498b-8561-f0762f1b3558": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "properties": {
+                    "timeout": 180
+                }
+            }
+        },
+        "2d663733-a48d-4206-8ba8-203c7a407717": {
+            "type": "appmixer.clickup.core.DeleteSpaceTag",
+            "x": 1728,
+            "y": 640,
+            "source": {
+                "in": {
+                    "648e9750-c874-4e53-ac2c-2f10ea6ec100": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "648e9750-c874-4e53-ac2c-2f10ea6ec100": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "spaceId": {
+                                        "a668d942-51b1-40fb-be34-658f4e2b9815": {
+                                            "variable": "$.f506de9f-f419-457d-b0ec-1f0b813eeff8.out.spaceId",
+                                            "functions": []
+                                        }
+                                    },
+                                    "tagName": {
+                                        "19616059-6d42-42f7-8006-1a679c3ac127": {
+                                            "variable": "$.f506de9f-f419-457d-b0ec-1f0b813eeff8.out.updatedTagName",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "spaceId": "{{{a668d942-51b1-40fb-be34-658f4e2b9815}}}",
+                                    "tagName": "{{{19616059-6d42-42f7-8006-1a679c3ac127}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "bde5667b-0457-413b-81c3-47664bfdec9e": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1936,
+            "y": 640,
+            "source": {
+                "in": {
+                    "2d663733-a48d-4206-8ba8-203c7a407717": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.1",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "properties": {
+                    "successStoreId": "000000000000000000000000",
+                    "failedStoreId": "000000000000000000000000"
+                },
+                "transform": {
+                    "in": {
+                        "2d663733-a48d-4206-8ba8-203c7a407717": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "e14f1783-1cb5-4ca0-ba21-a873d93f6497": {
+                                            "variable": "$.648e9750-c874-4e53-ac2c-2f10ea6ec100.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E Clickup - space tags",
+                                    "result": "{{{e14f1783-1cb5-4ca0-ba21-a873d93f6497}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

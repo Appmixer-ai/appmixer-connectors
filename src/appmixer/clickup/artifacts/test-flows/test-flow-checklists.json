@@ -1,47 +1,40 @@
 {
     "name": "E2E Clickup - checklists",
-    "description": "End-to-end test for Clickup connector - tests checklist operations: CreateTask, CreateChecklist, UpdateChecklist, DeleteChecklist",
+    "description": "Checklist and checklist item lifecycle.",
     "type": "automation",
     "notes": {},
     "flow": {
-        "on-start": {
+        "497c7164-5d2c-48e2-830f-0a45fa2b6a37": {
             "type": "appmixer.utils.controls.OnStart",
             "x": 64,
-            "y": 16,
+            "y": 0,
             "source": {},
             "version": "1.0.0",
-            "config": {}
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
         },
-        "before-all": {
-            "type": "appmixer.utils.test.BeforeAll",
-            "x": 256,
-            "y": 16,
+        "775438e5-b858-4c78-8219-25d66b369ab7": {
+            "type": "appmixer.utils.controls.SetVariable",
+            "x": 272,
+            "y": 0,
             "source": {
                 "in": {
-                    "on-start": [
+                    "497c7164-5d2c-48e2-830f-0a45fa2b6a37": [
                         "out"
                     ]
                 }
             },
             "version": "1.0.0",
-            "config": {}
-        },
-        "set-variables": {
-            "type": "appmixer.utils.controls.SetVariable",
-            "x": 448,
-            "y": 16,
-            "version": "1.0.0",
-            "source": {
-                "in": {
-                    "before-all": [
-                        "out"
-                    ]
-                }
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
             },
             "config": {
                 "transform": {
                     "in": {
-                        "before-all": {
+                        "497c7164-5d2c-48e2-830f-0a45fa2b6a37": {
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
@@ -53,22 +46,32 @@
                                             {
                                                 "type": "text",
                                                 "name": "listId",
-                                                "text": "YOUR_CLICKUP_LIST_ID"
+                                                "text": "901506393256"
                                             },
                                             {
                                                 "type": "text",
                                                 "name": "taskName",
-                                                "text": "E2E Checklist Test Task"
+                                                "text": "E2E Checklists Task"
                                             },
                                             {
                                                 "type": "text",
                                                 "name": "checklistName",
-                                                "text": "E2E Test Checklist"
+                                                "text": "E2E Checklist"
                                             },
                                             {
                                                 "type": "text",
                                                 "name": "updatedChecklistName",
-                                                "text": "E2E Test Checklist Updated"
+                                                "text": "E2E Checklist Updated"
+                                            },
+                                            {
+                                                "type": "text",
+                                                "name": "itemName",
+                                                "text": "E2E Checklist Item"
+                                            },
+                                            {
+                                                "type": "text",
+                                                "name": "updatedItemName",
+                                                "text": "E2E Checklist Item Updated"
                                             }
                                         ]
                                     }
@@ -79,41 +82,45 @@
                 }
             }
         },
-        "create-task": {
+        "fc80ab87-f0da-4197-abdf-69277163b946": {
             "type": "appmixer.clickup.core.CreateTask",
-            "x": 640,
-            "y": 16,
-            "version": "1.0.0",
+            "x": 480,
+            "y": 128,
             "source": {
                 "in": {
-                    "set-variables": [
+                    "775438e5-b858-4c78-8219-25d66b369ab7": [
                         "out"
                     ]
                 }
             },
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
             "config": {
                 "transform": {
                     "in": {
-                        "set-variables": {
+                        "775438e5-b858-4c78-8219-25d66b369ab7": {
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
                                     "listId": {
-                                        "var-list-id": {
-                                            "variable": "$.set-variables.out.listId",
+                                        "1831cc70-5e3b-41a8-843b-bd0586682be2": {
+                                            "variable": "$.775438e5-b858-4c78-8219-25d66b369ab7.out.listId",
                                             "functions": []
                                         }
                                     },
                                     "name": {
-                                        "var-task-name": {
-                                            "variable": "$.set-variables.out.taskName",
+                                        "c5524292-0763-4ee8-b0c8-f614134bb187": {
+                                            "variable": "$.775438e5-b858-4c78-8219-25d66b369ab7.out.taskName",
                                             "functions": []
                                         }
                                     }
                                 },
                                 "lambda": {
-                                    "listId": "{{{var-list-id}}}",
-                                    "name": "{{{var-task-name}}}"
+                                    "listId": "{{{1831cc70-5e3b-41a8-843b-bd0586682be2}}}",
+                                    "name": "{{{c5524292-0763-4ee8-b0c8-f614134bb187}}}"
                                 }
                             }
                         }
@@ -121,29 +128,33 @@
                 }
             }
         },
-        "assert-create-task": {
+        "d87835b5-397d-49ab-b597-512aa5a00053": {
             "type": "appmixer.utils.test.Assert",
-            "x": 1600,
-            "y": 16,
-            "version": "1.0.0",
-            "label": "Assert CreateTask",
+            "x": 688,
+            "y": 128,
             "source": {
                 "in": {
-                    "create-task": [
+                    "fc80ab87-f0da-4197-abdf-69277163b946": [
                         "out"
                     ]
                 }
             },
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "label": "Assert CreateTask",
             "config": {
                 "transform": {
                     "in": {
-                        "create-task": {
+                        "fc80ab87-f0da-4197-abdf-69277163b946": {
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
                                     "expression": {
-                                        "task-id-check": {
-                                            "variable": "$.create-task.out.id",
+                                        "f3dcb5ed-9114-4424-9e93-5164b8a30755": {
+                                            "variable": "$.fc80ab87-f0da-4197-abdf-69277163b946.out.id",
                                             "functions": []
                                         }
                                     }
@@ -152,7 +163,7 @@
                                     "expression": {
                                         "AND": [
                                             {
-                                                "field": "{{{task-id-check}}}",
+                                                "field": "{{{f3dcb5ed-9114-4424-9e93-5164b8a30755}}}",
                                                 "assertion": "notEmpty"
                                             }
                                         ]
@@ -164,41 +175,45 @@
                 }
             }
         },
-        "create-checklist": {
+        "3c12284a-351d-4283-bc2a-691a4812e9df": {
             "type": "appmixer.clickup.core.CreateChecklist",
-            "x": 832,
-            "y": 144,
-            "version": "1.0.0",
+            "x": 688,
+            "y": 256,
             "source": {
                 "in": {
-                    "create-task": [
+                    "fc80ab87-f0da-4197-abdf-69277163b946": [
                         "out"
                     ]
                 }
             },
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
             "config": {
                 "transform": {
                     "in": {
-                        "create-task": {
+                        "fc80ab87-f0da-4197-abdf-69277163b946": {
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
                                     "taskId": {
-                                        "var-task-id": {
-                                            "variable": "$.create-task.out.id",
+                                        "0d6cd7b7-1e2f-44a4-abe8-2f6e167ae22f": {
+                                            "variable": "$.fc80ab87-f0da-4197-abdf-69277163b946.out.id",
                                             "functions": []
                                         }
                                     },
                                     "name": {
-                                        "var-checklist-name": {
-                                            "variable": "$.set-variables.out.checklistName",
+                                        "c85223de-f1ec-4177-9b71-97a22f13c52b": {
+                                            "variable": "$.775438e5-b858-4c78-8219-25d66b369ab7.out.checklistName",
                                             "functions": []
                                         }
                                     }
                                 },
                                 "lambda": {
-                                    "taskId": "{{{var-task-id}}}",
-                                    "name": "{{{var-checklist-name}}}"
+                                    "taskId": "{{{0d6cd7b7-1e2f-44a4-abe8-2f6e167ae22f}}}",
+                                    "name": "{{{c85223de-f1ec-4177-9b71-97a22f13c52b}}}"
                                 }
                             }
                         }
@@ -206,37 +221,59 @@
                 }
             }
         },
-        "assert-create-checklist": {
+        "265f19b0-c2fb-472c-b333-973cf9ba8375": {
             "type": "appmixer.utils.test.Assert",
-            "x": 1600,
-            "y": 144,
-            "version": "1.0.0",
-            "label": "Assert CreateChecklist",
+            "x": 896,
+            "y": 256,
             "source": {
                 "in": {
-                    "create-checklist": [
+                    "3c12284a-351d-4283-bc2a-691a4812e9df": [
                         "out"
                     ]
                 }
             },
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "label": "Assert CreateChecklist",
             "config": {
                 "transform": {
                     "in": {
-                        "create-checklist": {
+                        "3c12284a-351d-4283-bc2a-691a4812e9df": {
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
                                     "expression": {
-                                        "checklist-id-check": {
-                                            "variable": "$.create-checklist.out.checklist.id",
-                                            "functions": []
+                                        "9d8a8f29-a689-4390-ab58-a5f8c37dc9e0": {
+                                            "variable": "$.3c12284a-351d-4283-bc2a-691a4812e9df.out.checklist",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$.id"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
                                         },
-                                        "checklist-name-check": {
-                                            "variable": "$.create-checklist.out.checklist.name",
-                                            "functions": []
+                                        "2b292178-4540-4d31-9b0b-06e129457d59": {
+                                            "variable": "$.3c12284a-351d-4283-bc2a-691a4812e9df.out.checklist",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$.name"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
                                         },
-                                        "expected-checklist-name": {
-                                            "variable": "$.set-variables.out.checklistName",
+                                        "1bd9ac56-c0d1-4767-bf48-be93936ecedb": {
+                                            "variable": "$.775438e5-b858-4c78-8219-25d66b369ab7.out.checklistName",
                                             "functions": []
                                         }
                                     }
@@ -245,13 +282,13 @@
                                     "expression": {
                                         "AND": [
                                             {
-                                                "field": "{{{checklist-id-check}}}",
+                                                "field": "{{{9d8a8f29-a689-4390-ab58-a5f8c37dc9e0}}}",
                                                 "assertion": "notEmpty"
                                             },
                                             {
-                                                "field": "{{{checklist-name-check}}}",
+                                                "field": "{{{2b292178-4540-4d31-9b0b-06e129457d59}}}",
                                                 "assertion": "equal",
-                                                "expected": "{{{expected-checklist-name}}}"
+                                                "expected": "{{{1bd9ac56-c0d1-4767-bf48-be93936ecedb}}}"
                                             }
                                         ]
                                     }
@@ -262,41 +299,54 @@
                 }
             }
         },
-        "update-checklist": {
-            "type": "appmixer.clickup.core.UpdateChecklist",
-            "x": 1024,
-            "y": 272,
-            "version": "1.0.0",
+        "1826827c-197a-4a5c-b6da-2ce0f5d84347": {
+            "type": "appmixer.clickup.core.CreateChecklistItem",
+            "x": 896,
+            "y": 384,
             "source": {
                 "in": {
-                    "create-checklist": [
+                    "3c12284a-351d-4283-bc2a-691a4812e9df": [
                         "out"
                     ]
                 }
             },
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
             "config": {
                 "transform": {
                     "in": {
-                        "create-checklist": {
+                        "3c12284a-351d-4283-bc2a-691a4812e9df": {
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
                                     "checklistId": {
-                                        "var-checklist-id": {
-                                            "variable": "$.create-checklist.out.checklist.id",
-                                            "functions": []
+                                        "fda4d3e9-e7e4-4cce-9967-81298a80646a": {
+                                            "variable": "$.3c12284a-351d-4283-bc2a-691a4812e9df.out.checklist",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$.id"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
                                         }
                                     },
                                     "name": {
-                                        "var-updated-name": {
-                                            "variable": "$.set-variables.out.updatedChecklistName",
+                                        "e19a287c-ccae-4e6d-8383-6a0bb0203442": {
+                                            "variable": "$.775438e5-b858-4c78-8219-25d66b369ab7.out.itemName",
                                             "functions": []
                                         }
                                     }
                                 },
                                 "lambda": {
-                                    "checklistId": "{{{var-checklist-id}}}",
-                                    "name": "{{{var-updated-name}}}"
+                                    "checklistId": "{{{fda4d3e9-e7e4-4cce-9967-81298a80646a}}}",
+                                    "name": "{{{e19a287c-ccae-4e6d-8383-6a0bb0203442}}}"
                                 }
                             }
                         }
@@ -304,29 +354,46 @@
                 }
             }
         },
-        "assert-update-checklist": {
+        "ced3e26e-dfa0-4c16-939e-7f967018253a": {
             "type": "appmixer.utils.test.Assert",
-            "x": 1600,
-            "y": 272,
-            "version": "1.0.0",
-            "label": "Assert UpdateChecklist",
+            "x": 1104,
+            "y": 384,
             "source": {
                 "in": {
-                    "update-checklist": [
+                    "1826827c-197a-4a5c-b6da-2ce0f5d84347": [
                         "out"
                     ]
                 }
             },
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "label": "Assert CreateChecklistItem",
             "config": {
                 "transform": {
                     "in": {
-                        "update-checklist": {
+                        "1826827c-197a-4a5c-b6da-2ce0f5d84347": {
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
                                     "expression": {
-                                        "updated-checklist-id-check": {
-                                            "variable": "$.update-checklist.out.checklistId",
+                                        "df9c6b77-746e-4589-bf6e-4d2a54249bb3": {
+                                            "variable": "$.1826827c-197a-4a5c-b6da-2ce0f5d84347.out.checklist",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$.items[0].name"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        },
+                                        "40106993-7b29-452b-b7a8-03aa478246ac": {
+                                            "variable": "$.775438e5-b858-4c78-8219-25d66b369ab7.out.itemName",
                                             "functions": []
                                         }
                                     }
@@ -335,8 +402,9 @@
                                     "expression": {
                                         "AND": [
                                             {
-                                                "field": "{{{updated-checklist-id-check}}}",
-                                                "assertion": "notEmpty"
+                                                "field": "{{{df9c6b77-746e-4589-bf6e-4d2a54249bb3}}}",
+                                                "assertion": "equal",
+                                                "expected": "{{{40106993-7b29-452b-b7a8-03aa478246ac}}}"
                                             }
                                         ]
                                     }
@@ -347,58 +415,72 @@
                 }
             }
         },
-        "after-all": {
-            "type": "appmixer.utils.test.AfterAll",
-            "x": 1792,
-            "y": 144,
-            "version": "1.0.0",
+        "39923add-45cf-4424-b17d-2344e6cd65a7": {
+            "type": "appmixer.clickup.core.UpdateChecklistItem",
+            "x": 1104,
+            "y": 512,
             "source": {
                 "in": {
-                    "assert-create-task": [
-                        "out"
-                    ],
-                    "assert-create-checklist": [
-                        "out"
-                    ],
-                    "assert-update-checklist": [
+                    "1826827c-197a-4a5c-b6da-2ce0f5d84347": [
                         "out"
                     ]
                 }
             },
-            "config": {
-                "properties": {
-                    "timeout": 30
-                }
-            }
-        },
-        "delete-checklist": {
-            "type": "appmixer.clickup.core.DeleteChecklist",
-            "x": 1984,
-            "y": 144,
             "version": "1.0.0",
-            "source": {
-                "in": {
-                    "after-all": [
-                        "out"
-                    ]
-                }
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
             },
             "config": {
                 "transform": {
                     "in": {
-                        "after-all": {
+                        "1826827c-197a-4a5c-b6da-2ce0f5d84347": {
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
                                     "checklistId": {
-                                        "var-checklist-id": {
-                                            "variable": "$.create-checklist.out.checklist.id",
+                                        "5748c79b-516e-4c22-bb89-95eb390be463": {
+                                            "variable": "$.3c12284a-351d-4283-bc2a-691a4812e9df.out.checklist",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$.id"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "checklistItemId": {
+                                        "baa93ff3-916c-4826-8cd5-1cfd9b6452e3": {
+                                            "variable": "$.1826827c-197a-4a5c-b6da-2ce0f5d84347.out.checklist",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$.items[0].id"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "name": {
+                                        "a710c224-2d39-452c-b636-162db901f966": {
+                                            "variable": "$.775438e5-b858-4c78-8219-25d66b369ab7.out.updatedItemName",
                                             "functions": []
                                         }
-                                    }
+                                    },
+                                    "resolved": {}
                                 },
                                 "lambda": {
-                                    "checklistId": "{{{var-checklist-id}}}"
+                                    "checklistId": "{{{5748c79b-516e-4c22-bb89-95eb390be463}}}",
+                                    "checklistItemId": "{{{baa93ff3-916c-4826-8cd5-1cfd9b6452e3}}}",
+                                    "name": "{{{a710c224-2d39-452c-b636-162db901f966}}}",
+                                    "resolved": true
                                 }
                             }
                         }
@@ -406,34 +488,94 @@
                 }
             }
         },
-        "delete-task": {
-            "type": "appmixer.clickup.core.DeleteTask",
-            "x": 2176,
-            "y": 144,
-            "version": "1.0.0",
+        "04dac785-3526-4ad1-8370-26b19daee859": {
+            "type": "appmixer.clickup.core.UpdateChecklist",
+            "x": 1312,
+            "y": 640,
             "source": {
                 "in": {
-                    "delete-checklist": [
+                    "39923add-45cf-4424-b17d-2344e6cd65a7": [
                         "out"
                     ]
                 }
             },
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
             "config": {
                 "transform": {
                     "in": {
-                        "delete-checklist": {
+                        "39923add-45cf-4424-b17d-2344e6cd65a7": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "checklistId": {
+                                        "a98bc6ae-7222-4ce1-85de-c9ec84e3ab86": {
+                                            "variable": "$.3c12284a-351d-4283-bc2a-691a4812e9df.out.checklist",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$.id"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "name": {
+                                        "c2dd7f78-d432-42d9-bf66-ca85c776a31f": {
+                                            "variable": "$.775438e5-b858-4c78-8219-25d66b369ab7.out.updatedChecklistName",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "checklistId": "{{{a98bc6ae-7222-4ce1-85de-c9ec84e3ab86}}}",
+                                    "name": "{{{c2dd7f78-d432-42d9-bf66-ca85c776a31f}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "8c3c6ee4-fe0b-4c27-8275-77bc768e118a": {
+            "type": "appmixer.clickup.core.GetTask",
+            "x": 1520,
+            "y": 768,
+            "source": {
+                "in": {
+                    "04dac785-3526-4ad1-8370-26b19daee859": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "label": "GetTask after checklist updates",
+            "config": {
+                "transform": {
+                    "in": {
+                        "04dac785-3526-4ad1-8370-26b19daee859": {
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
                                     "taskId": {
-                                        "var-task-id": {
-                                            "variable": "$.create-task.out.id",
+                                        "d57f655f-7a8d-4635-9d80-4d3959f6d9a6": {
+                                            "variable": "$.fc80ab87-f0da-4197-abdf-69277163b946.out.id",
                                             "functions": []
                                         }
                                     }
                                 },
                                 "lambda": {
-                                    "taskId": "{{{var-task-id}}}"
+                                    "taskId": "{{{d57f655f-7a8d-4635-9d80-4d3959f6d9a6}}}"
                                 }
                             }
                         }
@@ -441,34 +583,272 @@
                 }
             }
         },
-        "process-results": {
-            "type": "appmixer.utils.test.ProcessE2EResults",
-            "x": 2368,
-            "y": 144,
-            "version": "1.0.1",
+        "24af0c1e-6e21-4f30-9905-2877484d4d1b": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1728,
+            "y": 768,
             "source": {
                 "in": {
-                    "delete-task": [
+                    "8c3c6ee4-fe0b-4c27-8275-77bc768e118a": [
                         "out"
                     ]
                 }
             },
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "label": "Assert checklist updates",
+            "config": {
+                "transform": {
+                    "in": {
+                        "8c3c6ee4-fe0b-4c27-8275-77bc768e118a": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "f19ab804-5243-462e-816c-1e5c85ae26e6": {
+                                            "variable": "$.8c3c6ee4-fe0b-4c27-8275-77bc768e118a.out.id",
+                                            "functions": []
+                                        },
+                                        "31d8f721-eb7e-4e27-a3b3-7719879f491a": {
+                                            "variable": "$.fc80ab87-f0da-4197-abdf-69277163b946.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{f19ab804-5243-462e-816c-1e5c85ae26e6}}}",
+                                                "assertion": "equal",
+                                                "expected": "{{{31d8f721-eb7e-4e27-a3b3-7719879f491a}}}"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "bf06161f-53c8-4157-ad6c-7ce312d0f15d": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 1936,
+            "y": 896,
+            "source": {
+                "in": {
+                    "d87835b5-397d-49ab-b597-512aa5a00053": [
+                        "out"
+                    ],
+                    "265f19b0-c2fb-472c-b333-973cf9ba8375": [
+                        "out"
+                    ],
+                    "ced3e26e-dfa0-4c16-939e-7f967018253a": [
+                        "out"
+                    ],
+                    "24af0c1e-6e21-4f30-9905-2877484d4d1b": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
             "config": {
                 "properties": {
-                    "successStoreId": "64f6f1f9193228000754082f",
-                    "failedStoreId": "64f6f1f0193228000754082e"
+                    "timeout": 180
+                }
+            }
+        },
+        "8c7a98b1-081e-40a9-bff4-a65ed4608943": {
+            "type": "appmixer.clickup.core.DeleteChecklistItem",
+            "x": 2144,
+            "y": 896,
+            "source": {
+                "in": {
+                    "bf06161f-53c8-4157-ad6c-7ce312d0f15d": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "bf06161f-53c8-4157-ad6c-7ce312d0f15d": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "checklistId": {
+                                        "873e6e5c-0f6d-4864-891b-a7ef66517ad9": {
+                                            "variable": "$.3c12284a-351d-4283-bc2a-691a4812e9df.out.checklist",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$.id"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "checklistItemId": {
+                                        "3c5408d9-9243-4d5c-b427-e47a42391d42": {
+                                            "variable": "$.1826827c-197a-4a5c-b6da-2ce0f5d84347.out.checklist",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$.items[0].id"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "checklistId": "{{{873e6e5c-0f6d-4864-891b-a7ef66517ad9}}}",
+                                    "checklistItemId": "{{{3c5408d9-9243-4d5c-b427-e47a42391d42}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "de102d62-bf46-4d11-955d-3a7958220287": {
+            "type": "appmixer.clickup.core.DeleteChecklist",
+            "x": 2352,
+            "y": 896,
+            "source": {
+                "in": {
+                    "8c7a98b1-081e-40a9-bff4-a65ed4608943": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "8c7a98b1-081e-40a9-bff4-a65ed4608943": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "checklistId": {
+                                        "95b06a0d-8c95-4369-8990-7820fc3cd4b8": {
+                                            "variable": "$.3c12284a-351d-4283-bc2a-691a4812e9df.out.checklist",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$.id"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "checklistId": "{{{95b06a0d-8c95-4369-8990-7820fc3cd4b8}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "e734adee-9737-44a1-8dd9-7c1604979b80": {
+            "type": "appmixer.clickup.core.DeleteTask",
+            "x": 2560,
+            "y": 896,
+            "source": {
+                "in": {
+                    "de102d62-bf46-4d11-955d-3a7958220287": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "de102d62-bf46-4d11-955d-3a7958220287": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "taskId": {
+                                        "d8be0419-b428-48f9-b549-57821554f48f": {
+                                            "variable": "$.fc80ab87-f0da-4197-abdf-69277163b946.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "taskId": "{{{d8be0419-b428-48f9-b549-57821554f48f}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "836d396a-3ef6-43c5-98f5-b54ed3ceb19e": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 2768,
+            "y": 896,
+            "source": {
+                "in": {
+                    "e734adee-9737-44a1-8dd9-7c1604979b80": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.1",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "properties": {
+                    "successStoreId": "000000000000000000000000",
+                    "failedStoreId": "000000000000000000000000"
                 },
                 "transform": {
                     "in": {
-                        "delete-task": {
+                        "e734adee-9737-44a1-8dd9-7c1604979b80": {
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
                                     "recipients": {},
                                     "testCase": {},
                                     "result": {
-                                        "result-var": {
-                                            "variable": "$.after-all.out",
+                                        "413125da-425e-4bec-8d40-ebdecef6d5d9": {
+                                            "variable": "$.bf06161f-53c8-4157-ad6c-7ce312d0f15d.out",
                                             "functions": []
                                         }
                                     }
@@ -476,7 +856,7 @@
                                 "lambda": {
                                     "recipients": "test@appmixer.ai",
                                     "testCase": "E2E Clickup - checklists",
-                                    "result": "{{{result-var}}}"
+                                    "result": "{{{413125da-425e-4bec-8d40-ebdecef6d5d9}}}"
                                 }
                             }
                         }

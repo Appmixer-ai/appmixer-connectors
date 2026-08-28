@@ -1,47 +1,40 @@
 {
-    "name": "E2E Clickup - task-dependencies",
-    "description": "End-to-end test for Clickup connector - tests task dependency operations: CreateTask, CreateTaskDependency, DeleteTaskDependency",
+    "name": "E2E Clickup - task dependencies",
+    "description": "Task dependencies: CreateTaskDependency, DeleteTaskDependency.",
     "type": "automation",
     "notes": {},
     "flow": {
-        "on-start": {
+        "db7d6239-5f28-436a-ba5a-2a7092753143": {
             "type": "appmixer.utils.controls.OnStart",
             "x": 64,
-            "y": 16,
+            "y": 0,
             "source": {},
             "version": "1.0.0",
-            "config": {}
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
         },
-        "before-all": {
-            "type": "appmixer.utils.test.BeforeAll",
-            "x": 256,
-            "y": 16,
-            "version": "1.0.0",
+        "c6a1aea5-d71e-4248-abbe-939e3a3d6de9": {
+            "type": "appmixer.utils.controls.SetVariable",
+            "x": 272,
+            "y": 0,
             "source": {
                 "in": {
-                    "on-start": [
+                    "db7d6239-5f28-436a-ba5a-2a7092753143": [
                         "out"
                     ]
                 }
             },
-            "config": {}
-        },
-        "set-variables": {
-            "type": "appmixer.utils.controls.SetVariable",
-            "x": 448,
-            "y": 16,
             "version": "1.0.0",
-            "source": {
-                "in": {
-                    "before-all": [
-                        "out"
-                    ]
-                }
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
             },
             "config": {
                 "transform": {
                     "in": {
-                        "before-all": {
+                        "db7d6239-5f28-436a-ba5a-2a7092753143": {
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
@@ -53,17 +46,17 @@
                                             {
                                                 "type": "text",
                                                 "name": "listId",
-                                                "text": "YOUR_CLICKUP_LIST_ID"
+                                                "text": "901506393256"
                                             },
                                             {
                                                 "type": "text",
                                                 "name": "taskAName",
-                                                "text": "E2E Dep Task A"
+                                                "text": "E2E Dependency Task A"
                                             },
                                             {
                                                 "type": "text",
                                                 "name": "taskBName",
-                                                "text": "E2E Dep Task B"
+                                                "text": "E2E Dependency Task B"
                                             }
                                         ]
                                     }
@@ -74,41 +67,46 @@
                 }
             }
         },
-        "create-task-a": {
+        "d6028c7b-6b4e-4fcf-8c2f-95c5ff81dca7": {
             "type": "appmixer.clickup.core.CreateTask",
-            "x": 640,
-            "y": 16,
-            "version": "1.0.0",
+            "x": 480,
+            "y": 128,
             "source": {
                 "in": {
-                    "set-variables": [
+                    "c6a1aea5-d71e-4248-abbe-939e3a3d6de9": [
                         "out"
                     ]
                 }
             },
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "label": "CreateTask A",
             "config": {
                 "transform": {
                     "in": {
-                        "set-variables": {
+                        "c6a1aea5-d71e-4248-abbe-939e3a3d6de9": {
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
                                     "listId": {
-                                        "var-list-id": {
-                                            "variable": "$.set-variables.out.listId",
+                                        "299dd8f3-b346-4ebe-9635-ac8a3b0fd54f": {
+                                            "variable": "$.c6a1aea5-d71e-4248-abbe-939e3a3d6de9.out.listId",
                                             "functions": []
                                         }
                                     },
                                     "name": {
-                                        "var-task-a-name": {
-                                            "variable": "$.set-variables.out.taskAName",
+                                        "1bc0df1d-4f69-48da-8f67-d1a934db02bd": {
+                                            "variable": "$.c6a1aea5-d71e-4248-abbe-939e3a3d6de9.out.taskAName",
                                             "functions": []
                                         }
                                     }
                                 },
                                 "lambda": {
-                                    "listId": "{{{var-list-id}}}",
-                                    "name": "{{{var-task-a-name}}}"
+                                    "listId": "{{{299dd8f3-b346-4ebe-9635-ac8a3b0fd54f}}}",
+                                    "name": "{{{1bc0df1d-4f69-48da-8f67-d1a934db02bd}}}"
                                 }
                             }
                         }
@@ -116,41 +114,46 @@
                 }
             }
         },
-        "create-task-b": {
-            "type": "appmixer.clickup.core.CreateTask",
-            "x": 832,
-            "y": 144,
-            "version": "1.0.0",
+        "ae0eff87-6481-44ca-b8cc-7396d10708aa": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 688,
+            "y": 128,
             "source": {
                 "in": {
-                    "create-task-a": [
+                    "d6028c7b-6b4e-4fcf-8c2f-95c5ff81dca7": [
                         "out"
                     ]
                 }
             },
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "label": "Assert CreateTask A",
             "config": {
                 "transform": {
                     "in": {
-                        "create-task-a": {
+                        "d6028c7b-6b4e-4fcf-8c2f-95c5ff81dca7": {
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
-                                    "listId": {
-                                        "var-list-id": {
-                                            "variable": "$.set-variables.out.listId",
-                                            "functions": []
-                                        }
-                                    },
-                                    "name": {
-                                        "var-task-b-name": {
-                                            "variable": "$.set-variables.out.taskBName",
+                                    "expression": {
+                                        "69d516a2-5fe0-43cf-a49a-a04761926d7e": {
+                                            "variable": "$.d6028c7b-6b4e-4fcf-8c2f-95c5ff81dca7.out.id",
                                             "functions": []
                                         }
                                     }
                                 },
                                 "lambda": {
-                                    "listId": "{{{var-list-id}}}",
-                                    "name": "{{{var-task-b-name}}}"
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{69d516a2-5fe0-43cf-a49a-a04761926d7e}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
                                 }
                             }
                         }
@@ -158,41 +161,139 @@
                 }
             }
         },
-        "create-dependency": {
+        "9f69c271-57eb-4119-a73a-cf456daee03c": {
+            "type": "appmixer.clickup.core.CreateTask",
+            "x": 688,
+            "y": 256,
+            "source": {
+                "in": {
+                    "d6028c7b-6b4e-4fcf-8c2f-95c5ff81dca7": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "label": "CreateTask B",
+            "config": {
+                "transform": {
+                    "in": {
+                        "d6028c7b-6b4e-4fcf-8c2f-95c5ff81dca7": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "listId": {
+                                        "9acde3f6-350f-4497-92fd-52256a267fa6": {
+                                            "variable": "$.c6a1aea5-d71e-4248-abbe-939e3a3d6de9.out.listId",
+                                            "functions": []
+                                        }
+                                    },
+                                    "name": {
+                                        "559c492d-27ce-4113-bd6a-4aaa55a09e64": {
+                                            "variable": "$.c6a1aea5-d71e-4248-abbe-939e3a3d6de9.out.taskBName",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "listId": "{{{9acde3f6-350f-4497-92fd-52256a267fa6}}}",
+                                    "name": "{{{559c492d-27ce-4113-bd6a-4aaa55a09e64}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "c572fec2-879d-405d-adba-09cfae2f807f": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 896,
+            "y": 256,
+            "source": {
+                "in": {
+                    "9f69c271-57eb-4119-a73a-cf456daee03c": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "label": "Assert CreateTask B",
+            "config": {
+                "transform": {
+                    "in": {
+                        "9f69c271-57eb-4119-a73a-cf456daee03c": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "d50787d7-9999-44e9-8a08-8f73b0db0c90": {
+                                            "variable": "$.9f69c271-57eb-4119-a73a-cf456daee03c.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{d50787d7-9999-44e9-8a08-8f73b0db0c90}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "64f605e6-5fbc-47ad-b5ad-43cf42bb0940": {
             "type": "appmixer.clickup.core.CreateTaskDependency",
-            "x": 1024,
-            "y": 272,
-            "version": "1.0.0",
+            "x": 896,
+            "y": 384,
             "source": {
                 "in": {
-                    "create-task-b": [
+                    "9f69c271-57eb-4119-a73a-cf456daee03c": [
                         "out"
                     ]
                 }
             },
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
             "config": {
                 "transform": {
                     "in": {
-                        "create-task-b": {
+                        "9f69c271-57eb-4119-a73a-cf456daee03c": {
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
                                     "taskId": {
-                                        "var-task-a-id": {
-                                            "variable": "$.create-task-a.out.id",
+                                        "0a778a29-5dfd-41f8-8668-9814c23c60c0": {
+                                            "variable": "$.d6028c7b-6b4e-4fcf-8c2f-95c5ff81dca7.out.id",
                                             "functions": []
                                         }
                                     },
                                     "dependsOnTaskId": {
-                                        "var-task-b-id": {
-                                            "variable": "$.create-task-b.out.id",
+                                        "40b9b09b-75eb-4ae3-8bd2-c181a25c02db": {
+                                            "variable": "$.9f69c271-57eb-4119-a73a-cf456daee03c.out.id",
                                             "functions": []
                                         }
                                     }
                                 },
                                 "lambda": {
-                                    "taskId": "{{{var-task-a-id}}}",
-                                    "dependsOnTaskId": "{{{var-task-b-id}}}"
+                                    "taskId": "{{{0a778a29-5dfd-41f8-8668-9814c23c60c0}}}",
+                                    "dependsOnTaskId": "{{{40b9b09b-75eb-4ae3-8bd2-c181a25c02db}}}"
                                 }
                             }
                         }
@@ -200,33 +301,77 @@
                 }
             }
         },
-        "assert-create-dependency": {
-            "type": "appmixer.utils.test.Assert",
-            "x": 1600,
-            "y": 272,
+        "226093ad-49dc-4bb7-9a33-a49ef505d089": {
+            "type": "appmixer.clickup.core.GetTask",
+            "x": 1104,
+            "y": 512,
+            "source": {
+                "in": {
+                    "64f605e6-5fbc-47ad-b5ad-43cf42bb0940": [
+                        "out"
+                    ]
+                }
+            },
             "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "label": "GetTask after CreateTaskDependency",
+            "config": {
+                "transform": {
+                    "in": {
+                        "64f605e6-5fbc-47ad-b5ad-43cf42bb0940": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "taskId": {
+                                        "a0db02a9-6655-4100-af15-ec52f2328937": {
+                                            "variable": "$.d6028c7b-6b4e-4fcf-8c2f-95c5ff81dca7.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "taskId": "{{{a0db02a9-6655-4100-af15-ec52f2328937}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "a6cd9d83-34ff-4abc-8e04-8839c299d439": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1312,
+            "y": 512,
+            "source": {
+                "in": {
+                    "226093ad-49dc-4bb7-9a33-a49ef505d089": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
             "label": "Assert CreateTaskDependency",
-            "source": {
-                "in": {
-                    "create-dependency": [
-                        "out"
-                    ]
-                }
-            },
             "config": {
                 "transform": {
                     "in": {
-                        "create-dependency": {
+                        "226093ad-49dc-4bb7-9a33-a49ef505d089": {
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
                                     "expression": {
-                                        "dep-task-id-check": {
-                                            "variable": "$.create-dependency.out.taskId",
+                                        "28563eda-4f79-48bc-babc-44df3477b228": {
+                                            "variable": "$.226093ad-49dc-4bb7-9a33-a49ef505d089.out.id",
                                             "functions": []
                                         },
-                                        "dep-depends-on-check": {
-                                            "variable": "$.create-dependency.out.dependsOnTaskId",
+                                        "7f9c0fd5-5ac5-45ef-aa7f-b7cb86348dc9": {
+                                            "variable": "$.d6028c7b-6b4e-4fcf-8c2f-95c5ff81dca7.out.id",
                                             "functions": []
                                         }
                                     }
@@ -235,12 +380,9 @@
                                     "expression": {
                                         "AND": [
                                             {
-                                                "field": "{{{dep-task-id-check}}}",
-                                                "assertion": "notEmpty"
-                                            },
-                                            {
-                                                "field": "{{{dep-depends-on-check}}}",
-                                                "assertion": "notEmpty"
+                                                "field": "{{{28563eda-4f79-48bc-babc-44df3477b228}}}",
+                                                "assertion": "equal",
+                                                "expected": "{{{7f9c0fd5-5ac5-45ef-aa7f-b7cb86348dc9}}}"
                                             }
                                         ]
                                     }
@@ -251,41 +393,45 @@
                 }
             }
         },
-        "delete-dependency": {
+        "d5b33e4f-75fa-42ca-bed5-f7eb5483ab8b": {
             "type": "appmixer.clickup.core.DeleteTaskDependency",
-            "x": 1216,
-            "y": 400,
-            "version": "1.0.0",
+            "x": 1312,
+            "y": 640,
             "source": {
                 "in": {
-                    "create-dependency": [
+                    "226093ad-49dc-4bb7-9a33-a49ef505d089": [
                         "out"
                     ]
                 }
             },
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
             "config": {
                 "transform": {
                     "in": {
-                        "create-dependency": {
+                        "226093ad-49dc-4bb7-9a33-a49ef505d089": {
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
                                     "taskId": {
-                                        "var-del-task-id": {
-                                            "variable": "$.create-dependency.out.taskId",
+                                        "010f217a-17b2-4c5d-8a78-af5f7eac31ad": {
+                                            "variable": "$.d6028c7b-6b4e-4fcf-8c2f-95c5ff81dca7.out.id",
                                             "functions": []
                                         }
                                     },
                                     "dependsOnTaskId": {
-                                        "var-del-depends-on-id": {
-                                            "variable": "$.create-dependency.out.dependsOnTaskId",
+                                        "b09a1902-5127-41b2-a8f8-cfaee42ad5b1": {
+                                            "variable": "$.9f69c271-57eb-4119-a73a-cf456daee03c.out.id",
                                             "functions": []
                                         }
                                     }
                                 },
                                 "lambda": {
-                                    "taskId": "{{{var-del-task-id}}}",
-                                    "dependsOnTaskId": "{{{var-del-depends-on-id}}}"
+                                    "taskId": "{{{010f217a-17b2-4c5d-8a78-af5f7eac31ad}}}",
+                                    "dependsOnTaskId": "{{{b09a1902-5127-41b2-a8f8-cfaee42ad5b1}}}"
                                 }
                             }
                         }
@@ -293,33 +439,77 @@
                 }
             }
         },
-        "assert-delete-dependency": {
-            "type": "appmixer.utils.test.Assert",
-            "x": 1600,
-            "y": 400,
-            "version": "1.0.0",
-            "label": "Assert DeleteTaskDependency",
+        "b4104974-ac1c-4162-8376-53bf7b870755": {
+            "type": "appmixer.clickup.core.GetTask",
+            "x": 1520,
+            "y": 768,
             "source": {
                 "in": {
-                    "delete-dependency": [
+                    "d5b33e4f-75fa-42ca-bed5-f7eb5483ab8b": [
                         "out"
                     ]
                 }
             },
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "label": "GetTask after DeleteTaskDependency",
             "config": {
                 "transform": {
                     "in": {
-                        "delete-dependency": {
+                        "d5b33e4f-75fa-42ca-bed5-f7eb5483ab8b": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "taskId": {
+                                        "2316a647-da37-4cc5-9348-5e6dcdd50085": {
+                                            "variable": "$.d6028c7b-6b4e-4fcf-8c2f-95c5ff81dca7.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "taskId": "{{{2316a647-da37-4cc5-9348-5e6dcdd50085}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "48851718-1ae9-488a-8112-1af760e79a9e": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1728,
+            "y": 768,
+            "source": {
+                "in": {
+                    "b4104974-ac1c-4162-8376-53bf7b870755": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "label": "Assert DeleteTaskDependency",
+            "config": {
+                "transform": {
+                    "in": {
+                        "b4104974-ac1c-4162-8376-53bf7b870755": {
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
                                     "expression": {
-                                        "del-dep-task-id-check": {
-                                            "variable": "$.delete-dependency.out.taskId",
+                                        "920547a1-4c94-4eb2-a990-c331c8f86325": {
+                                            "variable": "$.b4104974-ac1c-4162-8376-53bf7b870755.out.id",
                                             "functions": []
                                         },
-                                        "del-dep-depends-on-check": {
-                                            "variable": "$.delete-dependency.out.dependsOnTaskId",
+                                        "d57de05a-eb65-4ba9-bef0-d5ae53197657": {
+                                            "variable": "$.d6028c7b-6b4e-4fcf-8c2f-95c5ff81dca7.out.id",
                                             "functions": []
                                         }
                                     }
@@ -328,12 +518,9 @@
                                     "expression": {
                                         "AND": [
                                             {
-                                                "field": "{{{del-dep-task-id-check}}}",
-                                                "assertion": "notEmpty"
-                                            },
-                                            {
-                                                "field": "{{{del-dep-depends-on-check}}}",
-                                                "assertion": "notEmpty"
+                                                "field": "{{{920547a1-4c94-4eb2-a990-c331c8f86325}}}",
+                                                "assertion": "equal",
+                                                "expected": "{{{d57de05a-eb65-4ba9-bef0-d5ae53197657}}}"
                                             }
                                         ]
                                     }
@@ -344,55 +531,69 @@
                 }
             }
         },
-        "after-all": {
+        "bf0223b7-9398-43a0-934a-288fc92b02c0": {
             "type": "appmixer.utils.test.AfterAll",
-            "x": 1792,
-            "y": 336,
-            "version": "1.0.0",
+            "x": 1936,
+            "y": 896,
             "source": {
                 "in": {
-                    "assert-create-dependency": [
+                    "ae0eff87-6481-44ca-b8cc-7396d10708aa": [
                         "out"
                     ],
-                    "assert-delete-dependency": [
+                    "c572fec2-879d-405d-adba-09cfae2f807f": [
+                        "out"
+                    ],
+                    "a6cd9d83-34ff-4abc-8e04-8839c299d439": [
+                        "out"
+                    ],
+                    "48851718-1ae9-488a-8112-1af760e79a9e": [
                         "out"
                     ]
                 }
+            },
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
             },
             "config": {
                 "properties": {
-                    "timeout": 30
+                    "timeout": 180
                 }
             }
         },
-        "delete-task-a": {
+        "3e2b1926-64da-4c14-b85b-41d74c43dc37": {
             "type": "appmixer.clickup.core.DeleteTask",
-            "x": 1984,
-            "y": 336,
-            "version": "1.0.0",
+            "x": 2144,
+            "y": 896,
             "source": {
                 "in": {
-                    "after-all": [
+                    "bf0223b7-9398-43a0-934a-288fc92b02c0": [
                         "out"
                     ]
                 }
             },
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
             "config": {
                 "transform": {
                     "in": {
-                        "after-all": {
+                        "bf0223b7-9398-43a0-934a-288fc92b02c0": {
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
                                     "taskId": {
-                                        "var-task-a-id": {
-                                            "variable": "$.create-task-a.out.id",
+                                        "0fe1ca96-ed5e-45bd-9365-5b2a1dc71302": {
+                                            "variable": "$.d6028c7b-6b4e-4fcf-8c2f-95c5ff81dca7.out.id",
                                             "functions": []
                                         }
                                     }
                                 },
                                 "lambda": {
-                                    "taskId": "{{{var-task-a-id}}}"
+                                    "taskId": "{{{0fe1ca96-ed5e-45bd-9365-5b2a1dc71302}}}"
                                 }
                             }
                         }
@@ -400,34 +601,38 @@
                 }
             }
         },
-        "delete-task-b": {
+        "d9aed4fe-7cf2-4a9c-bffe-9f7253020c19": {
             "type": "appmixer.clickup.core.DeleteTask",
-            "x": 2176,
-            "y": 336,
-            "version": "1.0.0",
+            "x": 2352,
+            "y": 896,
             "source": {
                 "in": {
-                    "delete-task-a": [
+                    "3e2b1926-64da-4c14-b85b-41d74c43dc37": [
                         "out"
                     ]
                 }
             },
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
             "config": {
                 "transform": {
                     "in": {
-                        "delete-task-a": {
+                        "3e2b1926-64da-4c14-b85b-41d74c43dc37": {
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
                                     "taskId": {
-                                        "var-task-b-id": {
-                                            "variable": "$.create-task-b.out.id",
+                                        "70010063-6992-44ef-967e-80f278a42d6c": {
+                                            "variable": "$.9f69c271-57eb-4119-a73a-cf456daee03c.out.id",
                                             "functions": []
                                         }
                                     }
                                 },
                                 "lambda": {
-                                    "taskId": "{{{var-task-b-id}}}"
+                                    "taskId": "{{{70010063-6992-44ef-967e-80f278a42d6c}}}"
                                 }
                             }
                         }
@@ -435,42 +640,46 @@
                 }
             }
         },
-        "process-results": {
+        "4521f489-81f0-4d75-a0c0-164543ae9c28": {
             "type": "appmixer.utils.test.ProcessE2EResults",
-            "x": 2368,
-            "y": 336,
-            "version": "1.0.1",
+            "x": 2560,
+            "y": 896,
             "source": {
                 "in": {
-                    "delete-task-b": [
+                    "d9aed4fe-7cf2-4a9c-bffe-9f7253020c19": [
                         "out"
                     ]
                 }
             },
+            "version": "1.0.1",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
             "config": {
                 "properties": {
-                    "successStoreId": "64f6f1f9193228000754082f",
-                    "failedStoreId": "64f6f1f0193228000754082e"
+                    "successStoreId": "000000000000000000000000",
+                    "failedStoreId": "000000000000000000000000"
                 },
                 "transform": {
                     "in": {
-                        "delete-task-b": {
+                        "d9aed4fe-7cf2-4a9c-bffe-9f7253020c19": {
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
                                     "recipients": {},
                                     "testCase": {},
                                     "result": {
-                                        "result-var": {
-                                            "variable": "$.after-all.out",
+                                        "03baf2cf-1a11-4c4c-8e4f-24a41a92a758": {
+                                            "variable": "$.bf0223b7-9398-43a0-934a-288fc92b02c0.out",
                                             "functions": []
                                         }
                                     }
                                 },
                                 "lambda": {
                                     "recipients": "test@appmixer.ai",
-                                    "testCase": "E2E Clickup - task-dependencies",
-                                    "result": "{{{result-var}}}"
+                                    "testCase": "E2E Clickup - task dependencies",
+                                    "result": "{{{03baf2cf-1a11-4c4c-8e4f-24a41a92a758}}}"
                                 }
                             }
                         }

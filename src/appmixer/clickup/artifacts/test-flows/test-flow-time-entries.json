@@ -1,0 +1,1230 @@
+{
+    "name": "E2E Clickup - time entries",
+    "description": "Time entry lifecycle plus time entry tags.",
+    "type": "automation",
+    "notes": {},
+    "flow": {
+        "d8a6acdd-108f-4806-ae2c-d6686a9c1202": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 0,
+            "source": {},
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "9c5301f2-80c8-40c0-a6ae-aa9669e717a1": {
+            "type": "appmixer.utils.controls.SetVariable",
+            "x": 272,
+            "y": 0,
+            "source": {
+                "in": {
+                    "d8a6acdd-108f-4806-ae2c-d6686a9c1202": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "d8a6acdd-108f-4806-ae2c-d6686a9c1202": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "variables": {}
+                                },
+                                "lambda": {
+                                    "variables": {
+                                        "ADD": [
+                                            {
+                                                "type": "text",
+                                                "name": "teamId",
+                                                "text": "9015365726"
+                                            },
+                                            {
+                                                "type": "text",
+                                                "name": "listId",
+                                                "text": "901506393256"
+                                            },
+                                            {
+                                                "type": "text",
+                                                "name": "taskName",
+                                                "text": "E2E Time Entry Task"
+                                            },
+                                            {
+                                                "type": "text",
+                                                "name": "description",
+                                                "text": "E2E time entry"
+                                            },
+                                            {
+                                                "type": "text",
+                                                "name": "updatedDescription",
+                                                "text": "E2E time entry updated"
+                                            },
+                                            {
+                                                "type": "text",
+                                                "name": "tagName",
+                                                "text": "e2e-time-tag"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "cfd29f7b-415f-4a53-a758-9de060d38270": {
+            "type": "appmixer.clickup.core.CreateTask",
+            "x": 480,
+            "y": 128,
+            "source": {
+                "in": {
+                    "9c5301f2-80c8-40c0-a6ae-aa9669e717a1": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "9c5301f2-80c8-40c0-a6ae-aa9669e717a1": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "listId": {
+                                        "cb5d0eb0-5024-4641-b865-152b04f03a50": {
+                                            "variable": "$.9c5301f2-80c8-40c0-a6ae-aa9669e717a1.out.listId",
+                                            "functions": []
+                                        }
+                                    },
+                                    "name": {
+                                        "7f83c83f-aa98-4477-bda6-8eae0c66d3fa": {
+                                            "variable": "$.9c5301f2-80c8-40c0-a6ae-aa9669e717a1.out.taskName",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "listId": "{{{cb5d0eb0-5024-4641-b865-152b04f03a50}}}",
+                                    "name": "{{{7f83c83f-aa98-4477-bda6-8eae0c66d3fa}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "c02ef2e4-22bc-480a-8152-998623f56f40": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 688,
+            "y": 128,
+            "source": {
+                "in": {
+                    "cfd29f7b-415f-4a53-a758-9de060d38270": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "label": "Assert CreateTask",
+            "config": {
+                "transform": {
+                    "in": {
+                        "cfd29f7b-415f-4a53-a758-9de060d38270": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "298f76e0-5f71-4e5e-8c84-d9789624f939": {
+                                            "variable": "$.cfd29f7b-415f-4a53-a758-9de060d38270.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{298f76e0-5f71-4e5e-8c84-d9789624f939}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "c4774dbd-a288-4045-9d25-cdc8877d9065": {
+            "type": "appmixer.clickup.core.CreateTimeEntry",
+            "x": 688,
+            "y": 256,
+            "source": {
+                "in": {
+                    "cfd29f7b-415f-4a53-a758-9de060d38270": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "cfd29f7b-415f-4a53-a758-9de060d38270": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "teamId": {
+                                        "072a3e05-87b5-4fc4-ae79-8a5012c27371": {
+                                            "variable": "$.9c5301f2-80c8-40c0-a6ae-aa9669e717a1.out.teamId",
+                                            "functions": []
+                                        }
+                                    },
+                                    "start": {
+                                        "c621cb01-8d9c-49db-a161-03a074c7b3a5": {
+                                            "functions": [
+                                                {
+                                                    "name": "g_now"
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "duration": {},
+                                    "taskId": {
+                                        "a10862e5-8cdc-4197-9758-e0037a4d9a93": {
+                                            "variable": "$.cfd29f7b-415f-4a53-a758-9de060d38270.out.id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "description": {
+                                        "51019860-7352-499a-8809-2ba69fd537c8": {
+                                            "variable": "$.9c5301f2-80c8-40c0-a6ae-aa9669e717a1.out.description",
+                                            "functions": []
+                                        }
+                                    },
+                                    "billable": {}
+                                },
+                                "lambda": {
+                                    "teamId": "{{{072a3e05-87b5-4fc4-ae79-8a5012c27371}}}",
+                                    "start": "{{{c621cb01-8d9c-49db-a161-03a074c7b3a5}}}",
+                                    "duration": 10,
+                                    "taskId": "{{{a10862e5-8cdc-4197-9758-e0037a4d9a93}}}",
+                                    "description": "{{{51019860-7352-499a-8809-2ba69fd537c8}}}",
+                                    "billable": true
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "cb3ffb1f-2be1-4363-b3cc-9c3b43685640": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 896,
+            "y": 256,
+            "source": {
+                "in": {
+                    "c4774dbd-a288-4045-9d25-cdc8877d9065": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "label": "Assert CreateTimeEntry",
+            "config": {
+                "transform": {
+                    "in": {
+                        "c4774dbd-a288-4045-9d25-cdc8877d9065": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "a1c9f61b-421b-4b04-a325-e107c3cec384": {
+                                            "variable": "$.c4774dbd-a288-4045-9d25-cdc8877d9065.out.data",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$.id"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        },
+                                        "fed390ae-a969-4f2f-b186-242784b4b3ba": {
+                                            "variable": "$.c4774dbd-a288-4045-9d25-cdc8877d9065.out.data",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$.description"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        },
+                                        "e23b34d6-03b1-4eb8-84e7-dde0f145b561": {
+                                            "variable": "$.9c5301f2-80c8-40c0-a6ae-aa9669e717a1.out.description",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{a1c9f61b-421b-4b04-a325-e107c3cec384}}}",
+                                                "assertion": "notEmpty"
+                                            },
+                                            {
+                                                "field": "{{{fed390ae-a969-4f2f-b186-242784b4b3ba}}}",
+                                                "assertion": "equal",
+                                                "expected": "{{{e23b34d6-03b1-4eb8-84e7-dde0f145b561}}}"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "32665a21-aaf3-4c53-83c6-25182aeb1b7b": {
+            "type": "appmixer.clickup.core.GetTimeEntry",
+            "x": 896,
+            "y": 384,
+            "source": {
+                "in": {
+                    "c4774dbd-a288-4045-9d25-cdc8877d9065": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "c4774dbd-a288-4045-9d25-cdc8877d9065": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "teamId": {
+                                        "79c65a07-2443-47de-8de6-4d782f740589": {
+                                            "variable": "$.9c5301f2-80c8-40c0-a6ae-aa9669e717a1.out.teamId",
+                                            "functions": []
+                                        }
+                                    },
+                                    "timeEntryId": {
+                                        "b2c7b052-8694-4fa0-8a79-a86d5a565cc4": {
+                                            "variable": "$.c4774dbd-a288-4045-9d25-cdc8877d9065.out.data",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$.id"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "teamId": "{{{79c65a07-2443-47de-8de6-4d782f740589}}}",
+                                    "timeEntryId": "{{{b2c7b052-8694-4fa0-8a79-a86d5a565cc4}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "2654a7f3-ed5d-41c9-a8e5-d10a84be0fbc": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1104,
+            "y": 384,
+            "source": {
+                "in": {
+                    "32665a21-aaf3-4c53-83c6-25182aeb1b7b": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "label": "Assert GetTimeEntry",
+            "config": {
+                "transform": {
+                    "in": {
+                        "32665a21-aaf3-4c53-83c6-25182aeb1b7b": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "93e2474d-2493-4bb1-b6f8-a1f1b54adf13": {
+                                            "variable": "$.32665a21-aaf3-4c53-83c6-25182aeb1b7b.out.data",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$.task.id"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        },
+                                        "2400e094-a2dd-4654-b727-b64472d654aa": {
+                                            "variable": "$.cfd29f7b-415f-4a53-a758-9de060d38270.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{93e2474d-2493-4bb1-b6f8-a1f1b54adf13}}}",
+                                                "assertion": "equal",
+                                                "expected": "{{{2400e094-a2dd-4654-b727-b64472d654aa}}}"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "9bf6d820-a75c-49c0-9a79-bd73a91acfb3": {
+            "type": "appmixer.clickup.core.FindTimeEntries",
+            "x": 1104,
+            "y": 512,
+            "source": {
+                "in": {
+                    "32665a21-aaf3-4c53-83c6-25182aeb1b7b": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "32665a21-aaf3-4c53-83c6-25182aeb1b7b": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "teamId": {
+                                        "0c641647-e75f-4c55-ae49-aaa3fe9d9d2e": {
+                                            "variable": "$.9c5301f2-80c8-40c0-a6ae-aa9669e717a1.out.teamId",
+                                            "functions": []
+                                        }
+                                    },
+                                    "outputType": {}
+                                },
+                                "lambda": {
+                                    "teamId": "{{{0c641647-e75f-4c55-ae49-aaa3fe9d9d2e}}}",
+                                    "outputType": "array"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "229f77b8-0dc4-4a21-9ac7-daca5a77256f": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1312,
+            "y": 512,
+            "source": {
+                "in": {
+                    "9bf6d820-a75c-49c0-9a79-bd73a91acfb3": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "label": "Assert FindTimeEntries",
+            "config": {
+                "transform": {
+                    "in": {
+                        "9bf6d820-a75c-49c0-9a79-bd73a91acfb3": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "7f62f2a9-97fd-4cbd-a72e-33faddf1dba4": {
+                                            "variable": "$.9bf6d820-a75c-49c0-9a79-bd73a91acfb3.out.result",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{7f62f2a9-97fd-4cbd-a72e-33faddf1dba4}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "65386902-9802-4a0b-a275-88c9315e786b": {
+            "type": "appmixer.clickup.core.UpdateTimeEntry",
+            "x": 1312,
+            "y": 640,
+            "source": {
+                "in": {
+                    "9bf6d820-a75c-49c0-9a79-bd73a91acfb3": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "9bf6d820-a75c-49c0-9a79-bd73a91acfb3": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "teamId": {
+                                        "ea1813a1-2c93-4ff2-97a2-278bf248cc7e": {
+                                            "variable": "$.9c5301f2-80c8-40c0-a6ae-aa9669e717a1.out.teamId",
+                                            "functions": []
+                                        }
+                                    },
+                                    "timeEntryId": {
+                                        "ed1c556f-161d-4ae6-8e03-a52c87ea9d22": {
+                                            "variable": "$.c4774dbd-a288-4045-9d25-cdc8877d9065.out.data",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$.id"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "description": {
+                                        "1d6ee134-0560-4228-bd47-2ac0946b2ee4": {
+                                            "variable": "$.9c5301f2-80c8-40c0-a6ae-aa9669e717a1.out.updatedDescription",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "teamId": "{{{ea1813a1-2c93-4ff2-97a2-278bf248cc7e}}}",
+                                    "timeEntryId": "{{{ed1c556f-161d-4ae6-8e03-a52c87ea9d22}}}",
+                                    "description": "{{{1d6ee134-0560-4228-bd47-2ac0946b2ee4}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "8983a8d6-713e-47be-8fa2-5059efc02569": {
+            "type": "appmixer.clickup.core.GetTimeEntry",
+            "x": 1520,
+            "y": 768,
+            "source": {
+                "in": {
+                    "65386902-9802-4a0b-a275-88c9315e786b": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "label": "GetTimeEntry after update",
+            "config": {
+                "transform": {
+                    "in": {
+                        "65386902-9802-4a0b-a275-88c9315e786b": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "teamId": {
+                                        "0cef84ec-48a0-4343-8bbe-2772b7af1688": {
+                                            "variable": "$.9c5301f2-80c8-40c0-a6ae-aa9669e717a1.out.teamId",
+                                            "functions": []
+                                        }
+                                    },
+                                    "timeEntryId": {
+                                        "5018c06c-0319-4349-b698-73f02996ed50": {
+                                            "variable": "$.c4774dbd-a288-4045-9d25-cdc8877d9065.out.data",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$.id"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "teamId": "{{{0cef84ec-48a0-4343-8bbe-2772b7af1688}}}",
+                                    "timeEntryId": "{{{5018c06c-0319-4349-b698-73f02996ed50}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "e4508213-4e18-4c33-b392-545923a29895": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1728,
+            "y": 768,
+            "source": {
+                "in": {
+                    "8983a8d6-713e-47be-8fa2-5059efc02569": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "label": "Assert UpdateTimeEntry",
+            "config": {
+                "transform": {
+                    "in": {
+                        "8983a8d6-713e-47be-8fa2-5059efc02569": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "1fdc8a11-93e6-495b-a4b0-953f2b4ca496": {
+                                            "variable": "$.8983a8d6-713e-47be-8fa2-5059efc02569.out.data",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$.description"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        },
+                                        "6e499e23-5965-4f67-a272-9a5fc6a263a3": {
+                                            "variable": "$.9c5301f2-80c8-40c0-a6ae-aa9669e717a1.out.updatedDescription",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{1fdc8a11-93e6-495b-a4b0-953f2b4ca496}}}",
+                                                "assertion": "equal",
+                                                "expected": "{{{6e499e23-5965-4f67-a272-9a5fc6a263a3}}}"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "ba65acd6-2506-4343-b6e7-3c02f345bc80": {
+            "type": "appmixer.clickup.core.AddTimeEntryTag",
+            "x": 1728,
+            "y": 896,
+            "source": {
+                "in": {
+                    "8983a8d6-713e-47be-8fa2-5059efc02569": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "8983a8d6-713e-47be-8fa2-5059efc02569": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "teamId": {
+                                        "31d74bd4-ae8a-4313-b9b3-930956fa5499": {
+                                            "variable": "$.9c5301f2-80c8-40c0-a6ae-aa9669e717a1.out.teamId",
+                                            "functions": []
+                                        }
+                                    },
+                                    "timeEntryIds": {
+                                        "ef5fef39-1fb1-419e-a822-d2e47ec758ac": {
+                                            "variable": "$.c4774dbd-a288-4045-9d25-cdc8877d9065.out.data",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$.id"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "tagName": {
+                                        "d43dfecb-521a-4eb0-8f37-3ae1e8ef0f18": {
+                                            "variable": "$.9c5301f2-80c8-40c0-a6ae-aa9669e717a1.out.tagName",
+                                            "functions": []
+                                        }
+                                    },
+                                    "tagBg": {},
+                                    "tagFg": {}
+                                },
+                                "lambda": {
+                                    "teamId": "{{{31d74bd4-ae8a-4313-b9b3-930956fa5499}}}",
+                                    "timeEntryIds": "{{{ef5fef39-1fb1-419e-a822-d2e47ec758ac}}}",
+                                    "tagName": "{{{d43dfecb-521a-4eb0-8f37-3ae1e8ef0f18}}}",
+                                    "tagBg": "#000000",
+                                    "tagFg": "#ffffff"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "4e010b9b-04ac-4f11-ac08-6192f64fdd49": {
+            "type": "appmixer.clickup.core.FindTimeEntryTags",
+            "x": 1936,
+            "y": 1024,
+            "source": {
+                "in": {
+                    "ba65acd6-2506-4343-b6e7-3c02f345bc80": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "ba65acd6-2506-4343-b6e7-3c02f345bc80": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "teamId": {
+                                        "00c3bbc9-45a4-48c2-b208-74af723e0c73": {
+                                            "variable": "$.9c5301f2-80c8-40c0-a6ae-aa9669e717a1.out.teamId",
+                                            "functions": []
+                                        }
+                                    },
+                                    "outputType": {}
+                                },
+                                "lambda": {
+                                    "teamId": "{{{00c3bbc9-45a4-48c2-b208-74af723e0c73}}}",
+                                    "outputType": "array"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "ee3cb3d7-ac32-40fc-a0d1-b854b74a5138": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 2144,
+            "y": 1024,
+            "source": {
+                "in": {
+                    "4e010b9b-04ac-4f11-ac08-6192f64fdd49": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "label": "Assert FindTimeEntryTags",
+            "config": {
+                "transform": {
+                    "in": {
+                        "4e010b9b-04ac-4f11-ac08-6192f64fdd49": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "4eb304c9-22ab-4c19-9e19-a7293e131c4f": {
+                                            "variable": "$.4e010b9b-04ac-4f11-ac08-6192f64fdd49.out.result",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{4eb304c9-22ab-4c19-9e19-a7293e131c4f}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "0bd58f80-364a-4c40-afef-82b82b4c3d33": {
+            "type": "appmixer.clickup.core.RemoveTimeEntryTag",
+            "x": 2144,
+            "y": 1152,
+            "source": {
+                "in": {
+                    "4e010b9b-04ac-4f11-ac08-6192f64fdd49": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "4e010b9b-04ac-4f11-ac08-6192f64fdd49": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "teamId": {
+                                        "0db20607-11f9-46d0-9cf8-5ff59707b749": {
+                                            "variable": "$.9c5301f2-80c8-40c0-a6ae-aa9669e717a1.out.teamId",
+                                            "functions": []
+                                        }
+                                    },
+                                    "timeEntryIds": {
+                                        "3d880802-2341-4df4-ade4-bd76a6a5fab2": {
+                                            "variable": "$.c4774dbd-a288-4045-9d25-cdc8877d9065.out.data",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$.id"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "tagNames": {
+                                        "4e53860f-a15b-4bd3-baf1-20c25b690e43": {
+                                            "variable": "$.9c5301f2-80c8-40c0-a6ae-aa9669e717a1.out.tagName",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "teamId": "{{{0db20607-11f9-46d0-9cf8-5ff59707b749}}}",
+                                    "timeEntryIds": "{{{3d880802-2341-4df4-ade4-bd76a6a5fab2}}}",
+                                    "tagNames": "{{{4e53860f-a15b-4bd3-baf1-20c25b690e43}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "479ffb8c-6b5f-479a-a3f9-492bf166916f": {
+            "type": "appmixer.clickup.core.GetTimeEntry",
+            "x": 2352,
+            "y": 1280,
+            "source": {
+                "in": {
+                    "0bd58f80-364a-4c40-afef-82b82b4c3d33": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "label": "GetTimeEntry after tag removal",
+            "config": {
+                "transform": {
+                    "in": {
+                        "0bd58f80-364a-4c40-afef-82b82b4c3d33": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "teamId": {
+                                        "04415f2d-7318-4bab-8eb0-41a956a2aab8": {
+                                            "variable": "$.9c5301f2-80c8-40c0-a6ae-aa9669e717a1.out.teamId",
+                                            "functions": []
+                                        }
+                                    },
+                                    "timeEntryId": {
+                                        "5e99620e-1dfe-4be3-84d4-3a77e6f2f250": {
+                                            "variable": "$.c4774dbd-a288-4045-9d25-cdc8877d9065.out.data",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$.id"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "teamId": "{{{04415f2d-7318-4bab-8eb0-41a956a2aab8}}}",
+                                    "timeEntryId": "{{{5e99620e-1dfe-4be3-84d4-3a77e6f2f250}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "21e490d4-6ac7-465d-b10b-c739f27eb7e6": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 2560,
+            "y": 1280,
+            "source": {
+                "in": {
+                    "479ffb8c-6b5f-479a-a3f9-492bf166916f": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "label": "Assert RemoveTimeEntryTag",
+            "config": {
+                "transform": {
+                    "in": {
+                        "479ffb8c-6b5f-479a-a3f9-492bf166916f": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "cf319380-280f-4445-8086-3cd7edd93e57": {
+                                            "variable": "$.479ffb8c-6b5f-479a-a3f9-492bf166916f.out.data",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$.id"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        },
+                                        "b19e271a-a229-4142-87b5-dabbf31d1b27": {
+                                            "variable": "$.c4774dbd-a288-4045-9d25-cdc8877d9065.out.data",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$.id"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{cf319380-280f-4445-8086-3cd7edd93e57}}}",
+                                                "assertion": "equal",
+                                                "expected": "{{{b19e271a-a229-4142-87b5-dabbf31d1b27}}}"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "34453934-4586-4fa8-aed2-1530198c219f": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 2768,
+            "y": 1408,
+            "source": {
+                "in": {
+                    "c02ef2e4-22bc-480a-8152-998623f56f40": [
+                        "out"
+                    ],
+                    "cb3ffb1f-2be1-4363-b3cc-9c3b43685640": [
+                        "out"
+                    ],
+                    "2654a7f3-ed5d-41c9-a8e5-d10a84be0fbc": [
+                        "out"
+                    ],
+                    "229f77b8-0dc4-4a21-9ac7-daca5a77256f": [
+                        "out"
+                    ],
+                    "e4508213-4e18-4c33-b392-545923a29895": [
+                        "out"
+                    ],
+                    "ee3cb3d7-ac32-40fc-a0d1-b854b74a5138": [
+                        "out"
+                    ],
+                    "21e490d4-6ac7-465d-b10b-c739f27eb7e6": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "properties": {
+                    "timeout": 180
+                }
+            }
+        },
+        "10e3ca0c-115d-473c-bf41-90771a710c24": {
+            "type": "appmixer.clickup.core.DeleteTimeEntry",
+            "x": 2976,
+            "y": 1408,
+            "source": {
+                "in": {
+                    "34453934-4586-4fa8-aed2-1530198c219f": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "34453934-4586-4fa8-aed2-1530198c219f": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "teamId": {
+                                        "3bcb4743-eb99-4d15-a66d-57a76000a00e": {
+                                            "variable": "$.9c5301f2-80c8-40c0-a6ae-aa9669e717a1.out.teamId",
+                                            "functions": []
+                                        }
+                                    },
+                                    "timeEntryId": {
+                                        "b1e431ff-caf6-47d2-92b1-48a7224a8bfc": {
+                                            "variable": "$.c4774dbd-a288-4045-9d25-cdc8877d9065.out.data",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$.id"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "teamId": "{{{3bcb4743-eb99-4d15-a66d-57a76000a00e}}}",
+                                    "timeEntryId": "{{{b1e431ff-caf6-47d2-92b1-48a7224a8bfc}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "c6a5855d-03b7-444d-83c8-f7d91dd05017": {
+            "type": "appmixer.clickup.core.DeleteTask",
+            "x": 3184,
+            "y": 1408,
+            "source": {
+                "in": {
+                    "10e3ca0c-115d-473c-bf41-90771a710c24": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "10e3ca0c-115d-473c-bf41-90771a710c24": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "taskId": {
+                                        "4d93e664-9af0-485f-ac54-f0e9112f5c99": {
+                                            "variable": "$.cfd29f7b-415f-4a53-a758-9de060d38270.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "taskId": "{{{4d93e664-9af0-485f-ac54-f0e9112f5c99}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "9a2f17a8-3e26-4ba2-9f1c-281c81ae36af": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 3392,
+            "y": 1408,
+            "source": {
+                "in": {
+                    "c6a5855d-03b7-444d-83c8-f7d91dd05017": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.1",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "properties": {
+                    "successStoreId": "000000000000000000000000",
+                    "failedStoreId": "000000000000000000000000"
+                },
+                "transform": {
+                    "in": {
+                        "c6a5855d-03b7-444d-83c8-f7d91dd05017": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "221c7a1f-52ba-447a-882e-acfc04238a76": {
+                                            "variable": "$.34453934-4586-4fa8-aed2-1530198c219f.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E Clickup - time entries",
+                                    "result": "{{{221c7a1f-52ba-447a-882e-acfc04238a76}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

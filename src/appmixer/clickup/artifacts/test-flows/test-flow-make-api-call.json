@@ -1,0 +1,236 @@
+{
+    "name": "E2E Clickup - make api call",
+    "description": "Generic authorized ClickUp API call.",
+    "type": "automation",
+    "notes": {},
+    "flow": {
+        "9dbaab66-8513-4483-8bd6-f91c1ac52367": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 0,
+            "source": {},
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "b8143721-0c90-4f71-b2b5-41f47f2758a2": {
+            "type": "appmixer.utils.controls.SetVariable",
+            "x": 272,
+            "y": 0,
+            "source": {
+                "in": {
+                    "9dbaab66-8513-4483-8bd6-f91c1ac52367": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "9dbaab66-8513-4483-8bd6-f91c1ac52367": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "variables": {}
+                                },
+                                "lambda": {
+                                    "variables": {
+                                        "ADD": [
+                                            {
+                                                "type": "text",
+                                                "name": "url",
+                                                "text": "https://api.clickup.com/api/v2/team"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "324d6948-c7f8-44ab-abb4-fbae3f6ee8de": {
+            "type": "appmixer.clickup.core.MakeApiCall",
+            "x": 480,
+            "y": 128,
+            "source": {
+                "in": {
+                    "b8143721-0c90-4f71-b2b5-41f47f2758a2": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "b8143721-0c90-4f71-b2b5-41f47f2758a2": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "url": {
+                                        "d29b4566-b41d-4de9-a17e-8fa0f44a8943": {
+                                            "variable": "$.b8143721-0c90-4f71-b2b5-41f47f2758a2.out.url",
+                                            "functions": []
+                                        }
+                                    },
+                                    "method": {}
+                                },
+                                "lambda": {
+                                    "url": "{{{d29b4566-b41d-4de9-a17e-8fa0f44a8943}}}",
+                                    "method": "GET"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "5da54796-9b44-46b5-84ae-a342707df8d0": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 688,
+            "y": 128,
+            "source": {
+                "in": {
+                    "324d6948-c7f8-44ab-abb4-fbae3f6ee8de": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "label": "Assert MakeApiCall",
+            "config": {
+                "transform": {
+                    "in": {
+                        "324d6948-c7f8-44ab-abb4-fbae3f6ee8de": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "826838b8-c700-4238-b020-b2a119cf843d": {
+                                            "variable": "$.324d6948-c7f8-44ab-abb4-fbae3f6ee8de.out.status",
+                                            "functions": []
+                                        },
+                                        "b2bcfdcf-6cf0-4ea1-8e6d-2d4b0e79d994": {
+                                            "variable": "$.324d6948-c7f8-44ab-abb4-fbae3f6ee8de.out.body",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$.teams[0].id"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{826838b8-c700-4238-b020-b2a119cf843d}}}",
+                                                "assertion": "equal",
+                                                "expected": "200"
+                                            },
+                                            {
+                                                "field": "{{{b2bcfdcf-6cf0-4ea1-8e6d-2d4b0e79d994}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "92add2cb-d0d1-4a0f-930b-f22df3751fb0": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 896,
+            "y": 256,
+            "source": {
+                "in": {
+                    "5da54796-9b44-46b5-84ae-a342707df8d0": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "properties": {
+                    "timeout": 180
+                }
+            }
+        },
+        "703e1a71-2c9e-4f09-82e0-1c8d75f7a325": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1104,
+            "y": 256,
+            "source": {
+                "in": {
+                    "92add2cb-d0d1-4a0f-930b-f22df3751fb0": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.1",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "properties": {
+                    "successStoreId": "000000000000000000000000",
+                    "failedStoreId": "000000000000000000000000"
+                },
+                "transform": {
+                    "in": {
+                        "92add2cb-d0d1-4a0f-930b-f22df3751fb0": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "128adbe4-c8a1-4f8e-a2be-2bc5c11f5adc": {
+                                            "variable": "$.92add2cb-d0d1-4a0f-930b-f22df3751fb0.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E Clickup - make api call",
+                                    "result": "{{{128adbe4-c8a1-4f8e-a2be-2bc5c11f5adc}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

@@ -1,0 +1,542 @@
+{
+    "name": "E2E Clickup - folders",
+    "description": "Folder lifecycle: CreateFolder, GetFolder, UpdateFolder, DeleteFolder.",
+    "type": "automation",
+    "notes": {},
+    "flow": {
+        "b1afa9f8-d226-4db3-b1dc-7cb16b25ee29": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 0,
+            "source": {},
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "0a6cd9b3-acbf-4ce1-8dc0-120848585ada": {
+            "type": "appmixer.utils.controls.SetVariable",
+            "x": 272,
+            "y": 0,
+            "source": {
+                "in": {
+                    "b1afa9f8-d226-4db3-b1dc-7cb16b25ee29": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "b1afa9f8-d226-4db3-b1dc-7cb16b25ee29": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "variables": {}
+                                },
+                                "lambda": {
+                                    "variables": {
+                                        "ADD": [
+                                            {
+                                                "type": "text",
+                                                "name": "spaceId",
+                                                "text": "90151198160"
+                                            },
+                                            {
+                                                "type": "text",
+                                                "name": "folderName",
+                                                "text": "E2E Test Folder"
+                                            },
+                                            {
+                                                "type": "text",
+                                                "name": "updatedFolderName",
+                                                "text": "E2E Test Folder Updated"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "1fae3a45-6b6a-4924-b0a9-ee2ae347e8ed": {
+            "type": "appmixer.clickup.core.CreateFolder",
+            "x": 480,
+            "y": 128,
+            "source": {
+                "in": {
+                    "0a6cd9b3-acbf-4ce1-8dc0-120848585ada": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "0a6cd9b3-acbf-4ce1-8dc0-120848585ada": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "spaceId": {
+                                        "be828894-a93f-4bb1-ab7b-cea8c42dd9c6": {
+                                            "variable": "$.0a6cd9b3-acbf-4ce1-8dc0-120848585ada.out.spaceId",
+                                            "functions": []
+                                        }
+                                    },
+                                    "name": {
+                                        "00f2a2aa-15cf-4d8a-91f0-0e0c23d4e773": {
+                                            "variable": "$.0a6cd9b3-acbf-4ce1-8dc0-120848585ada.out.folderName",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "spaceId": "{{{be828894-a93f-4bb1-ab7b-cea8c42dd9c6}}}",
+                                    "name": "{{{00f2a2aa-15cf-4d8a-91f0-0e0c23d4e773}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "f21bb7ce-ee56-4ba4-b992-736cc3bea2e1": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 688,
+            "y": 128,
+            "source": {
+                "in": {
+                    "1fae3a45-6b6a-4924-b0a9-ee2ae347e8ed": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "label": "Assert CreateFolder",
+            "config": {
+                "transform": {
+                    "in": {
+                        "1fae3a45-6b6a-4924-b0a9-ee2ae347e8ed": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "48474897-c8ff-42d4-9c1f-55771762a848": {
+                                            "variable": "$.1fae3a45-6b6a-4924-b0a9-ee2ae347e8ed.out.id",
+                                            "functions": []
+                                        },
+                                        "01bc079b-6c0d-41ac-ae40-3ee654d8a4c3": {
+                                            "variable": "$.1fae3a45-6b6a-4924-b0a9-ee2ae347e8ed.out.name",
+                                            "functions": []
+                                        },
+                                        "16c0e3d5-fd33-44a7-81b3-6b37d7ab00e1": {
+                                            "variable": "$.0a6cd9b3-acbf-4ce1-8dc0-120848585ada.out.folderName",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{48474897-c8ff-42d4-9c1f-55771762a848}}}",
+                                                "assertion": "notEmpty"
+                                            },
+                                            {
+                                                "field": "{{{01bc079b-6c0d-41ac-ae40-3ee654d8a4c3}}}",
+                                                "assertion": "equal",
+                                                "expected": "{{{16c0e3d5-fd33-44a7-81b3-6b37d7ab00e1}}}"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "b8701a2d-b564-44d2-a3bc-13874cc9194a": {
+            "type": "appmixer.clickup.core.GetFolder",
+            "x": 688,
+            "y": 256,
+            "source": {
+                "in": {
+                    "1fae3a45-6b6a-4924-b0a9-ee2ae347e8ed": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "1fae3a45-6b6a-4924-b0a9-ee2ae347e8ed": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "folderId": {
+                                        "d14dc2a4-3cdc-4138-8cd8-6ae3a8ce87ae": {
+                                            "variable": "$.1fae3a45-6b6a-4924-b0a9-ee2ae347e8ed.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "folderId": "{{{d14dc2a4-3cdc-4138-8cd8-6ae3a8ce87ae}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "b37c315e-4b78-413a-8929-f1cbd70295af": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 896,
+            "y": 256,
+            "source": {
+                "in": {
+                    "b8701a2d-b564-44d2-a3bc-13874cc9194a": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "label": "Assert GetFolder",
+            "config": {
+                "transform": {
+                    "in": {
+                        "b8701a2d-b564-44d2-a3bc-13874cc9194a": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "5aaa8441-69ad-4eff-b19b-5c64f178517e": {
+                                            "variable": "$.b8701a2d-b564-44d2-a3bc-13874cc9194a.out.name",
+                                            "functions": []
+                                        },
+                                        "cc72919b-153e-4be4-890a-8aa7893f20a8": {
+                                            "variable": "$.0a6cd9b3-acbf-4ce1-8dc0-120848585ada.out.folderName",
+                                            "functions": []
+                                        },
+                                        "2244a171-281e-4354-b2f9-d1ddc4ecc99e": {
+                                            "variable": "$.b8701a2d-b564-44d2-a3bc-13874cc9194a.out.space",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$.id"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        },
+                                        "519511c1-d203-4cff-b121-2e10b6063676": {
+                                            "variable": "$.0a6cd9b3-acbf-4ce1-8dc0-120848585ada.out.spaceId",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{5aaa8441-69ad-4eff-b19b-5c64f178517e}}}",
+                                                "assertion": "equal",
+                                                "expected": "{{{cc72919b-153e-4be4-890a-8aa7893f20a8}}}"
+                                            },
+                                            {
+                                                "field": "{{{2244a171-281e-4354-b2f9-d1ddc4ecc99e}}}",
+                                                "assertion": "equal",
+                                                "expected": "{{{519511c1-d203-4cff-b121-2e10b6063676}}}"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "ce91344c-fd04-431b-ba90-37b27a52e563": {
+            "type": "appmixer.clickup.core.UpdateFolder",
+            "x": 896,
+            "y": 384,
+            "source": {
+                "in": {
+                    "b8701a2d-b564-44d2-a3bc-13874cc9194a": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "b8701a2d-b564-44d2-a3bc-13874cc9194a": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "folderId": {
+                                        "1c422e40-14cf-4c98-b4b6-43272b836f78": {
+                                            "variable": "$.1fae3a45-6b6a-4924-b0a9-ee2ae347e8ed.out.id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "name": {
+                                        "296313c6-a9f1-4646-8a2c-82c7c80cd96d": {
+                                            "variable": "$.0a6cd9b3-acbf-4ce1-8dc0-120848585ada.out.updatedFolderName",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "folderId": "{{{1c422e40-14cf-4c98-b4b6-43272b836f78}}}",
+                                    "name": "{{{296313c6-a9f1-4646-8a2c-82c7c80cd96d}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "1313bff7-8a88-4d26-841c-6b2ccf64943e": {
+            "type": "appmixer.clickup.core.GetFolder",
+            "x": 1104,
+            "y": 512,
+            "source": {
+                "in": {
+                    "ce91344c-fd04-431b-ba90-37b27a52e563": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "label": "GetFolder after update",
+            "config": {
+                "transform": {
+                    "in": {
+                        "ce91344c-fd04-431b-ba90-37b27a52e563": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "folderId": {
+                                        "179665ad-abf9-4454-8a07-53ce7780bcf3": {
+                                            "variable": "$.1fae3a45-6b6a-4924-b0a9-ee2ae347e8ed.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "folderId": "{{{179665ad-abf9-4454-8a07-53ce7780bcf3}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "89c3395e-a59a-4df8-b17c-a70df4c8af76": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1312,
+            "y": 512,
+            "source": {
+                "in": {
+                    "1313bff7-8a88-4d26-841c-6b2ccf64943e": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "label": "Assert UpdateFolder",
+            "config": {
+                "transform": {
+                    "in": {
+                        "1313bff7-8a88-4d26-841c-6b2ccf64943e": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "72cc92dd-f99c-42ff-b65a-973f1a5eb0a4": {
+                                            "variable": "$.1313bff7-8a88-4d26-841c-6b2ccf64943e.out.name",
+                                            "functions": []
+                                        },
+                                        "0ee59af0-9348-4fd4-9298-7a9a965f41a7": {
+                                            "variable": "$.0a6cd9b3-acbf-4ce1-8dc0-120848585ada.out.updatedFolderName",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{72cc92dd-f99c-42ff-b65a-973f1a5eb0a4}}}",
+                                                "assertion": "equal",
+                                                "expected": "{{{0ee59af0-9348-4fd4-9298-7a9a965f41a7}}}"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "6304d1ed-3082-499c-95c3-29522d77caa9": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 1520,
+            "y": 640,
+            "source": {
+                "in": {
+                    "f21bb7ce-ee56-4ba4-b992-736cc3bea2e1": [
+                        "out"
+                    ],
+                    "b37c315e-4b78-413a-8929-f1cbd70295af": [
+                        "out"
+                    ],
+                    "89c3395e-a59a-4df8-b17c-a70df4c8af76": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "properties": {
+                    "timeout": 180
+                }
+            }
+        },
+        "f1fe16e8-58c0-47ec-96f8-cf3baab2fd5c": {
+            "type": "appmixer.clickup.core.DeleteFolder",
+            "x": 1728,
+            "y": 640,
+            "source": {
+                "in": {
+                    "6304d1ed-3082-499c-95c3-29522d77caa9": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "6304d1ed-3082-499c-95c3-29522d77caa9": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "folderId": {
+                                        "afc1b08a-3b6f-4d2d-b75e-ce7e6f5a8a80": {
+                                            "variable": "$.1fae3a45-6b6a-4924-b0a9-ee2ae347e8ed.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "folderId": "{{{afc1b08a-3b6f-4d2d-b75e-ce7e6f5a8a80}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "4074d223-e743-4e89-aa8e-5a4125205e2e": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1936,
+            "y": 640,
+            "source": {
+                "in": {
+                    "f1fe16e8-58c0-47ec-96f8-cf3baab2fd5c": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.1",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "properties": {
+                    "successStoreId": "000000000000000000000000",
+                    "failedStoreId": "000000000000000000000000"
+                },
+                "transform": {
+                    "in": {
+                        "f1fe16e8-58c0-47ec-96f8-cf3baab2fd5c": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "e9155742-d9c3-489d-aa6f-a2cc8cb5b2e5": {
+                                            "variable": "$.6304d1ed-3082-499c-95c3-29522d77caa9.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E Clickup - folders",
+                                    "result": "{{{e9155742-d9c3-489d-aa6f-a2cc8cb5b2e5}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

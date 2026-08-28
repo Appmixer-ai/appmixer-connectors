@@ -1,47 +1,40 @@
 {
-    "name": "E2E Clickup - task-details",
-    "description": "End-to-end test for Clickup connector - tests task detail operations: CreateTask, GetTask, SetTaskCustomField, AddTaskTag, RemoveTaskTag",
+    "name": "E2E Clickup - task details",
+    "description": "Task read/update plus task tags: CreateTask, GetTask, UpdateTask, AddTaskTag, RemoveTaskTag.",
     "type": "automation",
     "notes": {},
     "flow": {
-        "on-start": {
+        "ae79062f-4132-468e-8709-fe54c653cb19": {
             "type": "appmixer.utils.controls.OnStart",
             "x": 64,
-            "y": 16,
+            "y": 0,
             "source": {},
             "version": "1.0.0",
-            "config": {}
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
         },
-        "before-all": {
-            "type": "appmixer.utils.test.BeforeAll",
-            "x": 256,
-            "y": 16,
+        "c4ba14fa-e7f1-427c-9de9-5b60ce99b2c3": {
+            "type": "appmixer.utils.controls.SetVariable",
+            "x": 272,
+            "y": 0,
             "source": {
                 "in": {
-                    "on-start": [
+                    "ae79062f-4132-468e-8709-fe54c653cb19": [
                         "out"
                     ]
                 }
             },
             "version": "1.0.0",
-            "config": {}
-        },
-        "set-variables": {
-            "type": "appmixer.utils.controls.SetVariable",
-            "x": 448,
-            "y": 16,
-            "version": "1.0.0",
-            "source": {
-                "in": {
-                    "before-all": [
-                        "out"
-                    ]
-                }
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
             },
             "config": {
                 "transform": {
                     "in": {
-                        "before-all": {
+                        "ae79062f-4132-468e-8709-fe54c653cb19": {
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
@@ -53,7 +46,12 @@
                                             {
                                                 "type": "text",
                                                 "name": "listId",
-                                                "text": "YOUR_CLICKUP_LIST_ID"
+                                                "text": "901506393256"
+                                            },
+                                            {
+                                                "type": "text",
+                                                "name": "spaceId",
+                                                "text": "90151198160"
                                             },
                                             {
                                                 "type": "text",
@@ -62,18 +60,13 @@
                                             },
                                             {
                                                 "type": "text",
-                                                "name": "customFieldId",
-                                                "text": "YOUR_CLICKUP_CUSTOM_FIELD_ID"
-                                            },
-                                            {
-                                                "type": "text",
-                                                "name": "customFieldValue",
-                                                "text": "E2E Custom Field Value"
+                                                "name": "updatedTaskName",
+                                                "text": "E2E Test Task Updated"
                                             },
                                             {
                                                 "type": "text",
                                                 "name": "tagName",
-                                                "text": "e2e-test-tag"
+                                                "text": "e2e test tag"
                                             }
                                         ]
                                     }
@@ -84,41 +77,49 @@
                 }
             }
         },
-        "create-task": {
-            "type": "appmixer.clickup.core.CreateTask",
-            "x": 640,
-            "y": 16,
-            "version": "1.0.0",
+        "3d5b3a42-d6e7-4290-a1cf-f1c826986bfa": {
+            "type": "appmixer.clickup.core.CreateSpaceTag",
+            "x": 480,
+            "y": 128,
             "source": {
                 "in": {
-                    "set-variables": [
+                    "c4ba14fa-e7f1-427c-9de9-5b60ce99b2c3": [
                         "out"
                     ]
                 }
             },
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
             "config": {
                 "transform": {
                     "in": {
-                        "set-variables": {
+                        "c4ba14fa-e7f1-427c-9de9-5b60ce99b2c3": {
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
-                                    "listId": {
-                                        "var-list-id": {
-                                            "variable": "$.set-variables.out.listId",
+                                    "spaceId": {
+                                        "c15e49a9-a92f-4854-977d-e7b6e05d4f2d": {
+                                            "variable": "$.c4ba14fa-e7f1-427c-9de9-5b60ce99b2c3.out.spaceId",
                                             "functions": []
                                         }
                                     },
                                     "name": {
-                                        "var-task-name": {
-                                            "variable": "$.set-variables.out.taskName",
+                                        "cda29856-720c-49d7-9969-6f0c30f4345b": {
+                                            "variable": "$.c4ba14fa-e7f1-427c-9de9-5b60ce99b2c3.out.tagName",
                                             "functions": []
                                         }
-                                    }
+                                    },
+                                    "foregroundColor": {},
+                                    "backgroundColor": {}
                                 },
                                 "lambda": {
-                                    "listId": "{{{var-list-id}}}",
-                                    "name": "{{{var-task-name}}}"
+                                    "spaceId": "{{{c15e49a9-a92f-4854-977d-e7b6e05d4f2d}}}",
+                                    "name": "{{{cda29856-720c-49d7-9969-6f0c30f4345b}}}",
+                                    "foregroundColor": "#ffffff",
+                                    "backgroundColor": "#e16b16"
                                 }
                             }
                         }
@@ -126,29 +127,81 @@
                 }
             }
         },
-        "assert-create": {
-            "type": "appmixer.utils.test.Assert",
-            "x": 1600,
-            "y": 16,
+        "65ce286a-5fba-4490-976c-8784b8b80226": {
+            "type": "appmixer.clickup.core.CreateTask",
+            "x": 688,
+            "y": 256,
+            "source": {
+                "in": {
+                    "3d5b3a42-d6e7-4290-a1cf-f1c826986bfa": [
+                        "out"
+                    ]
+                }
+            },
             "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "3d5b3a42-d6e7-4290-a1cf-f1c826986bfa": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "listId": {
+                                        "5274ff19-eb6d-4f0a-a960-7e3824a6d952": {
+                                            "variable": "$.c4ba14fa-e7f1-427c-9de9-5b60ce99b2c3.out.listId",
+                                            "functions": []
+                                        }
+                                    },
+                                    "name": {
+                                        "9757f081-f959-44e4-945f-66b0a6c72de9": {
+                                            "variable": "$.c4ba14fa-e7f1-427c-9de9-5b60ce99b2c3.out.taskName",
+                                            "functions": []
+                                        }
+                                    },
+                                    "description": {}
+                                },
+                                "lambda": {
+                                    "listId": "{{{5274ff19-eb6d-4f0a-a960-7e3824a6d952}}}",
+                                    "name": "{{{9757f081-f959-44e4-945f-66b0a6c72de9}}}",
+                                    "description": "Created by the Appmixer E2E suite."
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "45fb88a7-3ea4-484e-a846-d5735808549f": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 896,
+            "y": 256,
+            "source": {
+                "in": {
+                    "65ce286a-5fba-4490-976c-8784b8b80226": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
             "label": "Assert CreateTask",
-            "source": {
-                "in": {
-                    "create-task": [
-                        "out"
-                    ]
-                }
-            },
             "config": {
                 "transform": {
                     "in": {
-                        "create-task": {
+                        "65ce286a-5fba-4490-976c-8784b8b80226": {
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
                                     "expression": {
-                                        "task-id-check": {
-                                            "variable": "$.create-task.out.id",
+                                        "7f8655ed-f995-4dd8-bf97-7396b8d1d551": {
+                                            "variable": "$.65ce286a-5fba-4490-976c-8784b8b80226.out.id",
                                             "functions": []
                                         }
                                     }
@@ -157,7 +210,7 @@
                                     "expression": {
                                         "AND": [
                                             {
-                                                "field": "{{{task-id-check}}}",
+                                                "field": "{{{7f8655ed-f995-4dd8-bf97-7396b8d1d551}}}",
                                                 "assertion": "notEmpty"
                                             }
                                         ]
@@ -169,34 +222,38 @@
                 }
             }
         },
-        "get-task": {
+        "6267d9a6-e27d-4047-ae33-374b26fac675": {
             "type": "appmixer.clickup.core.GetTask",
-            "x": 832,
-            "y": 144,
-            "version": "1.0.0",
+            "x": 896,
+            "y": 384,
             "source": {
                 "in": {
-                    "create-task": [
+                    "65ce286a-5fba-4490-976c-8784b8b80226": [
                         "out"
                     ]
                 }
             },
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
             "config": {
                 "transform": {
                     "in": {
-                        "create-task": {
+                        "65ce286a-5fba-4490-976c-8784b8b80226": {
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
                                     "taskId": {
-                                        "var-task-id": {
-                                            "variable": "$.create-task.out.id",
+                                        "173a2a46-dec0-4684-b93a-9f126b3a548a": {
+                                            "variable": "$.65ce286a-5fba-4490-976c-8784b8b80226.out.id",
                                             "functions": []
                                         }
                                     }
                                 },
                                 "lambda": {
-                                    "taskId": "{{{var-task-id}}}"
+                                    "taskId": "{{{173a2a46-dec0-4684-b93a-9f126b3a548a}}}"
                                 }
                             }
                         }
@@ -204,33 +261,54 @@
                 }
             }
         },
-        "assert-get": {
+        "6c9ef8d5-0955-441e-892d-76f38209b6ee": {
             "type": "appmixer.utils.test.Assert",
-            "x": 1600,
-            "y": 144,
+            "x": 1104,
+            "y": 384,
+            "source": {
+                "in": {
+                    "6267d9a6-e27d-4047-ae33-374b26fac675": [
+                        "out"
+                    ]
+                }
+            },
             "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
             "label": "Assert GetTask",
-            "source": {
-                "in": {
-                    "get-task": [
-                        "out"
-                    ]
-                }
-            },
             "config": {
                 "transform": {
                     "in": {
-                        "get-task": {
+                        "6267d9a6-e27d-4047-ae33-374b26fac675": {
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
                                     "expression": {
-                                        "task-name-check": {
-                                            "variable": "$.get-task.out.name",
+                                        "2e62c31a-dc71-4390-846a-674da1acdb7e": {
+                                            "variable": "$.6267d9a6-e27d-4047-ae33-374b26fac675.out.name",
                                             "functions": []
                                         },
-                                        "expected-task-name": {
-                                            "variable": "$.set-variables.out.taskName",
+                                        "e9049bd7-06b2-4f43-a50e-09baf9a1e486": {
+                                            "variable": "$.c4ba14fa-e7f1-427c-9de9-5b60ce99b2c3.out.taskName",
+                                            "functions": []
+                                        },
+                                        "2867320a-634d-48be-bd60-c3f3907898ae": {
+                                            "variable": "$.6267d9a6-e27d-4047-ae33-374b26fac675.out.list",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$.id"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        },
+                                        "8e639ac0-00de-4ce8-b1fd-97cbae86712c": {
+                                            "variable": "$.c4ba14fa-e7f1-427c-9de9-5b60ce99b2c3.out.listId",
                                             "functions": []
                                         }
                                     }
@@ -239,9 +317,14 @@
                                     "expression": {
                                         "AND": [
                                             {
-                                                "field": "{{{task-name-check}}}",
+                                                "field": "{{{2e62c31a-dc71-4390-846a-674da1acdb7e}}}",
                                                 "assertion": "equal",
-                                                "expected": "{{{expected-task-name}}}"
+                                                "expected": "{{{e9049bd7-06b2-4f43-a50e-09baf9a1e486}}}"
+                                            },
+                                            {
+                                                "field": "{{{2867320a-634d-48be-bd60-c3f3907898ae}}}",
+                                                "assertion": "equal",
+                                                "expected": "{{{8e639ac0-00de-4ce8-b1fd-97cbae86712c}}}"
                                             }
                                         ]
                                     }
@@ -252,48 +335,45 @@
                 }
             }
         },
-        "set-custom-field": {
-            "type": "appmixer.clickup.core.SetTaskCustomField",
-            "x": 1024,
-            "y": 272,
-            "version": "1.0.0",
+        "1fdfdf4e-1ada-4985-82e8-de1e10020c27": {
+            "type": "appmixer.clickup.core.UpdateTask",
+            "x": 1104,
+            "y": 512,
             "source": {
                 "in": {
-                    "get-task": [
+                    "6267d9a6-e27d-4047-ae33-374b26fac675": [
                         "out"
                     ]
                 }
             },
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
             "config": {
                 "transform": {
                     "in": {
-                        "get-task": {
+                        "6267d9a6-e27d-4047-ae33-374b26fac675": {
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
                                     "taskId": {
-                                        "var-task-id": {
-                                            "variable": "$.get-task.out.id",
+                                        "5f18383c-ff02-4130-96f5-564367ebcaf1": {
+                                            "variable": "$.65ce286a-5fba-4490-976c-8784b8b80226.out.id",
                                             "functions": []
                                         }
                                     },
-                                    "fieldId": {
-                                        "var-field-id": {
-                                            "variable": "$.set-variables.out.customFieldId",
-                                            "functions": []
-                                        }
-                                    },
-                                    "value": {
-                                        "var-field-value": {
-                                            "variable": "$.set-variables.out.customFieldValue",
+                                    "name": {
+                                        "5ab4e469-93c2-43f5-88fe-a5d02aaebfc0": {
+                                            "variable": "$.c4ba14fa-e7f1-427c-9de9-5b60ce99b2c3.out.updatedTaskName",
                                             "functions": []
                                         }
                                     }
                                 },
                                 "lambda": {
-                                    "taskId": "{{{var-task-id}}}",
-                                    "fieldId": "{{{var-field-id}}}",
-                                    "value": "{{{var-field-value}}}"
+                                    "taskId": "{{{5f18383c-ff02-4130-96f5-564367ebcaf1}}}",
+                                    "name": "{{{5ab4e469-93c2-43f5-88fe-a5d02aaebfc0}}}"
                                 }
                             }
                         }
@@ -301,29 +381,37 @@
                 }
             }
         },
-        "assert-set-custom-field": {
+        "6085d299-aa26-4c85-957b-0073ce8f6030": {
             "type": "appmixer.utils.test.Assert",
-            "x": 1600,
-            "y": 272,
-            "version": "1.0.0",
-            "label": "Assert SetTaskCustomField",
+            "x": 1312,
+            "y": 512,
             "source": {
                 "in": {
-                    "set-custom-field": [
+                    "1fdfdf4e-1ada-4985-82e8-de1e10020c27": [
                         "out"
                     ]
                 }
             },
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "label": "Assert UpdateTask",
             "config": {
                 "transform": {
                     "in": {
-                        "set-custom-field": {
+                        "1fdfdf4e-1ada-4985-82e8-de1e10020c27": {
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
                                     "expression": {
-                                        "custom-field-task-id-check": {
-                                            "variable": "$.set-custom-field.out.taskId",
+                                        "cafb4c9f-2666-4766-9534-5f898deef786": {
+                                            "variable": "$.1fdfdf4e-1ada-4985-82e8-de1e10020c27.out.name",
+                                            "functions": []
+                                        },
+                                        "61378fba-7c42-43d8-b75a-c9fa66f5baf8": {
+                                            "variable": "$.c4ba14fa-e7f1-427c-9de9-5b60ce99b2c3.out.updatedTaskName",
                                             "functions": []
                                         }
                                     }
@@ -332,8 +420,9 @@
                                     "expression": {
                                         "AND": [
                                             {
-                                                "field": "{{{custom-field-task-id-check}}}",
-                                                "assertion": "notEmpty"
+                                                "field": "{{{cafb4c9f-2666-4766-9534-5f898deef786}}}",
+                                                "assertion": "equal",
+                                                "expected": "{{{61378fba-7c42-43d8-b75a-c9fa66f5baf8}}}"
                                             }
                                         ]
                                     }
@@ -344,41 +433,45 @@
                 }
             }
         },
-        "add-tag": {
+        "04fa2b05-cdff-4605-92ce-726234d55fa5": {
             "type": "appmixer.clickup.core.AddTaskTag",
-            "x": 1216,
-            "y": 400,
-            "version": "1.0.0",
+            "x": 1312,
+            "y": 640,
             "source": {
                 "in": {
-                    "set-custom-field": [
+                    "1fdfdf4e-1ada-4985-82e8-de1e10020c27": [
                         "out"
                     ]
                 }
             },
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
             "config": {
                 "transform": {
                     "in": {
-                        "set-custom-field": {
+                        "1fdfdf4e-1ada-4985-82e8-de1e10020c27": {
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
                                     "taskId": {
-                                        "var-task-id": {
-                                            "variable": "$.set-custom-field.out.taskId",
+                                        "efc9630b-f072-4b6b-8ae1-43067cf32325": {
+                                            "variable": "$.65ce286a-5fba-4490-976c-8784b8b80226.out.id",
                                             "functions": []
                                         }
                                     },
                                     "tagName": {
-                                        "var-tag-name": {
-                                            "variable": "$.set-variables.out.tagName",
+                                        "a7df6803-f898-4cdb-8938-ea5581ce6172": {
+                                            "variable": "$.c4ba14fa-e7f1-427c-9de9-5b60ce99b2c3.out.tagName",
                                             "functions": []
                                         }
                                     }
                                 },
                                 "lambda": {
-                                    "taskId": "{{{var-task-id}}}",
-                                    "tagName": "{{{var-tag-name}}}"
+                                    "taskId": "{{{efc9630b-f072-4b6b-8ae1-43067cf32325}}}",
+                                    "tagName": "{{{a7df6803-f898-4cdb-8938-ea5581ce6172}}}"
                                 }
                             }
                         }
@@ -386,33 +479,86 @@
                 }
             }
         },
-        "assert-add-tag": {
-            "type": "appmixer.utils.test.Assert",
-            "x": 1600,
-            "y": 400,
+        "acaf13de-4b27-4caa-be51-ebd2ce8f9d9a": {
+            "type": "appmixer.clickup.core.GetTask",
+            "x": 1520,
+            "y": 768,
+            "source": {
+                "in": {
+                    "04fa2b05-cdff-4605-92ce-726234d55fa5": [
+                        "out"
+                    ]
+                }
+            },
             "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "label": "GetTask after AddTaskTag",
+            "config": {
+                "transform": {
+                    "in": {
+                        "04fa2b05-cdff-4605-92ce-726234d55fa5": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "taskId": {
+                                        "e03e69ce-3693-4194-ab21-7e82aee00a6b": {
+                                            "variable": "$.65ce286a-5fba-4490-976c-8784b8b80226.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "taskId": "{{{e03e69ce-3693-4194-ab21-7e82aee00a6b}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "8d46b57f-3e1f-4611-85b1-9b68087b82f1": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1728,
+            "y": 768,
+            "source": {
+                "in": {
+                    "acaf13de-4b27-4caa-be51-ebd2ce8f9d9a": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
             "label": "Assert AddTaskTag",
-            "source": {
-                "in": {
-                    "add-tag": [
-                        "out"
-                    ]
-                }
-            },
             "config": {
                 "transform": {
                     "in": {
-                        "add-tag": {
+                        "acaf13de-4b27-4caa-be51-ebd2ce8f9d9a": {
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
                                     "expression": {
-                                        "added-tag-name-check": {
-                                            "variable": "$.add-tag.out.tagName",
-                                            "functions": []
+                                        "5bf47277-d204-4aea-a735-564182bacab8": {
+                                            "variable": "$.acaf13de-4b27-4caa-be51-ebd2ce8f9d9a.out.tags",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$[0].name"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
                                         },
-                                        "expected-tag-name": {
-                                            "variable": "$.set-variables.out.tagName",
+                                        "5091d06c-3473-4c59-9f18-f6399043fdc3": {
+                                            "variable": "$.c4ba14fa-e7f1-427c-9de9-5b60ce99b2c3.out.tagName",
                                             "functions": []
                                         }
                                     }
@@ -421,9 +567,9 @@
                                     "expression": {
                                         "AND": [
                                             {
-                                                "field": "{{{added-tag-name-check}}}",
+                                                "field": "{{{5bf47277-d204-4aea-a735-564182bacab8}}}",
                                                 "assertion": "equal",
-                                                "expected": "{{{expected-tag-name}}}"
+                                                "expected": "{{{5091d06c-3473-4c59-9f18-f6399043fdc3}}}"
                                             }
                                         ]
                                     }
@@ -434,41 +580,45 @@
                 }
             }
         },
-        "remove-tag": {
+        "8f336286-ab38-4ab9-a2a3-d072efb373b0": {
             "type": "appmixer.clickup.core.RemoveTaskTag",
-            "x": 1408,
-            "y": 528,
-            "version": "1.0.0",
+            "x": 1728,
+            "y": 896,
             "source": {
                 "in": {
-                    "add-tag": [
+                    "acaf13de-4b27-4caa-be51-ebd2ce8f9d9a": [
                         "out"
                     ]
                 }
             },
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
             "config": {
                 "transform": {
                     "in": {
-                        "add-tag": {
+                        "acaf13de-4b27-4caa-be51-ebd2ce8f9d9a": {
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
                                     "taskId": {
-                                        "var-task-id": {
-                                            "variable": "$.add-tag.out.taskId",
+                                        "eccf00e2-07de-4c84-9b55-4fcf47f11a05": {
+                                            "variable": "$.65ce286a-5fba-4490-976c-8784b8b80226.out.id",
                                             "functions": []
                                         }
                                     },
                                     "tagName": {
-                                        "var-tag-name": {
-                                            "variable": "$.add-tag.out.tagName",
+                                        "bba719c1-ab92-4cf1-83a2-d8a9f818291c": {
+                                            "variable": "$.c4ba14fa-e7f1-427c-9de9-5b60ce99b2c3.out.tagName",
                                             "functions": []
                                         }
                                     }
                                 },
                                 "lambda": {
-                                    "taskId": "{{{var-task-id}}}",
-                                    "tagName": "{{{var-tag-name}}}"
+                                    "taskId": "{{{eccf00e2-07de-4c84-9b55-4fcf47f11a05}}}",
+                                    "tagName": "{{{bba719c1-ab92-4cf1-83a2-d8a9f818291c}}}"
                                 }
                             }
                         }
@@ -476,33 +626,77 @@
                 }
             }
         },
-        "assert-remove-tag": {
-            "type": "appmixer.utils.test.Assert",
-            "x": 1600,
-            "y": 528,
-            "version": "1.0.0",
-            "label": "Assert RemoveTaskTag",
+        "57f4cf3a-add1-42ec-9ba0-fee2c5a9a38d": {
+            "type": "appmixer.clickup.core.GetTask",
+            "x": 1936,
+            "y": 1024,
             "source": {
                 "in": {
-                    "remove-tag": [
+                    "8f336286-ab38-4ab9-a2a3-d072efb373b0": [
                         "out"
                     ]
                 }
             },
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "label": "GetTask after RemoveTaskTag",
             "config": {
                 "transform": {
                     "in": {
-                        "remove-tag": {
+                        "8f336286-ab38-4ab9-a2a3-d072efb373b0": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "taskId": {
+                                        "cccd8f50-fc02-4a67-8dc5-4e942316dc48": {
+                                            "variable": "$.65ce286a-5fba-4490-976c-8784b8b80226.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "taskId": "{{{cccd8f50-fc02-4a67-8dc5-4e942316dc48}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "d5a76793-bdc9-48f7-bcee-9db88c1d4652": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 2144,
+            "y": 1024,
+            "source": {
+                "in": {
+                    "57f4cf3a-add1-42ec-9ba0-fee2c5a9a38d": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "label": "Assert RemoveTaskTag",
+            "config": {
+                "transform": {
+                    "in": {
+                        "57f4cf3a-add1-42ec-9ba0-fee2c5a9a38d": {
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
                                     "expression": {
-                                        "removed-tag-name-check": {
-                                            "variable": "$.remove-tag.out.tagName",
+                                        "3290a163-e450-47c3-bf8e-3e07ada62eae": {
+                                            "variable": "$.57f4cf3a-add1-42ec-9ba0-fee2c5a9a38d.out.id",
                                             "functions": []
                                         },
-                                        "expected-removed-tag-name": {
-                                            "variable": "$.set-variables.out.tagName",
+                                        "5f08267c-cbb4-4f8c-b175-f5db9bc2b590": {
+                                            "variable": "$.65ce286a-5fba-4490-976c-8784b8b80226.out.id",
                                             "functions": []
                                         }
                                     }
@@ -511,9 +705,9 @@
                                     "expression": {
                                         "AND": [
                                             {
-                                                "field": "{{{removed-tag-name-check}}}",
+                                                "field": "{{{3290a163-e450-47c3-bf8e-3e07ada62eae}}}",
                                                 "assertion": "equal",
-                                                "expected": "{{{expected-removed-tag-name}}}"
+                                                "expected": "{{{5f08267c-cbb4-4f8c-b175-f5db9bc2b590}}}"
                                             }
                                         ]
                                     }
@@ -524,64 +718,72 @@
                 }
             }
         },
-        "after-all": {
+        "6fa2466e-07ef-49ab-9a21-b94d42967b86": {
             "type": "appmixer.utils.test.AfterAll",
-            "x": 1792,
-            "y": 272,
-            "version": "1.0.0",
+            "x": 2352,
+            "y": 1152,
             "source": {
                 "in": {
-                    "assert-create": [
+                    "45fb88a7-3ea4-484e-a846-d5735808549f": [
                         "out"
                     ],
-                    "assert-get": [
+                    "6c9ef8d5-0955-441e-892d-76f38209b6ee": [
                         "out"
                     ],
-                    "assert-set-custom-field": [
+                    "6085d299-aa26-4c85-957b-0073ce8f6030": [
                         "out"
                     ],
-                    "assert-add-tag": [
+                    "8d46b57f-3e1f-4611-85b1-9b68087b82f1": [
                         "out"
                     ],
-                    "assert-remove-tag": [
+                    "d5a76793-bdc9-48f7-bcee-9db88c1d4652": [
                         "out"
                     ]
                 }
             },
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
             "config": {
                 "properties": {
-                    "timeout": 30
+                    "timeout": 180
                 }
             }
         },
-        "delete-task": {
+        "d3136da9-e7ff-499b-9027-4b7fdca384ac": {
             "type": "appmixer.clickup.core.DeleteTask",
-            "x": 1984,
-            "y": 272,
-            "version": "1.0.0",
+            "x": 2560,
+            "y": 1152,
             "source": {
                 "in": {
-                    "after-all": [
+                    "6fa2466e-07ef-49ab-9a21-b94d42967b86": [
                         "out"
                     ]
                 }
+            },
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
             },
             "config": {
                 "transform": {
                     "in": {
-                        "after-all": {
+                        "6fa2466e-07ef-49ab-9a21-b94d42967b86": {
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
                                     "taskId": {
-                                        "var-task-id": {
-                                            "variable": "$.create-task.out.id",
+                                        "ebefc067-5baf-4dee-816d-1f1817ef74c9": {
+                                            "variable": "$.65ce286a-5fba-4490-976c-8784b8b80226.out.id",
                                             "functions": []
                                         }
                                     }
                                 },
                                 "lambda": {
-                                    "taskId": "{{{var-task-id}}}"
+                                    "taskId": "{{{ebefc067-5baf-4dee-816d-1f1817ef74c9}}}"
                                 }
                             }
                         }
@@ -589,42 +791,92 @@
                 }
             }
         },
-        "process-results": {
-            "type": "appmixer.utils.test.ProcessE2EResults",
-            "x": 2176,
-            "y": 272,
-            "version": "1.0.1",
+        "9ddb5913-a75f-4b88-8191-4db62f7e5540": {
+            "type": "appmixer.clickup.core.DeleteSpaceTag",
+            "x": 2768,
+            "y": 1152,
             "source": {
                 "in": {
-                    "delete-task": [
+                    "d3136da9-e7ff-499b-9027-4b7fdca384ac": [
                         "out"
                     ]
                 }
             },
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "d3136da9-e7ff-499b-9027-4b7fdca384ac": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "spaceId": {
+                                        "48beb800-4634-4d8f-99b5-72d547ea927d": {
+                                            "variable": "$.c4ba14fa-e7f1-427c-9de9-5b60ce99b2c3.out.spaceId",
+                                            "functions": []
+                                        }
+                                    },
+                                    "tagName": {
+                                        "da415eca-bc6a-4fc4-9f43-284d83283339": {
+                                            "variable": "$.c4ba14fa-e7f1-427c-9de9-5b60ce99b2c3.out.tagName",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "spaceId": "{{{48beb800-4634-4d8f-99b5-72d547ea927d}}}",
+                                    "tagName": "{{{da415eca-bc6a-4fc4-9f43-284d83283339}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "3a535103-e737-405f-8e9d-42abb829c00c": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 2976,
+            "y": 1152,
+            "source": {
+                "in": {
+                    "9ddb5913-a75f-4b88-8191-4db62f7e5540": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.1",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
             "config": {
                 "properties": {
-                    "successStoreId": "64f6f1f9193228000754082f",
-                    "failedStoreId": "64f6f1f0193228000754082e"
+                    "successStoreId": "000000000000000000000000",
+                    "failedStoreId": "000000000000000000000000"
                 },
                 "transform": {
                     "in": {
-                        "delete-task": {
+                        "9ddb5913-a75f-4b88-8191-4db62f7e5540": {
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
                                     "recipients": {},
                                     "testCase": {},
                                     "result": {
-                                        "result-var": {
-                                            "variable": "$.after-all.out",
+                                        "2d5b0706-f612-4831-ba25-b1f353a2a8d8": {
+                                            "variable": "$.6fa2466e-07ef-49ab-9a21-b94d42967b86.out",
                                             "functions": []
                                         }
                                     }
                                 },
                                 "lambda": {
                                     "recipients": "test@appmixer.ai",
-                                    "testCase": "E2E Clickup - task-details",
-                                    "result": "{{{result-var}}}"
+                                    "testCase": "E2E Clickup - task details",
+                                    "result": "{{{2d5b0706-f612-4831-ba25-b1f353a2a8d8}}}"
                                 }
                             }
                         }
