@@ -1,25 +1,47 @@
 'use strict';
 
+const lib = require('../lib');
+
+// Schema for a single model item.
+const schema = {
+    id: { type: 'string', title: 'ID' },
+    object: { type: 'string', title: 'Object' },
+    created: { type: 'integer', title: 'Created' },
+    owned_by: { type: 'string', title: 'Owned By' },
+    active: { type: 'boolean', title: 'Active' },
+    context_window: { type: 'integer', title: 'Context Window' }
+};
+
 module.exports = {
+
     async receive(context) {
 
-        // https://console.groq.com/docs/api-reference#models
-        const { data } = await context.httpRequest({
-            method: 'GET',
-            url: 'https://api.groq.com/openai/v1/models',
-            headers: {
-                'Authorization': `Bearer ${context.auth.apiKey}`
-            }
-        });
+        const { outputType = 'array' } = context.messages.in.content || {};
 
-        return context.sendJson(data.data, 'out');
+        // Generate output port options dynamically if requested.
+        if (context.properties && context.properties.generateOutputPortOptions) {
+            return lib.getOutputPortOptions(
+                context,
+                outputType,
+                schema,
+                { label: 'Models' }
+            );
+        }
+
+        // https://console.groq.com/docs/api-reference#models
+        const { data } = await lib.request({ context, path: '/models' });
+
+        const items = data?.data ?? [];
+
+        return lib.sendArrayOutput({
+            context,
+            records: items,
+            outputType
+        });
     },
 
-    modelsToSelectArray(models) {
-        if (!Array.isArray(models)) return [];
-        return models.map(model => ({
-            label: model.id,
-            value: model.id
-        }));
+    // Used by the model dropdowns of SendPrompt, CreateTranscription and CreateTranslation.
+    toSelectArray({ result }) {
+        return (result || []).map(model => ({ label: model.id, value: model.id }));
     }
 };
