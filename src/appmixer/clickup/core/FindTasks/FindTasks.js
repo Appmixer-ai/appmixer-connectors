@@ -33,9 +33,9 @@ module.exports = {
                 assignees: commaSeparatedStringToArray(assigneeIds),
                 statuses: normalizedStatuses,
                 tags: commaSeparatedStringToArray(tags),
-                order_by: orderBy,
-                paramsSerializer: { indexes: false }
-            }
+                order_by: orderBy
+            },
+            paramsSerializer: { indexes: false }
         });
 
         if (!tasks || tasks.length === 0) {
