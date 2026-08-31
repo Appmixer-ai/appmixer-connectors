@@ -98,6 +98,28 @@ module.exports = {
         return items.length ? items : undefined;
     },
 
+    /**
+     * Split a newline separated user input into a trimmed array. Used for inputs
+     * whose values are regular expressions: a comma is a legal part of a pattern
+     * (`a{1,3}`), so splitting on it the way `toList` does would tear one pattern
+     * into two broken ones.
+     * @param {string} value raw inspector input
+     * @returns {array|undefined}
+     */
+    toLines(value) {
+
+        if (!value) {
+            return undefined;
+        }
+
+        const items = String(value)
+            .split('\n')
+            .map(item => item.trim())
+            .filter(item => item.length > 0);
+
+        return items.length ? items : undefined;
+    },
+
     async sendArrayOutput({
         context,
         outputPortName = 'out',
@@ -191,6 +213,11 @@ module.exports = {
  * @returns {string}
  */
 const toCsv = (array) => {
+
+    if (!array.length) {
+        return '';
+    }
+
     const headers = Object.keys(array[0]);
 
     return [

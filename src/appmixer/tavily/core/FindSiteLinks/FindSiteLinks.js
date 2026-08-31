@@ -5,7 +5,7 @@ const lib = require('../../lib');
 // The map endpoint returns a flat array of URL strings. We wrap each one in an
 // object so the array/object/first/file output types all behave consistently.
 const schema = {
-    'url': { 'type': 'string', 'title': 'URL' }
+    'url': { 'type': 'string', 'title': 'URL', 'example': 'https://docs.tavily.com/documentation/quickstart' }
 };
 
 module.exports = {
@@ -53,14 +53,16 @@ module.exports = {
             data.allow_external = false;
         }
 
-        const listInputs = {
+        // These four take regular expressions, one per line. They are split on
+        // newlines only - a comma is a legal part of a pattern (`a{1,3}`).
+        const regexInputs = {
             select_paths: selectPaths,
             exclude_paths: excludePaths,
             select_domains: selectDomains,
             exclude_domains: excludeDomains
         };
-        Object.keys(listInputs).forEach(key => {
-            const value = lib.toList(listInputs[key]);
+        Object.keys(regexInputs).forEach(key => {
+            const value = lib.toLines(regexInputs[key]);
             if (value) {
                 data[key] = value;
             }

@@ -6,11 +6,20 @@ const MAX_URLS = 20;
 
 // Schema of a single extracted page.
 const schema = {
-    'url': { 'type': 'string', 'title': 'URL' },
-    'title': { 'type': 'string', 'title': 'Title' },
-    'raw_content': { 'type': 'string', 'title': 'Content' },
-    'images': { 'type': 'array', 'title': 'Images', 'items': { 'type': 'string' } },
-    'favicon': { 'type': 'string', 'title': 'Favicon' }
+    'url': { 'type': 'string', 'title': 'URL', 'example': 'https://docs.tavily.com/welcome' },
+    'title': { 'type': 'string', 'title': 'Title', 'example': 'Welcome to Tavily' },
+    'raw_content': {
+        'type': 'string',
+        'title': 'Content',
+        'example': '# Welcome to Tavily\n\nTavily is a search engine built for AI agents ...'
+    },
+    'images': {
+        'type': 'array',
+        'title': 'Images',
+        'items': { 'type': 'string' },
+        'example': ['https://docs.tavily.com/images/hero.png']
+    },
+    'favicon': { 'type': 'string', 'title': 'Favicon', 'example': 'https://docs.tavily.com/favicon.ico' }
 };
 
 module.exports = {

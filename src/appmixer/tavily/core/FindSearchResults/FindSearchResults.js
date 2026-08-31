@@ -4,13 +4,21 @@ const lib = require('../../lib');
 
 // Schema of a single search result.
 const schema = {
-    'title': { 'type': 'string', 'title': 'Title' },
-    'url': { 'type': 'string', 'title': 'URL' },
-    'content': { 'type': 'string', 'title': 'Content' },
-    'score': { 'type': 'number', 'title': 'Relevance Score' },
-    'published_date': { 'type': 'string', 'title': 'Published Date' },
-    'raw_content': { 'type': 'string', 'title': 'Raw Content' },
-    'favicon': { 'type': 'string', 'title': 'Favicon' }
+    'title': { 'type': 'string', 'title': 'Title', 'example': 'Welcome to Tavily' },
+    'url': { 'type': 'string', 'title': 'URL', 'example': 'https://docs.tavily.com/welcome' },
+    'content': {
+        'type': 'string',
+        'title': 'Content',
+        'example': 'Tavily is a search engine built for AI agents, returning ranked snippets ...'
+    },
+    'score': { 'type': 'number', 'title': 'Relevance Score', 'example': 0.9137 },
+    'published_date': { 'type': 'string', 'title': 'Published Date', 'example': 'Mon, 14 Jul 2025 08:00:00 GMT' },
+    'raw_content': {
+        'type': 'string',
+        'title': 'Raw Content',
+        'example': '# Welcome to Tavily\n\nTavily is a search engine built for AI agents ...'
+    },
+    'favicon': { 'type': 'string', 'title': 'Favicon', 'example': 'https://docs.tavily.com/favicon.ico' }
 };
 
 module.exports = {
