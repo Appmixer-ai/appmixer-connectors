@@ -340,5 +340,11 @@ module.exports = [
             'hubspot/engagements/FindNotes/component.json'
         ],
         reason: 'Every hubspot dynamic outPort source resolves through the live HubSpot properties API (GetContactsProperties / GetDealsProperties / GetCompaniesProperties, either directly or via componentStaticCall inside the component\'s own generateOutputPortOptions). These calls need an authenticated session; adding ignoreAuth=true would make the dropdown request unauthenticated and fail with 500 Invalid URL chips in the designer.'
+    },
+    {
+        validator: 'dynamic-outport-required-inputs',
+        messageIncludes: 'ignoreAuth=true',
+        paths: ['hubbi/core/NewHubEvent/component.json'],
+        reason: 'NewHubEvent builds its output-port options from the hub\'s actual target fields: the generateOutputPortOptions branch calls lib.getFields(context, ENDPOINTS.targetFields, conversionKey), a live HubBI request that reads context.auth. Adding ignoreAuth=true would send that call unauthenticated and the picker would fail rather than degrade. Unlike the connector\'s List helpers, whose options come from a static schema, this source cannot be made auth-free.'
     }
 ];
