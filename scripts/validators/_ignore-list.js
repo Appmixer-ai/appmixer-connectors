@@ -171,9 +171,10 @@ module.exports = [
         messageIncludes: 'no MakeApiCall component',
         paths: [
             'appmixer/utils/bundle.json',
+            'appmixer/utils/test/bundle.json',
             'appmixer/system/bundle.json'
         ],
-        reason: 'Internal/utility connectors (flow control, converters, storage, engine events) with no external service or stored credentials — there is no third-party API to call.'
+        reason: 'Internal/utility connectors (flow control, converters, storage, engine events) with no external service or stored credentials — there is no third-party API to call. utils/test is the E2E-flow harness module (Assert, AfterAll, ProcessE2EResults) and talks only to the engine and the internal stores.'
     },
     {
         validator: 'connector-has-makeapicall',
@@ -343,7 +344,24 @@ module.exports = [
     },
     {
         validator: 'dynamic-outport-required-inputs',
-        messageIncludes: 'ignoreAuth=true',
+        messageIncludes: 'missing "ignoreAuth=true"',
+        paths: [
+            'salesforce/crm/AccountStatusChange/component.json',
+            'salesforce/crm/ContactStatusChange/component.json',
+            'salesforce/crm/LeadStatusChange/component.json',
+            'salesforce/crm/RecordFieldChange/component.json'
+        ],
+        reason: 'These trigger outPort sources resolve through the live Salesforce describe API (GetObjectFields / ListObjects), which reads context.auth.accessToken and context.profileInfo.instanceUrl. With ignoreAuth=true the engine calls the source without the account, the URL is built from undefined and the designer renders 500 "Invalid URL" chips (observed on dev-automated-00001, 2026-08-19). The designer sends the caller\'s bound account automatically, so the sources must keep authenticated calls.'
+    },
+    {
+        validator: 'delete-returns-empty',
+        messageIncludes: 'must return an empty object',
+        paths: ['clickup/core/DeleteTask/component.json'],
+        reason: 'DeleteTask has shipped since clickup 1.0.1 emitting { taskId } and published flows read $.DeleteTask.out.taskId. Narrowing the output to {} is a breaking change that needs a major bundle bump and a flow migration, so it is deferred; every Delete component added since (folders, lists, comments, checklists, goals, tags, time entries) returns {} as the standard requires.'
+    },
+    {
+        validator: 'dynamic-outport-required-inputs',
+        messageIncludes: 'missing "ignoreAuth=true"',
         paths: ['hubbi/core/NewHubEvent/component.json'],
         reason: 'NewHubEvent builds its output-port options from the hub\'s actual target fields: the generateOutputPortOptions branch calls lib.getFields(context, ENDPOINTS.targetFields, conversionKey), a live HubBI request that reads context.auth. Adding ignoreAuth=true would send that call unauthenticated and the picker would fail rather than degrade. Unlike the connector\'s List helpers, whose options come from a static schema, this source cannot be made auth-free.'
     }
