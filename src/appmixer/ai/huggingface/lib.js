@@ -1,5 +1,6 @@
 'use strict';
 
+const crypto = require('crypto');
 const pathModule = require('path');
 
 // Hugging Face splits its surface over two hosts:
@@ -11,6 +12,11 @@ const ROUTER_BASE_URL = 'https://router.huggingface.co';
 const DEFAULT_PREFIX = 'huggingface-objects-export';
 
 const ALLOWED_ORIGINS = [HUB_API_BASE_URL, ROUTER_BASE_URL];
+
+// Dropdown source calls fire in a burst every time an inspector opens, so their
+// responses are cached per user and query for this long unless the instance
+// overrides it via `config.listCacheTTL`.
+const DEFAULT_LIST_CACHE_TTL = 2 * 60 * 1000;
 
 module.exports = {
 
@@ -100,6 +106,41 @@ module.exports = {
 
         const response = await context.httpRequest(options);
         return response ? response.data : null;
+    },
+
+    /**
+     * `makeRequest` for dropdown source calls: the designer fires one call per
+     * dropdown every time an inspector opens, so the response is cached per user and
+     * per query and the burst is collapsed onto a single upstream request by the lock.
+     * @param {object} args same shape as makeRequest
+     * @returns {Promise<*>} the parsed response body
+     */
+    async makeRequestCached(args) {
+
+        const { context, method = 'GET', baseUrl = HUB_API_BASE_URL, path } = args;
+        const key = crypto.createHash('sha256')
+            .update(JSON.stringify({ method, url: baseUrl + path, token: context.auth.apiKey }))
+            .digest('hex');
+
+        let lock;
+        try {
+            lock = await context.lock(key);
+
+            const cached = await context.staticCache.get(key);
+            if (cached) {
+                return cached;
+            }
+
+            const data = await module.exports.makeRequest(args);
+            const ttl = (context.config && context.config.listCacheTTL) || DEFAULT_LIST_CACHE_TTL;
+            await context.staticCache.set(key, data, ttl);
+
+            return data;
+        } finally {
+            if (lock) {
+                lock.unlock();
+            }
+        }
     },
 
     /**
@@ -269,6 +310,11 @@ module.exports = {
  * @returns {string}
  */
 const toCsv = (array) => {
+
+    if (!array.length) {
+        return '';
+    }
+
     const headers = Object.keys(array[0]);
 
     return [

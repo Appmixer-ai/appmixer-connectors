@@ -42,6 +42,8 @@ module.exports = {
 
     async receive(context) {
 
+        // A dropdown source call arrives without an input message, so the content is
+        // read defensively here.
         const {
             search,
             author,
@@ -50,11 +52,14 @@ module.exports = {
             sort,
             direction,
             outputType
-        } = context.messages.in.content;
+        } = (context.messages.in && context.messages.in.content) || {};
 
         if (context.properties.generateOutputPortOptions) {
             return lib.getOutputPortOptions(context, outputType, schema, { label: 'Models' });
         }
+
+        // Set when the component backs a `modelId` dropdown rather than a live flow.
+        const isSource = Boolean(context.properties.isSource);
 
         // The Hub takes `filter` as a REPEATED query parameter (filter=a&filter=b).
         // The default axios serializer would emit `filter[]=a&filter[]=b`, which the
@@ -76,18 +81,32 @@ module.exports = {
             query.append('filter', tag);
         }
 
-        if (sort) {
-            query.append('sort', sort);
+        // A dropdown showing 100 arbitrary repos out of the ~2M on the Hub is close to
+        // useless, so an unsorted source call falls back to the most downloaded models.
+        const effectiveSort = sort || (isSource ? 'downloads' : null);
+
+        if (effectiveSort) {
+            query.append('sort', effectiveSort);
             // The Hub expects direction=-1 for descending; ascending is the default.
             if (direction !== 'asc') {
                 query.append('direction', '-1');
             }
         }
 
-        const models = await lib.makeRequest({
-            context,
-            path: `/api/models?${query.toString()}`
-        });
+        const request = { context, path: `/api/models?${query.toString()}` };
+
+        let models;
+        try {
+            // Source calls fire in a burst per inspector open, so they read through the cache.
+            models = isSource ? await lib.makeRequestCached(request) : await lib.makeRequest(request);
+        } catch (error) {
+            if (isSource) {
+                // A failing dropdown must not raise an error popup in the designer - the
+                // field is free text, so the user can always type the model ID.
+                return context.sendJson({ result: [], count: 0 }, 'out');
+            }
+            throw error;
+        }
 
         const records = (Array.isArray(models) ? models : []).map(model => {
             const id = model.id || model.modelId;
@@ -108,9 +127,30 @@ module.exports = {
         });
 
         if (records.length === 0) {
-            return context.sendJson({ search: search || null }, 'notFound');
+            if (isSource) {
+                return context.sendJson({ result: [], count: 0 }, 'out');
+            }
+            return context.sendJson({}, 'notFound');
+        }
+
+        if (isSource) {
+            return context.sendJson({ result: records, count: records.length }, 'out');
         }
 
         return lib.sendArrayOutput({ context, records, outputType });
+    },
+
+    /**
+     * Turn the `out` payload into the { label, value } pairs an inspector dropdown
+     * expects. Referenced from GetModel's `modelId` source block.
+     * @param {object} out the component's `out` message content
+     * @returns {array}
+     */
+    toSelectArray(out) {
+
+        return ((out && out.result) || []).map(model => ({
+            label: model.id,
+            value: model.id
+        }));
     }
 };

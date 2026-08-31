@@ -18,7 +18,7 @@ module.exports = {
         const data = { inputs: text };
 
         if (topK) {
-            data.parameters = { top_k: topK };
+            data.parameters = { top_k: Number(topK) };
         }
 
         const response = await lib.makeRequest({

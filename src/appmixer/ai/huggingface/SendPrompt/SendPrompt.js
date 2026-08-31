@@ -47,7 +47,7 @@ module.exports = {
         };
 
         if (maxTokens) {
-            data.max_tokens = maxTokens;
+            data.max_tokens = Number(maxTokens);
         }
         if (temperature !== undefined && temperature !== null && temperature !== '') {
             data.temperature = Number(temperature);

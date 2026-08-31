@@ -39,6 +39,14 @@ module.exports = {
         // vector of numbers so downstream components always see the same shape.
         const embedding = toVector(response);
 
+        if (embedding === RAGGED) {
+            throw new context.CancelError(
+                `Model ${model} returned token vectors of differing lengths, which cannot be pooled `
+                + 'into one sentence embedding. Pick a sentence-level feature-extraction model '
+                + '(for example a sentence-transformers model).'
+            );
+        }
+
         if (!embedding) {
             throw new context.CancelError(
                 `Model ${model} did not return a numeric embedding. Pick a feature-extraction model.`
@@ -53,12 +61,18 @@ module.exports = {
     }
 };
 
+// Returned when the response holds token vectors that cannot be pooled. Silently
+// falling back to the first token's vector would emit a semantically wrong embedding
+// that looks perfectly valid downstream, so the caller turns this into an error.
+const RAGGED = Symbol('ragged');
+
 /**
  * Reduce the variably nested feature-extraction response to one flat vector.
  * Nested responses (per-token vectors) are mean-pooled so the output is always a
  * single sentence-level embedding.
  * @param {*} value
- * @returns {array|null} array of numbers, or null when the shape is unusable
+ * @returns {array|null|symbol} array of numbers, null when the shape is unusable,
+ *   or RAGGED when nested rows have differing lengths
  */
 function toVector(value) {
 
@@ -70,14 +84,19 @@ function toVector(value) {
         return value;
     }
 
-    const rows = value.map(toVector).filter(Boolean);
+    const nested = value.map(toVector);
+    if (nested.some(row => row === RAGGED)) {
+        return RAGGED;
+    }
+
+    const rows = nested.filter(Array.isArray);
     if (rows.length === 0) {
         return null;
     }
 
     const width = rows[0].length;
     if (!rows.every(row => row.length === width)) {
-        return rows[0];
+        return RAGGED;
     }
 
     return rows[0].map((_, column) => {
