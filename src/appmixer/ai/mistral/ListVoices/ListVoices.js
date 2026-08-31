@@ -37,9 +37,23 @@ module.exports = {
             return lib.getOutputPortOptions(context, outputType, schema, { label: 'Voices' });
         }
 
+        // Set when the component backs the voice dropdown rather than a live flow.
+        const isSource = Boolean(context.properties && context.properties.isSource);
+
         // https://docs.mistral.ai/api/#tag/audio-voices
         // Cached: this component also backs the voice dropdown of Create Speech.
-        const data = await lib.apiCallCached(context, '/audio/voices');
+        let data;
+        try {
+            data = await lib.apiCallCached(context, '/audio/voices');
+        } catch (err) {
+            if (isSource) {
+                // A dropdown must not raise an error popup every time an inspector is
+                // opened with an unsaved key or while Mistral is down. The voice input
+                // is free text, so the user can always type the slug.
+                return context.sendJson({ result: [], count: 0 }, 'out');
+            }
+            throw err;
+        }
         const items = data?.items ?? [];
 
         return lib.sendArrayOutput({ context, records: items, outputType });

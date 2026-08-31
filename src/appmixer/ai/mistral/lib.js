@@ -1,5 +1,7 @@
 'use strict';
 
+const crypto = require('crypto');
+
 const BASE_URL = 'https://api.mistral.ai/v1';
 
 const getBaseUrl = () => BASE_URL;
@@ -43,7 +45,12 @@ const acquireLock = async (context, key) => {
  */
 const apiCallCached = async (context, url) => {
 
-    const key = 'ai-mistral-' + url.replace(/\W+/g, '-') + '-' + (context.auth.apiKey || '').slice(-8);
+    // The key covers the whole credential, not a suffix of it: two accounts whose
+    // keys share the last characters would otherwise read each other's cached
+    // response, and /audio/voices includes account-private custom voices.
+    const key = 'ai-mistral-' + crypto.createHash('sha256')
+        .update(JSON.stringify({ url, apiKey: context.auth.apiKey }))
+        .digest('hex');
     let lock;
     try {
         lock = await acquireLock(context, key);

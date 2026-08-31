@@ -82,9 +82,23 @@ module.exports = {
             return lib.getOutputPortOptions(context, outputType, schema, { label: 'Models' });
         }
 
+        // Set when the component backs a model dropdown rather than a live flow.
+        const isSource = Boolean(context.properties && context.properties.isSource);
+
         // https://docs.mistral.ai/api/#tag/models
         // Cached: this component also backs the model dropdowns of other components.
-        const data = await lib.apiCallCached(context, '/models');
+        let data;
+        try {
+            data = await lib.apiCallCached(context, '/models');
+        } catch (err) {
+            if (isSource) {
+                // A dropdown must not raise an error popup every time an inspector is
+                // opened with an unsaved key or while Mistral is down. The model inputs
+                // are free text, so the user can always type the model id.
+                return context.sendJson({ result: [], count: 0 }, 'out');
+            }
+            throw err;
+        }
         const items = data?.data ?? [];
 
         return lib.sendArrayOutput({ context, records: items, outputType });

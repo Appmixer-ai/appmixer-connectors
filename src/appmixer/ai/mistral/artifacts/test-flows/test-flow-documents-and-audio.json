@@ -343,6 +343,12 @@
                     ],
                     "f3d62688-1969-47af-9f3b-5b2a7c6a051a": [
                         "out"
+                    ],
+                    "b1000000-0000-4000-8000-000000000003": [
+                        "out"
+                    ],
+                    "b1000000-0000-4000-8000-000000000006": [
+                        "out"
                     ]
                 }
             },
@@ -398,11 +404,11 @@
         },
         "dedd3e3e-712c-4c59-bf58-f83fa973ac86": {
             "type": "appmixer.utils.test.ProcessE2EResults",
-            "x": 1728,
+            "x": 2144,
             "y": 576,
             "source": {
                 "in": {
-                    "fd84dcdf-5e7d-47aa-9fc3-2ef0a18ee649": [
+                    "b1000000-0000-4000-8000-000000000008": [
                         "deleted"
                     ]
                 }
@@ -412,7 +418,7 @@
                 "properties": {},
                 "transform": {
                     "in": {
-                        "fd84dcdf-5e7d-47aa-9fc3-2ef0a18ee649": {
+                        "b1000000-0000-4000-8000-000000000008": {
                             "deleted": {
                                 "type": "json2new",
                                 "modifiers": {
@@ -438,6 +444,353 @@
             "errorHandling": {
                 "autoRetry": false,
                 "onError": "stopFlow"
+            }
+        },
+        "b1000000-0000-4000-8000-000000000001": {
+            "type": "appmixer.utils.files.DownloadFile",
+            "x": 480,
+            "y": 704,
+            "source": {
+                "in": {
+                    "5f5e23ff-1aa5-4113-87c4-8b3ba68ab04d": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "5f5e23ff-1aa5-4113-87c4-8b3ba68ab04d": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "link": {},
+                                    "customFileName": {}
+                                },
+                                "lambda": {
+                                    "link": "https://docs.mistral.ai/audio/obama.mp3",
+                                    "customFileName": "mistral-e2e-audio.mp3"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "b1000000-0000-4000-8000-000000000002": {
+            "type": "appmixer.ai.mistral.CreateTranscription",
+            "x": 688,
+            "y": 704,
+            "source": {
+                "in": {
+                    "b1000000-0000-4000-8000-000000000001": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "b1000000-0000-4000-8000-000000000001": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "file": {
+                                        "c1000000-0000-4000-8000-000000000001": {
+                                            "variable": "$.b1000000-0000-4000-8000-000000000001.out.fileId",
+                                            "functions": []
+                                        }
+                                    },
+                                    "model": {},
+                                    "language": {}
+                                },
+                                "lambda": {
+                                    "file": "{{{c1000000-0000-4000-8000-000000000001}}}",
+                                    "model": "voxtral-mini-latest",
+                                    "language": "en"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "b1000000-0000-4000-8000-000000000003": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 896,
+            "y": 704,
+            "source": {
+                "in": {
+                    "b1000000-0000-4000-8000-000000000002": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "b1000000-0000-4000-8000-000000000002": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "c1000000-0000-4000-8000-000000000002": {
+                                            "variable": "$.b1000000-0000-4000-8000-000000000002.out.text",
+                                            "functions": []
+                                        },
+                                        "c1000000-0000-4000-8000-000000000003": {
+                                            "variable": "$.b1000000-0000-4000-8000-000000000002.out.model",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{c1000000-0000-4000-8000-000000000002}}}",
+                                                "assertion": "notEmpty"
+                                            },
+                                            {
+                                                "field": "{{{c1000000-0000-4000-8000-000000000003}}}",
+                                                "assertion": "equal",
+                                                "expected": "voxtral-mini-latest"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "b1000000-0000-4000-8000-000000000004": {
+            "type": "appmixer.utils.files.DownloadFile",
+            "x": 480,
+            "y": 832,
+            "source": {
+                "in": {
+                    "5f5e23ff-1aa5-4113-87c4-8b3ba68ab04d": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "5f5e23ff-1aa5-4113-87c4-8b3ba68ab04d": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "link": {},
+                                    "customFileName": {}
+                                },
+                                "lambda": {
+                                    "link": "https://arxiv.org/pdf/2310.06825",
+                                    "customFileName": "mistral-e2e-document.pdf"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "b1000000-0000-4000-8000-000000000005": {
+            "type": "appmixer.ai.mistral.ExtractDocumentText",
+            "x": 688,
+            "y": 832,
+            "source": {
+                "in": {
+                    "b1000000-0000-4000-8000-000000000004": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "b1000000-0000-4000-8000-000000000004": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "file": {
+                                        "c1000000-0000-4000-8000-000000000004": {
+                                            "variable": "$.b1000000-0000-4000-8000-000000000004.out.fileId",
+                                            "functions": []
+                                        }
+                                    },
+                                    "pages": {},
+                                    "model": {}
+                                },
+                                "lambda": {
+                                    "file": "{{{c1000000-0000-4000-8000-000000000004}}}",
+                                    "pages": "0",
+                                    "model": "mistral-ocr-latest"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "b1000000-0000-4000-8000-000000000006": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 896,
+            "y": 832,
+            "source": {
+                "in": {
+                    "b1000000-0000-4000-8000-000000000005": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "b1000000-0000-4000-8000-000000000005": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "c1000000-0000-4000-8000-000000000005": {
+                                            "variable": "$.b1000000-0000-4000-8000-000000000005.out.markdown",
+                                            "functions": []
+                                        },
+                                        "c1000000-0000-4000-8000-000000000006": {
+                                            "variable": "$.b1000000-0000-4000-8000-000000000005.out.pagesProcessed",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{c1000000-0000-4000-8000-000000000005}}}",
+                                                "assertion": "regex",
+                                                "regex": "Mistral"
+                                            },
+                                            {
+                                                "field": "{{{c1000000-0000-4000-8000-000000000006}}}",
+                                                "assertion": "notEmpty",
+                                                "expected": ""
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "b1000000-0000-4000-8000-000000000007": {
+            "type": "appmixer.utils.files.RemoveFile",
+            "x": 1728,
+            "y": 704,
+            "source": {
+                "in": {
+                    "fd84dcdf-5e7d-47aa-9fc3-2ef0a18ee649": [
+                        "deleted"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "fd84dcdf-5e7d-47aa-9fc3-2ef0a18ee649": {
+                            "deleted": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "fileId": {
+                                        "c1000000-0000-4000-8000-000000000007": {
+                                            "variable": "$.b1000000-0000-4000-8000-000000000001.out.fileId",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "fileId": "{{{c1000000-0000-4000-8000-000000000007}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "b1000000-0000-4000-8000-000000000008": {
+            "type": "appmixer.utils.files.RemoveFile",
+            "x": 1936,
+            "y": 704,
+            "source": {
+                "in": {
+                    "b1000000-0000-4000-8000-000000000007": [
+                        "deleted"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "b1000000-0000-4000-8000-000000000007": {
+                            "deleted": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "fileId": {
+                                        "c1000000-0000-4000-8000-000000000008": {
+                                            "variable": "$.b1000000-0000-4000-8000-000000000004.out.fileId",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "fileId": "{{{c1000000-0000-4000-8000-000000000008}}}"
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
     }
