@@ -25,23 +25,21 @@ module.exports = {
 
         // Markdown is always requested; the other formats are opt-in because
         // each one adds payload size and some (summary, screenshot) cost extra
-        // processing time.
+        // processing time. A toggle can reach the component as the string 'false',
+        // which is truthy - so every flag is compared explicitly.
         const formats = ['markdown'];
-        if (includeHtml) {
-            formats.push('html');
-        }
-        if (includeRawHtml) {
-            formats.push('rawHtml');
-        }
-        if (includeLinks) {
-            formats.push('links');
-        }
-        if (includeSummary) {
-            formats.push('summary');
-        }
-        if (includeScreenshot) {
-            formats.push('screenshot');
-        }
+        const optionalFormats = {
+            html: includeHtml,
+            rawHtml: includeRawHtml,
+            links: includeLinks,
+            summary: includeSummary,
+            screenshot: includeScreenshot
+        };
+        Object.keys(optionalFormats).forEach(format => {
+            if (lib.isOn(optionalFormats[format])) {
+                formats.push(format);
+            }
+        });
 
         const payload = { url, formats };
 
@@ -56,7 +54,7 @@ module.exports = {
         if (Number(timeout) > 0) {
             payload.timeout = Number(timeout);
         }
-        if (mobile === true || mobile === 'true') {
+        if (lib.isOn(mobile)) {
             payload.mobile = true;
         }
 

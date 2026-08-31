@@ -2,105 +2,74 @@
 
 const lib = require('../../lib');
 
-// Appmixer will not schedule a continuation shorter than one minute, so that is
-// both the default and the floor for the polling interval.
-const MIN_POLL_INTERVAL_SECONDS = 60;
-
-// Safety cap on the number of `next` pages followed when collecting crawl
-// results (each page holds up to 10 MB of data).
-const MAX_RESULT_PAGES = 20;
+// Firecrawl's crawl.completed payload carries an empty `data` array - the pages are
+// fetched from the status endpoint once the callback says the job is done.
+const COMPLETION_EVENTS = ['crawl.completed', 'crawl.failed'];
 
 /**
- * Fetch a crawl job's status and, when it is completed, follow the `next`
- * pagination links to collect the full result set.
- * @param {object} context Appmixer component context
+ * State key holding the inputs of one submitted crawl.
  * @param {string} jobId
- * @returns {Promise<object>} the job status payload with fully collected data
+ * @returns {string}
  */
-async function getCrawlJob(context, jobId) {
-
-    const job = await lib.makeRequest({
-        context,
-        method: 'GET',
-        path: `/v2/crawl/${jobId}`
-    });
-
-    const data = (job && job.data) || [];
-    let next = job && job.next;
-    let pagesFollowed = 0;
-
-    while (next && job.status === 'completed' && pagesFollowed < MAX_RESULT_PAGES) {
-        // `next` is an absolute URL on the Firecrawl API host.
-        const page = await lib.makeRequest({
-            context,
-            path: String(next).replace(lib.API_BASE_URL, '')
-        });
-        data.push(...((page && page.data) || []));
-        next = page && page.next;
-        pagesFollowed++;
-    }
-
-    return { ...job, data };
-}
-
-/**
- * Reduce a scraped page to the fields declared in the output port schema so
- * flows do not carry the full raw payload of every page.
- * @param {object} page
- * @returns {object}
- */
-function toPageOutput(page) {
-
-    const metadata = (page && page.metadata) || {};
-    return {
-        markdown: page && page.markdown,
-        metadata: {
-            title: metadata.title,
-            sourceURL: metadata.sourceURL,
-            statusCode: metadata.statusCode
-        }
-    };
-}
+const jobKey = (jobId) => `job-${jobId}`;
 
 module.exports = {
 
     async receive(context) {
 
-        // Polling continuation scheduled by a previous invocation. Doing this
-        // with context.setTimeout instead of sleeping in-process keeps the
-        // worker free and survives the engine's cap on a single execution.
-        if (context.messages.timeout) {
+        // ── Firecrawl calling back ─────────────────────────────────────────────
+        if (context.messages.webhook) {
 
-            const { jobId, deadline, pollIntervalMs } = context.messages.timeout.content;
+            const body = (context.messages.webhook.content || {}).data || {};
+            const jobId = body.id;
 
-            const job = await getCrawlJob(context, jobId);
+            // `crawl.started` and `crawl.page` are not subscribed to, but acknowledge
+            // anything else that arrives instead of failing the delivery.
+            if (!jobId || !COMPLETION_EVENTS.includes(body.type)) {
+                return context.response();
+            }
 
-            if (job && job.status === 'completed') {
-                return context.sendJson({
+            // The submit branch stashed this crawl's inputs under its id. Replaying
+            // them is what lets a downstream component tell parallel crawls apart:
+            // one component instance has one callback URL, and callbacks arrive in
+            // completion order, not in the order the crawls were started.
+            const submitted = (await context.stateGet(jobKey(jobId))) || {};
+
+            if (body.success === false || body.type === 'crawl.failed') {
+                await context.sendJson({
+                    ...submitted,
                     jobId,
-                    status: job.status,
-                    total: job.total,
-                    completed: job.completed,
-                    creditsUsed: job.creditsUsed,
-                    data: (job.data || []).map(toPageOutput)
-                }, 'out');
+                    status: 'failed',
+                    total: 0,
+                    completed: 0,
+                    creditsUsed: 0,
+                    truncated: false,
+                    error: body.error || 'The Firecrawl crawl failed.',
+                    data: []
+                }, 'done');
+            } else {
+                const job = await lib.getCrawlJob(context, jobId);
+
+                await context.sendJson({
+                    ...submitted,
+                    jobId,
+                    status: job && job.status,
+                    total: job && job.total,
+                    completed: job && job.completed,
+                    creditsUsed: job && job.creditsUsed,
+                    truncated: Boolean(job && job.truncated),
+                    error: '',
+                    data: (job.data || []).map(lib.toPageOutput)
+                }, 'done');
             }
 
-            if (job && job.status === 'failed') {
-                throw new context.CancelError(`Firecrawl crawl ${jobId} failed.`);
-            }
+            await context.stateUnset(jobKey(jobId));
 
-            if (Date.now() >= deadline) {
-                const status = (job && job.status) || 'unknown';
-                throw new context.CancelError(
-                    `Crawl ${jobId} did not complete in time (status: ${status}). `
-                    + 'Use the Get Crawl Status component with this job id to fetch the result once it is done.'
-                );
-            }
-
-            return context.setTimeout({ jobId, deadline, pollIntervalMs }, pollIntervalMs);
+            // Acknowledge, or Firecrawl keeps retrying the callback.
+            return context.response();
         }
 
+        // ── the submit ─────────────────────────────────────────────────────────
         const {
             url,
             maxPages,
@@ -110,8 +79,7 @@ module.exports = {
             crawlEntireDomain,
             allowSubdomains,
             onlyMainContent,
-            wait,
-            pollingTimeout
+            correlationId
         } = context.messages.in.content;
 
         if (!url) {
@@ -119,16 +87,23 @@ module.exports = {
         }
 
         const scrapeOptions = { formats: ['markdown'] };
-        // The API defaults to true; only send the flag when the user turned it
-        // off. Toggle values can reach the component as the string 'false'.
-        if (onlyMainContent === false || onlyMainContent === 'false') {
+        // The API defaults to true; only send the flag when the user turned it off.
+        if (lib.isOff(onlyMainContent)) {
             scrapeOptions.onlyMainContent = false;
         }
 
         const payload = {
             url,
             limit: Number(maxPages) > 0 ? Number(maxPages) : 100,
-            scrapeOptions
+            scrapeOptions,
+            // Firecrawl reports back instead of us polling: the result lands in seconds
+            // rather than at the next continuation, which cannot be scheduled under a
+            // minute. Only the terminal events are subscribed to - crawl.page would fire
+            // once per crawled page.
+            webhook: {
+                url: context.getWebhookUrl(),
+                events: ['completed', 'failed']
+            }
         };
 
         if (Number(maxDiscoveryDepth) > 0) {
@@ -142,10 +117,10 @@ module.exports = {
         if (exclude.length) {
             payload.excludePaths = exclude;
         }
-        if (crawlEntireDomain === true || crawlEntireDomain === 'true') {
+        if (lib.isOn(crawlEntireDomain)) {
             payload.crawlEntireDomain = true;
         }
-        if (allowSubdomains === true || allowSubdomains === 'true') {
+        if (lib.isOn(allowSubdomains)) {
             payload.allowSubdomains = true;
         }
 
@@ -161,22 +136,9 @@ module.exports = {
             throw new context.CancelError('Firecrawl did not return a crawl job id.');
         }
 
-        // When the user opts out of waiting, return the created job reference
-        // and let Get Crawl Status fetch the result later.
-        if (wait === false || wait === 'false') {
-            return context.sendJson({ jobId, status: 'scraping' }, 'out');
-        }
+        const echo = { url, correlationId };
+        await context.stateSet(jobKey(jobId), echo);
 
-        const timeoutSeconds = Number(pollingTimeout) > 0 ? Number(pollingTimeout) : 1800;
-        const pollIntervalSeconds = Math.max(
-            Number(context.config && context.config.pollIntervalSeconds) || MIN_POLL_INTERVAL_SECONDS,
-            MIN_POLL_INTERVAL_SECONDS
-        );
-
-        return context.setTimeout({
-            jobId,
-            deadline: Date.now() + timeoutSeconds * 1000,
-            pollIntervalMs: pollIntervalSeconds * 1000
-        }, pollIntervalSeconds * 1000);
+        return context.sendJson({ ...echo, jobId, status: 'scraping' }, 'out');
     }
 };

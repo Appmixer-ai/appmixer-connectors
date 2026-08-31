@@ -79,13 +79,11 @@
                                             "functions": []
                                         }
                                     },
-                                    "maxPages": {},
-                                    "pollingTimeout": {}
+                                    "maxPages": {}
                                 },
                                 "lambda": {
                                     "url": "{{{8a803151-98a7-4a05-884e-7c276a6881f4}}}",
-                                    "maxPages": 1,
-                                    "pollingTimeout": 600
+                                    "maxPages": 1
                                 }
                             }
                         }
@@ -137,7 +135,7 @@
                                             {
                                                 "field": "{{{d3787b26-bb5f-450d-9835-a219dfda729d}}}",
                                                 "assertion": "equal",
-                                                "expected": "completed"
+                                                "expected": "scraping"
                                             }
                                         ]
                                     }
@@ -160,7 +158,7 @@
             "source": {
                 "in": {
                     "bca3f5ab-8941-4311-bcc7-306c5dfa7c26": [
-                        "out"
+                        "done"
                     ]
                 }
             },
@@ -168,12 +166,12 @@
                 "transform": {
                     "in": {
                         "bca3f5ab-8941-4311-bcc7-306c5dfa7c26": {
-                            "out": {
+                            "done": {
                                 "type": "json2new",
                                 "modifiers": {
                                     "jobId": {
                                         "37a6bdef-7910-4825-8b54-45a21afa2505": {
-                                            "variable": "$.bca3f5ab-8941-4311-bcc7-306c5dfa7c26.out.jobId",
+                                            "variable": "$.bca3f5ab-8941-4311-bcc7-306c5dfa7c26.done.jobId",
                                             "functions": []
                                         }
                                     }
@@ -250,6 +248,9 @@
                     ],
                     "83a5c39e-c7f9-4cec-a92f-e7484b023155": [
                         "out"
+                    ],
+                    "c41e7b05-2d9a-4f63-9a18-7e0b5c3d6a21": [
+                        "out"
                     ]
                 }
             },
@@ -305,6 +306,69 @@
             "errorHandling": {
                 "autoRetry": false,
                 "onError": "stopFlow"
+            }
+        },
+        "c41e7b05-2d9a-4f63-9a18-7e0b5c3d6a21": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 688,
+            "y": 464,
+            "source": {
+                "in": {
+                    "bca3f5ab-8941-4311-bcc7-306c5dfa7c26": [
+                        "done"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "bca3f5ab-8941-4311-bcc7-306c5dfa7c26": {
+                            "done": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "a1b2c3d4-0001-4a00-9000-000000000001": {
+                                            "variable": "$.bca3f5ab-8941-4311-bcc7-306c5dfa7c26.done.status",
+                                            "functions": []
+                                        },
+                                        "a1b2c3d4-0002-4a00-9000-000000000002": {
+                                            "variable": "$.bca3f5ab-8941-4311-bcc7-306c5dfa7c26.done.data.0.markdown",
+                                            "functions": []
+                                        },
+                                        "a1b2c3d4-0003-4a00-9000-000000000003": {
+                                            "variable": "$.bca3f5ab-8941-4311-bcc7-306c5dfa7c26.done.jobId",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{a1b2c3d4-0001-4a00-9000-000000000001}}}",
+                                                "assertion": "equal",
+                                                "expected": "completed"
+                                            },
+                                            {
+                                                "field": "{{{a1b2c3d4-0002-4a00-9000-000000000002}}}",
+                                                "assertion": "notEmpty"
+                                            },
+                                            {
+                                                "field": "{{{a1b2c3d4-0003-4a00-9000-000000000003}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
     },

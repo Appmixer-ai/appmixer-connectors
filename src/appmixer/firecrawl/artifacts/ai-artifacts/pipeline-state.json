@@ -8,7 +8,7 @@
             "status": "done",
             "components": [
                 "ScrapeUrl",
-                "Search",
+                "FindSearchResults",
                 "MapWebsite",
                 "CrawlWebsite",
                 "GetCrawlStatus",
@@ -27,8 +27,8 @@
             "notes": "All 8 components pass appmixer test component (2026-08-24). Async components verified via submit (wait=false) + status components against live jobs; ExtractData returned correct structured data ({heading: \"Example Domain\"}, 307 tokens)."
         },
         "3b-test-e2e": {
-            "status": "done",
-            "notes": "All 6 flows PASSED on api-dev-automated-00001.dev.appmixer.ai (2026-08-24, account 6a8c4eee7dfdc2b6f42c5419, user test@appmixer.ai); results verified in E2E Succeeded Tests store. Flow fixes: static literals for dynamic-source required inputs (Search.query, MapWebsite.url), markdown-based ScrapeUrl asserts (nested metadata paths not offered by designer), regex clause uses \"value\"."
+            "status": "needs-rerun",
+            "notes": "All 6 flows PASSED on api-dev-automated-00001.dev.appmixer.ai (2026-08-24, account 6a8c4eee7dfdc2b6f42c5419, user test@appmixer.ai); results verified in E2E Succeeded Tests store. Flow fixes: static literals for dynamic-source required inputs (FindSearchResults.query, MapWebsite.url), markdown-based ScrapeUrl asserts (nested metadata paths not offered by designer), regex clause uses \"value\". RE-RUN NEEDED after the review fixes: CrawlWebsite moved from the polling continuation chain to Firecrawl's webhook callback, so its result now arrives on a new \"done\" port and the \"wait\"/\"pollingTimeout\" inputs are gone. test-flow-crawl-lifecycle.json was rewired accordingly (GetCrawlStatus and a new assert hang off \"done\") but has not been executed since. The Search component was renamed to FindSearchResults - it gained the notFound port a Find-shaped component must have, which the find-naming-by-shape validator then required."
         },
         "4-publish": {
             "status": "done",

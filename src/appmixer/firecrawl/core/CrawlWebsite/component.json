@@ -1,9 +1,10 @@
 {
     "name": "appmixer.firecrawl.core.CrawlWebsite",
     "label": "Crawl Website",
-    "description": "Start an asynchronous crawl of a website and scrape every discovered page into markdown. By default the component waits for the crawl to finish and returns the scraped pages; turn off waiting to only get the job ID and fetch results later with Get Crawl Status.",
+    "description": "Start an asynchronous crawl of a website and scrape every discovered page into markdown. The job reference is emitted immediately on \"out\"; Firecrawl calls back when the crawl finishes and the scraped pages are emitted on \"done\".",
     "author": "Appmixer <info@appmixer.com>",
     "version": "1.0.0",
+    "webhook": true,
     "auth": {
         "service": "appmixer:firecrawl"
     },
@@ -20,18 +21,37 @@
             "schema": {
                 "type": "object",
                 "properties": {
-                    "url": { "type": "string" },
-                    "maxPages": { "type": "number" },
-                    "maxDiscoveryDepth": { "type": "number" },
-                    "includePaths": { "type": "string" },
-                    "excludePaths": { "type": "string" },
-                    "crawlEntireDomain": { "type": "boolean" },
-                    "allowSubdomains": { "type": "boolean" },
-                    "onlyMainContent": { "type": "boolean" },
-                    "wait": { "type": "boolean" },
-                    "pollingTimeout": { "type": "number" }
+                    "url": {
+                        "type": "string"
+                    },
+                    "maxPages": {
+                        "type": "number"
+                    },
+                    "maxDiscoveryDepth": {
+                        "type": "number"
+                    },
+                    "includePaths": {
+                        "type": "string"
+                    },
+                    "excludePaths": {
+                        "type": "string"
+                    },
+                    "crawlEntireDomain": {
+                        "type": "boolean"
+                    },
+                    "allowSubdomains": {
+                        "type": "boolean"
+                    },
+                    "onlyMainContent": {
+                        "type": "boolean"
+                    },
+                    "correlationId": {
+                        "type": "string"
+                    }
                 },
-                "required": ["url"]
+                "required": [
+                    "url"
+                ]
             },
             "inspector": {
                 "inputs": {
@@ -87,19 +107,11 @@
                         "defaultValue": true,
                         "tooltip": "Scrape only the main content of each page, excluding headers, navigation and footers."
                     },
-                    "wait": {
-                        "type": "toggle",
+                    "correlationId": {
+                        "type": "text",
                         "index": 8,
-                        "label": "Wait For Completion",
-                        "defaultValue": true,
-                        "tooltip": "Wait for the crawl to finish and return the scraped pages. When off, the component returns the job ID immediately; use Get Crawl Status to fetch the result later."
-                    },
-                    "pollingTimeout": {
-                        "type": "number",
-                        "index": 9,
-                        "label": "Polling Timeout (seconds)",
-                        "defaultValue": 1800,
-                        "tooltip": "How long to wait for the crawl to finish before giving up. Defaults to 1800 seconds (30 minutes). Only applies when waiting for completion."
+                        "label": "Correlation ID",
+                        "tooltip": "Any value of your own - an order number, a record ID - echoed on both output ports. One component instance has one callback URL, so parallel crawls report back to the same place in completion order; this is how a downstream component tells them apart."
                     }
                 }
             }
@@ -108,6 +120,34 @@
     "outPorts": [
         {
             "name": "out",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "jobId": {
+                        "type": "string",
+                        "title": "Job ID",
+                        "example": "3f8c2a1e-5b7d-4e0a-9c6f-2d1b8e4a7c9d"
+                    },
+                    "status": {
+                        "type": "string",
+                        "title": "Status",
+                        "example": "scraping"
+                    },
+                    "url": {
+                        "type": "string",
+                        "title": "URL",
+                        "example": "https://example.com/docs"
+                    },
+                    "correlationId": {
+                        "type": "string",
+                        "title": "Correlation ID",
+                        "example": "order-1042"
+                    }
+                }
+            }
+        },
+        {
+            "name": "done",
             "schema": {
                 "type": "object",
                 "properties": {
@@ -180,6 +220,26 @@
                                 }
                             }
                         }
+                    },
+                    "truncated": {
+                        "type": "boolean",
+                        "title": "Truncated",
+                        "example": false
+                    },
+                    "url": {
+                        "type": "string",
+                        "title": "URL",
+                        "example": "https://example.com/docs"
+                    },
+                    "correlationId": {
+                        "type": "string",
+                        "title": "Correlation ID",
+                        "example": "order-1042"
+                    },
+                    "error": {
+                        "type": "string",
+                        "title": "Error",
+                        "example": ""
                     }
                 }
             }

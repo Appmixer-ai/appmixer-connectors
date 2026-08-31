@@ -5,6 +5,10 @@ const pathModule = require('path');
 const API_BASE_URL = 'https://api.firecrawl.dev';
 const DEFAULT_PREFIX = 'firecrawl-objects-export';
 
+// Safety cap on the number of `next` pages followed when collecting crawl
+// results (each page holds up to 10 MB of data).
+const MAX_RESULT_PAGES = 20;
+
 module.exports = {
 
     API_BASE_URL,
@@ -95,6 +99,99 @@ module.exports = {
             .split(/[,\n]/)
             .map(item => item.trim())
             .filter(Boolean);
+    },
+
+    /**
+     * Read a toggle input. A toggle can reach a component as a real boolean or as
+     * the string 'true' / 'false', and the string 'false' is truthy - so every
+     * toggle has to be compared explicitly rather than tested for truthiness.
+     * @param {boolean|string|undefined} value
+     * @returns {boolean} true only when the toggle is explicitly on
+     */
+    isOn(value) {
+
+        return value === true || value === 'true';
+    },
+
+    /**
+     * The counterpart of `isOn`, for flags the API defaults to true: only an
+     * explicit "off" is worth sending.
+     * @param {boolean|string|undefined} value
+     * @returns {boolean} true only when the toggle is explicitly off
+     */
+    isOff(value) {
+
+        return value === false || value === 'false';
+    },
+
+    /**
+     * Fetch a crawl job's status and, when it is completed, follow the `next`
+     * pagination links to collect the full result set. Shared by CrawlWebsite and
+     * GetCrawlStatus so the two cannot drift apart.
+     * @param {object} context Appmixer component context
+     * @param {string} jobId
+     * @returns {Promise<object>} the job payload with `data` collected and a
+     *   `truncated` flag telling whether the page cap was hit
+     */
+    async getCrawlJob(context, jobId) {
+
+        const job = await module.exports.makeRequest({
+            context,
+            method: 'GET',
+            path: `/v2/crawl/${jobId}`
+        });
+
+        const data = (job && job.data) || [];
+        let next = job && job.next;
+        let pagesFollowed = 0;
+
+        while (next && job.status === 'completed' && pagesFollowed < MAX_RESULT_PAGES) {
+            // `next` is an absolute URL on the Firecrawl API host.
+            const page = await module.exports.makeRequest({
+                context,
+                path: String(next).replace(API_BASE_URL, '')
+            });
+            data.push(...((page && page.data) || []));
+            next = page && page.next;
+            pagesFollowed++;
+        }
+
+        // Stopping on the cap while `next` still points somewhere means pages were
+        // dropped. Say so, rather than handing back a silently partial result.
+        const truncated = Boolean(next) && job && job.status === 'completed';
+
+        if (truncated) {
+            await context.log({
+                step: 'Crawl result truncated',
+                jobId,
+                pagesFollowed,
+                maxResultPages: MAX_RESULT_PAGES,
+                message: 'The crawl returned more result pages than this component collects. '
+                    + 'Narrow the crawl with Max Pages or Include Paths to get a complete result.'
+            });
+        }
+
+        return { ...job, data, truncated };
+    },
+
+    /**
+     * Reduce a scraped page to the fields declared in the output port schema so
+     * flows do not carry the full raw payload of every page.
+     * @param {object} page
+     * @returns {object}
+     */
+    toPageOutput(page) {
+
+        const metadata = (page && page.metadata) || {};
+
+        return {
+            markdown: page && page.markdown,
+            metadata: {
+                title: metadata.title,
+                sourceURL: metadata.sourceURL,
+                statusCode: metadata.statusCode
+            }
+        };
     },
 
     async sendArrayOutput({
@@ -190,6 +287,11 @@ module.exports = {
  * @returns {string}
  */
 const toCsv = (array) => {
+
+    if (!array.length) {
+        return '';
+    }
+
     const headers = Object.keys(array[0]);
 
     return [
