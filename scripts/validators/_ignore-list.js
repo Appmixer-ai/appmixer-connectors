@@ -352,5 +352,11 @@ module.exports = [
             'salesforce/crm/RecordFieldChange/component.json'
         ],
         reason: 'These trigger outPort sources resolve through the live Salesforce describe API (GetObjectFields / ListObjects), which reads context.auth.accessToken and context.profileInfo.instanceUrl. With ignoreAuth=true the engine calls the source without the account, the URL is built from undefined and the designer renders 500 "Invalid URL" chips (observed on dev-automated-00001, 2026-08-19). The designer sends the caller\'s bound account automatically, so the sources must keep authenticated calls.'
+    },
+    {
+        validator: 'delete-returns-empty',
+        messageIncludes: 'must return an empty object',
+        paths: ['clickup/core/DeleteTask/component.json'],
+        reason: 'DeleteTask has shipped since clickup 1.0.1 emitting { taskId } and published flows read $.DeleteTask.out.taskId. Narrowing the output to {} is a breaking change that needs a major bundle bump and a flow migration, so it is deferred; every Delete component added since (folders, lists, comments, checklists, goals, tags, time entries) returns {} as the standard requires.'
     }
 ];
