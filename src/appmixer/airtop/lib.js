@@ -6,6 +6,11 @@ const DEFAULT_PREFIX = 'airtop-objects-export';
 
 const BASE_URL = 'https://api.airtop.ai/api/v1';
 
+// `meta.status` of an AI operation is one of success | partial | failure. `partial`
+// still carries a usable payload, so it is accepted and only the failure - and any
+// undocumented value - stops the flow.
+const AI_SUCCESS_STATUSES = ['success', 'partial'];
+
 module.exports = {
 
     BASE_URL,
@@ -50,9 +55,9 @@ module.exports = {
 
     /**
      * Airtop wraps successful payloads in a `data` envelope and reports
-     * non-fatal problems in `errors` / `warnings`. Unwrap consistently and
-     * turn a hard error into a CancelError so the flow stops with a clear
-     * message instead of emitting an empty result.
+     * non-fatal problems in `errors` / `warnings`. A populated `errors` array
+     * becomes a CancelError so the flow stops with a clear message instead of
+     * emitting an empty result; `warnings` are logged and the call continues.
      * @param {object} context
      * @param {object} responseData - the parsed response body
      * @returns {object}
@@ -62,10 +67,16 @@ module.exports = {
         const body = responseData || {};
 
         if (Array.isArray(body.errors) && body.errors.length) {
-            const message = body.errors
-                .map(error => (error && (error.message || error.detail || error.code)) || String(error))
-                .join('; ');
-            throw new context.CancelError(`Airtop API error: ${message}`);
+            throw new context.CancelError(`Airtop API error: ${describeIssues(body.errors)}`);
+        }
+
+        if (Array.isArray(body.warnings) && body.warnings.length) {
+            // Non-fatal: surface them in the flow log without stopping the flow. Logging
+            // is best-effort here because `unwrap` is synchronous and its callers only
+            // care about the payload.
+            Promise.resolve(
+                context.log({ step: 'Airtop API warning', warnings: describeIssues(body.warnings) })
+            ).catch(() => {});
         }
 
         return body.data !== undefined ? body.data : body;
@@ -85,8 +96,14 @@ module.exports = {
         const meta = body.meta || {};
         const data = module.exports.unwrap(context, body);
 
-        if (meta.status === 'failure') {
-            throw new context.CancelError('The Airtop operation failed. Request ID: '
+        // Allowlist, not a denylist. Airtop documents exactly three outcomes -
+        // success, partial, failure - and marks `meta.status` required. A missing or
+        // unexpected status therefore means we cannot tell the operation succeeded, and
+        // every field below would be emitted as `undefined` on the `out` port. Fail
+        // closed on anything that is not a documented success.
+        if (!AI_SUCCESS_STATUSES.includes(meta.status)) {
+            throw new context.CancelError('The Airtop operation did not succeed (status: '
+                + (meta.status || 'unknown') + '). Request ID: '
                 + (meta.requestId || 'unknown') + '.');
         }
 
@@ -123,12 +140,28 @@ module.exports = {
 
     /**
      * Convert the rows produced by the key-value inspector input into a plain object.
-     * @param {array} rows
+     * The inspector may hand over an array, an `{ ADD: [...] }` wrapper or — when the
+     * value is bound from another component — the JSON string of either shape.
+     * @param {array|object|string} rows
      * @returns {object}
      */
     keyValueToObject(rows) {
 
-        const list = Array.isArray(rows) ? rows : (rows && Array.isArray(rows.ADD) ? rows.ADD : null);
+        let value = rows;
+
+        if (typeof value === 'string') {
+            const trimmed = value.trim();
+            if (!trimmed.length) {
+                return {};
+            }
+            try {
+                value = JSON.parse(trimmed);
+            } catch (err) {
+                return {};
+            }
+        }
+
+        const list = Array.isArray(value) ? value : (value && Array.isArray(value.ADD) ? value.ADD : null);
         const out = {};
 
         if (!list) {
@@ -235,6 +268,18 @@ module.exports = {
             return context.sendJson([{ label: 'File ID', value: 'fileId' }], 'out');
         }
     }
+};
+
+/**
+ * Render an Airtop `errors` / `warnings` array as a single readable string.
+ * @param {array} issues
+ * @returns {string}
+ */
+const describeIssues = (issues) => {
+
+    return issues
+        .map(issue => (issue && (issue.message || issue.reason || issue.code)) || String(issue))
+        .join('; ');
 };
 
 /**

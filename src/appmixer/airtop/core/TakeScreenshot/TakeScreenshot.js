@@ -56,7 +56,15 @@ module.exports = {
         const result = lib.aiResult(context, data);
 
         // The image itself is delivered in the response metadata, not in the data envelope.
-        const image = result.screenshots[0] || {};
+        // Reporting success with four undefined image fields would hand a downstream
+        // component an empty message even though the credits were already spent.
+        if (!result.screenshots.length) {
+            throw new context.CancelError(
+                `Airtop returned no screenshot. Request ID: ${result.requestId || 'unknown'}.`
+            );
+        }
+
+        const image = result.screenshots[0];
 
         return context.sendJson({
             dataUrl: image.dataUrl,
@@ -64,7 +72,8 @@ module.exports = {
             fileName: image.fileName,
             format: image.format,
             status: result.status,
-            requestId: result.requestId
+            requestId: result.requestId,
+            credits: result.credits
         }, 'out');
     }
 };

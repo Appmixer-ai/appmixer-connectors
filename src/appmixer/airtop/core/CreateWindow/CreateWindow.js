@@ -18,9 +18,14 @@ module.exports = {
             throw new context.CancelError('Session ID is required!');
         }
 
-        const payload = {
-            url: url || 'https://www.google.com'
-        };
+        // The default landing URL lives in the `url` input's `defaultValue`
+        // (component.json) and is not repeated here — a user who deliberately clears the
+        // field gets Airtop's own blank window instead of being sent back to Google.
+        const payload = {};
+
+        if (url) {
+            payload.url = url;
+        }
 
         if (waitUntil) {
             payload.waitUntil = waitUntil;
