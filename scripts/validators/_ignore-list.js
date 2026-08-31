@@ -358,5 +358,11 @@ module.exports = [
         messageIncludes: 'must return an empty object',
         paths: ['clickup/core/DeleteTask/component.json'],
         reason: 'DeleteTask has shipped since clickup 1.0.1 emitting { taskId } and published flows read $.DeleteTask.out.taskId. Narrowing the output to {} is a breaking change that needs a major bundle bump and a flow migration, so it is deferred; every Delete component added since (folders, lists, comments, checklists, goals, tags, time entries) returns {} as the standard requires.'
+    },
+    {
+        validator: 'dynamic-outport-required-inputs',
+        messageIncludes: 'missing "ignoreAuth=true"',
+        paths: ['hubbi/core/NewHubEvent/component.json'],
+        reason: 'NewHubEvent builds its output-port options from the hub\'s actual target fields: the generateOutputPortOptions branch calls lib.getFields(context, ENDPOINTS.targetFields, conversionKey), a live HubBI request that reads context.auth. Adding ignoreAuth=true would send that call unauthenticated and the picker would fail rather than degrade. Unlike the connector\'s List helpers, whose options come from a static schema, this source cannot be made auth-free.'
     }
 ];
