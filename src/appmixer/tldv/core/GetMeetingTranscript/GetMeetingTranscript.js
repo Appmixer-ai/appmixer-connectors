@@ -29,6 +29,13 @@ module.exports = {
             throw lib.toCancelError(context, error);
         }
 
+        // A 204 (empty body) means the meeting was processed but produced no transcript -
+        // typically a recording with no recognizable speech. Without this guard the empty
+        // body would be emitted on `out` and every downstream field would be undefined.
+        if (response.status === 204 || !response.data) {
+            return context.sendJson({ meetingId }, 'notReady');
+        }
+
         return context.sendJson(response.data, 'out');
     }
 };

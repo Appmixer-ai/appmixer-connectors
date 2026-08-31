@@ -1,7 +1,7 @@
 {
     "name": "appmixer.tldv.core.ImportMeeting",
     "label": "Import Meeting",
-    "description": "Imports an external audio/video recording from a publicly reachable URL into tl;dv for transcription and AI notes. Supported formats: mp3, mp4, wav, m4a, mkv, mov, avi, wma, flac. Import is asynchronous — it returns a job ID that cannot be resolved to the created meeting, so pair it with the New Meeting trigger to pick the meeting up once it finishes processing.",
+    "description": "Imports an external audio/video recording from a publicly reachable URL into tl;dv for transcription and AI notes. Supported formats: mp3, mp4, wav, m4a, mkv, mov, avi, wma, flac. Import is asynchronous: the job id is emitted immediately on the first output port, and once tl;dv finishes processing, the created meeting is emitted on the second (Meeting Created) port. On a dry run nothing is created and the second port never fires.",
     "author": "Appmixer <info@appmixer.com>",
     "version": "1.0.0",
     "auth": {
@@ -28,6 +28,12 @@
                     },
                     "dryRun": {
                         "type": "boolean"
+                    },
+                    "correlationId": {
+                        "type": "string"
+                    },
+                    "pollingTimeout": {
+                        "type": "number"
                     }
                 },
                 "required": [
@@ -66,6 +72,19 @@
                         "index": 5,
                         "label": "Dry Run",
                         "tooltip": "When enabled, tl;dv validates the request without persisting anything. Useful for testing."
+                    },
+                    "correlationId": {
+                        "type": "text",
+                        "index": 6,
+                        "label": "Correlation ID",
+                        "tooltip": "Optional identifier of your own, echoed unchanged on both output ports. Use it to pair parallel imports with their results."
+                    },
+                    "pollingTimeout": {
+                        "type": "number",
+                        "index": 7,
+                        "label": "Polling Timeout (seconds)",
+                        "defaultValue": 300,
+                        "tooltip": "Maximum time to wait for tl;dv to finish processing the import. The meeting list is checked once a minute, so the effective resolution is 60 seconds and anything lower is raised to 60. When the timeout is reached the component fails; the import may still complete later - find it with Find Meetings (the meeting's Conference ID equals the job id) or the New Meeting trigger."
                     }
                 }
             }
@@ -77,9 +96,134 @@
             "schema": {
                 "type": "object",
                 "properties": {
-                    "success": { "type": "boolean", "title": "Success", "example": true },
-                    "jobId": { "type": "string", "title": "Job ID", "example": "job_657f1e2b9a1c4d0012ab34cd" },
-                    "message": { "type": "string", "title": "Message", "example": "Meeting import started." }
+                    "success": {
+                        "type": "boolean",
+                        "title": "Success",
+                        "example": true
+                    },
+                    "jobId": {
+                        "type": "string",
+                        "title": "Job ID",
+                        "example": "job_657f1e2b9a1c4d0012ab34cd"
+                    },
+                    "message": {
+                        "type": "string",
+                        "title": "Message",
+                        "example": "Meeting import started."
+                    },
+                    "correlationId": {
+                        "type": "string",
+                        "title": "Correlation ID",
+                        "example": "order-1042"
+                    }
+                }
+            }
+        },
+        {
+            "name": "done",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "title": "Meeting ID",
+                        "example": "657f1e2b9a1c4d0012ab34cd"
+                    },
+                    "name": {
+                        "type": "string",
+                        "title": "Name",
+                        "example": "Acme <> Widgets weekly sync"
+                    },
+                    "happenedAt": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Happened At",
+                        "example": "2025-01-15T10:30:00Z"
+                    },
+                    "url": {
+                        "type": "string",
+                        "title": "tl;dv URL",
+                        "example": "https://tldv.io/app/meetings/657f1e2b9a1c4d0012ab34cd"
+                    },
+                    "duration": {
+                        "type": "integer",
+                        "title": "Duration (seconds)",
+                        "example": 1830
+                    },
+                    "organizer": {
+                        "type": "object",
+                        "title": "Organizer",
+                        "properties": {
+                            "name": {
+                                "type": "string",
+                                "title": "Name",
+                                "example": "Jane Doe"
+                            },
+                            "email": {
+                                "type": "string",
+                                "title": "Email",
+                                "example": "jane@acme.com"
+                            }
+                        }
+                    },
+                    "invitees": {
+                        "type": "array",
+                        "title": "Invitees",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "name": {
+                                    "type": "string"
+                                },
+                                "email": {
+                                    "type": "string"
+                                }
+                            }
+                        },
+                        "example": [
+                            {
+                                "name": "John Smith",
+                                "email": "john@widgets.com"
+                            }
+                        ]
+                    },
+                    "template": {
+                        "type": "object",
+                        "title": "Template",
+                        "properties": {
+                            "id": {
+                                "type": "string",
+                                "title": "Template ID",
+                                "example": "tmpl_123"
+                            },
+                            "label": {
+                                "type": "string",
+                                "title": "Template Label",
+                                "example": "Sales Call"
+                            }
+                        }
+                    },
+                    "extraProperties": {
+                        "type": "object",
+                        "title": "Extra Properties",
+                        "properties": {
+                            "conferenceId": {
+                                "type": "string",
+                                "title": "Conference ID",
+                                "example": "abc-defg-hij"
+                            }
+                        }
+                    },
+                    "jobId": {
+                        "type": "string",
+                        "title": "Job ID",
+                        "example": "imjh-657f1e2b9a1c4d0012ab34cd"
+                    },
+                    "correlationId": {
+                        "type": "string",
+                        "title": "Correlation ID",
+                        "example": "order-1042"
+                    }
                 }
             }
         }
