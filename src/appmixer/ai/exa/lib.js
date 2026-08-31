@@ -218,6 +218,11 @@ module.exports = {
  * @returns {string}
  */
 const toCsv = (array) => {
+
+    if (!array.length) {
+        return '';
+    }
+
     const headers = Object.keys(array[0]);
 
     return [
