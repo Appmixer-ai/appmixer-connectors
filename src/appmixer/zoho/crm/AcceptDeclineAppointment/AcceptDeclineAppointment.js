@@ -1,6 +1,6 @@
 'use strict';
 const ZohoClient = require('../../ZohoClient');
-const lib = require('../../lib');
+const lib = require('../lib');
 
 /**
  * Accept or decline an appointment. Zoho CRM has no dedicated accept/decline action on the

@@ -1,6 +1,6 @@
 'use strict';
 const ZohoClient = require('../../ZohoClient');
-const lib = require('../../lib');
+const lib = require('../lib');
 
 // The Appointments module is only exposed from API v5 up, hence the version override.
 const makeClient = (context) => new ZohoClient(context, undefined, { apiVersion: lib.APPOINTMENTS_API_VERSION });

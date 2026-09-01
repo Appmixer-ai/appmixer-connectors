@@ -1,6 +1,6 @@
 'use strict';
 const ZohoClient = require('../../ZohoClient');
-const lib = require('../../lib');
+const lib = require('../lib');
 
 /**
  * Polls the Invoices module for invoices reaching their due date. The target due date moves once a

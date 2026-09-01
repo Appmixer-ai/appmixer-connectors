@@ -1,6 +1,6 @@
 'use strict';
 const ZohoClient = require('../../ZohoClient');
-const lib = require('../../lib');
+const lib = require('../lib');
 
 /**
  * Polls the Invoices module for invoices that have just become overdue. Each tick looks at the due

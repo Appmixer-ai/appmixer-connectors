@@ -1,6 +1,6 @@
 'use strict';
 const ZohoNotifiable = require('../../ZohoNotifiable');
-const lib = require('../../lib');
+const lib = require('../lib');
 
 const DEFAULT_CLOSED_STATUS = 'Closed';
 // Zoho only reports that a case was edited, not what changed, so an already reported case is

@@ -1,6 +1,6 @@
 'use strict';
 const ZohoClient = require('../../ZohoClient');
-const lib = require('../../lib');
+const lib = require('../lib');
 
 /**
  * Find appointments matching the given criteria.
