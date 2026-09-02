@@ -4,12 +4,19 @@ const pathModule = require('path');
 
 const DEFAULT_PREFIX = 'airtop-objects-export';
 
-const BASE_URL = 'https://api.airtop.ai/api/v1';
+const API_ORIGIN = 'https://api.airtop.ai';
+const BASE_URL = `${API_ORIGIN}/api/v1`;
 
 // `meta.status` of an AI operation is one of success | partial | failure. `partial`
 // still carries a usable payload, so it is accepted and only the failure - and any
 // undocumented value - stops the flow.
 const AI_SUCCESS_STATUSES = ['success', 'partial'];
+
+// Airtop holds the HTTP response open for the whole AI operation, so the
+// user-controlled time threshold directly bounds how long a single message keeps
+// its receive() (and the worker slot behind it) busy. AI operations legitimately
+// run longer than a page load, hence a higher ceiling than CreateWindow's 120s.
+const MAX_TIME_THRESHOLD_SECONDS = 300;
 
 module.exports = {
 
@@ -24,6 +31,41 @@ module.exports = {
         return {
             'Authorization': `Bearer ${context.auth.apiKey}`
         };
+    },
+
+    /**
+     * Resolve the MakeApiCall URL input into an absolute URL pinned to the Airtop
+     * API host. A relative path is appended to BASE_URL; a full URL is accepted only
+     * when it targets the Airtop API origin, so the account's API key can never be
+     * sent to a foreign host.
+     * @param {object} context
+     * @param {string} url relative path (e.g. '/sessions') or absolute Airtop URL
+     * @returns {string} absolute URL on the Airtop API host
+     */
+    resolveApiUrl(context, url) {
+
+        const input = String(url).trim();
+        const isAbsolute = /^[a-z][a-z0-9+.-]*:/i.test(input) || input.startsWith('//');
+        const candidate = isAbsolute ? input : `${BASE_URL}${input.startsWith('/') ? '' : '/'}${input}`;
+
+        let parsed;
+        try {
+            parsed = new URL(candidate);
+        } catch (err) {
+            throw new context.CancelError(`API Endpoint Path is not a valid URL: ${url}`);
+        }
+
+        if (parsed.username || parsed.password) {
+            throw new context.CancelError('API Endpoint Path must not contain credentials.');
+        }
+
+        if (parsed.origin !== API_ORIGIN) {
+            throw new context.CancelError(
+                `API Endpoint Path must target ${API_ORIGIN}, got ${parsed.origin}.`
+            );
+        }
+
+        return parsed.toString();
     },
 
     /**
@@ -114,6 +156,36 @@ module.exports = {
             credits: (meta.usage || {}).credits,
             screenshots: meta.screenshots || []
         };
+    },
+
+    /**
+     * Validate the cost/time threshold inputs shared by the AI page operations and
+     * set them on the request payload. Both arrive as free-form inspector values, so
+     * a non-numeric binding must fail here with a clear message instead of sending
+     * `null` (serialized NaN) to Airtop.
+     * @param {object} context
+     * @param {object} payload - mutated in place
+     * @param {object} thresholds - { costThresholdCredits, timeThresholdSeconds }
+     */
+    applyThresholds(context, payload, { costThresholdCredits, timeThresholdSeconds }) {
+
+        if (costThresholdCredits !== undefined && costThresholdCredits !== null && costThresholdCredits !== '') {
+            const credits = parseInt(costThresholdCredits, 10);
+            if (Number.isNaN(credits) || credits < 0) {
+                throw new context.CancelError('Cost Threshold must be a non-negative number.');
+            }
+            payload.costThresholdCredits = credits;
+        }
+
+        if (timeThresholdSeconds !== undefined && timeThresholdSeconds !== null && timeThresholdSeconds !== '') {
+            const seconds = parseInt(timeThresholdSeconds, 10);
+            if (Number.isNaN(seconds) || seconds < 1 || seconds > MAX_TIME_THRESHOLD_SECONDS) {
+                throw new context.CancelError(
+                    `Time Threshold must be between 1 and ${MAX_TIME_THRESHOLD_SECONDS} seconds.`
+                );
+            }
+            payload.timeThresholdSeconds = seconds;
+        }
     },
 
     /**

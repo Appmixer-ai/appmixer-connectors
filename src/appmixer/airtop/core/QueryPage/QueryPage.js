@@ -31,12 +31,7 @@ module.exports = {
         if (followPaginationLinks) {
             payload.followPaginationLinks = true;
         }
-        if (costThresholdCredits !== undefined && costThresholdCredits !== null && costThresholdCredits !== '') {
-            payload.costThresholdCredits = parseInt(costThresholdCredits, 10);
-        }
-        if (timeThresholdSeconds !== undefined && timeThresholdSeconds !== null && timeThresholdSeconds !== '') {
-            payload.timeThresholdSeconds = parseInt(timeThresholdSeconds, 10);
-        }
+        lib.applyThresholds(context, payload, { costThresholdCredits, timeThresholdSeconds });
         if (outputSchema) {
             // The API expects the JSON schema as a string. Validate it first so a typo
             // fails here with a clear message instead of inside Airtop.

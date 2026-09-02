@@ -18,9 +18,7 @@ module.exports = {
         const extraHeaders = lib.keyValueToObject(headers);
         const queryParams = lib.keyValueToObject(parameters);
 
-        const targetUrl = url.startsWith('http://') || url.startsWith('https://')
-            ? url
-            : `${lib.BASE_URL}${url.startsWith('/') ? '' : '/'}${url}`;
+        const targetUrl = lib.resolveApiUrl(context, url);
 
         const requestOptions = {
             method,

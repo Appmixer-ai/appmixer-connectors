@@ -34,12 +34,7 @@ module.exports = {
         if (clickType && clickType !== 'click') {
             payload.configuration = { clickType };
         }
-        if (costThresholdCredits !== undefined && costThresholdCredits !== null && costThresholdCredits !== '') {
-            payload.costThresholdCredits = parseInt(costThresholdCredits, 10);
-        }
-        if (timeThresholdSeconds !== undefined && timeThresholdSeconds !== null && timeThresholdSeconds !== '') {
-            payload.timeThresholdSeconds = parseInt(timeThresholdSeconds, 10);
-        }
+        lib.applyThresholds(context, payload, { costThresholdCredits, timeThresholdSeconds });
 
         const { data } = await lib.apiRequest(context, {
             method: 'POST',

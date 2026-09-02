@@ -2,6 +2,11 @@
 
 const lib = require('../../lib');
 
+// Airtop holds the HTTP response open until the requested load event, so this
+// bounds how long a single message can keep its receive() (and the worker slot
+// behind it) busy. 120s matches the CreateSession readiness ceiling.
+const MAX_WAIT_TIMEOUT_SECONDS = 120;
+
 module.exports = {
 
     async receive(context) {
@@ -31,7 +36,13 @@ module.exports = {
             payload.waitUntil = waitUntil;
         }
         if (waitUntilTimeoutSeconds) {
-            payload.waitUntilTimeoutSeconds = parseInt(waitUntilTimeoutSeconds, 10);
+            const timeoutSeconds = parseInt(waitUntilTimeoutSeconds, 10);
+            if (Number.isNaN(timeoutSeconds) || timeoutSeconds < 1 || timeoutSeconds > MAX_WAIT_TIMEOUT_SECONDS) {
+                throw new context.CancelError(
+                    `Wait Timeout must be between 1 and ${MAX_WAIT_TIMEOUT_SECONDS} seconds.`
+                );
+            }
+            payload.waitUntilTimeoutSeconds = timeoutSeconds;
         }
         if (screenResolution) {
             payload.screenResolution = screenResolution;
