@@ -1,15 +1,17 @@
 {
-    "name": "appmixer.box.core.DownloadFile",
-    "description": "Download a file by its file ID and store it in the file storage.",
+    "name": "appmixer.box.core.CopyFolder",
+    "description": "Creates a copy of an existing folder to a destination parent folder.",
     "author": "Appmixer <info@appmixer.com>",
     "version": "1.0.0",
-    "private": false,
     "auth": {
         "service": "appmixer:box"
     },
     "quota": {
         "manager": "appmixer:box",
-        "resources": "requests"
+        "resources": "requests",
+        "scope": {
+            "userId": ""
+        }
     },
     "inPorts": [
         {
@@ -17,30 +19,40 @@
             "schema": {
                 "type": "object",
                 "properties": {
-                    "fileId": {
+                    "folderId": {
                         "type": "string"
                     },
-                    "version": {
+                    "parentId": {
+                        "type": "string"
+                    },
+                    "name": {
                         "type": "string"
                     }
                 },
                 "required": [
-                    "fileId"
+                    "folderId",
+                    "parentId"
                 ]
             },
             "inspector": {
                 "inputs": {
-                    "fileId": {
+                    "folderId": {
                         "type": "text",
-                        "index": 1,
-                        "label": "File ID",
-                        "tooltip": "The ID of the file to download."
+                        "label": "Folder ID",
+                        "tooltip": "The ID of the folder to copy.",
+                        "index": 1
                     },
-                    "version": {
+                    "parentId": {
                         "type": "text",
-                        "index": 2,
-                        "label": "Version",
-                        "tooltip": "Optional file version ID to download a specific version."
+                        "label": "Parent Folder ID",
+                        "tooltip": "Destination parent folder ID.",
+                        "index": 2
+                    },
+                    "name": {
+                        "type": "text",
+                        "label": "Name",
+                        "tooltip": "Optional new name for the copied folder.",
+                        "index": 3
                     }
                 }
             }
@@ -51,35 +63,56 @@
             "name": "out",
             "options": [
                 {
-                    "label": "File ID",
-                    "value": "fileId",
+                    "label": "Type",
+                    "value": "type",
                     "schema": {
                         "type": "string",
-                        "example": "5e72b403-1865-4a6a-ab3a-0b9a40d94eb4"
+                        "example": "folder"
+                    }
+                },
+                {
+                    "label": "Folder ID",
+                    "value": "id",
+                    "schema": {
+                        "type": "string",
+                        "example": "123456789"
                     }
                 },
                 {
                     "label": "Name",
-                    "value": "fileName",
+                    "value": "name",
                     "schema": {
                         "type": "string",
-                        "example": "quarterly-report.pdf"
+                        "example": "Documents"
                     }
                 },
                 {
-                    "label": "Content Type",
-                    "value": "contentType",
+                    "label": "Parent",
+                    "value": "parent",
                     "schema": {
-                        "type": "string",
-                        "example": "application/pdf"
-                    }
-                },
-                {
-                    "label": "Size",
-                    "value": "size",
-                    "schema": {
-                        "type": "number",
-                        "example": 1048576
+                        "type": "object",
+                        "properties": {
+                            "type": {
+                                "type": "string",
+                                "title": "Parent.Type",
+                                "example": "folder"
+                            },
+                            "id": {
+                                "type": "string",
+                                "title": "Parent.Id",
+                                "example": "123456789"
+                            },
+                            "name": {
+                                "type": "string",
+                                "title": "Parent.Name",
+                                "example": "Documents"
+                            }
+                        },
+                        "example": {
+                            "type": "folder",
+                            "id": "123456789",
+                            "name": "Documents"
+                        }
                     }
                 }
             ]

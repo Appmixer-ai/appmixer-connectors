@@ -1,9 +1,8 @@
 {
-    "name": "appmixer.box.core.DownloadFile",
-    "description": "Download a file by its file ID and store it in the file storage.",
+    "name": "appmixer.box.core.RenameFolder",
+    "description": "Renames a folder by ID.",
     "author": "Appmixer <info@appmixer.com>",
     "version": "1.0.0",
-    "private": false,
     "auth": {
         "service": "appmixer:box"
     },
@@ -17,30 +16,40 @@
             "schema": {
                 "type": "object",
                 "properties": {
-                    "fileId": {
+                    "folderId": {
                         "type": "string"
                     },
-                    "version": {
+                    "name": {
+                        "type": "string"
+                    },
+                    "ifMatch": {
                         "type": "string"
                     }
                 },
                 "required": [
-                    "fileId"
+                    "folderId",
+                    "name"
                 ]
             },
             "inspector": {
                 "inputs": {
-                    "fileId": {
+                    "folderId": {
                         "type": "text",
                         "index": 1,
-                        "label": "File ID",
-                        "tooltip": "The ID of the file to download."
+                        "label": "Folder Id",
+                        "tooltip": "The ID of the folder to rename."
                     },
-                    "version": {
+                    "name": {
                         "type": "text",
                         "index": 2,
-                        "label": "Version",
-                        "tooltip": "Optional file version ID to download a specific version."
+                        "label": "Name",
+                        "tooltip": "The new folder name."
+                    },
+                    "ifMatch": {
+                        "type": "text",
+                        "index": 3,
+                        "label": "If Match",
+                        "tooltip": "Optional ETag to prevent race conditions. Sent as If-Match header."
                     }
                 }
             }
@@ -51,35 +60,80 @@
             "name": "out",
             "options": [
                 {
-                    "label": "File ID",
-                    "value": "fileId",
+                    "label": "Type",
+                    "value": "type",
                     "schema": {
                         "type": "string",
-                        "example": "5e72b403-1865-4a6a-ab3a-0b9a40d94eb4"
+                        "example": "folder"
+                    }
+                },
+                {
+                    "label": "ID",
+                    "value": "id",
+                    "schema": {
+                        "type": "string",
+                        "example": "123456789"
                     }
                 },
                 {
                     "label": "Name",
-                    "value": "fileName",
+                    "value": "name",
                     "schema": {
                         "type": "string",
-                        "example": "quarterly-report.pdf"
+                        "example": "Documents-renamed"
                     }
                 },
                 {
-                    "label": "Content Type",
-                    "value": "contentType",
+                    "label": "ETag",
+                    "value": "etag",
                     "schema": {
                         "type": "string",
-                        "example": "application/pdf"
+                        "example": "1"
                     }
                 },
                 {
-                    "label": "Size",
-                    "value": "size",
+                    "label": "Created At",
+                    "value": "created_at",
                     "schema": {
-                        "type": "number",
-                        "example": 1048576
+                        "type": "string",
+                        "example": "2024-01-15T10:30:00-08:00"
+                    }
+                },
+                {
+                    "label": "Modified At",
+                    "value": "modified_at",
+                    "schema": {
+                        "type": "string",
+                        "example": "2024-01-15T10:30:00-08:00"
+                    }
+                },
+                {
+                    "label": "Parent",
+                    "value": "parent",
+                    "schema": {
+                        "type": "object",
+                        "example": {
+                            "type": "folder",
+                            "id": "0",
+                            "name": "All Files"
+                        },
+                        "properties": {
+                            "type": {
+                                "type": "string",
+                                "title": "Parent.Type",
+                                "example": "folder"
+                            },
+                            "id": {
+                                "type": "string",
+                                "title": "Parent.ID",
+                                "example": "0"
+                            },
+                            "name": {
+                                "type": "string",
+                                "title": "Parent.Name",
+                                "example": "All Files"
+                            }
+                        }
                     }
                 }
             ]
