@@ -12,7 +12,7 @@ appmixer e2e run <flowId> --fix
 | Fixture | Value used |
 |---|---|
 | Bot | `@appmixer_test_bot` (id `8865231953`) |
-| Chat | group **Appmixer Test**, `chatId` `-5467341409` |
+| Chat | group **v & Appmixer QA**, `chatId` `-5393771328` |
 
 The chat ID is a literal in every flow — change it in one place per flow if you
 point these at a different group. The bot must be a **member** of that group, and
