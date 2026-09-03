@@ -124,7 +124,7 @@
         "Session listing vs. session detail return DIFFERENT records: GET /sessions omits the connection URLs for a session that has ended, while GET /sessions/{id} returns them for both running and ended sessions. `currentUsage` shows up only once a session has been running for a while - it is absent right after creation and on an ended session. Any assertion on those fields must account for status.",
         "The Airtop async API is real and used by Query Page: POST /api/v1/async/sessions/{id}/windows/{wid}/page-query answers 201 with {requestId, errors, warnings} at the ROOT (no data envelope), and GET /api/v1/requests/{requestId}/status answers {status: pending|completed|error, response} where `response` is the full AI envelope (data.modelResponse + meta.status/usage). Measured: query completed in ~5 s, delivered by the continuation at the engine's 60 s floor.",
         "appmixer connector verify cannot express `required` for a dynamic (source) outPort - it reads the generateOutputPortOptions list and treats every option as required. Find Sessions therefore reports a FAIL whenever it samples an ended session. Fixing that belongs in appmixer-cli (connector-verify/index.js, declaredFields() hardcodes required: null for the options form), not in the connector.",
-        "Still not re-run after these fixes: the two E2E flows on the instance (they were updated - the Take Screenshot assert now checks fileId, and the AfterAll window went 600 -> 900 s because Query Page now waits for a one-minute continuation)."
+        "Publishing after this round needed remove + publish of ALL TEN components, not a plain publish: lib.js changed and every component requires it, and `appmixer publish` never refreshes an existing (component, version) snapshot. Verified afterwards that each stored component zip holds exactly one copy of its behavior and carries the new markers (async/sessions, saveFileStream, ITEM_SCHEMA, parseIntegerInput). The TokenError-on-first-start artifact did not appear this time."
     ],
     "e2e": {
         "instance": "https://api-dev-automated-00001.dev.appmixer.ai",
@@ -133,22 +133,24 @@
             "E2E Airtop - Session Lifecycle": {
                 "flowId": "6a6a200b-fa8b-4e16-9ea9-f14d07bcab99",
                 "verdict": "PASSED",
-                "assertions": 4,
-                "failures": 0
+                "assertions": 6,
+                "failures": 0,
+                "lastRun": "2026-09-03"
             },
             "E2E Airtop - Browser Interaction": {
                 "flowId": "7852000a-7df4-46ec-b204-fdaeea8e5362",
                 "verdict": "PASSED",
-                "assertions": 6,
-                "failures": 0
+                "assertions": 7,
+                "failures": 0,
+                "lastRun": "2026-09-03"
             }
         },
-        "verifiedVia": "appmixer e2e results --json (failed[] empty); no running sessions left behind afterwards",
-        "totalAssertions": 10
+        "verifiedVia": "appmixer e2e run (both flows PASSED first attempt, 0 retries) cross-checked against `appmixer e2e results` \u2014 the runner verdict alone is not enough, the stored per-assert records show 13 PASS / 0 FAIL and no airtop entry in the failed bucket. FindSessions run server-side afterwards reported no running session, so nothing was left billing.",
+        "totalAssertions": 13
     },
     "results": {
         "cliTests": "PASS \u2014 10 of 10 components verified against the live Airtop API (1 required a code fix)",
-        "e2e": "PASS \u2014 2 of 2 flows, 10 assertions, 0 failures",
+        "e2e": "PASS \u2014 2 of 2 flows, 13 assertions, 0 failures (re-run 2026-09-03 after the second review round)",
         "validator": "0 failures, 1 warning (writable-fields-readable on CreateSession \u2014 deliberate, see notes)",
         "lint": "clean",
         "pr": "https://github.com/Appmixer-ai/appmixer-connectors/pull/1228"
