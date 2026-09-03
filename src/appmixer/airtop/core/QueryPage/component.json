@@ -1,6 +1,6 @@
 {
     "name": "appmixer.airtop.core.QueryPage",
-    "description": "Ask a natural language question about the content of a browser window and get the answer back, optionally as structured JSON matching a schema you provide.",
+    "description": "Ask a natural language question about the content of a browser window and get the answer back, optionally as structured JSON matching a schema you provide. The query runs in the background and its answer is delivered on the out port once it finishes, which is checked once a minute - expect at least that long even for a fast query.",
     "author": "Appmixer <info@appmixer.com>",
     "version": "1.0.0",
     "auth": {
@@ -8,7 +8,7 @@
     },
     "quota": {
         "manager": "appmixer:airtop",
-        "resources": "browser-operations",
+        "resources": "requests",
         "scope": {
             "userId": "{{userId}}"
         }
@@ -89,7 +89,7 @@
                         "type": "number",
                         "index": 7,
                         "label": "Time Threshold (seconds)",
-                        "tooltip": "Cancel the operation once it runs longer than this many seconds, between 1 and 300. Leave empty to use the Airtop default."
+                        "tooltip": "Cancel the query once it runs longer than this many seconds, between 1 and 300. Leave empty to use the Airtop default."
                     }
                 }
             }
@@ -100,6 +100,11 @@
             "name": "out",
             "schema": {
                 "type": "object",
+                "required": [
+                    "modelResponse",
+                    "status",
+                    "requestId"
+                ],
                 "properties": {
                     "modelResponse": {
                         "type": "string",

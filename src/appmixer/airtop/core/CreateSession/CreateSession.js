@@ -12,6 +12,11 @@ const POLL_INTERVAL_MS = 2000;
 // Statuses a session never leaves. Polling past any of them only burns API calls
 // and then reports a misleading timeout.
 const TERMINAL_STATUSES = ['ended', 'completed', 'cancelled'];
+// The range Airtop accepts for the idle timeout (7 days at the top end). Sessions
+// bill per minute, so a value outside it must fail here with a clear message rather
+// than as an opaque 400 from the API.
+const MIN_TIMEOUT_MINUTES = 1;
+const MAX_TIMEOUT_MINUTES = 10080;
 
 module.exports = {
 
@@ -32,8 +37,13 @@ module.exports = {
         if (profileName) {
             configuration.profileName = profileName;
         }
-        if (timeoutMinutes) {
-            configuration.timeoutMinutes = parseInt(timeoutMinutes, 10);
+        const idleTimeout = lib.parseIntegerInput(context, timeoutMinutes, {
+            label: 'Idle Timeout',
+            min: MIN_TIMEOUT_MINUTES,
+            max: MAX_TIMEOUT_MINUTES
+        });
+        if (idleTimeout !== undefined) {
+            configuration.timeoutMinutes = idleTimeout;
         }
         if (solveCaptcha) {
             configuration.solveCaptcha = true;

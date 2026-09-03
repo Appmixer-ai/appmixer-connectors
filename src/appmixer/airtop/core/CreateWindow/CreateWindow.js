@@ -35,13 +35,12 @@ module.exports = {
         if (waitUntil) {
             payload.waitUntil = waitUntil;
         }
-        if (waitUntilTimeoutSeconds) {
-            const timeoutSeconds = parseInt(waitUntilTimeoutSeconds, 10);
-            if (Number.isNaN(timeoutSeconds) || timeoutSeconds < 1 || timeoutSeconds > MAX_WAIT_TIMEOUT_SECONDS) {
-                throw new context.CancelError(
-                    `Wait Timeout must be between 1 and ${MAX_WAIT_TIMEOUT_SECONDS} seconds.`
-                );
-            }
+        const timeoutSeconds = lib.parseIntegerInput(context, waitUntilTimeoutSeconds, {
+            label: 'Wait Timeout',
+            min: 1,
+            max: MAX_WAIT_TIMEOUT_SECONDS
+        });
+        if (timeoutSeconds !== undefined) {
             payload.waitUntilTimeoutSeconds = timeoutSeconds;
         }
         if (screenResolution) {
@@ -59,8 +58,6 @@ module.exports = {
         return context.sendJson({
             windowId: window.windowId,
             targetId: window.targetId,
-            title: window.title,
-            url: window.url,
             sessionId
         }, 'out');
     }

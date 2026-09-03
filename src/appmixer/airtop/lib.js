@@ -12,10 +12,12 @@ const BASE_URL = `${API_ORIGIN}/api/v1`;
 // undocumented value - stops the flow.
 const AI_SUCCESS_STATUSES = ['success', 'partial'];
 
-// Airtop holds the HTTP response open for the whole AI operation, so the
-// user-controlled time threshold directly bounds how long a single message keeps
-// its receive() (and the worker slot behind it) busy. AI operations legitimately
-// run longer than a page load, hence a higher ceiling than CreateWindow's 120s.
+// Airtop holds the HTTP response open for the whole AI operation, so for the
+// blocking page operations (click, type, screenshot) this user-controlled threshold
+// directly bounds how long a single message keeps its receive() — and the worker slot
+// behind it — busy. AI operations legitimately run longer than a page load, hence a
+// higher ceiling than CreateWindow's 120s. Query Page runs on the async endpoint and
+// blocks nothing, but shares the ceiling: it is Airtop's own limit on one operation.
 const MAX_TIME_THRESHOLD_SECONDS = 300;
 
 module.exports = {
@@ -159,31 +161,67 @@ module.exports = {
     },
 
     /**
+     * Read a numeric inspector input as a whole number. Every numeric input arrives as
+     * a free-form value (the inspector's own string, or whatever a binding produced), so
+     * `parseInt` alone would turn a typo into `NaN` and send it to Airtop as `null` -
+     * an opaque upstream 400 instead of a message naming the field. Every numeric input
+     * in this connector goes through here.
+     * @param {object} context
+     * @param {*} value
+     * @param {object} options - { label, min, max }
+     * @returns {number|undefined} undefined when the input was left empty
+     */
+    parseIntegerInput(context, value, { label, min, max } = {}) {
+
+        if (value === undefined || value === null || value === '') {
+            return undefined;
+        }
+
+        // Number() over parseInt(): parseInt('30 seconds') is 30, which silently accepts
+        // a value the user did not mean.
+        const parsed = Number(String(value).trim());
+        if (!Number.isFinite(parsed)) {
+            throw new context.CancelError(`${label} must be a number.`);
+        }
+
+        const integer = Math.trunc(parsed);
+
+        if (min !== undefined && max !== undefined && (integer < min || integer > max)) {
+            throw new context.CancelError(`${label} must be between ${min} and ${max}.`);
+        }
+        if (min !== undefined && integer < min) {
+            throw new context.CancelError(`${label} must be ${min} or greater.`);
+        }
+        if (max !== undefined && integer > max) {
+            throw new context.CancelError(`${label} must be ${max} or lower.`);
+        }
+
+        return integer;
+    },
+
+    /**
      * Validate the cost/time threshold inputs shared by the AI page operations and
-     * set them on the request payload. Both arrive as free-form inspector values, so
-     * a non-numeric binding must fail here with a clear message instead of sending
-     * `null` (serialized NaN) to Airtop.
+     * set them on the request payload.
      * @param {object} context
      * @param {object} payload - mutated in place
      * @param {object} thresholds - { costThresholdCredits, timeThresholdSeconds }
      */
     applyThresholds(context, payload, { costThresholdCredits, timeThresholdSeconds }) {
 
-        if (costThresholdCredits !== undefined && costThresholdCredits !== null && costThresholdCredits !== '') {
-            const credits = parseInt(costThresholdCredits, 10);
-            if (Number.isNaN(credits) || credits < 0) {
-                throw new context.CancelError('Cost Threshold must be a non-negative number.');
-            }
+        const credits = module.exports.parseIntegerInput(context, costThresholdCredits, {
+            label: 'Cost Threshold',
+            min: 0
+        });
+        if (credits !== undefined) {
             payload.costThresholdCredits = credits;
         }
 
-        if (timeThresholdSeconds !== undefined && timeThresholdSeconds !== null && timeThresholdSeconds !== '') {
-            const seconds = parseInt(timeThresholdSeconds, 10);
-            if (Number.isNaN(seconds) || seconds < 1 || seconds > MAX_TIME_THRESHOLD_SECONDS) {
-                throw new context.CancelError(
-                    `Time Threshold must be between 1 and ${MAX_TIME_THRESHOLD_SECONDS} seconds.`
-                );
-            }
+        const seconds = module.exports.parseIntegerInput(context, timeThresholdSeconds, {
+            label: 'Time Threshold',
+            min: 1,
+            max: MAX_TIME_THRESHOLD_SECONDS
+        });
+        if (seconds !== undefined) {
             payload.timeThresholdSeconds = seconds;
         }
     },
@@ -214,12 +252,21 @@ module.exports = {
      * Convert the rows produced by the key-value inspector input into a plain object.
      * The inspector may hand over an array, an `{ ADD: [...] }` wrapper or — when the
      * value is bound from another component — the JSON string of either shape.
+     * Anything else throws: silently returning `{}` would drop the user's headers or
+     * query parameters and run the call anyway, turning a filtered request into an
+     * unfiltered one that still reports success.
+     * @param {object} context
      * @param {array|object|string} rows
+     * @param {string} label
      * @returns {object}
      */
-    keyValueToObject(rows) {
+    keyValueToObject(context, rows, label) {
 
         let value = rows;
+
+        if (value === undefined || value === null) {
+            return {};
+        }
 
         if (typeof value === 'string') {
             const trimmed = value.trim();
@@ -229,7 +276,9 @@ module.exports = {
             try {
                 value = JSON.parse(trimmed);
             } catch (err) {
-                return {};
+                throw new context.CancelError(
+                    `${label} must be a list of key/value pairs, or the JSON string of one.`
+                );
             }
         }
 
@@ -237,7 +286,9 @@ module.exports = {
         const out = {};
 
         if (!list) {
-            return out;
+            throw new context.CancelError(
+                `${label} must be a list of key/value pairs, or the JSON string of one.`
+            );
         }
 
         for (const row of list) {

@@ -1,6 +1,6 @@
 {
     "name": "appmixer.airtop.core.TakeScreenshot",
-    "description": "Take a screenshot of a browser window and return it as a base64 data URL or as a signed download URL.",
+    "description": "Take a screenshot of a browser window and store it as a file. The component outputs the File ID; the image itself never travels through the flow.",
     "author": "Appmixer <info@appmixer.com>",
     "version": "1.0.0",
     "auth": {
@@ -23,9 +23,6 @@
                         "type": "string"
                     },
                     "windowId": {
-                        "type": "string"
-                    },
-                    "format": {
                         "type": "string"
                     },
                     "maxWidth": {
@@ -60,44 +57,27 @@
                         "label": "Window ID",
                         "tooltip": "The ID of the browser window, typically taken from the output of the Create Window component."
                     },
-                    "format": {
-                        "type": "select",
-                        "index": 3,
-                        "label": "Format",
-                        "defaultValue": "base64",
-                        "tooltip": "How the screenshot is returned. <b>Base64</b> embeds the image in the output, <b>URL</b> uploads it to Airtop storage and returns a signed download URL.",
-                        "options": [
-                            {
-                                "label": "Base64 Data URL",
-                                "value": "base64"
-                            },
-                            {
-                                "label": "Signed Download URL",
-                                "value": "url"
-                            }
-                        ]
-                    },
                     "maxWidth": {
                         "type": "number",
-                        "index": 4,
+                        "index": 3,
                         "label": "Max Width (px)",
                         "tooltip": "Scale the screenshot down to fit this width, preserving the aspect ratio."
                     },
                     "maxHeight": {
                         "type": "number",
-                        "index": 5,
+                        "index": 4,
                         "label": "Max Height (px)",
                         "tooltip": "Scale the screenshot down to fit this height, preserving the aspect ratio."
                     },
                     "costThresholdCredits": {
                         "type": "number",
-                        "index": 6,
+                        "index": 5,
                         "label": "Cost Threshold (credits)",
                         "tooltip": "Cancel the operation once it exceeds this many credits. Leave empty to use the Airtop default."
                     },
                     "timeThresholdSeconds": {
                         "type": "number",
-                        "index": 7,
+                        "index": 6,
                         "label": "Time Threshold (seconds)",
                         "tooltip": "Cancel the operation once it runs longer than this many seconds, between 1 and 300. Leave empty to use the Airtop default."
                     }
@@ -110,26 +90,28 @@
             "name": "out",
             "schema": {
                 "type": "object",
+                "required": [
+                    "fileId",
+                    "fileName",
+                    "fileSize",
+                    "status",
+                    "requestId"
+                ],
                 "properties": {
-                    "dataUrl": {
+                    "fileId": {
                         "type": "string",
-                        "title": "Data URL",
-                        "example": "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQ..."
-                    },
-                    "signedDownloadUrl": {
-                        "type": "string",
-                        "title": "Signed Download URL",
-                        "example": "https://storage.airtop.ai/screenshots/8f3a1c.jpeg?signature=abc123"
+                        "title": "File ID",
+                        "example": "6a8da10544249be6241ce1ad"
                     },
                     "fileName": {
                         "type": "string",
                         "title": "File Name",
-                        "example": "screenshot-8f3a1c.jpeg"
+                        "example": "airtop-screenshot-1756900000000.jpg"
                     },
-                    "format": {
-                        "type": "string",
-                        "title": "Format",
-                        "example": "base64"
+                    "fileSize": {
+                        "type": "integer",
+                        "title": "File Size (bytes)",
+                        "example": 48213
                     },
                     "status": {
                         "type": "string",

@@ -15,8 +15,8 @@ module.exports = {
             throw new context.CancelError('HTTP Method is required!');
         }
 
-        const extraHeaders = lib.keyValueToObject(headers);
-        const queryParams = lib.keyValueToObject(parameters);
+        const extraHeaders = lib.keyValueToObject(context, headers, 'Request Headers');
+        const queryParams = lib.keyValueToObject(context, parameters, 'Query Parameters');
 
         const targetUrl = lib.resolveApiUrl(context, url);
 
