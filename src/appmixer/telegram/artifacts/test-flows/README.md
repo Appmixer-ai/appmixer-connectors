@@ -46,9 +46,8 @@ wait; `AfterAll` timeout is 600s to leave room for a human.
    group is a regular group and the bot's privacy mode is on, so it only receives
    replies to itself and messages that @-mention it).
 3. The trigger fires; the flow asserts `message_id`, `update_kind == "message"`,
-   the sender's `from.id` and `chat.type == "group"` (nested fields go through a
-   `g_jsonPath` modifier — the designer does not offer nested paths directly),
-   then deletes the bot's **own prompt** message. Your reply stays: a bot can
+   the sender's `from.id` and `chat.type == "group"` (the variable picker offers
+   nested fields directly — `From.ID`, `Chat.Type`), then deletes the bot's **own prompt** message. Your reply stays: a bot can
    delete other members' messages only as an administrator with the *Delete
    messages* right, which these flows do not assume.
 
