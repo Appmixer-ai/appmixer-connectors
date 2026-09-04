@@ -1,8 +1,10 @@
 'use strict';
 
 const FormData = require('form-data');
+const lib = require('../lib');
 
 module.exports = {
+
     async receive(context) {
 
         const {
@@ -14,6 +16,9 @@ module.exports = {
         } = context.messages.in.content;
 
         // Validate required inputs
+        if (!model) {
+            throw new context.CancelError('Model is required!');
+        }
         if (!file) {
             throw new context.CancelError('File is required!');
         }
@@ -33,16 +38,14 @@ module.exports = {
         if (prompt) form.append('prompt', prompt);
         if (temperature !== undefined) form.append('temperature', temperature.toString());
 
-        const response = await context.httpRequest({
+        const { data } = await lib.request({
+            context,
             method: 'POST',
-            url: 'https://api.groq.com/openai/v1/audio/transcriptions',
-            headers: {
-                ...form.getHeaders(),
-                Authorization: `Bearer ${context.auth.apiKey}`
-            },
+            path: '/audio/transcriptions',
+            headers: form.getHeaders(),
             data: form
         });
 
-        return context.sendJson(response.data, 'out');
+        return context.sendJson(data, 'out');
     }
 };
