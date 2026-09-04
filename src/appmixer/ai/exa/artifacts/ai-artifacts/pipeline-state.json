@@ -25,21 +25,24 @@
         "ship": "done"
     },
     "notes": [
-        "Pre-flight deviation (user approved): the appmixer CLI session was already logged in as test@appmixer.ai; no fresh `appmixer login` was run this session because the password was not available to the agent.",
-        "Exa API key supplied by the user mid-run; stored via the CLI, not hand-written into appmixer.json.",
-        "First e2e import failed with \"lib.getOutputPortOptions is not a function\" on FindExtractedPages only; a second `appmixer publish` fixed it — the known partial-publish behaviour of this instance, not a connector defect.",
-        "Run exceeded the declared maxMinutes=60 wall-clock ceiling; the overrun was spent finishing the E2E verification rather than stopping with the flows imported but unrun."
+        "Exa API key lives on the instance account 6a8d88635be7850c2bdfd5fd; the local CLI configstore has no Exa entry, so verification was driven through the instance (E2E flows + Flow Test Mode) rather than `appmixer test component`.",
+        "`appmixer e2e import` cannot resolve the account for nested ai/* refs and skips the binding \u2014 always pass `-a <accountId>`, otherwise `e2e run` fails its preflight with \"No valid account bound\".",
+        "Search `type` and `category` option lists were checked against the live API, not just the docs: an unknown `type` is rejected with a 400 that enumerates the valid set, while an unknown `category` is silently ignored on /search, so a wrong category value would degrade to unfiltered results rather than erroring."
     ],
     "results": {
-        "validator": "0 failures, 0 warnings (node scripts/validate.js --connector ai/exa and --changed), after sending the literal \"dummy\" for the required inputs in the three dynamic outPort sources",
-        "lint": "clean (eslint, CRLF warnings excluded)",
-        "cliTests": "6/6 components passed",
+        "validator": "0 failures, 0 warnings (node scripts/validate.js --connector ai/exa), 26 validators",
+        "lint": "clean (eslint 8, repo .eslintrc.json)",
+        "e2eValidate": "0 failures (appmixer e2e validate, 29 validators, 3 flow files)",
         "e2eFlows": {
+            "E2E Exa - Search, Extract and Find Similar": "PASSED f6b20f14-6585-4e94-8592-b759de209ff7 (3 asserts, 0 failures)",
             "E2E Exa - Answer and API Call": "PASSED b2c578b6-6454-4c41-9626-ce6700178927 (2 asserts, 0 failures)",
-            "E2E Exa - Search, Extract and Find Similar": "PASSED f6b20f14-6585-4e94-8592-b759de209ff7 (3 asserts, 0 failures)"
+            "E2E Exa - Array Output and Not Found": "PASSED 9fd8b2db-ebe7-48b8-9e1b-2a51f63ec670 (2 asserts, 3 clauses, 0 failures)"
         },
-        "e2eCoverage": "5 of 6 components; NewSearchResult (trigger) is not covered by an E2E flow — verified via CLI test() and a live tick() loop instead",
+        "e2eCoverage": "5 of 6 components. NewSearchResult is a polling trigger whose firing condition (a page new to Exa's index for the query) cannot be provoked, so it has no E2E flow \u2014 it is covered by Flow Test Mode on the instance plus a deterministic tick()/test() harness (13 checks).",
+        "negativeControl": "A copy of the array/notFound flow with both assertions inverted was imported and run: it reported FAILED with both assertion messages, proving the suite can fail. Flow and its store record were deleted afterwards.",
+        "triggerVerification": "appmixer flow test on the instance emitted one real result (dataSource=real); the local harness proves the first tick saves a baseline and emits nothing, later ticks emit only unseen ids, the known-id window caps at 1000, an empty first poll still initialises, and test() emits exactly one item without writing state.",
+        "ssrfGuard": "lib.resolveApiUrl exercised over 15 inputs: foreign origins, protocol-relative //host, embedded credentials, http downgrade, api.exa.ai.evil.com and javascript: are all rejected; only api.exa.ai resolves.",
         "instanceAccountId": "6a8d88635be7850c2bdfd5fd",
-        "pr": "https://github.com/Appmixer-ai/appmixer-connectors/pull/1226"
+        "instance": "https://api-dev-automated-00001.dev.appmixer.ai"
     }
 }

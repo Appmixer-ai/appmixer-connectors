@@ -18,6 +18,23 @@ const schema = {
         'title': 'Highlights',
         'items': { 'type': 'string' },
         'example': ['Exa is a search engine built for AI applications.']
+    },
+    // Only populated when the Subpages input asks for them. Declared so the
+    // designer can bind subpage fields instead of falling back to Raw Output.
+    'subpages': {
+        'type': 'array',
+        'title': 'Subpages',
+        'items': {
+            'type': 'object',
+            'properties': {
+                'id': { 'type': 'string', 'title': 'Subpage ID', 'example': 'https://exa.ai/pricing' },
+                'title': { 'type': 'string', 'title': 'Subpage Title', 'example': 'Exa pricing' },
+                'url': { 'type': 'string', 'title': 'Subpage URL', 'example': 'https://exa.ai/pricing' },
+                'author': { 'type': 'string', 'title': 'Subpage Author', 'example': 'Jane Doe' },
+                'text': { 'type': 'string', 'title': 'Subpage Text', 'example': 'Exa pricing starts at $0 per month.' }
+            }
+        },
+        'example': [{ 'id': 'https://exa.ai/pricing', 'title': 'Exa pricing', 'url': 'https://exa.ai/pricing' }]
     }
 };
 
