@@ -413,8 +413,7 @@ Each component consists of:
                 "schema": { "$ref": "#/definitions/jsonSchema" },
                 "inspector": { "$ref": "#/definitions/inspector" }
             }
-        },
-        "icon": { "type": "string", "description": "Link to svg icon. The icon representing the component in the UI." }
+        }
     },
     "additionalProperties": false,
     "required": ["name"],
@@ -582,6 +581,43 @@ Each output port can define its output structure using **either** `schema` or `o
 ]
 ```
 
+### Nested objects in output schemas
+
+The designer's variable picker renders nested schema properties as a **flat
+list of titles**. Two nested leaves with the same title (`from.username` and
+`chat.username`, both "Username") are indistinguishable there, and users wire
+the wrong one. Therefore:
+
+1. **Prefix nested titles with the parent title, dot-separated** —
+   `"Parent.Leaf"`: `From.Username`, `Chat.Username`, `Chat.ID`,
+   `Reply To Message.From.ID`. Deeper levels chain the already-prefixed parent.
+   The object property itself needs a `title` (it is the prefix). Array items
+   are exempt — the picker offers an array as one variable. Enforced by the
+   `outport-nested-title-prefix` validator.
+2. **Mark `required` per level** when the API's payload is polymorphic or has
+   optional fields (a Telegram `User` may have no `username`; a message is a
+   text OR a photo OR a document). `appmixer connector verify` compares the
+   schema with real payloads leaf by leaf: an absent *required* leaf is a dead
+   picker entry (FAIL), an absent *optional* leaf is only a warning. Without
+   any `required`, every declared leaf is treated as required.
+
+Both rules apply to a **dynamic** output port too — it has no `schema` here, so
+its contract lives in the behavior file's `ITEM_SCHEMA` export ("Export the item
+schema as `ITEM_SCHEMA`" in `07-component-types.md`). Same shape, same checks.
+
+```json
+"chat": {
+    "type": "object",
+    "title": "Chat",
+    "required": ["id", "type"],
+    "properties": {
+        "id": { "type": "integer", "title": "Chat.ID", "example": -1002345678901 },
+        "type": { "type": "string", "title": "Chat.Type", "example": "supergroup" },
+        "username": { "type": "string", "title": "Chat.Username", "example": "product_team" }
+    }
+}
+```
+
 ### Output Port Examples (variable picker preview)
 
 Output port fields should include `example` values so users see realistic sample data in the variable picker UI when wiring downstream components.
@@ -690,6 +726,49 @@ module.exports = {
 
 ## Advanced Features
 
+### Scheduling Work Later: `context.setTimeout`
+
+`context.setTimeout(content, ms)` re-invokes the component after `ms` with the
+payload on `context.messages.timeout`. It is the mechanism behind poll
+continuations, debounce windows and subscription renewals: the worker is freed
+in between, and the scheduled message keeps its scope and correlation id, so the
+continuation emits into the branch that started it.
+
+**Any delay under one minute is silently rounded up to one minute.** The engine
+clamps with `Math.max(timeout, WAITING_QUEUE_MIN_TIMEOUT)` — 60 000 ms by
+default. No error, no warning, no log entry. `context.setTimeout(payload, 5000)`
+reads as a five-second debounce and behaves as a sixty-second one.
+
+Two things about that clamp are what keep letting sub-minute delays ship:
+
+- **Test mode has no floor.** Under `appmixer test component` the delay takes a
+  different path (`Math.min(timeout, 120000)`), so a sub-minute value does
+  exactly what it says — and then behaves differently in production. A passing
+  component test proves nothing about the interval.
+- **Comments and error messages derived from the intended value become wrong.**
+  `POLL_INTERVAL_MS = 30000` with `MAX_POLLS = 60` is not "up to 30 minutes",
+  it is up to 60 — and the timeout error then reports a duration that never
+  elapsed.
+
+So: never pass a delay below 60 000 ms, and never compute a total duration from
+one. Where the interval is configurable, floor the configured value too — a
+config knob is exactly where a 30-second value gets set later.
+
+Treat the floor as a deployment setting rather than a constant: it is
+env-configurable, so do not write code that depends on its exact value in
+either direction. The ceiling is separate — `INPUT_QUEUE_MAX_MESSAGE_DELAY`,
+31 days by default — and exceeding *that* throws instead of clamping.
+
+Above the floor the delay is honoured to about a second: the scheduler
+pre-fetches due timeouts and sleeps until each one's exact due time, so 90 s
+means 90 s and not the next whole minute. A last poll shortened to fit a
+deadline (`Math.min(interval, remaining)`) is therefore a no-op whenever it
+would drop below the floor — it clamps straight back to a minute, and the
+timeout error simply arrives up to a minute late.
+
+`setTimeout` resolves to a `timeoutId`. `context.clearTimeout(id)` cancels the
+pending message, and still works after the scheduler has already queued it.
+
 ### Trigger Components
 
 ```javascript
@@ -707,21 +786,29 @@ module.exports = {
 
 ### Webhook Components
 
+Registration belongs to the lifecycle methods, not to `receive()` (see
+"Trigger Behavior Requirements" in `07-component-types.md`):
+
 ```javascript
 module.exports = {
-    async receive(context) {
-        const webhookUrl = context.getWebhookUrl();
-
-        // Register webhook with external service
-        await registerWebhook(context, webhookUrl);
-
-        return context.sendJson({ webhookUrl }, 'out');
+    async start(context) {
+        // Register the webhook with the external service when the flow starts
+        const { id } = await registerWebhook(context, context.getWebhookUrl());
+        return context.saveState({ webhookId: id });
     },
 
-    async webhook(context) {
-        // Handle incoming webhook
-        const payload = context.messages.webhook;
-        return context.sendJson(payload, 'out');
+    async stop(context) {
+        // Unregister it when the flow stops
+        const { webhookId } = await context.loadState();
+        return unregisterWebhook(context, webhookId);
+    },
+
+    async receive(context) {
+        // Handle the incoming webhook payload
+        if (context.messages.webhook) {
+            await context.sendJson(context.messages.webhook.content.data, 'out');
+            return context.response();
+        }
     }
 };
 ```
@@ -773,12 +860,26 @@ Components with `outputType` (Find/List) **MUST** use standardized lib.js helper
 ```javascript
 const lib = require('../../lib');
 
+// The output contract of ONE item. Exported so the offline tooling can read it —
+// see "Export the item schema as ITEM_SCHEMA" below.
+const ITEM_SCHEMA = {
+    type: 'object',
+    required: ['id'],
+    properties: {
+        id: { type: 'string', title: 'ID', example: '1001' },
+        name: { type: 'string', title: 'Name', example: 'Acme Inc.' }
+    }
+};
+
 module.exports = {
+
+    ITEM_SCHEMA,
+
     async receive(context) {
         const { outputType } = context.messages.in.content;
 
         if (context.properties.generateOutputPortOptions) {
-            return lib.getOutputPortOptions(context, outputType, SCHEMA, { label: 'Items' });
+            return lib.getOutputPortOptions(context, outputType, ITEM_SCHEMA.properties, { label: 'Items' });
         }
 
         const records = await fetchData();
@@ -791,6 +892,55 @@ module.exports = {
 - For the `'array'` outputType, always use `result` as the array output field name and include the total count: `{ result: records, count: records.length }`
 - Never use `records` or custom field names for consistency
 - lib.js MUST exist in connector root if component has outputType — follow this rule even when the workspace has no tooling to enforce it
+- The helper takes the **property map**, so pass `ITEM_SCHEMA.properties` — `lib.js` is copy-pasted per connector and its signature must not change
+
+### Export the item schema as `ITEM_SCHEMA`
+
+A dynamic output port declares **no** `schema` in component.json — the designer
+builds the variable picker from the options the component emits under
+`generateOutputPortOptions`. That leaves the whole output contract invisible to
+every offline check, and gives `required` nowhere to live, so
+`appmixer connector verify` has to treat every declared field as mandatory and
+reports an optional field the API happened not to return as a dead picker entry
+(real case: airtop FindSessions, 2026-09-03 — the session listing carries the
+connection URLs for a *running* session and omits them for an ended one).
+
+So a component whose `out` port generates its own options **MUST** export that
+item schema:
+
+```javascript
+const ITEM_SCHEMA = {
+    type: 'object',
+    required: ['id', 'status'],          // only what the API ALWAYS returns
+    properties: {
+        id: { type: 'string', title: 'Session ID', example: '0a5b2c4e-9d31' },
+        status: { type: 'string', title: 'Status', example: 'running' },
+        cdpUrl: { type: 'string', title: 'CDP URL', example: 'https://api.airtop.ai/cdp/0a5b' }
+    }
+};
+
+module.exports = { ITEM_SCHEMA, async receive(context) { /* … */ } };
+```
+
+Rules:
+
+1. **A complete JSON Schema** (`type` / `required` / `properties`), not a bare
+   property map — the same shape a static `outPorts[].schema` declares, so every
+   schema-aware check (nested titles, types, examples) works on it unchanged.
+2. **`required` lists only what the API always returns**, per level, exactly as
+   in "Nested objects in output schemas" (`05-component-config.md`). Take the
+   answer from a live `appmixer connector verify` run rather than from the
+   provider's docs — it reports which leaves were never observed.
+3. **Declare it above `module.exports`.** Naming it in the exports object while
+   the `const` sits below throws `Cannot access 'ITEM_SCHEMA' before
+   initialization` at require time — the component then fails to load at all.
+4. Applies to a **self-sourced** port (`source.url` points back at this
+   component). A port sourced from a *sibling* takes its contract from that
+   sibling's `ITEM_SCHEMA`.
+
+This changes nothing for the designer: the emitted options are byte-identical.
+It exists so `validate` can see the contract offline and `verify` can honour
+`required`.
 
 ### List (Items) Components
 
@@ -803,7 +953,7 @@ module.exports = {
 - Includes `outputType` for array vs individual items
 - IMPORTANT: Ignore pagination or limits—use the maximum available page size
 - Mention maximum page size count in description
-- **IMPORTANT**: Do NOT include `limit` or `offset` fields in component inputs - these are not supported by Appmixer List components
+- Same `limit`/`offset` rule as Find components above
 
 **Example component.json structure**:
 See [`examples/list-forms/component.json`](examples/list-forms/component.json).
@@ -937,15 +1087,16 @@ module.exports = {
 
 Trigger components monitor for events and start workflows when conditions are met. They use polling or webhooks.
 
-### Common Trigger Patterns
+### Key Characteristics
 
-**Key Characteristics**:
 - Set `"trigger": true` in component.json
 - Use `tick()` method for polling triggers
 - Use `webhook()` method for webhook triggers
 - Store state to track changes
 
-### New/Created (Item) Triggers
+### Trigger Kinds
+
+#### 1. Polling Triggers (`tick: true`) — New/Created (Item)
 
 **Purpose**: Trigger when new items are created.
 
@@ -1257,7 +1408,7 @@ The convention is to pass a sentinel property in `source.data.properties` so the
 "source": {
     "url": "/component/appmixer/<connector>/core/ListFoo?outPort=out",
     "data": {
-        "properties": { "variableFetch": true },
+        "properties": { "isSource": true },
         "transform": "./ListFoo#toSelectArray"
     }
 }
@@ -1271,7 +1422,7 @@ async receive(context) {
         const drives = await listItems(context, 'me/drives?');
         return context.sendJson({ drives }, 'out');
     } catch (err) {
-        if (context.properties.variableFetch) {
+        if (context.properties.isSource) {
             return context.sendJson({ drives: [] }, 'out');
         }
         context.log({ stage: 'Error', err });
@@ -1315,12 +1466,12 @@ const { callEndpointCached } = require('../../lib');
 async receive(context) {
     try {
         const url = `https://api.example.com/foo?token=${context.auth.accessToken}`;
-        const { data } = context.properties.variableFetch
+        const { data } = context.properties.isSource
             ? await callEndpointCached(context, url)
             : await context.httpRequest.get(url);
         return context.sendJson({ items: data.items }, 'out');
     } catch (err) {
-        if (context.properties.variableFetch) {
+        if (context.properties.isSource) {
             return context.sendJson({ items: [] }, 'out');
         }
         throw err;
@@ -1347,54 +1498,14 @@ Components referenced in a `source.url` **only** with `generateOutputPortOptions
 
 # Part 8: Best Practices
 
-## Code Style Guidelines (For All)
+## Code Style
 
 - Use 4 spaces for indentation
-- Add one empty line after function definitions
-- Add one empty line after the `receive` function definition
+- Add one empty line after function definitions (including `receive`)
 - Use camelCase for variable names in JavaScript behavior files (destructure with aliases if needed)
-- Remove all unused variables and imports
-- Property names in component.json must NEVER use a pipe `|` (e.g., `lockType`, not `lock|type`)
-- **New input** property names should be camelCase (no underscore `_`). Existing snake_case inputs are fine and must NOT be renamed — that is a breaking change for connector users (input re-binding).
+- Remove all unused variables and imports. If a property is not needed in the behavior logic, do not include it in component.json.
 - Property names in component.json must exactly match those used in `context.messages.in.content`
-
-## Development Guidelines (For All)
-
-### auth.js Requirements
-
-`auth.js` file with type `apiKey` MUST follow these rules:
-- `requestProfileInfo` MUST return either:
-    - An object with just the obfuscated apiKey (if profile info is not available via API) or
-    - An object with the profile info
-
-### Component Behavior (JavaScript) Requirements
-
-Behavior JS file MUST follow these rules:
-- Every required input in the component.json must be also asserted in the behavior file
-- If a required input is missing, throw exception: `throw new context.CancelError('<human_readable_input_name> is required!')`
-- Delete components must return an empty object, e.g., `return context.sendJson({}, 'out');` at the end of the function
-
-### component.json Requirements
-
-`component.json` file MUST follow these rules:
-- Delete components must have `outPorts: ['out']`
-- Update or delete components must have at least one required input, which is the ID of the entity being updated or deleted
-- **IMPORTANT**: Find and List components must NOT include `limit` or `offset` fields in their input schema - these pagination controls are not supported by Appmixer and should be handled internally using the maximum available page size from the API
-
-## Best Practices (AI Assistance)
-
-Intended for AI assistance like Copilot, CodeRabbit, Claude, etc.
-
-### Critical Restrictions for AI Code Generation
-
-- **OAuth Scope Changes are Breaking Changes**: NEVER add new OAuth scopes to an existing connector's `component.json` `auth.scope` array without treating it as a **major** version bump. Adding a scope forces all existing users to re-authenticate. Always:
-  - Bump the connector `bundle.json` to the next major version (e.g. `2.x.x` → `3.0.0`)
-  - Add a `BREAKING:` prefix to the changelog entry describing the scope addition
-  - Note in the PR description that existing users must re-authenticate
-
-- **Pagination Fields**: NEVER generate `limit` or `offset` fields in Find or List component inputs. Appmixer does not support these pagination controls. Instead, use the maximum available page size from the external API and mention the limit in the component description.
-
-- **Property Name Consistency**: Property names in `component.json` (both schema and inspector) MUST exactly match the property names used in the behavior file's `context.messages.in.content`. Use underscore `_` or camelCase as separator, NOT pipe `|`. For example:
+- Property names in component.json must NEVER use a pipe `|`. **New input** property names should be camelCase (no underscore `_`). Existing snake_case inputs are fine and must NOT be renamed — that is a breaking change for connector users (input re-binding). Enforced on changed/new inputs by the `input-property-naming` validator (`appmixer connector validate --changed`).
 
   ```
   // component.json - WRONG
@@ -1402,42 +1513,53 @@ Intended for AI assistance like Copilot, CodeRabbit, Claude, etc.
     "lock|type": { "type": "string" },      // WRONG - uses pipe |
     "lock|expires_at": { "type": "string" } // WRONG - uses pipe |
   }
-  
-  // component.json - CORRECT (option 1: snake_case)
+
+  // component.json - CORRECT (new inputs: camelCase)
   "properties": {
-    "lock_type": { "type": "string" },      
-    "lock_expires_at": { "type": "string" }
-  }
-  
-  // component.json - CORRECT (option 2: camelCase)
-  "properties": {
-    "lockType": { "type": "string" },      
+    "lockType": { "type": "string" },
     "lockExpiresAt": { "type": "string" }
   }
-  
-  // Behavior file - use camelCase variables
-  // If component.json uses snake_case, destructure with aliases:
-  const { 
+
+  // Behavior file - camelCase variables. If component.json uses (legacy)
+  // snake_case, destructure with aliases:
+  const {
     lock_type: lockType,
     lock_expires_at: lockExpiresAt
   } = context.messages.in.content;
-  
+
   // If component.json uses camelCase, destructure directly:
   const { lockType, lockExpiresAt } = context.messages.in.content;
   ```
 
-- **Unused Variables**: Remove all unused variables and imports. Every declared variable must be used in the code. If a property is not needed in the behavior logic, do not include it in component.json.
+## auth.js Requirements
 
-- **Unnecessary Input Fields**: Do not create select fields with only one option. If a value is constant, hardcode it in the behavior file instead of making it a user input.
+`auth.js` file with type `apiKey` MUST follow these rules:
+- `requestProfileInfo` MUST return either:
+    - An object with just the obfuscated apiKey (if profile info is not available via API) or
+    - An object with the profile info
 
-- **Date/Time Input Types**: When a field accepts date or datetime values, use the appropriate inspector type:
-    - For datetime fields: Use inspector type `"date-time"`
-    - Schema: `"type": "string", "format": "date-time"`
-    - Inspector: `"type": "date-time"`
-    - For date-only fields: Use inspector type `"date-time"` with config `{ "enableTime": false }`
-    - Do NOT use `"type": "text"` for date/datetime fields in the inspector
+**Adding an OAuth scope to an existing connector is a breaking change** —
+every existing user has to re-authenticate. Bump `bundle.json` to the next
+major version, prefix the changelog entry with `BREAKING:`, and say in the PR
+description that users must re-authenticate (example entry in
+"OAuth 2.0 Authentication", `02-authentication.md`).
 
-  Example:
+## Component Behavior (JavaScript) Requirements
+
+Behavior JS file MUST follow these rules:
+- Every required input in the component.json must be also asserted in the behavior file
+- If a required input is missing, throw exception: `throw new context.CancelError('<human_readable_input_name> is required!')`
+- Delete components must return an empty object, e.g., `return context.sendJson({}, 'out');` at the end of the function
+
+## component.json Requirements
+
+`component.json` file MUST follow these rules:
+- Delete components must have `outPorts: ['out']`
+- Update or delete components must have at least one required input, which is the ID of the entity being updated or deleted
+- Find and List components must NOT include `limit` or `offset` inputs — pagination is handled internally with the maximum page size (see "Find (Items) Components" in `07-component-types.md`)
+- **Unnecessary input fields**: do not create select fields with only one option. If a value is constant, hardcode it in the behavior file instead of making it a user input.
+- **Date/time inputs**: schema `"type": "string", "format": "date-time"` with inspector type `"date-time"` (date-only: `"format": "date"` + `config: { "enableTime": false }`). Do NOT use inspector type `"text"` for date/datetime fields. The full schema→inspector mapping is in "Type Mapping for Input Ports" (`05-component-config.md`).
+
   ```json
   {
     "schema": {
@@ -1459,22 +1581,20 @@ Intended for AI assistance like Copilot, CodeRabbit, Claude, etc.
   }
   ```
 
-## Best Practices (Humans)
-
-### Development Guidelines
+## General Guidelines
 
 - **Authentication**: Store sensitive data in auth configuration, not component code
 - **Rate Limiting**: Use quota.js to prevent API abuse
 - **Documentation**: Provide clear descriptions and tooltips for all fields
 
-### Performance Considerations
+## Performance
 
 - **Caching**: Cache frequently accessed data (e.g., user lists, configuration)
 - **Pagination**: Handle large datasets with proper pagination
 - **Locking**: Use locking mechanisms for shared resources
 - **Batching**: Batch API calls when possible to reduce requests
 
-#### Cache TTL using staticCache
+### Cache TTL using staticCache
 
 When caching data (e.g., folder structures, user lists, property definitions), use `context.staticCache` with a TTL (Time-To-Live) to ensure the cache is refreshed periodically:
 
@@ -1500,35 +1620,11 @@ async tick(context) {
 - Use descriptive cache keys with connector name prefix (e.g., `hubspot_properties_contacts`)
 - Include relevant identifiers in the key (e.g., user ID, folder ID) to avoid cache collisions
 - Use TTL between 10-60 minutes depending on how frequently the data changes
-- Combine with `context.lock()` when the fetch operation is expensive (see locking section below)
-
-**Example with lock** (from hubspot/commons.js):
-```javascript
-async getObjectProperties(context, objectType) {
-    const cacheKey = `hubspot_properties_${objectType}`;
-    let lock;
-    try {
-        lock = await context.lock(cacheKey);
-        const cached = await context.staticCache.get(cacheKey);
-        if (cached) {
-            return cached;
-        }
-
-        // Fetch data from API
-        const { data } = await context.httpRequest({ /* ... */ });
-
-        // Cache with 1 minute TTL
-        await context.staticCache.set(cacheKey, data, 60 * 1000);
-        return data;
-    } finally {
-        await lock?.unlock();
-    }
-}
-```
+- Combine with `context.lock()` when the fetch operation is expensive or fires in bursts — the lock-around-fetch shape is `callEndpointCached` in "Response caching" (`07-component-types.md`)
 
 **Why staticCache is preferred over state-based caching**: `staticCache` provides built-in TTL support, handles expiration automatically, and is shared across component instances. State-based caching requires manual timestamp tracking and persists in the database unnecessarily.
 
-#### Locking for Long-Running Tick Operations
+### Locking for Long-Running Tick Operations
 
 When a `tick()` function may take a long time to execute (e.g., fetching nested folder structures), use a lock to prevent concurrent execution:
 
@@ -1555,7 +1651,7 @@ async tick(context) {
 
 **Why locking is important**: The Appmixer engine calls `tick()` at regular intervals (default: 60 seconds). If a tick operation takes longer than the interval, multiple concurrent tick executions can overwhelm external APIs and cause race conditions.
 
-#### Batching Recursive API Calls
+### Batching Recursive API Calls
 
 When fetching hierarchical data (e.g., recursive folder structures), use batched concurrent requests instead of sequential recursive calls:
 
@@ -1596,26 +1692,28 @@ async function getSubfolders(context, rootFolderId) {
 ```
 
 **Why batching is important**: Deep recursive folder structures with hundreds of subfolders can take minutes to traverse sequentially. Batched concurrent requests significantly reduce total execution time and are less likely to timeout.
-    
-### Common Patterns
 
-#### When Adding New Field to component.json
+## Common Patterns
+
+### When Adding New Field to component.json
 
 > Use-case: "I want to add a new number field `itemCount` to the `MyAwesomeComponent` component."
 
 - Add the field to both `schema` and `inspector` sections in the `inPorts` array. Follow JSON schema format.
 - Add the fields to behavior JS file, especially in `context.httpRequest` call.
 
-#### Dynamic Field Options
+### Dynamic Field Options
 
-Use `source` property to populate field options dynamically:
+Use `source` property to populate field options dynamically. The field type is
+`text` (typeahead), never `select` — see "Using `variableFetch` / `isSource`
+for Dynamic Source Calls" in `07-component-types.md` for why:
 
 ```json
 {
     "inspector": {
         "inputs": {
             "projectId": {
-                "type": "select",
+                "type": "text",
                 "source": {
                     "url": "/component/appmixer/service/core/ListProjects?outPort=out",
                     "data": {
@@ -1628,9 +1726,9 @@ Use `source` property to populate field options dynamically:
 }
 ```
 
-#### File Handling
+### File Handling
 
-##### file input components
+#### file input components
 
 ```json
 {
@@ -1654,7 +1752,7 @@ Use `source` property to populate field options dynamically:
 }
 ```
 
-##### file output components
+#### file output components
 - use `context.saveFileStream()` in behavior JS
 - must return `fileId` in output message
 - should return additional info like `fileSize`, `prompt`, etc. — define these as fields in the `outPorts.schema.properties` (JSON Schema), each with a realistic `example`. See `05-component-config.md` § "Output Port Examples" for the canonical pattern.
@@ -1701,6 +1799,12 @@ E2E test flows are automated workflow tests stored as `test-flow-*.json` files i
 **Important**: Connectors should have **multiple smaller test flows** rather than one large flow. Each flow should test a specific feature or workflow (e.g., `test-flow-crud.json`, `test-flow-search.json`, `test-flow-webhooks.json`). This approach makes tests easier to maintain, debug, and understand.
 
 **Full Coverage Requirement**: All components in a connector MUST be tested. Verify that every component in the connector appears in at least one test flow.
+
+**Data assumptions get a designer sticky note**: a flow that assumes tenant
+data (hardcoded entity IDs that must exist), provokes its own data, or carries
+a timing constraint (a Wait that must not be removed) MUST carry a top-level
+`notes` entry — a designer sticky note with the warning and the setup steps for
+a fresh tenant. See `11-e2e-flow-generation.md` rule 19 for the shape.
 
 #### Test Flow Structure
 
@@ -1821,8 +1925,8 @@ validator).
     - Chain components to test realistic workflows
 
 3. **Assert Components** (`appmixer.utils.test.Assert`)
-    - Validate component outputs
-    - Supported assertions: `equal`, `notEmpty`, `regex`
+    - Validate component outputs (assertion types: see "Assert Component
+      Configuration" below)
     - Multiple assertions can be used throughout the flow
     - **Layout rule**: a tested component and its Assert share the same row
       (Assert at x + 208); the next tested component starts a new row (see
@@ -1974,7 +2078,7 @@ Use CodeBlock only when modifiers can't express the logic: complex string format
 
 **CodeBlock gotchas:**
 - Output wraps the return value under `result` field. Access via `$.code-block-id.out.result`. Deep access like `$.code-block-id.out.result.field` does NOT work — return simple strings/numbers.
-- Code runs in `isolated-vm`. Bare `return` statements are illegal. Use expressions directly (e.g. `'value-' + Date.now()`) or IIFEs.
+- Code runs in `isolated-vm`, **synchronously** (`evalSync`) — no `await`, no `setTimeout`, no Promises, so a CodeBlock cannot delay. Input variables are exposed on **`$data`** (e.g. `$data.body`), not as bare identifiers. Bare `return` statements are illegal. Use expressions directly (e.g. `'value-' + Date.now()`) or IIFEs.
 
 #### Deterministic Test Design
 
@@ -1982,9 +2086,8 @@ Tests must pass on repeated runs without input changes:
 
 - **Unique inputs**: Use `g_timestamp` or `g_uuid4` modifier functions for unique identifiers (e.g. `e2e-{{{ts-var}}}@test.com`). Prefer modifiers over CodeBlock.
 - **Avoid hardcoded dates**: Use `g_now` + `g_addTimeSpan` to compute future dates dynamically. Hardcoded dates expire and tests break.
-- **Create + Delete cleanup**: If the API rejects duplicates (e.g. contacts by email), the test MUST delete created resources at the end.
-- **Delete component placement**: Delete components should be placed DIRECTLY BELOW their corresponding Assert component (same x position, y + 128px) to maintain clean visual layout and avoid crossing connection lines.
-- **Search/Find race conditions**: Many APIs have eventual consistency. A record created 1 second ago may not appear in search results. Best approach: search for a pre-existing test record instead of a just-created one. Alternative: insert `appmixer.utils.timers.Wait` with `interval: "1m"` (minimum unit is minutes) — CodeBlock CANNOT delay: it runs synchronously in isolated-vm (`evalSync`), `await`/`setTimeout`/Promises error out.
+- **Create + Delete cleanup**: If the API rejects duplicates (e.g. contacts by email), the test MUST delete created resources at the end — after AfterAll (see Required Components).
+- **Search/Find race conditions**: Many APIs have eventual consistency. A record created 1 second ago may not appear in search results. Best approach: search for a pre-existing test record instead of a just-created one. Alternatives: insert `appmixer.utils.timers.Wait` with `interval: "1m"` (minimum unit is minutes — a CodeBlock cannot delay, see its gotchas above), or put a Get-by-ID between Create and Find.
 - **Cross-component variable references**: When referencing variables from indirect upstream components (2+ hops), prefer direct upstream references. E.g. use `$.find-items.out.id` instead of `$.create-item.out.id` when the update is triggered by find.
 
 #### Provider Latency Is a Design Input
@@ -2382,82 +2485,34 @@ The `result` property MUST use `{{{uuid}}}` pattern referencing `$.after-all.out
 
 #### Best Practices for Test Flows
 
-1. **Multiple Smaller Flows**
-    - Create multiple focused test flows per connector instead of one large flow
-    - Each flow should test a specific feature or workflow
-    - Examples: `test-flow-crud.json`, `test-flow-search.json`, `test-flow-webhooks.json`
-    - Smaller flows are easier to debug, maintain, and understand
+(Multiple smaller flows, full coverage, cleanup after AfterAll, layout and UUID
+component ids are specified at the top of this document and not repeated here.)
 
-2. **Ensure Full Coverage**
-    - **CRITICAL**: Every component in the connector MUST be tested
-    - Verify that each component appears in at least one test flow
-    - Use a checklist to track which components are covered
-    - Include both actions and triggers in test coverage
-
-3. **Test Realistic Workflows**
+1. **Test Realistic Workflows**
     - Create → Modify → Read → Delete sequence
     - Test main user journeys
     - Include error cases where appropriate
 
-4. **Multiple Assert Components - Separate Branches**
+2. **Multiple Assert Components - Separate Branches**
     - **CRITICAL**: If a flow has more than one Assert component, they MUST be in separate branches
     - Each Assert should test a different aspect or operation
-    - Branches should have different y-coordinates for visual separation
-    - All Assert components feed into the AfterAll component to merge results
-    - Example structure:
+    - Branches sit on different rows (Δy ≥ 128) and all feed into AfterAll:
       ```
-      Component A (y=100)
-        ├─> Assert 1 (y=100) ─┐
-        └─> Component B (y=300) ─> Assert 2 (y=300) ─┘
-                                                      └─> AfterAll
+      Component A (y=16)  → Assert 1 (y=16)  ─┐
+        └─> Component B (y=144) → Assert 2 (y=144) ─┴─> AfterAll
       ```
-    - See `test-flow-images.json` for reference implementation
 
-5. **Field Name Accuracy**
+3. **Field Name Accuracy**
     - Use EXACT field names from component.json
     - Match required vs optional fields
     - Example: `paragraphText` not `text`, `oldText` not `searchText`
 
-6. **Variable References**
+4. **Variable References**
     - Reference outputs using `$.component-id.out.fieldName`
     - Use consistent variable IDs in modifiers
     - Pass data between components via variables
 
-7. **Cleanup Operations**
-    - Always delete created test data
-    - Use AfterAll to ensure cleanup runs after all assertions
-    - Connect cleanup components properly
-
-8. **Component Coordinates and Layout**
-    - **Horizontal spacing**: at least **208px** (MIN_DX) between sequentially connected components on the x-axis
-    - **Vertical spacing**: at least **128px** (MIN_DY) between parallel rows/branches on the y-axis
-    - **Starting position**: OnStart at `x: 64, y: 16`
-    - **Diagonal staircase pattern**: When operations branch off sequentially (Create → Get → Update → ...), each subsequent action moves **+208px right** and **+128px down**, forming a diagonal:
-      ```
-      on-start (64,16) → set-variables (272,16) → create (480,16)
-                                                       ↓
-                                                   get (688,144)
-                                                       ↓
-                                                   update (896,272)
-                                                       ↓
-                                                   get-content (1104,400)
-      ```
-    - **Assert column**: All Assert components are **right-aligned at a fixed x position** (e.g., `x: 1312`), each at the **same y as its corresponding action**:
-      ```
-      create (480,16)          →  assert-create (1312,16)
-      get (688,144)            →  assert-get (1312,144)
-      update (896,272)         →  assert-update (1312,272)
-      get-content (1104,400)   →  assert-get-content (1312,400)
-      ```
-    - **Tail chain (AfterAll → Cleanup → ProcessResults)**: Place on a **horizontal line** at approximately the vertical center of the flow (e.g., `y: 144`), spaced ≥208px apart after the assert column:
-      ```
-      after-all (1520,144) → delete (1728,144) → process-results (1936,144)
-      ```
-
-9. **Naming Conventions**
-    - Component IDs are **freshly generated UUIDs** (`crypto.randomUUID()`) —
-      never readable slugs (see Component IDs above; `component-id-uuid`
-      validator)
+5. **File Naming**
     - Name test flow files: `test-flow-<feature>.json` (e.g., `test-flow-crud.json`, `test-flow-list.json`)
     - Use clear, descriptive flow names that indicate what the flow tests
 
@@ -2467,49 +2522,20 @@ See [`examples/e2e-test-flow.json`](examples/e2e-test-flow.json).
 
 #### Creating a Test Flow: Step-by-Step
 
-1. **Plan Test Coverage**
-    - List ALL components in the connector (actions and triggers)
-    - Decide how many test flows you need (prefer multiple smaller flows)
-    - Group related components into logical test scenarios
-    - Example groupings:
-        - `test-flow-crud.json`: Create, Update, Get, Delete components
-        - `test-flow-list.json`: List and Find components
-        - `test-flow-advanced.json`: Complex operations like ReplaceText, InsertParagraph
-    - Ensure every component appears in at least one flow
-
-2. **Identify Test Scenario**
-    - Determine which components to test in this specific flow
-    - Plan the workflow sequence
-    - Identify what to assert
-
-3. **Create JSON File**
-    - Name: `src/<vendor>/<connector>/artifacts/test-flows/test-flow-<feature>.json`
-    - Use descriptive feature names: `crud`, `search`, `webhooks`, `list`, etc.
-
-4. **Add Required Components**
-    - Start with OnStart
-    - Add your connector components
-    - Include Assert components
-    - End with AfterAll → Cleanup → ProcessE2EResults
-
-5. **Configure Each Component**
-    - Set correct field names from component.json
-    - Pass data via variable references
-    - Set static test values
-
-6. **Verify Field Names**
-    - Read each component's component.json
-    - Check `inPorts[0].schema.properties` for required fields
-    - Match EXACT field names in test flow config
-
-7. **Test Locally**
-    - Ensure authentication is configured
-    - Run individual components with `appmixer test component`
-    - Verify outputs before building full flow
-
-8. **Verify Coverage**
-    - Check that all components are covered across all test flows
-    - Create additional flows if needed for untested components
+1. **Plan** — list ALL components (actions and triggers) and group them into
+   scenarios, e.g. `test-flow-crud.json` (Create, Update, Get, Delete),
+   `test-flow-list.json` (List and Find), `test-flow-advanced.json` (complex
+   operations). Every component appears in at least one flow.
+2. **Create the file** at
+   `src/<vendor>/<connector>/artifacts/test-flows/test-flow-<feature>.json`
+   with OnStart → connector components → Assert(s) → AfterAll → cleanup →
+   ProcessE2EResults.
+3. **Configure each component** from its `component.json`: exact field names,
+   every `required` input populated, data passed via variable references.
+4. **Test locally first** — run individual components with
+   `appmixer test component` and verify outputs before wiring the full flow.
+5. **Validate** with `appmixer e2e validate` (rules in
+   `11-e2e-flow-generation.md`).
 
 #### Common Mistakes to Avoid
 
@@ -2522,20 +2548,11 @@ See [`examples/e2e-test-flow.json`](examples/e2e-test-flow.json).
     - ❌ Omitting required inputs
     - ✅ Verify all `required` fields from schema are populated
 
-3. **Wrong Variable References**
-    - ❌ `$.component.out` — Raw Output, forbidden. Always include a field name.
-    - ❌ `$.component.out.items.0.id` — `.N.` array indexing does not work in variable paths.
-    - ✅ `$.component-id.out.fieldName`
-    - ✅ For array items use modifier functions: `g_jsonPath` with param `"$[0].id"` on `$.component.out.items`, or `g_first` / `g_last` for simple first/last element. See **Modifier Functions** section above.
-
-3b. **Deep Paths Past the Static outPort Contract**
-    - ❌ `$.make-api-call.out.response.opportunityid` — works at runtime, but MakeApiCall statically declares only `response`/`status`/`statusText`, so the designer's variable picker cannot offer the deep path and renders a red invalid-variable chip (validation error).
-    - ✅ Reference the deepest DECLARED path and extract the leaf with a modifier: `"variable": "$.make-api-call.out.response"` + `"functions": [{ "name": "g_jsonPath", "params": [{ "value": "$.opportunityid" }] }]` (note: `params`, not `args`).
-    - ✅ Dynamic outPorts (options generated by a live `source` call, e.g. polling triggers) DO offer entity leaf fields — reference those directly (`$.trigger.out.contactid`).
-
-3c. **Arrays/Objects in String-Typed Inputs**
-    - ❌ `"headers": [{ "key": "Prefer", "value": "return=representation" }]` — key-value inspector inputs (MakeApiCall `headers`/`parameters`) declare `"type": "string"`; a raw array works at runtime but fails the designer's schema validation with a red "must be string" chip.
-    - ✅ Serialize as a JSON string: `"headers": "[{\"key\": \"Prefer\", \"value\": \"return=representation\"}]"`.
+3. **Wrong Variable References** — Raw Output (`$.component.out`), numeric
+   array indexing (`.items.0.id`), paths deeper than the sender's static
+   outPort contract, and raw arrays in string-typed inputs. The correct forms
+   (`g_jsonPath` / `g_first` / `g_last` modifiers, JSON-serialized strings) are
+   rules 3, 6b, 8 and 9b in `11-e2e-flow-generation.md`.
 
 4. **Forgetting ProcessE2EResults**
     - ❌ Ending flow without ProcessE2EResults
@@ -2545,18 +2562,12 @@ See [`examples/e2e-test-flow.json`](examples/e2e-test-flow.json).
     - ❌ Leaving test data in the service
     - ✅ Delete all created test data in cleanup phase
 
-6. **Incomplete Component Coverage**
-    - ❌ Creating one large test flow that doesn't test all components
-    - ❌ Forgetting to test some components
-    - ✅ Verify every component appears in at least one test flow
-    - ✅ Create multiple smaller flows to cover all components
-
 #### Reference Test Flows
 
-Good examples to reference (under each connector's `artifacts/test-flows/`):
-- `src/appmixer/googleDocs/artifacts/test-flows/` - Document CRUD operations
-- `src/appmixer/todoist/artifacts/test-flows/` - Task/project/label workflows
-- `src/appmixer/hubspot/artifacts/test-flows/` - CRM operations
+`examples/e2e-test-flow.json` is the only structural reference. Do NOT copy
+patterns from other connectors' committed test flows — many pre-date the current
+rules (`BeforeAll`, missing `errorHandling`, readable component ids); see
+`11-e2e-flow-generation.md`.
 
 ---
 
@@ -2750,7 +2761,7 @@ those mean the engine fell back to schema samples because `test()` threw or is m
 
 | Group | Description | `test()` approach |
 |-------|-------------|-------------------|
-| **A** Polling list+dedup | `tick()` lists latest, dedups vs state (e.g. `freshdesk.NewTicket`, `gmail.NewEmail`, `github.NewIssue`, `wordpress.*`, `asana.*`) | Reuse the same fetch+map path, queried newest-first (`desc` + `limit 1`), emit first item. ⚠️ If the polling helper has a baseline/init phase that suppresses first-run output (e.g. gmail), don't call it with empty state — add a small `fetchLatest` helper that shares the mapping. For SDK-based connectors (`asana`) reuse the same SDK `list`+`findById` calls — the SDK is the shared seam (see "SDK-based connectors" above). |
+| **A** Polling list+dedup | `tick()` lists latest, dedups vs state (e.g. `freshdesk.NewTicket`, `gmail.NewEmail`, `github.NewIssue`, `wordpress.*`, `asana.*`) | Reuse the same fetch+map path, queried newest-first (`desc` + `limit 1`), emit first item. ⚠️ If the polling helper has a baseline/init phase that suppresses first-run output (e.g. gmail), don't call it with empty state — add a small `fetchLatest` helper that shares the mapping. SDK-based connectors (`asana`): see "SDK-based connectors" above. |
 | **B** Per-flow webhook | `start()` registers a per-flow webhook (e.g. `calendly`, `shopify`, `xero`, `hubspot`, `microsoft.mail`) | Do NOT register. Add a shared `lib.fetchLatestExample(context, type, properties)` once per connector, fetch newest record via REST, reshape into the webhook payload. |
 | **C** Plugin-based (global URL + `addListener`) | app-level webhook, `plugin.js`/`routes.js` fan out (e.g. `slack`, `whatsapp`, `meta.*`) | Skip `addListener`, fetch one recent matching event via REST, return it in the exact shape `routes.js` puts on the wire. **If the upstream has no API to fetch such an event** (e.g. WhatsApp received messages / message-status updates), do NOT fabricate one — `throw new context.CancelError(...)` explaining it can only be triggered by a real event (see Hard rule 5). |
 | **D** Generic webhook (`utils.http.Webhook*`) | no schema/upstream | **Do not implement.** Rely on log search or user-provided `payload`; document in the description. |
@@ -2763,7 +2774,9 @@ The shared pieces live in the connector's `lib.js` so every component issues req
 way: `apiCall()` (auth + base URL on top of `context.httpRequest`), `mapTicket()` (raw ticket →
 output `fields`) and `requestTickets()` (one page: fetch + map + pagination parsing). `tick()`
 and `test()` both go through `requestTickets()`; `test()` adds only the newest-first query and
-`records[0]`. See `src/appmixer/freshdesk/lib.js` + `tickets/NewTicket/NewTicket.js`.
+`records[0]`. See `src/appmixer/freshdesk/lib.js` + `tickets/NewTicket/NewTicket.js`;
+the sibling triggers `UpdatedTicket` (cursor on `updated_at`), `DeletedTicket`
+(`filter=deleted`, own mapping) and `NewConversation` follow the same shape.
 
 ```javascript
 // lib.js — single source of truth for request shape, mapping and pagination
@@ -2947,57 +2960,6 @@ test(context) {
 - [ ] Workspace lint/validators pass (when provided), and `test()` verified via CLI `--test` or
       Flow Test Mode on a live instance (see "Verifying your test() method")
 
-## Reference connectors
-
-Worked examples across the groups:
-
-**Group A — polling list+dedup:**
-- **`freshdesk.NewTicket`** (`src/appmixer/freshdesk/tickets/NewTicket/`) — *extract from inlined
-  logic.* `tick()` had the request + mapping inlined, so they were pulled into `lib.requestTickets()`
-  + `lib.mapTicket()` and now `tick()` and `test()` both call them. Also has **dynamic** outPorts
-  (via `GenerateTicketsOutput`), so the schema fallback is weak and `test()` carries real value.
-  The sibling triggers `UpdatedTicket` (cursor on `updated_at`) and `DeletedTicket`
-  (`filter=deleted`, own mapping) follow the same shape; `NewConversation` shares
-  fetch/filter/emit helpers between `tick()` and `test()`.
-- **`google.gmail.NewEmail`** (`src/appmixer/google/gmail/NewEmail/` + `../lib.js`) — *reuse an
-  existing lib helper.* The per-message fetch+normalize was factored into `lib.fetchMessage()`
-  (reused by both `listNewMessages()` and a new `lib.fetchLatestExample()`); `test()` is a 4-line
-  wrapper. Note the gotcha: `listNewMessages()` suppresses output on first run (baseline-only
-  init phase), so `test()` could **not** just call it with empty state — it needed the dedicated
-  `fetchLatestExample()` that lists newest-first and honors `query`. Watch for this whenever the
-  polling helper has init/baseline semantics.
-- **`asana.*`** (`src/appmixer/asana/` — `NewTask`, `NewSubtask`, `NewStory`, `NewComment`,
-  `NewTag`, `TagAdded`, `TaskCompleted`, `NewProject`, `NewTeam`) — *SDK-based, no HTTP helper.*
-  Every `tick()` lists via the `asana` SDK, dedups vs state, then re-fetches each hit with
-  `<resource>.findById(gid)` and emits that. `test()` calls the **same** list + `findById`, so
-  the shape is identical; the one shared addition is `asana-commons.pickLatest()` (newest by
-  `created_at`/`gid`). `NewComment` keeps the `type === 'comment'` filter; `TagAdded` reads the
-  task's `tags`; `TaskCompleted` mirrors both of `tick()`'s branches (single `task` vs
-  project-wide scan) — a worked example of the branching-trigger rule.
-
-**Group B — per-flow webhook:**
-- **`calendly.events.InviteeCreated`** (`src/appmixer/calendly/events/InviteeCreated/` +
-  `../../calendly-commons.js`) — `receive()` only forwards the webhook body, so the reuse is
-  *across the connector's webhook triggers*: `fetchLatestExample()` (REST, newest invitee) +
-  `toWebhookShape()` live in commons; `test()` is a thin wrapper that reshapes the REST record
-  into the exact body the webhook delivers.
-
-**Group C — plugin-based (global URL + `addListener`):**
-- **`slack.list.NewChannelMessageRT`** (`src/appmixer/slack/list/NewChannelMessageRT/`) — `test()`
-  skips `addListener` and reuses the same `conversations.history` call the polling
-  `slack.list.NewChannelMessage` trigger uses, honoring the same `ignoreBotMessages` filter as
-  `receive()`.
-
-**Group E — scheduler/timer:**
-- **`utils.timers.SchedulerTrigger`** (`src/appmixer/utils/timers/SchedulerTrigger/`) — `test()`
-  reuses the same `getNextRun()` computation as `start()`/`receive()` and emits the next-run
-  payload without setting any timeout or touching state.
-
-**Group F — form (dynamic schema):**
-- **`utils.forms.FormTrigger`** (`src/appmixer/utils/forms/FormTrigger/`) — `test()` synthesizes
-  one entry from `properties.fields.ADD`, matching the exact shape a real POST submission
-  produces (`field_<index>` keys, string values, checkbox → boolean, `defaultValue` preferred).
-
 ---
 
 # E2E Test Flows
@@ -3006,7 +2968,7 @@ Generate E2E test flow JSON files for a connector's components. **You (the agent
 write the flows directly** — there is no separate sub-agent. After writing them
 you run a deterministic validator and fix anything it flags, looping until clean.
 
-> **Tooling:** the validator and the canonical flow template ship with the
+> **Tooling:** the validator ships with the
 > `appmixer` CLI (`npm i -g appmixer`, version **>= 2.6.0** — the version-gate
 > snippet is in `12-e2e-upload.md` Prerequisites; quick probe:
 > `appmixer e2e validate --help`). No other setup is needed.
@@ -3016,10 +2978,10 @@ you run a deterministic validator and fix anything it flags, looping until clean
 1. **Pick the components** to cover (one trigger or action per flow; default: all
    testable components of the connector).
 2. **Read the canonical template**
-   [`examples/test-flow-template.json`](examples/test-flow-template.json)
-   (shipped next to this document) — copy its structure (OnStart → setup →
-   component-under-test → Assert → AfterAll → ProcessE2EResults). It is a
-   complete, working example.
+   [`examples/e2e-test-flow.json`](examples/e2e-test-flow.json)
+   (shipped next to this document) — copy its structure (OnStart →
+   component-under-test → Assert → AfterAll → cleanup → ProcessE2EResults).
+   It is a complete, working example.
 
    ⚠️ **The template is the ONLY structural source of truth. Do NOT copy patterns
    from other connectors' committed test flows** — many pre-date the current
@@ -3185,6 +3147,11 @@ you run a deterministic validator and fix anything it flags, looping until clean
       created during flow start, before OnStart fires.
     - polling trigger (e.g. event-start): create data the first poll will match
       (an ongoing/imminent item) — no Wait needed.
+    - **baseline-and-dedupe polling trigger** (`tick()` records the current item
+      set on its first poll and only emits items that appear LATER): the provoke
+      MUST run after that first tick, so keep the `Wait 1m` before the
+      provoking action — a cart/record created at flow start lands in the
+      baseline and is never emitted (prestashop AbandonedCart).
     - Webhook notifications can take **minutes** to arrive (MS Graph: ~5 measured)
       — set the AfterAll `timeout` to 420 and expect the runner to wait, not fail.
     - Cleanup should consume the TRIGGER's output (`$.trigger.out.id`) — it then
@@ -3207,16 +3174,34 @@ you run a deterministic validator and fix anything it flags, looping until clean
     - **Event not provokable via API at all** (real storefront/UI action:
       checkout sessions, customer-portal steps)? Still generate the flow —
       trigger lane + `OnStart → Wait` (validators require OnStart) — and add a
-      sticky `note` in the flow JSON with numbered manual steps to fire the
-      event, plus a longer AfterAll `timeout` (600) so a human has time to click
+      sticky note (top-level `notes`, rule 19) with numbered manual steps to
+      fire the event, plus a longer AfterAll `timeout` (600) so a human has time to click
       through. The flow then serves as a repeatable manual verification harness.
     - **Verify the trigger's topic fires at all** before writing the flow: a
       generic "updated" topic can be dead for the whole real journey (per-step
-      topics fire instead) — see the multi-topic trigger pattern in
-      `07-component-types.md`. A wrong topic produces a flow that registers
-      fine and times out forever.
+      topics fire instead). Probe the topic with a direct API call first — a
+      wrong topic produces a flow that registers fine and times out forever.
 
-(Failures 1-10 — including 5c, 6b and 9b — fail validation; 11-18 are warnings
+19. **Document data assumptions with a designer sticky note** — a flow that
+    assumes tenant data (a hardcoded entity ID that must exist), provokes its
+    own data (state transitions, seeded records), or carries a timing
+    constraint (a Wait that must not be removed) MUST carry a top-level
+    `notes` entry explaining the assumption and how to satisfy it on a fresh
+    tenant. Anyone opening the flow in the designer sees the warning instead
+    of debugging a silent timeout. Shape (markdown `content`):
+
+    ```json
+    "notes": {
+        "<uuid>": { "x": 64, "y": 32, "width": 672, "height": 224,
+                    "content": "## ⚠️ Test data assumption\n\n…what must exist, why, and the setup steps…" }
+    }
+    ```
+
+    Notes survive `appmixer e2e import`. Real cases: prestashop find-returns
+    (self-provoked Refunded state + required POST permission), customer-orders
+    (demo customer with orders vs. the GDPR anonymous account).
+
+(Failures 1-10 — including 5c, 6b and 9b — fail validation; 11-19 are warnings
 or generation guidance.)
 
 ## Adding / changing a rule
@@ -3555,8 +3540,6 @@ into `dynamicComponentVariables[]` and each
 into that array; entry values look like `{{{$.<id>.<port>.<field>}}}`.
 `variables.errors` entries mean the source's options call failed.
 
-**NEVER assert on Raw Output** (`$.comp-id.out`) — it always contains something, making the assertion meaningless. Always test specific fields (e.g. `$.comp-id.out.ManualJournalID` notEmpty).
-
 ## Auth — When `appmixer login` Is Not Possible
 
 With the default setup the e2e commands reuse the CLI's stored login token —
@@ -3621,9 +3604,7 @@ Whack-a-mole warning: each publish of an existing version **appends a duplicate
 copy** into the stored package of every non-removed component — removing A+B and
 publishing refreshes A+B but appends a dupe to the just-cleaned C+D. Duplicates
 are harmless **when byte-identical** (verify with the zipfile snippet in Step 1);
-only content that differs across copies needs another remove+publish round. And
-retry any `appmixer remove` that fails with 502/504 — a gateway error means the
-remove did NOT happen.
+only content that differs across copies needs another remove+publish round.
 
 Alternative when definitions refuse to update in place: **bump the component
 `version`** in component.json (new version = new snapshot) and update the flows'
@@ -3777,12 +3758,10 @@ run `appmixer e2e import` (which binds accounts and validity-tests them).
 **Auth failures are detected automatically:**
 - **Preflight at import** — every bound account is validity-tested
   (`POST /accounts/:id/test`) by `appmixer e2e import`; an expired/revoked token
-  fails the import with the account id, before anything runs. ⚠️ This test runs
-  the connector's `validateAccessToken`, which in some connectors (salesforce)
-  only compares a stored expiry date — a dead token can still pass preflight and
-  surface as runtime 401/403 (`Bad_OAuth_Token`, `INVALID_SESSION_ID`) or as a
-  flow-start 400 wrapping an inner 401 from the trigger's `start()` call. In
-  that case try the service's OTHER accounts and pin the working one.
+  fails the import with the account id, before anything runs. ⚠️ A passing
+  preflight can still hide a dead token (`validateAccessToken` is a no-op in
+  some connectors) — the runtime symptoms and the real-call check are in
+  `12-e2e-upload.md` Step 2.
 - **Scopes (`--fix`)** — a TokenError that persists after one account rebind
   means the bound account's token lacks the component's required scopes (read
   from its `component.json`). The runner hard-fails with the exact scopes —
@@ -3790,14 +3769,10 @@ run `appmixer e2e import` (which binds accounts and validity-tests them).
   re-consent, pin the new account with `appmixer e2e import --account
   <accountId>` if the old scope-less account still exists next to it.
 
-**A pinned account is authoritative:** with `appmixer e2e import --account
-<accountId>` (or the `APPMIXER_SKILL_ACCOUNT_ID` env override), the import
-overrides flow-authored `config.properties.account` values both in the
-uploaded flow definition and in the auth grants — a stale account hardcoded in
-the flow JSON can never shadow it. (Unpinned imports keep flow-authored
-accounts — that is how multi-account flows work — but only when the ID exists
-on the target instance; foreign/deleted IDs, e.g. from a flow exported off
-another tenant, are ignored and a live account is bound instead.)
+**A pinned account is authoritative:** `appmixer e2e import --account
+<accountId>` (or `APPMIXER_SKILL_ACCOUNT_ID`) overrides every flow-authored
+account, in the flow definition and in the auth grants; the full binding
+precedence is in `12-e2e-upload.md` Step 3.
 
 **Clean timeouts are triaged by flow type (`--fix`):** a timeout with zero
 errors means some Assert never fired.
@@ -3848,12 +3823,9 @@ by the flow name. Then:
      usually means an upstream Assert or AfterAll failed
    - `"timeout"` in AfterAll = not all Asserts fired — something upstream is stuck
    - **Flow start rejected: `Component transformation validation error` /
-     `Malformed transformation`** (the response names no component) — some
-     component's `source`/`config.transform` is keyed on a port name that is not
-     one of its inPorts. Most components use `in`, but not all (salesforce
-     CreateLead → `lead`, CreateContact → `contact`). Check every component's
-     `component.json` inPorts; the `inport-key-match` validator catches this
-     statically.
+     `Malformed transformation`** (the response names no component) — a
+     `source`/`config.transform` keyed on a wrong inPort name; rule 0c in
+     `11-e2e-flow-generation.md` (`inport-key-match` validator).
    - **Flow start rejected: 400 wrapping an inner 401/AxiosError with a service
      URL** — the engine called the service during start (trigger `start()`) with a
      dead/wrong account; see the auth notes above. `Cannot read properties of
@@ -3965,23 +3937,11 @@ results or the FIX BRIEF. When reading `/logs` **manually**, always check
 ### `GET /flows/:flowId` Elasticsearch errors
 **Always use `?projection=stage` for status checks** and `?projection=flow` for the definition.
 
-### Search/Find race conditions after Create
-Many APIs have eventual consistency on search indexes. A record created 1 second ago may not appear in search results yet:
-- **Best approach:** Search for a pre-existing test record instead of a just-created one
-- **Alternative:** Insert `appmixer.utils.timers.Wait` with `interval: "1m"` (minimum unit is minutes). CodeBlock CANNOT delay — it runs synchronously in isolated-vm (`evalSync`), `await`/`setTimeout`/Promises are unavailable and error out.
-- **Alternative:** Use GetById between Create and Find to add natural delay
-
 ### Duplicate records on re-runs
 Previous test runs may leave records behind if cleanup failed:
 1. Stop any running flows first
 2. Check if the API rejects duplicates
 3. Clean up leftover test data from previous runs via the connector's API
-
-### CodeBlock output wraps results under `result`
-`appmixer.utils.controls.CodeBlock` wraps the return value under a `result` field. Access it via `$.code-block-id.out.result`. Deep access like `$.code-block-id.out.result.field` does NOT work — return simple strings/numbers only.
-
-### CodeBlock code syntax
-CodeBlock runs in `isolated-vm`, **synchronously** (`evalSync`) — no `await`, no `setTimeout`, no Promises. Input variables are exposed on **`$data`** (e.g. `$data.body`), not as bare identifiers. Bare `return` statements are illegal. Use expressions directly (e.g., `'value-' + Date.now()`) or IIFEs — a single expression that evaluates to a value.
 
 ### Assert failures do NOT stop the flow — and `equal` reads `expected`, not `value`
 A failed assertion is logged in the Assert result payload (`error[]`) as a plain info message; the flow continues and ProcessE2EResults still completes. The runner scans Assert payloads (`collectAssertFailures`) so these fail the run — but when reading logs manually, always check the Assert `success`/`error` arrays, not just component errors. Common authoring bug: `{"assertion": "equal", "field": ..., "value": "200"}` — the Assert component reads the comparison value from the key **`expected`**; with `value` it compares against `undefined` and fails with the misleading message "expected undefined to equal 200".
@@ -3989,11 +3949,10 @@ A failed assertion is logged in the Assert result payload (`error[]`) as a plain
 ### Log parsing
 The `/logs` API returns raw Elasticsearch hits. Error details are in `hits[]._source.err` as a **JSON string** (not object). Parse `err.response.data` for the actual error message.
 
-### Deterministic test design
-Tests must pass on repeated runs without input changes:
-- **Create + Delete cleanup**: If the API rejects duplicates, the test MUST delete created resources at the end.
-- **Unique inputs via modifiers**: Use `g_timestamp` or `g_uuid4` modifier functions for unique identifiers.
-- **Avoid hardcoded dates**: Use `g_now` + `g_addTimeSpan` modifiers to compute future dates dynamically.
+### Flow-design gotchas (CodeBlock, eventual consistency, determinism)
+Live in `09-testing.md` — "Modifier Functions" (CodeBlock `result` wrapping,
+`$data`, no delays) and "Deterministic Test Design" (search-after-create race,
+unique inputs, no hardcoded dates, cleanup).
 
 ## Key API Endpoints
 
@@ -4068,7 +4027,26 @@ receive(webhook) ──▶ look up the echo by job id ──▶ done { result + 
 ### Behavior
 
 ```javascript
-const jobKey = (requestId) => `job-${requestId}`;
+// The echo rides in the callback URL, NOT in component state. See
+// "Carry the echo in the callback URL" below for why state loses jobs.
+const ECHO_PARAM = 'echo';
+
+function buildCallbackUrl(context, echo) {
+    const base = context.getWebhookUrl();
+    const separator = base.indexOf('?') === -1 ? '?' : '&';
+    return `${base}${separator}${ECHO_PARAM}=${encodeURIComponent(JSON.stringify(echo))}`;
+}
+
+function readEcho(context) {
+    const raw = ((context.messages.webhook.content || {}).query || {})[ECHO_PARAM];
+    if (!raw) return {};
+    try {
+        const parsed = JSON.parse(raw);
+        return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {};
+    } catch (e) {
+        return {};   // a malformed echo must not cost the result
+    }
+}
 
 module.exports = {
 
@@ -4080,39 +4058,68 @@ module.exports = {
             const body = (context.messages.webhook.content || {}).data || {};
             const requestId = (body.metadata || {}).request_id;
 
-            // The submit branch stashed this job's input under its id; replaying
-            // it here is what lets downstream tell parallel jobs apart.
-            const submitted = (requestId && await context.stateGet(jobKey(requestId))) || {};
-
-            await context.sendJson({
-                ...submitted,
-                request_id: requestId,
-                result: body.result
-            }, 'done');
-
-            if (requestId) {
-                await context.stateUnset(jobKey(requestId));
+            // Anything can POST to a webhook URL. Without this guard a stray or
+            // replayed request emits a `done` with an empty result that
+            // downstream cannot tell from a real one.
+            if (!requestId) {
+                await context.log('warn', 'Ignoring a callback with no job id.', { body });
+                return context.response();
             }
 
-            // Acknowledge, or the provider keeps retrying the callback.
-            return context.response();
+            try {
+                await context.sendJson({
+                    ...readEcho(context),
+                    request_id: requestId,
+                    result: body.result
+                }, 'done');
+            } finally {
+                // Acknowledge even if the emit threw: without a 2xx the provider
+                // redelivers, and the redelivery re-runs whatever just failed.
+                await context.response();
+            }
+
+            return;
         }
 
         // ── the submit ─────────────────────────────────────────────────
-        const { audioUrl, correlationId } = context.messages.in.content;
+        const { audioUrl, fileId, correlationId } = context.messages.in.content;
+        const echo = { audioUrl, fileId, correlationId };
 
-        const response = await lib.apiRequest(context, {
-            method: 'POST',
-            path: '/v1/jobs',
-            params: { callback: context.getWebhookUrl() },
-            data: { url: audioUrl }
-        });
+        let data;
+        let stream;
+        if (audioUrl) {
+            data = { url: audioUrl };
+        } else {
+            stream = await context.getFileReadStream(fileId);
+            data = stream;
+        }
+
+        let response;
+        try {
+            response = await lib.apiRequest(context, {
+                method: 'POST',
+                path: '/v1/jobs',
+                params: { callback: buildCallbackUrl(context, echo) },
+                data
+            });
+        } catch (error) {
+            // The upload stream is ours to close. Left open on a 413/429/5xx it
+            // holds a file descriptor, and an auto-retried component opens
+            // another one on every attempt.
+            if (stream && typeof stream.destroy === 'function') stream.destroy();
+            throw error;
+        }
 
         const requestId = (response.data || {}).request_id;
-        const echo = { audioUrl, correlationId };
 
-        if (requestId) {
-            await context.stateSet(jobKey(requestId), echo);
+        // No job id means the job was never linked to this flow: the callback
+        // cannot be attributed and `out` would carry request_id: undefined into
+        // the rest of the flow. Fail loudly instead of degrading silently.
+        if (!requestId) {
+            throw new context.CancelError(
+                'The provider accepted the request but returned no job id, so the result '
+                + 'cannot be delivered on the "done" port. Retry the job.'
+            );
         }
 
         return context.sendJson({ ...echo, request_id: requestId }, 'out');
@@ -4127,16 +4134,69 @@ component — not by message. Ten parallel jobs all report back to the same plac
 and arrive in completion order, so the fifth `done` may belong to the eighth
 input, and the webhook branch cannot see the message that started the job.
 
-Nothing is *mixed up* — each callback carries its own payload — but without the
-state-keyed echo a downstream component cannot tell which result belongs to
-which input. So:
+Nothing is *mixed up* — each callback carries its own payload — but without an
+echo a downstream component cannot tell which result belongs to which input. So:
 
-- Stash the job's inputs in component state under the provider's job id at
-  submit time, replay them on the callback, and `stateUnset` afterwards.
-- Namespace the key (`job-${id}`) so it cannot collide with other component
-  state.
+- Carry the job's inputs across in the callback URL (below), and replay them on
+  the callback.
 - Give the user a **Correlation ID** input — any value of their own (an order
   number, a file name, a record id) — and echo it on **both** ports.
+- **E2E-assert the Correlation ID on `done`.** A broken echo is invisible until
+  someone runs ten jobs at once; an `equal` assertion on the completion port
+  catches it on the first run.
+
+### Carry the echo in the callback URL, not in component state
+
+The callback URL is yours: append your own query string to
+`context.getWebhookUrl()` and read it back from
+`context.messages.webhook.content.query`. This is an established Appmixer
+mechanism — `utils/forms/FormAction` keys its state off `?inputMessageId=`, and
+`google/drive` appends `?enqueueOnly=true`.
+
+Stashing the echo in component state under the job id looks equivalent and is
+not. It fails four ways, all of which only show up under load:
+
+| State-keyed echo | What happens |
+|------------------|--------------|
+| **The callback races the write.** The provider starts working the instant it accepts the job, so the callback can land before the `stateSet` that follows the submit commits. | The echo is gone from `done` — exactly the field the mechanism exists to deliver. Worse, the callback's `stateUnset` runs *before* the submit's `stateSet`, so the entry is then leaked permanently. Measured margin on a 26 s audio job: ~0.5 s. A one-second job and a loaded state store close it. |
+| **A redelivered callback finds the entry consumed.** | A second `done` with no echo at all. |
+| **`stateSet`/`stateUnset` has no TTL** (the two-argument form is the only one). | A job that never calls back leaks its entry forever. |
+| **`stateUnset` throwing blocks the ack.** | No 2xx → the provider redelivers → duplicate `done`. |
+
+The URL has none of these: it is per-job by construction, unaffected by write
+latency, needs no cleanup, and a redelivered callback carries the same complete
+echo. Keep the payload small — a correlation id and the input references, not
+the whole input message.
+
+Some providers offer a native equivalent (Deepgram's `tag`, echoed back in
+`metadata.tags`). Either is fine; both beat state.
+
+### Delivery is at-least-once, and a lost callback is silent
+
+Two properties of this shape that no amount of code removes — design the flow
+around them rather than pretending otherwise:
+
+- **A callback can arrive twice.** The `finally` ack above removes the failure
+  modes you control; provider-side retries remain. Because the echo travels in
+  the URL, a repeat is a *complete* duplicate rather than a degraded one.
+- **A job that never calls back stalls its branch forever.** No error, no
+  timeout, no dead letter — `out` fired and `done` never will. A watchdog would
+  need per-job state to know whether the job already finished, which reintroduces
+  everything the URL-carried echo just removed. Say so in the component
+  description instead.
+
+### Async submits do not hold a quota concurrency slot
+
+A `limit-concurrency` quota rule holds its slot for the duration of `receive()`.
+While the component blocked on a synchronous endpoint that bounded **in-flight
+jobs**; once it submits and returns in a couple of seconds it bounds only
+**concurrent submissions**, and the provider's jobs pile up unbounded behind it.
+
+Converting a component from blocking to self-callback therefore silently drops
+whatever protection that rule was written for. Re-read the quota comment when
+you make that change: either correct it to describe what it now does, or lean on
+the sliding-window rule, which is what actually bounds the rate work is handed
+over. Do not leave a comment claiming a cap the rule no longer provides.
 
 ### Do not expose the callback URL as an input
 
@@ -4180,8 +4240,10 @@ async receive(context) {
 }
 ```
 
-**Appmixer will not schedule a continuation shorter than one minute** — that is
-both the floor and a sensible default for the poll interval.
+**Appmixer will not schedule a continuation shorter than one minute** — use
+that as the floor and the default poll interval, and never derive a total wait
+from a shorter value. Why (silent clamp in production, no floor in test mode)
+is in `06-component-behavior.md` — "Scheduling Work Later".
 
 ---
 
@@ -4193,6 +4255,11 @@ both the floor and a sensible default for the poll interval.
 | Use `tick()` to deliver the completion | A tick emit has no message scope — it cannot continue the branch that started the job, and it cannot see the input that produced it |
 | Make a separate polling trigger the completion path | Couples two flows, and inherits the provider's log/visibility lag (measured: 12–17 min vs. 4 s by callback) |
 | Expose the callback URL as a component input | Setting it silently kills the `done` port |
+| Stash the per-job echo in component state | The callback races the write, a redelivery finds it consumed, and there is no TTL — see "Carry the echo in the callback URL" |
+| Emit `done` before checking the callback carries a job id | Any POST to the webhook URL then produces an empty-result `done` downstream cannot distinguish |
+| `return context.response()` after the emit, outside a `finally` | An emit that throws never acks, the provider redelivers, and the redelivery re-runs the failure |
+| Hand a file read stream to the request and let an error path drop it | The descriptor stays open until GC, and an auto-retried component opens a new one per attempt |
+| Keep a `limit-concurrency` quota comment written for the blocking version | The slot is released when `receive()` returns — it no longer caps in-flight jobs |
 
 A polling trigger is still legitimate **on its own** — for jobs submitted
 outside Appmixer. It just must not be the way an action component gets its own
@@ -4207,4 +4274,232 @@ job duration.
 
 If the component takes a Correlation ID, assert it comes back on `done` — that
 is the only cheap way to catch a broken echo before a user hits it with ten
-parallel jobs.
+parallel jobs. Use `equal` against the value the flow set, not `notEmpty`: a
+`notEmpty` on a field the component happens to copy from elsewhere passes while
+the echo is broken.
+
+Two failure modes E2E will not surface, so check them by reading the code:
+
+- **The submit's error path.** Force a 4xx (an unreachable audio URL, an
+  oversized payload) and confirm nothing is left open and the message is the
+  connector's normalized one, not a bare `Request failed with status code NNN`.
+- **A callback arriving twice.** Re-POST the same body to the webhook URL and
+  confirm the second `done` is a complete duplicate — same echo, same result —
+  rather than a degraded one.
+
+---
+
+# Live Verification (`appmixer connector verify`)
+
+`connector validate` proves the connector agrees with our conventions from the
+source alone. **`connector verify` proves the source tells the truth about the
+service's API** — it executes the connector's behavior files locally
+(`require()` + `receive()`, no engine) against the real API. Both of its
+checks exist because real bugs shipped with every static gate green: a field
+Create Patient accepted that the Patient schema never declared (`medicare`),
+and a select whose labels were inverted against the service (`type_code` —
+picking "Doctor" created a Standard contact).
+
+## When to run it
+
+After the CLI component test loop passes and before E2E flows. It reuses the
+credentials already stored by `appmixer test auth login` (configstore key
+`appmixer:<connector>`), so once component testing is set up, verify costs one
+command:
+
+```bash
+appmixer connector verify <connector>              # schema conformance, read-only
+appmixer connector verify <connector> --write      # + enum round-trips (creates records!)
+appmixer connector verify <connector> --record     # save sanitized output shapes to artifacts/samples/
+appmixer connector verify <connector> --offline    # re-check conformance from samples, no credentials (CI)
+appmixer connector verify <c> --auth auth.json     # explicit credentials ({"apiKey": "..."})
+```
+
+Exit 0 = no fail/error findings; 1 otherwise.
+
+## The checks and what findings mean
+
+**schema-conformance** — declared outPort contract vs the live payload, for
+every List/Find/Get component and every trigger (sampled through its `test()`
+method — the same read-only fetch Flow Test Mode uses). Declared and returned
+fields are compared as **nested leaf paths** (`from.username`), because the
+variable picker offers every nested leaf as its own variable:
+
+| Finding | Meaning | Action |
+|---|---|---|
+| FAIL: declared but absent | a *required* leaf (or, with no `required` in the schema, any leaf) never returned — dead entry in the designer's variable picker | remove the field or fix the mapping |
+| WARN: optional field never observed | a leaf the schema does not list in `required` was absent from every sample | confirm it exists; record a sample that has it (`--record` appends distinct shapes) |
+| WARN: returned but undeclared | data no flow can reach | candidates to declare (link stubs like `links`/relations are expected noise — `expandIds` output is what counts) |
+| SKIP: no data in the account / no sample | nothing to compare against | seed one record; for a trigger, make `test()` able to see an event (Telegram: no webhook registered) |
+
+Where the declared contract comes from: the `out` port's `schema` for a static
+port, and the behavior's **`ITEM_SCHEMA` export** for a dynamic one (see "Export
+the item schema as `ITEM_SCHEMA`" in `07-component-types.md`). Without that
+export a dynamic port falls back to running `generateOutputPortOptions`, whose
+options list has no place for `required` — every field then counts as required
+and an optional one the API happened not to return is reported as a FAIL. If a
+Find/List component fails this check on fields you know are optional, exporting
+`ITEM_SCHEMA` with an honest `required` is the fix.
+
+Sample files (`artifacts/samples/<Component>.json`) hold a **list** of shapes;
+`--record` adds a shape only when it differs from those on file, so recording a
+text message, then a photo, then a message from a user with a username builds
+the union that "never observed" is judged against.
+
+**enum-roundtrip** (`--write` only) — for a `select` input: create a record per
+option, read back the stored value AND **the service's own label for it**. The
+label comparison is the point — an inverted label/value map round-trips values
+perfectly, so value equality alone cannot catch it.
+
+## Authoring `artifacts/verify.json`
+
+Lives with the connector's other non-runtime assets. **Account-agnostic by
+rule**: recipes, never concrete IDs — the same file must work on any tenant.
+
+```json
+{
+  "fixtures": {
+    "businessId": { "from": "ListBusinesses", "path": "id" }
+  },
+  "read": [
+    { "component": "FindAvailableTimes", "inputs": { "businessId": "{businessId}" } }
+  ],
+  "roundtrip": [ {
+    "component": "CreateContact", "input": "typeCode",
+    "base": { "lastName": "Verify Roundtrip" },
+    "valueField": "type_code", "labelField": "type",
+    "cleanup": { "component": "MakeApiCall",
+                 "inputs": { "url": "/contacts/{id}/archive", "method": "POST" } }
+  } ]
+}
+```
+
+- `fixtures` resolve lazily in declaration order against the connector's own
+  List/Find components; `{name}` placeholders fill inputs.
+- `read` defaults (without the file) to every List/Find/Get component with no
+  required inputs — verify gives signal at zero configuration.
+- `roundtrip` REQUIRES a `cleanup` recipe. It runs per created record even
+  when the check fails, through the connector's own components — `MakeApiCall`
+  covers services with no delete action. Verify must leave the account clean.
+- Write a roundtrip spec for every `select` input whose values the service
+  echoes back (a `valueField`, ideally also a `labelField`).
+
+## Recorded samples (`artifacts/samples/`)
+
+`--record` saves each read component's output SHAPE with every value replaced
+by a type placeholder — live payloads carry PII (patient names, emails) and
+none of it may reach the repo; the sanitizer guarantees no original value
+survives. Commit the samples: `--offline` then re-checks conformance against
+them with no credentials at all, which is the CI leg. Re-record whenever the
+service adds fields or a component's mapping changes. Samples capture the
+COMPONENT's output (after `expandIds` etc.), not the raw API response — that
+is the contract flows actually see.
+
+## Pitfalls
+
+- `--write` creates real records — never run it against a production tenant.
+- OAuth connectors work while the stored token is fresh (verify does not
+  refresh); API-key connectors are fully supported.
+- Roundtrip needs the entity to be retrievable (a Get/Find/List sibling) and
+  the create to echo the stored entity; operations merely named `Create*`
+  (transcriptions, embeddings) are not roundtrip material.
+- Only request/response components run under verify — triggers and webhooks
+  belong to E2E flows, not here.
+
+---
+
+# Development Instructions for Agents
+
+## Capturing New Learnings
+
+As you work on connectors, you will discover information that is not yet
+documented: gotchas, undocumented API behaviors, edge cases, patterns that
+turned out to matter.
+
+These instructions are the **single source of truth** — this repo's
+`instructions/` directory. Consumer repositories (appmixer-connectors' Copilot
+instructions, each skill's `references/`) are generated or synced copies; a
+learning written into a copy is lost on the next sync.
+
+1. **Capture insights** where they belong: add them to the appropriate
+   `instructions/*.md` file **in this repository** (a pull request when you
+   work elsewhere).
+2. **Be concise**: brief and actionable.
+3. **Include context**: explain *why* it matters, not just *what* it is.
+
+### Example
+
+Instead of:
+> "The email quota endpoint sometimes times out"
+
+Write:
+> "The email quota endpoint can time out when the database is under heavy
+> load. If tests show timeout errors, raise the query timeout or check for
+> long-running queries first."
+
+Commit such updates as documentation improvements:
+
+```
+docs(instructions): add note about email quota endpoint timeouts
+```
+
+After a change here, run `node scripts/sync-references.mjs` so the skills'
+`references/` copies stay in sync (CI checks this with `--check`).
+
+---
+
+# Demo Flows
+
+Demo flows are small, presentable flows shipped with a connector in
+`src/<vendor>/<connector_name>/artifacts/demo-flows/` (connector level — never
+inside a module). Unlike E2E test flows they are not a harness: no Assert, no
+AfterAll, no ProcessE2EResults, no cleanup lane. A demo flow shows one
+realistic use case a customer would actually build — typically
+`trigger → enrich → notify/act` (e.g. Abandoned Cart → Get Customer →
+Send Email).
+
+## Conventions
+
+- **File name**: `demo-<connector>-<usecase>.json`
+  (e.g. `demo-prestashop-abandonedcart.json`).
+- **Flow name**: `"Demo <Service> - <Use case>"`
+  (e.g. `"Demo PrestaShop - Abandoned Cart Recovery"`).
+- **Top-level shape**: `{ "name", "type": "automation", "flow", "wizard": { "fields": [] } }`
+  — the empty `wizard` keeps the flow usable as an automation-template seed.
+- **Component IDs**: UUIDs, same as test flows.
+- **Layout**: left→right, same grid minimums as E2E flows.
+- **errorHandling**: `{ "autoRetry": false, "onError": "stopFlow" }` on every
+  component.
+- **2–4 components** — a demo is a pitch, not coverage; the E2E flows own
+  coverage.
+
+## Variables: reference what the schema offers
+
+The single most common authoring mistake: extracting a field from Raw Output
+with a `g_jsonPath` modifier when the sender's outPort schema already declares
+it. Runtime works, but the designer renders an ugly magenta **"Raw Output"**
+chip instead of the named field the picker offers.
+
+- Field is declared in the sender's static outPort `schema`/`options` (the
+  picker shows a named chip) → reference it **directly**:
+  `{ "variable": "$.<id>.out.id_customer", "functions": [] }`.
+- Path the picker does NOT offer (deeper than the static contract) → reference
+  the deepest declared parent + `g_jsonPath` — see the deep-path rule in
+  `11-e2e-flow-generation.md`.
+
+The `raw-output-declared-field` flow validator (appmixer CLI, basic ruleset)
+warns on the Raw Output form.
+
+## Verify before committing
+
+Import the flow on a live instance and check the variable chips the way the
+designer does — every used variable must be among the offered ones:
+
+```bash
+appmixer flow import <demo-flow.json>        # plain import — no E2E tagging
+appmixer flow variables <flowId> --json      # offered variables (designer endpoint)
+# clean up the test import afterwards
+```
+
+`appmixer flow validate --ruleset basic <path>` runs the generic flow rules
+(schema, UUID ids, variable paths, layout) without the E2E-harness rules.
