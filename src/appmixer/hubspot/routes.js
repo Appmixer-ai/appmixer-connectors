@@ -66,9 +66,11 @@ module.exports = async (context) => {
             for (const sub of subscriptions) {
                 const { subscriptionType: evType, propertyName } = sub.subscriptionDetails;
                 const existing = existingByKey.get(subKey(evType, propertyName));
+                // The v3 subscriptions API reports the state as `active` (v1 used `enabled`).
+                const isActive = existing ? (existing.active ?? existing.enabled) : undefined;
                 if (!existing) {
                     subscriptionsToCreate.push(sub);
-                } else if (!existing.enabled) {
+                } else if (isActive === false) {
                     // Re-enable a disabled subscription for this exact property — don't stop at the
                     // first one, every desired property must end up active.
                     await activateHubSpotSubscription(context, hubspot, existing.id);
@@ -304,7 +306,8 @@ async function activateHubSpotSubscription(context, hubspot, subscriptionId) {
     const result = await context.httpRequest({
         method: 'PATCH',
         url: `https://api.hubapi.com/webhooks/v3/${hubspot.appId}/subscriptions/${subscriptionId}?hapikey=${hubspot.apiKey}`,
-        data: { enabled: true }
+        // v3 takes `active` — `enabled` is silently ignored and the subscription stays off.
+        data: { active: true }
     });
 
     if (result.data?.ok === false) {

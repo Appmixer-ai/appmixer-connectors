@@ -71,7 +71,7 @@ describe('POST /events handler', () => {
             context.httpRequest.onCall(0).resolves({
                 data: {
                     results: [
-                        { id: 1, eventType: 'contact.propertyChange', propertyName: 'email', enabled: true }
+                        { id: 1, eventType: 'contact.propertyChange', propertyName: 'email', active: true }
                     ]
                 }
             });
@@ -89,6 +89,35 @@ describe('POST /events handler', () => {
             assert(created.includes('my_custom_field'), 'custom property subscribed');
             assert(created.includes('firstname'), 'default properties subscribed');
             assert(!created.includes('email'), 'existing subscription not created again');
+        });
+
+        it('onListenerAdded re-activates an inactive subscription (v3 `active` flag)', async () => {
+
+            // Every default exists; `email` is switched off, the rest are active.
+            const defaults = ['email', 'firstname', 'lastname', 'phone', 'website', 'company', 'address', 'city', 'state', 'zip'];
+            context.httpRequest.onCall(0).resolves({
+                data: {
+                    results: defaults.map((propertyName, index) => ({
+                        id: 100 + index,
+                        eventType: 'contact.propertyChange',
+                        propertyName,
+                        active: propertyName !== 'email'
+                    }))
+                }
+            });
+            context.httpRequest.resolves({ statusCode: 200, data: {} });
+
+            const listenerHandler = context.onListenerAdded.getCall(0).args[0];
+            await listenerHandler({
+                eventName: 'contact.propertyChange:33',
+                params: { apiKey: 'dev-api-key', appId: '1234585' }
+            });
+
+            assert.equal(context.httpRequest.callCount, 2, 'list + one PATCH, nothing created');
+            const patch = context.httpRequest.getCall(1).args[0];
+            assert.equal(patch.method, 'PATCH');
+            assert(patch.url.includes('/subscriptions/100?'), 'the inactive email subscription');
+            assert.deepEqual(patch.data, { active: true });
         });
 
         describe('on the AuthHub pod', () => {
