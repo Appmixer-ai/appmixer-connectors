@@ -1,6 +1,7 @@
 'use strict';
 const BaseSubscriptionComponent = require('../../BaseSubscriptionComponent');
 const { getObjectProperties } = require('../../commons');
+const ITEM_SCHEMA = require('../../item-schemas.json').contact;
 
 const subscriptionType = 'contact.creation';
 
@@ -66,8 +67,12 @@ class NewContact extends BaseSubscriptionComponent {
     async test(context) {
 
         const record = await this.fetchLatestExample(context, 'contacts');
+        if (!record) {
+            throw new context.CancelError('No contact found to use as test data.');
+        }
         return context.sendJson(record, 'contact');
     }
 }
 
 module.exports = new NewContact(subscriptionType);
+module.exports.ITEM_SCHEMA = ITEM_SCHEMA;

@@ -1,6 +1,7 @@
 'use strict';
 const BaseSubscriptionComponent = require('../../BaseSubscriptionComponent');
 const { getObjectProperties, parsePropertyList, eventChangedWatchedProperty } = require('../../commons');
+const ITEM_SCHEMA = require('../../item-schemas.json').deal;
 
 const subscriptionType = 'deal.propertyChange';
 
@@ -104,8 +105,12 @@ class UpdatedDeal extends BaseSubscriptionComponent {
             filters.push({ propertyName: 'dealstage', operator: 'EQ', value: filterStage });
         }
         const record = await this.fetchLatestExample(context, 'deals', { sortProperty: 'lastmodifieddate', filters });
+        if (!record) {
+            throw new context.CancelError('No deal found to use as test data.');
+        }
         return context.sendJson(record, 'deal');
     }
 }
 
 module.exports = new UpdatedDeal(subscriptionType);
+module.exports.ITEM_SCHEMA = ITEM_SCHEMA;

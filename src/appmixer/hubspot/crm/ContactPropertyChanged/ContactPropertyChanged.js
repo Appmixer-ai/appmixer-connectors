@@ -1,6 +1,7 @@
 'use strict';
 const BaseSubscriptionComponent = require('../../BaseSubscriptionComponent');
 const { getObjectProperties, eventChangedWatchedProperty } = require('../../commons');
+const ITEM_SCHEMA = require('../../item-schemas.json').contact;
 
 const subscriptionType = 'contact.propertyChange';
 
@@ -106,3 +107,4 @@ class ContactPropertyChanged extends BaseSubscriptionComponent {
 }
 
 module.exports = new ContactPropertyChanged(subscriptionType);
+module.exports.ITEM_SCHEMA = ITEM_SCHEMA;

@@ -1,6 +1,7 @@
 'use strict';
 const BaseSubscriptionComponent = require('../../BaseSubscriptionComponent');
 const { getObjectProperties, parsePropertyList, eventChangedWatchedProperty } = require('../../commons');
+const ITEM_SCHEMA = require('../../item-schemas.json').contact;
 
 const subscriptionType = 'contact.propertyChange';
 
@@ -87,8 +88,12 @@ class UpdatedContact extends BaseSubscriptionComponent {
     async test(context) {
 
         const record = await this.fetchLatestExample(context, 'contacts', { sortProperty: 'lastmodifieddate' });
+        if (!record) {
+            throw new context.CancelError('No contact found to use as test data.');
+        }
         return context.sendJson(record, 'contact');
     }
 }
 
 module.exports = new UpdatedContact(subscriptionType);
+module.exports.ITEM_SCHEMA = ITEM_SCHEMA;

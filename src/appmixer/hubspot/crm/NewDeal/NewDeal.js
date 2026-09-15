@@ -1,6 +1,7 @@
 'use strict';
 const BaseSubscriptionComponent = require('../../BaseSubscriptionComponent');
 const { getObjectProperties } = require('../../commons');
+const ITEM_SCHEMA = require('../../item-schemas.json').deal;
 
 const subscriptionType = 'deal.creation';
 
@@ -78,8 +79,12 @@ class NewDeal extends BaseSubscriptionComponent {
             filters.push({ propertyName: 'pipeline', operator: 'EQ', value: filterPipeline });
         }
         const record = await this.fetchLatestExample(context, 'deals', { filters });
+        if (!record) {
+            throw new context.CancelError('No deal found to use as test data.');
+        }
         return context.sendJson(record, 'deal');
     }
 }
 
 module.exports = new NewDeal(subscriptionType);
+module.exports.ITEM_SCHEMA = ITEM_SCHEMA;
