@@ -35,9 +35,46 @@ module.exports = {
         }
     },
 
-    WATCHED_PROPERTIES_CONTACT: ['email', 'firstname', 'lastname', 'phone', 'website', 'company', 'address', 'city', 'state', 'zip'],
-    WATCHED_PROPERTIES_DEAL: ['dealname', 'dealstage', 'pipeline', 'hubSpotOwnerId', 'closedate', 'amount'],
-    WATCHED_PROPERTIES_COMPANY: ['domain', 'name', 'numberofemployees', 'industry', 'phone', 'website', 'city', 'state', 'country', 'address', 'zip', 'description', 'annualrevenue'],
+    // HubSpot property names of the fields hard-coded in the Create*/Update* inspectors — excluded from the
+    // "additional properties" dropdowns so they are not offered twice.
+    INSPECTOR_FIELDS_CONTACT: ['email', 'firstname', 'lastname', 'phone', 'website', 'company', 'address', 'city', 'state', 'zip'],
+    INSPECTOR_FIELDS_DEAL: ['dealname', 'dealstage', 'pipeline', 'hubspot_owner_id', 'closedate', 'amount'],
+    INSPECTOR_FIELDS_COMPANY: ['domain', 'name', 'numberofemployees', 'industry', 'phone', 'website', 'city', 'state', 'country', 'address', 'zip', 'description', 'annualrevenue'],
+
+    // Default propertyChange subscriptions routes.js registers for an OWN HubSpot app (appId + apiKey). They do
+    // NOT decide what the triggers receive: with AuthHub the shared app's subscriptions are configured manually
+    // in its HubSpot webhook settings. Subscriptions are app-wide (every installed portal) and capped at 1000
+    // per app, so the defaults stay small — triggers add what they need through listener params
+    // (see routes.js propertyChangeSubscriptions()).
+    DEFAULT_SUBSCRIBED_PROPERTIES_CONTACT: ['email', 'firstname', 'lastname', 'phone', 'website', 'company', 'address', 'city', 'state', 'zip'],
+    DEFAULT_SUBSCRIBED_PROPERTIES_DEAL: ['dealname', 'dealstage', 'pipeline', 'hubspot_owner_id', 'closedate', 'amount'],
+
+    /** Splits a comma-separated list of property names from an inspector input. */
+    parsePropertyList(value) {
+
+        if (!value) {
+            return [];
+        }
+        const names = Array.isArray(value) ? value : String(value).split(',');
+        return names.map(name => String(name).trim()).filter(Boolean);
+    },
+
+    /**
+     * True when a propertyChange webhook event changed at least one of the `watched` properties.
+     * Checks every property routes.js collected for the object in the batch (`propertyNames`),
+     * not only the last one. An empty `watched` list, or an event without property info, passes.
+     */
+    eventChangedWatchedProperty(event, watched) {
+
+        if (!watched.length) {
+            return true;
+        }
+        const changed = event.propertyNames || (event.propertyName ? [event.propertyName] : []);
+        if (!changed.length) {
+            return true;
+        }
+        return changed.some(name => watched.includes(name));
+    },
 
     async getObjectProperties(context, hubspot, objectType, output = 'all') {
 

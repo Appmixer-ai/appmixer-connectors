@@ -64,6 +64,99 @@ describe('POST /events handler', () => {
             );
             assert.equal(context.httpRequest.callCount, 2, 'httpRequest should be called twice');
         });
+
+        it('onListenerAdded subscribes to the requested properties on top of the defaults', async () => {
+
+            // Existing subscriptions of the app: `email` is already there.
+            context.httpRequest.onCall(0).resolves({
+                data: {
+                    results: [
+                        { id: 1, eventType: 'contact.propertyChange', propertyName: 'email', enabled: true }
+                    ]
+                }
+            });
+            context.httpRequest.onCall(1).resolves({ statusCode: 200 });
+
+            const listenerHandler = context.onListenerAdded.getCall(0).args[0];
+            await listenerHandler({
+                eventName: 'contact.propertyChange:33',
+                params: { apiKey: 'dev-api-key', appId: '1234585', propertyNames: ['my_custom_field', 'email'] }
+            });
+
+            assert.equal(context.httpRequest.callCount, 2, 'list + batch create');
+            const created = context.httpRequest.getCall(1).args[0].data
+                .map(sub => sub.subscriptionDetails.propertyName);
+            assert(created.includes('my_custom_field'), 'custom property subscribed');
+            assert(created.includes('firstname'), 'default properties subscribed');
+            assert(!created.includes('email'), 'existing subscription not created again');
+        });
+
+        describe('on the AuthHub pod', () => {
+
+            const originalEnv = {};
+
+            beforeEach(() => {
+
+                originalEnv.url = process.env.AUTH_HUB_URL;
+                originalEnv.token = process.env.AUTH_HUB_TOKEN;
+                process.env.AUTH_HUB_URL = 'https://auth-hub.example.com';
+                delete process.env.AUTH_HUB_TOKEN;
+            });
+
+            afterEach(() => {
+
+                if (originalEnv.url === undefined) {
+                    delete process.env.AUTH_HUB_URL;
+                } else {
+                    process.env.AUTH_HUB_URL = originalEnv.url;
+                }
+                if (originalEnv.token !== undefined) {
+                    process.env.AUTH_HUB_TOKEN = originalEnv.token;
+                }
+            });
+
+            it('adds only the explicitly requested properties, with its own developer credentials', async () => {
+
+                // Tenants connected through AuthHub send no developer credentials in the listener params.
+                context.config = { apiKey: 'authhub-dev-key', appId: '999' };
+                context.httpRequest.onCall(0).resolves({ data: { results: [] } });
+                context.httpRequest.onCall(1).resolves({ statusCode: 200 });
+
+                const listenerHandler = context.onListenerAdded.getCall(0).args[0];
+                await listenerHandler({
+                    eventName: 'contact.propertyChange:33',
+                    params: { propertyNames: ['my_custom_field'] }
+                });
+
+                assert.equal(context.httpRequest.callCount, 2, 'list + batch create');
+                assert(context.httpRequest.getCall(0).args[0].url.includes('/999/'), 'AuthHub app id used');
+                const created = context.httpRequest.getCall(1).args[0].data
+                    .map(sub => sub.subscriptionDetails.propertyName);
+                assert.deepEqual(created, ['my_custom_field'], 'no default subscriptions on the shared app');
+            });
+
+            it('skips without developer credentials instead of failing the listener', async () => {
+
+                context.config = {};
+                const listenerHandler = context.onListenerAdded.getCall(0).args[0];
+                await listenerHandler({
+                    eventName: 'contact.propertyChange:33',
+                    params: { propertyNames: ['my_custom_field'] }
+                });
+
+                assert.equal(context.httpRequest.callCount, 0, 'no HubSpot call');
+            });
+
+            it('leaves the default and creation subscriptions of the shared app alone', async () => {
+
+                context.config = { apiKey: 'authhub-dev-key', appId: '999' };
+                const listenerHandler = context.onListenerAdded.getCall(0).args[0];
+                await listenerHandler({ eventName: 'contact.creation:33', params: {} });
+                await listenerHandler({ eventName: 'contact.propertyChange:33', params: {} });
+
+                assert.equal(context.httpRequest.callCount, 0, 'no HubSpot call');
+            });
+        });
     }
 
     it('all propertyChange events pass through to triggerListeners', async () => {
@@ -111,8 +204,10 @@ describe('POST /events handler', () => {
         assert.equal(context.triggerListeners.callCount, 1, 'triggerListeners should be called once');
         const call = context.triggerListeners.getCall(0).args[0];
         assert.equal(call.eventName, `contact.propertyChange:${PORTAL_ID_AIRBUS}`);
-        // _.keyBy keeps last event per objectId
-        assert.deepEqual(call.payload, { '38533722672': req.payload[1] });
+        // The last event per objectId, plus every property of the object that changed in the batch.
+        assert.deepEqual(call.payload, {
+            '38533722672': { ...req.payload[1], propertyNames: ['hubspot_owner_id', 'hubspot_owner_assigneddate'] }
+        });
     });
 
     it('multiple changes of the same contact in a single event', async () => {
@@ -203,14 +298,20 @@ describe('POST /events handler', () => {
         }
 
         // Expecting the call to triggerListeners to be with the correct arguments.
-        // All propertyChange events now pass through (no allowlist filter). _.keyBy groups by objectId
-        // keeping the last event per object, so the payload contains the last event in the batch.
+        // All propertyChange events pass through (no allowlist filter), grouped by objectId: the last event
+        // per object plus `propertyNames` with every property changed in the batch — firstname included,
+        // although it is not the last change, so triggers filtering by property do not miss it.
         if (version.startsWith('4')) {
             const triggerListenersArgsExpected = [
                 [
                     {
                         eventName: `contact.propertyChange:${PORTAL_ID_AIRBUS}`,
-                        payload: { '38533722672': req.payload[3] }
+                        payload: {
+                            '38533722672': {
+                                ...req.payload[3],
+                                propertyNames: ['hubspot_owner_id', 'hubspot_owner_assigneddate', 'firstname']
+                            }
+                        }
                     }
                 ]
             ];

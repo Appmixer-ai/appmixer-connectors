@@ -1,6 +1,6 @@
 {
     "name": "appmixer.hubspot",
-    "version": "4.8.1",
+    "version": "4.9.0",
     "engine": ">=6.0.0",
     "changelog": {
         "1.0.0": [
@@ -121,6 +121,14 @@
         ],
         "4.8.1": [
             "Fixed a crash when a Find/List component saved an EMPTY result set to a CSV file — the header row was built from the first record without checking there was one, so a search that legitimately matched nothing failed the flow instead of writing an empty file."
+        ],
+        "4.9.0": [
+            "UpdatedContact, UpdatedDeal: new optional Watched Properties input (custom properties included). When set, the trigger fires only when one of these properties changes, and the connector subscribes to them in HubSpot where it manages the app's webhook subscriptions (see below).",
+            "Webhook subscriptions: with an own HubSpot app (appId + apiKey) the connector registers the default subscriptions plus every property a trigger asks for (ContactPropertyChanged, Watched Properties). With AuthHub the shared app's subscriptions stay configured manually in its HubSpot webhook settings; the AuthHub only adds the explicitly requested properties, and only when its HubSpot service config has the app's developer appId + apiKey — otherwise the property has to be added in the HubSpot app settings.",
+            "Fixed property-filtered triggers (ContactPropertyChanged, Watched Properties) missing a change that was not the last change of the object in a webhook batch — the events now carry every changed property name (propertyNames).",
+            "Fixed two UpdatedContact/UpdatedDeal flows of the same portal consuming each other's events (the dedupe cache key was shared across flows).",
+            "Fixed the default deal owner subscription and the owner field showing up twice in the CreateDeal/UpdateDeal additional properties dropdown (hubspot_owner_id instead of the input name hubSpotOwnerId).",
+            "Fixed a ReferenceError hiding the HubSpot error message when a webhook subscription API call failed."
         ]
     }
 }

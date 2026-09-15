@@ -267,4 +267,80 @@ describe('UpdatedContact', () => {
         assert.equal(hubspotStub.callCount, 11, 'Should make 10 calls to get contact data and 1 call to get contact properties');
     });
 
+    describe('Watched Properties', () => {
+
+        it('asks routes.js to subscribe to the watched properties', () => {
+
+            context.properties = { watchedProperties: 'my_custom_field, lifecyclestage' };
+            assert.deepEqual(
+                UpdatedContact.getListenerParams(context),
+                { propertyNames: ['my_custom_field', 'lifecyclestage'] }
+            );
+
+            context.properties = {};
+            assert.deepEqual(UpdatedContact.getListenerParams(context), {});
+        });
+
+        it('fires only for changes of the watched properties', async () => {
+
+            context.properties = { properties: 'firstname', watchedProperties: 'my_custom_field' };
+            context.messages.webhook.content.data = {
+                '101': { occurredAt: 1726820305517, propertyName: 'firstname', propertyNames: ['firstname'] },
+                // The watched property is not the last change of this contact in the batch.
+                '102': { occurredAt: 1726820305517, propertyName: 'lastname', propertyNames: ['my_custom_field', 'lastname'] }
+            };
+            hubspotStub.withArgs('post', 'crm/v3/objects/contacts/batch/read').resolves({
+                data: {
+                    results: [{ id: '102', createdAt: '2023-01-01T00:00:00Z', updatedAt: '2023-02-04T00:00:00Z' }]
+                }
+            });
+
+            await UpdatedContact.receive(context);
+
+            assert.deepEqual(hubspotStub.args[0][2].inputs, [{ id: '102' }], 'only the contact with a watched change is read');
+            assert.equal(context.sendArray.args[0][0].length, 1);
+        });
+
+        it('does not fire when no watched property changed', async () => {
+
+            context.properties = { watchedProperties: 'my_custom_field' };
+            context.messages.webhook.content.data = {
+                '103': { occurredAt: 1726820305517, propertyName: 'email', propertyNames: ['email'] }
+            };
+
+            await UpdatedContact.receive(context);
+
+            assert.equal(hubspotStub.callCount, 0, 'HubSpot API not called');
+            assert.equal(context.sendArray.callCount, 0);
+            assert.equal(context.response.callCount, 1);
+        });
+    });
+
+    it('two flows receive the same change (the dedupe cache is per component)', async () => {
+
+        // staticCache is shared by all component instances.
+        const cache = new Map();
+        context.staticCache = {
+            get: async (key) => cache.get(key),
+            set: async (key, value) => {
+                cache.set(key, value);
+            }
+        };
+        context.messages.webhook.content.data = {
+            '104': { occurredAt: 1726820305517, propertyName: 'firstname' }
+        };
+        hubspotStub.withArgs('post', 'crm/v3/objects/contacts/batch/read').resolves({
+            data: {
+                results: [{ id: '104', createdAt: '2023-01-01T00:00:00Z', updatedAt: '2023-02-04T00:00:00Z' }]
+            }
+        });
+
+        context.componentId = 'flow-a-updated-contact';
+        await UpdatedContact.receive(context);
+        context.componentId = 'flow-b-updated-contact';
+        await UpdatedContact.receive(context);
+
+        assert.equal(context.sendArray.callCount, 2, 'both flows fire');
+        assert.equal(context.sendArray.args[1][0].length, 1, 'second flow gets the contact too');
+    });
 });
