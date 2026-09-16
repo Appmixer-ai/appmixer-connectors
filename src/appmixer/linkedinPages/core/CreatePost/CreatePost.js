@@ -1,6 +1,6 @@
 'use strict';
 
-const { API_BASE_URL, getHeaders } = require('../../lib');
+const { API_BASE_URL, getHeaders, escapeLittleText } = require('../../lib');
 
 const ORGANIZATION_ID_PATTERN = /^(?:urn:li:organization:)?(\d+)$/;
 
@@ -12,11 +12,12 @@ const ORGANIZATION_ID_PATTERN = /^(?:urn:li:organization:)?(\d+)$/;
  */
 function buildPost(context, authorUrn) {
 
-    const { visibility, text, url, title, description, specificLink } = context.messages.in.content;
+    const { visibility, text, allowMentions, url, title, description, specificLink } = context.messages.in.content;
 
     const shareObject = {
         author: authorUrn,
-        commentary: text,
+        // Plain text is escaped; with allowMentions the text is sent as LinkedIn "little text".
+        commentary: allowMentions ? text : escapeLittleText(text),
         visibility: visibility || 'PUBLIC',
         distribution: {
             feedDistribution: 'MAIN_FEED',
@@ -89,7 +90,7 @@ module.exports = {
                 const detail = err.response.data && err.response.data.message;
                 throw new context.CancelError(
                     `LinkedIn rejected the post for organization ${orgId} (403 Forbidden). ` +
-                    'Make sure you are an administrator of the page and the account ' +
+                    'Make sure you are an administrator or content administrator of the page and the account ' +
                     'has granted the w_organization_social permission.' +
                     (detail ? ` LinkedIn says: ${detail}` : '')
                 );

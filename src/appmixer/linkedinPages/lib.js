@@ -36,10 +36,10 @@ module.exports = {
      * @param {Context} context
      * @param {Object} keyParts Everything that shapes the result (the token is added automatically).
      * @param {Function} fn Async function producing the value to cache.
-     * @param {number} [ttl] Cache TTL in ms; `listCacheTTL` from the service config wins when set.
+     * @param {number} [ttl] Cache TTL in ms. Defaults to `listCacheTTL` from the service config, then 2 minutes.
      * @returns {Promise<*>}
      */
-    async withCache(context, keyParts, fn, ttl = 2 * 60 * 1000) {
+    async withCache(context, keyParts, fn, ttl) {
 
         let lock;
         try {
@@ -53,7 +53,7 @@ module.exports = {
             }
 
             const value = await fn();
-            await context.staticCache.set(key, value, context.config.listCacheTTL || ttl);
+            await context.staticCache.set(key, value, ttl || context.config.listCacheTTL || 2 * 60 * 1000);
             return value;
         } finally {
             lock?.unlock();
@@ -69,6 +69,7 @@ module.exports = {
      */
     resolveApiUrl(context, url) {
 
+        url = String(url);
         const candidate = /^[a-z][a-z0-9+.-]*:/i.test(url) || url.startsWith('//')
             ? url
             : `${url.startsWith('/') ? '' : '/'}${url}`;
@@ -88,6 +89,19 @@ module.exports = {
         }
 
         return parsed.toString();
+    },
+
+    /**
+     * Escape text for LinkedIn's "little text" format used by the post commentary. Unescaped
+     * reserved characters cut the post short or make LinkedIn reject it
+     * (https://learn.microsoft.com/en-us/linkedin/marketing/community-management/shares/little-text-format).
+     * `#` stays as typed so hashtags keep working.
+     * @param {string} text
+     * @returns {string}
+     */
+    escapeLittleText(text) {
+
+        return String(text).replace(/[\\|{}@[\]()<>*_~]/g, char => `\\${char}`);
     },
 
     /**

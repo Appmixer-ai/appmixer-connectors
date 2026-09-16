@@ -67,6 +67,10 @@ async function resolveOrganization(context, id) {
         });
         name = (data && data.localizedName) || name;
     } catch (err) {
+        if (err.response && err.response.status === 429) {
+            // Out of API calls: fail the whole list so the fallback names are not cached.
+            throw err;
+        }
         context.log({ stage: 'Could not resolve the organization name.', id, error: err.message });
     }
     return { id, name };

@@ -145,6 +145,30 @@ describe('linkedinPages core', function() {
             });
         });
 
+        it('escapes little-text characters in plain text', async function() {
+
+            const context = createContext({ organizationId: '1', text: 'Join us (today) at some_name #launch @home' });
+            context.httpRequest.resolves({ status: 201, headers: {} });
+
+            await CreatePost.receive(context);
+
+            assert.strictEqual(
+                context.httpRequest.firstCall.args[0].data.commentary,
+                'Join us \\(today\\) at some\\_name #launch \\@home'
+            );
+        });
+
+        it('sends little text as typed when mentions are allowed', async function() {
+
+            const text = 'Thanks @[Appmixer](urn:li:organization:2414183) {hashtag|\\#|launch}';
+            const context = createContext({ organizationId: '1', text, allowMentions: true });
+            context.httpRequest.resolves({ status: 201, headers: {} });
+
+            await CreatePost.receive(context);
+
+            assert.strictEqual(context.httpRequest.firstCall.args[0].data.commentary, text);
+        });
+
         it('explains a 403 and keeps the LinkedIn message', async function() {
 
             const context = createContext({ organizationId: '42', text: 'Hello' });
@@ -157,6 +181,7 @@ describe('linkedinPages core', function() {
             await assert.rejects(CreatePost.receive(context), err => {
                 assert.strictEqual(err.name, 'CancelError');
                 assert.match(err.message, /organization 42/);
+                assert.match(err.message, /content administrator/);
                 assert.match(err.message, /w_organization_social/);
                 assert.match(err.message, /partnerApiPostsExternal\.CREATE/);
                 return true;
@@ -265,6 +290,20 @@ describe('linkedinPages core', function() {
             assert.deepStrictEqual(ListOrganizations.organizationsToSelectArray(result.data), []);
         });
 
+        it('does not cache fallback names when LinkedIn rate-limits the lookup', async function() {
+
+            const context = createContext({}, { isSource: true });
+            stubLinkedIn(context, {
+                aclPages: [[{ organization: 'urn:li:organization:1', role: 'ADMINISTRATOR' }]],
+                organizations: { 1: httpError(429, { message: 'Too many requests' }) }
+            });
+
+            const result = await ListOrganizations.receive(context);
+
+            assert.deepStrictEqual(result.data, { organizations: [] });
+            assert.strictEqual(context.staticCache.set.callCount, 0);
+        });
+
         it('throws outside of the dropdown', async function() {
 
             const context = createContext();
@@ -346,6 +385,15 @@ describe('linkedinPages core', function() {
                 MakeApiCall.receive(createContext({ url: '/rest/posts', method: 'GET', headers: 'x=1' })),
                 { name: 'CancelError', message: /Request Headers/ }
             );
+        });
+
+        it('rejects a non-string URL with a clear error', async function() {
+
+            const context = createContext({ url: 12345, method: 'GET' });
+            context.httpRequest.resolves({ status: 200, headers: {}, data: {} });
+
+            await MakeApiCall.receive(context);
+            assert.strictEqual(context.httpRequest.firstCall.args[0].url, 'https://api.linkedin.com/12345');
         });
 
         it('requires url and method', async function() {

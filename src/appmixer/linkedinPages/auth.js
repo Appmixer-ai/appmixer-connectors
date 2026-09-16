@@ -52,17 +52,32 @@ module.exports = {
                 );
             }
 
-            const { data } = await context.httpRequest({
-                method: 'POST',
-                url: TOKEN_URL,
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                data: new URLSearchParams({
-                    grant_type: 'refresh_token',
-                    refresh_token: refreshToken,
-                    client_id: context.clientId,
-                    client_secret: context.clientSecret
-                }).toString()
-            });
+            let data;
+            try {
+                ({ data } = await context.httpRequest({
+                    method: 'POST',
+                    url: TOKEN_URL,
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    data: new URLSearchParams({
+                        grant_type: 'refresh_token',
+                        refresh_token: refreshToken,
+                        client_id: context.clientId,
+                        client_secret: context.clientSecret
+                    }).toString()
+                }));
+            } catch (err) {
+                const status = err.response && err.response.status;
+                if (status === 400 || status === 401) {
+                    // Expired (after a year) or revoked refresh token.
+                    const body = err.response.data || {};
+                    const detail = body.error_description || body.error;
+                    throw new context.InvalidTokenError(
+                        'LinkedIn refused to refresh the access token. Reconnect the account.' +
+                        (detail ? ` LinkedIn says: ${detail}` : '')
+                    );
+                }
+                throw err;
+            }
 
             return {
                 accessToken: data.access_token,

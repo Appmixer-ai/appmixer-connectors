@@ -92,6 +92,30 @@ describe('linkedinPages auth', function() {
         }
     });
 
+    it('asks for reconnection when LinkedIn refuses the refresh token', async function() {
+
+        const context = authContext({ refreshToken: 'refresh-1' });
+        const err = new Error('Request failed with status code 400');
+        err.response = { status: 400, data: { error: 'invalid_grant', error_description: 'expired' } };
+        context.httpRequest.rejects(err);
+
+        await assert.rejects(definition.refreshAccessToken(context), error => {
+            assert.strictEqual(error.name, 'InvalidTokenError');
+            assert.match(error.message, /expired/);
+            return true;
+        });
+    });
+
+    it('rethrows other refresh failures', async function() {
+
+        const context = authContext({ refreshToken: 'refresh-1' });
+        const err = new Error('Request failed with status code 503');
+        err.response = { status: 503, data: {} };
+        context.httpRequest.rejects(err);
+
+        await assert.rejects(definition.refreshAccessToken(context), error => error === err);
+    });
+
     it('stores a new refresh token when LinkedIn returns one', async function() {
 
         const context = authContext({
@@ -117,12 +141,11 @@ describe('linkedinPages quota', function() {
         return sandboxModule.exports;
     }
 
-    it('defines the shares resource with keyable windows', function() {
+    it('defines the shares and requests resources with keyable windows', function() {
 
         const { rules } = loadQuota();
-        assert.ok(rules.length > 0);
+        assert.deepStrictEqual([...new Set(rules.map(rule => rule.resource))].sort(), ['requests', 'shares']);
         rules.forEach(rule => {
-            assert.strictEqual(rule.resource, 'shares');
             assert.ok(Number.isFinite(rule.window) && rule.window > 0, `${rule.throttling} rule needs a window`);
             // Same computation as the engine's KeyBuilder.calculateWindowBoundary().
             const windowStart = Math.floor(Date.now() / rule.window) * rule.window;
