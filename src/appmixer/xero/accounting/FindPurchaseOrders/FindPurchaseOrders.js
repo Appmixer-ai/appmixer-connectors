@@ -13,7 +13,10 @@ const ITEM_SCHEMA = {
         Reference: { type: 'string', title: 'Reference', example: 'PO-REF-001' },
         Type: { type: 'string', title: 'Type', example: 'PURCHASEORDER' },
         Status: { type: 'string', title: 'Status', example: 'DRAFT' },
-        Contact: { type: 'object', title: 'Contact' },
+        Contact: {
+            type: 'object', title: 'Contact',
+            example: { ContactID: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890', Name: 'Acme Corp' }
+        },
         Date: { type: 'string', title: 'Date', example: '/Date(1704067200000+0000)/' },
         DateString: { type: 'string', title: 'Date String', example: '2026-01-15' },
         DeliveryDate: { type: 'string', title: 'Delivery Date', example: '/Date(1704067200000+0000)/' },
@@ -21,6 +24,7 @@ const ITEM_SCHEMA = {
         LineAmountTypes: { type: 'string', title: 'Line Amount Types', example: 'Exclusive' },
         LineItems: {
             type: 'array', title: 'Line Items',
+            example: [{ Description: 'Office supplies', Quantity: 10, UnitAmount: 5, LineAmount: 50, AccountCode: '300' }],
             items: {
                 type: 'object',
                 properties: {
