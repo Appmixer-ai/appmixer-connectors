@@ -1,25 +1,24 @@
 {
     "name": "appmixer.linkedin.shares.ListAdminOrganizations",
-    "author": "Appmixer",
-    "description": "List LinkedIn organization pages where the authenticated user has an administrator role. Used as a data source for dynamic dropdowns.",
-    "private": false,
+    "author": "Appmixer <info@appmixer.com>",
+    "description": "List LinkedIn organization pages where the authenticated member is an approved administrator or content administrator. Used as a data source for the organization dropdown.",
+    "private": true,
     "version": "1.0.0",
     "dependencies": {
         "service": "2.0.0"
     },
     "auth": {
         "service": "appmixer:linkedin",
-        "scope": [ "w_organization_social" ]
+        "scope": [
+            "rw_organization_admin"
+        ]
     },
-    "quota": {},
     "inPorts": [
         {
             "name": "in",
             "schema": {
                 "type": "object",
-                "properties": {
-                    "isSource": { "type": "boolean" }
-                }
+                "properties": {}
             },
             "inspector": {
                 "inputs": {}
@@ -29,10 +28,36 @@
     "outPorts": [
         {
             "name": "out",
-            "options": [
-                { "label": "Organization ID", "value": "id" },
-                { "label": "Organization Name", "value": "name" }
-            ]
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "organizations": {
+                        "type": "array",
+                        "title": "Organizations",
+                        "example": [
+                            {
+                                "id": "2414183",
+                                "name": "DevTestCo"
+                            }
+                        ],
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "id": {
+                                    "type": "string",
+                                    "title": "Organizations.ID",
+                                    "example": "2414183"
+                                },
+                                "name": {
+                                    "type": "string",
+                                    "title": "Organizations.Name",
+                                    "example": "DevTestCo"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
     ],
     "properties": {},

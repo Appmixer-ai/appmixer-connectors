@@ -1,78 +1,113 @@
 'use strict';
 
-const { BASE_URL, VERSION_PATH, VERSION_HEADER } = require('../../constants');
+const { BASE_URL, VERSION_PATH } = require('../../constants');
+const { getHeaders, withCache } = require('../../lib');
+
+const PAGE_SIZE = 100;
+const MAX_PAGES = 10;
+const NAME_LOOKUP_CONCURRENCY = 5;
+// Roles allowed to publish organic posts on behalf of the page.
+const POSTING_ROLES = ['ADMINISTRATOR', 'CONTENT_ADMINISTRATOR'];
+// Organization names rarely change and LinkedIn's Development tier allows only
+// 100 calls per member per day, so keep the list longer than the default 2 min.
+const CACHE_TTL = 15 * 60 * 1000;
 
 /**
- * Fetch the list of organizations where the authenticated user is an ADMINISTRATOR.
- * When used as a dynamic source (isSource=true), also resolves the display name
- * of each organization by calling the organizations endpoint.
+ * IDs of every page where the member holds an approved role that can post.
+ * @param {Context} context
+ * @returns {Promise<string[]>}
+ */
+async function fetchPostableOrganizationIds(context) {
+
+    const ids = [];
+    for (let page = 0; page < MAX_PAGES; page++) {
+        const { data } = await context.httpRequest({
+            method: 'GET',
+            url: `${BASE_URL}${VERSION_PATH}/organizationAcls`,
+            params: {
+                q: 'roleAssignee',
+                state: 'APPROVED',
+                start: page * PAGE_SIZE,
+                count: PAGE_SIZE
+            },
+            headers: getHeaders(context)
+        });
+
+        const elements = (data && data.elements) || [];
+        elements
+            .filter(element => POSTING_ROLES.includes(element.role))
+            .forEach(element => {
+                // Docs show both `organization` and `organizationTarget` for this finder.
+                const urn = element.organization || element.organizationTarget || '';
+                const id = urn.split(':').pop();
+                if (id && !ids.includes(id)) {
+                    ids.push(id);
+                }
+            });
+
+        if (elements.length < PAGE_SIZE) {
+            break;
+        }
+    }
+    return ids;
+}
+
+/**
+ * @param {Context} context
+ * @param {string} id Numeric organization ID.
+ * @returns {Promise<{id: string, name: string}>}
+ */
+async function resolveOrganization(context, id) {
+
+    let name = `Organization ${id}`;
+    try {
+        const { data } = await context.httpRequest({
+            method: 'GET',
+            url: `${BASE_URL}${VERSION_PATH}/organizations/${id}`,
+            headers: getHeaders(context)
+        });
+        name = (data && data.localizedName) || name;
+    } catch (err) {
+        context.log({ stage: 'Could not resolve the organization name.', id, error: err.message });
+    }
+    return { id, name };
+}
+
+/**
+ * Lists LinkedIn organization pages the authenticated member can post to
+ * (administrators and content administrators).
+ * Private helper backing the organization dropdown in CreateCompanyPost.
  */
 module.exports = {
 
     async receive(context) {
 
-        const { isSource } = context.messages.in.content;
-
-        // Fetch organizations where the user holds the ADMINISTRATOR role
-        const aclResponse = await context.httpRequest({
-            method: 'GET',
-            url: `${BASE_URL}${VERSION_PATH}/organizationAcls?q=roleAssignee&role=ADMINISTRATOR&count=100`,
-            headers: {
-                'Authorization': `Bearer ${context.auth.accessToken}`,
-                'LinkedIn-Version': VERSION_HEADER,
-                'X-Restli-Protocol-Version': '2.0.0'
-            }
-        });
-
-        const elements = (aclResponse.data && aclResponse.data.elements) || [];
-
-        if (isSource) {
-
-            // Resolve display names so the dropdown shows org names, not raw IDs
-            const orgs = await Promise.all(elements.map(async (element) => {
-
-                const orgUrn = element.organization || '';
-                const orgId = orgUrn.split(':').pop();
-                let name = `Organization ${orgId}`;
-
-                try {
-                    const orgResponse = await context.httpRequest({
-                        method: 'GET',
-                        url: `${BASE_URL}${VERSION_PATH}/organizations/${orgId}`,
-                        headers: {
-                            'Authorization': `Bearer ${context.auth.accessToken}`,
-                            'LinkedIn-Version': VERSION_HEADER,
-                            'X-Restli-Protocol-Version': '2.0.0'
-                        }
-                    });
-                    name = orgResponse.data.localizedName || name;
-                } catch (e) {
-                    // Fallback to "Organization <id>" if the name lookup fails
-                    context.log('warn', `Could not resolve name for organization ${orgId}: ${e.message}`);
+        try {
+            const organizations = await withCache(context, { key: 'postableOrganizations' }, async () => {
+                const ids = await fetchPostableOrganizationIds(context);
+                // BATCH_GET is not available on LinkedIn's Development tier, so look names up one by one.
+                const resolved = [];
+                for (let i = 0; i < ids.length; i += NAME_LOOKUP_CONCURRENCY) {
+                    const chunk = ids.slice(i, i + NAME_LOOKUP_CONCURRENCY);
+                    resolved.push(...await Promise.all(chunk.map(id => resolveOrganization(context, id))));
                 }
-
-                return { id: orgId, name };
-            }));
-
-            if (orgs.length === 0) {
-                return context.sendJson({}, 'out');
+                return resolved;
+            }, CACHE_TTL);
+            return context.sendJson({ organizations }, 'out');
+        } catch (err) {
+            if (context.properties.isSource) {
+                context.log({ stage: 'Could not list organizations for the dropdown.', error: err.message });
+                return context.sendJson({ organizations: [] }, 'out');
             }
-            return context.sendJson(orgs, 'out');
+            throw err;
         }
-
-        return context.sendJson(elements, 'out');
     },
 
-    /**
-     * Transform function used by the CreateCompanyPost component.json source entry
-     * to convert the raw organization list into a select-friendly array.
-     *
-     * @param {Array} orgs  Array of { id, name } objects returned by this component
-     * @returns {Array}     Array of { label, value } objects for a select dropdown
-     */
-    organizationsToSelectArray(orgs) {
+    organizationsToSelectArray(out) {
 
-        if (!Array.isArray(orgs)) return [];
-        return orgs.map(org => ({ label: org.name, value: org.id }));
+        return ((out && out.organizations) || []).map(org => ({
+            label: `${org.name} (${org.id})`,
+            value: org.id
+        }));
     }
 };
