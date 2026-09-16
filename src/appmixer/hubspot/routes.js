@@ -9,36 +9,18 @@ module.exports = async (context) => {
     // This will create a subscription in HubSpot for the given subscriptionType if it does not exist.
     context.onListenerAdded(async (listener) => {
 
-        const { eventName, params = {} } = listener;
-        const subscriptionType = eventName.split(':')[0];
-
         /** Is this AuthHub or Engine pod? */
         const isAuthHubPod = !!process.env.AUTH_HUB_URL && !process.env.AUTH_HUB_TOKEN;
-        // Components connected through AuthHub register their listeners here, on the AuthHub pod. The
-        // subscriptions of the shared HubSpot app are configured manually in its HubSpot webhook settings,
-        // so the AuthHub only adds the properties a trigger explicitly asks for (ContactPropertyChanged,
-        // Watched Properties) — never the defaults, never creation/deletion subscriptions.
-        if (isAuthHubPod && !subscriptionType.endsWith('.propertyChange')) {
+        if (isAuthHubPod) {
+            // This is AuthHub — the shared app's subscriptions are configured manually in its HubSpot
+            // webhook settings, so there is nothing to register here.
             return;
         }
 
-        const subscriptions = getSubscriptionsByType(subscriptionType, context, params, !isAuthHubPod);
+        const { eventName, params } = listener;
+        const subscriptionType = eventName.split(':')[0];
+        const subscriptions = getSubscriptionsByType(subscriptionType, context, params);
         if (!subscriptions?.length) {
-            return;
-        }
-
-        // AuthHub tenants send no developer credentials — the AuthHub's own service config is used instead.
-        const hubspot = {
-            appId: params.appId || context.config?.appId,
-            apiKey: params.apiKey || context.config?.apiKey
-        };
-        if (!hubspot.appId || !hubspot.apiKey) {
-            // Without the app's developer API key the subscriptions can't be managed from here; the
-            // properties have to be added in the HubSpot app's webhook settings instead.
-            context.log('info', 'hubspot-plugin-listener-added-no-developer-credentials', {
-                eventName,
-                properties: subscriptions.map(sub => sub.subscriptionDetails.propertyName).filter(Boolean)
-            });
             return;
         }
 
@@ -53,7 +35,7 @@ module.exports = async (context) => {
                 maxRetryCount: 20
             });
 
-            const results = await getHubSpotSubscriptions(context, hubspot);
+            const results = await getHubSpotSubscriptions(context, params);
 
             // Reconcile on the full (eventType, propertyName) pair. HubSpot models each watched
             // property as its own subscription, so comparing eventType alone would treat every
@@ -73,12 +55,12 @@ module.exports = async (context) => {
                 } else if (isActive === false) {
                     // Re-enable a disabled subscription for this exact property — don't stop at the
                     // first one, every desired property must end up active.
-                    await activateHubSpotSubscription(context, hubspot, existing.id);
+                    await activateHubSpotSubscription(context, params, existing.id);
                 }
             }
 
             if (subscriptionsToCreate.length) {
-                const { data } = await createHubSpotSubscriptions(context, hubspot, subscriptionsToCreate);
+                const { data } = await createHubSpotSubscriptions(context, params, subscriptionsToCreate);
                 return data;
             }
 
@@ -223,16 +205,14 @@ function groupEventsByObjectId(events) {
 }
 
 // HubSpot has no "any property" subscription — every watched property is its own subscription, shared by
-// all portals that installed the app (max 1000 per app). Register the defaults plus whatever the starting
-// trigger asked for: `propertyName` (ContactPropertyChanged) or `propertyNames` (the Watched Properties
-// input of UpdatedContact/UpdatedDeal).
-function propertyChangeSubscriptions(subscriptionType, defaultProperties, params) {
+// all portals that installed the app (max 1000 per app). Register the defaults plus the property a
+// ContactPropertyChanged trigger asks for (`propertyName`).
+function propertyChangeSubscriptions(subscriptionType, defaultProperties, params = {}) {
 
     const propertySet = new Set(defaultProperties);
     if (params.propertyName) {
         propertySet.add(params.propertyName);
     }
-    (params.propertyNames || []).forEach(propertyName => propertySet.add(propertyName));
 
     return Array.from(propertySet).map(propertyName => ({
         enabled: true,
@@ -243,17 +223,14 @@ function propertyChangeSubscriptions(subscriptionType, defaultProperties, params
     }));
 }
 
-// `withDefaults` is false on the AuthHub pod — the shared app's default subscriptions are managed manually.
-function getSubscriptionsByType(subscriptionType, context, params = {}, withDefaults = true) {
+function getSubscriptionsByType(subscriptionType, context, params = {}) {
 
     let subscriptions = [];
 
     if (subscriptionType === 'deal.propertyChange') {
-        const defaults = withDefaults ? DEFAULT_SUBSCRIBED_PROPERTIES_DEAL : [];
-        subscriptions = propertyChangeSubscriptions(subscriptionType, defaults, params);
+        subscriptions = propertyChangeSubscriptions(subscriptionType, DEFAULT_SUBSCRIBED_PROPERTIES_DEAL, params);
     } else if (subscriptionType === 'contact.propertyChange') {
-        const defaults = withDefaults ? DEFAULT_SUBSCRIBED_PROPERTIES_CONTACT : [];
-        subscriptions = propertyChangeSubscriptions(subscriptionType, defaults, params);
+        subscriptions = propertyChangeSubscriptions(subscriptionType, DEFAULT_SUBSCRIBED_PROPERTIES_CONTACT, params);
     } else if (subscriptionType === 'contact.creation' || subscriptionType === 'deal.creation') {
         subscriptions = [{
             enabled: true,

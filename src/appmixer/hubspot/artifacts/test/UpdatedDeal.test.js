@@ -220,23 +220,4 @@ describe('UpdatedDeal', () => {
         assert.equal(hubspotStub.callCount, 11, 'Should make 10 calls to get deal data and 1 call to get deal properties');
     });
 
-    it('with Watched Properties fires only for changes of those properties', async () => {
-
-        context.properties = { properties: 'amount', watchedProperties: 'my_custom_deal_field' };
-        context.messages.webhook.content.data = {
-            '201': { occurredAt: 1726820305517, propertyName: 'amount', propertyNames: ['amount'] },
-            '202': { occurredAt: 1726820305517, propertyName: 'my_custom_deal_field', propertyNames: ['my_custom_deal_field'] }
-        };
-        hubspotStub.withArgs('post', 'crm/v3/objects/deals/batch/read').resolves({
-            data: {
-                results: [{ id: '202', createdAt: '2023-01-01T00:00:00Z', updatedAt: '2023-02-04T00:00:00Z' }]
-            }
-        });
-
-        await UpdatedDeal.receive(context);
-
-        assert.deepEqual(hubspotStub.args[0][2].inputs, [{ id: '202' }], 'only the deal with a watched change is read');
-        assert.equal(context.sendArray.args[0][0].length, 1);
-        assert.deepEqual(UpdatedDeal.getListenerParams(context), { propertyNames: ['my_custom_deal_field'] });
-    });
 });

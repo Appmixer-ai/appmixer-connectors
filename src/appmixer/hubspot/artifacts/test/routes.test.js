@@ -65,7 +65,7 @@ describe('POST /events handler', () => {
             assert.equal(context.httpRequest.callCount, 2, 'httpRequest should be called twice');
         });
 
-        it('onListenerAdded subscribes to the requested properties on top of the defaults', async () => {
+        it('onListenerAdded subscribes to the ContactPropertyChanged property on top of the defaults', async () => {
 
             // Existing subscriptions of the app: `email` is already there.
             context.httpRequest.onCall(0).resolves({
@@ -80,7 +80,7 @@ describe('POST /events handler', () => {
             const listenerHandler = context.onListenerAdded.getCall(0).args[0];
             await listenerHandler({
                 eventName: 'contact.propertyChange:33',
-                params: { apiKey: 'dev-api-key', appId: '1234585', propertyNames: ['my_custom_field', 'email'] }
+                params: { apiKey: 'dev-api-key', appId: '1234585', propertyName: 'my_custom_field' }
             });
 
             assert.equal(context.httpRequest.callCount, 2, 'list + batch create');
@@ -120,71 +120,29 @@ describe('POST /events handler', () => {
             assert.deepEqual(patch.data, { active: true });
         });
 
-        describe('on the AuthHub pod', () => {
+        it('onListenerAdded does nothing on the AuthHub pod (the shared app is configured manually)', async () => {
 
-            const originalEnv = {};
+            const originalUrl = process.env.AUTH_HUB_URL;
+            const originalToken = process.env.AUTH_HUB_TOKEN;
+            process.env.AUTH_HUB_URL = 'https://auth-hub.example.com';
+            delete process.env.AUTH_HUB_TOKEN;
+            try {
+                context.config = { apiKey: 'authhub-dev-key', appId: '999' };
+                const listenerHandler = context.onListenerAdded.getCall(0).args[0];
+                await listenerHandler({ eventName: 'contact.propertyChange:33', params: { propertyName: 'my_custom_field' } });
+                await listenerHandler({ eventName: 'contact.creation:33', params: {} });
 
-            beforeEach(() => {
-
-                originalEnv.url = process.env.AUTH_HUB_URL;
-                originalEnv.token = process.env.AUTH_HUB_TOKEN;
-                process.env.AUTH_HUB_URL = 'https://auth-hub.example.com';
-                delete process.env.AUTH_HUB_TOKEN;
-            });
-
-            afterEach(() => {
-
-                if (originalEnv.url === undefined) {
+                assert.equal(context.httpRequest.callCount, 0, 'no HubSpot call');
+            } finally {
+                if (originalUrl === undefined) {
                     delete process.env.AUTH_HUB_URL;
                 } else {
-                    process.env.AUTH_HUB_URL = originalEnv.url;
+                    process.env.AUTH_HUB_URL = originalUrl;
                 }
-                if (originalEnv.token !== undefined) {
-                    process.env.AUTH_HUB_TOKEN = originalEnv.token;
+                if (originalToken !== undefined) {
+                    process.env.AUTH_HUB_TOKEN = originalToken;
                 }
-            });
-
-            it('adds only the explicitly requested properties, with its own developer credentials', async () => {
-
-                // Tenants connected through AuthHub send no developer credentials in the listener params.
-                context.config = { apiKey: 'authhub-dev-key', appId: '999' };
-                context.httpRequest.onCall(0).resolves({ data: { results: [] } });
-                context.httpRequest.onCall(1).resolves({ statusCode: 200 });
-
-                const listenerHandler = context.onListenerAdded.getCall(0).args[0];
-                await listenerHandler({
-                    eventName: 'contact.propertyChange:33',
-                    params: { propertyNames: ['my_custom_field'] }
-                });
-
-                assert.equal(context.httpRequest.callCount, 2, 'list + batch create');
-                assert(context.httpRequest.getCall(0).args[0].url.includes('/999/'), 'AuthHub app id used');
-                const created = context.httpRequest.getCall(1).args[0].data
-                    .map(sub => sub.subscriptionDetails.propertyName);
-                assert.deepEqual(created, ['my_custom_field'], 'no default subscriptions on the shared app');
-            });
-
-            it('skips without developer credentials instead of failing the listener', async () => {
-
-                context.config = {};
-                const listenerHandler = context.onListenerAdded.getCall(0).args[0];
-                await listenerHandler({
-                    eventName: 'contact.propertyChange:33',
-                    params: { propertyNames: ['my_custom_field'] }
-                });
-
-                assert.equal(context.httpRequest.callCount, 0, 'no HubSpot call');
-            });
-
-            it('leaves the default and creation subscriptions of the shared app alone', async () => {
-
-                context.config = { apiKey: 'authhub-dev-key', appId: '999' };
-                const listenerHandler = context.onListenerAdded.getCall(0).args[0];
-                await listenerHandler({ eventName: 'contact.creation:33', params: {} });
-                await listenerHandler({ eventName: 'contact.propertyChange:33', params: {} });
-
-                assert.equal(context.httpRequest.callCount, 0, 'no HubSpot call');
-            });
+            }
         });
     }
 

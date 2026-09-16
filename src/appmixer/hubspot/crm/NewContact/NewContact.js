@@ -26,7 +26,9 @@ class NewContact extends BaseSubscriptionComponent {
             });
 
             for (const [contactId] of Object.entries(eventsByObjectId)) {
-                const cacheKey = 'hubspot-contact-created-' + contactId;
+                // Scope the dedupe key per component instance — staticCache is shared across all
+                // instances, so two flows must not consume each other's events.
+                const cacheKey = `hubspot-contact-created-${context.componentId}-${contactId}`;
                 const cached = await context.staticCache.get(cacheKey);
                 if (cached) {
                     continue;

@@ -102,17 +102,7 @@ class BaseSubscriptionComponent {
 
         // Use hub_id from context to differentiate between different HubSpot portals/users.
         const portalId = context.auth?.profileInfo?.hub_id;
-        return context.addListener(`${this.subscriptionType}:${portalId}`, {
-            apiKey: context.config.apiKey,
-            appId: context.config.appId,
-            ...this.getListenerParams(context)
-        });
-    }
-
-    /** Extra listener params passed to routes.js, e.g. `propertyNames` to subscribe to. Override in triggers. */
-    getListenerParams(context) {
-
-        return {};
+        return context.addListener(`${this.subscriptionType}:${portalId}`, { apiKey: context.config.apiKey, appId: context.config.appId });
     }
 
     async stop(context) {

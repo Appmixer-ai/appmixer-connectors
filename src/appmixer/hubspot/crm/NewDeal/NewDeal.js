@@ -26,7 +26,9 @@ class NewDeal extends BaseSubscriptionComponent {
             });
 
             for (const [dealId] of Object.entries(eventsByObjectId)) {
-                const cacheKey = 'hubspot-deal-created-' + dealId;
+                // Scope the dedupe key per component instance — staticCache is shared across all
+                // instances, so two flows must not consume each other's events.
+                const cacheKey = `hubspot-deal-created-${context.componentId}-${dealId}`;
                 const cached = await context.staticCache.get(cacheKey);
                 if (cached) {
                     continue;

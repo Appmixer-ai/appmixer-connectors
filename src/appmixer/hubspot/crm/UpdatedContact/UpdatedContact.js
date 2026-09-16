@@ -1,25 +1,17 @@
 'use strict';
 const BaseSubscriptionComponent = require('../../BaseSubscriptionComponent');
-const { getObjectProperties, parsePropertyList, eventChangedWatchedProperty } = require('../../commons');
+const { getObjectProperties } = require('../../commons');
 const ITEM_SCHEMA = require('../../item-schemas.json').contact;
 
 const subscriptionType = 'contact.propertyChange';
 
 class UpdatedContact extends BaseSubscriptionComponent {
 
-    getListenerParams(context) {
-
-        // routes.js subscribes to these on top of the default properties (custom properties included).
-        const propertyNames = parsePropertyList(context.properties.watchedProperties);
-        return propertyNames.length ? { propertyNames } : {};
-    }
-
     async receive(context) {
 
         this.configureHubspot(context);
 
         const eventsByObjectId = context.messages.webhook.content.data;
-        const watchedProperties = parsePropertyList(context.properties.watchedProperties);
 
         let events = {};
         // Locking to avoid duplicates. HubSpot payloads can come within milliseconds of each other.
@@ -33,10 +25,6 @@ class UpdatedContact extends BaseSubscriptionComponent {
             });
 
             for (const [contactId, event] of Object.entries(eventsByObjectId)) {
-                // Subscriptions are app-wide, so changes of properties watched by other flows arrive here too.
-                if (!eventChangedWatchedProperty(event, watchedProperties)) {
-                    continue;
-                }
                 // Scope the dedupe key per component instance — staticCache is shared across all
                 // instances, so two flows must not consume each other's events.
                 const cacheKey = `hubspot-contact-updated-${context.componentId}-${contactId}`;
