@@ -1,0 +1,128 @@
+{
+    "name": "appmixer.linkedin.shares.CreateCompanyPost",
+    "author": "Appmixer",
+    "description": "Create a new post on LinkedIn on behalf of a company page you manage.",
+    "private": false,
+    "version": "1.0.0",
+    "dependencies": {
+        "service": "2.0.0"
+    },
+    "auth": {
+        "service": "appmixer:linkedin",
+        "scope": [ "w_organization_social" ]
+    },
+    "quota": {
+        "manager": "appmixer:linkedin:shares",
+        "resources": "shares",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "organizationId": {
+                        "type": "string"
+                    },
+                    "visibility": {
+                        "type": "string"
+                    },
+                    "text": {
+                        "type": "string"
+                    },
+                    "specificLink": {
+                        "type": "boolean"
+                    },
+                    "url": {
+                        "type": "string"
+                    },
+                    "title": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": "string"
+                    }
+                },
+                "required": [ "organizationId", "text" ]
+            },
+            "inspector": {
+                "inputs": {
+                    "organizationId": {
+                        "type": "text",
+                        "label": "Organization",
+                        "index": 1,
+                        "tooltip": "Select a company page to post as. You must be an administrator of the page. If the list is empty, enter the numeric organization ID manually (found in the company page URL: linkedin.com/company/{id}/).",
+                        "source": {
+                            "url": "/component/appmixer/linkedin/shares/ListAdminOrganizations?outPort=out",
+                            "data": {
+                                "transform": "./ListAdminOrganizations#organizationsToSelectArray",
+                                "messages": {
+                                    "in/isSource": true
+                                }
+                            }
+                        }
+                    },
+                    "visibility": {
+                        "type": "select",
+                        "label": "Visibility",
+                        "options": [
+                            { "label": "Public", "value": "PUBLIC" },
+                            { "label": "Logged In Members Only", "value": "LOGGED_IN" }
+                        ],
+                        "defaultValue": "PUBLIC",
+                        "index": 2,
+                        "tooltip": "Select who can see this post. Note: 'Connections Only' is not available for company page posts."
+                    },
+                    "text": {
+                        "type": "text",
+                        "tooltip": "Text content of the post.",
+                        "label": "Text",
+                        "index": 3
+                    },
+                    "specificLink": {
+                        "type": "toggle",
+                        "tooltip": "Enable to attach a URL article link to the post.",
+                        "label": "Share specific link",
+                        "defaultValue": false,
+                        "index": 4
+                    },
+                    "url": {
+                        "type": "text",
+                        "tooltip": "A fully qualified URL for the content being shared.",
+                        "label": "URL",
+                        "index": 5,
+                        "when": { "eq": { "specificLink": true } }
+                    },
+                    "title": {
+                        "type": "text",
+                        "tooltip": "The title of the content being shared.",
+                        "label": "Title",
+                        "index": 6,
+                        "when": { "eq": { "specificLink": true } }
+                    },
+                    "description": {
+                        "type": "textarea",
+                        "tooltip": "The description of the content being shared.",
+                        "label": "Description",
+                        "index": 7,
+                        "when": { "eq": { "specificLink": true } }
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "options": [
+                { "label": "Status", "value": "status" },
+                { "label": "Post ID", "value": "postId" }
+            ]
+        }
+    ],
+    "properties": {},
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA3NS43NjggNzYuMjQ4Ij48ZGVmcz48c3R5bGU+LmF7ZmlsbDojMDY5O30uYntmaWxsOiNmZmY7ZmlsbC1ydWxlOmV2ZW5vZGQ7fTwvc3R5bGU+PC9kZWZzPjxnIHRyYW5zZm9ybT0idHJhbnNsYXRlKC05NTUxLjA5OCAtMjUwNykiPjxwYXRoIGNsYXNzPSJhIiBkPSJNMjQzLjgzNi05Ni44MjZhNS41MzIsNS41MzIsMCwwLDEsNS42LTUuNDYySDMxNGE1LjUzMiw1LjUzMiwwLDAsMSw1LjYsNS40NjJWLTMxLjVhNS41MzIsNS41MzIsMCwwLDEtNS42LDUuNDYySDI0OS40MzVhNS41MzIsNS41MzIsMCwwLDEtNS42LTUuNDYyWiIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoOTMwNy4yNjIgMjYwOS4yODgpIi8+PHBhdGggY2xhc3M9ImIiIGQ9Ik0yNjYuOC0zOC40NlYtNzIuODlIMjU1LjM2djM0LjQzWm0tNS43MjItMzkuMTMxYzMuOTkxLDAsNi40NzUtMi42NDQsNi40NzUtNS45NDgtLjA3NC0zLjM3OC0yLjQ4NC01Ljk0OS02LjQtNS45NDlzLTYuNDc0LDIuNTcxLTYuNDc0LDUuOTQ5YzAsMy4zLDIuNDgzLDUuOTQ4LDYuMzI0LDUuOTQ4aC4wNzRaIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSg5MzA3LjI2MiAyNjA5LjI4OCkiLz48cGF0aCBjbGFzcz0iYiIgZD0iTTI3My4xMzYtMzguNDZIMjg0LjU4Vi01Ny42ODdhNy44NDQsNy44NDQsMCwwLDEsLjM3Ny0yLjc5Myw2LjI2NCw2LjI2NCwwLDAsMSw1Ljg3Mi00LjE4NWM0LjE0MSwwLDUuOCwzLjE1Nyw1LjgsNy43ODZWLTM4LjQ2aDExLjQ0M1YtNTguMmMwLTEwLjU3NS01LjY0Ni0xNS41LTEzLjE3NS0xNS41YTExLjQsMTEuNCwwLDAsMC0xMC4zOSw1LjhoLjA3NlYtNzIuODlIMjczLjEzN2MuMTUsMy4yMzEsMCwzNC40MywwLDM0LjQzWiIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoOTMwNy4yNjIgMjYwOS4yODgpIi8+PC9nPjwvc3ZnPg=="
+}
