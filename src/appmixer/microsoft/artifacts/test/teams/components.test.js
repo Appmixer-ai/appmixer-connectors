@@ -286,7 +286,7 @@ describe('Microsoft Teams', function() {
                 request.url,
                 `https://graph.microsoft.com/v1.0/teams/${TEAM_ID}/channels/${ENCODED_CHANNEL_ID}/messages`
             );
-            assert.deepStrictEqual(request.data, { body: { content: 'Hi' } });
+            assert.deepStrictEqual(request.data, { body: { contentType: 'text', content: 'Hi' } });
             assert.deepStrictEqual(context.sendJson.args[0], [message, 'out']);
         });
 

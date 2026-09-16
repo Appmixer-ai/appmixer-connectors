@@ -15,6 +15,17 @@ const getRetryAfterMs = (error) => {
 
 module.exports = {
 
+    /**
+     * The HTTP status of a failed Graph request. `graphError` returns a new Error and keeps
+     * the axios one on `cause`, so the status has to be looked for in both places.
+     * @param {Error} error
+     * @return {number|undefined}
+     */
+    statusOf(error) {
+
+        return error?.response?.status ?? error?.cause?.response?.status;
+    },
+
     async makeRequest(context, options) {
 
         for (let attempt = 0; ; attempt++) {

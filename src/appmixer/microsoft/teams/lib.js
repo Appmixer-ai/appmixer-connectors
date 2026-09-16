@@ -126,6 +126,40 @@ module.exports = {
     },
 
     /**
+     * The signed-in user. Needed wherever Graph wants the caller named explicitly,
+     * e.g. in the member list of a chat being created.
+     * @param {object} context
+     * @return {Promise<object>}
+     */
+    async getMe(context) {
+
+        const { data } = await makeRequest(context, { method: 'GET', path: '/me' });
+        return data;
+    },
+
+    /**
+     * The Graph path of a single message, in a channel or in a chat. Every segment is
+     * encoded: channel and chat IDs look like `19:xxx@thread.tacv2`.
+     * @param {object} target
+     * @param {string} [target.location] - 'chat' or 'channel' (default)
+     * @param {string} [target.parentMessageId] - set when the message is a channel reply
+     * @return {string}
+     */
+    messagePath({ location, teamId, channelId, chatId, messageId, parentMessageId }) {
+
+        const segment = encodeURIComponent;
+
+        if (location === 'chat') {
+            return `/chats/${segment(chatId)}/messages/${segment(messageId)}`;
+        }
+
+        const messages = `/teams/${segment(teamId)}/channels/${segment(channelId)}/messages`;
+        return parentMessageId
+            ? `${messages}/${segment(parentMessageId)}/replies/${segment(messageId)}`
+            : `${messages}/${segment(messageId)}`;
+    },
+
+    /**
      * Cache the result of `fn` for dynamic inspector sources. The designer fires source
      * calls in concurrent bursts, so the lock makes the burst hit Graph only once.
      * @param {object} context
