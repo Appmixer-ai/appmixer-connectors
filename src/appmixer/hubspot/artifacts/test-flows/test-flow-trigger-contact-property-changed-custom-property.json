@@ -179,84 +179,6 @@
                 }
             }
         },
-        "f6000006-0000-4000-8000-000000000006": {
-            "type": "appmixer.utils.timers.Wait",
-            "x": 1104,
-            "y": 320,
-            "source": {
-                "in": {
-                    "f6000006-0000-4000-8000-000000000005": [
-                        "updateContact"
-                    ]
-                }
-            },
-            "version": "1.0.0",
-            "errorHandling": {
-                "autoRetry": false,
-                "onError": "stopFlow"
-            },
-            "config": {
-                "transform": {
-                    "in": {
-                        "f6000006-0000-4000-8000-000000000005": {
-                            "updateContact": {
-                                "type": "json2new",
-                                "modifiers": {
-                                    "interval": {}
-                                },
-                                "lambda": {
-                                    "interval": "1m"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "f6000006-0000-4000-8000-000000000007": {
-            "type": "appmixer.hubspot.core.MakeApiCall",
-            "x": 1312,
-            "y": 320,
-            "source": {
-                "in": {
-                    "f6000006-0000-4000-8000-000000000006": [
-                        "out"
-                    ]
-                }
-            },
-            "version": "1.0.0",
-            "errorHandling": {
-                "autoRetry": false,
-                "onError": "stopFlow"
-            },
-            "config": {
-                "transform": {
-                    "in": {
-                        "f6000006-0000-4000-8000-000000000006": {
-                            "out": {
-                                "type": "json2new",
-                                "modifiers": {
-                                    "url": {
-                                        "del-1": {
-                                            "variable": "$.f6000006-0000-4000-8000-000000000003.contact.id",
-                                            "functions": []
-                                        }
-                                    },
-                                    "method": {}
-                                },
-                                "lambda": {
-                                    "url": "/crm/v3/objects/contacts/{{{del-1}}}",
-                                    "method": "DELETE"
-                                }
-                            }
-                        }
-                    }
-                },
-                "properties": {
-                    "account": "69b0148dfba66468c2a58a06"
-                }
-            }
-        },
         "f6000006-0000-4000-8000-000000000008": {
             "type": "appmixer.hubspot.crm.ContactPropertyChanged",
             "x": 64,
@@ -333,14 +255,11 @@
         },
         "f6000006-0000-4000-8000-00000000000a": {
             "type": "appmixer.utils.test.AfterAll",
-            "x": 1520,
-            "y": 320,
+            "x": 480,
+            "y": 576,
             "source": {
                 "in": {
                     "f6000006-0000-4000-8000-000000000009": [
-                        "out"
-                    ],
-                    "f6000006-0000-4000-8000-000000000007": [
                         "out"
                     ]
                 }
@@ -356,13 +275,57 @@
                 }
             }
         },
-        "f6000006-0000-4000-8000-00000000000b": {
-            "type": "appmixer.utils.test.ProcessE2EResults",
-            "x": 1728,
-            "y": 320,
+        "f6000006-0000-4000-8000-000000000007": {
+            "type": "appmixer.hubspot.core.MakeApiCall",
+            "x": 688,
+            "y": 576,
             "source": {
                 "in": {
                     "f6000006-0000-4000-8000-00000000000a": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "f6000006-0000-4000-8000-00000000000a": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "url": {
+                                        "del-1": {
+                                            "variable": "$.f6000006-0000-4000-8000-000000000008.contact.properties.hs_object_id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "method": {}
+                                },
+                                "lambda": {
+                                    "url": "/crm/v3/objects/contacts/{{{del-1}}}",
+                                    "method": "DELETE"
+                                }
+                            }
+                        }
+                    }
+                },
+                "properties": {
+                    "account": "69b0148dfba66468c2a58a06"
+                }
+            }
+        },
+        "f6000006-0000-4000-8000-00000000000b": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 896,
+            "y": 576,
+            "source": {
+                "in": {
+                    "f6000006-0000-4000-8000-000000000007": [
                         "out"
                     ]
                 }
@@ -375,7 +338,7 @@
             "config": {
                 "transform": {
                     "in": {
-                        "f6000006-0000-4000-8000-00000000000a": {
+                        "f6000006-0000-4000-8000-000000000007": {
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
@@ -405,7 +368,7 @@
     "type": "automation",
     "notes": {
         "f6000006-0000-4000-8000-0000000000ff": {
-            "content": "## ⚠️ Test data assumption\n\n- Appmixer account: auth+hubspot@appmixer.com (service appmixer:hubspot), HubSpot portal 148964607 (developer test account).\n- The HubSpot app's webhook target URL must point at this Appmixer instance (own app: appId + apiKey in the service config) — the triggers register / re-activate their subscriptions at flow start.\n- **Custom contact property `e2e_watched_note` must exist** (string/text, group contactinformation). Create it once: HubSpot MakeApiCall `POST /crm/v3/properties/contacts` `{\"name\":\"e2e_watched_note\",\"label\":\"E2E Watched Note\",\"type\":\"string\",\"fieldType\":\"text\",\"groupName\":\"contactinformation\"}`.\n- ContactPropertyChanged subscribes to `e2e_watched_note` itself at flow start (own app only; with AuthHub the property has to be added in the HubSpot app's webhook settings).\n- The creation-time email/name events must not fire it — the Assert expects the custom value.\n- The Waits must stay: subscription propagation, create → update spacing, cleanup after the trigger read the contact.",
+            "content": "## ⚠️ Test data assumption\n\n- Appmixer account: auth+hubspot@appmixer.com (service appmixer:hubspot), HubSpot portal 148964607 (developer test account).\n- The HubSpot app's webhook target URL must point at this Appmixer instance (own app: appId + apiKey in the service config) — the trigger registers its subscription at flow start.\n- **Custom contact property `e2e_watched_note` must exist** (string/text, group contactinformation). Create it once: HubSpot MakeApiCall `POST /crm/v3/properties/contacts` `{\"name\":\"e2e_watched_note\",\"label\":\"E2E Watched Note\",\"type\":\"string\",\"fieldType\":\"text\",\"groupName\":\"contactinformation\"}`.\n- ContactPropertyChanged subscribes to `e2e_watched_note` itself at flow start (own app only; with AuthHub the property has to be added in the HubSpot app's webhook settings).\n- The creation-time email/name events must not fire it — the Assert expects the custom value. The cleanup after AfterAll deletes the contact by the trigger output.\n- The Waits must stay: subscription propagation and create → update spacing.",
             "x": 64,
             "y": 32,
             "width": 672,

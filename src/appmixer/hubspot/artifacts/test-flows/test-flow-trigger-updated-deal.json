@@ -170,84 +170,6 @@
                 }
             }
         },
-        "e5000005-0000-4000-8000-000000000006": {
-            "type": "appmixer.utils.timers.Wait",
-            "x": 1104,
-            "y": 320,
-            "source": {
-                "in": {
-                    "e5000005-0000-4000-8000-000000000005": [
-                        "updateDeal"
-                    ]
-                }
-            },
-            "version": "1.0.0",
-            "errorHandling": {
-                "autoRetry": false,
-                "onError": "stopFlow"
-            },
-            "config": {
-                "transform": {
-                    "in": {
-                        "e5000005-0000-4000-8000-000000000005": {
-                            "updateDeal": {
-                                "type": "json2new",
-                                "modifiers": {
-                                    "interval": {}
-                                },
-                                "lambda": {
-                                    "interval": "1m"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "e5000005-0000-4000-8000-000000000007": {
-            "type": "appmixer.hubspot.core.MakeApiCall",
-            "x": 1312,
-            "y": 320,
-            "source": {
-                "in": {
-                    "e5000005-0000-4000-8000-000000000006": [
-                        "out"
-                    ]
-                }
-            },
-            "version": "1.0.0",
-            "errorHandling": {
-                "autoRetry": false,
-                "onError": "stopFlow"
-            },
-            "config": {
-                "transform": {
-                    "in": {
-                        "e5000005-0000-4000-8000-000000000006": {
-                            "out": {
-                                "type": "json2new",
-                                "modifiers": {
-                                    "url": {
-                                        "del-1": {
-                                            "variable": "$.e5000005-0000-4000-8000-000000000003.newDeal.properties.hs_object_id",
-                                            "functions": []
-                                        }
-                                    },
-                                    "method": {}
-                                },
-                                "lambda": {
-                                    "url": "/crm/v3/objects/deals/{{{del-1}}}",
-                                    "method": "DELETE"
-                                }
-                            }
-                        }
-                    }
-                },
-                "properties": {
-                    "account": "69b0148dfba66468c2a58a06"
-                }
-            }
-        },
         "e5000005-0000-4000-8000-000000000008": {
             "type": "appmixer.hubspot.crm.NewDeal",
             "x": 64,
@@ -387,17 +309,14 @@
         },
         "e5000005-0000-4000-8000-00000000000c": {
             "type": "appmixer.utils.test.AfterAll",
-            "x": 1520,
-            "y": 320,
+            "x": 480,
+            "y": 704,
             "source": {
                 "in": {
                     "e5000005-0000-4000-8000-000000000009": [
                         "out"
                     ],
                     "e5000005-0000-4000-8000-00000000000b": [
-                        "out"
-                    ],
-                    "e5000005-0000-4000-8000-000000000007": [
                         "out"
                     ]
                 }
@@ -413,13 +332,57 @@
                 }
             }
         },
-        "e5000005-0000-4000-8000-00000000000d": {
-            "type": "appmixer.utils.test.ProcessE2EResults",
-            "x": 1728,
-            "y": 320,
+        "e5000005-0000-4000-8000-000000000007": {
+            "type": "appmixer.hubspot.core.MakeApiCall",
+            "x": 688,
+            "y": 704,
             "source": {
                 "in": {
                     "e5000005-0000-4000-8000-00000000000c": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "e5000005-0000-4000-8000-00000000000c": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "url": {
+                                        "del-1": {
+                                            "variable": "$.e5000005-0000-4000-8000-00000000000a.deal.properties.hs_object_id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "method": {}
+                                },
+                                "lambda": {
+                                    "url": "/crm/v3/objects/deals/{{{del-1}}}",
+                                    "method": "DELETE"
+                                }
+                            }
+                        }
+                    }
+                },
+                "properties": {
+                    "account": "69b0148dfba66468c2a58a06"
+                }
+            }
+        },
+        "e5000005-0000-4000-8000-00000000000d": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 896,
+            "y": 704,
+            "source": {
+                "in": {
+                    "e5000005-0000-4000-8000-000000000007": [
                         "out"
                     ]
                 }
@@ -432,7 +395,7 @@
             "config": {
                 "transform": {
                     "in": {
-                        "e5000005-0000-4000-8000-00000000000c": {
+                        "e5000005-0000-4000-8000-000000000007": {
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
@@ -462,7 +425,7 @@
     "type": "automation",
     "notes": {
         "e5000005-0000-4000-8000-0000000000ff": {
-            "content": "## ⚠️ Test data assumption\n\n- Appmixer account: auth+hubspot@appmixer.com (service appmixer:hubspot), HubSpot portal 148964607 (developer test account).\n- The HubSpot app's webhook target URL must point at this Appmixer instance (own app: appId + apiKey in the service config) — the triggers register / re-activate their subscriptions at flow start.\n- UpdatedDeal re-activates the default deal.propertyChange subscriptions if they were switched off in the HubSpot app; NewDeal does the same for `deal.creation`, so the creation-time events are dropped — UpdatedDeal must fire on the amount update only (its Assert expects amount 250).\n- The Waits must stay: subscription propagation, create → update spacing, cleanup after the trigger read the deal.",
+            "content": "## ⚠️ Test data assumption\n\n- Appmixer account: auth+hubspot@appmixer.com (service appmixer:hubspot), HubSpot portal 148964607 (developer test account).\n- The HubSpot app's webhook target URL must point at this Appmixer instance (own app: appId + apiKey in the service config) — the triggers register / re-activate their subscriptions at flow start.\n- UpdatedDeal re-activates the default deal.propertyChange subscriptions if they were switched off in the HubSpot app; NewDeal does the same for `deal.creation`, so the creation-time events are dropped — UpdatedDeal must fire on the amount update only (its Assert expects amount 250).\n- The cleanup after AfterAll deletes the deal by the UpdatedDeal output: UpdatedDeal always fires last (a minute after NewDeal), so its lane is the one that completes AfterAll.\n- The Waits must stay: subscription propagation and create → update spacing.",
             "x": 64,
             "y": 32,
             "width": 672,
