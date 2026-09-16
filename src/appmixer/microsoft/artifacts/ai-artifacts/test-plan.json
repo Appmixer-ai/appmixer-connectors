@@ -5,8 +5,8 @@
             "completed": true,
             "result": {
                 "status": "passed",
-                "how": "live call on the dev instance (source endpoint + generateOutputPortOptions)",
-                "note": "returned 2 real teams via toSelectArray; dynamic schema returns result + count with examples"
+                "how": "E2E flow on the dev instance + live source call",
+                "note": "returned real teams; assert on the team ID passed; dynamic schema returns result + count with examples"
             }
         },
         {
@@ -14,8 +14,17 @@
             "completed": true,
             "result": {
                 "status": "passed",
-                "how": "live call on the dev instance with a real teamId",
-                "note": "returned 7 channels; channel IDs with ':' and '@' are encoded correctly in the path"
+                "how": "E2E flow on the dev instance + live source call with a real teamId",
+                "note": "returned 7 channels; assert on the channel ID passed; IDs with ':' and '@' are encoded correctly in the path"
+            }
+        },
+        {
+            "name": "teams/SendChannelMessage",
+            "completed": true,
+            "result": {
+                "status": "passed",
+                "how": "E2E flow on the dev instance",
+                "note": "posted message 1789559004402; needed a re-consent of the account including the ChannelMessage.Send scope"
             }
         },
         {
@@ -23,25 +32,18 @@
             "completed": true,
             "result": {
                 "status": "passed",
-                "how": "live call on the dev instance with a real teamId + channelId, outputType first",
-                "note": "returned a real message; from/body are objects and dates are date-time, as the fixed schema declares"
-            }
-        },
-        {
-            "name": "teams/SendChannelMessage",
-            "completed": false,
-            "result": {
-                "status": "blocked",
-                "reason": "no account on the instance has the ChannelMessage.Send scope; the account test appmixer (6a466fd9b97d4609b92a5f6a) only has ChannelMessage.Read.All, Channel.ReadBasic.All, Team.ReadBasic.All, offline_access, user.read",
-                "next": "re-consent the Microsoft account in the designer including ChannelMessage.Send, then re-run the E2E flow"
+                "how": "E2E flow on the dev instance + live call with outputType first",
+                "note": "read back the message sent by the flow as result[0]; from/body are objects and dates are date-time, as the fixed schema declares"
             }
         },
         {
             "name": "teams/MakeApiCall",
             "completed": false,
             "result": {
-                "status": "blocked",
-                "reason": "declares ChannelMessage.Send among its scopes, so the same account gap applies"
+                "status": "not tested",
+                "reason": "declares ChannelMessage.Send and ChannelMessage.Read.All together; the account holds those scopes in two separate tokens, so the engine finds no single token that satisfies the component",
+                "next": "connect an account from the MakeApiCall component itself (one consent covering all four scopes), then call it live",
+                "risk": "low - Phase A only wrapped its errors with graphError and changed the icon"
             }
         }
     ]
