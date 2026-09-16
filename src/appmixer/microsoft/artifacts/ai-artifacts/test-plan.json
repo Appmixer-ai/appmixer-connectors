@@ -1,0 +1,94 @@
+{
+    "plan": [
+        {
+            "name": "teams/ListTeams",
+            "completed": true,
+            "result": {
+                "status": "passed",
+                "how": "E2E flow on the dev instance + live source call",
+                "note": "returned real teams; assert on the team ID passed; dynamic schema returns result + count with examples"
+            }
+        },
+        {
+            "name": "teams/ListChannels",
+            "completed": true,
+            "result": {
+                "status": "passed",
+                "how": "E2E flow on the dev instance + live source call with a real teamId",
+                "note": "returned 7 channels; assert on the channel ID passed; IDs with ':' and '@' are encoded correctly in the path"
+            }
+        },
+        {
+            "name": "teams/SendChannelMessage",
+            "completed": true,
+            "result": {
+                "status": "passed",
+                "how": "E2E flow on the dev instance",
+                "note": "posted message 1789559004402; needed a re-consent of the account including the ChannelMessage.Send scope. Phase B added replyToMessageId, contentType, subject and importance - the reply path is covered by the extended E2E flow and is not verified live yet"
+            }
+        },
+        {
+            "name": "teams/ListChannelMessages",
+            "completed": true,
+            "result": {
+                "status": "passed",
+                "how": "E2E flow on the dev instance + live call with outputType first",
+                "note": "read back the message sent by the flow as result[0]; from/body are objects and dates are date-time, as the fixed schema declares"
+            }
+        },
+        {
+            "name": "teams/MakeApiCall",
+            "completed": true,
+            "result": {
+                "status": "passed",
+                "how": "live call on the dev instance, once an account consented to all four Teams scopes at once",
+                "note": "GET /me/joinedTeams returned 200 with the Graph payload; an invalid team ID returns 'Microsoft Graph error BadRequest: teamId needs to be a valid GUID. (request-id: ...)', which confirms the graphError wrapping"
+            }
+        },
+        {
+            "name": "teams/ListChats",
+            "completed": false,
+            "result": {
+                "status": "pending-live",
+                "how": "unit tested; live run needs an account consented to Chat.ReadBasic",
+                "note": "covered by the new E2E flow 'E2E Microsoft Teams - Chat Messaging' and by a verify.json read case. Open item to confirm live: whether $expand=members is permitted under Chat.ReadBasic in this tenant - the source falls back to a plain listing if it is not"
+            }
+        },
+        {
+            "name": "teams/SendChatMessage",
+            "completed": false,
+            "result": {
+                "status": "pending-live",
+                "how": "unit tested; live run needs an account consented to Chat.Create and ChatMessage.Send",
+                "note": "the E2E flow posts into an existing chat from ListChats. Creating a chat from recipients needs a second real user in the tenant, so that branch is unit tested only"
+            }
+        },
+        {
+            "name": "teams/AddReaction",
+            "completed": false,
+            "result": {
+                "status": "pending-live",
+                "how": "unit tested; live run needs ChannelMessage.Send",
+                "note": "covered by the extended channel E2E flow, which reacts to the message the flow just posted"
+            }
+        },
+        {
+            "name": "teams/RemoveReaction",
+            "completed": false,
+            "result": {
+                "status": "pending-live",
+                "how": "unit tested; live run needs ChannelMessage.Send",
+                "note": "covered by the extended channel E2E flow, which takes back the reaction AddReaction left"
+            }
+        },
+        {
+            "name": "teams/NewChatMessage",
+            "completed": false,
+            "result": {
+                "status": "pending-live",
+                "how": "unit tested; live run needs Chat.Read and a real incoming chat message",
+                "note": "a trigger cannot be driven by an E2E flow. Verify on the instance per the issue: the subscription is created, a real message fires it, a renewal and a lifecycle event are exercised, and stop() deletes the subscription. Also confirm the Graph maximum lifetime for chatMessage subscriptions is accepted (4320 minutes with a lifecycle URL)"
+            }
+        }
+    ]
+}
