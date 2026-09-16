@@ -3,10 +3,10 @@
 const assert = require('assert');
 const sinon = require('sinon');
 
-const CreatePost = require('../../shares/CreatePost/CreatePost');
-const CreateCompanyPost = require('../../shares/CreateCompanyPost/CreateCompanyPost');
-const ListAdminOrganizations = require('../../shares/ListAdminOrganizations/ListAdminOrganizations');
-const { VERSION_HEADER } = require('../../constants');
+const CreatePost = require('../../core/CreatePost/CreatePost');
+const ListOrganizations = require('../../core/ListOrganizations/ListOrganizations');
+const MakeApiCall = require('../../core/MakeApiCall/MakeApiCall');
+const { VERSION_HEADER } = require('../../lib');
 
 class CancelError extends Error {
     constructor(message) {
@@ -42,51 +42,16 @@ function httpError(status, data) {
     return err;
 }
 
-describe('linkedin shares', function() {
+describe('linkedinPages core', function() {
 
     describe('CreatePost', function() {
-
-        it('requires text', async function() {
-
-            const context = createContext({ visibility: 'PUBLIC' });
-            await assert.rejects(CreatePost.receive(context), { name: 'CancelError', message: 'Text is required!' });
-            assert.strictEqual(context.httpRequest.callCount, 0);
-        });
-
-        it('requires URL and title when sharing a link', async function() {
-
-            await assert.rejects(
-                CreatePost.receive(createContext({ text: 'Hello', specificLink: true, title: 'T' })),
-                /URL is required/
-            );
-            await assert.rejects(
-                CreatePost.receive(createContext({ text: 'Hello', specificLink: true, url: 'https://a.b' })),
-                /Title is required/
-            );
-        });
-
-        it('posts as the member', async function() {
-
-            const context = createContext({ text: 'Hello' });
-            context.httpRequest.resolves({ status: 201, headers: { 'x-restli-id': 'urn:li:share:1' } });
-
-            await CreatePost.receive(context);
-
-            const request = context.httpRequest.firstCall.args[0];
-            assert.strictEqual(request.data.author, 'urn:li:person:member-1');
-            assert.strictEqual(request.headers['LinkedIn-Version'], VERSION_HEADER);
-            assert.deepStrictEqual(context.sendJson.firstCall.args, [{ status: 201, postId: 'urn:li:share:1' }, 'out']);
-        });
-    });
-
-    describe('CreateCompanyPost', function() {
 
         it('accepts a numeric organization ID', async function() {
 
             const context = createContext({ organizationId: '2414183', text: 'Hello' });
             context.httpRequest.resolves({ status: 201, headers: { 'x-restli-id': 'urn:li:share:2' } });
 
-            await CreateCompanyPost.receive(context);
+            await CreatePost.receive(context);
 
             const request = context.httpRequest.firstCall.args[0];
             assert.strictEqual(request.method, 'POST');
@@ -105,7 +70,7 @@ describe('linkedin shares', function() {
             const context = createContext({ organizationId: ' urn:li:organization:12345 ', text: 'Hello' });
             context.httpRequest.resolves({ status: 201, headers: {} });
 
-            await CreateCompanyPost.receive(context);
+            await CreatePost.receive(context);
 
             assert.strictEqual(context.httpRequest.firstCall.args[0].data.author, 'urn:li:organization:12345');
         });
@@ -115,7 +80,7 @@ describe('linkedin shares', function() {
             const context = createContext({ organizationId: 12345, text: 'Hello' });
             context.httpRequest.resolves({ status: 201, headers: {} });
 
-            await CreateCompanyPost.receive(context);
+            await CreatePost.receive(context);
 
             assert.strictEqual(context.httpRequest.firstCall.args[0].data.author, 'urn:li:organization:12345');
         });
@@ -129,7 +94,7 @@ describe('linkedin shares', function() {
             it(`rejects '${organizationId}' without calling LinkedIn`, async function() {
 
                 const context = createContext({ organizationId, text: 'Hello' });
-                await assert.rejects(CreateCompanyPost.receive(context), { name: 'CancelError', message: /Invalid organization ID/ });
+                await assert.rejects(CreatePost.receive(context), { name: 'CancelError', message: /Invalid organization ID/ });
                 assert.strictEqual(context.httpRequest.callCount, 0);
             });
         });
@@ -137,11 +102,11 @@ describe('linkedin shares', function() {
         it('requires the organization ID and text', async function() {
 
             await assert.rejects(
-                CreateCompanyPost.receive(createContext({ text: 'Hello' })),
+                CreatePost.receive(createContext({ text: 'Hello' })),
                 { name: 'CancelError', message: 'Organization ID is required!' }
             );
             await assert.rejects(
-                CreateCompanyPost.receive(createContext({ organizationId: '1' })),
+                CreatePost.receive(createContext({ organizationId: '1' })),
                 { name: 'CancelError', message: 'Text is required!' }
             );
         });
@@ -149,11 +114,11 @@ describe('linkedin shares', function() {
         it('requires URL and title for article shares', async function() {
 
             await assert.rejects(
-                CreateCompanyPost.receive(createContext({ organizationId: '1', text: 'Hi', specificLink: true, title: 'T' })),
+                CreatePost.receive(createContext({ organizationId: '1', text: 'Hi', specificLink: true, title: 'T' })),
                 /URL is required/
             );
             await assert.rejects(
-                CreateCompanyPost.receive(createContext({ organizationId: '1', text: 'Hi', specificLink: true, url: 'https://a.b' })),
+                CreatePost.receive(createContext({ organizationId: '1', text: 'Hi', specificLink: true, url: 'https://a.b' })),
                 /Title is required/
             );
         });
@@ -171,7 +136,7 @@ describe('linkedin shares', function() {
             });
             context.httpRequest.resolves({ status: 201, headers: {} });
 
-            await CreateCompanyPost.receive(context);
+            await CreatePost.receive(context);
 
             const { data } = context.httpRequest.firstCall.args[0];
             assert.strictEqual(data.visibility, 'LOGGED_IN');
@@ -189,7 +154,7 @@ describe('linkedin shares', function() {
                 message: 'Not enough permissions to access: partnerApiPostsExternal.CREATE'
             }));
 
-            await assert.rejects(CreateCompanyPost.receive(context), err => {
+            await assert.rejects(CreatePost.receive(context), err => {
                 assert.strictEqual(err.name, 'CancelError');
                 assert.match(err.message, /organization 42/);
                 assert.match(err.message, /w_organization_social/);
@@ -204,11 +169,11 @@ describe('linkedin shares', function() {
             const error = httpError(422, { message: 'invalid' });
             context.httpRequest.rejects(error);
 
-            await assert.rejects(CreateCompanyPost.receive(context), err => err === error);
+            await assert.rejects(CreatePost.receive(context), err => err === error);
         });
     });
 
-    describe('ListAdminOrganizations', function() {
+    describe('ListOrganizations', function() {
 
         function stubLinkedIn(context, { aclPages, organizations = {} }) {
 
@@ -241,7 +206,7 @@ describe('linkedin shares', function() {
                 }
             });
 
-            const result = await ListAdminOrganizations.receive(context);
+            const result = await ListOrganizations.receive(context);
 
             const aclRequest = context.httpRequest.firstCall.args[0];
             assert.deepStrictEqual(aclRequest.params, {
@@ -251,7 +216,7 @@ describe('linkedin shares', function() {
             assert.deepStrictEqual(result.data, {
                 organizations: [{ id: '1', name: 'Acme' }, { id: '2', name: 'Organization 2' }]
             });
-            assert.deepStrictEqual(ListAdminOrganizations.organizationsToSelectArray(result.data), [
+            assert.deepStrictEqual(ListOrganizations.organizationsToSelectArray(result.data), [
                 { label: 'Acme (1)', value: '1' },
                 { label: 'Organization 2 (2)', value: '2' }
             ]);
@@ -264,7 +229,7 @@ describe('linkedin shares', function() {
             const firstPage = Array.from({ length: 100 }, (_, i) => admin(i + 1));
             stubLinkedIn(context, { aclPages: [firstPage, [admin(101), admin(1)]] });
 
-            const result = await ListAdminOrganizations.receive(context);
+            const result = await ListOrganizations.receive(context);
 
             assert.strictEqual(result.data.organizations.length, 101);
             assert.strictEqual(result.data.organizations[100].id, '101');
@@ -280,8 +245,8 @@ describe('linkedin shares', function() {
                 organizations: { 1: { localizedName: 'Acme' } }
             });
 
-            await ListAdminOrganizations.receive(context);
-            const second = await ListAdminOrganizations.receive(context);
+            await ListOrganizations.receive(context);
+            const second = await ListOrganizations.receive(context);
 
             assert.strictEqual(context.httpRequest.callCount, 2); // one ACL page + one name lookup
             assert.deepStrictEqual(second.data.organizations, [{ id: '1', name: 'Acme' }]);
@@ -294,10 +259,10 @@ describe('linkedin shares', function() {
             const context = createContext({}, { isSource: true });
             context.httpRequest.rejects(httpError(403, { message: 'Not enough permissions' }));
 
-            const result = await ListAdminOrganizations.receive(context);
+            const result = await ListOrganizations.receive(context);
 
             assert.deepStrictEqual(result.data, { organizations: [] });
-            assert.deepStrictEqual(ListAdminOrganizations.organizationsToSelectArray(result.data), []);
+            assert.deepStrictEqual(ListOrganizations.organizationsToSelectArray(result.data), []);
         });
 
         it('throws outside of the dropdown', async function() {
@@ -306,13 +271,87 @@ describe('linkedin shares', function() {
             const error = httpError(403, { message: 'Not enough permissions' });
             context.httpRequest.rejects(error);
 
-            await assert.rejects(ListAdminOrganizations.receive(context), err => err === error);
+            await assert.rejects(ListOrganizations.receive(context), err => err === error);
         });
 
         it('transform tolerates a missing payload', function() {
 
-            assert.deepStrictEqual(ListAdminOrganizations.organizationsToSelectArray(undefined), []);
-            assert.deepStrictEqual(ListAdminOrganizations.organizationsToSelectArray({}), []);
+            assert.deepStrictEqual(ListOrganizations.organizationsToSelectArray(undefined), []);
+            assert.deepStrictEqual(ListOrganizations.organizationsToSelectArray({}), []);
+        });
+    });
+
+    describe('MakeApiCall', function() {
+
+        it('calls a path on api.linkedin.com with the account headers', async function() {
+
+            const context = createContext({
+                url: '/rest/organizationAcls',
+                method: 'GET',
+                parameters: '[{"key": "q", "value": "roleAssignee"}]',
+                headers: [{ key: 'X-RestLi-Method', value: 'FINDER' }]
+            });
+            context.httpRequest.resolves({ status: 200, headers: { a: 'b' }, data: { elements: [] } });
+
+            const result = await MakeApiCall.receive(context);
+
+            const request = context.httpRequest.firstCall.args[0];
+            assert.strictEqual(request.url, 'https://api.linkedin.com/rest/organizationAcls');
+            assert.deepStrictEqual(request.params, { q: 'roleAssignee' });
+            assert.strictEqual(request.headers.Authorization, 'Bearer token-1');
+            assert.strictEqual(request.headers['LinkedIn-Version'], VERSION_HEADER);
+            assert.strictEqual(request.headers['X-RestLi-Method'], 'FINDER');
+            assert.strictEqual(request.data, undefined);
+            assert.deepStrictEqual(result.data, { status: 200, headers: { a: 'b' }, body: { elements: [] } });
+        });
+
+        it('parses a JSON body and accepts a full LinkedIn URL', async function() {
+
+            const context = createContext({
+                url: 'https://api.linkedin.com/rest/posts/urn%3Ali%3Ashare%3A1',
+                method: 'DELETE',
+                body: '{"a": [1, {"b": true}]}'
+            });
+            context.httpRequest.resolves({ status: 204, headers: {}, data: '' });
+
+            await MakeApiCall.receive(context);
+
+            const request = context.httpRequest.firstCall.args[0];
+            assert.strictEqual(request.url, 'https://api.linkedin.com/rest/posts/urn%3Ali%3Ashare%3A1');
+            assert.deepStrictEqual(request.data, { a: [1, { b: true }] });
+        });
+
+        [
+            'https://evil.example.com/rest/posts',
+            '//evil.example.com/rest/posts',
+            'http://api.linkedin.com/rest/posts',
+            'https://user:pass@api.linkedin.com/rest/posts',
+            'https://api.linkedin.com.evil.example.com/rest/posts'
+        ].forEach(url => {
+            it(`refuses ${url} without sending the token`, async function() {
+
+                const context = createContext({ url, method: 'GET' });
+                await assert.rejects(MakeApiCall.receive(context), { name: 'CancelError' });
+                assert.strictEqual(context.httpRequest.callCount, 0);
+            });
+        });
+
+        it('rejects an invalid JSON body and malformed key-value input', async function() {
+
+            await assert.rejects(
+                MakeApiCall.receive(createContext({ url: '/rest/posts', method: 'POST', body: '{nope' })),
+                { name: 'CancelError', message: 'Request Body must be valid JSON.' }
+            );
+            await assert.rejects(
+                MakeApiCall.receive(createContext({ url: '/rest/posts', method: 'GET', headers: 'x=1' })),
+                { name: 'CancelError', message: /Request Headers/ }
+            );
+        });
+
+        it('requires url and method', async function() {
+
+            await assert.rejects(MakeApiCall.receive(createContext({ method: 'GET' })), /API Endpoint Path is required/);
+            await assert.rejects(MakeApiCall.receive(createContext({ url: '/rest/posts' })), /HTTP Method is required/);
         });
     });
 });

@@ -1,7 +1,6 @@
 'use strict';
 
-const { BASE_URL, VERSION_PATH } = require('../../constants');
-const { getHeaders, withCache } = require('../../lib');
+const { API_BASE_URL, getHeaders, withCache } = require('../../lib');
 
 const PAGE_SIZE = 100;
 const MAX_PAGES = 10;
@@ -23,7 +22,7 @@ async function fetchPostableOrganizationIds(context) {
     for (let page = 0; page < MAX_PAGES; page++) {
         const { data } = await context.httpRequest({
             method: 'GET',
-            url: `${BASE_URL}${VERSION_PATH}/organizationAcls`,
+            url: `${API_BASE_URL}/rest/organizationAcls`,
             params: {
                 q: 'roleAssignee',
                 state: 'APPROVED',
@@ -63,7 +62,7 @@ async function resolveOrganization(context, id) {
     try {
         const { data } = await context.httpRequest({
             method: 'GET',
-            url: `${BASE_URL}${VERSION_PATH}/organizations/${id}`,
+            url: `${API_BASE_URL}/rest/organizations/${id}`,
             headers: getHeaders(context)
         });
         name = (data && data.localizedName) || name;
@@ -76,7 +75,7 @@ async function resolveOrganization(context, id) {
 /**
  * Lists LinkedIn organization pages the authenticated member can post to
  * (administrators and content administrators).
- * Private helper backing the organization dropdown in CreateCompanyPost.
+ * Private helper backing the organization dropdown in CreatePost.
  */
 module.exports = {
 

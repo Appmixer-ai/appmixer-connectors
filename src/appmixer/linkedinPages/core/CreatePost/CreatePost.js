@@ -1,7 +1,6 @@
 'use strict';
 
-const { BASE_URL, VERSION_PATH } = require('../../constants');
-const { getHeaders } = require('../../lib');
+const { API_BASE_URL, getHeaders } = require('../../lib');
 
 const ORGANIZATION_ID_PATTERN = /^(?:urn:li:organization:)?(\d+)$/;
 
@@ -43,7 +42,7 @@ function buildPost(context, authorUrn) {
 }
 
 /**
- * Component for creating a LinkedIn post as a company/organization page.
+ * Create a LinkedIn post as a company page (organization).
  */
 module.exports = {
 
@@ -78,7 +77,7 @@ module.exports = {
         try {
             response = await context.httpRequest({
                 method: 'POST',
-                url: `${BASE_URL}${VERSION_PATH}/posts`,
+                url: `${API_BASE_URL}/rest/posts`,
                 headers: {
                     ...getHeaders(context),
                     'Content-Type': 'application/json'
