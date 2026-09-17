@@ -19,6 +19,33 @@
 
 module.exports = [
     {
+        validator: 'delete-returns-empty',
+        messageIncludes: 'Delete component must return an empty object',
+        paths: ['github/list/DeleteBranch/component.json'],
+        reason: 'Legacy published component (since 2.0.0) whose out port declares the deleted branch name and existing flows read it. Emptying the output would be a breaking change for a component this PR only touches for the free-text branch input; same precedent as google.drive DeleteFileOrFolder.'
+    },
+    {
+        validator: 'find-naming-by-shape',
+        messageIncludes: 'has the Find shape',
+        paths: ['github/list/ListPullRequests/component.json'],
+        reason: 'Legacy published component (since 2.0.0) whose only Find-like trait is the optional state filter; FindPullRequest already exists next to it. Renaming it would break every flow that references appmixer.github.list.ListPullRequests and needs a major bundle bump, which is intentionally deferred. The file is touched in 3.2.0 only for the free-text repositoryId input and output examples.'
+    },
+    {
+        validator: 'delete-returns-empty',
+        messageIncludes: 'must return an empty object',
+        paths: ['google/drive/DeleteFileOrFolder/component.json'],
+        reason: 'Published for years with { fileId } on its out port and referenced by existing flows; switching to {} is a breaking change that would need a major bundle bump and a flow migration, which is intentionally deferred.'
+    },
+    {
+        validator: 'dynamic-outport-item-schema',
+        messageIncludes: 'exports no ITEM_SCHEMA',
+        paths: [
+            'ai/openai/TransformTextToJSON/component.json',
+            'ai/openai/VariableExtractor/component.json'
+        ],
+        reason: 'The out port schema is not a fixed item contract: it is the JSON Schema the user types into the jsonSchema/outputVariables input, echoed back verbatim by getOutputPortOptions. There is no static ITEM_SCHEMA to export — every flow declares a different shape — so verify has nothing to compare against and the title rule has no fixed leaves to check.'
+    },
+    {
         validator: 'find-naming-by-shape',
         messageIncludes: 'has the Find shape',
         paths: ['jira/issues/GetIssueTransitions/component.json'],
@@ -179,6 +206,12 @@ module.exports = [
     {
         validator: 'connector-has-makeapicall',
         messageIncludes: 'no MakeApiCall component',
+        paths: ['appmixer/utils/http/bundle.json'],
+        reason: 'appmixer.utils.http IS the generic "call any endpoint" connector: Get/Post/Put/Patch/Delete take a free-form URL, headers and body and it has no auth module, so there is no credential for a MakeApiCall to attach and nothing it would add.'
+    },
+    {
+        validator: 'connector-has-makeapicall',
+        messageIncludes: 'no MakeApiCall component',
         paths: ['appmixer/evernote/bundle.json'],
         reason: 'Evernote authenticates with OAuth 1.0a request signing (HMAC-SHA1) and a Thrift-based API, not a plain Bearer/API-key REST surface, so a generic header-based MakeApiCall cannot sign arbitrary requests.'
     },
@@ -296,6 +329,17 @@ module.exports = [
             'hubspot/crm/ListDeals/component.json'
         ],
         reason: 'The limit input is a long-published part of these components and existing flows set it. Removing it is a breaking change deferred to a future major version. Surfaced now only because the 4.8.0 quality pass touched these files.'
+    },
+    {
+        validator: 'find-list-no-pagination',
+        paths: [
+            'microsoft/sharepoint/ListSites/component.json',
+            'microsoft/onedrive/ListDrives/component.json',
+            'microsoft/onedrive/ListGroups/component.json',
+            'microsoft/onedrive/ListSites/component.json',
+            'microsoft/onedrive/ListUsers/component.json'
+        ],
+        reason: 'The limit input is a long-published part of these components (they also feed the site/drive/group/user pickers of the other SharePoint and OneDrive components) and existing flows set it. Removing it is a breaking change deferred to a future major version. Surfaced now only because sharepoint 2.3.0 / onedrive 1.5.0 add output examples to these files.'
     },
     {
         validator: 'delete-returns-empty',
