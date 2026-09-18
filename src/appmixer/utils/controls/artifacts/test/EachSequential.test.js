@@ -31,7 +31,7 @@ function createHarness() {
         if (method === 'POST' && action === 'next') {
             const record = store[id];
             if (!record || !record.sequential) {
-                return { success: false, error: 'Not found' };
+                return { success: false, reason: 'not-found' };
             }
             triggered.push({ id, index: body.index, query: record.webhookQuery });
             return { success: true, id, index: body.index };
@@ -355,7 +355,8 @@ describe('ContinueEach Component', () => {
     });
 
     it('should continue the flow when no loop is waiting', async () => {
-        const context = createContext({ correlationId: 'run-1', index: 1 }, { success: false, error: 'Not found' });
+        // No `error` key in the body: context.callAppmixer would turn that into a thrown error.
+        const context = createContext({ correlationId: 'run-1', index: 1 }, { success: false, reason: 'not-found' });
 
         await ContinueEach.receive(context);
 

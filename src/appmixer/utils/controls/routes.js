@@ -89,8 +89,10 @@ module.exports = context => {
                 const record = eachItems ? eachItems.toJson() : null;
                 if (!record || !record.sequential) {
                     // Not a sequential loop, or the loop already finished (or timed out past this
-                    // item) and its record is gone. Nothing to wake up - not an error.
-                    return { success: false, error: 'Not found' };
+                    // item) and its record is gone. Nothing to wake up - not an error. Deliberately no
+                    // `error` key: context.callAppmixer treats any JSON body with one as a failure
+                    // and throws, which would fail ContinueEach instead of letting the flow go on.
+                    return { success: false, reason: 'not-found' };
                 }
 
                 // `webhookQuery` holds the correlationId/correlationInPort/messageId of the message
