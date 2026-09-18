@@ -1,7 +1,7 @@
 'use strict';
 
 const _ = require('lodash');
-const { WATCHED_PROPERTIES_CONTACT, WATCHED_PROPERTIES_DEAL } = require('./commons');
+const { DEFAULT_SUBSCRIBED_PROPERTIES_CONTACT, DEFAULT_SUBSCRIBED_PROPERTIES_DEAL } = require('./commons');
 
 module.exports = async (context) => {
 
@@ -12,11 +12,17 @@ module.exports = async (context) => {
         /** Is this AuthHub or Engine pod? */
         const isAuthHubPod = !!process.env.AUTH_HUB_URL && !process.env.AUTH_HUB_TOKEN;
         if (isAuthHubPod) {
-            // This is AuthHub, we don't need to create subscriptions here.
+            // This is AuthHub — the shared app's subscriptions are configured manually in its HubSpot
+            // webhook settings, so there is nothing to register here.
             return;
         }
 
         const { eventName, params } = listener;
+        const subscriptionType = eventName.split(':')[0];
+        const subscriptions = getSubscriptionsByType(subscriptionType, context, params);
+        if (!subscriptions?.length) {
+            return;
+        }
 
         // Retry on lock contention. Each ContactPropertyChanged listener contributes a distinct
         // propertyName, so two listeners of the same subscriptionType starting concurrently must not
@@ -29,8 +35,6 @@ module.exports = async (context) => {
                 maxRetryCount: 20
             });
 
-            const subscriptionType = eventName.split(':')[0];
-            const subscriptions = getSubscriptionsByType(subscriptionType, context, params);
             const results = await getHubSpotSubscriptions(context, params);
 
             // Reconcile on the full (eventType, propertyName) pair. HubSpot models each watched
@@ -44,9 +48,11 @@ module.exports = async (context) => {
             for (const sub of subscriptions) {
                 const { subscriptionType: evType, propertyName } = sub.subscriptionDetails;
                 const existing = existingByKey.get(subKey(evType, propertyName));
+                // The v3 subscriptions API reports the state as `active` (v1 used `enabled`).
+                const isActive = existing ? (existing.active ?? existing.enabled) : undefined;
                 if (!existing) {
                     subscriptionsToCreate.push(sub);
-                } else if (!existing.enabled) {
+                } else if (isActive === false) {
                     // Re-enable a disabled subscription for this exact property — don't stop at the
                     // first one, every desired property must end up active.
                     await activateHubSpotSubscription(context, params, existing.id);
@@ -103,7 +109,7 @@ module.exports = async (context) => {
                     // Filtering here would silently drop any property not in the hardcoded list
                     // (e.g. lifecyclestage, custom properties), breaking user-configured subscriptions.
                     const filteredEvents = [...subscriptionEvents];
-                    const eventsByObjectId = _.keyBy(filteredEvents, 'objectId');
+                    const eventsByObjectId = groupEventsByObjectId(filteredEvents);
                     const objectIds = Object.keys(eventsByObjectId);
                     if (!objectIds.length) {
                         continue;
@@ -178,32 +184,53 @@ async function triggerListenersDelayed(context, eventName, payload) {
     await context.triggerListeners({ eventName, payload });
 }
 
+// One entry per object, the last event wins (as HubSpot batches arrive in order). For propertyChange
+// events, `propertyNames` lists every property of the object that changed in this batch — a single batch
+// can carry several changes of the same object, and triggers that filter by property must see all of them.
+function groupEventsByObjectId(events) {
+
+    const eventsByObjectId = {};
+    for (const event of events) {
+        if (!event.propertyName) {
+            eventsByObjectId[event.objectId] = event;
+            continue;
+        }
+        const propertyNames = [...(eventsByObjectId[event.objectId]?.propertyNames || [])];
+        if (!propertyNames.includes(event.propertyName)) {
+            propertyNames.push(event.propertyName);
+        }
+        eventsByObjectId[event.objectId] = { ...event, propertyNames };
+    }
+    return eventsByObjectId;
+}
+
+// HubSpot has no "any property" subscription — every watched property is its own subscription, shared by
+// all portals that installed the app (max 1000 per app). Register the defaults plus the property a
+// ContactPropertyChanged trigger asks for (`propertyName`).
+function propertyChangeSubscriptions(subscriptionType, defaultProperties, params = {}) {
+
+    const propertySet = new Set(defaultProperties);
+    if (params.propertyName) {
+        propertySet.add(params.propertyName);
+    }
+
+    return Array.from(propertySet).map(propertyName => ({
+        enabled: true,
+        subscriptionDetails: {
+            subscriptionType,
+            propertyName
+        }
+    }));
+}
+
 function getSubscriptionsByType(subscriptionType, context, params = {}) {
 
     let subscriptions = [];
 
     if (subscriptionType === 'deal.propertyChange') {
-        subscriptions = WATCHED_PROPERTIES_DEAL.map(propertyName => ({
-            enabled: true,
-            subscriptionDetails: {
-                subscriptionType,
-                propertyName
-            }
-        }));
+        subscriptions = propertyChangeSubscriptions(subscriptionType, DEFAULT_SUBSCRIBED_PROPERTIES_DEAL, params);
     } else if (subscriptionType === 'contact.propertyChange') {
-        // Start with the default watched properties.
-        const propertySet = new Set(WATCHED_PROPERTIES_CONTACT);
-        // If a specific property was requested (e.g. by ContactPropertyChanged), ensure it is included.
-        if (params.propertyName) {
-            propertySet.add(params.propertyName);
-        }
-        subscriptions = Array.from(propertySet).map(propertyName => ({
-            enabled: true,
-            subscriptionDetails: {
-                subscriptionType,
-                propertyName
-            }
-        }));
+        subscriptions = propertyChangeSubscriptions(subscriptionType, DEFAULT_SUBSCRIBED_PROPERTIES_CONTACT, params);
     } else if (subscriptionType === 'contact.creation' || subscriptionType === 'deal.creation') {
         subscriptions = [{
             enabled: true,
@@ -230,7 +257,7 @@ async function getHubSpotSubscriptions(context, hubspot) {
     });
 
     if (data?.ok === false) {
-        throw new Error(response?.data?.error);
+        throw new Error(data?.error);
     }
 
     return data.results;
@@ -245,7 +272,7 @@ async function createHubSpotSubscriptions(context, hubspot, subscriptions) {
     });
 
     if (result.data?.ok === false) {
-        throw new Error(response?.data?.error);
+        throw new Error(result.data?.error);
     }
 
     return result;
@@ -256,11 +283,12 @@ async function activateHubSpotSubscription(context, hubspot, subscriptionId) {
     const result = await context.httpRequest({
         method: 'PATCH',
         url: `https://api.hubapi.com/webhooks/v3/${hubspot.appId}/subscriptions/${subscriptionId}?hapikey=${hubspot.apiKey}`,
-        data: { enabled: true }
+        // v3 takes `active` — `enabled` is silently ignored and the subscription stays off.
+        data: { active: true }
     });
 
     if (result.data?.ok === false) {
-        throw new Error(response?.data?.error);
+        throw new Error(result.data?.error);
     }
 
     return result;
