@@ -21,7 +21,13 @@ module.exports = context => {
                 'items',
                 'delay',
                 'correlationId',
-                'count'
+                'count',
+                // Sequential mode only (see Each/EachSequential.js).
+                'sequential',
+                'itemTimeout',
+                'flowId',
+                'componentId',
+                'webhookQuery'
             ];
         }
     }

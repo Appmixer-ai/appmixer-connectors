@@ -171,6 +171,7 @@ module.exports = [
         messageIncludes: 'no MakeApiCall component',
         paths: [
             'appmixer/utils/bundle.json',
+            'appmixer/utils/controls/bundle.json',
             'appmixer/system/bundle.json'
         ],
         reason: 'Internal/utility connectors (flow control, converters, storage, engine events) with no external service or stored credentials — there is no third-party API to call.'
