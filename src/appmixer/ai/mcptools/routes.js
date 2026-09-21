@@ -64,18 +64,17 @@ module.exports = (context) => {
                 // component ID; pass `?flowId=` to scope the removal to one flow.
                 // This is also the way to clean up registrations of flows that were
                 // deleted without being stopped (MCPGateway.stop() never ran).
+                // Matching members are removed one by one: writing the filtered array
+                // back would discard a gateway that another flow registered with
+                // stateAddToSet() in the meantime.
                 const key = `mcpgateways:user:${userId}`;
                 const gateways = await context.service.stateGet(key) || [];
-                const remaining = gateways.filter(gateway =>
-                    !(gateway.componentId === gatewayId && (!flowId || gateway.flowId === flowId)));
-                const removed = gateways.length - remaining.length;
-                if (removed) {
-                    if (remaining.length) {
-                        await context.service.stateSet(key, remaining);
-                    } else {
-                        await context.service.stateUnset(key);
-                    }
+                const matching = gateways.filter(gateway =>
+                    gateway.componentId === gatewayId && (!flowId || gateway.flowId === flowId));
+                for (const gateway of matching) {
+                    await context.service.stateRemoveFromSet(key, gateway);
                 }
+                const removed = matching.length;
 
                 await context.pubSubPublish(`stream:mcp:events:${userId}`, {
                     type: 'gateway-delete',

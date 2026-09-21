@@ -20,6 +20,7 @@
  * user-set value are passed as static properties on every call.
  */
 
+const crypto = require('crypto');
 const shortuuid = require('short-uuid');
 const uuid = require('uuid');
 const mcp = require('./mcp');
@@ -48,6 +49,45 @@ function buildToolName(componentId, rawName) {
     const maxNameLength = Math.max(1, MAX_TOOL_NAME_LENGTH - prefix.length - 1);
     const safeName = rawName.replace(/[^a-zA-Z0-9_]/g, '_').slice(0, maxNameLength);
     return `${prefix}_${safeName}`;
+}
+
+/**
+ * Sanitizing and truncating a name is not injective ("foo-bar" / "foo_bar", or two
+ * long names sharing the retained prefix), while receive() resolves a call by the
+ * full name — a colliding tool would be unreachable. Every definition of a colliding
+ * group gets a suffix derived from its component and original tool name, so the
+ * public name does not depend on the order the tools were listed in. Definitions that
+ * still collide (an MCP server listing the same name twice) are dropped.
+ *
+ * @returns {{ defs: Array, dropped: Array<string> }}
+ */
+function disambiguateToolNames(defs) {
+    const counts = new Map();
+    for (const def of defs) {
+        counts.set(def.function.name, (counts.get(def.function.name) || 0) + 1);
+    }
+
+    const taken = new Set();
+    const unique = [];
+    const dropped = [];
+    for (const def of defs) {
+        const fn = def.function;
+        const { _componentId: componentId, _mcpToolName: mcpToolName } = fn;
+        if (counts.get(fn.name) > 1) {
+            const hash = crypto.createHash('sha1')
+                .update(`${componentId}:${mcpToolName || ''}`)
+                .digest('hex')
+                .slice(0, 8);
+            fn.name = `${fn.name.slice(0, MAX_TOOL_NAME_LENGTH - hash.length - 1)}_${hash}`;
+        }
+        if (taken.has(fn.name)) {
+            dropped.push(mcpToolName || fn.name);
+            continue;
+        }
+        taken.add(fn.name);
+        unique.push(def);
+    }
+    return { defs: unique, dropped };
 }
 
 /**
@@ -189,7 +229,11 @@ async function buildDefsFromManifests(context, manifests) {
         defs.push(def);
     }
 
-    return defs;
+    const { defs: uniqueDefs, dropped } = disambiguateToolNames(defs);
+    if (dropped.length) {
+        await context.log({ step: 'component-tool-duplicate-names-dropped', dropped });
+    }
+    return uniqueDefs;
 }
 
 /**
@@ -349,7 +393,7 @@ function buildComponentToolDef(componentId, componentDescriptor, manifest, conne
  */
 async function executeComponentTool(context, toolDef, args, { correlationId } = {}) {
     const { name: fullToolName, _isMCP, _componentId, _mcpToolName,
-        _componentType, _inPort, _userStaticValues } = toolDef.function;
+        _componentType, _inPort, _userStaticValues, _aiFields } = toolDef.function;
     const displayName = _isMCP ? _mcpToolName : fullToolName;
 
     if (_isMCP) {
@@ -363,9 +407,16 @@ async function executeComponentTool(context, toolDef, args, { correlationId } = 
         }
     }
 
-    // Regular action component: merge static + model args and call it statically.
+    // Regular action component: merge model args + static values and call it statically.
+    // `args` come from the webhook caller, so only the fields the user marked as
+    // "Model Defined Parameter" are taken from them, and the static values are applied
+    // last — a caller can never override a value configured on the tool.
     const endPoint = '/component/' + _componentType.replace(/\./g, '/');
-    const messagePayload = { ..._userStaticValues, ...args };
+    const modelArgs = {};
+    for (const key of _aiFields || []) {
+        if (args && args[key] !== undefined) modelArgs[key] = args[key];
+    }
+    const messagePayload = { ...modelArgs, ..._userStaticValues };
     await context.log({
         step: 'component-tool-call',
         displayName,
