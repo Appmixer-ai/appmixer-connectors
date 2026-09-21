@@ -20,6 +20,17 @@ function getAuthHeaders(context) {
     }
 }
 
+// A GET/HEAD must go out without a body. Axios serializes even an empty object to '{}'
+// (Content-Length: 2); ServiceNow does not read it, so on a reused keep-alive connection
+// those bytes desync the stream and the next response fails to parse with
+// 'Parse Error: Expected HTTP/' (HPE_INVALID_CONSTANT).
+function attachBody(options, method, data) {
+    if (!['GET', 'HEAD'].includes(String(method || 'GET').toUpperCase())) {
+        options.data = data;
+    }
+    return options;
+}
+
 function getCacheKey(obj) {
     const str = JSON.stringify(obj);
     return crypto
@@ -66,16 +77,15 @@ async function callEndpoint(context, {
 
     const url = `https://${context.auth.instance}.service-now.com/api/now/${action}`;
     const authHeaders = getAuthHeaders(context);
-    const options = {
+    const options = attachBody({
         method,
         url,
         headers: {
             'User-Agent': 'Appmixer (info@appmixer.com)',
             ...authHeaders
         },
-        data,
         params
-    };
+    }, method, data);
 
     return await context.httpRequest(options);
 }
@@ -97,7 +107,7 @@ async function requestPaginated(context, { method, url, data = {}, headers = {},
         page += 1;
         params.sysparm_offset = (page - 1) * pageSize;
 
-        const options = { method, url, data, headers, params };
+        const options = attachBody({ method, url, headers, params }, method, data);
         context.log({ step: 'Requesting paginated data', options });
         const response = await context.httpRequest(options);
 
