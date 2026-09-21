@@ -380,8 +380,8 @@
         },
         "0f4b91b3-946c-4eb5-bc64-698ce944bde4": {
             "type": "appmixer.zoho.crm.FindAppointments",
-            "x": 1680,
-            "y": 320,
+            "x": 1888,
+            "y": 576,
             "version": "1.0.0",
             "errorHandling": {
                 "autoRetry": false,
@@ -389,7 +389,7 @@
             },
             "source": {
                 "in": {
-                    "1e1106e7-a095-44d6-bc17-8ee3ada47156": [
+                    "79690412-a65d-4bcd-bbfc-8d01d79a8022": [
                         "out"
                     ]
                 }
@@ -397,7 +397,7 @@
             "config": {
                 "transform": {
                     "in": {
-                        "1e1106e7-a095-44d6-bc17-8ee3ada47156": {
+                        "79690412-a65d-4bcd-bbfc-8d01d79a8022": {
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
@@ -418,8 +418,8 @@
         },
         "e3b46ffb-42a2-4730-b952-cbff4e686aad": {
             "type": "appmixer.utils.test.Assert",
-            "x": 1872,
-            "y": 448,
+            "x": 2096,
+            "y": 576,
             "version": "1.0.0",
             "errorHandling": {
                 "autoRetry": false,
@@ -496,7 +496,7 @@
             },
             "config": {
                 "properties": {
-                    "timeout": 180
+                    "timeout": 420
                 }
             }
         },
@@ -587,6 +587,49 @@
                     }
                 }
             }
+        },
+        "79690412-a65d-4bcd-bbfc-8d01d79a8022": {
+            "type": "appmixer.utils.timers.Wait",
+            "x": 1680,
+            "y": 576,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "1e1106e7-a095-44d6-bc17-8ee3ada47156": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "1e1106e7-a095-44d6-bc17-8ee3ada47156": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "interval": {}
+                                },
+                                "lambda": {
+                                    "interval": "1m"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        }
+    },
+    "notes": {
+        "68868aaf-886e-483f-ba08-391721d268b4": {
+            "x": 64,
+            "y": 640,
+            "width": 672,
+            "height": 224,
+            "content": "## ⚠️ Do not remove the Wait\n\nZoho's `/search` endpoint reads an eventually-consistent index, so an appointment created seconds earlier is not findable yet: Find Appointments sends to `notFound`, nothing reaches its Assert and the flow hangs until the AfterAll timeout (seen on 2026-09-21).\n\nThe Wait gives the index a minute to catch up, which is why the AfterAll timeout is 420 s.\n\nThe flow also assumes the tenant data seeded for the Zoho CRM org: contact `918492000000533812`, service `918492000000690001` and service member `918492000000516001`, with the Services module enabled."
         }
     }
 }
