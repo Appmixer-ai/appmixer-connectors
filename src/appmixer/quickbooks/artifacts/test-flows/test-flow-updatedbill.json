@@ -1,9 +1,9 @@
 {
-    "name": "E2E QuickBooks UpdatedInvoice trigger",
+    "name": "E2E QuickBooks UpdatedBill trigger",
     "type": "automation",
     "notes": {},
     "flow": {
-        "a0846298-72d6-49a1-a7b8-c5191afa47e0": {
+        "b1b2c3d4-0001-4000-8000-000000000001": {
             "type": "appmixer.utils.controls.OnStart",
             "x": 64,
             "y": 320,
@@ -15,8 +15,8 @@
             "source": {},
             "config": {}
         },
-        "9f53fa6f-ab4a-49f6-a259-42bcfa3984d8": {
-            "type": "appmixer.quickbooks.accounting.CreateCustomer",
+        "b1b2c3d4-0002-4000-8000-000000000002": {
+            "type": "appmixer.quickbooks.accounting.CreateVendor",
             "x": 320,
             "y": 320,
             "version": "1.0.0",
@@ -26,7 +26,7 @@
             },
             "source": {
                 "in": {
-                    "a0846298-72d6-49a1-a7b8-c5191afa47e0": [
+                    "b1b2c3d4-0001-4000-8000-000000000001": [
                         "out"
                     ]
                 }
@@ -34,12 +34,12 @@
             "config": {
                 "transform": {
                     "in": {
-                        "a0846298-72d6-49a1-a7b8-c5191afa47e0": {
+                        "b1b2c3d4-0001-4000-8000-000000000001": {
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
                                     "displayName": {
-                                        "v-cust-ts": {
+                                        "v-vend-ts": {
                                             "functions": [
                                                 {
                                                     "name": "g_timestamp"
@@ -51,15 +51,17 @@
                                     "familyName": {},
                                     "companyName": {},
                                     "primaryEmailAddrAddress": {},
-                                    "printOnCheckName": {}
+                                    "printOnCheckName": {},
+                                    "minorVersion": {}
                                 },
                                 "lambda": {
-                                    "displayName": "E2E QB Customer {{{v-cust-ts}}}",
+                                    "displayName": "E2E QB Vendor {{{v-vend-ts}}}",
                                     "givenName": "E2E",
-                                    "familyName": "Tester",
-                                    "companyName": "E2E Test Co",
-                                    "primaryEmailAddrAddress": "e2e-customer@appmixer-test.com",
-                                    "printOnCheckName": "E2E Test Co"
+                                    "familyName": "Supplier",
+                                    "companyName": "E2E Supply Co",
+                                    "primaryEmailAddrAddress": "e2e-vendor@appmixer-test.com",
+                                    "printOnCheckName": "E2E Supply Co",
+                                    "minorVersion": "75"
                                 }
                             }
                         }
@@ -67,18 +69,18 @@
                 }
             }
         },
-        "d6131058-b0e8-447e-8038-f8da7c13483b": {
-            "type": "appmixer.quickbooks.accounting.CreateInvoice",
+        "b1b2c3d4-0003-4000-8000-000000000003": {
+            "type": "appmixer.quickbooks.accounting.CreateBill",
             "x": 576,
             "y": 320,
-            "version": "1.0.2",
+            "version": "1.0.0",
             "errorHandling": {
                 "autoRetry": false,
                 "onError": "stopFlow"
             },
             "source": {
                 "in": {
-                    "9f53fa6f-ab4a-49f6-a259-42bcfa3984d8": [
+                    "b1b2c3d4-0002-4000-8000-000000000002": [
                         "out"
                     ]
                 }
@@ -86,21 +88,27 @@
             "config": {
                 "transform": {
                     "in": {
-                        "9f53fa6f-ab4a-49f6-a259-42bcfa3984d8": {
+                        "b1b2c3d4-0002-4000-8000-000000000002": {
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
-                                    "customerId": {
-                                        "v-inv-cust": {
-                                            "variable": "$.9f53fa6f-ab4a-49f6-a259-42bcfa3984d8.out.Id",
+                                    "vendorId": {
+                                        "v-bill-vendor": {
+                                            "variable": "$.b1b2c3d4-0002-4000-8000-000000000002.out.Id",
                                             "functions": []
                                         }
                                     },
-                                    "lineItemsJSON": {}
+                                    "lineItemsJSON": {},
+                                    "dueDate": {},
+                                    "privateNote": {},
+                                    "minorVersion": {}
                                 },
                                 "lambda": {
-                                    "customerId": "{{{v-inv-cust}}}",
-                                    "lineItemsJSON": "[{ \"DetailType\": \"SalesItemLineDetail\", \"Amount\": 50, \"Description\": \"E2E service\", \"SalesItemLineDetail\": { \"Qty\": 1 } }]"
+                                    "vendorId": "{{{v-bill-vendor}}}",
+                                    "lineItemsJSON": "[{ \"DetailType\": \"AccountBasedExpenseLineDetail\", \"Amount\": 100, \"Description\": \"E2E expense\", \"AccountBasedExpenseLineDetail\": { \"AccountRef\": { \"value\": \"7\" } } }]",
+                                    "dueDate": "2030-02-10",
+                                    "privateNote": "E2E UpdatedBill trigger",
+                                    "minorVersion": "75"
                                 }
                             }
                         }
@@ -108,7 +116,7 @@
                 }
             }
         },
-        "dc806eba-cb11-4819-8a3d-a95d9f0b86c2": {
+        "b1b2c3d4-0004-4000-8000-000000000004": {
             "type": "appmixer.quickbooks.core.MakeApiCall",
             "x": 832,
             "y": 320,
@@ -119,7 +127,7 @@
             },
             "source": {
                 "in": {
-                    "d6131058-b0e8-447e-8038-f8da7c13483b": [
+                    "b1b2c3d4-0003-4000-8000-000000000003": [
                         "out"
                     ]
                 }
@@ -127,7 +135,7 @@
             "config": {
                 "transform": {
                     "in": {
-                        "d6131058-b0e8-447e-8038-f8da7c13483b": {
+                        "b1b2c3d4-0003-4000-8000-000000000003": {
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
@@ -135,19 +143,19 @@
                                     "method": {},
                                     "body": {
                                         "v-upd-id": {
-                                            "variable": "$.d6131058-b0e8-447e-8038-f8da7c13483b.out.Id",
+                                            "variable": "$.b1b2c3d4-0003-4000-8000-000000000003.out.Id",
                                             "functions": []
                                         },
                                         "v-upd-token": {
-                                            "variable": "$.d6131058-b0e8-447e-8038-f8da7c13483b.out.SyncToken",
+                                            "variable": "$.b1b2c3d4-0003-4000-8000-000000000003.out.SyncToken",
                                             "functions": []
                                         }
                                     }
                                 },
                                 "lambda": {
-                                    "url": "/invoice",
+                                    "url": "/bill",
                                     "method": "POST",
-                                    "body": "{\"Id\":\"{{{v-upd-id}}}\",\"SyncToken\":\"{{{v-upd-token}}}\",\"sparse\":true,\"PrivateNote\":\"E2E updated note\"}"
+                                    "body": "{\"Id\":\"{{{v-upd-id}}}\",\"SyncToken\":\"{{{v-upd-token}}}\",\"sparse\":true,\"PrivateNote\":\"E2E updated bill note\"}"
                                 }
                             }
                         }
@@ -155,7 +163,7 @@
                 }
             }
         },
-        "594b3d00-bed6-4ae5-844b-57f6490a5be6": {
+        "b1b2c3d4-0005-4000-8000-000000000005": {
             "type": "appmixer.utils.test.Assert",
             "x": 1088,
             "y": 320,
@@ -166,7 +174,7 @@
             },
             "source": {
                 "in": {
-                    "dc806eba-cb11-4819-8a3d-a95d9f0b86c2": [
+                    "b1b2c3d4-0004-4000-8000-000000000004": [
                         "out"
                     ]
                 }
@@ -174,19 +182,19 @@
             "config": {
                 "transform": {
                     "in": {
-                        "dc806eba-cb11-4819-8a3d-a95d9f0b86c2": {
+                        "b1b2c3d4-0004-4000-8000-000000000004": {
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
                                     "expression": {
-                                        "v-34b20375": {
-                                            "variable": "$.dc806eba-cb11-4819-8a3d-a95d9f0b86c2.out",
+                                        "v-update-bill-id": {
+                                            "variable": "$.b1b2c3d4-0004-4000-8000-000000000004.out",
                                             "functions": [
                                                 {
                                                     "name": "g_jsonPath",
                                                     "params": [
                                                         {
-                                                            "value": "$.body.Invoice.Id"
+                                                            "value": "$.body.Bill.Id"
                                                         }
                                                     ]
                                                 }
@@ -198,7 +206,7 @@
                                     "expression": {
                                         "AND": [
                                             {
-                                                "field": "{{{v-34b20375}}}",
+                                                "field": "{{{v-update-bill-id}}}",
                                                 "assertion": "notEmpty"
                                             }
                                         ]
@@ -210,18 +218,18 @@
                 }
             }
         },
-        "93c767bb-4918-49f0-bd46-ee9752380ab8": {
-            "type": "appmixer.quickbooks.accounting.UpdatedInvoice",
+        "b1b2c3d4-0006-4000-8000-000000000006": {
+            "type": "appmixer.quickbooks.accounting.UpdatedBill",
             "x": 832,
             "y": 560,
-            "version": "1.0.1",
+            "version": "1.0.0",
             "errorHandling": {
                 "autoRetry": false,
                 "onError": "stopFlow"
             },
             "source": {}
         },
-        "9feeb799-17b6-4412-b8e5-a19a384a45a9": {
+        "b1b2c3d4-0007-4000-8000-000000000007": {
             "type": "appmixer.utils.test.Assert",
             "x": 1088,
             "y": 560,
@@ -232,7 +240,7 @@
             },
             "source": {
                 "in": {
-                    "93c767bb-4918-49f0-bd46-ee9752380ab8": [
+                    "b1b2c3d4-0006-4000-8000-000000000006": [
                         "out"
                     ]
                 }
@@ -240,23 +248,18 @@
             "config": {
                 "transform": {
                     "in": {
-                        "93c767bb-4918-49f0-bd46-ee9752380ab8": {
+                        "b1b2c3d4-0006-4000-8000-000000000006": {
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
                                     "expression": {
-                                        "v-953c537b": {
-                                            "variable": "$.93c767bb-4918-49f0-bd46-ee9752380ab8.out",
-                                            "functions": [
-                                                {
-                                                    "name": "g_jsonPath",
-                                                    "params": [
-                                                        {
-                                                            "value": "$.Id"
-                                                        }
-                                                    ]
-                                                }
-                                            ]
+                                        "v-trigger-bill-id": {
+                                            "variable": "$.b1b2c3d4-0006-4000-8000-000000000006.out.Id",
+                                            "functions": []
+                                        },
+                                        "v-trigger-bill-vendor": {
+                                            "variable": "$.b1b2c3d4-0006-4000-8000-000000000006.out.VendorRef.value",
+                                            "functions": []
                                         }
                                     }
                                 },
@@ -264,7 +267,11 @@
                                     "expression": {
                                         "AND": [
                                             {
-                                                "field": "{{{v-953c537b}}}",
+                                                "field": "{{{v-trigger-bill-id}}}",
+                                                "assertion": "notEmpty"
+                                            },
+                                            {
+                                                "field": "{{{v-trigger-bill-vendor}}}",
                                                 "assertion": "notEmpty"
                                             }
                                         ]
@@ -276,7 +283,7 @@
                 }
             }
         },
-        "85ddff23-abff-49d8-bbc5-eba283ff904f": {
+        "b1b2c3d4-0008-4000-8000-000000000008": {
             "type": "appmixer.utils.test.AfterAll",
             "x": 1344,
             "y": 560,
@@ -287,10 +294,10 @@
             },
             "source": {
                 "in": {
-                    "594b3d00-bed6-4ae5-844b-57f6490a5be6": [
+                    "b1b2c3d4-0005-4000-8000-000000000005": [
                         "out"
                     ],
-                    "9feeb799-17b6-4412-b8e5-a19a384a45a9": [
+                    "b1b2c3d4-0007-4000-8000-000000000007": [
                         "out"
                     ]
                 }
@@ -301,9 +308,57 @@
                 }
             }
         },
-        "e21fe09e-e916-4600-954a-ad0140f7bd64": {
-            "type": "appmixer.utils.test.ProcessE2EResults",
+        "b1b2c3d4-0010-4000-8000-000000000010": {
+            "type": "appmixer.quickbooks.accounting.DeleteBill",
             "x": 1600,
+            "y": 560,
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "source": {
+                "in": {
+                    "b1b2c3d4-0008-4000-8000-000000000008": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "b1b2c3d4-0008-4000-8000-000000000008": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "billId": {
+                                        "v-cleanup-id": {
+                                            "variable": "$.b1b2c3d4-0006-4000-8000-000000000006.out.Id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "syncToken": {
+                                        "v-cleanup-token": {
+                                            "variable": "$.b1b2c3d4-0006-4000-8000-000000000006.out.SyncToken",
+                                            "functions": []
+                                        }
+                                    },
+                                    "minorVersion": {}
+                                },
+                                "lambda": {
+                                    "billId": "{{{v-cleanup-id}}}",
+                                    "syncToken": "{{{v-cleanup-token}}}",
+                                    "minorVersion": 75
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "b1b2c3d4-0009-4000-8000-000000000009": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1856,
             "y": 560,
             "version": "1.0.1",
             "errorHandling": {
@@ -312,7 +367,7 @@
             },
             "source": {
                 "in": {
-                    "85ddff23-abff-49d8-bbc5-eba283ff904f": [
+                    "b1b2c3d4-0010-4000-8000-000000000010": [
                         "out"
                     ]
                 }
@@ -321,23 +376,23 @@
                 "properties": {},
                 "transform": {
                     "in": {
-                        "85ddff23-abff-49d8-bbc5-eba283ff904f": {
+                        "b1b2c3d4-0010-4000-8000-000000000010": {
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
                                     "recipients": {},
                                     "testCase": {},
                                     "result": {
-                                        "v-result-2d697865": {
-                                            "variable": "$.85ddff23-abff-49d8-bbc5-eba283ff904f.out",
+                                        "v-result-updatedbill": {
+                                            "variable": "$.b1b2c3d4-0008-4000-8000-000000000008.out",
                                             "functions": []
                                         }
                                     }
                                 },
                                 "lambda": {
                                     "recipients": "test@appmixer.ai",
-                                    "testCase": "E2E QuickBooks UpdatedInvoice trigger",
-                                    "result": "{{{v-result-2d697865}}}"
+                                    "testCase": "E2E QuickBooks UpdatedBill trigger",
+                                    "result": "{{{v-result-updatedbill}}}"
                                 }
                             }
                         }
