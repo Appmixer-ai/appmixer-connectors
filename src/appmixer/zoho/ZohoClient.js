@@ -240,9 +240,16 @@ class ZohoClient {
             method,
             url,
             headers,
-            data,
             params
         };
+
+        // A GET/HEAD must go out without a body. Axios serializes even an empty object to
+        // '{}' (Content-Length: 2); Zoho does not read it, so on a reused keep-alive
+        // connection those bytes desync the stream and the next response fails to parse
+        // with 'Parse Error: Expected HTTP/' (HPE_INVALID_CONSTANT).
+        if (!['GET', 'HEAD'].includes(String(method || 'GET').toUpperCase())) {
+            request.data = data;
+        }
 
         return this.client(request)
             .then(response => response.data)
