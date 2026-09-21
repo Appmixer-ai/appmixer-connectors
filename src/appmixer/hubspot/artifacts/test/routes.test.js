@@ -64,6 +64,86 @@ describe('POST /events handler', () => {
             );
             assert.equal(context.httpRequest.callCount, 2, 'httpRequest should be called twice');
         });
+
+        it('onListenerAdded subscribes to the ContactPropertyChanged property on top of the defaults', async () => {
+
+            // Existing subscriptions of the app: `email` is already there.
+            context.httpRequest.onCall(0).resolves({
+                data: {
+                    results: [
+                        { id: 1, eventType: 'contact.propertyChange', propertyName: 'email', active: true }
+                    ]
+                }
+            });
+            context.httpRequest.onCall(1).resolves({ statusCode: 200 });
+
+            const listenerHandler = context.onListenerAdded.getCall(0).args[0];
+            await listenerHandler({
+                eventName: 'contact.propertyChange:33',
+                params: { apiKey: 'dev-api-key', appId: '1234585', propertyName: 'my_custom_field' }
+            });
+
+            assert.equal(context.httpRequest.callCount, 2, 'list + batch create');
+            const created = context.httpRequest.getCall(1).args[0].data
+                .map(sub => sub.subscriptionDetails.propertyName);
+            assert(created.includes('my_custom_field'), 'custom property subscribed');
+            assert(created.includes('firstname'), 'default properties subscribed');
+            assert(!created.includes('email'), 'existing subscription not created again');
+        });
+
+        it('onListenerAdded re-activates an inactive subscription (v3 `active` flag)', async () => {
+
+            // Every default exists; `email` is switched off, the rest are active.
+            const defaults = ['email', 'firstname', 'lastname', 'phone', 'website', 'company', 'address', 'city', 'state', 'zip'];
+            context.httpRequest.onCall(0).resolves({
+                data: {
+                    results: defaults.map((propertyName, index) => ({
+                        id: 100 + index,
+                        eventType: 'contact.propertyChange',
+                        propertyName,
+                        active: propertyName !== 'email'
+                    }))
+                }
+            });
+            context.httpRequest.resolves({ statusCode: 200, data: {} });
+
+            const listenerHandler = context.onListenerAdded.getCall(0).args[0];
+            await listenerHandler({
+                eventName: 'contact.propertyChange:33',
+                params: { apiKey: 'dev-api-key', appId: '1234585' }
+            });
+
+            assert.equal(context.httpRequest.callCount, 2, 'list + one PATCH, nothing created');
+            const patch = context.httpRequest.getCall(1).args[0];
+            assert.equal(patch.method, 'PATCH');
+            assert(patch.url.includes('/subscriptions/100?'), 'the inactive email subscription');
+            assert.deepEqual(patch.data, { active: true });
+        });
+
+        it('onListenerAdded does nothing on the AuthHub pod (the shared app is configured manually)', async () => {
+
+            const originalUrl = process.env.AUTH_HUB_URL;
+            const originalToken = process.env.AUTH_HUB_TOKEN;
+            process.env.AUTH_HUB_URL = 'https://auth-hub.example.com';
+            delete process.env.AUTH_HUB_TOKEN;
+            try {
+                context.config = { apiKey: 'authhub-dev-key', appId: '999' };
+                const listenerHandler = context.onListenerAdded.getCall(0).args[0];
+                await listenerHandler({ eventName: 'contact.propertyChange:33', params: { propertyName: 'my_custom_field' } });
+                await listenerHandler({ eventName: 'contact.creation:33', params: {} });
+
+                assert.equal(context.httpRequest.callCount, 0, 'no HubSpot call');
+            } finally {
+                if (originalUrl === undefined) {
+                    delete process.env.AUTH_HUB_URL;
+                } else {
+                    process.env.AUTH_HUB_URL = originalUrl;
+                }
+                if (originalToken !== undefined) {
+                    process.env.AUTH_HUB_TOKEN = originalToken;
+                }
+            }
+        });
     }
 
     it('all propertyChange events pass through to triggerListeners', async () => {
@@ -111,8 +191,10 @@ describe('POST /events handler', () => {
         assert.equal(context.triggerListeners.callCount, 1, 'triggerListeners should be called once');
         const call = context.triggerListeners.getCall(0).args[0];
         assert.equal(call.eventName, `contact.propertyChange:${PORTAL_ID_AIRBUS}`);
-        // _.keyBy keeps last event per objectId
-        assert.deepEqual(call.payload, { '38533722672': req.payload[1] });
+        // The last event per objectId, plus every property of the object that changed in the batch.
+        assert.deepEqual(call.payload, {
+            '38533722672': { ...req.payload[1], propertyNames: ['hubspot_owner_id', 'hubspot_owner_assigneddate'] }
+        });
     });
 
     it('multiple changes of the same contact in a single event', async () => {
@@ -203,14 +285,20 @@ describe('POST /events handler', () => {
         }
 
         // Expecting the call to triggerListeners to be with the correct arguments.
-        // All propertyChange events now pass through (no allowlist filter). _.keyBy groups by objectId
-        // keeping the last event per object, so the payload contains the last event in the batch.
+        // All propertyChange events pass through (no allowlist filter), grouped by objectId: the last event
+        // per object plus `propertyNames` with every property changed in the batch — firstname included,
+        // although it is not the last change, so triggers filtering by property do not miss it.
         if (version.startsWith('4')) {
             const triggerListenersArgsExpected = [
                 [
                     {
                         eventName: `contact.propertyChange:${PORTAL_ID_AIRBUS}`,
-                        payload: { '38533722672': req.payload[3] }
+                        payload: {
+                            '38533722672': {
+                                ...req.payload[3],
+                                propertyNames: ['hubspot_owner_id', 'hubspot_owner_assigneddate', 'firstname']
+                            }
+                        }
                     }
                 ]
             ];
