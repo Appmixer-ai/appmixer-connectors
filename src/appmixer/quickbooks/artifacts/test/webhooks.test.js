@@ -515,40 +515,47 @@ describe('Quickbooks onListenerAdded', function() {
     });
 });
 
-describe('NewBill component', function() {
+const RECEIVE_TRIGGERS = [
+    { label: 'NewBill', path: '../../accounting/NewBill/NewBill', entity: 'Bill', fixture: { id: '2001', name: 'Bill', operation: 'Create' } },
+    { label: 'UpdatedBill', path: '../../accounting/UpdatedBill/UpdatedBill', entity: 'Bill', fixture: { id: '2002', name: 'Bill', operation: 'Update' } }
+];
 
-    const { receive } = require('../../accounting/NewBill/NewBill');
-    let context;
+for (const trigger of RECEIVE_TRIGGERS) {
+    describe(`${trigger.label} component`, function() {
 
-    const QUICKBOOKS_BILL_A = { Id: '2001', TotalAmt: 2400, VendorRef: { value: '55', name: 'Acme Supplies' } };
+        const { receive } = require(trigger.path);
+        let context;
 
-    beforeEach(function() {
+        const QUICKBOOKS_BILL = { Id: trigger.fixture.id, TotalAmt: 2400, VendorRef: { value: '55', name: 'Acme Supplies' } };
 
-        context = {
-            ...testUtils.createMockContext(),
-            profileInfo: { companyId: 'companyId' }
-        };
-    });
+        beforeEach(function() {
 
-    it('should query and emit bills by id', async function() {
-
-        context.httpRequest = sinon.stub().resolves({
-            data: { QueryResponse: { Bill: [QUICKBOOKS_BILL_A] } }
+            context = {
+                ...testUtils.createMockContext(),
+                profileInfo: { companyId: 'companyId' }
+            };
         });
-        context.messages = { webhook: { content: { data: [BILL_A_CREATED.id] } } };
 
-        await receive(context);
+        it('should query and emit bills by id', async function() {
 
-        assert(context.httpRequest.calledOnce);
-        const args = context.httpRequest.args[0];
-        assert.equal(args[0].method, 'GET');
-        assert.match(args[0].url, /v3\/company\/companyId\/query\?query=select/);
-        assert.match(args[0].url, /Bill/);
-        assert.match(args[0].url, /Id%20in%20\('2001'\)/);
-        assert.equal(context.sendArray.callCount, 1);
-        assert.deepEqual(context.sendArray.args[0][0], [QUICKBOOKS_BILL_A]);
+            context.httpRequest = sinon.stub().resolves({
+                data: { QueryResponse: { Bill: [QUICKBOOKS_BILL] } }
+            });
+            context.messages = { webhook: { content: { data: [trigger.fixture.id] } } };
+
+            await receive(context);
+
+            assert(context.httpRequest.calledOnce);
+            const args = context.httpRequest.args[0];
+            assert.equal(args[0].method, 'GET');
+            assert.match(args[0].url, /v3\/company\/companyId\/query\?query=select/);
+            assert.match(args[0].url, /Bill/);
+            assert.match(args[0].url, new RegExp(`Id%20in%20\\('${trigger.fixture.id}'\\)`));
+            assert.equal(context.sendArray.callCount, 1);
+            assert.deepEqual(context.sendArray.args[0][0], [QUICKBOOKS_BILL]);
+        });
     });
-});
+}
 
 describe('Quickbooks webhooks: Bill routing', function() {
 
