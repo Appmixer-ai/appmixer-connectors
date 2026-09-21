@@ -1,6 +1,6 @@
 {
     "name": "E2E MCPGateway - tool port",
-    "description": "MCPGateway announces its webhook on the 'out' port; the flow calls two tools through it (EchoTool with a model-defined parameter, GreetTool with a static value) exactly the way the MCP Server would, and asserts the component output that comes back.",
+    "description": "MCPGateway announces its webhook on the 'out' port; the flow calls two tools through it (EchoTool with a model-defined parameter, GreetTool with a static value) exactly the way the MCP Server would, and asserts the component output that comes back. A third call passes a 'value' argument to GreetTool and asserts the static value still wins — a caller must not override a literal configured on the tool.",
     "customFields": {
         "category": "E2E_test_flow"
     },
@@ -194,6 +194,108 @@
                 }
             }
         },
+        "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb": {
+            "type": "appmixer.utils.http.Post",
+            "label": "Call GreetTool with an override attempt",
+            "x": 416,
+            "y": 832,
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "source": {
+                "in": {
+                    "11111111-1111-4111-8111-111111111111": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "11111111-1111-4111-8111-111111111111": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "url": {
+                                        "hook": {
+                                            "variable": "$.11111111-1111-4111-8111-111111111111.out.webhook",
+                                            "functions": []
+                                        }
+                                    },
+                                    "body": {},
+                                    "bodyType": {},
+                                    "headers": {}
+                                },
+                                "lambda": {
+                                    "url": "{{{hook}}}",
+                                    "bodyType": "raw",
+                                    "headers": "{\"Content-Type\":\"application/json\"}",
+                                    "body": "{\"function\": {\"name\": \"7jGwZxT7QmPXG9Bky8Bv5g_GreetTool\", \"arguments\": {\"value\": \"overridden by the caller\"}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "cccccccc-cccc-4ccc-8ccc-cccccccccccc": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 624,
+            "y": 832,
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "source": {
+                "in": {
+                    "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb": [
+                        "response"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb": {
+                            "response": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "outvalue": {
+                                            "variable": "$.bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb.response.body",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$.out.outvalue"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "assertion": "equal",
+                                                "field": "{{{outvalue}}}",
+                                                "expected": "Hello, Appmixer!"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "66666666-6666-4666-8666-666666666666": {
             "type": "appmixer.utils.test.Assert",
             "x": 624,
@@ -324,6 +426,9 @@
                         "out"
                     ],
                     "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa": [
+                        "out"
+                    ],
+                    "cccccccc-cccc-4ccc-8ccc-cccccccccccc": [
                         "out"
                     ]
                 }
