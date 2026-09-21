@@ -73,7 +73,14 @@
                         "type": "text",
                         "label": "Appointment For",
                         "index": 2,
-                        "tooltip": "The ID of the customer record (a contact by default) the appointment is scheduled for."
+                        "tooltip": "The customer the appointment is scheduled for. The list offers contacts; for a custom customer module, set Appointment For Module and enter the record ID.",
+                        "source": {
+                            "url": "/component/appmixer/zoho/crm/ListRecords?outPort=out",
+                            "data": {
+                                "transform": "./transformers#personsToSelectArray",
+                                "messages": { "in": { "allAtOnce": true, "moduleName": "Contacts" } }
+                            }
+                        }
                     },
                     "appointmentForModule": {
                         "type": "text",
@@ -90,9 +97,15 @@
                     },
                     "ownerId": {
                         "type": "text",
-                        "label": "Owner ID",
+                        "label": "Owner",
                         "index": 5,
-                        "tooltip": "The ID of the user who delivers the service. The user must be a member of the selected service."
+                        "tooltip": "The user who delivers the service. They must be a member of the selected service.",
+                        "source": {
+                            "url": "/component/appmixer/zoho/crm/ListUsers?outPort=users",
+                            "data": {
+                                "transform": "./ListUsers#usersToSelectArray"
+                            }
+                        }
                     },
                     "startTime": {
                         "type": "date-time",

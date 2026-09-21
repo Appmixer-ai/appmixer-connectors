@@ -23,9 +23,11 @@ module.exports = {
 
         // The endpoint takes multipart form data in both cases: the file itself, or a link to it.
         const data = new FormData();
+        let stream = null;
         if (fileId) {
             const fileInfo = await context.getFileInfo(fileId);
-            data.append('file', await context.getFileReadStream(fileId), {
+            stream = await context.getFileReadStream(fileId);
+            data.append('file', stream, {
                 filename: fileInfo.filename,
                 contentType: fileInfo.contentType,
                 knownLength: fileInfo.length
@@ -34,7 +36,14 @@ module.exports = {
             data.append('attachmentUrl', attachmentUrl);
         }
 
-        const response = await client.request('POST', url, { data, headers: data.getHeaders() });
+        let response;
+        try {
+            response = await client.request('POST', url, { data, headers: data.getHeaders() });
+        } catch (err) {
+            // A failed upload leaves the file stream open, one descriptor per attempt.
+            stream?.destroy();
+            throw err;
+        }
         const result = Array.isArray(response?.data) ? response.data[0] : null;
 
         if (!result || result.status === 'error') {
