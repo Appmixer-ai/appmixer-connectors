@@ -112,6 +112,28 @@ describe('Shopify discounts', function() {
             assert.strictEqual(context.sent[0].payload.code, generated);
         });
 
+        it('should remove the price rule again when the code is refused', async () => {
+
+            const context = mockContext({ valueType: 'percentage', value: 15, code: 'TAKEN' }, (options, index) => {
+                if (index === 0) {
+                    return { data: { 'price_rule': { id: 42, ...options.data['price_rule'] } }, headers: {} };
+                }
+                if (index === 1) {
+                    const error = new Error('Unprocessable Entity');
+                    error.response = { status: 422, statusText: 'Unprocessable Entity', headers: {} };
+                    throw error;
+                }
+                return { data: {}, headers: {} };
+            });
+
+            await assert.rejects(CreateDiscountCode.receive(context), error => error.statusCode === 422);
+
+            assert.strictEqual(context.requests.length, 3);
+            assert.strictEqual(context.requests[2].method, 'DELETE');
+            assert.ok(context.requests[2].url.endsWith('/price_rules/42.json'));
+            assert.strictEqual(context.sent.length, 0);
+        });
+
         it('should reject a missing or out-of-range value', async () => {
 
             const failing = () => assert.fail('no request expected');

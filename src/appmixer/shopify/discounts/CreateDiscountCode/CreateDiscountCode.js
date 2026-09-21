@@ -82,7 +82,16 @@ module.exports = {
 
         const shopify = commons.getShopifyAPI(context);
         const priceRule = await shopify.priceRule.create(priceRulePayload);
-        const created = await shopify.discountCode.create(priceRule.id, { code: discountCode });
+
+        let created;
+        try {
+            created = await shopify.discountCode.create(priceRule.id, { code: discountCode });
+        } catch (error) {
+            // The code was refused (typically a duplicate): a price rule without
+            // a code is useless, so do not leave it behind in the store.
+            await shopify.priceRule.delete(priceRule.id).catch(() => {});
+            throw error;
+        }
 
         return context.sendJson({ ...created, 'price_rule': priceRule }, 'out');
     }
