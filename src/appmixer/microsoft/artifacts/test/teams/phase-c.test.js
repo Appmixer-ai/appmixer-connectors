@@ -1,4 +1,6 @@
 const assert = require('assert');
+const fs = require('fs');
+const path = require('path');
 const testUtils = require('../../../../../../test/utils.js');
 const { chatMessage } = require('../../../teams/schemas.js');
 const UpdateMessage = require('../../../teams/UpdateMessage/UpdateMessage.js');
@@ -458,6 +460,12 @@ describe('Microsoft Teams - phase C', function() {
             await assert.rejects(NewChannelMessage.test(context), /No recent message in the channel/);
         });
 
+        it('feeds the Channel picker the team from the trigger properties', function() {
+
+            const { messages } = componentJson('NewChannelMessage').properties.inspector.inputs.channelId.source.data;
+            assert.strictEqual(messages['in/teamId'], 'properties/teamId');
+        });
+
         it('declares the shared chatMessage schema on its output port', function() {
 
             const json = componentJson('NewChannelMessage');
@@ -564,6 +572,45 @@ describe('Microsoft Teams - phase C', function() {
         it('declares the ListTeamMembers item schema on its output port', function() {
 
             assert.deepStrictEqual(componentJson('NewTeamMember').outPorts[0].schema, plain(ListTeamMembers.ITEM_SCHEMA));
+        });
+    });
+
+    describe('inspector sources', function() {
+
+        // Every `inputs/<port>/<field>` or `properties/<field>` a source sends must name a field
+        // the component has; otherwise the picker is fed an empty value and shows nothing.
+        it('map only fields the component declares', function() {
+
+            const dir = path.join(__dirname, '../../../teams');
+            const fieldsOf = (section) => new Set([
+                ...Object.keys(section?.schema?.properties || {}),
+                ...Object.keys(section?.inspector?.inputs || {})
+            ]);
+
+            const components = fs.readdirSync(dir).filter((entry) => fs.existsSync(path.join(dir, entry, 'component.json')));
+
+            for (const name of components) {
+                const json = componentJson(name);
+                const ports = Object.fromEntries((json.inPorts || []).map((port) => [port.name, fieldsOf(port)]));
+                const properties = fieldsOf(json.properties);
+                const sources = [
+                    ...(json.inPorts || []).flatMap((port) => Object.values(port.inspector?.inputs || {})),
+                    ...Object.values(json.properties?.inspector?.inputs || {}),
+                    ...(json.outPorts || [])
+                ].map((holder) => holder.source).filter(Boolean);
+
+                for (const { data = {} } of sources) {
+                    const values = [...Object.values(data.messages || {}), ...Object.values(data.properties || {})];
+                    for (const value of values) {
+                        const [kind, port, field] = String(value).split('/');
+                        if (kind === 'inputs') {
+                            assert.ok(ports[port]?.has(field), `${name} maps ${value}, which it does not have`);
+                        } else if (kind === 'properties') {
+                            assert.ok(properties.has(port), `${name} maps ${value}, which it does not have`);
+                        }
+                    }
+                }
+            }
         });
     });
 });
