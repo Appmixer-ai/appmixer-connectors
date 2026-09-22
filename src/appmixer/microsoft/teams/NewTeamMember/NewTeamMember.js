@@ -2,7 +2,7 @@
 
 const subscriptions = require('../subscriptions');
 const { makeRequest, statusOf } = require('../commons');
-const { ITEM_SCHEMA } = require('../ListTeamMembers/ListTeamMembers');
+const { member: ITEM_SCHEMA } = require('../schemas');
 
 // A notification names the membership as `teams('..')/members('<base64 id>')`.
 const RESOURCE = /teams\('([^']+)'\)\/members\('([^']+)'\)/;

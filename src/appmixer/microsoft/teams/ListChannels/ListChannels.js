@@ -1,29 +1,7 @@
 'use strict';
 
 const lib = require('../lib');
-
-const ITEM_SCHEMA = {
-    type: 'object',
-    required: ['id', 'displayName'],
-    properties: {
-        id: { type: 'string', title: 'Channel ID', example: '19:4a95f7d8db4c4e7fae857bcebe0623e6@thread.tacv2' },
-        displayName: { type: 'string', title: 'Display Name', example: 'General' },
-        description: { type: 'string', title: 'Description', example: 'Announcements and general discussion.' },
-        membershipType: { type: 'string', title: 'Membership Type', example: 'standard' },
-        email: { type: 'string', title: 'Email', example: 'Marketing@contoso.onmicrosoft.com' },
-        webUrl: {
-            type: 'string',
-            title: 'Web URL',
-            example: 'https://teams.microsoft.com/l/channel/19%3A4a95f7d8db4c4e7fae857bcebe0623e6%40thread.tacv2/General'
-        },
-        createdDateTime: {
-            type: 'string',
-            format: 'date-time',
-            title: 'Created Date Time',
-            example: '2026-01-12T09:15:32.123Z'
-        }
-    }
-};
+const { channel: ITEM_SCHEMA } = require('../schemas');
 
 const listChannels = (context, teamId) => {
 

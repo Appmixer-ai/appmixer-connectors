@@ -2,7 +2,7 @@
 
 const lib = require('../lib');
 const { makeRequest } = require('../commons');
-const { ITEM_SCHEMA } = require('../ListChannels/ListChannels');
+const { channel: ITEM_SCHEMA } = require('../schemas');
 
 module.exports = {
 
