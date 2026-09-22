@@ -27,23 +27,6 @@ const fetchMessage = async (context, chatId, messageId) => {
     return data;
 };
 
-/**
- * @param {object} message
- * @param {boolean} ignoreOwnMessages
- * @param {string} [meId]
- * @return {boolean}
- */
-const shouldEmit = (message, ignoreOwnMessages, meId) => {
-
-    // Joins, renames and the like are delivered as messages but are not ones.
-    if (message.messageType !== 'message') {
-        return false;
-    }
-
-    // Without this a flow that also posts to the chat would trigger itself.
-    return !(ignoreOwnMessages && meId && message.from?.user?.id === meId);
-};
-
 module.exports = {
 
     ITEM_SCHEMA,
@@ -113,7 +96,7 @@ module.exports = {
                 throw error;
             }
 
-            if (shouldEmit(message, ignoreOwnMessages, meId)) {
+            if (lib.shouldEmitMessage(message, ignoreOwnMessages, meId)) {
                 await context.sendJson(message, 'out');
             }
         }
@@ -153,7 +136,7 @@ module.exports = {
         const message = await fetchMessage(context, chatId, newest.id);
         const me = await lib.getMe(context);
 
-        if (!shouldEmit(message, ignoreOwnMessages, me.id)) {
+        if (!lib.shouldEmitMessage(message, ignoreOwnMessages, me.id)) {
             throw new Error('The newest message is one this trigger skips: a system event or your own message.');
         }
 

@@ -160,6 +160,46 @@ module.exports = {
     },
 
     /**
+     * What is missing for the inputs to name a message: a chat and a message ID, or a team,
+     * a channel and a message ID. The caller turns it into a CancelError.
+     * @param {object} target - the `location`, `teamId`, `channelId`, `chatId` and `messageId` inputs
+     * @return {string|undefined} the error message, or nothing when the message is named
+     */
+    missingMessageInput({ location, teamId, channelId, chatId, messageId }) {
+
+        if (location === 'chat' && !chatId) {
+            return 'Chat is required!';
+        }
+        if (location !== 'chat' && !teamId) {
+            return 'Team is required!';
+        }
+        if (location !== 'chat' && !channelId) {
+            return 'Channel is required!';
+        }
+        if (!messageId) {
+            return 'Message ID is required!';
+        }
+    },
+
+    /**
+     * Whether a message trigger emits the message.
+     * @param {object} message
+     * @param {boolean} ignoreOwnMessages
+     * @param {string} [meId]
+     * @return {boolean}
+     */
+    shouldEmitMessage(message, ignoreOwnMessages, meId) {
+
+        // Joins, renames and the like are delivered as messages but are not ones.
+        if (message.messageType !== 'message') {
+            return false;
+        }
+
+        // Without this a flow that also posts to the same place would trigger itself.
+        return !(ignoreOwnMessages && meId && message.from?.user?.id === meId);
+    },
+
+    /**
      * Cache the result of `fn` for dynamic inspector sources. The designer fires source
      * calls in concurrent bursts, so the lock makes the burst hit Graph only once.
      * @param {object} context

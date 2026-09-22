@@ -16,6 +16,11 @@
             "from": "teams/ListChannels",
             "path": "id",
             "inputs": { "teamId": "{teamId}", "outputType": "first" }
+        },
+        "channelMessageId": {
+            "from": "teams/ListChannelMessages",
+            "path": "id",
+            "inputs": { "teamId": "{teamId}", "channelId": "{channelId}", "outputType": "first" }
         }
     },
     "read": [
@@ -33,7 +38,21 @@
             "component": "teams/ListChannelMessages",
             "inputs": { "teamId": "{teamId}", "channelId": "{channelId}", "outputType": "first" }
         },
+        {
+            "component": "teams/GetMessage",
+            "inputs": { "location": "channel", "teamId": "{teamId}", "channelId": "{channelId}", "messageId": "{channelMessageId}" }
+        },
+        {
+            "component": "teams/ListMessageReplies",
+            "inputs": { "teamId": "{teamId}", "channelId": "{channelId}", "messageId": "{channelMessageId}", "outputType": "array" }
+        },
+        { "component": "teams/ListTeamMembers", "inputs": { "teamId": "{teamId}", "outputType": "first" } },
         { "component": "teams/ListChats", "inputs": { "outputType": "first" } },
-        { "component": "teams/NewChatMessage" }
+        { "component": "teams/NewChatMessage" },
+        {
+            "component": "teams/NewChannelMessage",
+            "inputs": { "teamId": "{teamId}", "channelId": "{channelId}", "ignoreOwnMessages": false }
+        },
+        { "component": "teams/NewTeamMember", "inputs": { "teamId": "{teamId}" } }
     ]
 }

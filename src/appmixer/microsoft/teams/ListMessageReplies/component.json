@@ -1,0 +1,140 @@
+{
+    "name": "appmixer.microsoft.teams.ListMessageReplies",
+    "author": "Appmixer <info@appmixer.com>",
+    "label": "List Message Replies",
+    "description": "Lists the replies to a message in a team channel, following every result page. Requires tenant admin consent for the ChannelMessage.Read.All permission.",
+    "auth": {
+        "service": "appmixer:microsoft",
+        "scope": [
+            "ChannelMessage.Read.All"
+        ]
+    },
+    "quota": {
+        "manager": "appmixer:microsoft:teams",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "teamId": {
+                        "type": "string"
+                    },
+                    "channelId": {
+                        "type": "string"
+                    },
+                    "messageId": {
+                        "type": "string"
+                    },
+                    "outputType": {
+                        "type": "string",
+                        "enum": [
+                            "first",
+                            "array",
+                            "object",
+                            "file"
+                        ]
+                    }
+                },
+                "required": [
+                    "teamId",
+                    "channelId",
+                    "messageId"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "teamId": {
+                        "type": "text",
+                        "label": "Team",
+                        "index": 1,
+                        "tooltip": "Required. Pick a team, or enter a Team ID directly.",
+                        "source": {
+                            "url": "/component/appmixer/microsoft/teams/ListTeams?outPort=out",
+                            "data": {
+                                "messages": {
+                                    "in/outputType": "array",
+                                    "in/isSource": true
+                                },
+                                "transform": "./ListTeams#toSelectArray"
+                            }
+                        }
+                    },
+                    "channelId": {
+                        "type": "text",
+                        "label": "Channel",
+                        "index": 2,
+                        "tooltip": "Required. Pick a channel of the selected team, or enter a Channel ID directly. Requires tenant admin consent for the ChannelMessage.Read.All permission.",
+                        "source": {
+                            "url": "/component/appmixer/microsoft/teams/ListChannels?outPort=out",
+                            "data": {
+                                "messages": {
+                                    "in/teamId": "inputs/in/teamId",
+                                    "in/outputType": "array",
+                                    "in/isSource": true
+                                },
+                                "transform": "./ListChannels#toSelectArray"
+                            }
+                        }
+                    },
+                    "messageId": {
+                        "type": "text",
+                        "label": "Message ID",
+                        "tooltip": "Required. The ID of the root message whose replies to list, for example <code>1616990032035</code>.",
+                        "index": 3
+                    },
+                    "outputType": {
+                        "type": "select",
+                        "label": "Output Type",
+                        "index": 4,
+                        "defaultValue": "array",
+                        "tooltip": "Choose whether you want to receive the result set as one complete list, first item only, one item at a time, or stream the items to a file.",
+                        "options": [
+                            {
+                                "label": "First Item Only",
+                                "value": "first"
+                            },
+                            {
+                                "label": "All items at once",
+                                "value": "array"
+                            },
+                            {
+                                "label": "One item at a time",
+                                "value": "object"
+                            },
+                            {
+                                "label": "Store to CSV file",
+                                "value": "file"
+                            }
+                        ]
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "source": {
+                "url": "/component/appmixer/microsoft/teams/ListMessageReplies?outPort=out&ignoreAuth=true",
+                "data": {
+                    "properties": {
+                        "generateOutputPortOptions": true
+                    },
+                    "messages": {
+                        "in/teamId": "dummy",
+                        "in/channelId": "dummy",
+                        "in/messageId": "dummy",
+                        "in/outputType": "inputs/in/outputType"
+                    }
+                }
+            }
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMTkgMTE5Ij48cGF0aCBmaWxsPSIjNDg1QkQ1IiBkPSJNODQgNDloMjJhMyAzIDAgMCAxIDMgM3YyMWExNiAxNiAwIDAgMS0zMiAwVjQ5eiIvPjxjaXJjbGUgZmlsbD0iIzM0NDBBMCIgY3g9Ijk0LjI1IiBjeT0iMjkuNiIgcj0iOS43NSIvPjxwYXRoIGZpbGw9IiM2RDgxRkYiIGQ9Ik00MCA0OWg0NGEyIDIgMCAwIDEgMiAydjQwYTI2IDI2IDAgMCAxLTQ4IDBWNTFhMiAyIDAgMCAxIDItMnoiLz48Y2lyY2xlIGZpbGw9IiM1MTYxQ0IiIGN4PSI2MS43NSIgY3k9IjI3LjI1IiByPSIxNC43NSIvPjxyZWN0IGZpbGw9IiMyRDM5OUEiIHg9IjkuOSIgeT0iMzQuNSIgd2lkdGg9IjQ5LjUiIGhlaWdodD0iNTAiIHJ4PSIzIi8+PHBhdGggZmlsbD0iI2ZmZiIgZD0iTTI0LjMgNDdoMjAuNXY0LjZoLTcuNHYyMWgtNS41di0yMWgtNy42eiIvPjwvc3ZnPg=="
+}
