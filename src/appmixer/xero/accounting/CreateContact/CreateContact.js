@@ -32,6 +32,13 @@ module.exports = {
             PaymentTerms
         } = context.messages.in.content;
 
+        if (!tenantId) {
+            throw new context.CancelError('Tenant ID is required!');
+        }
+        if (!Name) {
+            throw new context.CancelError('Name is required!');
+        }
+
         const addresses = (Addresses?.AND || []).filter(a => a.AddressLine1);
         const phones = (Phones?.AND || []).filter(p => p.PhoneNumber);
         const data = {
