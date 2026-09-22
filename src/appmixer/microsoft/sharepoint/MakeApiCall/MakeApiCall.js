@@ -67,12 +67,23 @@ module.exports = {
             throw new context.CancelError('HTTP Method is required!');
         }
 
+        // HTTP header names are case-insensitive, so drop any user-supplied Authorization
+        // (`authorization`, `AUTHORIZATION`, ...) before spreading. Otherwise a second
+        // case-variant could sit beside the forced `Authorization` and, depending on the HTTP
+        // adapter, override or duplicate the account credential.
+        const userHeaders = kvToObj(headersKV);
+        for (const key of Object.keys(userHeaders)) {
+            if (key.toLowerCase() === 'authorization') {
+                delete userHeaders[key];
+            }
+        }
+
         const request = {
             method,
             url: resolveGraphUrl(context, url),
             headers: {
                 'Content-Type': 'application/json',
-                ...kvToObj(headersKV),
+                ...userHeaders,
                 // Last, so that a header row can never replace the account's credential.
                 'Authorization': `Bearer ${context.auth.accessToken}`
             }

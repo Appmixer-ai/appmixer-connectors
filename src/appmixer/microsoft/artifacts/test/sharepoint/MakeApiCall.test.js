@@ -91,6 +91,25 @@ describe('Microsoft SharePoint MakeApiCall', () => {
             assert.strictEqual(context.httpRequest.firstCall.args[0].headers.Authorization, 'Bearer test-token');
         });
 
+        it('should drop a header row whose case differs from Authorization', async () => {
+
+            // HTTP header names are case-insensitive: a lower/upper-case variant must not survive
+            // beside the forced Authorization, or the adapter could override the credential.
+            await run({
+                url: '/me',
+                method: 'GET',
+                headers: [
+                    { key: 'authorization', value: 'Bearer other' },
+                    { key: 'AUTHORIZATION', value: 'Bearer other2' }
+                ]
+            });
+
+            const headers = context.httpRequest.firstCall.args[0].headers;
+            const authKeys = Object.keys(headers).filter((k) => k.toLowerCase() === 'authorization');
+            assert.deepStrictEqual(authKeys, ['Authorization']);
+            assert.strictEqual(headers.Authorization, 'Bearer test-token');
+        });
+
         it('should send no body and keep the empty response of a DELETE', async () => {
 
             context.httpRequest.resolves({ status: 204, data: '' });
