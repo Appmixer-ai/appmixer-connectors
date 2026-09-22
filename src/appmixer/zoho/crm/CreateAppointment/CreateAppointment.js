@@ -78,6 +78,9 @@ module.exports = {
         // output has the values Zoho computes (end time, duration, status).
         const record = await client.getRecord(lib.APPOINTMENTS_MODULE, details.id);
 
-        return context.sendJson(record || { ...appointment, ...details }, 'out');
+        // The create payload carries Owner as a bare id, while the out port declares it as an
+        // object like every other lookup, so the fallback has to reshape it — otherwise a flow
+        // reading Owner.name off this branch gets a character of a string.
+        return context.sendJson(record || { ...appointment, Owner: { id: ownerId }, ...details }, 'out');
     }
 };
