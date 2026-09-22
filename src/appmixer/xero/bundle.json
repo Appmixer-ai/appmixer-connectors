@@ -1,6 +1,6 @@
 {
     "name": "appmixer.xero",
-    "version": "1.7.0",
+    "version": "2.0.0",
     "engine": ">=6.0.0",
     "changelog": {
         "1.0.0": [
@@ -60,6 +60,15 @@
         "1.7.0": [
             "Added components: CreatePurchaseOrder, GetPurchaseOrder, UpdatePurchaseOrder, FindPurchaseOrders. They use Xero's granular scopes (accounting.invoices / accounting.invoices.read), so they work with Xero apps created on or after 2 March 2026; an existing Xero account must be reconnected to grant these scopes before it can be used with them.",
             "Fixed the Contact ID dropdown (ListContacts source) returning an empty list in CreateInvoice, UpdateInvoice and UpdateContact."
+        ],
+        "2.0.0": [
+            "BREAKING: Migrated the invoice and manual journal components to Xero's granular OAuth scopes, which replace the broad accounting.transactions scope. Every existing Xero account must be reconnected (remove and re-authorize the connection) after upgrading. Until it is reconnected, the account no longer matches these components: it disappears from the account picker and flows using it fail to start with \"Access token not found for component ...\".",
+            "CreateInvoice, UpdateInvoice: accounting.transactions -> accounting.invoices.",
+            "GetInvoice, NewInvoice, UpdatedInvoice: accounting.transactions -> accounting.invoices.read. These components are read-only, so they no longer request a write scope (GetInvoice previously asked for accounting.transactions).",
+            "CreateManualJournal, UpdateManualJournal: accounting.transactions -> accounting.manualjournals.",
+            "FindManualJournals: accounting.transactions.read -> accounting.manualjournals.read.",
+            "Why: Xero apps created on or after 2 March 2026 are only granted the granular scopes, so these components could not be used at all with such an app. Apps created earlier keep the broad scopes until 13 September 2027.",
+            "Unchanged: the contact and settings components, AddAttachmentToInvoice (accounting.attachments), ListJournals (accounting.journals.read), ListTenants and MakeApiCall (accounting.settings.read)."
         ]
     }
 }
