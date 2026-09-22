@@ -1,5 +1,7 @@
 'use strict';
 
+const lib = require('../../lib');
+
 function kvToObj(arr) {
     if (!arr || !Array.isArray(arr)) return {};
     const out = {};
@@ -54,7 +56,7 @@ module.exports = {
             requestOptions.params = queryParams;
         }
 
-        const response = await context.httpRequest(requestOptions);
+        const response = await lib.httpRequestWithRetry(context, requestOptions);
 
         await context.sendJson({
             status: response.status,

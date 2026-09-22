@@ -1,6 +1,6 @@
 {
     "name": "appmixer.github",
-    "version": "3.4.1",
+    "version": "3.4.2",
     "changelog": {
         "1.0.3": [
             "Removed 'None' empty string value from ListAssignees, ListLabels and ListMilestones."
@@ -54,6 +54,9 @@
         ],
         "3.4.1": [
             "Fixed intermittent \"Parse Error: Expected HTTP/\" (HPE_INVALID_CONSTANT) failures in triggers and actions that read from GitHub. Every GET request was sent with an empty JSON body ({}), which GitHub does not read; on a reused connection those stray bytes corrupted the next response. GET and HEAD requests are now sent without a body."
+        ],
+        "3.4.2": [
+            "Triggers and actions now survive a broken connection to GitHub instead of failing the flow: a request that never produced a response (\"Parse Error\" / HPE_*, connection reset, socket hang up) is retried up to twice, on a fresh connection. Only reads are repeated - a write that failed in transit may already have been applied, so it is still sent exactly once."
         ]
     }
 }

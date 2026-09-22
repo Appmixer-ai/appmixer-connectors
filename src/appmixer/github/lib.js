@@ -1,9 +1,38 @@
 'use strict';
 
 const crypto = require('crypto');
+const https = require('https');
 const pathModule = require('path');
 
 const DEFAULT_PREFIX = 'github-objects-export';
+
+/**
+ * Connection-level failures, i.e. the request never produced a response to look at.
+ *
+ * Node's strict HTTP parser rejects a response whose framing does not line up ('HPE_*',
+ * e.g. 'Expected LF after chunk data'), which is what a desynced keep-alive socket looks
+ * like from the client side. The engine hands every component the same axios instance and
+ * Node keeps its agents keep-alive by default, so all GitHub traffic inside one worker
+ * shares a single connection pool: a socket poisoned by another request in that process
+ * fails here, in an unrelated component. Resets and hang-ups belong to the same class.
+ *
+ * None of these reached the API, so repeating an idempotent request is safe.
+ */
+const TRANSPORT_ERROR_CODES = ['ECONNRESET', 'ECONNABORTED', 'EPIPE', 'ETIMEDOUT', 'EAI_AGAIN'];
+
+const isTransportError = error => {
+
+    if (!error || error.response) {
+        // The server answered. Whatever went wrong, it was not the connection.
+        return false;
+    }
+    const code = error.code || '';
+    return code.startsWith('HPE_') ||
+        TRANSPORT_ERROR_CODES.includes(code) ||
+        /socket hang up/i.test(error.message || '');
+};
+
+const RETRY_BASE_DELAY_MS = 250;
 
 module.exports = {
 
@@ -36,7 +65,55 @@ module.exports = {
             options.data = body;
         }
 
-        return await context.httpRequest(options);
+        return await this.httpRequestWithRetry(context, options);
+    },
+
+    /**
+     * `context.httpRequest` with a bounded retry for connection-level failures (see
+     * `isTransportError`). The retry goes out on an agent of its own with keep-alive off so
+     * it cannot be handed another socket from the same poisoned pool.
+     *
+     * Only idempotent requests are repeated by default: a POST that failed in transit may
+     * still have been applied on GitHub's side, and repeating it would duplicate the write.
+     *
+     * @param {Object} context
+     * @param {Object} options axios request options
+     * @param {Object} [opts]
+     * @param {Boolean} [opts.retry] override the GET/HEAD-only default
+     * @param {Number} [opts.attempts] total attempts, including the first one
+     * @returns {Promise<Object>} the axios response
+     */
+    async httpRequestWithRetry(context, options, { retry, attempts = 3 } = {}) {
+
+        const method = String(options.method || 'GET').toUpperCase();
+        const retryable = retry === undefined ? ['GET', 'HEAD'].includes(method) : retry;
+        const maxAttempts = retryable ? attempts : 1;
+
+        let attempt = 1;
+        // eslint-disable-next-line no-constant-condition
+        while (true) {
+            try {
+                return await context.httpRequest(attempt === 1 ? options : {
+                    ...options,
+                    httpsAgent: new https.Agent({ keepAlive: false })
+                });
+            } catch (error) {
+                if (attempt >= maxAttempts || !isTransportError(error)) {
+                    throw error;
+                }
+                // `apiRequest` also serves the auth context, which has no logger.
+                await context.log?.({
+                    step: 'Retrying a GitHub request after a connection-level failure.',
+                    url: options.url,
+                    method,
+                    attempt,
+                    code: error.code,
+                    message: error.message
+                });
+                await new Promise(resolve => setTimeout(resolve, RETRY_BASE_DELAY_MS * attempt));
+                attempt += 1;
+            }
+        }
     },
 
     async apiRequestPaginated(context, action, {
@@ -118,7 +195,11 @@ module.exports = {
      */
     async graphqlRequest(context, query, variables = {}) {
 
-        const { data } = await context.httpRequest({
+        // A query is a read and may be repeated after a connection-level failure; a mutation
+        // may already have been applied, so it is sent exactly once.
+        const isMutation = /^\s*mutation\b/.test(query);
+
+        const { data } = await this.httpRequestWithRetry(context, {
             method: 'POST',
             url: 'https://api.github.com/graphql',
             headers: {
@@ -127,7 +208,7 @@ module.exports = {
                 'User-Agent': 'Appmixer GitHub Connector'
             },
             data: { query, variables }
-        });
+        }, { retry: !isMutation });
 
         if (data.errors) {
             const message = data.errors.map(error => error.message).filter(Boolean).join('; ');
