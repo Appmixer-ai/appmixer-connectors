@@ -61,7 +61,8 @@ describe('Microsoft SharePoint driveItem output', () => {
         it('should give every leaf an example', () => {
 
             const missing = [];
-            (function walk(properties, path) {
+
+            const walk = (properties, path) => {
                 for (const [key, value] of Object.entries(properties)) {
                     if (value.type === 'object' && value.properties) {
                         walk(value.properties, `${path}${key}.`);
@@ -69,7 +70,9 @@ describe('Microsoft SharePoint driveItem output', () => {
                         missing.push(path + key);
                     }
                 }
-            })(lib.DRIVE_ITEM_SCHEMA.properties, '');
+            };
+
+            walk(lib.DRIVE_ITEM_SCHEMA.properties, '');
 
             assert.deepStrictEqual(missing, []);
         });
