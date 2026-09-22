@@ -4,6 +4,9 @@ const moment = require('moment');
 const check = require('check-types');
 const { apiEndpoint } = require('./endpoints');
 
+// Methods whose requests never carry a body.
+const BODYLESS_METHODS = new Set(['GET', 'HEAD', 'DELETE']);
+
 class ZohoClient {
 
     /**
@@ -240,9 +243,21 @@ class ZohoClient {
             method,
             url,
             headers,
-            data,
             params
         };
+
+        // GET, HEAD and DELETE must go out without a body. Axios serializes even an empty
+        // object to '{}' (Content-Length: 2); Zoho does not read it, so on a reused keep-alive
+        // connection those bytes desync the stream and the next response fails to parse with
+        // 'Parse Error: Expected HTTP/' (HPE_INVALID_CONSTANT). The connector's DELETEs pass
+        // their arguments as query parameters and never have a body to send.
+        //
+        // POST/PUT keep the defaulted '{}': three Books components (MarkAsSent, MarkAsDraft,
+        // VoidInvoice) POST to a status endpoint with parameters only, and a body-less POST
+        // is a different request than the one they send today.
+        if (!BODYLESS_METHODS.has(String(method || 'GET').toUpperCase())) {
+            request.data = data;
+        }
 
         return this.client(request)
             .then(response => response.data)

@@ -87,19 +87,21 @@ module.exports = [
         reason: 'Dynamics 365 uses the legacy resource-based OAuth flow (authorize?resource={org url}); the access token is scoped to the org resource, not to granular OAuth scopes. The connector declares scope [] on every component by design, so MakeApiCall matches that convention.'
     },
     {
+        validator: 'makeapicall-standards',
+        messageIncludes: 'auth.scope is empty',
+        paths: ['hubspot/core/MakeApiCall/component.json'],
+        reason: 'HubSpot declares its OAuth scopes once, at service level in auth.js — none of the hubspot components carries its own auth.scope, so MakeApiCall matches that convention. Declaring scopes on MakeApiCall alone would require every account to hold them, including the conditionally-required forms/automation scopes added in 4.8.0 that older connections lack — existing MakeApiCall flows would need a reconnect, i.e. a breaking change.'
+    },
+    {
         validator: 'trigger-test-method',
         messageIncludes: 'test() should throw when no example is available',
         paths: [
-            'hubspot/crm/NewContact/component.json',
-            'hubspot/crm/NewDeal/component.json',
-            'hubspot/crm/UpdatedContact/component.json',
-            'hubspot/crm/UpdatedDeal/component.json',
             'zoho/crm/ContactCreated/component.json',
             'zoho/crm/ContactUpdated/component.json',
             'zoho/crm/LeadCreated/component.json',
             'zoho/crm/LeadUpdated/component.json'
         ],
-        reason: 'These test() methods delegate the "no example" throw to the connector-shared fetchLatestExample() helper (hubspot BaseSubscriptionComponent / zoho ZohoNotifiable), which throws a CancelError when the upstream returns no record. The validator only scans the test() body for a literal throw, so it reports a false positive; the fallback-on-empty behaviour is present.'
+        reason: 'These test() methods delegate the "no example" throw to the connector-shared fetchLatestExample() helper (zoho ZohoNotifiable), which throws a CancelError when the upstream returns no record. The validator only scans the test() body for a literal throw, so it reports a false positive; the fallback-on-empty behaviour is present.'
     },
     {
         validator: 'trigger-test-method',
@@ -168,9 +170,22 @@ module.exports = [
         reason: 'Engine-internal triggers with no external upstream to sample: utils/test/Tick is an E2E-flow harness piece and utils/storage/* fire on internal store changes.'
     },
 
+    {
+        validator: 'trigger-has-test-method',
+        messageIncludes: 'missing a test(context) method',
+        paths: ['ai/mcptools/MCPGateway/component.json'],
+        reason: 'MCPGateway is not a data trigger: its webhook answers tool calls from the MCP Server synchronously (the response IS the tool output) and there is no upstream record to sample for Flow Test Mode.'
+    },
+
     // connector-has-makeapicall: connectors that intentionally ship NO generic
     // MakeApiCall component because they expose no generic authorized REST
     // surface to call. Grouped by reason.
+    {
+        validator: 'connector-has-makeapicall',
+        messageIncludes: 'no MakeApiCall component',
+        paths: ['ai/mcptools/bundle.json'],
+        reason: 'Platform-internal module (MCP Gateway + plugin routes) with no external REST API behind it — there is nothing for a generic MakeApiCall to call.'
+    },
     {
         validator: 'connector-has-makeapicall',
         messageIncludes: 'no MakeApiCall component',

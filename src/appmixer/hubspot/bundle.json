@@ -1,6 +1,6 @@
 {
     "name": "appmixer.hubspot",
-    "version": "4.8.1",
+    "version": "4.9.0",
     "engine": ">=6.0.0",
     "changelog": {
         "1.0.0": [
@@ -121,6 +121,16 @@
         ],
         "4.8.1": [
             "Fixed a crash when a Find/List component saved an EMPTY result set to a CSV file — the header row was built from the first record without checking there was one, so a search that legitimately matched nothing failed the flow instead of writing an empty file."
+        ],
+        "4.9.0": [
+            "Fixed re-activation of disabled webhook subscriptions: the v3 API reports and takes `active`, not `enabled`, so a switched-off subscription was never turned back on (e.g. UpdatedDeal received nothing) and every existing one was PATCHed on each trigger start.",
+            "Fixed two NewContact / NewDeal / UpdatedContact / UpdatedDeal flows of the same portal consuming each other's events (the dedupe cache key was shared across flows).",
+            "ContactPropertyChanged: no longer misses a change of the watched property that was not the last change of the contact in a webhook batch (the events now carry every changed property name).",
+            "Fixed the default deal owner subscription and the owner field showing up twice in the CreateDeal/UpdateDeal additional properties dropdown (hubspot_owner_id instead of the input name hubSpotOwnerId).",
+            "Fixed a ReferenceError hiding the HubSpot error message when a webhook subscription API call failed.",
+            "Components with a dynamic output port now export their item contract (ITEM_SCHEMA), so offline validation and `appmixer connector verify` can check it; the designer output is unchanged.",
+            "CreateNote: the output now also contains associationTypeId (the create response carries no associations).",
+            "NewContact, NewDeal, UpdatedContact, UpdatedDeal: test() throws explicitly when no example record exists."
         ]
     }
 }
