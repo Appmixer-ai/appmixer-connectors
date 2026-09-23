@@ -1,6 +1,6 @@
 {
     "name": "E2E Utils Controls - Each sequential item timeout",
-    "description": "Iterates [\"a\",\"b\",\"c\"] with Each in Sequential mode and a 60 s Item Timeout. A Condition lets only items other than 'b' reach Continue Each, so 'b' is never confirmed. Each must give up on 'b' after the Item Timeout, emit 'c' and finish: the Assert on the 'done' port (count = 3) fires only when the loop did not hang. Takes 1-2 minutes by design.",
+    "description": "Iterates [\"a\",\"b\",\"c\"] with Each in Sequential mode and a 60 s Item Timeout. A Condition lets only items other than 'b' reach Continue Each, so 'b' is never confirmed. Each must give up on 'b' after the Item Timeout, emit 'c' and finish: the Assert on the 'done' port (count = 3) fires only when the loop did not hang. Takes 1-2 minutes by design. Continue Each adds each confirmed item to the Result, so 'done' must carry [\"a\",\"c\"] - the skipped 'b' contributes nothing.",
     "notes": {
         "57f09353-29ab-4429-ac17-f0dbdf5fc3b4": {
             "x": 64,
@@ -18,7 +18,10 @@
             "source": {},
             "version": "1.0.0",
             "config": {},
-            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
         },
         "8ade1b70-4e4d-45f9-afd0-639de9105c97": {
             "type": "appmixer.utils.controls.SetVariable",
@@ -27,7 +30,9 @@
             "version": "1.0.0",
             "source": {
                 "in": {
-                    "d03e4bd7-cb63-4698-b93e-5581902c05f0": ["out"]
+                    "d03e4bd7-cb63-4698-b93e-5581902c05f0": [
+                        "out"
+                    ]
                 }
             },
             "config": {
@@ -55,7 +60,10 @@
                     }
                 }
             },
-            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
         },
         "bfd765a1-278d-4549-a672-9654608bd608": {
             "type": "appmixer.utils.controls.Each",
@@ -65,7 +73,9 @@
             "version": "1.5.0",
             "source": {
                 "in": {
-                    "8ade1b70-4e4d-45f9-afd0-639de9105c97": ["out"]
+                    "8ade1b70-4e4d-45f9-afd0-639de9105c97": [
+                        "out"
+                    ]
                 }
             },
             "config": {
@@ -94,7 +104,10 @@
                     }
                 }
             },
-            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
         },
         "91e8a9b9-ab6a-47b8-a793-eec34b82af52": {
             "type": "appmixer.utils.controls.Condition",
@@ -104,7 +117,9 @@
             "version": "1.0.0",
             "source": {
                 "in": {
-                    "bfd765a1-278d-4549-a672-9654608bd608": ["item"]
+                    "bfd765a1-278d-4549-a672-9654608bd608": [
+                        "item"
+                    ]
                 }
             },
             "config": {
@@ -141,7 +156,10 @@
                     }
                 }
             },
-            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
         },
         "f0feb9c8-e8c2-425a-b5a8-f85745bdb5ee": {
             "type": "appmixer.utils.controls.ContinueEach",
@@ -150,7 +168,9 @@
             "version": "1.0.0",
             "source": {
                 "in": {
-                    "91e8a9b9-ab6a-47b8-a793-eec34b82af52": ["true"]
+                    "91e8a9b9-ab6a-47b8-a793-eec34b82af52": [
+                        "true"
+                    ]
                 }
             },
             "config": {
@@ -171,28 +191,46 @@
                                             "variable": "$.bfd765a1-278d-4549-a672-9654608bd608.item.index",
                                             "functions": []
                                         }
+                                    },
+                                    "result": {
+                                        "a8b7c6d5-e4f3-4a2b-9c1d-0e9f8a7b6c5d": {
+                                            "variable": "$.bfd765a1-278d-4549-a672-9654608bd608.item.value",
+                                            "functions": []
+                                        }
                                     }
                                 },
                                 "lambda": {
                                     "correlationId": "{{{306af8c1-aeb7-494b-b085-b6a72515988f}}}",
-                                    "index": "{{{61b67a5d-7bba-457f-b64f-bfc199c5c3dd}}}"
+                                    "index": "{{{61b67a5d-7bba-457f-b64f-bfc199c5c3dd}}}",
+                                    "result": {
+                                        "ADD": [
+                                            {
+                                                "value": "{{{a8b7c6d5-e4f3-4a2b-9c1d-0e9f8a7b6c5d}}}"
+                                            }
+                                        ]
+                                    }
                                 }
                             }
                         }
                     }
                 }
             },
-            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
         },
         "de83cdd7-0a10-4bc0-9fd0-e7f2e0b50509": {
             "type": "appmixer.utils.test.Assert",
-            "label": "Assert the loop finished (done count = 3)",
+            "label": "Assert the loop finished (count = 3, Result = a,c)",
             "x": 688,
             "y": 16,
             "version": "1.0.0",
             "source": {
                 "in": {
-                    "bfd765a1-278d-4549-a672-9654608bd608": ["done"]
+                    "bfd765a1-278d-4549-a672-9654608bd608": [
+                        "done"
+                    ]
                 }
             },
             "config": {
@@ -206,6 +244,14 @@
                                         "6c8a1f64-86ae-4b9f-99f4-9850851871f9": {
                                             "variable": "$.bfd765a1-278d-4549-a672-9654608bd608.done.count",
                                             "functions": []
+                                        },
+                                        "5f4e3d2c-1b0a-4f9e-8d7c-6b5a4f3e2d1c": {
+                                            "variable": "$.bfd765a1-278d-4549-a672-9654608bd608.done.result",
+                                            "functions": [
+                                                {
+                                                    "name": "g_stringify"
+                                                }
+                                            ]
                                         }
                                     }
                                 },
@@ -216,6 +262,11 @@
                                                 "field": "{{{6c8a1f64-86ae-4b9f-99f4-9850851871f9}}}",
                                                 "assertion": "equal",
                                                 "expected": "3"
+                                            },
+                                            {
+                                                "field": "{{{5f4e3d2c-1b0a-4f9e-8d7c-6b5a4f3e2d1c}}}",
+                                                "assertion": "equal",
+                                                "expected": "[\"a\",\"c\"]"
                                             }
                                         ]
                                     }
@@ -225,7 +276,10 @@
                     }
                 }
             },
-            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
         },
         "ce4029c5-5ec6-4160-9214-dcced605dcb3": {
             "type": "appmixer.utils.test.AfterAll",
@@ -234,7 +288,9 @@
             "version": "1.0.0",
             "source": {
                 "in": {
-                    "de83cdd7-0a10-4bc0-9fd0-e7f2e0b50509": ["out"]
+                    "de83cdd7-0a10-4bc0-9fd0-e7f2e0b50509": [
+                        "out"
+                    ]
                 }
             },
             "config": {
@@ -242,7 +298,10 @@
                     "timeout": 300
                 }
             },
-            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
         },
         "d5d882b0-9935-4b8c-9ed0-a7fb1d00e14b": {
             "type": "appmixer.utils.test.ProcessE2EResults",
@@ -251,7 +310,9 @@
             "version": "1.0.1",
             "source": {
                 "in": {
-                    "ce4029c5-5ec6-4160-9214-dcced605dcb3": ["out"]
+                    "ce4029c5-5ec6-4160-9214-dcced605dcb3": [
+                        "out"
+                    ]
                 }
             },
             "config": {
@@ -284,7 +345,10 @@
                     }
                 }
             },
-            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
         }
     }
 }

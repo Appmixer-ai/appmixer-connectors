@@ -118,7 +118,8 @@ module.exports = {
         const { buildOutPortOptions = false } = context.properties;
 
         if (context.messages.webhook) {
-            // ContinueEach acknowledged the item in flight of a sequential Each loop.
+            // ContinueEach acknowledged the item in flight of a sequential Each loop (it calls this
+            // component's webhook URL directly, see EachSequential.js).
             return eachSequential.handleAck(context);
         }
 
@@ -157,7 +158,7 @@ module.exports = {
 
         if (!Array.isArray(list)) {
             // Not an array, send empty done
-            await context.sendJson({ count: 0, correlationId: eachCorrelationId }, 'done');
+            await context.sendJson({ count: 0, correlationId: eachCorrelationId, result: [] }, 'done');
             return;
         }
 
@@ -207,7 +208,7 @@ module.exports = {
             });
         }
 
-        await context.sendJson({ count, correlationId: eachCorrelationId }, 'done');
+        await context.sendJson({ count, correlationId: eachCorrelationId, result: [] }, 'done');
         // at this point we will remove the store index. Otherwise, the state would keep growing until it would
         // reach the limit of the document
         return context.stateUnset(contextId);

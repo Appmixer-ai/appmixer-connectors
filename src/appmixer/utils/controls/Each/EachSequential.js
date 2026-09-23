@@ -6,22 +6,29 @@
 // enqueues - so a delay between items merely spaces them out, it does not order them.
 //
 // In sequential mode Each emits ONE item and waits. The ContinueEach component, placed at the end of
-// the loop body, acknowledges the item through the plugin (see routes.js, POST /{id}/next), which
-// wakes this component up on its webhook port to emit the next item. The engine restores the scope
-// of the message that started the loop for that webhook delivery, so every item continues the
-// original branch and upstream variables stay resolvable in the loop body.
+// the loop body, acknowledges the item by calling the webhook URL of this component directly (the
+// engine's POST /flows/{flowId}/components/{componentId} endpoint, through context.callAppmixer),
+// which wakes this component up on its webhook port to emit the next item. The engine restores the
+// scope of the message that started the loop for that webhook delivery (see getWebhookQuery), so
+// every item continues the original branch and upstream variables stay resolvable in the loop body.
 //
-// The list is parked in the plugin store (the webhook delivery does not carry the `in` message); the
-// index of the item in flight lives in component state. An item that is never acknowledged (the body
-// failed, or a Condition filtered the item out before ContinueEach) is given up on after the item
-// timeout, so the loop cannot hang forever.
+// Everything is kept in engine-provided state, no plugin is involved:
+//   - component state `<id>`        the loop cursor: the item in flight, its timeout, loop metadata
+//                                   and the values collected by ContinueEach so far
+//   - component state `items:<id>`  the parked list (the webhook delivery does not carry `in`)
+//   - flow state `each:<id>`        where ContinueEach finds the webhook target of this loop
+//
+// An item that is never acknowledged (the body failed, or a Condition filtered the item out before
+// ContinueEach) is given up on after the item timeout, so the loop cannot hang forever.
 
 const DEFAULT_ITEM_TIMEOUT = 300;
 // The engine silently rounds any context.setTimeout below one minute up to one minute, so a smaller
 // item timeout would not do what it says.
 const MIN_ITEM_TIMEOUT = 60;
 
-const storeEndpoint = id => `/plugins/appmixer/utils/controls/${encodeURIComponent(id)}`;
+const itemsKey = id => `items:${id}`;
+// Read by ContinueEach - keep the two in sync.
+const targetKey = id => `each:${id}`;
 const lockName = id => `each-sequential:${id}`;
 
 /**
@@ -64,14 +71,33 @@ function getWebhookQuery(context) {
 /**
  * Emit one item and record it as the item in flight. Must be called with the loop lock held: a fast
  * loop body can acknowledge the item before the state is written.
+ * @param {Object} context - Appmixer context
+ * @param {string} id - Loop id (the context.id of the `in` message)
+ * @param {Object} cursor - Loop metadata + collected results (see handleStart)
+ * @param {number} index
+ * @param {*} value
  */
-async function sendItem(context, { id, index, value, count, correlationId, itemTimeout }) {
+async function sendItem(context, id, cursor, index, value) {
 
+    const { count, correlationId, itemTimeout } = cursor;
     const timeoutId = await context.setTimeout({ id, sequential: true, index }, itemTimeout * 1000);
     await context.sendJson({ index, value, count, correlationId }, 'item');
     // At-least-once: a crash between sendJson and stateSet re-sends this item on re-delivery rather
     // than losing it.
-    await context.stateSet(id, { index, timeoutId });
+    await context.stateSet(id, { ...cursor, index, timeoutId });
+}
+
+/**
+ * Forget everything about a finished loop.
+ * @param {Object} context - Appmixer context
+ * @param {string} id
+ */
+async function cleanup(context, id) {
+
+    await context.stateUnset(itemsKey(id));
+    await context.flow.stateUnset(targetKey(id));
+    // The cursor goes last: it is what marks the loop as running.
+    return context.stateUnset(id);
 }
 
 /**
@@ -90,7 +116,7 @@ async function handleStart(context, { list, correlationId, count, delay, itemTim
     const itemTimeout = parseItemTimeout(context, rawItemTimeout);
 
     if (count === 0) {
-        return context.sendJson({ count, correlationId }, 'done');
+        return context.sendJson({ count, correlationId, result: [] }, 'done');
     }
 
     let lock = null;
@@ -103,23 +129,15 @@ async function handleStart(context, { list, correlationId, count, delay, itemTim
             return;
         }
 
-        await context.callAppmixer({
-            endPoint: storeEndpoint(id),
-            method: 'POST',
-            body: {
-                items: list,
-                delay,
-                correlationId,
-                count,
-                sequential: true,
-                itemTimeout,
-                flowId: context.flowId,
-                componentId: context.componentId,
-                webhookQuery: getWebhookQuery(context)
-            }
+        await context.stateSet(itemsKey(id), list);
+        // ContinueEach only knows the loop id (the Correlation ID mapped to it), so this is how it
+        // finds which component to wake up and with which correlation, before the first item goes out.
+        await context.flow.stateSet(targetKey(id), {
+            componentId: context.componentId,
+            webhookQuery: getWebhookQuery(context)
         });
 
-        await sendItem(context, { id, index: 0, value: list[0], count, correlationId, itemTimeout });
+        await sendItem(context, id, { count, correlationId, delay, itemTimeout, results: [] }, 0, list[0]);
     } finally {
         lock?.unlock();
     }
@@ -130,67 +148,69 @@ async function handleStart(context, { list, correlationId, count, delay, itemTim
  * Anything that does not refer to the item in flight is ignored. That covers a duplicated
  * acknowledgement (a loop body that fans out into two ContinueEach, an engine re-delivery), a late
  * acknowledgement of an item that already timed out, and a stale timeout.
+ * @param {Object} context - Appmixer context
+ * @param {string} id
+ * @param {number} doneIndex
+ * @param {Array} [result] - Values ContinueEach added for this item
  */
-async function advance(context, id, doneIndex) {
+async function advance(context, id, doneIndex, result = []) {
 
-    const isInFlight = state => state && state.index === doneIndex;
+    const isInFlight = cursor => cursor && cursor.index === doneIndex;
 
     // Cheap check before any work; repeated under the lock below.
-    if (!isInFlight(await context.stateGet(id))) {
+    const cursor = await context.stateGet(id);
+    if (!isInFlight(cursor)) {
         return;
     }
 
     const nextIndex = doneIndex + 1;
-    const record = await context.callAppmixer({
-        endPoint: `${storeEndpoint(id)}?index=${nextIndex}`,
-        method: 'GET'
-    });
 
-    if (!record) {
-        await context.log({ step: 'no-data', message: 'Each sequential: stored list is missing, nothing to continue.' });
-        return context.stateUnset(id);
-    }
-
-    const { item, count, correlationId, delay, itemTimeout } = record;
-
-    if (delay && nextIndex < count) {
+    if (cursor.delay && nextIndex < cursor.count) {
         // Outside of the lock: the delay can be longer than the lock TTL.
-        await new Promise(resolve => setTimeout(resolve, delay));
+        await new Promise(resolve => setTimeout(resolve, cursor.delay));
     }
 
     let lock = null;
     try {
         lock = await context.lock(lockName(id));
 
-        const state = await context.stateGet(id);
-        if (!isInFlight(state)) {
+        const current = await context.stateGet(id);
+        if (!isInFlight(current)) {
             return;
         }
 
-        if (state.timeoutId) {
-            await context.clearTimeout(state.timeoutId);
+        if (current.timeoutId) {
+            await context.clearTimeout(current.timeoutId);
         }
+
+        const { count, correlationId } = current;
+        const results = (current.results || []).concat(result);
 
         if (nextIndex >= count) {
             // `done` first, clean up after: a crash in between repeats `done` instead of losing it.
-            await context.sendJson({ count, correlationId }, 'done');
-            await context.callAppmixer({ endPoint: storeEndpoint(id), method: 'DELETE' });
-            return context.stateUnset(id);
+            await context.sendJson({ count, correlationId, result: results }, 'done');
+            return cleanup(context, id);
         }
 
-        await sendItem(context, { id, index: nextIndex, value: item, count, correlationId, itemTimeout });
+        const items = await context.stateGet(itemsKey(id));
+        if (!Array.isArray(items)) {
+            await context.log({ step: 'no-data', message: 'Each sequential: stored list is missing, nothing to continue.' });
+            return cleanup(context, id);
+        }
+
+        await sendItem(context, id, { ...current, results }, nextIndex, items[nextIndex]);
     } finally {
         lock?.unlock();
     }
 }
 
 /**
- * Handle the webhook delivery triggered by ContinueEach (through the plugin).
+ * Handle the webhook delivery sent by ContinueEach.
  * @param {Object} context - Appmixer context
  */
 async function handleAck(context) {
 
-    const { id, index } = (context.messages.webhook.content || {}).data || {};
+    const { id, index, result } = (context.messages.webhook.content || {}).data || {};
     const doneIndex = Number(index);
 
     // Anything can POST to a webhook URL - ignore whatever is not a well-formed acknowledgement.
@@ -198,7 +218,7 @@ async function handleAck(context) {
         return context.log({ step: 'invalid-ack', message: 'Each sequential: ignoring a malformed acknowledgement.' });
     }
 
-    return advance(context, id, doneIndex);
+    return advance(context, id, doneIndex, Array.isArray(result) ? result : []);
 }
 
 /**

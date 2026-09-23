@@ -2,7 +2,7 @@
   "name": "appmixer.utils.controls.ContinueEach",
   "author": "Appmixer <info@appmixer.ai>",
   "label": "Continue Each",
-  "description": "Ends one pass of a sequential Each loop. Place it after the last step that has to finish before the next item starts: it tells the Each component (with 'Sequential' turned on) that the current item is done, so Each sends the next one. This keeps the items in order even when the steps in the loop take a varying amount of time.",
+  "description": "Ends one pass of a sequential Each loop. Place it after the last step that has to finish before the next item starts: it tells the Each component (with 'Sequential' turned on) that the current item is done, so Each sends the next one. This keeps the items in order even when the steps in the loop take a varying amount of time. Optionally add values to the result - Each emits them all as 'Result' on its 'done' port once the loop is over.",
   "version": "1.0.0",
   "private": false,
   "inPorts": [
@@ -17,6 +17,9 @@
           "index": {
             "type": "integer",
             "minimum": 0
+          },
+          "result": {
+            "type": "object"
           }
         },
         "required": [
@@ -38,6 +41,23 @@
             "index": 2,
             "min": 0,
             "tooltip": "Select the 'Index' variable of the same Each component. It identifies the item that is done, so a repeated or late confirmation of another item is ignored."
+          },
+          "result": {
+            "type": "expression",
+            "label": "Add to Result",
+            "index": 3,
+            "levels": [
+              "ADD"
+            ],
+            "tooltip": "Values to collect from this item, for example the ID of a record created in the loop. Every value you add becomes one entry of the 'Result' list that the Each component emits on its 'done' port once all items are processed, in item order. Leave empty if you do not need to collect anything.",
+            "fields": {
+              "value": {
+                "type": "text",
+                "label": "Value",
+                "index": 1,
+                "tooltip": "A value to add to the result. Usually a variable of a step inside the loop."
+              }
+            }
           }
         }
       }

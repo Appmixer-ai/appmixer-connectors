@@ -1,7 +1,7 @@
 {
   "name": "appmixer.utils.controls.Each",
   "author": "David Durman <david@client.io>",
-  "description": "Loops over the incoming list and outputs a new message for each item. Turn on 'Sequential' and end the loop with the 'Continue Each' component to process the items strictly one at a time, in order.",
+  "description": "Loops over the incoming list and outputs a new message for each item. Turn on 'Sequential' and end the loop with the 'Continue Each' component to process the items strictly one at a time, in order, and to collect a 'Result' from every item for the 'done' branch.",
   "version": "1.5.0",
   "private": false,
   "webhook": true,
@@ -62,7 +62,7 @@
             "label": "Sequential",
             "index": 3,
             "defaultValue": false,
-            "tooltip": "Send the next item only after the previous one has been fully processed. Use it when the order of the items matters and the steps after this component take a varying amount of time - otherwise faster items overtake slower ones. <b>Requires the 'Continue Each' component at the end of the loop</b>: connect it after the last step that has to finish before the next item starts, and map the 'Correlation ID' and 'Index' of this component to it."
+            "tooltip": "Send the next item only after the previous one has been fully processed. Use it when the order of the items matters and the steps after this component take a varying amount of time - otherwise faster items overtake slower ones. <b>Requires the 'Continue Each' component at the end of the loop</b>: connect it after the last step that has to finish before the next item starts, and map the 'Correlation ID' and 'Index' of this component to it. Values that 'Continue Each' adds to the result are available as 'Result' on the 'done' port once the loop is over."
           },
           "itemTimeout": {
             "type": "number",
@@ -121,6 +121,19 @@
           "schema": {
             "type": "string",
             "example": "f47ac10b-58cc-4372-a567-0e02b2c3d479"
+          }
+        },
+        {
+          "label": "Result",
+          "value": "result",
+          "schema": {
+            "type": "array",
+            "description": "Values added by 'Continue Each' across all items of a sequential loop, in item order. Empty when 'Sequential' is off.",
+            "example": [
+              "1718888888.123456",
+              "1718888890.654321",
+              "1718888893.000123"
+            ]
           }
         }
       ]
