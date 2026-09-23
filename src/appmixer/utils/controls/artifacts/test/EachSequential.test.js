@@ -387,7 +387,7 @@ describe('ContinueEach Component', () => {
         assert.ok(context.sendJson.calledOnceWith({ correlationId: 'run-1', index: 2 }, 'out'));
     });
 
-    it('should send every value of "Add to Result" along, skipping unresolved ones', async () => {
+    it('should send every value of "Add to Result" along, null for an unresolved one', async () => {
         const context = createContext({
             correlationId: 'run-1',
             index: 0,
@@ -397,7 +397,7 @@ describe('ContinueEach Component', () => {
         await ContinueEach.receive(context);
 
         assert.deepStrictEqual(context.callAppmixer.getCall(0).args[0].body, {
-            id: 'run-1', index: 0, result: ['1718888888.1', 0, { a: 1 }]
+            id: 'run-1', index: 0, result: ['1718888888.1', null, 0, { a: 1 }]
         });
     });
 

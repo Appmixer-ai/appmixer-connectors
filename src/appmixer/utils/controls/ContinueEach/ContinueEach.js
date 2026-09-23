@@ -6,14 +6,17 @@ const targetKey = id => `each:${id}`;
 
 /**
  * The values to collect for this item: every row of the 'Add to Result' expression becomes one entry
- * of the 'Result' list that Each emits on its 'done' port once the loop is over.
+ * of the 'Result' list that Each emits on its 'done' port once the loop is over. A row whose value did
+ * not resolve (the variable is missing in this item's message) becomes null rather than disappearing:
+ * the list then always has rows x items entries and a missing value is visible instead of silently
+ * shifting everything after it.
  * @param {*} result - The raw `result` input ({ ADD: [{ value }] })
  * @returns {Array}
  */
 function collectValues(result) {
 
     const rows = Array.isArray(result?.ADD) ? result.ADD : [];
-    return rows.map(row => row?.value).filter(value => value !== undefined);
+    return rows.map(row => (row?.value === undefined ? null : row.value));
 }
 
 module.exports = {
