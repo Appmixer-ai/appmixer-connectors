@@ -48,7 +48,7 @@ describe('SendChannelMessage component', () => {
         assert.deepStrictEqual(args[6], { username: 'MySlackBot', iconUrl: 'https://example.com/icon.png' });
     });
 
-    it('still honours the pre-5.5.0 thread_ts / reply_broadcast input names', async () => {
+    it('still honours the pre-5.5.1 thread_ts / reply_broadcast input names', async () => {
         delete context.messages.message.content.threadTs;
         delete context.messages.message.content.replyBroadcast;
         context.messages.message.content.thread_ts = '1717171717.000300';

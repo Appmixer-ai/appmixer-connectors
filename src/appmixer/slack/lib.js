@@ -32,7 +32,7 @@ module.exports = {
 
     /**
      * Thread inputs of Send*ChannelMessage. The inputs were renamed to camelCase
-     * (threadTs, replyBroadcast) in 5.5.0; flows saved earlier still carry the
+     * (threadTs, replyBroadcast) in 5.5.1; flows saved earlier still carry the
      * original Slack names (thread_ts, reply_broadcast), so both are honoured.
      * @param {Object} content
      * @returns {{ threadTs: string|undefined, replyBroadcast: boolean|undefined }}
