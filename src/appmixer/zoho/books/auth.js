@@ -1,6 +1,7 @@
 'use strict';
 const ZohoClient = require('../ZohoClient');
 const { accountsEndpoint } = require('../endpoints');
+const { assertTokenResponse, assertRefreshToken, accessTokenExpDate } = require('../oauth');
 
 /**
  * Validate user - get user info. 'region' property has to be in context.profileInfo.region or the second
@@ -64,16 +65,13 @@ module.exports = {
                 '&code=' + context.authorizationCode +
                 '&redirect_uri=' + context.callbackUrl;
             const { data } = await context.httpRequest.post(tokenUrl);
-            const {
-                access_token: accessToken,
-                expires_in: expiresIn,
-                refresh_token: refreshToken
-            } = data;
+            assertTokenResponse(data, 'issue an access token');
 
-            const accessTokenExpDate = new Date();
-            accessTokenExpDate.setSeconds(accessTokenExpDate.getSeconds() + expiresIn);
-
-            return { accessToken, accessTokenExpDate, refreshToken };
+            return {
+                accessToken: data.access_token,
+                accessTokenExpDate: accessTokenExpDate(data),
+                refreshToken: data.refresh_token
+            };
         },
 
         accountNameFromProfileInfo: 'email',
@@ -91,6 +89,8 @@ module.exports = {
 
         refreshAccessToken: async context => {
 
+            assertRefreshToken(context.refreshToken);
+
             const url = accountsEndpoint(context.profileInfo.region);
             const tokenUrl = `${url}/oauth/v2/token?` +
                 'grant_type=refresh_token&refresh_token=' + context.refreshToken +
@@ -98,12 +98,11 @@ module.exports = {
                 '&client_secret=' + context.clientSecret;
 
             const { data } = await context.httpRequest.post(tokenUrl);
+            assertTokenResponse(data, 'refresh the access token');
 
-            const newDate = new Date();
-            newDate.setTime(newDate.getTime() + (data.expires_in * 1000));
             return {
                 accessToken: data.access_token,
-                accessTokenExpDate: newDate
+                accessTokenExpDate: accessTokenExpDate(data)
             };
         },
 
