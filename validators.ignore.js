@@ -213,6 +213,7 @@ module.exports = [
         messageIncludes: 'no MakeApiCall component',
         paths: [
             'appmixer/utils/bundle.json',
+            'appmixer/utils/controls/bundle.json',
             'appmixer/utils/test/bundle.json',
             'appmixer/system/bundle.json'
         ],
