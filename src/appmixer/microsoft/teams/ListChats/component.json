@@ -1,12 +1,12 @@
 {
-    "name": "appmixer.microsoft.teams.ListChannels",
-    "author": "David Durman <david@client.io>",
-    "label": "List Channels",
-    "description": "Lists the channels in a team.",
+    "name": "appmixer.microsoft.teams.ListChats",
+    "author": "Appmixer <info@appmixer.com>",
+    "label": "List Chats",
+    "description": "Lists the chats the signed-in user is part of, 50 per request.",
     "auth": {
         "service": "appmixer:microsoft",
         "scope": [
-            "Channel.ReadBasic.All"
+            "Chat.ReadBasic"
         ]
     },
     "quota": {
@@ -22,9 +22,6 @@
             "schema": {
                 "type": "object",
                 "properties": {
-                    "teamId": {
-                        "type": "string"
-                    },
                     "isSource": {
                         "type": "boolean"
                     },
@@ -41,26 +38,10 @@
             },
             "inspector": {
                 "inputs": {
-                    "teamId": {
-                        "type": "text",
-                        "label": "Team",
-                        "index": 1,
-                        "tooltip": "Required. Pick a team, or enter a Team ID directly.",
-                        "source": {
-                            "url": "/component/appmixer/microsoft/teams/ListTeams?outPort=out",
-                            "data": {
-                                "messages": {
-                                    "in/outputType": "array",
-                                    "in/isSource": true
-                                },
-                                "transform": "./ListTeams#toSelectArray"
-                            }
-                        }
-                    },
                     "outputType": {
                         "type": "select",
                         "label": "Output Type",
-                        "index": 2,
+                        "index": 1,
                         "defaultValue": "array",
                         "tooltip": "Choose whether you want to receive the result set as one complete list, first item only, one item at a time, or stream the items to a file.",
                         "options": [
@@ -90,7 +71,7 @@
         {
             "name": "out",
             "source": {
-                "url": "/component/appmixer/microsoft/teams/ListChannels?outPort=out&ignoreAuth=true",
+                "url": "/component/appmixer/microsoft/teams/ListChats?outPort=out&ignoreAuth=true",
                 "data": {
                     "properties": {
                         "generateOutputPortOptions": true
