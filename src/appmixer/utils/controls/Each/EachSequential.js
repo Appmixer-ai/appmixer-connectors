@@ -1,5 +1,7 @@
 'use strict';
 
+const { randomUUID } = require('crypto');
+
 // Everything related to the Each "sequential" mode lives here. A plain Each emits all items in one
 // tight loop, so when the loop body has a variable latency the items overtake each other and leave
 // the body in a different order. Each cannot see when the body is done with an item - sendJson only
@@ -70,7 +72,9 @@ function getWebhookQuery(context) {
 
 /**
  * Emit one item and record it as the item in flight. Must be called with the loop lock held: a fast
- * loop body can acknowledge the item before the state is written.
+ * loop body can acknowledge the item before the state is written. Every attempt gets its own timeout
+ * token: when sendJson or stateSet fails after the timeout was set, the retry sets another one, and
+ * the orphaned timeout of the failed attempt must not be able to move the retried item on.
  * @param {Object} context - Appmixer context
  * @param {string} id - Loop id (the context.id of the `in` message)
  * @param {Object} cursor - Loop metadata + collected results (see handleStart)
@@ -80,11 +84,31 @@ function getWebhookQuery(context) {
 async function sendItem(context, id, cursor, index, value) {
 
     const { count, correlationId, itemTimeout } = cursor;
-    const timeoutId = await context.setTimeout({ id, sequential: true, index }, itemTimeout * 1000);
+    const timeoutToken = randomUUID();
+    const timeoutId = await context.setTimeout({ id, sequential: true, index, timeoutToken }, itemTimeout * 1000);
     await context.sendJson({ index, value, count, correlationId }, 'item');
     // At-least-once: a crash between sendJson and stateSet re-sends this item on re-delivery rather
     // than losing it.
-    await context.stateSet(id, { ...cursor, index, timeoutId });
+    // eslint-disable-next-line no-unused-vars
+    const { acked, ...loop } = cursor;
+    await context.stateSet(id, { ...loop, index, timeoutId, timeoutToken });
+}
+
+/**
+ * Run `fn` with the loop lock held.
+ * @param {Object} context - Appmixer context
+ * @param {string} id
+ * @param {Function} fn
+ */
+async function withLock(context, id, fn) {
+
+    let lock = null;
+    try {
+        lock = await context.lock(lockName(id));
+        return await fn();
+    } finally {
+        lock?.unlock();
+    }
 }
 
 /**
@@ -144,64 +168,88 @@ async function handleStart(context, { list, correlationId, count, delay, itemTim
 }
 
 /**
- * Item `doneIndex` is finished (acknowledged or timed out): emit the next one, or `done` after the last.
- * Anything that does not refer to the item in flight is ignored. That covers a duplicated
- * acknowledgement (a loop body that fans out into two ContinueEach, an engine re-delivery), a late
- * acknowledgement of an item that already timed out, and a stale timeout.
+ * Item `doneIndex` is finished: emit the next item, or `done` after the last one. Must be called with
+ * the loop lock held, with `current` (the cursor) already carrying the values collected for the item.
+ * @param {Object} context - Appmixer context
+ * @param {string} id
+ * @param {Object} current - The cursor
+ * @param {number} doneIndex
+ */
+async function emitNext(context, id, current, doneIndex) {
+
+    if (current.timeoutId) {
+        await context.clearTimeout(current.timeoutId);
+    }
+
+    const { count, correlationId, results = [] } = current;
+    const nextIndex = doneIndex + 1;
+
+    if (nextIndex >= count) {
+        // `done` first, clean up after: a crash in between repeats `done` instead of losing it.
+        await context.sendJson({ count, correlationId, result: results }, 'done');
+        return cleanup(context, id);
+    }
+
+    const items = await context.stateGet(itemsKey(id));
+    if (!Array.isArray(items)) {
+        await context.log({ step: 'no-data', message: 'Each sequential: stored list is missing, nothing to continue.' });
+        return cleanup(context, id);
+    }
+
+    return sendItem(context, id, current, nextIndex, items[nextIndex]);
+}
+
+/**
+ * Item `doneIndex` was acknowledged by ContinueEach: record its values and emit the next item (after
+ * the delay, if any), or `done` after the last one. An acknowledgement that does not refer to the
+ * item in flight is ignored: a duplicate (a loop body that fans out into two ContinueEach, an engine
+ * re-delivery, a second acknowledgement during the delay) or a late one for an item that timed out.
  * @param {Object} context - Appmixer context
  * @param {string} id
  * @param {number} doneIndex
- * @param {Array} [result] - Values ContinueEach added for this item
+ * @param {Array} result - Values ContinueEach added for this item
  */
-async function advance(context, id, doneIndex, result = []) {
+async function acknowledge(context, id, doneIndex, result) {
 
-    const isInFlight = cursor => cursor && cursor.index === doneIndex;
+    const isAwaitingAck = cursor => cursor && cursor.index === doneIndex && !cursor.acked;
 
-    // Cheap check before any work; repeated under the lock below.
-    const cursor = await context.stateGet(id);
-    if (!isInFlight(cursor)) {
+    // Cheap check before taking the lock; repeated under it.
+    if (!isAwaitingAck(await context.stateGet(id))) {
         return;
     }
 
-    const nextIndex = doneIndex + 1;
+    const delay = await withLock(context, id, async () => {
+        const current = await context.stateGet(id);
+        if (!isAwaitingAck(current)) {
+            return 0;
+        }
+        const cursor = { ...current, results: (current.results || []).concat(result) };
+        if (!cursor.delay || doneIndex + 1 >= cursor.count) {
+            await emitNext(context, id, cursor, doneIndex);
+            return 0;
+        }
+        // Record the acknowledgement before the delay, so the item timeout firing meanwhile (a delay
+        // close to the item timeout) cannot take the item as unacknowledged. The timeout stays set:
+        // if the process waiting on the delay dies, it is what moves the loop on.
+        await context.stateSet(id, { ...cursor, acked: true });
+        return cursor.delay;
+    });
 
-    if (cursor.delay && nextIndex < cursor.count) {
-        // Outside of the lock: the delay can be longer than the lock TTL.
-        await new Promise(resolve => setTimeout(resolve, cursor.delay));
+    if (!delay) {
+        return;
     }
 
-    let lock = null;
-    try {
-        lock = await context.lock(lockName(id));
+    // Outside of the lock: the delay can be longer than the lock TTL.
+    await new Promise(resolve => setTimeout(resolve, delay));
 
+    return withLock(context, id, async () => {
         const current = await context.stateGet(id);
-        if (!isInFlight(current)) {
+        // The item timeout already moved the loop on (or the loop is gone).
+        if (!current || current.index !== doneIndex || !current.acked) {
             return;
         }
-
-        if (current.timeoutId) {
-            await context.clearTimeout(current.timeoutId);
-        }
-
-        const { count, correlationId } = current;
-        const results = (current.results || []).concat(result);
-
-        if (nextIndex >= count) {
-            // `done` first, clean up after: a crash in between repeats `done` instead of losing it.
-            await context.sendJson({ count, correlationId, result: results }, 'done');
-            return cleanup(context, id);
-        }
-
-        const items = await context.stateGet(itemsKey(id));
-        if (!Array.isArray(items)) {
-            await context.log({ step: 'no-data', message: 'Each sequential: stored list is missing, nothing to continue.' });
-            return cleanup(context, id);
-        }
-
-        await sendItem(context, id, { ...current, results }, nextIndex, items[nextIndex]);
-    } finally {
-        lock?.unlock();
-    }
+        return emitNext(context, id, current, doneIndex);
+    });
 }
 
 /**
@@ -211,30 +259,47 @@ async function advance(context, id, doneIndex, result = []) {
 async function handleAck(context) {
 
     const { id, index, result } = (context.messages.webhook.content || {}).data || {};
-    const doneIndex = Number(index);
+    // Number() alone turns null, false, [] and '' into 0 - only a number or a numeric string counts.
+    const isNumeric = typeof index === 'number' || (typeof index === 'string' && index.trim() !== '');
+    const doneIndex = isNumeric ? Number(index) : NaN;
 
     // Anything can POST to a webhook URL - ignore whatever is not a well-formed acknowledgement.
     if (!id || !Number.isInteger(doneIndex) || doneIndex < 0) {
         return context.log({ step: 'invalid-ack', message: 'Each sequential: ignoring a malformed acknowledgement.' });
     }
 
-    return advance(context, id, doneIndex, Array.isArray(result) ? result : []);
+    return acknowledge(context, id, doneIndex, Array.isArray(result) ? result : []);
 }
 
 /**
- * Handle the item timeout: the item in flight was not acknowledged in time, move on.
+ * Handle the item timeout: the item in flight was not acknowledged in time, move on. Only the timeout
+ * of the current attempt for the item in flight counts; a stale one is ignored.
  * @param {Object} context - Appmixer context
  */
 async function handleTimeout(context) {
 
-    const { id, index } = context.messages.timeout.content;
+    const { id, index, timeoutToken } = context.messages.timeout.content;
 
-    await context.log({
-        step: 'item-timeout',
-        message: `Each sequential: item ${index} was not acknowledged by ContinueEach in time, continuing with the next item.`
+    // A timeout without a token was set by the previous version - matched by the index alone.
+    const isCurrent = cursor => cursor && cursor.index === index &&
+        (!timeoutToken || cursor.timeoutToken === timeoutToken);
+
+    return withLock(context, id, async () => {
+        const current = await context.stateGet(id);
+        if (!isCurrent(current)) {
+            return;
+        }
+        await context.log({
+            step: 'item-timeout',
+            message: current.acked
+                // Acknowledged, but the delay before the next item has not run out (it is close to the
+                // item timeout, or the process waiting on it died).
+                ? `Each sequential: item ${index} was acknowledged, continuing with the next item before the delay ran out.`
+                : `Each sequential: item ${index} was not acknowledged by ContinueEach in time, continuing with the next item.`
+        });
+        // The timeout that fired needs no clearing.
+        return emitNext(context, id, { ...current, timeoutId: null }, index);
     });
-
-    return advance(context, id, index);
 }
 
 module.exports = {

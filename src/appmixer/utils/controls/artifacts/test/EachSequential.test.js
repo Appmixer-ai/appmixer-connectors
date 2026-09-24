@@ -103,10 +103,12 @@ describe('Each Component - sequential mode', () => {
 
         // The list is parked in the component state, the cursor points at the item in flight.
         assert.deepStrictEqual(h.state['items:each-run-1'], ['a', 'b', 'c']);
-        assert.deepStrictEqual(h.state['each-run-1'], {
+        const { timeoutToken, ...cursor } = h.state['each-run-1'];
+        assert.deepStrictEqual(cursor, {
             index: 0, timeoutId: 'timeout-0', count: 3, correlationId: 'each-run-1',
             delay: 0, itemTimeout: 300, results: []
         });
+        assert.ok(typeof timeoutToken === 'string' && timeoutToken.length > 0);
         // ContinueEach finds the webhook target of the loop in the flow state. All three query
         // parameters are needed by the engine to restore the scope of the original message.
         assert.deepStrictEqual(h.flowState['each:each-run-1'], {
@@ -114,7 +116,8 @@ describe('Each Component - sequential mode', () => {
             webhookQuery: { correlationId: 'corr-1', correlationInPort: 'in', messageId: 'msg-1' }
         });
 
-        assert.deepStrictEqual(h.timeouts[0].content, { id: 'each-run-1', sequential: true, index: 0 });
+        // The timeout carries the token of this attempt.
+        assert.deepStrictEqual(h.timeouts[0].content, { id: 'each-run-1', sequential: true, index: 0, timeoutToken });
         // Default item timeout: 300 s.
         assert.strictEqual(h.timeouts[0].ms, 300000);
         // No plugin involved.
@@ -252,12 +255,82 @@ describe('Each Component - sequential mode', () => {
         await h.ack(undefined, 0);
         await h.ack('each-run-1', 'not-a-number');
         await h.ack('each-run-1', -1);
+        // Number() would turn all of these into 0.
+        for (const bad of [null, false, [], '', '   ', true]) {
+            await h.ack('each-run-1', bad);
+        }
         await h.ack('unknown-run', 0);
         // A result that is not a list is dropped, the acknowledgement itself still counts.
         await h.ack('each-run-1', 0, 'not-a-list');
 
         assert.deepStrictEqual(h.items().map(i => i.value), ['a', 'b']);
         assert.deepStrictEqual(h.state['each-run-1'].results, []);
+    });
+
+    it('should accept a numeric string index', async () => {
+        const h = createHarness();
+
+        await h.start({ list: ['a', 'b'], sequential: true });
+        await h.ack('each-run-1', ' 0 ');
+
+        assert.deepStrictEqual(h.items().map(i => i.value), ['a', 'b']);
+    });
+
+    it('should ignore the orphaned timeout of a failed attempt when the item is retried', async () => {
+        const h = createHarness();
+        const context = h.createContext({ in: { content: { list: ['a', 'b'], sequential: true } } });
+        // The first attempt sets its timeout, then sendJson fails; the engine retries the message.
+        context.sendJson = sinon.stub().rejects(new Error('Broker unavailable'));
+        await assert.rejects(async () => Each.receive(context), /Broker unavailable/);
+        assert.strictEqual(h.timeouts.length, 1);
+
+        await h.start({ list: ['a', 'b'], sequential: true });
+        assert.deepStrictEqual(h.items().map(i => i.value), ['a']);
+        assert.strictEqual(h.timeouts.length, 2);
+
+        // The orphaned timeout of the first attempt refers to the same item, but not this attempt.
+        await h.timeout(h.timeouts[0].content);
+        assert.deepStrictEqual(h.items().map(i => i.value), ['a']);
+        assert.strictEqual(h.state['each-run-1'].index, 0);
+
+        // The timeout of the retried attempt does move the loop on.
+        await h.timeout(h.timeouts[1].content);
+        assert.deepStrictEqual(h.items().map(i => i.value), ['a', 'b']);
+    });
+
+    it('should still honour a timeout set before timeout tokens existed', async () => {
+        const h = createHarness();
+
+        await h.start({ list: ['a', 'b'], sequential: true });
+        await h.timeout({ id: 'each-run-1', sequential: true, index: 0 });
+
+        assert.deepStrictEqual(h.items().map(i => i.value), ['a', 'b']);
+    });
+
+    it('should record the acknowledgement before the delay, so a timeout during it keeps the values', async () => {
+        const h = createHarness();
+
+        await h.start({ list: ['a', 'b', 'c'], sequential: true, delay: 80 });
+        const acking = h.ack('each-run-1', 0, ['ts-a']);
+        // The ack is recorded under the lock right away...
+        await new Promise(resolve => setTimeout(resolve, 20));
+        assert.strictEqual(h.state['each-run-1'].acked, true);
+        assert.deepStrictEqual(h.state['each-run-1'].results, ['ts-a']);
+        // ...a duplicate acknowledgement during the delay is ignored...
+        await h.ack('each-run-1', 0, ['dup']);
+        // ...and the item timeout firing during the delay moves on, keeping the value.
+        await h.timeout(h.timeouts[0].content);
+        assert.deepStrictEqual(h.items().map(i => i.value), ['a', 'b']);
+        assert.deepStrictEqual(h.state['each-run-1'].results, ['ts-a']);
+        assert.strictEqual(h.state['each-run-1'].acked, undefined);
+
+        // The delayed acknowledgement finds the loop already moved on and does not emit 'c'.
+        await acking;
+        assert.deepStrictEqual(h.items().map(i => i.value), ['a', 'b']);
+
+        await h.ack('each-run-1', 1, ['ts-b']);
+        await h.ack('each-run-1', 2, ['ts-c']);
+        assert.deepStrictEqual(h.dones()[0].result, ['ts-a', 'ts-b', 'ts-c']);
     });
 
     it('should reject an item timeout below one minute (the engine would silently round it up)', async () => {
