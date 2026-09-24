@@ -1,0 +1,454 @@
+{
+    "name": "E2E Microsoft Teams - Team Administration",
+    "type": "automation",
+    "flow": {
+        "d7e2b4c0-0000-4000-9000-00000000c001": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 0,
+            "y": 0,
+            "source": {},
+            "config": {},
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "d7e2b4c0-0000-4000-9000-00000000c002": {
+            "type": "appmixer.utils.controls.SetVariable",
+            "x": 150,
+            "y": 0,
+            "source": {
+                "in": {
+                    "d7e2b4c0-0000-4000-9000-00000000c001": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "d7e2b4c0-0000-4000-9000-00000000c001": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "variables": {}
+                                },
+                                "lambda": {
+                                    "variables": {
+                                        "ADD": [
+                                            {
+                                                "type": "text",
+                                                "name": "description",
+                                                "text": "Created by the Microsoft connector E2E test flow; deleted at the end of the run."
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "d7e2b4c0-0000-4000-9000-00000000c003": {
+            "type": "appmixer.microsoft.teams.ListTeams",
+            "source": {
+                "in": {
+                    "d7e2b4c0-0000-4000-9000-00000000c002": [
+                        "out"
+                    ]
+                }
+            },
+            "x": 300,
+            "y": 0,
+            "config": {
+                "transform": {
+                    "in": {
+                        "d7e2b4c0-0000-4000-9000-00000000c002": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "outputType": {}
+                                },
+                                "lambda": {
+                                    "outputType": "array"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "d7e2b4c0-0000-4000-9000-00000000c004": {
+            "type": "appmixer.microsoft.teams.ListTeamMembers",
+            "source": {
+                "in": {
+                    "d7e2b4c0-0000-4000-9000-00000000c003": [
+                        "out"
+                    ]
+                }
+            },
+            "x": 450,
+            "y": 0,
+            "config": {
+                "transform": {
+                    "in": {
+                        "d7e2b4c0-0000-4000-9000-00000000c003": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "teamId": {
+                                        "d7e2b4c0-0001-4000-9000-00000000d001": {
+                                            "variable": "$.d7e2b4c0-0000-4000-9000-00000000c003.out",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$.result[0].id"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "outputType": {}
+                                },
+                                "lambda": {
+                                    "teamId": "{{{d7e2b4c0-0001-4000-9000-00000000d001}}}",
+                                    "outputType": "array"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "d7e2b4c0-0000-4000-9000-00000000c005": {
+            "type": "appmixer.microsoft.teams.CreateChannel",
+            "source": {
+                "in": {
+                    "d7e2b4c0-0000-4000-9000-00000000c004": [
+                        "out"
+                    ]
+                }
+            },
+            "x": 600,
+            "y": 0,
+            "config": {
+                "transform": {
+                    "in": {
+                        "d7e2b4c0-0000-4000-9000-00000000c004": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "teamId": {
+                                        "d7e2b4c0-0002-4000-9000-00000000d002": {
+                                            "variable": "$.d7e2b4c0-0000-4000-9000-00000000c003.out",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$.result[0].id"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "displayName": {
+                                        "d7e2b4c0-0003-4000-9000-00000000d003": {
+                                            "functions": [
+                                                {
+                                                    "name": "g_timestamp"
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "description": {
+                                        "d7e2b4c0-0004-4000-9000-00000000d004": {
+                                            "variable": "$.d7e2b4c0-0000-4000-9000-00000000c002.out.description",
+                                            "functions": []
+                                        }
+                                    },
+                                    "membershipType": {}
+                                },
+                                "lambda": {
+                                    "teamId": "{{{d7e2b4c0-0002-4000-9000-00000000d002}}}",
+                                    "displayName": "E2E {{{d7e2b4c0-0003-4000-9000-00000000d003}}}",
+                                    "description": "{{{d7e2b4c0-0004-4000-9000-00000000d004}}}",
+                                    "membershipType": "standard"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "d7e2b4c0-0000-4000-9000-00000000c006": {
+            "type": "appmixer.utils.test.Assert",
+            "source": {
+                "in": {
+                    "d7e2b4c0-0000-4000-9000-00000000c004": [
+                        "out"
+                    ]
+                }
+            },
+            "x": 450,
+            "y": 150,
+            "config": {
+                "transform": {
+                    "in": {
+                        "d7e2b4c0-0000-4000-9000-00000000c004": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "d7e2b4c0-0005-4000-9000-00000000d005": {
+                                            "variable": "$.d7e2b4c0-0000-4000-9000-00000000c004.out",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$.result[0].userId"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        },
+                                        "d7e2b4c0-0006-4000-9000-00000000d006": {
+                                            "variable": "$.d7e2b4c0-0000-4000-9000-00000000c004.out",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$.result[0].displayName"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{d7e2b4c0-0005-4000-9000-00000000d005}}}",
+                                                "assertion": "notEmpty"
+                                            },
+                                            {
+                                                "field": "{{{d7e2b4c0-0006-4000-9000-00000000d006}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "d7e2b4c0-0000-4000-9000-00000000c007": {
+            "type": "appmixer.utils.test.Assert",
+            "source": {
+                "in": {
+                    "d7e2b4c0-0000-4000-9000-00000000c005": [
+                        "out"
+                    ]
+                }
+            },
+            "x": 600,
+            "y": 150,
+            "config": {
+                "transform": {
+                    "in": {
+                        "d7e2b4c0-0000-4000-9000-00000000c005": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "d7e2b4c0-0007-4000-9000-00000000d007": {
+                                            "variable": "$.d7e2b4c0-0000-4000-9000-00000000c005.out.id",
+                                            "functions": []
+                                        },
+                                        "d7e2b4c0-0008-4000-9000-00000000d008": {
+                                            "variable": "$.d7e2b4c0-0000-4000-9000-00000000c005.out.membershipType",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{d7e2b4c0-0007-4000-9000-00000000d007}}}",
+                                                "assertion": "notEmpty"
+                                            },
+                                            {
+                                                "field": "{{{d7e2b4c0-0008-4000-9000-00000000d008}}}",
+                                                "assertion": "equal",
+                                                "expected": "standard"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "d7e2b4c0-0000-4000-9000-00000000c008": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 750,
+            "y": 150,
+            "source": {
+                "in": {
+                    "d7e2b4c0-0000-4000-9000-00000000c006": [
+                        "out"
+                    ],
+                    "d7e2b4c0-0000-4000-9000-00000000c007": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 180
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "d7e2b4c0-0000-4000-9000-00000000c009": {
+            "type": "appmixer.microsoft.teams.MakeApiCall",
+            "x": 900,
+            "y": 150,
+            "source": {
+                "in": {
+                    "d7e2b4c0-0000-4000-9000-00000000c008": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "d7e2b4c0-0000-4000-9000-00000000c008": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "url": {
+                                        "d7e2b4c0-0009-4000-9000-00000000d009": {
+                                            "variable": "$.d7e2b4c0-0000-4000-9000-00000000c003.out",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$.result[0].id"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        },
+                                        "d7e2b4c0-000a-4000-9000-00000000d00a": {
+                                            "variable": "$.d7e2b4c0-0000-4000-9000-00000000c005.out.id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "method": {},
+                                    "body": {},
+                                    "headers": {},
+                                    "parameters": {}
+                                },
+                                "lambda": {
+                                    "url": "/teams/{{{d7e2b4c0-0009-4000-9000-00000000d009}}}/channels/{{{d7e2b4c0-000a-4000-9000-00000000d00a}}}",
+                                    "method": "DELETE"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "d7e2b4c0-0000-4000-9000-00000000c00a": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1050,
+            "y": 150,
+            "source": {
+                "in": {
+                    "d7e2b4c0-0000-4000-9000-00000000c009": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {},
+                "transform": {
+                    "in": {
+                        "d7e2b4c0-0000-4000-9000-00000000c009": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "d7e2b4c0-000b-4000-9000-00000000d00b": {
+                                            "variable": "$.d7e2b4c0-0000-4000-9000-00000000c008.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.com",
+                                    "testCase": "E2E Microsoft Teams - Team Administration",
+                                    "result": "{{{d7e2b4c0-000b-4000-9000-00000000d00b}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        }
+    }
+}

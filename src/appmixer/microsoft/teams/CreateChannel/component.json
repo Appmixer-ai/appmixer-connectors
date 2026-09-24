@@ -1,0 +1,149 @@
+{
+    "name": "appmixer.microsoft.teams.CreateChannel",
+    "author": "Appmixer <info@appmixer.com>",
+    "label": "Create Channel",
+    "description": "Creates a standard or private channel in a team. Requires tenant admin consent for the Channel.Create permission.",
+    "auth": {
+        "service": "appmixer:microsoft",
+        "scope": [
+            "Channel.Create"
+        ]
+    },
+    "quota": {
+        "manager": "appmixer:microsoft:teams",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "teamId": {
+                        "type": "string"
+                    },
+                    "displayName": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "membershipType": {
+                        "type": "string",
+                        "enum": [
+                            "standard",
+                            "private"
+                        ]
+                    }
+                },
+                "required": [
+                    "teamId",
+                    "displayName"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "teamId": {
+                        "type": "text",
+                        "label": "Team",
+                        "index": 1,
+                        "tooltip": "Required. Pick a team, or enter a Team ID directly. Requires tenant admin consent for the Channel.Create permission.",
+                        "source": {
+                            "url": "/component/appmixer/microsoft/teams/ListTeams?outPort=out",
+                            "data": {
+                                "messages": {
+                                    "in/outputType": "array",
+                                    "in/isSource": true
+                                },
+                                "transform": "./ListTeams#toSelectArray"
+                            }
+                        }
+                    },
+                    "displayName": {
+                        "type": "text",
+                        "label": "Name",
+                        "tooltip": "Required. The channel name as it appears in Microsoft Teams, up to 50 characters. It cannot contain the characters ~ # % & * { } + / \\ : < > ? | ' \" , .. and cannot start with an underscore or a period.",
+                        "index": 2
+                    },
+                    "description": {
+                        "type": "textarea",
+                        "label": "Description",
+                        "tooltip": "Optional. A description of the channel.",
+                        "index": 3
+                    },
+                    "membershipType": {
+                        "type": "select",
+                        "label": "Privacy",
+                        "defaultValue": "standard",
+                        "tooltip": "Standard channels are open to every member of the team. Private channels are visible only to their members; the connected user becomes the owner.",
+                        "options": [
+                            {
+                                "label": "Standard",
+                                "value": "standard"
+                            },
+                            {
+                                "label": "Private",
+                                "value": "private"
+                            }
+                        ],
+                        "index": 4
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "schema": {
+                "type": "object",
+                "required": [
+                    "id",
+                    "displayName"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "title": "Channel ID",
+                        "example": "19:4a95f7d8db4c4e7fae857bcebe0623e6@thread.tacv2"
+                    },
+                    "displayName": {
+                        "type": "string",
+                        "title": "Display Name",
+                        "example": "General"
+                    },
+                    "description": {
+                        "type": "string",
+                        "title": "Description",
+                        "example": "Announcements and general discussion."
+                    },
+                    "membershipType": {
+                        "type": "string",
+                        "title": "Membership Type",
+                        "example": "standard"
+                    },
+                    "email": {
+                        "type": "string",
+                        "title": "Email",
+                        "example": "Marketing@contoso.onmicrosoft.com"
+                    },
+                    "webUrl": {
+                        "type": "string",
+                        "title": "Web URL",
+                        "example": "https://teams.microsoft.com/l/channel/19%3A4a95f7d8db4c4e7fae857bcebe0623e6%40thread.tacv2/General"
+                    },
+                    "createdDateTime": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Created Date Time",
+                        "example": "2026-01-12T09:15:32.123Z"
+                    }
+                }
+            }
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMTkgMTE5Ij48cGF0aCBmaWxsPSIjNDg1QkQ1IiBkPSJNODQgNDloMjJhMyAzIDAgMCAxIDMgM3YyMWExNiAxNiAwIDAgMS0zMiAwVjQ5eiIvPjxjaXJjbGUgZmlsbD0iIzM0NDBBMCIgY3g9Ijk0LjI1IiBjeT0iMjkuNiIgcj0iOS43NSIvPjxwYXRoIGZpbGw9IiM2RDgxRkYiIGQ9Ik00MCA0OWg0NGEyIDIgMCAwIDEgMiAydjQwYTI2IDI2IDAgMCAxLTQ4IDBWNTFhMiAyIDAgMCAxIDItMnoiLz48Y2lyY2xlIGZpbGw9IiM1MTYxQ0IiIGN4PSI2MS43NSIgY3k9IjI3LjI1IiByPSIxNC43NSIvPjxyZWN0IGZpbGw9IiMyRDM5OUEiIHg9IjkuOSIgeT0iMzQuNSIgd2lkdGg9IjQ5LjUiIGhlaWdodD0iNTAiIHJ4PSIzIi8+PHBhdGggZmlsbD0iI2ZmZiIgZD0iTTI0LjMgNDdoMjAuNXY0LjZoLTcuNHYyMWgtNS41di0yMWgtNy42eiIvPjwvc3ZnPg=="
+}
