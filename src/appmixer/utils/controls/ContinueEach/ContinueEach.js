@@ -5,18 +5,30 @@
 const targetKey = id => `each:${id}`;
 
 /**
- * The values to collect for this item: every row of the 'Add to Result' expression becomes one entry
- * of the 'Result' list that Each emits on its 'done' port once the loop is over. A row whose value did
- * not resolve (the variable is missing in this item's message) becomes null rather than disappearing:
- * the list then always has rows x items entries and a missing value is visible instead of silently
- * shifting everything after it.
- * @param {*} result - The raw `result` input ({ ADD: [{ value }] })
- * @returns {Array}
+ * The entry this item adds to the 'Result' list that Each emits on its 'done' port once the loop is
+ * over: one object per item, with a field for every row of the 'Add to Result' expression. A value
+ * that did not resolve (the variable is missing in this item's message) becomes null rather than
+ * disappearing, so every entry has the same fields.
+ * @param {Object} context - Appmixer context
+ * @param {*} result - The raw `result` input ({ ADD: [{ name, value }] })
+ * @returns {Object}
  */
-function collectValues(result) {
+function collectEntry(context, result) {
 
     const rows = Array.isArray(result?.ADD) ? result.ADD : [];
-    return rows.map(row => (row?.value === undefined ? null : row.value));
+    const entry = {};
+    rows.forEach((row, i) => {
+        const name = typeof row?.name === 'string' ? row.name.trim() : '';
+        if (!name) {
+            // A row left completely empty is just an unused row.
+            if (row?.value === undefined || row?.value === '') {
+                return;
+            }
+            throw new context.CancelError(`Name is required in row ${i + 1} of 'Add to Result'!`);
+        }
+        entry[name] = row.value === undefined ? null : row.value;
+    });
+    return entry;
 }
 
 module.exports = {
@@ -34,7 +46,7 @@ module.exports = {
             throw new context.CancelError('Index is required and must be a non-negative integer!');
         }
 
-        const values = collectValues(result);
+        const entry = collectEntry(context, result);
 
         // The Each that emitted this item published where to acknowledge it (its component id and the
         // correlation of the message that started the loop) in the flow state under the loop id.
@@ -58,7 +70,7 @@ module.exports = {
         await context.callAppmixer({
             endPoint: `/flows/${context.flowId}/components/${target.componentId}?${query}`,
             method: 'POST',
-            body: { id: correlationId, index, result: values }
+            body: { id: correlationId, index, result: entry }
         });
 
         return context.sendJson({ correlationId, index }, 'out');

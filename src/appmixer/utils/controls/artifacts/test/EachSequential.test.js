@@ -138,7 +138,8 @@ describe('Each Component - sequential mode', () => {
 
         await h.ack('each-run-1', 2);
         assert.deepStrictEqual(h.items().map(i => i.index), [0, 1, 2]);
-        assert.deepStrictEqual(h.dones(), [{ count: 3, correlationId: 'each-run-1', result: [] }]);
+        // One entry per item, even when ContinueEach adds no fields.
+        assert.deepStrictEqual(h.dones(), [{ count: 3, correlationId: 'each-run-1', result: [{}, {}, {}] }]);
 
         // Every pending item timeout was cleared and nothing is left behind.
         assert.deepStrictEqual(h.cleared, ['timeout-0', 'timeout-1', 'timeout-2']);
@@ -146,18 +147,18 @@ describe('Each Component - sequential mode', () => {
         assert.deepStrictEqual(h.flowState, {});
     });
 
-    it('should collect the values added by ContinueEach and emit them on done, in item order', async () => {
+    it('should collect one entry per item from ContinueEach and emit them on done, in item order', async () => {
         const h = createHarness();
 
         await h.start({ list: ['a', 'b', 'c'], sequential: true });
-        await h.ack('each-run-1', 0, ['ts-a']);
-        // More than one value per item: each one is an entry of its own.
-        await h.ack('each-run-1', 1, ['ts-b', { channel: 'C1' }]);
-        // No values for this item.
-        await h.ack('each-run-1', 2, []);
+        await h.ack('each-run-1', 0, { ts: 'ts-a' });
+        // More than one field per item: still one entry.
+        await h.ack('each-run-1', 1, { ts: 'ts-b', channel: 'C1' });
+        // No fields for this item.
+        await h.ack('each-run-1', 2, {});
 
         assert.deepStrictEqual(h.dones(), [{
-            count: 3, correlationId: 'each-run-1', result: ['ts-a', 'ts-b', { channel: 'C1' }]
+            count: 3, correlationId: 'each-run-1', result: [{ ts: 'ts-a' }, { ts: 'ts-b', channel: 'C1' }, {}]
         }]);
     });
 
@@ -165,14 +166,14 @@ describe('Each Component - sequential mode', () => {
         const h = createHarness();
 
         await h.start({ list: ['a', 'b', 'c'], sequential: true });
-        await h.ack('each-run-1', 0, ['first']);
-        await h.ack('each-run-1', 0, ['again']);
+        await h.ack('each-run-1', 0, { v: 'first' });
+        await h.ack('each-run-1', 0, { v: 'again' });
 
         // Still exactly one item in flight: 'b'. A second 'c' would break the ordering guarantee.
         assert.deepStrictEqual(h.items().map(i => i.value), ['a', 'b']);
         assert.strictEqual(h.state['each-run-1'].index, 1);
         // And the duplicate did not add to the result.
-        assert.deepStrictEqual(h.state['each-run-1'].results, ['first']);
+        assert.deepStrictEqual(h.state['each-run-1'].results, [{ v: 'first' }]);
     });
 
     it('should move on when an item is not acknowledged in time, and ignore its late acknowledgement', async () => {
@@ -185,17 +186,17 @@ describe('Each Component - sequential mode', () => {
         assert.deepStrictEqual(h.items().map(i => i.value), ['a', 'b']);
 
         // The slow branch of item 0 finally reaches ContinueEach - 'b' is in flight, nothing happens.
-        await h.ack('each-run-1', 0, ['late']);
+        await h.ack('each-run-1', 0, { v: 'late' });
         assert.deepStrictEqual(h.items().map(i => i.value), ['a', 'b']);
 
         // A stale timeout (item 0 again) is ignored too.
         await h.timeout(h.timeouts[0].content);
         assert.deepStrictEqual(h.items().map(i => i.value), ['a', 'b']);
 
-        // A skipped item contributes nothing to the result, the late value is dropped.
-        await h.ack('each-run-1', 1, ['b']);
-        await h.ack('each-run-1', 2, ['c']);
-        assert.deepStrictEqual(h.dones()[0].result, ['b', 'c']);
+        // A skipped item is null in the result, the late value is dropped.
+        await h.ack('each-run-1', 1, { v: 'b' });
+        await h.ack('each-run-1', 2, { v: 'c' });
+        assert.deepStrictEqual(h.dones()[0].result, [null, { v: 'b' }, { v: 'c' }]);
     });
 
     it('should send done after the last item times out', async () => {
@@ -204,7 +205,7 @@ describe('Each Component - sequential mode', () => {
         await h.start({ list: ['a'], sequential: true });
         await h.timeout(h.timeouts[0].content);
 
-        assert.deepStrictEqual(h.dones(), [{ count: 1, correlationId: 'each-run-1', result: [] }]);
+        assert.deepStrictEqual(h.dones(), [{ count: 1, correlationId: 'each-run-1', result: [null] }]);
         assert.deepStrictEqual(h.state, {});
         assert.deepStrictEqual(h.flowState, {});
     });
@@ -239,13 +240,13 @@ describe('Each Component - sequential mode', () => {
 
         await h.start({ list: ['a1', 'a2'], sequential: true }, 'run-a');
         await h.start({ list: ['b1', 'b2'], sequential: true }, 'run-b');
-        await h.ack('run-b', 0, ['b1-done']);
+        await h.ack('run-b', 0, { v: 'b1-done' });
 
         assert.deepStrictEqual(h.items().map(i => i.value), ['a1', 'b1', 'b2']);
         assert.strictEqual(h.state['run-a'].index, 0);
         assert.deepStrictEqual(h.state['run-a'].results, []);
         assert.strictEqual(h.state['run-b'].index, 1);
-        assert.deepStrictEqual(h.state['run-b'].results, ['b1-done']);
+        assert.deepStrictEqual(h.state['run-b'].results, [{ v: 'b1-done' }]);
     });
 
     it('should ignore a malformed or unknown acknowledgement', async () => {
@@ -260,11 +261,11 @@ describe('Each Component - sequential mode', () => {
             await h.ack('each-run-1', bad);
         }
         await h.ack('unknown-run', 0);
-        // A result that is not a list is dropped, the acknowledgement itself still counts.
-        await h.ack('each-run-1', 0, 'not-a-list');
+        // A result that is not an object becomes an empty entry, the acknowledgement itself still counts.
+        await h.ack('each-run-1', 0, ['not', 'an', 'object']);
 
         assert.deepStrictEqual(h.items().map(i => i.value), ['a', 'b']);
-        assert.deepStrictEqual(h.state['each-run-1'].results, []);
+        assert.deepStrictEqual(h.state['each-run-1'].results, [{}]);
     });
 
     it('should accept a numeric string index', async () => {
@@ -311,26 +312,26 @@ describe('Each Component - sequential mode', () => {
         const h = createHarness();
 
         await h.start({ list: ['a', 'b', 'c'], sequential: true, delay: 80 });
-        const acking = h.ack('each-run-1', 0, ['ts-a']);
+        const acking = h.ack('each-run-1', 0, { ts: 'ts-a' });
         // The ack is recorded under the lock right away...
         await new Promise(resolve => setTimeout(resolve, 20));
         assert.strictEqual(h.state['each-run-1'].acked, true);
-        assert.deepStrictEqual(h.state['each-run-1'].results, ['ts-a']);
+        assert.deepStrictEqual(h.state['each-run-1'].results, [{ ts: 'ts-a' }]);
         // ...a duplicate acknowledgement during the delay is ignored...
-        await h.ack('each-run-1', 0, ['dup']);
+        await h.ack('each-run-1', 0, { ts: 'dup' });
         // ...and the item timeout firing during the delay moves on, keeping the value.
         await h.timeout(h.timeouts[0].content);
         assert.deepStrictEqual(h.items().map(i => i.value), ['a', 'b']);
-        assert.deepStrictEqual(h.state['each-run-1'].results, ['ts-a']);
+        assert.deepStrictEqual(h.state['each-run-1'].results, [{ ts: 'ts-a' }]);
         assert.strictEqual(h.state['each-run-1'].acked, undefined);
 
         // The delayed acknowledgement finds the loop already moved on and does not emit 'c'.
         await acking;
         assert.deepStrictEqual(h.items().map(i => i.value), ['a', 'b']);
 
-        await h.ack('each-run-1', 1, ['ts-b']);
-        await h.ack('each-run-1', 2, ['ts-c']);
-        assert.deepStrictEqual(h.dones()[0].result, ['ts-a', 'ts-b', 'ts-c']);
+        await h.ack('each-run-1', 1, { ts: 'ts-b' });
+        await h.ack('each-run-1', 2, { ts: 'ts-c' });
+        assert.deepStrictEqual(h.dones()[0].result, [{ ts: 'ts-a' }, { ts: 'ts-b' }, { ts: 'ts-c' }]);
     });
 
     it('should reject an item timeout below one minute (the engine would silently round it up)', async () => {
@@ -397,7 +398,7 @@ describe('Each Component - sequential mode', () => {
             inFlight--;
 
             const { correlationId, index } = item;
-            await h.continueEach({ correlationId, index, result: { ADD: [{ value: `id-of-${item.value}` }] } });
+            await h.continueEach({ correlationId, index, result: { ADD: [{ name: 'id', value: `id-of-${item.value}` }] } });
         };
 
         await h.start({ list, sequential: true });
@@ -419,7 +420,7 @@ describe('Each Component - sequential mode', () => {
 
         assert.deepStrictEqual(processed, list);
         assert.strictEqual(maxInFlight, 1);
-        assert.deepStrictEqual(h.dones()[0].result, list.map(value => `id-of-${value}`));
+        assert.deepStrictEqual(h.dones()[0].result, list.map(value => ({ id: `id-of-${value}` })));
     });
 });
 
@@ -455,23 +456,44 @@ describe('ContinueEach Component', () => {
             endPoint: '/flows/flow-1/components/each-1' +
                 '?correlationId=corr-1&correlationInPort=in&messageId=msg-1&enqueueOnly=true',
             method: 'POST',
-            body: { id: 'run-1', index: 2, result: [] }
+            body: { id: 'run-1', index: 2, result: {} }
         });
         assert.ok(context.sendJson.calledOnceWith({ correlationId: 'run-1', index: 2 }, 'out'));
     });
 
-    it('should send every value of "Add to Result" along, null for an unresolved one', async () => {
+    it('should send the rows of "Add to Result" as one entry, null for an unresolved value', async () => {
         const context = createContext({
             correlationId: 'run-1',
             index: 0,
-            result: { ADD: [{ value: '1718888888.1' }, { value: undefined }, { value: 0 }, { value: { a: 1 } }] }
+            result: { ADD: [
+                { name: 'ts', value: '1718888888.1' },
+                { name: 'user', value: undefined },
+                { name: ' count ', value: 0 },
+                { name: 'raw', value: { a: 1 } },
+                // An unused, completely empty row.
+                { name: '', value: '' }
+            ] }
         });
 
         await ContinueEach.receive(context);
 
         assert.deepStrictEqual(context.callAppmixer.getCall(0).args[0].body, {
-            id: 'run-1', index: 0, result: ['1718888888.1', null, 0, { a: 1 }]
+            id: 'run-1', index: 0, result: { ts: '1718888888.1', user: null, count: 0, raw: { a: 1 } }
         });
+    });
+
+    it('should throw CancelError for an "Add to Result" row with a value but no name', async () => {
+        const context = createContext({
+            correlationId: 'run-1',
+            index: 0,
+            result: { ADD: [{ name: 'ts', value: '1' }, { value: 'orphan' }] }
+        });
+
+        await assert.rejects(
+            async () => ContinueEach.receive(context),
+            err => err instanceof context.CancelError && err.message.includes('row 2')
+        );
+        assert.ok(context.callAppmixer.notCalled);
     });
 
     it('should cope with a target without correlation (no scope to restore)', async () => {

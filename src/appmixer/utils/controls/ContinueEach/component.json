@@ -2,7 +2,7 @@
   "name": "appmixer.utils.controls.ContinueEach",
   "author": "Appmixer <info@appmixer.ai>",
   "label": "Continue Each",
-  "description": "Ends one pass of a sequential Each loop. Place it after the last step that has to finish before the next item starts: it tells the Each component (with 'Sequential' turned on) that the current item is done, so Each sends the next one. This keeps the items in order even when the steps in the loop take a varying amount of time. Optionally add values to the result - Each emits them all as 'Result' on its 'done' port once the loop is over.",
+  "description": "Ends one pass of a sequential Each loop. Place it after the last step that has to finish before the next item starts: it tells the Each component (with 'Sequential' turned on) that the current item is done, so Each sends the next one. This keeps the items in order even when the steps in the loop take a varying amount of time. Optionally add named values to the result - Each emits one entry per item as 'Result' on its 'done' port once the loop is over.",
   "version": "1.0.0",
   "private": false,
   "inPorts": [
@@ -49,13 +49,19 @@
             "levels": [
               "ADD"
             ],
-            "tooltip": "Values to collect from this item, for example the ID of a record created in the loop. Every value you add becomes one entry of the 'Result' list that the Each component emits on its 'done' port once all items are processed, in item order. A value that is empty for an item is added as null, so the list always has the same number of entries per item. Leave empty if you do not need to collect anything.",
+            "tooltip": "Named values to collect from this item, for example the ID of a record created in the loop. Every item adds one entry to the 'Result' list that the Each component emits on its 'done' port once all items are processed, in item order: an object with one field per row, e.g. {\"id\": \"1001\", \"status\": \"created\"}. A value that is empty for an item is added as null. An item skipped after 'Item Timeout' is null as a whole. Leave empty if you do not need to collect anything.",
             "fields": {
+              "name": {
+                "type": "text",
+                "label": "Name",
+                "index": 1,
+                "tooltip": "The name of the field in the result entry, e.g. 'id'."
+              },
               "value": {
                 "type": "text",
                 "label": "Value",
-                "index": 1,
-                "tooltip": "A value to add to the result. Usually a variable of a step inside the loop."
+                "index": 2,
+                "tooltip": "The value of the field. Usually a variable of a step inside the loop."
               }
             }
           }

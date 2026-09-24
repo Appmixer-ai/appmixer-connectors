@@ -207,9 +207,9 @@ async function emitNext(context, id, current, doneIndex) {
  * @param {Object} context - Appmixer context
  * @param {string} id
  * @param {number} doneIndex
- * @param {Array} result - Values ContinueEach added for this item
+ * @param {Object} entry - The fields ContinueEach added for this item
  */
-async function acknowledge(context, id, doneIndex, result) {
+async function acknowledge(context, id, doneIndex, entry) {
 
     const isAwaitingAck = cursor => cursor && cursor.index === doneIndex && !cursor.acked;
 
@@ -223,7 +223,8 @@ async function acknowledge(context, id, doneIndex, result) {
         if (!isAwaitingAck(current)) {
             return 0;
         }
-        const cursor = { ...current, results: (current.results || []).concat(result) };
+        // Items finish strictly in order, so the entry of item N is always the (N+1)th one.
+        const cursor = { ...current, results: (current.results || []).concat([entry]) };
         if (!cursor.delay || doneIndex + 1 >= cursor.count) {
             await emitNext(context, id, cursor, doneIndex);
             return 0;
@@ -268,7 +269,8 @@ async function handleAck(context) {
         return context.log({ step: 'invalid-ack', message: 'Each sequential: ignoring a malformed acknowledgement.' });
     }
 
-    return acknowledge(context, id, doneIndex, Array.isArray(result) ? result : []);
+    const isEntry = result && typeof result === 'object' && !Array.isArray(result);
+    return acknowledge(context, id, doneIndex, isEntry ? result : {});
 }
 
 /**
@@ -297,8 +299,10 @@ async function handleTimeout(context) {
                 ? `Each sequential: item ${index} was acknowledged, continuing with the next item before the delay ran out.`
                 : `Each sequential: item ${index} was not acknowledged by ContinueEach in time, continuing with the next item.`
         });
+        // A skipped item still has its entry in the result - null - so entries and items line up.
+        const results = current.acked ? current.results : (current.results || []).concat([null]);
         // The timeout that fired needs no clearing.
-        return emitNext(context, id, { ...current, timeoutId: null }, index);
+        return emitNext(context, id, { ...current, results, timeoutId: null }, index);
     });
 }
 
