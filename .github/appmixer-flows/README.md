@@ -87,7 +87,7 @@ review's `submitted_at`. Worst case is one extra ~15 s no-op run.
 Fires a `repository_dispatch` event of type `apx-vero-mention` when a person
 mentions the bot on a PR — in the conversation, inline on a line of the diff,
 or in a review body — which starts
-`.github/workflows/claude-mention-responder.yml`.
+`.github/workflows/vero-mention-responder.yml`.
 
 It replaces `claude-pr-author.yml` (#1153, removed in #1169), which listened to
 the comment and review events directly. Two of those three events run without
@@ -122,7 +122,7 @@ a repeated dispatch finds nothing pending and stops.
 
 Published as an integration template (see below); the wizard asks for the two
 accounts and the repositories to watch. Each watched repository needs
-`claude-mention-responder.yml` on its default branch and the `VERO_GH_TOKEN`
+`vero-mention-responder.yml` on its default branch and the `VERO_GH_TOKEN`
 and `ANTHROPIC_API_KEY` secrets — the integration only covers the Appmixer half.
 
 ## Publishing as integrations
