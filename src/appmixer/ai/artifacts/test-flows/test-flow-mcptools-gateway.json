@@ -1,0 +1,561 @@
+{
+    "name": "E2E MCPTools - gateway tool port",
+    "description": "MCPGateway announces its webhook on the 'out' port; the flow calls two tools through it (EchoTool with a model-defined parameter, GreetTool with a static value) exactly the way an MCP client would, and asserts the component output that comes back. A third call passes a 'value' argument to GreetTool and asserts the static value still wins — a caller must not override a literal configured on the tool.",
+    "customFields": {
+        "category": "E2E_test_flow"
+    },
+    "flow": {
+        "fd3b5a05-98b8-4431-ac29-55a80ce8f866": {
+            "type": "appmixer.utils.controls.OnStart",
+            "label": "OnStart",
+            "x": 64,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {},
+            "config": {},
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "60cd69f3-76be-44b1-ac41-47c77b0e9537": {
+            "type": "appmixer.ai.mcptools.MCPGateway",
+            "label": "MCPGateway",
+            "x": 272,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {},
+            "config": {},
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "996ab86c-e9b0-420b-9148-2f7813089c93": {
+            "type": "appmixer.utils.test.Assert",
+            "label": "Assert gateway announcement",
+            "x": 480,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "60cd69f3-76be-44b1-ac41-47c77b0e9537": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "60cd69f3-76be-44b1-ac41-47c77b0e9537": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "e57cbf43-432e-48ce-9be1-4eb14fbf2f74": {
+                                            "variable": "$.60cd69f3-76be-44b1-ac41-47c77b0e9537.out.webhook",
+                                            "functions": []
+                                        },
+                                        "4339bee8-35fe-4960-bb42-c31e02cc2224": {
+                                            "variable": "$.60cd69f3-76be-44b1-ac41-47c77b0e9537.out.componentId",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{e57cbf43-432e-48ce-9be1-4eb14fbf2f74}}}",
+                                                "assertion": "regex",
+                                                "regex": "^https?://.+/flows/.+/components/"
+                                            },
+                                            {
+                                                "field": "{{{4339bee8-35fe-4960-bb42-c31e02cc2224}}}",
+                                                "assertion": "equal",
+                                                "expected": "60cd69f3-76be-44b1-ac41-47c77b0e9537"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "c08d43af-0893-4141-8c45-80559988bd1b": {
+            "type": "appmixer.utils.controls.MockValue",
+            "label": "EchoTool",
+            "x": 480,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "60cd69f3-76be-44b1-ac41-47c77b0e9537": [
+                        "tool"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "60cd69f3-76be-44b1-ac41-47c77b0e9537": {
+                            "tool": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "value": {
+                                        "8481184f-59db-4c2c-a5b7-026ad68b97fe": {
+                                            "variable": "$.60cd69f3-76be-44b1-ac41-47c77b0e9537.tool.modelDefinedParameter",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "value": "{{{8481184f-59db-4c2c-a5b7-026ad68b97fe}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "26689cfd-d15f-4c4d-a4bc-ae170e9b1e12": {
+            "type": "appmixer.utils.controls.MockValue",
+            "label": "GreetTool",
+            "x": 480,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "60cd69f3-76be-44b1-ac41-47c77b0e9537": [
+                        "tool"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "60cd69f3-76be-44b1-ac41-47c77b0e9537": {
+                            "tool": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "value": {}
+                                },
+                                "lambda": {
+                                    "value": "Hello, Appmixer!"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "8e11b14a-ba4d-4fd8-b2d2-e98f8b616458": {
+            "type": "appmixer.utils.http.Post",
+            "label": "Call EchoTool",
+            "x": 688,
+            "y": 400,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "60cd69f3-76be-44b1-ac41-47c77b0e9537": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "60cd69f3-76be-44b1-ac41-47c77b0e9537": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "url": {
+                                        "5b4cdaac-d680-4932-8797-9f3680c8082b": {
+                                            "variable": "$.60cd69f3-76be-44b1-ac41-47c77b0e9537.out.webhook",
+                                            "functions": []
+                                        }
+                                    },
+                                    "headers": {},
+                                    "bodyType": {},
+                                    "body": {}
+                                },
+                                "lambda": {
+                                    "url": "{{{5b4cdaac-d680-4932-8797-9f3680c8082b}}}",
+                                    "headers": "{\"Content-Type\":\"application/json\"}",
+                                    "bodyType": "raw",
+                                    "body": "{\"function\": {\"name\": \"pM5edMztbgussb84FReaoB_EchoTool\", \"arguments\": {\"value\": \"hello world\"}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "23d19971-6711-47eb-b480-274e8f1fc7e0": {
+            "type": "appmixer.utils.test.Assert",
+            "label": "Assert EchoTool output",
+            "x": 896,
+            "y": 400,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "8e11b14a-ba4d-4fd8-b2d2-e98f8b616458": [
+                        "response"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "8e11b14a-ba4d-4fd8-b2d2-e98f8b616458": {
+                            "response": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "033563a1-841f-465d-82d2-c006e911ece2": {
+                                            "variable": "$.8e11b14a-ba4d-4fd8-b2d2-e98f8b616458.response.body",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$.out.outvalue"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{033563a1-841f-465d-82d2-c006e911ece2}}}",
+                                                "assertion": "equal",
+                                                "expected": "hello world"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "c355cab8-1069-4b4c-8130-4477dacf1a25": {
+            "type": "appmixer.utils.http.Post",
+            "label": "Call GreetTool",
+            "x": 688,
+            "y": 528,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "60cd69f3-76be-44b1-ac41-47c77b0e9537": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "60cd69f3-76be-44b1-ac41-47c77b0e9537": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "url": {
+                                        "5193e36a-8b2c-4028-8487-c53be35fdc57": {
+                                            "variable": "$.60cd69f3-76be-44b1-ac41-47c77b0e9537.out.webhook",
+                                            "functions": []
+                                        }
+                                    },
+                                    "headers": {},
+                                    "bodyType": {},
+                                    "body": {}
+                                },
+                                "lambda": {
+                                    "url": "{{{5193e36a-8b2c-4028-8487-c53be35fdc57}}}",
+                                    "headers": "{\"Content-Type\":\"application/json\"}",
+                                    "bodyType": "raw",
+                                    "body": "{\"function\": {\"name\": \"5K5ZxsRuVJshv8u9dMYXb3_GreetTool\", \"arguments\": {}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "62767654-1fb0-4690-b70d-bcc7063caa63": {
+            "type": "appmixer.utils.test.Assert",
+            "label": "Assert GreetTool output",
+            "x": 896,
+            "y": 528,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "c355cab8-1069-4b4c-8130-4477dacf1a25": [
+                        "response"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "c355cab8-1069-4b4c-8130-4477dacf1a25": {
+                            "response": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "65f62d67-2473-4984-bbd0-f783dbf23fea": {
+                                            "variable": "$.c355cab8-1069-4b4c-8130-4477dacf1a25.response.body",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$.out.outvalue"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{65f62d67-2473-4984-bbd0-f783dbf23fea}}}",
+                                                "assertion": "equal",
+                                                "expected": "Hello, Appmixer!"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "9fa23b77-6fe4-474f-8e3b-5b0daab084d3": {
+            "type": "appmixer.utils.http.Post",
+            "label": "Call GreetTool with an argument",
+            "x": 688,
+            "y": 656,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "60cd69f3-76be-44b1-ac41-47c77b0e9537": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "60cd69f3-76be-44b1-ac41-47c77b0e9537": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "url": {
+                                        "1201b9bd-5c98-427b-8885-55f18e671ce4": {
+                                            "variable": "$.60cd69f3-76be-44b1-ac41-47c77b0e9537.out.webhook",
+                                            "functions": []
+                                        }
+                                    },
+                                    "headers": {},
+                                    "bodyType": {},
+                                    "body": {}
+                                },
+                                "lambda": {
+                                    "url": "{{{1201b9bd-5c98-427b-8885-55f18e671ce4}}}",
+                                    "headers": "{\"Content-Type\":\"application/json\"}",
+                                    "bodyType": "raw",
+                                    "body": "{\"function\": {\"name\": \"5K5ZxsRuVJshv8u9dMYXb3_GreetTool\", \"arguments\": {\"value\": \"overridden by the caller\"}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "6161383d-458e-4940-9ba6-21197f4b2621": {
+            "type": "appmixer.utils.test.Assert",
+            "label": "Assert the static value wins",
+            "x": 896,
+            "y": 656,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "9fa23b77-6fe4-474f-8e3b-5b0daab084d3": [
+                        "response"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "9fa23b77-6fe4-474f-8e3b-5b0daab084d3": {
+                            "response": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "6b6a8d14-aab6-4bef-b33c-30c867098b73": {
+                                            "variable": "$.9fa23b77-6fe4-474f-8e3b-5b0daab084d3.response.body",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$.out.outvalue"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{6b6a8d14-aab6-4bef-b33c-30c867098b73}}}",
+                                                "assertion": "equal",
+                                                "expected": "Hello, Appmixer!"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "61ae6935-d3bc-48b8-9b95-da7830121b74": {
+            "type": "appmixer.utils.test.AfterAll",
+            "label": "AfterAll",
+            "x": 1104,
+            "y": 656,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "996ab86c-e9b0-420b-9148-2f7813089c93": [
+                        "out"
+                    ],
+                    "23d19971-6711-47eb-b480-274e8f1fc7e0": [
+                        "out"
+                    ],
+                    "62767654-1fb0-4690-b70d-bcc7063caa63": [
+                        "out"
+                    ],
+                    "6161383d-458e-4940-9ba6-21197f4b2621": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 180
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "efef82ff-fff0-4282-aea8-c463fb907de8": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "label": "ProcessE2EResults",
+            "x": 1312,
+            "y": 656,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "61ae6935-d3bc-48b8-9b95-da7830121b74": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "61ae6935-d3bc-48b8-9b95-da7830121b74": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "4501a5d4-b764-4ef2-ab4b-b9a2775eeb2f": {
+                                            "variable": "$.61ae6935-d3bc-48b8-9b95-da7830121b74.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E MCPTools - gateway tool port",
+                                    "result": "{{{4501a5d4-b764-4ef2-ab4b-b9a2775eeb2f}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        }
+    },
+    "notes": {
+        "327c267a-c5c4-4ef6-b731-1955dba44333": {
+            "x": 64,
+            "y": 816,
+            "width": 672,
+            "height": 288,
+            "content": "## ⚠️ Tool names are derived from component IDs\n\nThe three `Call …Tool` HTTP components post a literal tool name to the gateway webhook:\n\n- `pM5edMztbgussb84FReaoB_EchoTool` → EchoTool (`c08d43af-…`)\n- `5K5ZxsRuVJshv8u9dMYXb3_GreetTool` → GreetTool (`26689cfd-…`)\n\n`mcptools/tool.js buildToolName()` builds those as `shortUuid(componentId)_<component label>`, so **copying a tool component, changing its label or re-creating it in the designer changes its tool name** and the call comes back `404 Unknown tool`. Recompute with `require('short-uuid')().fromUUID(componentId)` and update the request bodies.\n\nNo tenant data is needed and nothing is created outside Appmixer, so there is nothing to clean up."
+        }
+    }
+}
