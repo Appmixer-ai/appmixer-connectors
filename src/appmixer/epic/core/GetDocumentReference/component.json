@@ -1,7 +1,7 @@
 {
-    "name": "appmixer.epic.core.GetMedicationRequest",
-    "label": "Get Medication Request",
-    "description": "Retrieve a single Medication Request (medication order) resource from Epic by its FHIR ID, including the ordered medication, requester and dosage instructions.",
+    "name": "appmixer.epic.core.GetDocumentReference",
+    "label": "Get Document",
+    "description": "Retrieve a single DocumentReference resource (clinical note or document) from Epic by its FHIR ID, including its type, category, status, date and the attachment metadata pointing to the document content.",
     "author": "Appmixer <info@appmixer.com>",
     "version": "1.0.0",
     "auth": {
@@ -13,21 +13,21 @@
             "schema": {
                 "type": "object",
                 "properties": {
-                    "medicationRequestId": {
+                    "documentReferenceId": {
                         "type": "string"
                     }
                 },
                 "required": [
-                    "medicationRequestId"
+                    "documentReferenceId"
                 ]
             },
             "inspector": {
                 "inputs": {
-                    "medicationRequestId": {
+                    "documentReferenceId": {
                         "type": "text",
-                        "label": "Medication Request ID",
+                        "label": "Document Reference ID",
                         "index": 1,
-                        "tooltip": "The FHIR ID of the Medication Request resource, typically taken from Find Medication Requests."
+                        "tooltip": "The FHIR ID of the DocumentReference resource, typically taken from Find Documents."
                     }
                 }
             }
@@ -42,80 +42,121 @@
                     "resourceType": {
                         "type": "string",
                         "title": "Resource Type",
-                        "example": "MedicationRequest"
+                        "example": "DocumentReference"
                     },
                     "id": {
                         "type": "string",
-                        "title": "Medication Request ID",
-                        "example": "exlvXBLBqAg-U8-tCHWDh2g3"
+                        "title": "Document Reference ID",
+                        "example": "eqrfCLzZib7T9CLDBTAULhg3"
                     },
                     "status": {
                         "type": "string",
                         "title": "Status",
-                        "example": "active"
+                        "example": "current"
                     },
-                    "intent": {
+                    "docStatus": {
                         "type": "string",
-                        "title": "Intent",
-                        "example": "order"
+                        "title": "Doc Status",
+                        "example": "final"
                     },
-                    "medicationReference": {
+                    "type": {
                         "type": "object",
-                        "title": "Medication Reference",
-                        "properties": {
-                            "reference": {
-                                "type": "string",
-                                "title": "Medication Reference.Reference",
-                                "example": "Medication/eGmO0h6H1cVDlLimIL5x4Vg3"
-                            },
-                            "display": {
-                                "type": "string",
-                                "title": "Medication Reference.Display",
-                                "example": "lisinopril 10 MG Oral Tablet"
-                            }
-                        }
-                    },
-                    "medicationCodeableConcept": {
-                        "type": "object",
-                        "title": "Medication",
+                        "title": "Type",
                         "properties": {
                             "coding": {
                                 "type": "array",
-                                "title": "Medication.Coding",
+                                "title": "Type.Coding",
                                 "items": {
                                     "type": "object",
                                     "properties": {
                                         "system": {
                                             "type": "string",
-                                            "title": "Medication Coding System",
-                                            "example": "http://www.nlm.nih.gov/research/umls/rxnorm"
+                                            "title": "Type Coding System",
+                                            "example": "http://loinc.org"
                                         },
                                         "code": {
                                             "type": "string",
-                                            "title": "Medication Coding Code",
-                                            "example": "314076"
+                                            "title": "Type Coding Code",
+                                            "example": "11506-3"
                                         },
                                         "display": {
                                             "type": "string",
-                                            "title": "Medication Coding Display",
-                                            "example": "lisinopril 10 MG Oral Tablet"
+                                            "title": "Type Coding Display",
+                                            "example": "Progress note"
                                         }
                                     }
                                 },
                                 "example": [
                                     {
-                                        "system": "http://www.nlm.nih.gov/research/umls/rxnorm",
-                                        "code": "314076",
-                                        "display": "lisinopril 10 MG Oral Tablet"
+                                        "system": "http://loinc.org",
+                                        "code": "11506-3",
+                                        "display": "Progress note"
                                     }
                                 ]
                             },
                             "text": {
                                 "type": "string",
-                                "title": "Medication.Text",
-                                "example": "lisinopril 10 MG Oral Tablet"
+                                "title": "Type.Text",
+                                "example": "Progress note"
                             }
                         }
+                    },
+                    "category": {
+                        "type": "array",
+                        "title": "Category",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "coding": {
+                                    "type": "array",
+                                    "title": "Category Coding",
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {
+                                            "system": {
+                                                "type": "string",
+                                                "title": "Category Coding System",
+                                                "example": "http://hl7.org/fhir/us/core/CodeSystem/us-core-documentreference-category"
+                                            },
+                                            "code": {
+                                                "type": "string",
+                                                "title": "Category Coding Code",
+                                                "example": "clinical-note"
+                                            },
+                                            "display": {
+                                                "type": "string",
+                                                "title": "Category Coding Display",
+                                                "example": "Clinical Note"
+                                            }
+                                        }
+                                    },
+                                    "example": [
+                                        {
+                                            "system": "http://hl7.org/fhir/us/core/CodeSystem/us-core-documentreference-category",
+                                            "code": "clinical-note",
+                                            "display": "Clinical Note"
+                                        }
+                                    ]
+                                },
+                                "text": {
+                                    "type": "string",
+                                    "title": "Category Text",
+                                    "example": "Clinical Note"
+                                }
+                            }
+                        },
+                        "example": [
+                            {
+                                "coding": [
+                                    {
+                                        "system": "http://hl7.org/fhir/us/core/CodeSystem/us-core-documentreference-category",
+                                        "code": "clinical-note",
+                                        "display": "Clinical Note"
+                                    }
+                                ],
+                                "text": "Clinical Note"
+                            }
+                        ]
                     },
                     "subject": {
                         "type": "object",
@@ -133,82 +174,40 @@
                             }
                         }
                     },
-                    "authoredOn": {
+                    "date": {
                         "type": "string",
-                        "title": "Authored On",
-                        "example": "2023-07-20T09:00:00Z"
+                        "title": "Date",
+                        "example": "2023-09-02T10:15:00Z"
                     },
-                    "requester": {
-                        "type": "object",
-                        "title": "Requester",
-                        "properties": {
-                            "reference": {
-                                "type": "string",
-                                "title": "Requester.Reference",
-                                "example": "Practitioner/euGDzQdIeVCVMBw5nRSFOZQ3"
-                            },
-                            "display": {
-                                "type": "string",
-                                "title": "Requester.Display",
-                                "example": "Physician Family Medicine, MD"
-                            }
-                        }
+                    "description": {
+                        "type": "string",
+                        "title": "Description",
+                        "example": "Office visit progress note"
                     },
-                    "dosageInstruction": {
+                    "content": {
                         "type": "array",
-                        "title": "Dosage Instruction",
+                        "title": "Content",
                         "items": {
                             "type": "object",
                             "properties": {
-                                "text": {
-                                    "type": "string",
-                                    "title": "Dosage Instruction Text",
-                                    "example": "Take 1 tablet (10 mg total) by mouth once daily."
-                                },
-                                "patientInstruction": {
-                                    "type": "string",
-                                    "title": "Dosage Instruction Patient Instruction",
-                                    "example": "Take 1 tablet by mouth once daily."
-                                },
-                                "route": {
+                                "attachment": {
                                     "type": "object",
-                                    "title": "Dosage Instruction Route",
+                                    "title": "Content Attachment",
                                     "properties": {
-                                        "coding": {
-                                            "type": "array",
-                                            "title": "Dosage Instruction Route.Coding",
-                                            "items": {
-                                                "type": "object",
-                                                "properties": {
-                                                    "system": {
-                                                        "type": "string",
-                                                        "title": "Dosage Instruction Route Coding System",
-                                                        "example": "http://snomed.info/sct"
-                                                    },
-                                                    "code": {
-                                                        "type": "string",
-                                                        "title": "Dosage Instruction Route Coding Code",
-                                                        "example": "260548002"
-                                                    },
-                                                    "display": {
-                                                        "type": "string",
-                                                        "title": "Dosage Instruction Route Coding Display",
-                                                        "example": "Oral"
-                                                    }
-                                                }
-                                            },
-                                            "example": [
-                                                {
-                                                    "system": "http://snomed.info/sct",
-                                                    "code": "260548002",
-                                                    "display": "Oral"
-                                                }
-                                            ]
-                                        },
-                                        "text": {
+                                        "contentType": {
                                             "type": "string",
-                                            "title": "Dosage Instruction Route.Text",
-                                            "example": "Oral"
+                                            "title": "Content Attachment.Content Type",
+                                            "example": "text/html"
+                                        },
+                                        "url": {
+                                            "type": "string",
+                                            "title": "Content Attachment.URL",
+                                            "example": "Binary/eZzn1Ff2cW0Yv3yMm0FBDCw3"
+                                        },
+                                        "title": {
+                                            "type": "string",
+                                            "title": "Content Attachment.Title",
+                                            "example": "Progress note"
                                         }
                                     }
                                 }
@@ -216,17 +215,10 @@
                         },
                         "example": [
                             {
-                                "text": "Take 1 tablet (10 mg total) by mouth once daily.",
-                                "patientInstruction": "Take 1 tablet by mouth once daily.",
-                                "route": {
-                                    "coding": [
-                                        {
-                                            "system": "http://snomed.info/sct",
-                                            "code": "260548002",
-                                            "display": "Oral"
-                                        }
-                                    ],
-                                    "text": "Oral"
+                                "attachment": {
+                                    "contentType": "text/html",
+                                    "url": "Binary/eZzn1Ff2cW0Yv3yMm0FBDCw3",
+                                    "title": "Progress note"
                                 }
                             }
                         ]
