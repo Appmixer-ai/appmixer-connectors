@@ -206,3 +206,52 @@ so re-running it updates the same template in place. Do not clone a template to
 republish it: the clone is a second card in the hub. Running
 instances stay on their revision until
 `appmixer integration update-instances <template id>` moves them.
+
+## pr-connector-labels.json
+
+Labels every new pull request with the connector it touches, so one search lists
+a connector's issues and PRs together across both repositories:
+`org:Appmixer-ai label:"appmixer:slack"`.
+
+The labels are one per releasable unit — per `bundle.json` — named after the
+connector ref the e2e tooling uses (`appmixer:microsoft:mail`), plus a label per
+shared root that ships files of its own (`appmixer:google`, `appmixer:microsoft`,
+`appmixer:aws`, `appmixer:zoho`). The generated MCP server wrappers share one
+label, `appmixer:mcpservers`. PRs that touch no connector (CI, scripts, docs)
+get none.
+
+### Shape
+
+`New Pull Request` → `Make API Call` (GraphQL `resource(url:)`: the PR's number,
+repository and changed files) → `Code Block` (paths to labels: the deepest
+bundle directory containing a file wins, else the deepest shared root) →
+`Condition` (at least one label) → `Make API Call` (`POST
+/repos/{repo}/issues/{number}/labels`).
+
+A PR that adds a connector ships its `bundle.json`, and the Code Block derives
+the new label from it, so the first PR of a new connector is labelled too.
+Only the first 100 changed files are read; a sweep across more connectors than
+that keeps the labels of its first 100 files.
+
+### Setup
+
+The wizard asks for two GitHub accounts and the repository:
+
+- **Reads pull requests** — any account that can read the repository.
+- **Push access** — adds the labels. Adding a label that does not exist yet
+  creates it, which needs push; `apx-vero` has only triage.
+
+### Keeping the map current
+
+The path map is a line in the Code Block, generated from the `bundle.json`
+directories by `scripts/connector-labels.js`. After adding or removing a
+connector:
+
+```bash
+node scripts/connector-labels.js sync --repo Appmixer-ai/appmixer-connectors
+node scripts/connector-labels.js sync --repo Appmixer-ai/appmixer-components
+node scripts/connector-labels.js flow .github/appmixer-flows/pr-connector-labels.json
+```
+
+then republish the integration (see *Publishing* above). `sync` needs push to
+both repositories.

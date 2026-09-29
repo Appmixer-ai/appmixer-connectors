@@ -1,0 +1,305 @@
+{
+    "name": "CI - PR connector labels",
+    "description": "Labels every new pull request with the connector it touches — appmixer:<connector>, one label per bundle.json — so org:Appmixer-ai label:\"appmixer:slack\" lists its issues and PRs together.",
+    "flow": {
+        "e2000000-0000-4000-8000-000000000001": {
+            "type": "appmixer.github.list.NewPullRequest",
+            "version": "1.0.0",
+            "label": "New pull request",
+            "x": 0,
+            "y": 0,
+            "source": {},
+            "errorHandling": {
+                "autoRetry": true,
+                "onError": "storeUnprocessed"
+            },
+            "config": {
+                "properties": {
+                    "repositoryId": "Appmixer-ai/appmixer-connectors"
+                }
+            }
+        },
+        "e2000000-0000-4000-8000-000000000002": {
+            "type": "appmixer.github.list.MakeApiCall",
+            "version": "1.0.0",
+            "label": "Changed files",
+            "x": 384,
+            "y": 0,
+            "source": {
+                "in": {
+                    "e2000000-0000-4000-8000-000000000001": [
+                        "pullRequest"
+                    ]
+                }
+            },
+            "errorHandling": {
+                "autoRetry": true,
+                "onError": "storeUnprocessed"
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "e2000000-0000-4000-8000-000000000001": {
+                            "pullRequest": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "url": {},
+                                    "method": {},
+                                    "body": {
+                                        "e2000000-0000-4000-8000-00000000bb01": {
+                                            "variable": "$.e2000000-0000-4000-8000-000000000001.pullRequest.html_url",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "url": "/graphql",
+                                    "method": "POST",
+                                    "body": "{\"query\": \"query { resource(url: \\\"{{{e2000000-0000-4000-8000-00000000bb01}}}\\\") { ... on PullRequest { number repository { nameWithOwner } files(first: 100) { nodes { path } } } } }\"}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "e2000000-0000-4000-8000-000000000003": {
+            "type": "appmixer.utils.controls.CodeBlock",
+            "version": "1.0.0",
+            "label": "Paths to labels",
+            "x": 768,
+            "y": 0,
+            "source": {
+                "in": {
+                    "e2000000-0000-4000-8000-000000000002": [
+                        "out"
+                    ]
+                }
+            },
+            "errorHandling": {
+                "autoRetry": true,
+                "onError": "storeUnprocessed"
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "e2000000-0000-4000-8000-000000000002": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "variables": {
+                                        "e2000000-0000-4000-8000-00000000bb02": {
+                                            "variable": "$.e2000000-0000-4000-8000-000000000002.out.body",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$.data.resource"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "code": {}
+                                },
+                                "lambda": {
+                                    "variables": {
+                                        "ADD": [
+                                            {
+                                                "type": "text",
+                                                "name": "pr",
+                                                "text": "{{{e2000000-0000-4000-8000-00000000bb02}}}"
+                                            }
+                                        ]
+                                    },
+                                    "code": "(function () {\n    // Generated by scripts/connector-labels.js flow — regenerate after adding a connector.\n    const MAP = {\"bundles\":[[\"src/appmixer/activecampaign/\",\"appmixer:activecampaign\"],[\"src/appmixer/ai/agentcore/\",\"appmixer:ai:agentcore\"],[\"src/appmixer/ai/agenttools/\",\"appmixer:ai:agenttools\"],[\"src/appmixer/ai/assemblyai/\",\"appmixer:ai:assemblyai\"],[\"src/appmixer/ai/bedrock/\",\"appmixer:ai:bedrock\"],[\"src/appmixer/ai/claude/\",\"appmixer:ai:claude\"],[\"src/appmixer/ai/deepgram/\",\"appmixer:ai:deepgram\"],[\"src/appmixer/ai/exa/\",\"appmixer:ai:exa\"],[\"src/appmixer/ai/fal/\",\"appmixer:ai:fal\"],[\"src/appmixer/ai/gemini/\",\"appmixer:ai:gemini\"],[\"src/appmixer/ai/gladia/\",\"appmixer:ai:gladia\"],[\"src/appmixer/ai/groq/\",\"appmixer:ai:groq\"],[\"src/appmixer/ai/huggingface/\",\"appmixer:ai:huggingface\"],[\"src/appmixer/ai/mcptools/\",\"appmixer:ai:mcptools\"],[\"src/appmixer/ai/openai/\",\"appmixer:ai:openai\"],[\"src/appmixer/ai/openrouter/\",\"appmixer:ai:openrouter\"],[\"src/appmixer/ai/requesty/\",\"appmixer:ai:requesty\"],[\"src/appmixer/ai/voyageai/\",\"appmixer:ai:voyageai\"],[\"src/appmixer/airtable/\",\"appmixer:airtable\"],[\"src/appmixer/airtop/\",\"appmixer:airtop\"],[\"src/appmixer/akamai/\",\"appmixer:akamai\"],[\"src/appmixer/apify/\",\"appmixer:apify\"],[\"src/appmixer/apigee/\",\"appmixer:apigee\"],[\"src/appmixer/asana/\",\"appmixer:asana\"],[\"src/appmixer/aws/lambda/\",\"appmixer:aws:lambda\"],[\"src/appmixer/aws/redshift/\",\"appmixer:aws:redshift\"],[\"src/appmixer/aws/s3/\",\"appmixer:aws:s3\"],[\"src/appmixer/aws/sns/\",\"appmixer:aws:sns\"],[\"src/appmixer/axiom/\",\"appmixer:axiom\"],[\"src/appmixer/azureCognitiveServices/\",\"appmixer:azureCognitiveServices\"],[\"src/appmixer/azuredevops/\",\"appmixer:azuredevops\"],[\"src/appmixer/azuredocumentintelligence/\",\"appmixer:azuredocumentintelligence\"],[\"src/appmixer/beehiiv/\",\"appmixer:beehiiv\"],[\"src/appmixer/betterstack/\",\"appmixer:betterstack\"],[\"src/appmixer/bigCommerce/\",\"appmixer:bigCommerce\"],[\"src/appmixer/blackboard/\",\"appmixer:blackboard\"],[\"src/appmixer/bluesky/\",\"appmixer:bluesky\"],[\"src/appmixer/box/\",\"appmixer:box\"],[\"src/appmixer/brevo/\",\"appmixer:brevo\"],[\"src/appmixer/brightdata/\",\"appmixer:brightdata\"],[\"src/appmixer/calendly/\",\"appmixer:calendly\"],[\"src/appmixer/canva/\",\"appmixer:canva\"],[\"src/appmixer/canvas/\",\"appmixer:canvas\"],[\"src/appmixer/clearbit/\",\"appmixer:clearbit\"],[\"src/appmixer/clerk/\",\"appmixer:clerk\"],[\"src/appmixer/clickup/\",\"appmixer:clickup\"],[\"src/appmixer/cliniko/\",\"appmixer:cliniko\"],[\"src/appmixer/cloudflare/\",\"appmixer:cloudflare\"],[\"src/appmixer/cloudflareWAF/\",\"appmixer:cloudflareWAF\"],[\"src/appmixer/connectwise/\",\"appmixer:connectwise\"],[\"src/appmixer/constantContact/\",\"appmixer:constantContact\"],[\"src/appmixer/convex/\",\"appmixer:convex\"],[\"src/appmixer/currencylayer/\",\"appmixer:currencylayer\"],[\"src/appmixer/deepai/\",\"appmixer:deepai\"],[\"src/appmixer/discord/\",\"appmixer:discord\"],[\"src/appmixer/docusign/\",\"appmixer:docusign\"],[\"src/appmixer/dropbox/\",\"appmixer:dropbox\"],[\"src/appmixer/e2b/\",\"appmixer:e2b\"],[\"src/appmixer/elevenlabs/\",\"appmixer:elevenlabs\"],[\"src/appmixer/epic/\",\"appmixer:epic\"],[\"src/appmixer/everart/\",\"appmixer:everart\"],[\"src/appmixer/evernote/\",\"appmixer:evernote\"],[\"src/appmixer/exchangeratesapi/\",\"appmixer:exchangeratesapi\"],[\"src/appmixer/facebook/\",\"appmixer:facebook\"],[\"src/appmixer/facebookbusiness/\",\"appmixer:facebookbusiness\"],[\"src/appmixer/fakturoid/\",\"appmixer:fakturoid\"],[\"src/appmixer/figma/\",\"appmixer:figma\"],[\"src/appmixer/firecrawl/\",\"appmixer:firecrawl\"],[\"src/appmixer/fireflies/\",\"appmixer:fireflies\"],[\"src/appmixer/freeforexapi/\",\"appmixer:freeforexapi\"],[\"src/appmixer/freshdesk/\",\"appmixer:freshdesk\"],[\"src/appmixer/freshsales/\",\"appmixer:freshsales\"],[\"src/appmixer/front/\",\"appmixer:front\"],[\"src/appmixer/getResponse/\",\"appmixer:getResponse\"],[\"src/appmixer/github/\",\"appmixer:github\"],[\"src/appmixer/gohighlevel/\",\"appmixer:gohighlevel\"],[\"src/appmixer/google/analytics/\",\"appmixer:google:analytics\"],[\"src/appmixer/google/bigquery/\",\"appmixer:google:bigquery\"],[\"src/appmixer/google/calendar/\",\"appmixer:google:calendar\"],[\"src/appmixer/google/drive/\",\"appmixer:google:drive\"],[\"src/appmixer/google/gmail/\",\"appmixer:google:gmail\"],[\"src/appmixer/google/spreadsheets/\",\"appmixer:google:spreadsheets\"],[\"src/appmixer/google/youtube/\",\"appmixer:google:youtube\"],[\"src/appmixer/googleAds/\",\"appmixer:googleAds\"],[\"src/appmixer/googleBlogger/\",\"appmixer:googleBlogger\"],[\"src/appmixer/googleChat/\",\"appmixer:googleChat\"],[\"src/appmixer/googleContacts/\",\"appmixer:googleContacts\"],[\"src/appmixer/googleDocs/\",\"appmixer:googleDocs\"],[\"src/appmixer/googleForms/\",\"appmixer:googleForms\"],[\"src/appmixer/googleMeet/\",\"appmixer:googleMeet\"],[\"src/appmixer/googleSlides/\",\"appmixer:googleSlides\"],[\"src/appmixer/googleTasks/\",\"appmixer:googleTasks\"],[\"src/appmixer/harvest/\",\"appmixer:harvest\"],[\"src/appmixer/helpscout/\",\"appmixer:helpscout\"],[\"src/appmixer/highrise/\",\"appmixer:highrise\"],[\"src/appmixer/hubbi/\",\"appmixer:hubbi\"],[\"src/appmixer/hubspot/\",\"appmixer:hubspot\"],[\"src/appmixer/imperva/\",\"appmixer:imperva\"],[\"src/appmixer/intercom/\",\"appmixer:intercom\"],[\"src/appmixer/jira/\",\"appmixer:jira\"],[\"src/appmixer/jotform/\",\"appmixer:jotform\"],[\"src/appmixer/kafka/\",\"appmixer:kafka\"],[\"src/appmixer/kit/\",\"appmixer:kit\"],[\"src/appmixer/klaviyo/\",\"appmixer:klaviyo\"],[\"src/appmixer/latchshot/\",\"appmixer:latchshot\"],[\"src/appmixer/leadspicker/\",\"appmixer:leadspicker\"],[\"src/appmixer/lemonsqueezy/\",\"appmixer:lemonsqueezy\"],[\"src/appmixer/line/\",\"appmixer:line\"],[\"src/appmixer/linear/\",\"appmixer:linear\"],[\"src/appmixer/linkedin/\",\"appmixer:linkedin\"],[\"src/appmixer/logscale/\",\"appmixer:logscale\"],[\"src/appmixer/mailchimp/\",\"appmixer:mailchimp\"],[\"src/appmixer/mailerlite/\",\"appmixer:mailerlite\"],[\"src/appmixer/mandrill/\",\"appmixer:mandrill\"],[\"src/appmixer/mcpservers/\",\"appmixer:mcpservers\"],[\"src/appmixer/merk/\",\"appmixer:merk\"],[\"src/appmixer/microsoft/calendar/\",\"appmixer:microsoft:calendar\"],[\"src/appmixer/microsoft/dynamics/\",\"appmixer:microsoft:dynamics\"],[\"src/appmixer/microsoft/excel/\",\"appmixer:microsoft:excel\"],[\"src/appmixer/microsoft/mail/\",\"appmixer:microsoft:mail\"],[\"src/appmixer/microsoft/onedrive/\",\"appmixer:microsoft:onedrive\"],[\"src/appmixer/microsoft/sharepoint/\",\"appmixer:microsoft:sharepoint\"],[\"src/appmixer/microsoft/teams/\",\"appmixer:microsoft:teams\"],[\"src/appmixer/mollie/\",\"appmixer:mollie\"],[\"src/appmixer/monday/\",\"appmixer:monday\"],[\"src/appmixer/mongodb/\",\"appmixer:mongodb\"],[\"src/appmixer/MSPowerBI/\",\"appmixer:MSPowerBI\"],[\"src/appmixer/mssql/\",\"appmixer:mssql\"],[\"src/appmixer/mysql/\",\"appmixer:mysql\"],[\"src/appmixer/naxai/\",\"appmixer:naxai\"],[\"src/appmixer/nexl/\",\"appmixer:nexl\"],[\"src/appmixer/notion/\",\"appmixer:notion\"],[\"src/appmixer/ntfy/\",\"appmixer:ntfy\"],[\"src/appmixer/onesignal/\",\"appmixer:onesignal\"],[\"src/appmixer/openai/\",\"appmixer:openai\"],[\"src/appmixer/paddle/\",\"appmixer:paddle\"],[\"src/appmixer/pdfco/\",\"appmixer:pdfco\"],[\"src/appmixer/perplexity/\",\"appmixer:perplexity\"],[\"src/appmixer/pinecone/\",\"appmixer:pinecone\"],[\"src/appmixer/pinterest/\",\"appmixer:pinterest\"],[\"src/appmixer/pipedrive/\",\"appmixer:pipedrive\"],[\"src/appmixer/plivo/\",\"appmixer:plivo\"],[\"src/appmixer/postgres/\",\"appmixer:postgres\"],[\"src/appmixer/posthog/\",\"appmixer:posthog\"],[\"src/appmixer/prestashop/\",\"appmixer:prestashop\"],[\"src/appmixer/quickbooks/\",\"appmixer:quickbooks\"],[\"src/appmixer/rabbitmq/\",\"appmixer:rabbitmq\"],[\"src/appmixer/ragieai/\",\"appmixer:ragieai\"],[\"src/appmixer/railway/\",\"appmixer:railway\"],[\"src/appmixer/redis/\",\"appmixer:redis\"],[\"src/appmixer/redmine/\",\"appmixer:redmine\"],[\"src/appmixer/replicate/\",\"appmixer:replicate\"],[\"src/appmixer/resend/\",\"appmixer:resend\"],[\"src/appmixer/ringring/\",\"appmixer:ringring\"],[\"src/appmixer/sageone/\",\"appmixer:sageone\"],[\"src/appmixer/salesforce/\",\"appmixer:salesforce\"],[\"src/appmixer/screenshotapi/\",\"appmixer:screenshotapi\"],[\"src/appmixer/servicenow/\",\"appmixer:servicenow\"],[\"src/appmixer/shopify/\",\"appmixer:shopify\"],[\"src/appmixer/slack/\",\"appmixer:slack\"],[\"src/appmixer/smartsheet/\",\"appmixer:smartsheet\"],[\"src/appmixer/snowflake/\",\"appmixer:snowflake\"],[\"src/appmixer/sonarqube/\",\"appmixer:sonarqube\"],[\"src/appmixer/square/\",\"appmixer:square\"],[\"src/appmixer/strava/\",\"appmixer:strava\"],[\"src/appmixer/stripe/\",\"appmixer:stripe\"],[\"src/appmixer/supabaseManagement/\",\"appmixer:supabaseManagement\"],[\"src/appmixer/system/\",\"appmixer:system\"],[\"src/appmixer/tally/\",\"appmixer:tally\"],[\"src/appmixer/tavily/\",\"appmixer:tavily\"],[\"src/appmixer/telegram/\",\"appmixer:telegram\"],[\"src/appmixer/tldv/\",\"appmixer:tldv\"],[\"src/appmixer/todoist/\",\"appmixer:todoist\"],[\"src/appmixer/trello/\",\"appmixer:trello\"],[\"src/appmixer/twilio/\",\"appmixer:twilio\"],[\"src/appmixer/twitter/\",\"appmixer:twitter\"],[\"src/appmixer/typeform/\",\"appmixer:typeform\"],[\"src/appmixer/unkey/\",\"appmixer:unkey\"],[\"src/appmixer/userengage/\",\"appmixer:userengage\"],[\"src/appmixer/utils/\",\"appmixer:utils\"],[\"src/appmixer/utils/ai/\",\"appmixer:utils:ai\"],[\"src/appmixer/utils/appevents/\",\"appmixer:utils:appevents\"],[\"src/appmixer/utils/chat/\",\"appmixer:utils:chat\"],[\"src/appmixer/utils/controls/\",\"appmixer:utils:controls\"],[\"src/appmixer/utils/converters/\",\"appmixer:utils:converters\"],[\"src/appmixer/utils/csv/\",\"appmixer:utils:csv\"],[\"src/appmixer/utils/files/\",\"appmixer:utils:files\"],[\"src/appmixer/utils/filters/\",\"appmixer:utils:filters\"],[\"src/appmixer/utils/forms/\",\"appmixer:utils:forms\"],[\"src/appmixer/utils/ftp/\",\"appmixer:utils:ftp\"],[\"src/appmixer/utils/http/\",\"appmixer:utils:http\"],[\"src/appmixer/utils/rss/\",\"appmixer:utils:rss\"],[\"src/appmixer/utils/storage/\",\"appmixer:utils:storage\"],[\"src/appmixer/utils/subflows/\",\"appmixer:utils:subflows\"],[\"src/appmixer/utils/tasks/\",\"appmixer:utils:tasks\"],[\"src/appmixer/utils/test/\",\"appmixer:utils:test\"],[\"src/appmixer/utils/timers/\",\"appmixer:utils:timers\"],[\"src/appmixer/utils/xml/\",\"appmixer:utils:xml\"],[\"src/appmixer/vapi/\",\"appmixer:vapi\"],[\"src/appmixer/vatcomply/\",\"appmixer:vatcomply\"],[\"src/appmixer/vercel/\",\"appmixer:vercel\"],[\"src/appmixer/verifyemail/\",\"appmixer:verifyemail\"],[\"src/appmixer/virustotal/\",\"appmixer:virustotal\"],[\"src/appmixer/voys/\",\"appmixer:voys\"],[\"src/appmixer/webflow/\",\"appmixer:webflow\"],[\"src/appmixer/whatsapp/\",\"appmixer:whatsapp\"],[\"src/appmixer/wiz/\",\"appmixer:wiz\"],[\"src/appmixer/woodpecker/\",\"appmixer:woodpecker\"],[\"src/appmixer/wordpress/\",\"appmixer:wordpress\"],[\"src/appmixer/xero/\",\"appmixer:xero\"],[\"src/appmixer/xtremepush/\",\"appmixer:xtremepush\"],[\"src/appmixer/zendesk/tickets/\",\"appmixer:zendesk:tickets\"],[\"src/appmixer/zoho/books/\",\"appmixer:zoho:books\"],[\"src/appmixer/zoho/crm/\",\"appmixer:zoho:crm\"],[\"src/appmixer/zoom/\",\"appmixer:zoom\"]],\"roots\":[[\"src/appmixer/aws/\",\"appmixer:aws\"],[\"src/appmixer/google/\",\"appmixer:google\"],[\"src/appmixer/microsoft/\",\"appmixer:microsoft\"],[\"src/appmixer/zoho/\",\"appmixer:zoho\"]]};\n    const parse = (v) => (typeof v === 'string' ? JSON.parse(v) : v);\n    const pr = parse($data.pr) || {};\n    if (!pr.number || !pr.repository) {\n        return { label: false, reason: 'pull request not found' };\n    }\n    const files = ((pr.files || {}).nodes || []).map(f => f.path);\n    const deepest = (list, file) => list.filter(([p]) => file.startsWith(p))\n        .sort((a, b) => b[0].length - a[0].length)[0];\n    // A new connector ships its bundle.json in the PR itself, so its label is not in MAP yet.\n    const bundles = MAP.bundles.slice();\n    for (const f of files) {\n        const m = f.match(/^(src\\/appmixer\\/.+\\/)bundle\\.json$/);\n        if (m && !deepest(bundles, m[1])) {\n            const name = 'appmixer:' + m[1].slice('src/appmixer/'.length, -1).split('/').join(':');\n            if (name.length <= 50) bundles.push([m[1], name]);\n        }\n    }\n    const labels = new Set();\n    for (const f of files) {\n        const hit = deepest(bundles, f) || deepest(MAP.roots, f);\n        if (hit) labels.add(hit[1]);\n    }\n    const list = Array.from(labels).sort();\n    return {\n        label: list.length > 0,\n        labels: list.join(', '),\n        url: '/repos/' + pr.repository.nameWithOwner + '/issues/' + pr.number + '/labels',\n        body: JSON.stringify({ labels: list })\n    };\n})();"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "e2000000-0000-4000-8000-000000000004": {
+            "type": "appmixer.utils.controls.Condition",
+            "version": "1.0.0",
+            "label": "Touches a connector",
+            "x": 1152,
+            "y": 0,
+            "source": {
+                "in": {
+                    "e2000000-0000-4000-8000-000000000003": [
+                        "out"
+                    ]
+                }
+            },
+            "errorHandling": {
+                "autoRetry": true,
+                "onError": "storeUnprocessed"
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "e2000000-0000-4000-8000-000000000003": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "e2000000-0000-4000-8000-00000000bb03": {
+                                            "variable": "$.e2000000-0000-4000-8000-000000000003.out.result",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$.label"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "OR": [
+                                                    {
+                                                        "input": "{{{e2000000-0000-4000-8000-00000000bb03}}}",
+                                                        "operator": "=",
+                                                        "value": "true"
+                                                    }
+                                                ]
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "e2000000-0000-4000-8000-000000000005": {
+            "type": "appmixer.github.list.MakeApiCall",
+            "version": "1.0.0",
+            "label": "Add labels",
+            "x": 1536,
+            "y": 0,
+            "source": {
+                "in": {
+                    "e2000000-0000-4000-8000-000000000004": [
+                        "true"
+                    ]
+                }
+            },
+            "errorHandling": {
+                "autoRetry": true,
+                "onError": "storeUnprocessed"
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "e2000000-0000-4000-8000-000000000004": {
+                            "true": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "url": {
+                                        "e2000000-0000-4000-8000-00000000bb04": {
+                                            "variable": "$.e2000000-0000-4000-8000-000000000003.out.result",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$.url"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "method": {},
+                                    "body": {
+                                        "e2000000-0000-4000-8000-00000000bb05": {
+                                            "variable": "$.e2000000-0000-4000-8000-000000000003.out.result",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$.body"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "url": "{{{e2000000-0000-4000-8000-00000000bb04}}}",
+                                    "method": "POST",
+                                    "body": "{{{e2000000-0000-4000-8000-00000000bb05}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "notes": {
+        "e2000000-0000-4000-8000-00000000ff01": {
+            "x": 0,
+            "y": 160,
+            "width": 560,
+            "height": 240,
+            "content": "**PR connector labels**\n\nEvery new pull request gets `appmixer:<connector>` for each connector whose files it changes — one label per `bundle.json`, plus `appmixer:google` / `appmixer:microsoft` / `appmixer:aws` / `appmixer:zoho` for their shared root files. A PR that adds a connector gets its new label from the `bundle.json` it ships.\n\n**Add labels** needs **push** access: adding a label that does not exist yet creates it, which triage cannot.\n\nThe path map lives in *Paths to labels*; regenerate it with `node scripts/connector-labels.js flow .github/appmixer-flows/pr-connector-labels.json` and republish.\n\n**Source of truth:** `.github/appmixer-flows/pr-connector-labels.json` in the connectors repo."
+        }
+    },
+    "wizard": {
+        "fields": [
+            {
+                "type": "account",
+                "label": "GitHub account (reads pull requests)",
+                "tooltip": "Reads new pull requests and their changed files.",
+                "placeholder": "",
+                "attrs": {
+                    "service": "appmixer:github",
+                    "components": [
+                        "e2000000-0000-4000-8000-000000000001",
+                        "e2000000-0000-4000-8000-000000000002"
+                    ],
+                    "sharedAccountId": null
+                },
+                "options": {}
+            },
+            {
+                "type": "account",
+                "label": "GitHub account with push access",
+                "tooltip": "Adds the labels. Push access is needed so a label for a brand-new connector can be created on first use.",
+                "placeholder": "",
+                "attrs": {
+                    "service": "appmixer:github",
+                    "components": [
+                        "e2000000-0000-4000-8000-000000000005"
+                    ],
+                    "sharedAccountId": null
+                },
+                "options": {}
+            },
+            {
+                "type": "inspectorField",
+                "label": "Repository",
+                "tooltip": "The repository to watch, in `owner/repo` format.",
+                "placeholder": "",
+                "source": "e2000000-0000-4000-8000-000000000001.config.properties.repositoryId",
+                "attrs": {},
+                "options": {}
+            }
+        ]
+    }
+}
