@@ -230,6 +230,8 @@ bundle directory containing a file wins, else the deepest shared root) →
 
 A PR that adds a connector ships its `bundle.json`, and the Code Block derives
 the new label from it, so the first PR of a new connector is labelled too.
+A sweep that touches more than five connectors gets no labels: it would show up
+in every one of their overviews. The backfill of older PRs used the same cut.
 Only the first 100 changed files are read; a sweep across more connectors than
 that keeps the labels of its first 100 files.
 
