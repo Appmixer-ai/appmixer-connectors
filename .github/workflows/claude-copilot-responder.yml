@@ -397,18 +397,29 @@ jobs:
             6. Stop. Do not loop, do not open a new PR, do not merge.
 
       - name: Push Claude's commits to the PR branch
-        # TRUSTED step: the checkout above used the apx-vero PAT with
-        # persist-credentials, so a plain `git push origin` reaches the fork —
-        # no token ever appears on a command line. Anything Claude edited but
-        # did not commit is NOT pushed (it would be unreviewed, half-done work);
-        # it is reported instead. `pushed` / `commits` / `uncommitted` feed the
-        # summary so it can only claim a push that actually happened.
+        # TRUSTED step: pushes to the apx-vero fork with the apx-vero PAT — no
+        # token ever appears on a command line or in .git/config. Anything
+        # Claude edited but did not commit is NOT pushed (it would be
+        # unreviewed, half-done work); it is reported instead. `pushed` /
+        # `commits` / `uncommitted` feed the summary so it can only claim a push
+        # that actually happened.
+        #
+        # The checkout's credentials cannot be reused: while setting up git
+        # auth, claude-code-action removes the checkout's extraheader, re-points
+        # `origin` at the BASE repository (GITHUB_REPOSITORY, where the fork's
+        # head branch does not exist) and installs a credential helper that
+        # only works inside its own process. So restore the fork remote and
+        # authenticate with a helper that reads GH_TOKEN from this step's env.
         id: push
         if: steps.pr.outputs.proceed == 'true'
         env:
           HEAD_REF: ${{ steps.pr.outputs.head_ref }}
+          GH_TOKEN: ${{ secrets.VERO_GH_TOKEN }}
         run: |
           set -euo pipefail
+          git remote set-url origin https://github.com/apx-vero/appmixer-connectors.git
+          git config --local --unset-all credential.helper || true
+          git config --local credential.helper '!f() { echo username=x-access-token; echo "password=$GH_TOKEN"; }; f'
           git fetch -q origin "$HEAD_REF"
 
           UNCOMMITTED=$(git status --porcelain | wc -l | tr -d ' ')
