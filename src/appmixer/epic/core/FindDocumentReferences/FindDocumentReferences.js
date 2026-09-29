@@ -29,7 +29,7 @@ const schema = {
         'properties': {
             'coding': {
                 'type': 'array',
-                'title': 'Type Coding',
+                'title': 'Type.Coding',
                 'items': {
                     'type': 'object',
                     'properties': {
@@ -53,7 +53,7 @@ const schema = {
             },
             'text': {
                 'type': 'string',
-                'title': 'Type Text',
+                'title': 'Type.Text',
                 'example': 'Progress note'
             }
         }
@@ -102,12 +102,12 @@ const schema = {
         'properties': {
             'reference': {
                 'type': 'string',
-                'title': 'Subject Reference',
+                'title': 'Subject.Reference',
                 'example': 'Patient/eq081-VQEgP8drUUqCWzHfw3'
             },
             'display': {
                 'type': 'string',
-                'title': 'Subject Display',
+                'title': 'Subject.Display',
                 'example': 'Warren McGinnis'
             }
         }
@@ -134,17 +134,17 @@ const schema = {
                     'properties': {
                         'contentType': {
                             'type': 'string',
-                            'title': 'Content Attachment Content Type',
+                            'title': 'Content Attachment.Content Type',
                             'example': 'text/html'
                         },
                         'url': {
                             'type': 'string',
-                            'title': 'Content Attachment URL',
+                            'title': 'Content Attachment.URL',
                             'example': 'Binary/eZzn1Ff2cW0Yv3yMm0FBDCw3'
                         },
                         'title': {
                             'type': 'string',
-                            'title': 'Content Attachment Title',
+                            'title': 'Content Attachment.Title',
                             'example': 'Progress note'
                         }
                     }

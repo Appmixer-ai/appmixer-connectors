@@ -19,7 +19,7 @@ const schema = {
         'properties': {
             'coding': {
                 'type': 'array',
-                'title': 'Clinical Status Coding',
+                'title': 'Clinical Status.Coding',
                 'items': {
                     'type': 'object',
                     'properties': {
@@ -43,7 +43,7 @@ const schema = {
             },
             'text': {
                 'type': 'string',
-                'title': 'Clinical Status Text',
+                'title': 'Clinical Status.Text',
                 'example': 'Active'
             }
         }
@@ -54,7 +54,7 @@ const schema = {
         'properties': {
             'coding': {
                 'type': 'array',
-                'title': 'Verification Status Coding',
+                'title': 'Verification Status.Coding',
                 'items': {
                     'type': 'object',
                     'properties': {
@@ -78,7 +78,7 @@ const schema = {
             },
             'text': {
                 'type': 'string',
-                'title': 'Verification Status Text',
+                'title': 'Verification Status.Text',
                 'example': 'Confirmed'
             }
         }
@@ -127,7 +127,7 @@ const schema = {
         'properties': {
             'coding': {
                 'type': 'array',
-                'title': 'Code Coding',
+                'title': 'Code.Coding',
                 'items': {
                     'type': 'object',
                     'properties': {
@@ -151,7 +151,7 @@ const schema = {
             },
             'text': {
                 'type': 'string',
-                'title': 'Code Text',
+                'title': 'Code.Text',
                 'example': 'Essential hypertension'
             }
         }
@@ -162,12 +162,12 @@ const schema = {
         'properties': {
             'reference': {
                 'type': 'string',
-                'title': 'Subject Reference',
+                'title': 'Subject.Reference',
                 'example': 'Patient/eq081-VQEgP8drUUqCWzHfw3'
             },
             'display': {
                 'type': 'string',
-                'title': 'Subject Display',
+                'title': 'Subject.Display',
                 'example': 'Warren McGinnis'
             }
         }
