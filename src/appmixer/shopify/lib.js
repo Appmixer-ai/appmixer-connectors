@@ -136,6 +136,7 @@ const RESOURCES = {
     location: { path: 'locations', one: 'location', many: 'locations' },
     inventoryLevel: { path: 'inventory_levels', one: 'inventory_level', many: 'inventory_levels' },
     draftOrder: { path: 'draft_orders', one: 'draft_order', many: 'draft_orders' },
+    priceRule: { path: 'price_rules', one: 'price_rule', many: 'price_rules' },
     webhook: { path: 'webhooks', one: 'webhook', many: 'webhooks' }
 };
 
@@ -343,6 +344,9 @@ module.exports = {
             inventoryLevel: crud(context, RESOURCES.inventoryLevel),
             checkout: crud(context, RESOURCES.checkout),
             draftOrder: crud(context, RESOURCES.draftOrder),
+            // A price rule holds the terms of a discount; the codes customers
+            // type at checkout hang off it.
+            priceRule: crud(context, RESOURCES.priceRule),
 
             customer: {
                 ...customer,
@@ -367,6 +371,53 @@ module.exports = {
                 async list(orderId, query = {}) {
                     const { data, headers } = await shopifyRequest(context, { path: `orders/${orderId}/fulfillments.json`, query });
                     return toListResult(data.fulfillments, headers);
+                }
+            },
+
+            // Discount codes are nested under the price rule they belong to.
+            discountCode: {
+                async list(priceRuleId, query = {}) {
+                    const { data, headers } = await shopifyRequest(context, { path: `price_rules/${priceRuleId}/discount_codes.json`, query });
+                    return toListResult(data.discount_codes, headers);
+                },
+                async get(priceRuleId, id) {
+                    const { data } = await shopifyRequest(context, { path: `price_rules/${priceRuleId}/discount_codes/${id}.json` });
+                    return data.discount_code;
+                },
+                async create(priceRuleId, payload) {
+                    const { data } = await shopifyRequest(context, {
+                        method: 'POST',
+                        path: `price_rules/${priceRuleId}/discount_codes.json`,
+                        body: { discount_code: payload }
+                    });
+                    return data.discount_code;
+                },
+                // Resolve a code string to its discount code record. Returns null
+                // when no such code exists. The lookup endpoint answers with a 303
+                // to the canonical price_rules/<id>/discount_codes/<id> URL; the
+                // HTTP client normally follows it, so fall back to resolving the
+                // Location header by hand only when it did not.
+                async lookup(code) {
+                    let response;
+                    try {
+                        response = await shopifyRequest(context, { path: 'discount_codes/lookup.json', query: { code } });
+                    } catch (error) {
+                        if (error.statusCode === 404) {
+                            return null;
+                        }
+                        throw error;
+                    }
+
+                    if (response.data && response.data.discount_code) {
+                        return response.data.discount_code;
+                    }
+
+                    const location = response.headers.location || response.headers.Location;
+                    const match = location && String(location).match(/price_rules\/(\d+)\/discount_codes\/(\d+)/);
+                    if (!match) {
+                        return null;
+                    }
+                    return this.get(match[1], match[2]);
                 }
             },
 
