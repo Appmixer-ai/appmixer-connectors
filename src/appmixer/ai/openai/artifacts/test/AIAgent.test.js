@@ -281,3 +281,111 @@ describe('AIAgent - instructions', () => {
         assert(history.every((message) => message.content !== INSTRUCTIONS), 'instructions should not be stored');
     });
 });
+
+describe('AIAgent - tool port', () => {
+
+    const AGENT_ID = 'agent-1';
+    const TOOL_NAME = 'rows-1_Employee_contacts';
+
+    let sandbox;
+    let context;
+
+    beforeEach(() => {
+        context = createMockContext({
+            componentId: AGENT_ID,
+            messages: { in: { correlationId: 'corr-1', content: { prompt: 'Who is the CEO?' } } },
+            flowDescriptor: {
+                [AGENT_ID]: { type: 'appmixer.ai.openai.AIAgent' },
+                'rows-1': {
+                    type: 'appmixer.google.spreadsheets.GetRows',
+                    label: 'Employee contacts',
+                    source: { in: { [AGENT_ID]: ['tool'] } },
+                    config: {
+                        transform: {
+                            in: {
+                                [AGENT_ID]: {
+                                    tool: {
+                                        modifiers: {
+                                            sheetId: {},
+                                            filter: {
+                                                'var-1': {
+                                                    variable: `$.${AGENT_ID}.tool.modelDefinedParameter`,
+                                                    functions: []
+                                                }
+                                            }
+                                        },
+                                        lambda: { sheetId: 'sheet-1', filter: '{{{var-1}}}' }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        context.callAppmixer = sinon.stub().callsFake(async ({ endPoint }) => {
+            if (endPoint.startsWith('/components?selector=')) {
+                return [{
+                    name: 'appmixer.google.spreadsheets.GetRows',
+                    description: 'Get rows from a sheet.',
+                    inPorts: [{
+                        name: 'in',
+                        schema: {
+                            type: 'object',
+                            properties: { sheetId: { type: 'string' }, filter: { type: 'string' } },
+                            required: ['sheetId']
+                        },
+                        inspector: { inputs: { filter: { label: 'Filter', tooltip: 'Rows to return.' } } }
+                    }]
+                }];
+            }
+            return { rows: [['Jane Doe', 'CEO']] };
+        });
+
+        sandbox = sinon.createSandbox();
+        sandbox.stub(AIAgent, 'publishChatProgressEvent').resolves();
+    });
+
+    afterEach(() => {
+        sandbox.restore();
+    });
+
+    it('should expose a component wired to the tool port as a tool', async () => {
+
+        const tools = await AIAgent.getAllToolsDefinition(context);
+
+        assert.deepStrictEqual(tools, [{
+            type: 'function',
+            function: {
+                name: TOOL_NAME,
+                description: 'Get rows from a sheet.',
+                parameters: {
+                    type: 'object',
+                    properties: { filter: { type: 'string', description: 'Filter — Rows to return.' } }
+                }
+            }
+        }]);
+    });
+
+    it('should call the component directly with the model arguments and the static values', async () => {
+
+        await AIAgent.getAllToolsDefinition(context);
+
+        const outputs = await AIAgent.callTools(context, [{
+            id: 'call-1',
+            function: { name: TOOL_NAME, arguments: '{"filter":"CEO","sheetId":"other"}' }
+        }]);
+
+        assert.deepStrictEqual(outputs, [{
+            tool_call_id: 'call-1',
+            output: JSON.stringify({ rows: [['Jane Doe', 'CEO']] }, null, 2)
+        }]);
+        const call = context.callAppmixer.lastCall.args[0];
+        assert.strictEqual(call.endPoint, '/component/appmixer/google/spreadsheets/GetRows');
+        assert.deepStrictEqual(call.body, {
+            componentId: 'rows-1',
+            messages: { in: { filter: 'CEO', sheetId: 'sheet-1' } }
+        });
+        assert(context.sendJson.notCalled, 'nothing should be sent to the tools port');
+    });
+});
