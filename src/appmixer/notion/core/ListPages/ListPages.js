@@ -54,12 +54,12 @@ const getTitle = (page) => {
     return title || 'Untitled';
 };
 
-const fetchPages = async (context) => {
+const search = async (context, objectType) => {
     const { data } = await lib.callEndpoint(context, '/search', {
         method: 'POST',
         data: {
             filter: {
-                value: 'page',
+                value: objectType,
                 property: 'object'
             },
             sort: {
@@ -70,7 +70,13 @@ const fetchPages = async (context) => {
         }
     });
 
-    return (data.results || []).map(page => ({
+    return data.results || [];
+};
+
+const fetchPages = async (context) => {
+    const pages = await search(context, 'page');
+
+    return pages.map(page => ({
         id: page.id,
         title: getTitle(page),
         url: page.url,
@@ -79,6 +85,61 @@ const fetchPages = async (context) => {
         last_edited_time: page.last_edited_time,
         parent: page.parent
     }));
+};
+
+const fetchDatabases = async (context) => {
+    const databases = await search(context, 'database');
+
+    return databases.map(database => ({
+        id: database.id,
+        title: (database.title || []).map(fragment => fragment.plain_text).join('') || 'Untitled',
+        parent: database.parent
+    }));
+};
+
+const PATH_SEPARATOR = ' / ';
+
+// Pages form a tree (page → subpage, database → item), but a dropdown is a flat list.
+// Each page is therefore labelled with its path from the topmost ancestor the
+// integration can see (`Wiki / Onboarding / Day one`, `Tasks / Fix login`), and the
+// list is ordered as the tree reads: a page is followed by its descendants.
+const toPageOptions = (pages, databases) => {
+    const pageIds = new Set(pages.map(page => page.id));
+    const nodes = new Map([...databases, ...pages].map(node => [node.id, node]));
+
+    // A node whose parent the integration cannot see (not shared, a block, beyond
+    // the 100 listed) starts its own tree, the same as a workspace-level one.
+    const roots = [];
+    const children = new Map();
+    for (const node of nodes.values()) {
+        const parentId = node.parent?.page_id || node.parent?.database_id;
+        if (nodes.has(parentId) && parentId !== node.id) {
+            children.set(parentId, [...(children.get(parentId) || []), node]);
+        } else {
+            roots.push(node);
+        }
+    }
+
+    const byTitle = (a, b) => a.title.localeCompare(b.title);
+    const options = [];
+    const visited = new Set();
+    const walk = (node, ancestors) => {
+        if (visited.has(node.id)) {
+            return;
+        }
+        visited.add(node.id);
+        const path = [...ancestors, node.title];
+        // Databases only name the path — a page cannot be created under one here.
+        if (pageIds.has(node.id)) {
+            options.push({ id: node.id, path: path.join(PATH_SEPARATOR) });
+        }
+        (children.get(node.id) || []).sort(byTitle).forEach(child => walk(child, path));
+    };
+    roots.sort(byTitle).forEach(root => walk(root, []));
+    // Nodes on a parent cycle have no root; list them anyway rather than drop them.
+    nodes.forEach(node => walk(node, []));
+
+    return options;
 };
 
 module.exports = {
@@ -106,9 +167,14 @@ module.exports = {
         // so the ID can still be typed in.
         try {
             const result = await lib.withCache(context, ['ListPages'], async () => {
-                const pages = await fetchPages(context);
+                const [pages, databases] = await Promise.all([
+                    fetchPages(context),
+                    // Databases only name the path of their items — the dropdown is
+                    // still worth showing without them.
+                    fetchDatabases(context).catch(() => [])
+                ]);
                 // Only the fields the dropdown needs, to keep the cache small.
-                return pages.map(page => ({ id: page.id, title: page.title }));
+                return toPageOptions(pages, databases);
             });
             return context.sendJson({ result }, 'out');
         } catch (err) {
@@ -118,7 +184,7 @@ module.exports = {
 
     pageToSelectArray({ result }) {
         return (result || []).map(page => {
-            return { label: page.title, value: page.id };
+            return { label: page.path, value: page.id };
         });
     }
 };

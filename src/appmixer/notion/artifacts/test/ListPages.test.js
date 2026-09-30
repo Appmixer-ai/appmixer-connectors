@@ -54,6 +54,16 @@ const SEARCH_RESULTS = [
     }
 ];
 
+// A database as returned by POST /v1/search with the `database` filter.
+const DATABASES = [
+    {
+        object: 'database',
+        id: '9b4c8f2e-1d3a-4e5b-8c7d-6f0a1b2c3d4e',
+        title: [{ type: 'text', plain_text: 'Roadmaps' }],
+        parent: { type: 'workspace', workspace: true }
+    }
+];
+
 describe('notion ListPages', () => {
 
     let context;
@@ -208,19 +218,97 @@ describe('notion ListPages', () => {
             context.messages = {};
         });
 
-        it('returns id + title only and feeds the select transform', async () => {
+        // The source call searches pages and databases; answer each by its filter.
+        const respondWith = ({ pages = SEARCH_RESULTS, databases = DATABASES } = {}) => {
+            context.httpRequest.callsFake(async (request) => {
+                const results = request.data.filter.value === 'database' ? databases : pages;
+                if (results instanceof Error) {
+                    throw results;
+                }
+                return { data: { results } };
+            });
+        };
+
+        const page = (id, title, parent) => ({
+            object: 'page',
+            id,
+            parent,
+            properties: { title: { id: 'title', type: 'title', title: [{ type: 'text', plain_text: title }] } }
+        });
+
+        const labels = () => ListPages.pageToSelectArray(context.sendJson.lastCall.args[0]).map(o => o.label);
+
+        beforeEach(() => respondWith());
+
+        it('labels each page with its path and lists a page right before its descendants', async () => {
             await ListPages.receive(context);
 
             const [output] = context.sendJson.firstCall.args;
-            assert.deepStrictEqual(output.result[0], {
-                id: 'b8c9d0e1-f2a3-4567-bcde-678901234567',
-                title: 'Launch plan'
-            });
+            assert.deepStrictEqual(Object.keys(output.result[0]), ['id', 'path']);
             assert.deepStrictEqual(ListPages.pageToSelectArray(output), [
                 { label: 'Launch plan', value: 'b8c9d0e1-f2a3-4567-bcde-678901234567' },
-                { label: 'Q1 Roadmap', value: 'e5f6a7b8-c9d0-1234-efab-345678901234' },
-                { label: 'Untitled', value: '7a1d2c3b-4e5f-4a6b-9c8d-0e1f2a3b4c5d' }
+                { label: 'Launch plan / Untitled', value: '7a1d2c3b-4e5f-4a6b-9c8d-0e1f2a3b4c5d' },
+                { label: 'Roadmaps / Q1 Roadmap', value: 'e5f6a7b8-c9d0-1234-efab-345678901234' }
             ]);
+        });
+
+        it('keeps a subpage next to its own parent when siblings share a title', async () => {
+            respondWith({
+                pages: [
+                    page('child-2', 'Notes', { type: 'page_id', page_id: 'project-2' }),
+                    page('project-1', 'Project', { type: 'workspace', workspace: true }),
+                    page('project-2', 'Project', { type: 'workspace', workspace: true }),
+                    page('child-1', 'Notes', { type: 'page_id', page_id: 'project-1' }),
+                    page('grandchild', 'Draft', { type: 'page_id', page_id: 'child-1' })
+                ],
+                databases: []
+            });
+
+            await ListPages.receive(context);
+
+            assert.deepStrictEqual(ListPages.pageToSelectArray(context.sendJson.firstCall.args[0]), [
+                { label: 'Project', value: 'project-1' },
+                { label: 'Project / Notes', value: 'child-1' },
+                { label: 'Project / Notes / Draft', value: 'grandchild' },
+                { label: 'Project', value: 'project-2' },
+                { label: 'Project / Notes', value: 'child-2' }
+            ]);
+        });
+
+        it('starts the path at the page itself when its parent is not visible', async () => {
+            respondWith({
+                pages: [
+                    page('orphan', 'Shared subpage', { type: 'page_id', page_id: 'not-shared' }),
+                    page('in-block', 'Inside a column', { type: 'block_id', block_id: 'some-block' })
+                ],
+                databases: []
+            });
+
+            await ListPages.receive(context);
+
+            assert.deepStrictEqual(labels(), ['Inside a column', 'Shared subpage']);
+        });
+
+        it('still lists the pages when the database search fails', async () => {
+            respondWith({ databases: new Error('Request failed with status code 502') });
+
+            await ListPages.receive(context);
+
+            assert.deepStrictEqual(labels(), ['Launch plan', 'Launch plan / Untitled', 'Q1 Roadmap']);
+        });
+
+        it('does not drop or loop on pages that are each other\'s parent', async () => {
+            respondWith({
+                pages: [
+                    page('a', 'A', { type: 'page_id', page_id: 'b' }),
+                    page('b', 'B', { type: 'page_id', page_id: 'a' })
+                ],
+                databases: []
+            });
+
+            await ListPages.receive(context);
+
+            assert.deepStrictEqual(labels().sort(), ['A', 'A / B'].sort());
         });
 
         it('serves the second call from the cache and releases the lock', async () => {
@@ -230,7 +318,8 @@ describe('notion ListPages', () => {
             await ListPages.receive(context);
             await ListPages.receive(context);
 
-            assert.strictEqual(context.httpRequest.callCount, 1);
+            // One page search + one database search, then nothing.
+            assert.strictEqual(context.httpRequest.callCount, 2);
             assert.deepStrictEqual(context.sendJson.secondCall.args[0], context.sendJson.firstCall.args[0]);
             assert.strictEqual(unlock.callCount, 2);
         });
@@ -240,7 +329,7 @@ describe('notion ListPages', () => {
             context.auth = { accessToken: 'another-token' };
             await ListPages.receive(context);
 
-            assert.strictEqual(context.httpRequest.callCount, 2);
+            assert.strictEqual(context.httpRequest.callCount, 4);
         });
 
         it('renders an empty dropdown instead of an error when the API call fails', async () => {
