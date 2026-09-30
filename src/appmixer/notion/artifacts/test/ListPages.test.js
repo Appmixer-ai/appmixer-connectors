@@ -1,0 +1,258 @@
+'use strict';
+
+const assert = require('assert');
+const sinon = require('sinon');
+const appmixer = require('../../../../../test/utils');
+
+const ListPages = require('../../core/ListPages/ListPages');
+
+// Shapes as returned by POST /v1/search (Notion-Version 2022-06-28).
+const SEARCH_RESULTS = [
+    {
+        object: 'page',
+        id: 'b8c9d0e1-f2a3-4567-bcde-678901234567',
+        created_time: '2025-12-01T08:00:00.000Z',
+        last_edited_time: '2026-01-15T10:30:00.000Z',
+        parent: { type: 'workspace', workspace: true },
+        archived: false,
+        properties: {
+            title: { id: 'title', type: 'title', title: [{ type: 'text', plain_text: 'Launch plan' }] }
+        },
+        url: 'https://www.notion.so/Launch-plan-b8c9d0e1f2a34567bcde678901234567',
+        public_url: null
+    },
+    {
+        // A database item: the title property carries the column's name, and the
+        // title is split into several rich-text fragments.
+        object: 'page',
+        id: 'e5f6a7b8-c9d0-1234-efab-345678901234',
+        created_time: '2025-11-20T09:00:00.000Z',
+        last_edited_time: '2025-12-24T12:00:00.000Z',
+        parent: { type: 'database_id', database_id: '9b4c8f2e-1d3a-4e5b-8c7d-6f0a1b2c3d4e' },
+        archived: false,
+        properties: {
+            Status: { id: 'abc', type: 'select', select: { name: 'Done' } },
+            Name: {
+                id: 'title',
+                type: 'title',
+                title: [{ type: 'text', plain_text: 'Q1 ' }, { type: 'mention', plain_text: 'Roadmap' }]
+            }
+        },
+        url: 'https://www.notion.so/Q1-Roadmap-e5f6a7b8c9d01234efab345678901234',
+        public_url: null
+    },
+    {
+        object: 'page',
+        id: '7a1d2c3b-4e5f-4a6b-9c8d-0e1f2a3b4c5d',
+        created_time: '2025-10-01T09:00:00.000Z',
+        last_edited_time: '2025-10-02T12:00:00.000Z',
+        parent: { type: 'page_id', page_id: 'b8c9d0e1-f2a3-4567-bcde-678901234567' },
+        archived: false,
+        properties: { title: { id: 'title', type: 'title', title: [] } },
+        url: 'https://www.notion.so/7a1d2c3b4e5f4a6b9c8d0e1f2a3b4c5d',
+        public_url: null
+    }
+];
+
+describe('notion ListPages', () => {
+
+    let context;
+
+    beforeEach(() => {
+        context = appmixer.createMockContext({
+            auth: { accessToken: 'test-token' },
+            messages: { in: { content: {} } }
+        });
+        context.httpRequest.resolves({ data: { results: SEARCH_RESULTS, has_more: false } });
+    });
+
+    it('searches pages only, most recently edited first, at the maximum page size', async () => {
+        context.messages.in.content = { outputType: 'array' };
+
+        await ListPages.receive(context);
+
+        const request = context.httpRequest.firstCall.args[0];
+        assert.strictEqual(request.method, 'POST');
+        assert.strictEqual(request.url, 'https://api.notion.com/v1/search');
+        assert.deepStrictEqual(request.data, {
+            filter: { value: 'page', property: 'object' },
+            sort: { direction: 'descending', timestamp: 'last_edited_time' },
+            page_size: 100
+        });
+    });
+
+    it('array: sends { result, count } and reads the title from the property of type title', async () => {
+        context.messages.in.content = { outputType: 'array' };
+
+        await ListPages.receive(context);
+
+        const [output, port] = context.sendJson.firstCall.args;
+        assert.strictEqual(port, 'out');
+        assert.strictEqual(output.count, 3);
+        assert.deepStrictEqual(output.result.map(page => page.title), ['Launch plan', 'Q1 Roadmap', 'Untitled']);
+        assert.deepStrictEqual(output.result[1], {
+            id: 'e5f6a7b8-c9d0-1234-efab-345678901234',
+            title: 'Q1 Roadmap',
+            url: 'https://www.notion.so/Q1-Roadmap-e5f6a7b8c9d01234efab345678901234',
+            public_url: null,
+            created_time: '2025-11-20T09:00:00.000Z',
+            last_edited_time: '2025-12-24T12:00:00.000Z',
+            parent: { type: 'database_id', database_id: '9b4c8f2e-1d3a-4e5b-8c7d-6f0a1b2c3d4e' }
+        });
+    });
+
+    it('emits only fields declared in ITEM_SCHEMA, and every required one', async () => {
+        context.messages.in.content = { outputType: 'array' };
+
+        await ListPages.receive(context);
+
+        const declared = Object.keys(ListPages.ITEM_SCHEMA.properties);
+        for (const page of context.sendJson.firstCall.args[0].result) {
+            assert.deepStrictEqual(Object.keys(page).filter(key => !declared.includes(key)), []);
+            for (const key of ListPages.ITEM_SCHEMA.required) {
+                assert.notStrictEqual(page[key], undefined, `${key} missing`);
+            }
+        }
+    });
+
+    it('defaults to the array mode when outputType is not set', async () => {
+        await ListPages.receive(context);
+
+        assert.strictEqual(context.sendJson.firstCall.args[0].result.length, 3);
+    });
+
+    it('first: sends the first page with index and count', async () => {
+        context.messages.in.content = { outputType: 'first' };
+
+        await ListPages.receive(context);
+
+        assert.strictEqual(context.sendJson.callCount, 1);
+        const [output] = context.sendJson.firstCall.args;
+        assert.strictEqual(output.id, 'b8c9d0e1-f2a3-4567-bcde-678901234567');
+        assert.strictEqual(output.index, 0);
+        assert.strictEqual(output.count, 3);
+    });
+
+    it('object: sends one message per page', async () => {
+        context.messages.in.content = { outputType: 'object' };
+
+        await ListPages.receive(context);
+
+        assert.strictEqual(context.sendJson.callCount, 3);
+        assert.strictEqual(context.sendJson.thirdCall.args[0].index, 2);
+    });
+
+    it('file: writes an empty CSV instead of crashing when there are no pages', async () => {
+        context.messages.in.content = { outputType: 'file' };
+        context.httpRequest.resolves({ data: { results: [] } });
+        context.saveFileStream = sinon.stub().resolves({ fileId: 'file-1' });
+
+        await ListPages.receive(context);
+
+        assert.strictEqual(context.saveFileStream.firstCall.args[1].toString(), '');
+        assert.deepStrictEqual(context.sendJson.firstCall.args[0], { fileId: 'file-1' });
+    });
+
+    it('array: an empty workspace gives an empty result, not an error', async () => {
+        context.messages.in.content = { outputType: 'array' };
+        context.httpRequest.resolves({ data: { results: [] } });
+
+        await ListPages.receive(context);
+
+        assert.deepStrictEqual(context.sendJson.firstCall.args[0], { result: [], count: 0 });
+    });
+
+    it('lets an API error reach the flow', async () => {
+        context.messages.in.content = { outputType: 'array' };
+        context.httpRequest.rejects(new Error('Request failed with status code 401'));
+
+        await assert.rejects(() => ListPages.receive(context), /401/);
+    });
+
+    describe('generateOutputPortOptions', () => {
+
+        beforeEach(() => {
+            context.properties = { generateOutputPortOptions: true };
+        });
+
+        it('array: one `result` option holding the item schema, without calling the API', async () => {
+            context.messages.in.content = { outputType: 'array' };
+
+            await ListPages.receive(context);
+
+            const [options] = context.sendJson.firstCall.args;
+            assert.strictEqual(options.length, 1);
+            assert.strictEqual(options[0].label, 'Pages');
+            assert.strictEqual(options[0].value, 'result');
+            assert.deepStrictEqual(options[0].schema.items.properties, ListPages.ITEM_SCHEMA.properties);
+            assert.strictEqual(context.httpRequest.callCount, 0);
+        });
+
+        it('first: one option per field plus index and count', async () => {
+            context.messages.in.content = { outputType: 'first' };
+
+            await ListPages.receive(context);
+
+            const values = context.sendJson.firstCall.args[0].map(option => option.value);
+            assert.deepStrictEqual(values, [
+                'index', 'count', 'id', 'title', 'url', 'public_url', 'created_time', 'last_edited_time', 'parent'
+            ]);
+        });
+    });
+
+    describe('as a dropdown source (isSource)', () => {
+
+        beforeEach(() => {
+            context.properties = { isSource: true };
+            // The designer sends no message with a source call.
+            context.messages = {};
+        });
+
+        it('returns id + title only and feeds the select transform', async () => {
+            await ListPages.receive(context);
+
+            const [output] = context.sendJson.firstCall.args;
+            assert.deepStrictEqual(output.result[0], {
+                id: 'b8c9d0e1-f2a3-4567-bcde-678901234567',
+                title: 'Launch plan'
+            });
+            assert.deepStrictEqual(ListPages.pageToSelectArray(output), [
+                { label: 'Launch plan', value: 'b8c9d0e1-f2a3-4567-bcde-678901234567' },
+                { label: 'Q1 Roadmap', value: 'e5f6a7b8-c9d0-1234-efab-345678901234' },
+                { label: 'Untitled', value: '7a1d2c3b-4e5f-4a6b-9c8d-0e1f2a3b4c5d' }
+            ]);
+        });
+
+        it('serves the second call from the cache and releases the lock', async () => {
+            const unlock = sinon.stub();
+            context.lock = sinon.stub().resolves({ unlock });
+
+            await ListPages.receive(context);
+            await ListPages.receive(context);
+
+            assert.strictEqual(context.httpRequest.callCount, 1);
+            assert.deepStrictEqual(context.sendJson.secondCall.args[0], context.sendJson.firstCall.args[0]);
+            assert.strictEqual(unlock.callCount, 2);
+        });
+
+        it('does not share the cache between accounts', async () => {
+            await ListPages.receive(context);
+            context.auth = { accessToken: 'another-token' };
+            await ListPages.receive(context);
+
+            assert.strictEqual(context.httpRequest.callCount, 2);
+        });
+
+        it('renders an empty dropdown instead of an error when the API call fails', async () => {
+            const unlock = sinon.stub();
+            context.lock = sinon.stub().resolves({ unlock });
+            context.httpRequest.rejects(new Error('Request failed with status code 401'));
+
+            await ListPages.receive(context);
+
+            assert.deepStrictEqual(context.sendJson.firstCall.args[0], { result: [] });
+            assert.strictEqual(unlock.callCount, 1);
+            assert.deepStrictEqual(ListPages.pageToSelectArray({ result: [] }), []);
+        });
+    });
+});
