@@ -9,13 +9,18 @@ const lib = require('../lib');
 const ITEM_SCHEMA = {
     type: 'object',
     properties: {
-        name: { type: 'string', title: 'Name', example: 'jev-1.13.0' },
+        name: { type: 'string', title: 'Name', example: 'jev-latest' },
         description: {
             type: 'string',
             title: 'Description',
-            example: 'System One decision model for choice, score and noul questions.'
+            example: 'The latest iteration of TypeSafe\'s System One Model: Jev'
         },
-        release_date: { type: 'string', title: 'Release Date', example: '2026-09-15' }
+        release_date: {
+            type: 'string',
+            format: 'date-time',
+            title: 'Release Date',
+            example: '2026-09-10T18:38:01.391457+00:00'
+        }
     }
 };
 
@@ -47,7 +52,8 @@ module.exports = {
             const { data } = isSource
                 ? await lib.requestCached({ context, path: '/v1/models' })
                 : await lib.request({ context, path: '/v1/models' });
-            items = Array.isArray(data) ? data : (data?.data ?? []);
+            // The API wraps the list: `{ models: [...] }`.
+            items = Array.isArray(data) ? data : (data?.models ?? []);
         } catch (error) {
             if (isSource) {
                 return context.sendJson({ result: [], count: 0 }, 'out');

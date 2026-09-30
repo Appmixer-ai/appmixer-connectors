@@ -12,6 +12,9 @@ const DEFAULT_LIST_CACHE_TTL = 2 * 60 * 1000; // 120 s
 // Verify Statement). The id is never shown to the user.
 const QUESTION_ID = 'decision';
 
+// Request errors the API answers deterministically; a retry would fail the same way.
+const NON_RETRYABLE_STATUSES = [400, 403, 404, 422];
+
 module.exports = {
 
     API_BASE_URL,
@@ -58,7 +61,8 @@ module.exports = {
 
     /**
      * Thin wrapper around context.httpRequest that applies the TypeSafe auth header.
-     * `401` (invalid key) and `422` (validation) are turned into a CancelError with
+     * `401` (invalid key) and the request errors `400` (unknown model, too many
+     * levels), `403`, `404` and `422` (validation) are turned into a CancelError with
      * the API's message — retrying them cannot succeed. Everything else, notably
      * `429` (rate limit) and `529` (overloaded), is rethrown as is so the engine
      * retries the message with its backoff.
@@ -102,8 +106,8 @@ module.exports = {
             if (status === 401) {
                 throw new context.CancelError(`Invalid TypeSafe API key: ${getErrorMessage(error)}`);
             }
-            if (status === 422) {
-                throw new context.CancelError(`TypeSafe rejected the request: ${getErrorMessage(error)}`);
+            if (NON_RETRYABLE_STATUSES.includes(status)) {
+                throw new context.CancelError(`TypeSafe rejected the request (${status}): ${getErrorMessage(error)}`);
             }
             throw error;
         }
@@ -227,9 +231,9 @@ module.exports = {
     },
 
     /**
-     * The API reference shows `probabilities` / `legend` of a score answer as maps
-     * keyed by level index, the Primitives page as arrays. Normalise both to a map
-     * keyed by the index as a string so the output shape does not depend on it.
+     * The live API returns `probabilities` / `legend` of a score answer as maps
+     * keyed by level index; the Primitives page shows arrays. Normalise both to a
+     * map keyed by the index as a string so the output shape does not depend on it.
      * @param {object|array} value
      * @returns {object}
      */
@@ -350,9 +354,10 @@ module.exports = {
 };
 
 /**
- * Best effort extraction of the API's error message. Validation errors may come
- * as `{ detail: [{ loc, msg }] }`, others as `{ error: { message } }`,
- * `{ message }` or plain text.
+ * Best effort extraction of the API's error message. Validation errors (422) come
+ * as `{ detail: [{ loc, msg }] }`, the rest as `{ detail: { error_type, message } }`
+ * or `{ detail: '...' }`; `{ error: { message } }`, `{ message }` and plain text
+ * are covered for whatever sits in front of the API.
  * @param {object} error the error thrown by context.httpRequest
  * @returns {string}
  */
@@ -376,6 +381,9 @@ const getErrorMessage = (error) => {
     }
     if (typeof data.detail === 'string') {
         return data.detail;
+    }
+    if (data.detail && typeof data.detail === 'object' && data.detail.message) {
+        return data.detail.message;
     }
     if (data.error && typeof data.error === 'object' && data.error.message) {
         return data.error.message;
