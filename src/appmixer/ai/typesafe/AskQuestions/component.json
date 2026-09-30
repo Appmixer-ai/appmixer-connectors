@@ -24,8 +24,7 @@
                     }
                 },
                 "required": [
-                    "state",
-                    "questions"
+                    "state"
                 ]
             },
             "inspector": {
@@ -37,10 +36,92 @@
                         "tooltip": "The text the questions are about. A JSON object or array mapped from a variable is sent as structured data. Text only, up to about 32k tokens."
                     },
                     "questions": {
-                        "type": "textarea",
+                        "type": "expression",
                         "label": "Questions",
                         "index": 2,
-                        "tooltip": "A JSON object mapping each question id to a question in the <a href=\"https://docs.typesafe.ai/primitives\" target=\"_blank\">TypeSafe format</a>, for example <code>{\"department\": {\"type\": \"choice\", \"instructions\": \"Which team should handle this\", \"criteria\": {\"billing\": null, \"technical\": null}}, \"is_urgent\": {\"type\": \"noul\", \"instructions\": \"The message is urgent\"}}</code>."
+                        "tooltip": "Required. The questions to ask about the content, one row each. All of them are answered in a single request. Every answer is available as its own output variable, named after the Question ID.",
+                        "levels": [
+                            "ADD"
+                        ],
+                        "fields": {
+                            "id": {
+                                "type": "text",
+                                "label": "Question ID",
+                                "index": 1,
+                                "tooltip": "A short name for the answer, for example <code>department</code> or <code>is_urgent</code>. Letters, digits and underscores only; it names the output variables of this question."
+                            },
+                            "type": {
+                                "type": "select",
+                                "label": "Type",
+                                "index": 2,
+                                "defaultValue": "choice",
+                                "tooltip": "Choice picks one of your options, Score rates on your scale, True or False checks a statement.",
+                                "options": [
+                                    {
+                                        "label": "Choice (pick one option)",
+                                        "value": "choice"
+                                    },
+                                    {
+                                        "label": "Score (rate on a scale)",
+                                        "value": "score"
+                                    },
+                                    {
+                                        "label": "True or False (verify a statement)",
+                                        "value": "noul"
+                                    }
+                                ]
+                            },
+                            "instructions": {
+                                "type": "text",
+                                "label": "Question",
+                                "index": 3,
+                                "tooltip": "What to decide, for example <code>Which team should handle this</code>, <code>How frustrated the customer appears</code> or the statement to verify, <code>The message is urgent</code>."
+                            },
+                            "options": {
+                                "type": "textarea",
+                                "label": "Options",
+                                "index": 4,
+                                "tooltip": "One option per line (2 to 255), as <code>key</code> or <code>key: description</code>, for example <code>billing: Payments, invoices and refunds</code>. The key is what the answer returns.",
+                                "when": {
+                                    "eq": {
+                                        "./type": "choice"
+                                    }
+                                }
+                            },
+                            "levels": {
+                                "type": "textarea",
+                                "label": "Levels",
+                                "index": 4,
+                                "tooltip": "One level description per line (2 to 10), ordered from the lowest (level 0) to the highest, for example <code>Calm, just stating facts</code>.",
+                                "when": {
+                                    "eq": {
+                                        "./type": "score"
+                                    }
+                                }
+                            },
+                            "trueCriteria": {
+                                "type": "text",
+                                "label": "When True",
+                                "index": 4,
+                                "tooltip": "Optional. Describe what makes the statement true.",
+                                "when": {
+                                    "eq": {
+                                        "./type": "noul"
+                                    }
+                                }
+                            },
+                            "falseCriteria": {
+                                "type": "text",
+                                "label": "When False",
+                                "index": 5,
+                                "tooltip": "Optional. Describe what makes the statement false.",
+                                "when": {
+                                    "eq": {
+                                        "./type": "noul"
+                                    }
+                                }
+                            }
+                        }
                     },
                     "model": {
                         "type": "text",
@@ -65,42 +146,15 @@
     "outPorts": [
         {
             "name": "out",
-            "schema": {
-                "type": "object",
-                "properties": {
-                    "answers": {
-                        "type": "object",
-                        "title": "Answers",
-                        "example": {
-                            "department": {
-                                "type": "choice",
-                                "choice": "technical",
-                                "confidence": 0.78,
-                                "probabilities": { "technical": 0.85, "sales": 0, "billing": 0.15 }
-                            },
-                            "is_urgent": { "type": "noul", "noul": 1 }
-                        }
+            "source": {
+                "url": "/component/appmixer/ai/typesafe/AskQuestions?outPort=out&ignoreAuth=true",
+                "data": {
+                    "properties": {
+                        "generateOutputPortOptions": true
                     },
-                    "model": {
-                        "type": "string",
-                        "title": "Model",
-                        "example": "jev-1.13.0"
-                    },
-                    "usage": {
-                        "type": "object",
-                        "title": "Usage",
-                        "properties": {
-                            "inputTokens": {
-                                "type": "integer",
-                                "title": "Usage.Input Tokens",
-                                "example": 392
-                            },
-                            "outputTokens": {
-                                "type": "integer",
-                                "title": "Usage.Output Tokens",
-                                "example": 65
-                            }
-                        }
+                    "messages": {
+                        "in/state": "dummy",
+                        "in/questions": "inputs/in/questions"
                     }
                 }
             }

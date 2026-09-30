@@ -39,28 +39,8 @@ module.exports = {
             question: { type: 'score', instructions, criteria }
         });
 
-        const probabilities = lib.toIndexedMap(answer.probabilities);
-        const legend = lib.toIndexedMap(answer.legend);
-
-        // The most probable level; `score` itself is the probability-weighted average.
-        let level = null;
-        Object.keys(probabilities).forEach(key => {
-            if (level === null || probabilities[key] > probabilities[String(level)]) {
-                level = Number(key);
-            }
-        });
-
-        let levelDescription = null;
-        if (level !== null) {
-            levelDescription = legend[String(level)] !== undefined ? legend[String(level)] : (criteria[level] ?? null);
-        }
-
         return context.sendJson({
-            score: answer.score,
-            level,
-            levelDescription,
-            confidence: answer.confidence,
-            probabilities,
+            ...lib.scoreOutput(answer, criteria),
             model: resolvedModel,
             usage: { inputTokens: usage.input_tokens }
         }, 'out');

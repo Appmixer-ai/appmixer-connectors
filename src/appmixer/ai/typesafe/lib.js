@@ -249,6 +249,41 @@ module.exports = {
     },
 
     /**
+     * Output fields of a score answer, shared by Score Text and Ask Questions.
+     * `level` is the most probable level; `score` itself is the probability-weighted
+     * average, so it is usually not a whole number.
+     * @param {object} answer score answer from the API
+     * @param {array<string>} [criteria] the level descriptions that were sent
+     * @returns {{score: number, level: number|null, levelDescription: string|null,
+     *     confidence: number, probabilities: object}}
+     */
+    scoreOutput(answer, criteria = []) {
+
+        const probabilities = this.toIndexedMap(answer.probabilities);
+        const legend = this.toIndexedMap(answer.legend);
+
+        let level = null;
+        Object.keys(probabilities).forEach(key => {
+            if (level === null || probabilities[key] > probabilities[String(level)]) {
+                level = Number(key);
+            }
+        });
+
+        let levelDescription = null;
+        if (level !== null) {
+            levelDescription = legend[String(level)] !== undefined ? legend[String(level)] : (criteria[level] ?? null);
+        }
+
+        return {
+            score: answer.score,
+            level,
+            levelDescription,
+            confidence: answer.confidence,
+            probabilities
+        };
+    },
+
+    /**
      * Turn the designer's key-value inspector rows into a plain object.
      * @param {array} rows
      * @returns {object}

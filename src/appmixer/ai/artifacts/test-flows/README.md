@@ -65,6 +65,12 @@ returns for the same role.
 
 ## TypeSafe notes
 
+- **`AskQuestions` asserts go through the generated variables.** Its questions are
+  inspector rows (one `choice`, one `score`, one `noul`) and its out port is built from
+  those rows, so the asserts read `answers.<id>.<field>` directly with no `g_jsonPath` —
+  a broken option list fails the import's variable check instead of hiding behind a
+  raw-object path. `appmixer connector verify` skips this component (it only samples
+  dynamic ports of `outputType` components), so this flow is its live check.
 - All decision calls pin `model: jev-latest`, so the model assertions are `regex ^jev-`
   (the API resolves the alias to a concrete version such as `jev-1.13.0`).
 - The content in each decision flow is deliberately unambiguous (a double charge →

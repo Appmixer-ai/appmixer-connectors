@@ -485,7 +485,28 @@
                                 },
                                 "lambda": {
                                     "state": "Hi, the API integration returns a 500 error on every request since this morning and our production system is blocked. Please help as soon as possible.",
-                                    "questions": "{\"department\":{\"type\":\"choice\",\"instructions\":\"Which team should handle this\",\"criteria\":{\"billing\":null,\"technical\":null,\"sales\":null}},\"is_urgent\":{\"type\":\"noul\",\"instructions\":\"The message is urgent\"}}",
+                                    "questions": {
+                                        "ADD": [
+                                            {
+                                                "id": "department",
+                                                "type": "choice",
+                                                "instructions": "Which team should handle this",
+                                                "options": "billing: Payments, invoices and refunds\ntechnical: Bugs or integration problems\nsales"
+                                            },
+                                            {
+                                                "id": "frustration",
+                                                "type": "score",
+                                                "instructions": "How frustrated the customer appears",
+                                                "levels": "Calm, just stating facts\nFrustrated but civil\nAngry or threatening to leave"
+                                            },
+                                            {
+                                                "id": "is_urgent",
+                                                "type": "noul",
+                                                "instructions": "The message is urgent",
+                                                "trueCriteria": "An outage, a deadline or an explicit request for a fast response"
+                                            }
+                                        ]
+                                    },
                                     "model": "jev-latest"
                                 }
                             }
@@ -518,67 +539,47 @@
                                 "type": "json2new",
                                 "modifiers": {
                                     "expression": {
-                                        "7eac216f-dd31-43cf-96e1-da135bca4417": {
-                                            "variable": "$.c2947a35-4433-4de3-9816-2b7062dcac81.out.answers",
-                                            "functions": [
-                                                {
-                                                    "name": "g_jsonPath",
-                                                    "params": [
-                                                        {
-                                                            "value": "$.department.type"
-                                                        }
-                                                    ]
-                                                }
-                                            ]
+                                        "363d063f-8679-4f68-aa46-ad582097cc40": {
+                                            "variable": "$.c2947a35-4433-4de3-9816-2b7062dcac81.out.answers.department.choice",
+                                            "functions": []
                                         },
-                                        "afb28d84-688d-463f-a839-8f702c27664a": {
-                                            "variable": "$.c2947a35-4433-4de3-9816-2b7062dcac81.out.answers",
-                                            "functions": [
-                                                {
-                                                    "name": "g_jsonPath",
-                                                    "params": [
-                                                        {
-                                                            "value": "$.department.choice"
-                                                        }
-                                                    ]
-                                                }
-                                            ]
+                                        "e0eeec9b-b767-4cb6-8051-c39a175c1a3f": {
+                                            "variable": "$.c2947a35-4433-4de3-9816-2b7062dcac81.out.answers.department.confidence",
+                                            "functions": []
                                         },
-                                        "2c89e13c-8c4a-4b4d-896f-1b9e3f968ec3": {
-                                            "variable": "$.c2947a35-4433-4de3-9816-2b7062dcac81.out.answers",
-                                            "functions": [
-                                                {
-                                                    "name": "g_jsonPath",
-                                                    "params": [
-                                                        {
-                                                            "value": "$.is_urgent.type"
-                                                        }
-                                                    ]
-                                                }
-                                            ]
+                                        "2b917205-5e5e-493e-a60f-54d269e64859": {
+                                            "variable": "$.c2947a35-4433-4de3-9816-2b7062dcac81.out.answers.frustration.score",
+                                            "functions": []
                                         },
-                                        "f74bd852-961b-459a-9b82-68de24985b4a": {
-                                            "variable": "$.c2947a35-4433-4de3-9816-2b7062dcac81.out.answers",
-                                            "functions": [
-                                                {
-                                                    "name": "g_jsonPath",
-                                                    "params": [
-                                                        {
-                                                            "value": "$.is_urgent.noul"
-                                                        }
-                                                    ]
-                                                }
-                                            ]
+                                        "7e2e2fed-2875-4898-9fa8-4020c58ecdc8": {
+                                            "variable": "$.c2947a35-4433-4de3-9816-2b7062dcac81.out.answers.frustration.level",
+                                            "functions": []
                                         },
-                                        "acef4e81-c680-4ef2-9163-6e1e9d390a91": {
+                                        "07ebb8ae-984e-46c6-b611-0520b18832ce": {
+                                            "variable": "$.c2947a35-4433-4de3-9816-2b7062dcac81.out.answers.frustration.levelDescription",
+                                            "functions": []
+                                        },
+                                        "0fe26538-a79a-4317-a2e4-942b4fee43d9": {
+                                            "variable": "$.c2947a35-4433-4de3-9816-2b7062dcac81.out.answers.frustration.confidence",
+                                            "functions": []
+                                        },
+                                        "696a67cf-f264-4343-ba49-399ccac1ef00": {
+                                            "variable": "$.c2947a35-4433-4de3-9816-2b7062dcac81.out.answers.is_urgent.probability",
+                                            "functions": []
+                                        },
+                                        "01e472f8-c4df-444d-b815-a72b1f803527": {
+                                            "variable": "$.c2947a35-4433-4de3-9816-2b7062dcac81.out.answers.is_urgent.result",
+                                            "functions": []
+                                        },
+                                        "b06f3f80-71ae-4d12-8f1b-2c6a39deebf1": {
                                             "variable": "$.c2947a35-4433-4de3-9816-2b7062dcac81.out.model",
                                             "functions": []
                                         },
-                                        "6a110be2-7c0b-47f7-827f-91e1ee34b406": {
+                                        "6f922b0d-9760-43bd-bb48-660433b491de": {
                                             "variable": "$.c2947a35-4433-4de3-9816-2b7062dcac81.out.usage.inputTokens",
                                             "functions": []
                                         },
-                                        "0db04432-5672-45ef-857f-d38aff8dee6a": {
+                                        "25440989-58de-4c90-95d7-a84e12b77726": {
                                             "variable": "$.c2947a35-4433-4de3-9816-2b7062dcac81.out.usage.outputTokens",
                                             "functions": []
                                         }
@@ -588,37 +589,57 @@
                                     "expression": {
                                         "AND": [
                                             {
-                                                "field": "{{{7eac216f-dd31-43cf-96e1-da135bca4417}}}",
-                                                "assertion": "equal",
-                                                "expected": "choice"
-                                            },
-                                            {
-                                                "field": "{{{afb28d84-688d-463f-a839-8f702c27664a}}}",
+                                                "field": "{{{363d063f-8679-4f68-aa46-ad582097cc40}}}",
                                                 "assertion": "equal",
                                                 "expected": "technical"
                                             },
                                             {
-                                                "field": "{{{2c89e13c-8c4a-4b4d-896f-1b9e3f968ec3}}}",
-                                                "assertion": "equal",
-                                                "expected": "noul"
-                                            },
-                                            {
-                                                "field": "{{{f74bd852-961b-459a-9b82-68de24985b4a}}}",
+                                                "field": "{{{e0eeec9b-b767-4cb6-8051-c39a175c1a3f}}}",
                                                 "assertion": "regex",
                                                 "regex": "^(0(\\.[0-9]+)?|1(\\.0+)?)$"
                                             },
                                             {
-                                                "field": "{{{acef4e81-c680-4ef2-9163-6e1e9d390a91}}}",
+                                                "field": "{{{2b917205-5e5e-493e-a60f-54d269e64859}}}",
+                                                "assertion": "regex",
+                                                "regex": "^[0-2](\\.[0-9]+)?$"
+                                            },
+                                            {
+                                                "field": "{{{7e2e2fed-2875-4898-9fa8-4020c58ecdc8}}}",
+                                                "assertion": "regex",
+                                                "regex": "^[0-2]$"
+                                            },
+                                            {
+                                                "field": "{{{07ebb8ae-984e-46c6-b611-0520b18832ce}}}",
+                                                "assertion": "regex",
+                                                "regex": "^(Calm, just stating facts|Frustrated but civil|Angry or threatening to leave)$"
+                                            },
+                                            {
+                                                "field": "{{{0fe26538-a79a-4317-a2e4-942b4fee43d9}}}",
+                                                "assertion": "regex",
+                                                "regex": "^(0(\\.[0-9]+)?|1(\\.0+)?)$"
+                                            },
+                                            {
+                                                "field": "{{{696a67cf-f264-4343-ba49-399ccac1ef00}}}",
+                                                "assertion": "regex",
+                                                "regex": "^(0(\\.[0-9]+)?|1(\\.0+)?)$"
+                                            },
+                                            {
+                                                "field": "{{{01e472f8-c4df-444d-b815-a72b1f803527}}}",
+                                                "assertion": "equal",
+                                                "expected": "true"
+                                            },
+                                            {
+                                                "field": "{{{b06f3f80-71ae-4d12-8f1b-2c6a39deebf1}}}",
                                                 "assertion": "regex",
                                                 "regex": "^jev-"
                                             },
                                             {
-                                                "field": "{{{6a110be2-7c0b-47f7-827f-91e1ee34b406}}}",
+                                                "field": "{{{6f922b0d-9760-43bd-bb48-660433b491de}}}",
                                                 "assertion": "regex",
                                                 "regex": "^[1-9][0-9]*$"
                                             },
                                             {
-                                                "field": "{{{0db04432-5672-45ef-857f-d38aff8dee6a}}}",
+                                                "field": "{{{25440989-58de-4c90-95d7-a84e12b77726}}}",
                                                 "assertion": "regex",
                                                 "regex": "^[0-9]+$"
                                             }
