@@ -1,0 +1,140 @@
+{
+    "name": "appmixer.ai.typesafe.ScoreText",
+    "label": "Score Text",
+    "author": "Appmixer <info@appmixer.com>",
+    "description": "Rate the content on your own scale of 2 to 10 levels, using the TypeSafe Jev decision model. Returns the probability-weighted score, the most likely level with its description, a probability per level and a confidence score. Works best with English content.",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:ai:typesafe"
+    },
+    "quota": {
+        "manager": "appmixer:ai:typesafe",
+        "resources": "requests"
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "state": {},
+                    "instructions": {},
+                    "levels": {},
+                    "model": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "state",
+                    "instructions",
+                    "levels"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "state": {
+                        "type": "textarea",
+                        "label": "Content",
+                        "index": 1,
+                        "tooltip": "The text to score, for example a customer message or a review. A JSON object or array mapped from a variable is sent as structured data. Text only, up to about 32k tokens."
+                    },
+                    "instructions": {
+                        "type": "text",
+                        "label": "What to score",
+                        "index": 2,
+                        "tooltip": "Describe what is being rated, for example <code>How frustrated the customer appears</code>."
+                    },
+                    "levels": {
+                        "type": "expression",
+                        "label": "Levels",
+                        "index": 3,
+                        "tooltip": "The levels of the scale, ordered from the lowest (level 0) to the highest (2 to 10 rows).",
+                        "levels": [
+                            "ADD"
+                        ],
+                        "fields": {
+                            "description": {
+                                "type": "text",
+                                "label": "Level Description",
+                                "index": 1,
+                                "tooltip": "What this level means, for example <code>Calm, just stating facts</code>."
+                            }
+                        }
+                    },
+                    "model": {
+                        "type": "text",
+                        "label": "Model",
+                        "index": 4,
+                        "defaultValue": "jev-latest",
+                        "tooltip": "Model name or alias. <code>jev-latest</code> is the stable alias, <code>jev-preview</code> the preview build; a version such as <code>jev-1.13.0</code> pins the model.",
+                        "source": {
+                            "url": "/component/appmixer/ai/typesafe/ListModels?outPort=out",
+                            "data": {
+                                "properties": {
+                                    "isSource": true
+                                },
+                                "transform": "./ListModels#toSelectArray"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "score": {
+                        "type": "number",
+                        "title": "Score",
+                        "example": 1.0
+                    },
+                    "level": {
+                        "type": "integer",
+                        "title": "Level",
+                        "example": 1
+                    },
+                    "levelDescription": {
+                        "type": "string",
+                        "title": "Level Description",
+                        "example": "Frustrated but civil"
+                    },
+                    "confidence": {
+                        "type": "number",
+                        "title": "Confidence",
+                        "example": 1.0
+                    },
+                    "probabilities": {
+                        "type": "object",
+                        "title": "Probabilities",
+                        "example": {
+                            "0": 0,
+                            "1": 1,
+                            "2": 0
+                        }
+                    },
+                    "model": {
+                        "type": "string",
+                        "title": "Model",
+                        "example": "jev-1.13.0"
+                    },
+                    "usage": {
+                        "type": "object",
+                        "title": "Usage",
+                        "properties": {
+                            "inputTokens": {
+                                "type": "integer",
+                                "title": "Usage.Input Tokens",
+                                "example": 392
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTI4IiBoZWlnaHQ9IjEyOCIgdmlld0JveD0iMCAwIDEyOCAxMjgiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxMjgiIGhlaWdodD0iMTI4IiByeD0iMjgiIGZpbGw9IiMxMTE4MjciLz4KPHBhdGggZD0iTTM0IDM4SDk0IiBzdHJva2U9IiNGRkZGRkYiIHN0cm9rZS13aWR0aD0iMTMiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPgo8cGF0aCBkPSJNNjQgMzhWNzAiIHN0cm9rZT0iI0ZGRkZGRiIgc3Ryb2tlLXdpZHRoPSIxMyIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+CjxwYXRoIGQ9Ik00NiA4Nkw2MCAxMDBMODYgNzQiIHN0cm9rZT0iIzM0RDM5OSIgc3Ryb2tlLXdpZHRoPSIxMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIi8+Cjwvc3ZnPgo="
+}

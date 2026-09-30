@@ -1,0 +1,160 @@
+{
+    "name": "appmixer.ai.typesafe.ClassifyText",
+    "label": "Classify Text",
+    "author": "Appmixer <info@appmixer.com>",
+    "description": "Pick which of your options fits the content best, using the TypeSafe Jev decision model. The answer is always one of the option keys you supply, with a probability per option and a confidence score, so it can drive a Condition directly. Works best with English content.",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:ai:typesafe"
+    },
+    "quota": {
+        "manager": "appmixer:ai:typesafe",
+        "resources": "requests"
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "state": {},
+                    "instructions": {},
+                    "options": {},
+                    "model": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "state",
+                    "instructions",
+                    "options"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "state": {
+                        "type": "textarea",
+                        "label": "Content",
+                        "index": 1,
+                        "tooltip": "The text to classify, for example a support ticket or an e-mail. A JSON object or array mapped from a variable is sent as structured data. Text only, up to about 32k tokens."
+                    },
+                    "instructions": {
+                        "type": "text",
+                        "label": "What to decide",
+                        "index": 2,
+                        "tooltip": "Describe the decision, for example <code>Which team should handle this</code>."
+                    },
+                    "options": {
+                        "type": "expression",
+                        "label": "Options",
+                        "index": 3,
+                        "tooltip": "The options to choose from (2 to 255). The key is what the component returns as the choice and must be unique; the optional description tells the model what the option means.",
+                        "levels": [
+                            "ADD"
+                        ],
+                        "fields": {
+                            "key": {
+                                "type": "text",
+                                "label": "Key",
+                                "index": 1,
+                                "tooltip": "Option key returned as the choice, for example <code>technical</code>."
+                            },
+                            "description": {
+                                "type": "text",
+                                "label": "Description",
+                                "index": 2,
+                                "tooltip": "Optional description of the option, for example <code>Bugs or integration problems</code>."
+                            }
+                        }
+                    },
+                    "model": {
+                        "type": "text",
+                        "label": "Model",
+                        "index": 4,
+                        "defaultValue": "jev-latest",
+                        "tooltip": "Model name or alias. <code>jev-latest</code> is the stable alias, <code>jev-preview</code> the preview build; a version such as <code>jev-1.13.0</code> pins the model.",
+                        "source": {
+                            "url": "/component/appmixer/ai/typesafe/ListModels?outPort=out",
+                            "data": {
+                                "properties": {
+                                    "isSource": true
+                                },
+                                "transform": "./ListModels#toSelectArray"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "choice": {
+                        "type": "string",
+                        "title": "Choice",
+                        "example": "technical"
+                    },
+                    "confidence": {
+                        "type": "number",
+                        "title": "Confidence",
+                        "example": 0.78
+                    },
+                    "probabilities": {
+                        "type": "object",
+                        "title": "Probabilities",
+                        "example": {
+                            "technical": 0.85,
+                            "billing": 0.15,
+                            "sales": 0
+                        }
+                    },
+                    "ranking": {
+                        "type": "array",
+                        "title": "Ranking",
+                        "example": [
+                            { "option": "technical", "probability": 0.85 },
+                            { "option": "billing", "probability": 0.15 },
+                            { "option": "sales", "probability": 0 }
+                        ],
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "option": {
+                                    "type": "string",
+                                    "title": "Ranking.Option",
+                                    "example": "technical"
+                                },
+                                "probability": {
+                                    "type": "number",
+                                    "title": "Ranking.Probability",
+                                    "example": 0.85
+                                }
+                            }
+                        }
+                    },
+                    "model": {
+                        "type": "string",
+                        "title": "Model",
+                        "example": "jev-1.13.0"
+                    },
+                    "usage": {
+                        "type": "object",
+                        "title": "Usage",
+                        "properties": {
+                            "inputTokens": {
+                                "type": "integer",
+                                "title": "Usage.Input Tokens",
+                                "example": 392
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTI4IiBoZWlnaHQ9IjEyOCIgdmlld0JveD0iMCAwIDEyOCAxMjgiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxMjgiIGhlaWdodD0iMTI4IiByeD0iMjgiIGZpbGw9IiMxMTE4MjciLz4KPHBhdGggZD0iTTM0IDM4SDk0IiBzdHJva2U9IiNGRkZGRkYiIHN0cm9rZS13aWR0aD0iMTMiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPgo8cGF0aCBkPSJNNjQgMzhWNzAiIHN0cm9rZT0iI0ZGRkZGRiIgc3Ryb2tlLXdpZHRoPSIxMyIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+CjxwYXRoIGQ9Ik00NiA4Nkw2MCAxMDBMODYgNzQiIHN0cm9rZT0iIzM0RDM5OSIgc3Ryb2tlLXdpZHRoPSIxMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIi8+Cjwvc3ZnPgo="
+}

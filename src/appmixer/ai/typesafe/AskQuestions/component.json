@@ -1,0 +1,110 @@
+{
+    "name": "appmixer.ai.typesafe.AskQuestions",
+    "label": "Ask Questions",
+    "author": "Appmixer <info@appmixer.com>",
+    "description": "Ask several typed questions (choice, score and noul) about the same content in one TypeSafe Jev request. The questions are evaluated independently and the answers are returned keyed by your question ids. Works best with English content.",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:ai:typesafe"
+    },
+    "quota": {
+        "manager": "appmixer:ai:typesafe",
+        "resources": "requests"
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "state": {},
+                    "questions": {},
+                    "model": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "state",
+                    "questions"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "state": {
+                        "type": "textarea",
+                        "label": "Content",
+                        "index": 1,
+                        "tooltip": "The text the questions are about. A JSON object or array mapped from a variable is sent as structured data. Text only, up to about 32k tokens."
+                    },
+                    "questions": {
+                        "type": "textarea",
+                        "label": "Questions",
+                        "index": 2,
+                        "tooltip": "A JSON object mapping each question id to a question in the <a href=\"https://docs.typesafe.ai/primitives\" target=\"_blank\">TypeSafe format</a>, for example <code>{\"department\": {\"type\": \"choice\", \"instructions\": \"Which team should handle this\", \"criteria\": {\"billing\": null, \"technical\": null}}, \"is_urgent\": {\"type\": \"noul\", \"instructions\": \"The message is urgent\"}}</code>."
+                    },
+                    "model": {
+                        "type": "text",
+                        "label": "Model",
+                        "index": 3,
+                        "defaultValue": "jev-latest",
+                        "tooltip": "Model name or alias. <code>jev-latest</code> is the stable alias, <code>jev-preview</code> the preview build; a version such as <code>jev-1.13.0</code> pins the model.",
+                        "source": {
+                            "url": "/component/appmixer/ai/typesafe/ListModels?outPort=out",
+                            "data": {
+                                "properties": {
+                                    "isSource": true
+                                },
+                                "transform": "./ListModels#toSelectArray"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "answers": {
+                        "type": "object",
+                        "title": "Answers",
+                        "example": {
+                            "department": {
+                                "type": "choice",
+                                "choice": "technical",
+                                "confidence": 0.78,
+                                "probabilities": { "technical": 0.85, "sales": 0, "billing": 0.15 }
+                            },
+                            "is_urgent": { "type": "noul", "noul": 1 }
+                        }
+                    },
+                    "model": {
+                        "type": "string",
+                        "title": "Model",
+                        "example": "jev-1.13.0"
+                    },
+                    "usage": {
+                        "type": "object",
+                        "title": "Usage",
+                        "properties": {
+                            "inputTokens": {
+                                "type": "integer",
+                                "title": "Usage.Input Tokens",
+                                "example": 392
+                            },
+                            "outputTokens": {
+                                "type": "integer",
+                                "title": "Usage.Output Tokens",
+                                "example": 65
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTI4IiBoZWlnaHQ9IjEyOCIgdmlld0JveD0iMCAwIDEyOCAxMjgiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxMjgiIGhlaWdodD0iMTI4IiByeD0iMjgiIGZpbGw9IiMxMTE4MjciLz4KPHBhdGggZD0iTTM0IDM4SDk0IiBzdHJva2U9IiNGRkZGRkYiIHN0cm9rZS13aWR0aD0iMTMiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPgo8cGF0aCBkPSJNNjQgMzhWNzAiIHN0cm9rZT0iI0ZGRkZGRiIgc3Ryb2tlLXdpZHRoPSIxMyIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+CjxwYXRoIGQ9Ik00NiA4Nkw2MCAxMDBMODYgNzQiIHN0cm9rZT0iIzM0RDM5OSIgc3Ryb2tlLXdpZHRoPSIxMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIi8+Cjwvc3ZnPgo="
+}
