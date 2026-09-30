@@ -18,7 +18,7 @@ const SEARCH_RESULTS = [
         properties: {
             title: { id: 'title', type: 'title', title: [{ type: 'text', plain_text: 'Launch plan' }] }
         },
-        url: 'https://www.notion.so/Launch-plan-b8c9d0e1f2a34567bcde678901234567',
+        url: 'https://app.notion.com/p/Launch-plan-b8c9d0e1f2a34567bcde678901234567',
         public_url: null
     },
     {
@@ -38,7 +38,7 @@ const SEARCH_RESULTS = [
                 title: [{ type: 'text', plain_text: 'Q1 ' }, { type: 'mention', plain_text: 'Roadmap' }]
             }
         },
-        url: 'https://www.notion.so/Q1-Roadmap-e5f6a7b8c9d01234efab345678901234',
+        url: 'https://app.notion.com/p/Q1-Roadmap-e5f6a7b8c9d01234efab345678901234',
         public_url: null
     },
     {
@@ -49,7 +49,7 @@ const SEARCH_RESULTS = [
         parent: { type: 'page_id', page_id: 'b8c9d0e1-f2a3-4567-bcde-678901234567' },
         archived: false,
         properties: { title: { id: 'title', type: 'title', title: [] } },
-        url: 'https://www.notion.so/7a1d2c3b4e5f4a6b9c8d0e1f2a3b4c5d',
+        url: 'https://app.notion.com/p/7a1d2c3b4e5f4a6b9c8d0e1f2a3b4c5d',
         public_url: null
     }
 ];
@@ -93,7 +93,7 @@ describe('notion ListPages', () => {
         assert.deepStrictEqual(output.result[1], {
             id: 'e5f6a7b8-c9d0-1234-efab-345678901234',
             title: 'Q1 Roadmap',
-            url: 'https://www.notion.so/Q1-Roadmap-e5f6a7b8c9d01234efab345678901234',
+            url: 'https://app.notion.com/p/Q1-Roadmap-e5f6a7b8c9d01234efab345678901234',
             public_url: null,
             created_time: '2025-11-20T09:00:00.000Z',
             last_edited_time: '2025-12-24T12:00:00.000Z',

@@ -10,7 +10,7 @@ const ITEM_SCHEMA = {
         url: {
             type: 'string',
             title: 'URL',
-            example: 'https://www.notion.so/Launch-plan-b8c9d0e1f2a34567bcde678901234567'
+            example: 'https://app.notion.com/p/Launch-plan-b8c9d0e1f2a34567bcde678901234567'
         },
         public_url: {
             type: ['string', 'null'],
