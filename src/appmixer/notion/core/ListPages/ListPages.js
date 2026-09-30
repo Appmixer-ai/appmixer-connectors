@@ -147,7 +147,7 @@ module.exports = {
     ITEM_SCHEMA,
 
     async receive(context) {
-        const { outputType } = context.messages.in?.content || {};
+        const { outputType = 'array' } = context.messages.in?.content || {};
         const { generateOutputPortOptions, isSource } = context.properties;
 
         if (generateOutputPortOptions) {
@@ -167,11 +167,12 @@ module.exports = {
         // so the ID can still be typed in.
         try {
             const result = await lib.withCache(context, ['ListPages'], async () => {
+                // Both or nothing: labels built without the databases would be cached
+                // for the whole TTL, while a failure is not cached and is retried on
+                // the next inspector open.
                 const [pages, databases] = await Promise.all([
                     fetchPages(context),
-                    // Databases only name the path of their items — the dropdown is
-                    // still worth showing without them.
-                    fetchDatabases(context).catch(() => [])
+                    fetchDatabases(context)
                 ]);
                 // Only the fields the dropdown needs, to keep the cache small.
                 return toPageOptions(pages, databases);

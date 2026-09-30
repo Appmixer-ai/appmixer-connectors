@@ -163,6 +163,28 @@ describe('notion ListPages', () => {
         assert.deepStrictEqual(context.sendJson.firstCall.args[0], { fileId: 'file-1' });
     });
 
+    it('file: every row has as many cells as the header, with nested and comma values quoted', async () => {
+        context.messages.in.content = { outputType: 'file' };
+        const tricky = {
+            ...SEARCH_RESULTS[0],
+            properties: {
+                title: { id: 'title', type: 'title', title: [{ type: 'text', plain_text: 'Plan, "Q1"\nfinal' }] }
+            }
+        };
+        context.httpRequest.resolves({ data: { results: [tricky] } });
+        context.saveFileStream = sinon.stub().resolves({ fileId: 'file-1' });
+
+        await ListPages.receive(context);
+
+        const csv = context.saveFileStream.firstCall.args[1].toString();
+        assert.strictEqual(csv, [
+            'id,title,url,public_url,created_time,last_edited_time,parent',
+            'b8c9d0e1-f2a3-4567-bcde-678901234567,"Plan, ""Q1""\nfinal",' +
+            'https://app.notion.com/p/Launch-plan-b8c9d0e1f2a34567bcde678901234567,,' +
+            '2025-12-01T08:00:00.000Z,2026-01-15T10:30:00.000Z,"{""type"":""workspace"",""workspace"":true}"'
+        ].join('\n'));
+    });
+
     it('array: an empty workspace gives an empty result, not an error', async () => {
         context.messages.in.content = { outputType: 'array' };
         context.httpRequest.resolves({ data: { results: [] } });
@@ -191,11 +213,18 @@ describe('notion ListPages', () => {
             await ListPages.receive(context);
 
             const [options] = context.sendJson.firstCall.args;
-            assert.strictEqual(options.length, 1);
-            assert.strictEqual(options[0].label, 'Pages');
-            assert.strictEqual(options[0].value, 'result');
-            assert.deepStrictEqual(options[0].schema.items.properties, ListPages.ITEM_SCHEMA.properties);
+            // The picker must offer everything the array mode emits: { result, count }.
+            assert.deepStrictEqual(options.map(option => option.value), ['count', 'result']);
+            assert.strictEqual(options[1].label, 'Pages');
+            assert.deepStrictEqual(options[1].schema.items.properties, ListPages.ITEM_SCHEMA.properties);
             assert.strictEqual(context.httpRequest.callCount, 0);
+        });
+
+        it('describes the array mode when outputType is not set, like the data path does', async () => {
+            await ListPages.receive(context);
+
+            const [options] = context.sendJson.firstCall.args;
+            assert.deepStrictEqual(options.map(option => option.value), ['count', 'result']);
         });
 
         it('first: one option per field plus index and count', async () => {
@@ -289,12 +318,17 @@ describe('notion ListPages', () => {
             assert.deepStrictEqual(labels(), ['Inside a column', 'Shared subpage']);
         });
 
-        it('still lists the pages when the database search fails', async () => {
+        it('does not cache labels built without the databases: a failed search is retried', async () => {
             respondWith({ databases: new Error('Request failed with status code 502') });
 
             await ListPages.receive(context);
 
-            assert.deepStrictEqual(labels(), ['Launch plan', 'Launch plan / Untitled', 'Q1 Roadmap']);
+            assert.deepStrictEqual(context.sendJson.lastCall.args[0], { result: [] });
+
+            respondWith();
+            await ListPages.receive(context);
+
+            assert.deepStrictEqual(labels(), ['Launch plan', 'Launch plan / Untitled', 'Roadmaps / Q1 Roadmap']);
         });
 
         it('does not drop or loop on pages that are each other\'s parent', async () => {

@@ -140,8 +140,12 @@ module.exports = {
 
         if (outputType === 'array') {
             return context.sendJson([{
+                label: 'Items Count',
+                value: 'count',
+                schema: { type: 'integer' }
+            }, {
                 label,
-                value,
+                value: value || 'result',
                 schema: {
                     type: 'array',
                     items: { type: 'object', properties: itemSchema }
@@ -164,14 +168,17 @@ const toCsv = (array) => {
     }
     const headers = Object.keys(array[0]);
     return [
-        headers.join(','),
-        ...array.map(items => {
-            return Object.values(items).map(property => {
-                if (typeof property === 'object') {
-                    return JSON.stringify(property);
-                }
-                return property;
-            }).join(',');
-        })
+        headers.map(toCsvValue).join(','),
+        ...array.map(item => headers.map(header => toCsvValue(item[header])).join(','))
     ].join('\n');
+};
+
+// A value holding a comma, a quote or a line break is quoted and its quotes doubled
+// (RFC 4180) — a nested object serialized as JSON always does, and a title may.
+const toCsvValue = (value) => {
+    if (value === null || value === undefined) {
+        return '';
+    }
+    const text = typeof value === 'object' ? JSON.stringify(value) : String(value);
+    return /[",\r\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
 };
