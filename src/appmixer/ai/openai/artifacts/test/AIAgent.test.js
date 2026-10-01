@@ -596,7 +596,9 @@ describe('AIAgent - tool port with a chain of components', () => {
             type: 'function',
             function: {
                 name: TOOL_NAME,
-                description: 'Search policies - Generate embeddings for a text. Then: Query Pinecone for vectors.',
+                description: 'Search policies - Generate embeddings for a text. Then: Query Pinecone for vectors.'
+                    + ' The tool runs these steps in a row and returns the output of the last step,'
+                    + ' one result for every item when a step returns several.',
                 parameters: {
                     type: 'object',
                     properties: { text: { type: 'string', description: 'Text — The text to embed.' } },
@@ -682,7 +684,54 @@ describe('AIAgent - tool port with a chain of components', () => {
         const outputs = await callTool();
 
         assert.strictEqual(componentCalls.length, 1);
-        assert.match(outputs[0].output, /step "QueryVectors"\): transform failed/);
+        assert.match(outputs[0].output, /step "QueryVectors": transform failed/);
+    });
+
+    describe('when a step sends several messages', () => {
+
+        const match = { out: { result: { matches: [{ id: 'chunk-1' }] } } };
+
+        beforeEach(async () => {
+            // What a static call returns for a component that sent two messages to 'out'.
+            embeddingsOutput = { out: [{ firstVector: [1] }, { firstVector: [2] }] };
+            await AIAgent.getAllToolsDefinition(context);
+        });
+
+        it('should run the next step for each of them and return a list', async () => {
+
+            const outputs = await callTool();
+
+            assert.deepStrictEqual(componentCalls.slice(1).map((call) => call.body.messages.in.vector), [[1], [2]]);
+            assert.deepStrictEqual(JSON.parse(outputs[0].output), [match, match]);
+        });
+
+        it('should keep the other results when one of them fails', async () => {
+
+            const callAppmixer = context.callAppmixer;
+            context.callAppmixer = sinon.stub().callsFake(async (request) => {
+                if (request.body?.messages?.in?.vector?.[0] === 1) throw new Error('index not found');
+                return callAppmixer(request);
+            });
+
+            const outputs = await callTool();
+
+            assert.deepStrictEqual(JSON.parse(outputs[0].output), [
+                { error: 'Step "QueryVectors" failed: index not found' },
+                match
+            ]);
+        });
+
+        it('should stop at the configured number of items and say so', async () => {
+
+            context.config = { AI_AGENT_TOOL_MAX_ITEMS: 1 };
+
+            const outputs = await callTool();
+
+            assert.deepStrictEqual(JSON.parse(outputs[0].output), [
+                match,
+                { note: 'Only the first 1 of 2 items were processed.' }
+            ]);
+        });
     });
 
     it('should turn a model defined field of a later step into a tool parameter', async () => {

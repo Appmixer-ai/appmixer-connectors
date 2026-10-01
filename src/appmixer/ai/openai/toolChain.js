@@ -18,6 +18,9 @@
  *     agent) is resolved by the engine itself (POST /modifiers/transform), so variable
  *     modifiers behave exactly as they do in a running flow.
  *
+ * When a step sends several messages, the next one runs for each of them and the tool
+ * returns a list (Find Emails -> Get Email returns the content of every email found).
+ *
  * Limit: the chain is a straight line. It ends where the flow branches.
  */
 
@@ -27,6 +30,8 @@ const TOOL_OUTPUT_TYPE = 'appmixer.ai.agenttools.ToolOutput';
 const VARIABLE = /\{\{\{[^{}]+\}\}\}/;
 // Arrays longer than this (embedding vectors) are summarized in the logs.
 const MAX_LOGGED_ARRAY = 20;
+// How many messages of one step the next step is run for (AI_AGENT_TOOL_MAX_ITEMS overrides it).
+const MAX_ITEMS = 50;
 
 // ─── Discovery ────────────────────────────────────────────────────────────────
 
@@ -164,9 +169,13 @@ async function extendToolDef(context, toolDef, fetchManifest) {
     }
 
     if (steps.length) {
+        // The descriptions of the components only say what each one does. Without the last
+        // sentence the model reads the first one and expects that component's output.
         Object.assign(fn, {
             _chain: steps,
             description: [fn.description, ...descriptions].join(' Then: ')
+                + ' The tool runs these steps in a row and returns the output of the last step,'
+                + ' one result for every item when a step returns several.'
         });
     }
     return toolDef;
@@ -232,6 +241,93 @@ function forLog(value) {
 }
 
 /**
+ * Call one step with its input built from the outputs known so far.
+ */
+async function callStep(context, fn, step, args, outputs) {
+    const payload = await resolveVariables(context, step.fields, outputs);
+    for (const [key, field] of Object.entries(step.fields)) {
+        if (field.kind === 'static') payload[key] = field.value;
+        if (field.kind === 'model' && args?.[field.parameter] !== undefined) {
+            payload[key] = args[field.parameter];
+        }
+    }
+    await context.log({
+        step: 'component-tool-chain-call',
+        tool: fn.name,
+        label: step.label,
+        componentId: step.componentId,
+        payload: forLog(payload)
+    });
+    const result = await context.callAppmixer({
+        endPoint: '/component/' + step.componentType.replace(/\./g, '/'),
+        method: 'POST',
+        body: {
+            componentId: step.componentId,
+            messages: { [step.inPort]: payload }
+        }
+    });
+    await context.log({ step: 'component-tool-chain-result', tool: fn.name, label: step.label, result: forLog(result) });
+    return result;
+}
+
+/**
+ * Run the chain from the step at `index` on. A component that sends several messages
+ * to a port (Find Emails with one email at a time) has them returned by the static
+ * call as an array; the next step then runs once per message, the way it would in the
+ * running flow, and the results come back as a list.
+ *
+ * @returns {Promise<*>} output of the last step, or a list of them after a fan-out
+ */
+async function runFrom(context, fn, args, index, outputs, result) {
+    const { _chain: chain } = fn;
+    const step = chain[index];
+    if (!step) return result;
+
+    // As in a running flow, a step runs only when its source port sent something.
+    const source = outputs[step.sourceId];
+    const sent = source && typeof source === 'object' ? source[step.sourcePort] : undefined;
+    if (sent === undefined) {
+        await context.log({
+            step: 'component-tool-chain-stopped',
+            tool: fn.name,
+            before: step.label,
+            sourcePort: step.sourcePort
+        });
+        return result;
+    }
+    if (!Array.isArray(sent)) {
+        let stepResult;
+        try {
+            stepResult = await callStep(context, fn, step, args, outputs);
+        } catch (err) {
+            throw new Error(`step "${step.label}": ${err.message}`);
+        }
+        return runFrom(context, fn, args, index + 1, { ...outputs, [step.componentId]: stepResult }, stepResult);
+    }
+
+    const limit = Number(context.config?.AI_AGENT_TOOL_MAX_ITEMS) || MAX_ITEMS;
+    const results = [];
+    for (const message of sent.slice(0, limit)) {
+        const itemOutputs = { ...outputs, [step.sourceId]: { ...source, [step.sourcePort]: message } };
+        try {
+            const stepResult = await callStep(context, fn, step, args, itemOutputs);
+            results.push(await runFrom(
+                context, fn, args, index + 1, { ...itemOutputs, [step.componentId]: stepResult }, stepResult
+            ));
+        } catch (err) {
+            // One failed item must not cost the model all the others.
+            await context.log({ step: 'component-tool-chain-error', tool: fn.name, label: step.label, error: err.message });
+            results.push({ error: `Step "${step.label}" failed: ${err.message}` });
+        }
+    }
+    if (sent.length > limit) {
+        await context.log({ step: 'component-tool-chain-truncated', tool: fn.name, label: step.label, items: sent.length, limit });
+        results.push({ note: `Only the first ${limit} of ${sent.length} items were processed.` });
+    }
+    return results;
+}
+
+/**
  * Run the steps behind the tool's first component. Never throws: like in tool.js, an
  * error is returned as the tool output so that the model can deal with it.
  *
@@ -243,60 +339,16 @@ function forLog(value) {
  */
 async function run(context, toolDef, args, firstResult) {
     const fn = toolDef.function;
-    const { _componentId: firstComponentId, _chain: chain } = fn;
+    const { _componentId: firstComponentId } = fn;
     const outputs = { ...getScope(context), [firstComponentId]: firstResult };
-    let result = firstResult;
 
-    for (const step of chain) {
-        // As in a running flow, a step runs only when its source port sent something.
-        const source = outputs[step.sourceId];
-        if (!source || typeof source !== 'object' || source[step.sourcePort] === undefined) {
-            await context.log({
-                step: 'component-tool-chain-stopped',
-                tool: fn.name,
-                before: step.label,
-                sourcePort: step.sourcePort
-            });
-            break;
-        }
-
-        try {
-            const payload = await resolveVariables(context, step.fields, outputs);
-            for (const [key, field] of Object.entries(step.fields)) {
-                if (field.kind === 'static') payload[key] = field.value;
-                if (field.kind === 'model' && args?.[field.parameter] !== undefined) {
-                    payload[key] = args[field.parameter];
-                }
-            }
-            await context.log({
-                step: 'component-tool-chain-call',
-                tool: fn.name,
-                label: step.label,
-                componentId: step.componentId,
-                payload: forLog(payload)
-            });
-            result = await context.callAppmixer({
-                endPoint: '/component/' + step.componentType.replace(/\./g, '/'),
-                method: 'POST',
-                body: {
-                    componentId: step.componentId,
-                    messages: { [step.inPort]: payload }
-                }
-            });
-            outputs[step.componentId] = result;
-            await context.log({
-                step: 'component-tool-chain-result',
-                tool: fn.name,
-                label: step.label,
-                result: forLog(result)
-            });
-        } catch (err) {
-            await context.log({ step: 'component-tool-chain-error', tool: fn.name, label: step.label, error: err.message });
-            return `Error calling tool ${fn.name} (step "${step.label}"): ${err.message}`;
-        }
+    try {
+        const result = await runFrom(context, fn, args, 0, outputs, firstResult);
+        return typeof result === 'string' ? result : JSON.stringify(result, null, 2);
+    } catch (err) {
+        await context.log({ step: 'component-tool-chain-error', tool: fn.name, error: err.message });
+        return `Error calling tool ${fn.name}: ${err.message}`;
     }
-
-    return typeof result === 'string' ? result : JSON.stringify(result, null, 2);
 }
 
 module.exports = {
