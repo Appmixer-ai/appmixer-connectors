@@ -1,0 +1,427 @@
+{
+    "name": "E2E MCPTools - remote MCP endpoint metadata",
+    "description": "Checks the public half of the remote MCP endpoint added in mcptools 1.1.0: the RFC 9728 protected resource metadata document is served (unauthenticated) at both paths the plugin registers — /plugins/appmixer/ai/mcptools/.well-known/oauth-protected-resource and the /mcp-suffixed alias — and names this instance's /plugins/appmixer/ai/mcptools/mcp endpoint as the protected resource. Set the apiBaseUrl variable to the API URL of the instance under test.",
+    "customFields": {
+        "category": "E2E_test_flow"
+    },
+    "flow": {
+        "1b568bb3-a181-40ea-9098-f80bf5e0fbf8": {
+            "type": "appmixer.utils.controls.OnStart",
+            "label": "OnStart",
+            "x": 64,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {},
+            "config": {},
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "977a2c56-54dc-4b12-a273-6be8ab56477d": {
+            "type": "appmixer.utils.controls.SetVariable",
+            "label": "SetVariable",
+            "x": 272,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "1b568bb3-a181-40ea-9098-f80bf5e0fbf8": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "1b568bb3-a181-40ea-9098-f80bf5e0fbf8": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "variables": {}
+                                },
+                                "lambda": {
+                                    "variables": {
+                                        "ADD": [
+                                            {
+                                                "type": "text",
+                                                "name": "apiBaseUrl",
+                                                "text": "https://api-dev-automated-00001.dev.appmixer.ai"
+                                            },
+                                            {
+                                                "type": "text",
+                                                "name": "metadataPath",
+                                                "text": "/plugins/appmixer/ai/mcptools/.well-known/oauth-protected-resource"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "f69dd9ac-6ae1-4361-8faf-01a4e647c4db": {
+            "type": "appmixer.utils.http.Get",
+            "label": "Get resource metadata",
+            "x": 480,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "977a2c56-54dc-4b12-a273-6be8ab56477d": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "977a2c56-54dc-4b12-a273-6be8ab56477d": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "url": {
+                                        "abd46d39-ffe0-4fac-b7c5-b21a618ae9ac": {
+                                            "variable": "$.977a2c56-54dc-4b12-a273-6be8ab56477d.out.apiBaseUrl",
+                                            "functions": []
+                                        },
+                                        "82facfd5-7105-40a4-ac25-b8ae2cec721d": {
+                                            "variable": "$.977a2c56-54dc-4b12-a273-6be8ab56477d.out.metadataPath",
+                                            "functions": []
+                                        }
+                                    },
+                                    "headers": {}
+                                },
+                                "lambda": {
+                                    "url": "{{{abd46d39-ffe0-4fac-b7c5-b21a618ae9ac}}}{{{82facfd5-7105-40a4-ac25-b8ae2cec721d}}}",
+                                    "headers": "{\"Accept\":\"application/json\"}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "8f2aebef-0d0c-4308-adfc-79d20e5528e4": {
+            "type": "appmixer.utils.test.Assert",
+            "label": "Assert resource metadata",
+            "x": 688,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "f69dd9ac-6ae1-4361-8faf-01a4e647c4db": [
+                        "response"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "f69dd9ac-6ae1-4361-8faf-01a4e647c4db": {
+                            "response": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "f5b2f3d6-6b9e-42ac-9816-ff96b13df04f": {
+                                            "variable": "$.f69dd9ac-6ae1-4361-8faf-01a4e647c4db.response.body",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$.resource"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        },
+                                        "7264ae68-7b3a-4824-a227-dac2bb78510d": {
+                                            "variable": "$.f69dd9ac-6ae1-4361-8faf-01a4e647c4db.response.body",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$.resource_name"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        },
+                                        "a3e084fc-4fe8-4571-9d63-97f2e0ac381d": {
+                                            "variable": "$.f69dd9ac-6ae1-4361-8faf-01a4e647c4db.response.body",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$.bearer_methods_supported[0]"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        },
+                                        "b4ef152c-b4aa-4391-aef8-d5d87e887ed2": {
+                                            "variable": "$.f69dd9ac-6ae1-4361-8faf-01a4e647c4db.response.body",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$.authorization_servers[0]"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{f5b2f3d6-6b9e-42ac-9816-ff96b13df04f}}}",
+                                                "assertion": "regex",
+                                                "regex": "^https?://.+/plugins/appmixer/ai/mcptools/mcp$"
+                                            },
+                                            {
+                                                "field": "{{{7264ae68-7b3a-4824-a227-dac2bb78510d}}}",
+                                                "assertion": "equal",
+                                                "expected": "Appmixer MCP"
+                                            },
+                                            {
+                                                "field": "{{{a3e084fc-4fe8-4571-9d63-97f2e0ac381d}}}",
+                                                "assertion": "equal",
+                                                "expected": "header"
+                                            },
+                                            {
+                                                "field": "{{{b4ef152c-b4aa-4391-aef8-d5d87e887ed2}}}",
+                                                "assertion": "regex",
+                                                "regex": "^https?://.+"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "770e8ea8-01d5-412a-b20e-830b93a09b0a": {
+            "type": "appmixer.utils.http.Get",
+            "label": "Get resource metadata (alias path)",
+            "x": 480,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "977a2c56-54dc-4b12-a273-6be8ab56477d": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "977a2c56-54dc-4b12-a273-6be8ab56477d": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "url": {
+                                        "8926a51b-849a-4216-8094-c43c29bb335e": {
+                                            "variable": "$.977a2c56-54dc-4b12-a273-6be8ab56477d.out.apiBaseUrl",
+                                            "functions": []
+                                        },
+                                        "b8325a6d-950e-404f-a761-aaac8f11f2c5": {
+                                            "variable": "$.977a2c56-54dc-4b12-a273-6be8ab56477d.out.metadataPath",
+                                            "functions": []
+                                        }
+                                    },
+                                    "headers": {}
+                                },
+                                "lambda": {
+                                    "url": "{{{8926a51b-849a-4216-8094-c43c29bb335e}}}{{{b8325a6d-950e-404f-a761-aaac8f11f2c5}}}/mcp",
+                                    "headers": "{\"Accept\":\"application/json\"}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "1b578e5c-4f8b-45c8-950f-92f9928374cd": {
+            "type": "appmixer.utils.test.Assert",
+            "label": "Assert alias path metadata",
+            "x": 688,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "770e8ea8-01d5-412a-b20e-830b93a09b0a": [
+                        "response"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "770e8ea8-01d5-412a-b20e-830b93a09b0a": {
+                            "response": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "f92a936a-b6ea-4535-bde0-e7a7d4cc355b": {
+                                            "variable": "$.770e8ea8-01d5-412a-b20e-830b93a09b0a.response.body",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$.resource"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        },
+                                        "f8947427-6e9c-48a6-a3a8-557ab7975cc9": {
+                                            "variable": "$.770e8ea8-01d5-412a-b20e-830b93a09b0a.response.body",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$.resource_documentation"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{f92a936a-b6ea-4535-bde0-e7a7d4cc355b}}}",
+                                                "assertion": "regex",
+                                                "regex": "^https?://.+/plugins/appmixer/ai/mcptools/mcp$"
+                                            },
+                                            {
+                                                "field": "{{{f8947427-6e9c-48a6-a3a8-557ab7975cc9}}}",
+                                                "assertion": "equal",
+                                                "expected": "https://docs.appmixer.com/appmixer/tutorials/appmixer-mcp-server"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "da73f85e-1f81-4a78-a88e-cb25f7773466": {
+            "type": "appmixer.utils.test.AfterAll",
+            "label": "AfterAll",
+            "x": 896,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "8f2aebef-0d0c-4308-adfc-79d20e5528e4": [
+                        "out"
+                    ],
+                    "1b578e5c-4f8b-45c8-950f-92f9928374cd": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 180
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "5ce768e5-cdff-459c-a953-ae6f693dd1c3": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "label": "ProcessE2EResults",
+            "x": 1104,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "da73f85e-1f81-4a78-a88e-cb25f7773466": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "da73f85e-1f81-4a78-a88e-cb25f7773466": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "43610661-aef4-4bc4-a6bd-a4ba6050680f": {
+                                            "variable": "$.da73f85e-1f81-4a78-a88e-cb25f7773466.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E MCPTools - remote MCP endpoint metadata",
+                                    "result": "{{{43610661-aef4-4bc4-a6bd-a4ba6050680f}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        }
+    },
+    "notes": {
+        "2af4c245-c5a0-478b-8a59-fcf1d073d497": {
+            "x": 64,
+            "y": 336,
+            "width": 672,
+            "height": 320,
+            "content": "## ⚠️ Instance-specific URL, and what this flow can NOT cover\n\n**`apiBaseUrl` in SetVariable must be the API URL of the instance this flow runs on** (`appmixer url`), e.g. `https://api-dev-automated-00001.dev.appmixer.ai`. Plugin routes are only reachable on the tenant's own API host, and the `resource` value the endpoint reports comes from `MCP_PUBLIC_BASE_URL` / `APPMIXER_API_URL` on the backend — a mismatch is exactly what this flow is meant to catch.\n\nThe authenticated half of the endpoint (`POST /mcp` JSON-RPC: `initialize`, `tools/list`, `tools/call`; the `GET /mcp` SSE stream) is **deliberately not tested here**: it needs a user bearer token, and no token may be committed to this repo. The 401 + `WWW-Authenticate` challenge and the `DELETE /mcp` → 405 contract are also out of reach, because `appmixer.utils.http.*` throws on any non-2xx response and would stop the flow.\n\nThose paths are covered by `test/ai/mcptools/{mcp-auth,streamable-http}.test.js` and, against a live instance, by `src/appmixer/ai/mcptools/artifacts/mcp-server-simulation/run-e2e-test.sh`."
+        }
+    }
+}
