@@ -282,6 +282,75 @@ describe('AIAgent - instructions', () => {
     });
 });
 
+describe('AIAgent - history summary', () => {
+
+    let sandbox;
+    let context;
+    let createCompletion;
+
+    beforeEach(async () => {
+        context = createMockContext({
+            auth: { apiKey: 'test-api-key' },
+            properties: { model: 'gpt-4o' },
+            messages: { in: { correlationId: 'corr-1', content: { prompt: 'Question', threadId: 'thread-1' } } }
+        });
+        // Any exchange is over this limit, so every turn ends with a summary.
+        context.config = { AI_AGENT_MAX_HISTORY_SIZE: 10 };
+        await context.stateSet('tools', []);
+
+        sandbox = sinon.createSandbox();
+        sandbox.stub(AIAgent, 'publishChatProgressEvent').resolves();
+        createCompletion = sandbox.stub(AIAgent, 'createCompletion').resolves({
+            finish_reason: 'stop',
+            message: { role: 'assistant', content: 'Text' }
+        });
+    });
+
+    afterEach(() => {
+        sandbox.restore();
+    });
+
+    const summaryRequest = () => createCompletion.secondCall.args[2];
+
+    it('should not cap the summary unless a cap is configured', async () => {
+
+        await AIAgent.receive(context);
+
+        assert.deepStrictEqual(Object.keys(summaryRequest()), ['model', 'messages']);
+    });
+
+    it('should send a configured cap as max_completion_tokens to OpenAI', async () => {
+
+        context.config.AI_AGENT_MAX_HISTORY_SUMMARY_TOKENS = 500;
+
+        await AIAgent.receive(context);
+
+        assert.strictEqual(summaryRequest().max_completion_tokens, 500);
+        assert.strictEqual(summaryRequest().max_tokens, undefined);
+    });
+
+    it('should send a configured cap as max_tokens to another OpenAI compatible LLM', async () => {
+
+        context.config.AI_AGENT_MAX_HISTORY_SUMMARY_TOKENS = 500;
+        context.config.llmBaseUrl = 'https://llm.example.com/v1';
+
+        await AIAgent.receive(context);
+
+        assert.strictEqual(summaryRequest().max_tokens, 500);
+        assert.strictEqual(summaryRequest().max_completion_tokens, undefined);
+    });
+
+    it('should still send the answer when the summary fails', async () => {
+
+        createCompletion.onSecondCall().rejects(new Error('400 Unsupported parameter'));
+
+        await AIAgent.receive(context);
+
+        assert.strictEqual(context.sendJson.firstCall.args[0].answer, 'Text');
+        assert.strictEqual(JSON.parse(await context.stateGet('thread_summary_thread-1')).length, 2);
+    });
+});
+
 describe('AIAgent - tool port', () => {
 
     const AGENT_ID = 'agent-1';
