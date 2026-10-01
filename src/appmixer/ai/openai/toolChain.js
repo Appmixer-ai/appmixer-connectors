@@ -13,18 +13,18 @@
  * user made in the flow:
  *
  *   - a literal value is passed as it is,
- *   - a variable of an earlier step, or of anything in front of the agent, is resolved
- *     from that component's output,
- *   - a field filled with "Model Defined Parameter" becomes a parameter of the tool.
+ *   - a field filled with "Model Defined Parameter" becomes a parameter of the tool,
+ *   - a field with flow variables (of an earlier step, or of anything in front of the
+ *     agent) is resolved by the engine itself (POST /modifiers/transform), so variable
+ *     modifiers behave exactly as they do in a running flow.
  *
- * Limits: the chain is a straight line (it ends where the flow branches), and a
- * variable with modifiers fails the call with a message saying so.
+ * Limit: the chain is a straight line. It ends where the flow branches.
  */
 
+const TOOL_PORT = 'tool';
 const MODEL_PARAMETER = 'modelDefinedParameter';
 const TOOL_OUTPUT_TYPE = 'appmixer.ai.agenttools.ToolOutput';
-const VARIABLE = /\{\{\{([^{}]+)\}\}\}/g;
-const SINGLE_VARIABLE = /^\{\{\{([^{}]+)\}\}\}$/;
+const VARIABLE = /\{\{\{[^{}]+\}\}\}/;
 // Arrays longer than this (embedding vectors) are summarized in the logs.
 const MAX_LOGGED_ARRAY = 20;
 
@@ -61,7 +61,7 @@ function readFields(transform) {
 
         if (isModelDefined) {
             fields[key] = { kind: 'model' };
-        } else if (typeof value === 'string' && new RegExp(VARIABLE.source).test(value)) {
+        } else if (typeof value === 'string' && VARIABLE.test(value)) {
             fields[key] = { kind: 'variable', value, variables };
         } else if (value !== null && value !== undefined && value !== '') {
             fields[key] = { kind: 'static', value };
@@ -71,18 +71,31 @@ function readFields(transform) {
 }
 
 /**
- * Add the components connected behind the tool's first component to its definition:
- * the steps to run (`_chain`), their model defined fields as tool parameters and
- * their descriptions.
+ * Complete the definition built for the component on the "tool" port:
+ *
+ *   - `_variableFields`: its fields mapped to flow variables (tool.js itself only
+ *     knows literals and model defined fields),
+ *   - `_chain`: the components connected behind it, with their model defined fields
+ *     added to the tool parameters and their descriptions to the tool description.
  *
  * @param {object} context
- * @param {object} toolDef - definition built for the component on the "tool" port
+ * @param {object} toolDef
  * @param {function} fetchManifest - (context, componentType) => manifest
  */
 async function extendToolDef(context, toolDef, fetchManifest) {
     const flowDescriptor = context.flowDescriptor;
     const fn = toolDef.function;
-    const { _componentId: firstComponentId } = fn;
+    const { _componentId: firstComponentId, _inPort: firstInPort } = fn;
+
+    const firstTransform = flowDescriptor[firstComponentId]?.config?.transform
+        ?.[firstInPort]?.[context.componentId]?.[TOOL_PORT];
+    const variableFields = Object.fromEntries(
+        Object.entries(readFields(firstTransform)).filter(([, field]) => field.kind === 'variable')
+    );
+    if (Object.keys(variableFields).length) {
+        Object.assign(fn, { _variableFields: variableFields });
+    }
+
     const visited = new Set([context.componentId, firstComponentId]);
     const steps = [];
     const descriptions = [];
@@ -110,7 +123,12 @@ async function extendToolDef(context, toolDef, fetchManifest) {
             manifest = await fetchManifest(context, component.type) || {};
         } catch (err) {
             // Only the parameter descriptions come from the manifest; the step still runs.
-            await context.log({ step: 'component-tool-manifest-error', componentId: next.id, type: component.type, error: err.message });
+            await context.log({
+                step: 'component-tool-manifest-error',
+                componentId: next.id,
+                type: component.type,
+                error: err.message
+            });
         }
 
         const inPortDef = (manifest.inPorts || []).find((port) => port.name === next.inPort) || {};
@@ -157,50 +175,54 @@ async function extendToolDef(context, toolDef, fetchManifest) {
 // ─── Execution ────────────────────────────────────────────────────────────────
 
 /**
- * Value of a flow variable such as `$.<componentId>.out.result.matches[0].id`.
+ * Outputs of the components in front of the agent, keyed by component and port. They
+ * travel in the scope of the agent's input message.
  */
-function getVariable(outputs, variable) {
-    const path = String(variable).replace(/^\$\./, '').replace(/\[(\d+)\]/g, '.$1').split('.');
-    let value = outputs;
-    for (const key of path) {
-        if (value === null || value === undefined) return undefined;
-        value = value[key];
-    }
-    return value;
+function getScope(context) {
+    return context.messages?.in?.scope || {};
 }
 
-function resolveField(field, outputs) {
-    const lookup = (key) => {
-        const entry = field.variables[key];
-        if (!entry?.variable) return undefined;
-        if (entry.functions?.length) {
-            const names = entry.functions.map((fn) => fn.name).join(', ');
-            throw new Error(`variable modifiers are not supported in a tool chain (${names})`);
+/**
+ * Resolve fields mapped to flow variables. The engine does it, so that modifiers
+ * (g_jsonPath and the like) and typing work the way they do in a running flow.
+ *
+ * @param {object} context
+ * @param {object} fields - `{ <input>: { kind: 'variable', value, variables } }`
+ * @param {object} outputs - `{ <componentId>: { <port>: <content> } }`
+ * @returns {Promise<object>} `{ <input>: <value> }`, without the undefined ones
+ */
+async function resolveVariables(context, fields, outputs) {
+    const values = {};
+    for (const [key, field] of Object.entries(fields || {})) {
+        if (field.kind !== 'variable') continue;
+
+        // Send only the outputs the field refers to; the scope can be large.
+        const data = {};
+        for (const entry of Object.values(field.variables)) {
+            const componentId = /^\$\.([^.]+)\./.exec(entry?.variable || '')?.[1];
+            if (componentId && outputs[componentId] !== undefined) {
+                data[componentId] = outputs[componentId];
+            }
         }
-        return getVariable(outputs, entry.variable);
-    };
 
-    // A value that is one variable and nothing else keeps its type (a vector stays an array).
-    const single = SINGLE_VARIABLE.exec(field.value);
-    if (single) return lookup(single[1]);
-
-    return field.value.replace(VARIABLE, (match, key) => {
-        const value = lookup(key);
-        if (value === null || value === undefined) return '';
-        return typeof value === 'object' ? JSON.stringify(value) : String(value);
-    });
-}
-
-function buildPayload(step, args, outputs) {
-    const payload = {};
-    for (const [key, field] of Object.entries(step.fields)) {
-        let value;
-        if (field.kind === 'static') value = field.value;
-        if (field.kind === 'model') value = args?.[field.parameter];
-        if (field.kind === 'variable') value = resolveField(field, outputs);
-        if (value !== undefined) payload[key] = value;
+        const response = await context.callAppmixer({
+            endPoint: '/modifiers/transform',
+            method: 'POST',
+            body: {
+                template: field.value,
+                modifiers: field.variables,
+                data: { $: data },
+                context: { flowId: context.flowId }
+            }
+        });
+        if (response?.errors) {
+            await context.log({ step: 'component-tool-variable-warning', field: key, errors: response.errors });
+        }
+        if (response?.result !== undefined) {
+            values[key] = response.result;
+        }
     }
-    return payload;
+    return values;
 }
 
 function forLog(value) {
@@ -222,21 +244,30 @@ function forLog(value) {
 async function run(context, toolDef, args, firstResult) {
     const fn = toolDef.function;
     const { _componentId: firstComponentId, _chain: chain } = fn;
-    // Outputs of the components in front of the agent are in the scope of its message,
-    // so a step can use them just like it can in the flow.
-    const outputs = { ...(context.messages?.in?.scope || {}), [firstComponentId]: firstResult };
+    const outputs = { ...getScope(context), [firstComponentId]: firstResult };
     let result = firstResult;
 
     for (const step of chain) {
         // As in a running flow, a step runs only when its source port sent something.
         const source = outputs[step.sourceId];
         if (!source || typeof source !== 'object' || source[step.sourcePort] === undefined) {
-            await context.log({ step: 'component-tool-chain-stopped', tool: fn.name, before: step.label, sourcePort: step.sourcePort });
+            await context.log({
+                step: 'component-tool-chain-stopped',
+                tool: fn.name,
+                before: step.label,
+                sourcePort: step.sourcePort
+            });
             break;
         }
 
         try {
-            const payload = buildPayload(step, args, outputs);
+            const payload = await resolveVariables(context, step.fields, outputs);
+            for (const [key, field] of Object.entries(step.fields)) {
+                if (field.kind === 'static') payload[key] = field.value;
+                if (field.kind === 'model' && args?.[field.parameter] !== undefined) {
+                    payload[key] = args[field.parameter];
+                }
+            }
             await context.log({
                 step: 'component-tool-chain-call',
                 tool: fn.name,
@@ -253,7 +284,12 @@ async function run(context, toolDef, args, firstResult) {
                 }
             });
             outputs[step.componentId] = result;
-            await context.log({ step: 'component-tool-chain-result', tool: fn.name, label: step.label, result: forLog(result) });
+            await context.log({
+                step: 'component-tool-chain-result',
+                tool: fn.name,
+                label: step.label,
+                result: forLog(result)
+            });
         } catch (err) {
             await context.log({ step: 'component-tool-chain-error', tool: fn.name, label: step.label, error: err.message });
             return `Error calling tool ${fn.name} (step "${step.label}"): ${err.message}`;
@@ -265,5 +301,7 @@ async function run(context, toolDef, args, firstResult) {
 
 module.exports = {
     extendToolDef,
+    getScope,
+    resolveVariables,
     run
 };

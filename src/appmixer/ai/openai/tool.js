@@ -408,7 +408,7 @@ function buildComponentToolDef(componentId, componentDescriptor, manifest, conne
  */
 async function executeComponentTool(context, toolDef, args, { correlationId } = {}) {
     const { name: fullToolName, _isMCP, _componentId, _mcpToolName,
-        _componentType, _inPort, _userStaticValues, _aiFields, _chain } = toolDef.function;
+        _componentType, _inPort, _userStaticValues, _aiFields, _variableFields, _chain } = toolDef.function;
     const displayName = _isMCP ? _mcpToolName : fullToolName;
 
     if (_isMCP) {
@@ -431,7 +431,15 @@ async function executeComponentTool(context, toolDef, args, { correlationId } = 
     for (const key of _aiFields || []) {
         if (args && args[key] !== undefined) modelArgs[key] = args[key];
     }
-    const messagePayload = { ...modelArgs, ..._userStaticValues };
+    // Fields mapped to variables of the components in front of the agent.
+    let variableValues;
+    try {
+        variableValues = await toolChain.resolveVariables(context, _variableFields, toolChain.getScope(context));
+    } catch (err) {
+        await context.log({ step: 'component-tool-call-error', displayName, endPoint, error: err.message });
+        return `Error calling tool ${displayName}: ${err.message}`;
+    }
+    const messagePayload = { ...variableValues, ...modelArgs, ..._userStaticValues };
     await context.log({
         step: 'component-tool-call',
         displayName,

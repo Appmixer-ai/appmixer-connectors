@@ -399,14 +399,35 @@ describe('AIAgent - tool port with a chain of components', () => {
     let sandbox;
     let context;
     let componentCalls;
+    let transformCalls;
     let embeddingsOutput;
 
     const toolTransform = (modifiers, lambda) => ({ in: { [AGENT_ID]: { tool: { modifiers, lambda } } } });
 
+    // What the engine's POST /modifiers/transform does, as far as these tests need it.
+    const engineTransform = ({ template, modifiers, data }) => {
+        const dig = (value, path) => path.split('.').reduce((item, key) => item?.[key], value);
+        const resolve = (key) => {
+            const { variable, functions } = modifiers[key];
+            return functions.reduce(
+                (value, fn) => (fn.name === 'g_jsonPath' ? dig(value, fn.params[0].value) : value),
+                dig(data.$, variable.replace(/^\$\./, ''))
+            );
+        };
+        const single = /^\{\{\{([^{}]+)\}\}\}$/.exec(template);
+        return {
+            result: single
+                ? resolve(single[1])
+                : template.replace(/\{\{\{([^{}]+)\}\}\}/g, (match, key) => String(resolve(key)))
+        };
+    };
+
     beforeEach(() => {
         embeddingsOutput = { out: { firstVector: VECTOR } };
         componentCalls = [];
+        transformCalls = [];
         context = createMockContext({
+            flowId: 'flow-1',
             componentId: AGENT_ID,
             messages: {
                 in: {
@@ -475,8 +496,14 @@ describe('AIAgent - tool port with a chain of components', () => {
                     inPorts: [{ name: 'in', schema: { type: 'object', properties: {} }, inspector: { inputs: {} } }]
                 }];
             }
+            if (endPoint === '/modifiers/transform') {
+                transformCalls.push(body);
+                return engineTransform(body);
+            }
             componentCalls.push({ endPoint, body });
-            return endPoint.endsWith('GenerateEmbeddings') ? embeddingsOutput : { out: { result: { matches: [{ id: 'chunk-1' }] } } };
+            return endPoint.endsWith('GenerateEmbeddings')
+                ? embeddingsOutput
+                : { out: { result: { matches: [{ id: 'chunk-1' }] } } };
         });
 
         sandbox = sinon.createSandbox();
@@ -541,19 +568,52 @@ describe('AIAgent - tool port with a chain of components', () => {
         assert.strictEqual(outputs[0].output, JSON.stringify({ notFound: {} }, null, 2));
     });
 
-    it('should hand an unsupported variable modifier back to the model as an error', async () => {
+    it('should let the engine resolve the variables, modifiers included', async () => {
 
-        const vector = context.flowDescriptor['query-1'].config.transform.in['emb-1'].out.modifiers.vector;
-        vector['var-2'].functions = [{ name: 'g_jsonPath', params: [] }];
+        const namespace = { variable: '$.trigger-1.out', functions: [{ name: 'g_jsonPath', params: [{ value: 'channel' }] }] };
+        context.flowDescriptor['query-1'].config.transform.in['emb-1'].out.modifiers.namespace = { 'var-3': namespace };
         await AIAgent.getAllToolsDefinition(context);
+
+        await callTool();
+
+        assert.deepStrictEqual(transformCalls.find((call) => call.template === '{{{var-3}}}'), {
+            template: '{{{var-3}}}',
+            modifiers: { 'var-3': namespace },
+            // Only the outputs the field refers to are sent.
+            data: { $: { 'trigger-1': { out: { channel: 'policies-ns' } } } },
+            context: { flowId: 'flow-1' }
+        });
+        assert.strictEqual(componentCalls[1].body.messages.in.namespace, 'policies-ns');
+    });
+
+    it('should fill a field of the first component from a variable in front of the agent', async () => {
+
+        const transform = context.flowDescriptor['emb-1'].config.transform.in[AGENT_ID].tool;
+        transform.modifiers.text = { 'var-1': { variable: '$.trigger-1.out.channel', functions: [] } };
+
+        const tools = await AIAgent.getAllToolsDefinition(context);
+        await AIAgent.callTools(context, [{ id: 'call-1', function: { name: TOOL_NAME, arguments: '{}' } }]);
+
+        assert.strictEqual(tools[0].function.parameters, undefined);
+        assert.deepStrictEqual(componentCalls[0].body.messages.in, {
+            text: 'policies-ns',
+            model: 'text-embedding-ada-002'
+        });
+    });
+
+    it('should hand a failed variable resolution back to the model as an error', async () => {
+
+        await AIAgent.getAllToolsDefinition(context);
+        const callAppmixer = context.callAppmixer;
+        context.callAppmixer = sinon.stub().callsFake(async (request) => {
+            if (request.endPoint === '/modifiers/transform') throw new Error('transform failed');
+            return callAppmixer(request);
+        });
 
         const outputs = await callTool();
 
         assert.strictEqual(componentCalls.length, 1);
-        assert.match(
-            outputs[0].output,
-            /step "QueryVectors"\): variable modifiers are not supported in a tool chain \(g_jsonPath\)/
-        );
+        assert.match(outputs[0].output, /step "QueryVectors"\): transform failed/);
     });
 
     it('should turn a model defined field of a later step into a tool parameter', async () => {
