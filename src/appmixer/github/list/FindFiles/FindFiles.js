@@ -88,11 +88,9 @@ module.exports = {
             params: { recursive: 1 }
         });
 
+        // A partial tree would give incomplete results, or notFound for a file that exists.
         if (data.truncated) {
-            await context.log({
-                step: 'tree-truncated',
-                message: 'GitHub returned a truncated tree (over 100 000 entries); some files may be missing.'
-            });
+            throw new context.CancelError('GitHub returned a truncated tree (over 100 000 entries or 7 MB); the repository is too large to search.');
         }
 
         const matchesName = nameMatcher(name);

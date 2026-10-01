@@ -224,17 +224,18 @@ connectors, which would show up in every one of their overviews.
 
 ### Shape
 
-`New Pull Request` → `Find Files` (every `bundle.json` under `src/appmixer` at
-the PR's **head commit**) → `Make API Call` (GraphQL `resource(url:)`: the PR's
+`New Pull Request` → `Find Files` ×2 (every `bundle.json` under `src/appmixer` at
+the PR's **head commit** and at its **base commit**) → `Make API Call` (GraphQL `resource(url:)`: the PR's
 number, repository and changed files) → `Code Block` (a changed file takes the
 deepest bundle directory containing it, else the nearest ancestor that holds
 bundles) → `Condition` (at least one label) → `Make API Call` (`POST
 /repos/{repo}/issues/{number}/labels`).
 
 The bundle set comes from the repository on every run, so a PR that adds a
-connector is labelled with its new label, and adding a connector needs no change
-here. Only the first 100 changed files are read; a sweep over more keeps the
-labels of its first 100 files.
+connector is labelled with its new label, a PR that removes or renames one with
+its old label, and adding a connector needs no change here. Only the first 100
+changed files can be read in one request, so a PR changing more than 100 files
+gets no labels rather than labels from part of it.
 
 ### Setup
 
