@@ -390,80 +390,109 @@ describe('AIAgent - tool port', () => {
     });
 });
 
-describe('AIAgent - tool port with a model defined embedding', () => {
+describe('AIAgent - tool port with a chain of components', () => {
 
     const AGENT_ID = 'agent-1';
-    const TOOL_NAME = 'query-1_Search_policies';
+    const TOOL_NAME = 'emb-1_Search_policies';
+    const VECTOR = [0.1, 0.2, 0.3];
 
     let sandbox;
     let context;
-    let embed;
+    let componentCalls;
+    let embeddingsOutput;
+
+    const toolTransform = (modifiers, lambda) => ({ in: { [AGENT_ID]: { tool: { modifiers, lambda } } } });
 
     beforeEach(() => {
+        embeddingsOutput = { out: { firstVector: VECTOR } };
+        componentCalls = [];
         context = createMockContext({
             componentId: AGENT_ID,
-            messages: { in: { correlationId: 'corr-1', content: { prompt: 'Is there a password policy?' } } },
+            messages: {
+                in: {
+                    correlationId: 'corr-1',
+                    content: { prompt: 'Is there a password policy?' },
+                    scope: { 'trigger-1': { out: { channel: 'policies-ns' } } }
+                }
+            },
             flowDescriptor: {
-                [AGENT_ID]: { type: 'appmixer.ai.openai.AIAgent' },
-                'query-1': {
-                    type: 'appmixer.pinecone.database.QueryVectors',
+                'trigger-1': { type: 'appmixer.utils.controls.OnStart' },
+                [AGENT_ID]: { type: 'appmixer.ai.openai.AIAgent', source: { in: { 'trigger-1': ['out'] } } },
+                'emb-1': {
+                    type: 'appmixer.ai.openai.GenerateEmbeddings',
                     label: 'Search policies',
                     source: { in: { [AGENT_ID]: ['tool'] } },
                     config: {
+                        transform: toolTransform(
+                            {
+                                model: {},
+                                text: { 'var-1': { variable: `$.${AGENT_ID}.tool.modelDefinedParameter`, functions: [] } }
+                            },
+                            { model: 'text-embedding-ada-002', text: '{{{var-1}}}' }
+                        )
+                    }
+                },
+                'query-1': {
+                    type: 'appmixer.pinecone.database.QueryVectors',
+                    source: { in: { 'emb-1': ['out'] } },
+                    config: {
                         transform: {
                             in: {
-                                [AGENT_ID]: {
-                                    tool: {
+                                'emb-1': {
+                                    out: {
                                         modifiers: {
                                             index: {},
-                                            vector: {
-                                                'var-1': {
-                                                    variable: `$.${AGENT_ID}.tool.modelDefinedEmbedding`,
-                                                    functions: []
-                                                }
-                                            }
+                                            vector: { 'var-2': { variable: '$.emb-1.out.firstVector', functions: [] } },
+                                            namespace: { 'var-3': { variable: '$.trigger-1.out.channel', functions: [] } }
                                         },
-                                        lambda: { index: 'policies', vector: '{{{var-1}}}' }
+                                        lambda: { index: 'policies', vector: '{{{var-2}}}', namespace: '{{{var-3}}}' }
                                     }
                                 }
                             }
                         }
                     }
-                }
+                },
+                // The agent's own output must not be taken for a step of the tool.
+                'send-1': { type: 'appmixer.utils.controls.SetVariable', source: { in: { [AGENT_ID]: ['out'] } } }
             }
         });
-        context.callAppmixer = sinon.stub().callsFake(async ({ endPoint }) => {
+        context.callAppmixer = sinon.stub().callsFake(async ({ endPoint, body }) => {
+            if (endPoint.includes('GenerateEmbeddings') && endPoint.startsWith('/components?selector=')) {
+                return [{
+                    name: 'appmixer.ai.openai.GenerateEmbeddings',
+                    description: 'Generate embeddings for a text.',
+                    inPorts: [{
+                        name: 'in',
+                        schema: { type: 'object', properties: { text: { type: 'string' }, model: { type: 'string' } }, required: ['text'] },
+                        inspector: { inputs: { text: { label: 'Text', tooltip: 'The text to embed.' } } }
+                    }]
+                }];
+            }
             if (endPoint.startsWith('/components?selector=')) {
                 return [{
                     name: 'appmixer.pinecone.database.QueryVectors',
                     description: 'Query Pinecone for vectors.',
-                    inPorts: [{
-                        name: 'in',
-                        schema: {
-                            type: 'object',
-                            properties: {
-                                index: { type: 'string' },
-                                vector: { oneOf: [{ type: 'array' }, { type: 'string' }] }
-                            },
-                            required: ['index', 'vector']
-                        },
-                        inspector: { inputs: { vector: { label: 'Vector', tooltip: 'The query vector.' } } }
-                    }]
+                    inPorts: [{ name: 'in', schema: { type: 'object', properties: {} }, inspector: { inputs: {} } }]
                 }];
             }
-            return { result: { matches: [] } };
+            componentCalls.push({ endPoint, body });
+            return endPoint.endsWith('GenerateEmbeddings') ? embeddingsOutput : { out: { result: { matches: [{ id: 'chunk-1' }] } } };
         });
 
         sandbox = sinon.createSandbox();
         sandbox.stub(AIAgent, 'publishChatProgressEvent').resolves();
-        embed = sandbox.stub(AIAgent, 'embed').resolves([0.1, 0.2, 0.3]);
     });
 
     afterEach(() => {
         sandbox.restore();
     });
 
-    it('should ask the model for a text, not for a vector', async () => {
+    const callTool = () => AIAgent.callTools(context, [{
+        id: 'call-1',
+        function: { name: TOOL_NAME, arguments: '{"text":"password policy"}' }
+    }]);
+
+    it('should describe the whole chain as one tool', async () => {
 
         const tools = await AIAgent.getAllToolsDefinition(context);
 
@@ -471,49 +500,74 @@ describe('AIAgent - tool port with a model defined embedding', () => {
             type: 'function',
             function: {
                 name: TOOL_NAME,
-                description: 'Search policies - Query Pinecone for vectors.',
+                description: 'Search policies - Generate embeddings for a text. Then: Query Pinecone for vectors.',
                 parameters: {
                     type: 'object',
-                    properties: {
-                        vector: {
-                            type: 'string',
-                            description: 'Text to search for. It is converted to an embedding vector before the call.'
-                        }
-                    },
-                    required: ['vector']
+                    properties: { text: { type: 'string', description: 'Text — The text to embed.' } },
+                    required: ['text']
                 }
             }
         }]);
     });
 
-    it('should call the component with the embedding of the text', async () => {
+    it('should feed each step from the previous one and return the output of the last', async () => {
 
         await AIAgent.getAllToolsDefinition(context);
 
-        await AIAgent.callTools(context, [{
-            id: 'call-1',
-            function: { name: TOOL_NAME, arguments: '{"vector":"password policy"}' }
-        }]);
+        const outputs = await callTool();
 
-        assert.strictEqual(embed.firstCall.args[1], 'password policy');
-        assert.deepStrictEqual(context.callAppmixer.lastCall.args[0].body, {
-            componentId: 'query-1',
-            messages: { in: { vector: [0.1, 0.2, 0.3], index: 'policies' } }
-        });
+        assert.deepStrictEqual(componentCalls, [{
+            endPoint: '/component/appmixer/ai/openai/GenerateEmbeddings',
+            body: { componentId: 'emb-1', messages: { in: { text: 'password policy', model: 'text-embedding-ada-002' } } }
+        }, {
+            endPoint: '/component/appmixer/pinecone/database/QueryVectors',
+            // The vector keeps its type; the namespace comes from a component in front of the agent.
+            body: { componentId: 'query-1', messages: { in: { index: 'policies', vector: VECTOR, namespace: 'policies-ns' } } }
+        }]);
+        assert.deepStrictEqual(outputs, [{
+            tool_call_id: 'call-1',
+            output: JSON.stringify({ out: { result: { matches: [{ id: 'chunk-1' }] } } }, null, 2)
+        }]);
     });
 
-    it('should hand an embedding failure back to the model instead of calling the component', async () => {
+    it('should not run a step whose source port sent nothing', async () => {
 
         await AIAgent.getAllToolsDefinition(context);
-        embed.rejects(new Error('model not found'));
-        const callsBefore = context.callAppmixer.callCount;
+        embeddingsOutput = { notFound: {} };
 
-        const outputs = await AIAgent.callTools(context, [{
+        const outputs = await callTool();
+
+        assert.strictEqual(componentCalls.length, 1);
+        assert.strictEqual(outputs[0].output, JSON.stringify({ notFound: {} }, null, 2));
+    });
+
+    it('should hand an unsupported variable modifier back to the model as an error', async () => {
+
+        const vector = context.flowDescriptor['query-1'].config.transform.in['emb-1'].out.modifiers.vector;
+        vector['var-2'].functions = [{ name: 'g_jsonPath', params: [] }];
+        await AIAgent.getAllToolsDefinition(context);
+
+        const outputs = await callTool();
+
+        assert.strictEqual(componentCalls.length, 1);
+        assert.match(
+            outputs[0].output,
+            /step "QueryVectors"\): variable modifiers are not supported in a tool chain \(g_jsonPath\)/
+        );
+    });
+
+    it('should turn a model defined field of a later step into a tool parameter', async () => {
+
+        const transform = context.flowDescriptor['query-1'].config.transform.in['emb-1'].out;
+        transform.modifiers.namespace = { 'var-3': { variable: `$.${AGENT_ID}.tool.modelDefinedParameter`, functions: [] } };
+
+        const tools = await AIAgent.getAllToolsDefinition(context);
+        await AIAgent.callTools(context, [{
             id: 'call-1',
-            function: { name: TOOL_NAME, arguments: '{"vector":"password policy"}' }
+            function: { name: TOOL_NAME, arguments: '{"text":"password policy","namespace":"hr"}' }
         }]);
 
-        assert.strictEqual(context.callAppmixer.callCount, callsBefore);
-        assert.match(outputs[0].output, /could not create the embedding for "vector": model not found/);
+        assert.deepStrictEqual(Object.keys(tools[0].function.parameters.properties), ['text', 'namespace']);
+        assert.strictEqual(componentCalls[1].body.messages.in.namespace, 'hr');
     });
 });

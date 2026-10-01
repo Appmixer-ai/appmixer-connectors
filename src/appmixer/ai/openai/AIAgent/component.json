@@ -2,7 +2,7 @@
     "name": "appmixer.ai.openai.AIAgent",
     "label": "AI Agent",
     "author": "Appmixer <info@appmixer.com>",
-    "description": "Build an AI agent responding with contextual answers or performing contextual actions. Connect a component to the 'tool' output port to let the agent call it as a tool, and mark the fields the model should fill with the 'Model Defined Parameter' variable, or with 'Model Defined Embedding' where the component expects a vector. Use the 'tools' port with 'Tool Start' and 'Tool Output' for a tool made of several steps.",
+    "description": "Build an AI agent responding with contextual answers or performing contextual actions. Connect a component to the 'tool' output port to let the agent call it as a tool, and mark the fields the model should fill with the 'Model Defined Parameter' variable. Components connected behind it run as further steps of the same tool and the output of the last one is returned to the agent.",
     "auth": {
         "service": "appmixer:ai:openai"
     },
@@ -36,8 +36,7 @@
                 "prompt": { "type": "string" },
                 "threadId": { "type": "string" },
                 "storeId": { "type": "string" },
-                "fileId": { "type": "string" },
-                "embeddingModel": { "type": "string" }
+                "fileId": { "type": "string" }
             },
             "required": ["prompt"]
         },
@@ -89,12 +88,6 @@
                         }
                     },
                     "tooltip": "Select a data store to be used for storing the conversation context. This is useful if you want to preserve the context across different executions. Additionally, by saving the history to a data store, you can create other flows that export the history to your custom databases or external tools. Explore the Storage utilities to learn more about how to use the data store in your flows."
-                },
-                "embeddingModel": {
-                    "label": "Embedding Model",
-                    "type": "text",
-                    "index": 7,
-                    "tooltip": "ID of the model that turns text into an embedding for tools using the 'Model Defined Embedding' variable, for example a vector database query. It has to be the model the vectors in that database were created with. Defaults to text-embedding-ada-002 when left empty."
                 }
             }
         }
@@ -157,14 +150,6 @@
             "label": "Model Defined Parameter",
             "value": "modelDefinedParameter",
             "schema": { "type": "string", "example": "Paris" }
-        }, {
-            "label": "Model Defined Embedding",
-            "value": "modelDefinedEmbedding",
-            "schema": {
-                "type": "array",
-                "items": { "type": "number" },
-                "example": [0.0123, -0.0456, 0.0789]
-            }
         }]
     }, {
         "name": "mcp"

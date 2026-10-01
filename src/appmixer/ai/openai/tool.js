@@ -6,8 +6,8 @@
  *
  * Based on ai/mcptools/tool.js (MCP Gateway), which is why the code below still says
  * "gateway" for the component owning the port. Two things differ and have to be kept
- * when syncing the files: embedding fields ("modelDefinedEmbedding") and the component
- * label leading the tool description. Components wired to the "tool" port are either:
+ * when syncing the files: tool chains (see toolChain.js) and the component label leading
+ * the tool description. Components wired to the "tool" port are either:
  *
  *   - Regular action components: called synchronously via context.callAppmixer()
  *     (static component call, no ToolStart/ToolOutput chain, no flow-state polling).
@@ -21,16 +21,17 @@
  * Only those fields become parameters in the tool definition. Fields with a literal
  * user-set value are passed as static properties on every call.
  *
- * A field that expects a vector (a vector database query) takes the "Model Defined
- * Embedding" variable instead: the model writes a text, the agent turns it into an
- * embedding and the component receives the vector. That makes a retrieval tool out of
- * a single query component, with no separate embeddings step in front of it.
+ *
+ * A tool can be more than one component: whatever is connected behind the component
+ * on the "tool" port runs after it, each step fed from the previous one the way the
+ * flow maps it, and the output of the last step is the tool output (toolChain.js).
  */
 
 const crypto = require('crypto');
 const shortuuid = require('short-uuid');
 const uuid = require('uuid');
 const mcp = require('./mcp');
+const toolChain = require('./toolChain');
 
 const TOOL_PORT = 'tool';
 const MAX_TOOL_NAME_LENGTH = 64;
@@ -222,6 +223,8 @@ async function buildDefsFromManifests(context, manifests) {
         if (!resolvedManifest) continue;
 
         const def = buildComponentToolDef(componentId, component, resolvedManifest, inPortName, gatewayComponentId);
+        // Whatever is connected behind the component belongs to the same tool.
+        await toolChain.extendToolDef(context, def, fetchManifest);
         const { _aiFields: aiFields, _userStaticValues: userStaticValues } = def.function;
 
         await context.log({
@@ -300,9 +303,6 @@ async function getComponentToolDefs(context) {
 
 function buildComponentToolDef(componentId, componentDescriptor, manifest, connectedInPortName, gatewayComponentId) {
     const aiFields = new Set();
-    // AI fields the model fills with a text that is turned into an embedding vector
-    // before the call (variable "modelDefinedEmbedding").
-    const embeddingFields = new Set();
     const userStaticValues = {};
 
     // Field configuration lives in config.transform[inPortName][gatewayComponentId][TOOL_PORT]
@@ -312,16 +312,10 @@ function buildComponentToolDef(componentId, componentDescriptor, manifest, conne
         const modifiers = transform.modifiers || {};
         const lambda = transform.lambda || {};
 
-        // AI fields: modifier entries whose variable references modelDefinedParameter
-        // or modelDefinedEmbedding.
+        // AI fields: modifier entries whose variable references modelDefinedParameter.
         for (const [key, modifier] of Object.entries(modifiers)) {
             if (!modifier || typeof modifier !== 'object') continue;
             for (const entry of Object.values(modifier)) {
-                if (entry?.variable && entry.variable.includes('modelDefinedEmbedding')) {
-                    aiFields.add(key);
-                    embeddingFields.add(key);
-                    break;
-                }
                 if (entry?.variable && entry.variable.includes('modelDefinedParameter')) {
                     aiFields.add(key);
                     break;
@@ -353,25 +347,24 @@ function buildComponentToolDef(componentId, componentDescriptor, manifest, conne
 
     const parameters = { type: 'object', properties: {}, required: [] };
 
-    // The model writes a text for an embedding field; what the component's own tooltip
-    // says about the vector would only mislead it.
-    const parameterFor = (key, schemaProp, inp) => (embeddingFields.has(key)
-        ? { type: 'string', description: 'Text to search for. It is converted to an embedding vector before the call.' }
-        : {
-            type: schemaProp.type || 'string',
-            description: [inp.label, inp.tooltip].filter(Boolean).join(' — ') || key
-        });
-
     for (const [key, schemaProp] of Object.entries(inPortSchemaProps)) {
         if (!aiFields.has(key)) continue;
-        parameters.properties[key] = parameterFor(key, schemaProp, inPortInspector[key] || {});
+        const inp = inPortInspector[key] || {};
+        parameters.properties[key] = {
+            type: schemaProp.type || 'string',
+            description: [inp.label, inp.tooltip].filter(Boolean).join(' — ') || key
+        };
         if (inPortRequired.has(key)) parameters.required.push(key);
     }
 
     for (const [key, schemaProp] of Object.entries(propSchemaProps)) {
         if (!aiFields.has(key)) continue;
         if (key in parameters.properties) continue;
-        parameters.properties[key] = parameterFor(key, schemaProp, propInspector[key] || {});
+        const inp = propInspector[key] || {};
+        parameters.properties[key] = {
+            type: schemaProp.type || 'string',
+            description: [inp.label, inp.tooltip].filter(Boolean).join(' — ') || key
+        };
         if (propRequired.has(key)) parameters.required.push(key);
     }
 
@@ -399,8 +392,7 @@ function buildComponentToolDef(componentId, componentDescriptor, manifest, conne
             _componentType: manifest.name || componentDescriptor.type,
             _inPort: inPortDef?.name || 'in',
             _userStaticValues: userStaticValues,
-            _aiFields: [...aiFields],
-            _embeddingFields: [...embeddingFields]
+            _aiFields: [...aiFields]
         }
     };
 }
@@ -414,9 +406,9 @@ function buildComponentToolDef(componentId, componentDescriptor, manifest, conne
  *
  * @returns {Promise<string>} tool output, always a string.
  */
-async function executeComponentTool(context, toolDef, args, { correlationId, embed } = {}) {
+async function executeComponentTool(context, toolDef, args, { correlationId } = {}) {
     const { name: fullToolName, _isMCP, _componentId, _mcpToolName,
-        _componentType, _inPort, _userStaticValues, _aiFields, _embeddingFields } = toolDef.function;
+        _componentType, _inPort, _userStaticValues, _aiFields, _chain } = toolDef.function;
     const displayName = _isMCP ? _mcpToolName : fullToolName;
 
     if (_isMCP) {
@@ -439,21 +431,6 @@ async function executeComponentTool(context, toolDef, args, { correlationId, emb
     for (const key of _aiFields || []) {
         if (args && args[key] !== undefined) modelArgs[key] = args[key];
     }
-    // Embedding fields: the model wrote a text, the component gets the vector. `embed` is
-    // supplied by the component owning the port (it holds the credentials for the model).
-    const embedded = {};
-    for (const key of _embeddingFields || []) {
-        if (typeof modelArgs[key] !== 'string') continue;
-        try {
-            if (!embed) throw new Error('no embedding model is available');
-            const vector = await embed(modelArgs[key]);
-            embedded[key] = `[embedding of ${vector.length} values]`;
-            modelArgs[key] = vector;
-        } catch (err) {
-            await context.log({ step: 'component-tool-embedding-error', displayName, field: key, error: err.message });
-            return `Error calling tool ${displayName}: could not create the embedding for "${key}": ${err.message}`;
-        }
-    }
     const messagePayload = { ...modelArgs, ..._userStaticValues };
     await context.log({
         step: 'component-tool-call',
@@ -462,8 +439,7 @@ async function executeComponentTool(context, toolDef, args, { correlationId, emb
         inPort: _inPort,
         aiArgs: args,
         staticValues: _userStaticValues,
-        // The vectors themselves would only flood the log.
-        mergedPayload: { ...messagePayload, ...embedded }
+        mergedPayload: messagePayload
     });
     try {
         const result = await context.callAppmixer({
@@ -475,6 +451,9 @@ async function executeComponentTool(context, toolDef, args, { correlationId, emb
             }
         });
         await context.log({ step: 'component-tool-result', displayName, result });
+        if (_chain?.length) {
+            return toolChain.run(context, toolDef, args, result);
+        }
         return typeof result === 'string' ? result : JSON.stringify(result, null, 2);
     } catch (err) {
         await context.log({ step: 'component-tool-call-error', displayName, endPoint, error: err.message });
