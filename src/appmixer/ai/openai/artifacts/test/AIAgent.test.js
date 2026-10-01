@@ -358,7 +358,7 @@ describe('AIAgent - tool port', () => {
             type: 'function',
             function: {
                 name: TOOL_NAME,
-                description: 'Get rows from a sheet.',
+                description: 'Employee contacts - Get rows from a sheet.',
                 parameters: {
                     type: 'object',
                     properties: { filter: { type: 'string', description: 'Filter — Rows to return.' } }
@@ -387,5 +387,133 @@ describe('AIAgent - tool port', () => {
             messages: { in: { filter: 'CEO', sheetId: 'sheet-1' } }
         });
         assert(context.sendJson.notCalled, 'nothing should be sent to the tools port');
+    });
+});
+
+describe('AIAgent - tool port with a model defined embedding', () => {
+
+    const AGENT_ID = 'agent-1';
+    const TOOL_NAME = 'query-1_Search_policies';
+
+    let sandbox;
+    let context;
+    let embed;
+
+    beforeEach(() => {
+        context = createMockContext({
+            componentId: AGENT_ID,
+            messages: { in: { correlationId: 'corr-1', content: { prompt: 'Is there a password policy?' } } },
+            flowDescriptor: {
+                [AGENT_ID]: { type: 'appmixer.ai.openai.AIAgent' },
+                'query-1': {
+                    type: 'appmixer.pinecone.database.QueryVectors',
+                    label: 'Search policies',
+                    source: { in: { [AGENT_ID]: ['tool'] } },
+                    config: {
+                        transform: {
+                            in: {
+                                [AGENT_ID]: {
+                                    tool: {
+                                        modifiers: {
+                                            index: {},
+                                            vector: {
+                                                'var-1': {
+                                                    variable: `$.${AGENT_ID}.tool.modelDefinedEmbedding`,
+                                                    functions: []
+                                                }
+                                            }
+                                        },
+                                        lambda: { index: 'policies', vector: '{{{var-1}}}' }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        context.callAppmixer = sinon.stub().callsFake(async ({ endPoint }) => {
+            if (endPoint.startsWith('/components?selector=')) {
+                return [{
+                    name: 'appmixer.pinecone.database.QueryVectors',
+                    description: 'Query Pinecone for vectors.',
+                    inPorts: [{
+                        name: 'in',
+                        schema: {
+                            type: 'object',
+                            properties: {
+                                index: { type: 'string' },
+                                vector: { oneOf: [{ type: 'array' }, { type: 'string' }] }
+                            },
+                            required: ['index', 'vector']
+                        },
+                        inspector: { inputs: { vector: { label: 'Vector', tooltip: 'The query vector.' } } }
+                    }]
+                }];
+            }
+            return { result: { matches: [] } };
+        });
+
+        sandbox = sinon.createSandbox();
+        sandbox.stub(AIAgent, 'publishChatProgressEvent').resolves();
+        embed = sandbox.stub(AIAgent, 'embed').resolves([0.1, 0.2, 0.3]);
+    });
+
+    afterEach(() => {
+        sandbox.restore();
+    });
+
+    it('should ask the model for a text, not for a vector', async () => {
+
+        const tools = await AIAgent.getAllToolsDefinition(context);
+
+        assert.deepStrictEqual(tools, [{
+            type: 'function',
+            function: {
+                name: TOOL_NAME,
+                description: 'Search policies - Query Pinecone for vectors.',
+                parameters: {
+                    type: 'object',
+                    properties: {
+                        vector: {
+                            type: 'string',
+                            description: 'Text to search for. It is converted to an embedding vector before the call.'
+                        }
+                    },
+                    required: ['vector']
+                }
+            }
+        }]);
+    });
+
+    it('should call the component with the embedding of the text', async () => {
+
+        await AIAgent.getAllToolsDefinition(context);
+
+        await AIAgent.callTools(context, [{
+            id: 'call-1',
+            function: { name: TOOL_NAME, arguments: '{"vector":"password policy"}' }
+        }]);
+
+        assert.strictEqual(embed.firstCall.args[1], 'password policy');
+        assert.deepStrictEqual(context.callAppmixer.lastCall.args[0].body, {
+            componentId: 'query-1',
+            messages: { in: { vector: [0.1, 0.2, 0.3], index: 'policies' } }
+        });
+    });
+
+    it('should hand an embedding failure back to the model instead of calling the component', async () => {
+
+        await AIAgent.getAllToolsDefinition(context);
+        embed.rejects(new Error('model not found'));
+        const callsBefore = context.callAppmixer.callCount;
+
+        const outputs = await AIAgent.callTools(context, [{
+            id: 'call-1',
+            function: { name: TOOL_NAME, arguments: '{"vector":"password policy"}' }
+        }]);
+
+        assert.strictEqual(context.callAppmixer.callCount, callsBefore);
+        assert.match(outputs[0].output, /could not create the embedding for "vector": model not found/);
     });
 });

@@ -17,6 +17,7 @@ const AI_AGENT_MAX_HISTORY_SIZE = 512000;
 const AI_AGENT_MAX_HISTORY_SUMMARY_TOKENS = 32000;
 const AI_AGENT_MAX_FILE_SIZE = 1024 * 1024 * 5; // 5MB
 const AI_AGENT_OPENAI_FILE_EXP = 3600 * 24 * 7; // 7 days
+const AI_AGENT_EMBEDDING_MODEL = 'text-embedding-ada-002';
 
 module.exports = {
 
@@ -294,7 +295,8 @@ module.exports = {
                 // Called directly, so the output is here right away. Errors come back
                 // as the output text for the model to deal with.
                 const output = await componentTool.executeComponentTool(context, componentToolDef, args, {
-                    correlationId: context.messages?.in?.correlationId
+                    correlationId: context.messages?.in?.correlationId,
+                    embed: (text) => this.embed(context, text)
                 });
                 outputs.push({ tool_call_id: toolCall.id, output });
                 continue;
@@ -508,6 +510,17 @@ module.exports = {
             messages,
             answer: 'The maximum number of iterations has been met without a suitable answer. Please try again with a more specific input.'
         };
+    },
+
+    // Embedding for a tool field filled with the 'Model Defined Embedding' variable.
+    embed: async function(context, text) {
+
+        const client = lib.sdk(context);
+        const response = await client.embeddings.create({
+            model: context.messages.in.content.embeddingModel || AI_AGENT_EMBEDDING_MODEL,
+            input: text
+        });
+        return response.data[0].embedding;
     },
 
     createStreamCompletion: async function(context, client, completion) {

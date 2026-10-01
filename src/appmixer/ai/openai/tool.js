@@ -4,9 +4,10 @@
  * tool.js — "tool" output port: expose any Appmixer action component or MCP server
  * as a tool of the AI Agent.
  *
- * Copy of ai/mcptools/tool.js (MCP Gateway), which is why the code below still says
- * "gateway" for the component owning the port — keep the two files in sync. Components
- * wired to the "tool" port are either:
+ * Based on ai/mcptools/tool.js (MCP Gateway), which is why the code below still says
+ * "gateway" for the component owning the port. Two things differ and have to be kept
+ * when syncing the files: embedding fields ("modelDefinedEmbedding") and the component
+ * label leading the tool description. Components wired to the "tool" port are either:
  *
  *   - Regular action components: called synchronously via context.callAppmixer()
  *     (static component call, no ToolStart/ToolOutput chain, no flow-state polling).
@@ -19,6 +20,11 @@
  * output variable of the AI Agent (port "tool", option "modelDefinedParameter").
  * Only those fields become parameters in the tool definition. Fields with a literal
  * user-set value are passed as static properties on every call.
+ *
+ * A field that expects a vector (a vector database query) takes the "Model Defined
+ * Embedding" variable instead: the model writes a text, the agent turns it into an
+ * embedding and the component receives the vector. That makes a retrieval tool out of
+ * a single query component, with no separate embeddings step in front of it.
  */
 
 const crypto = require('crypto');
@@ -294,6 +300,9 @@ async function getComponentToolDefs(context) {
 
 function buildComponentToolDef(componentId, componentDescriptor, manifest, connectedInPortName, gatewayComponentId) {
     const aiFields = new Set();
+    // AI fields the model fills with a text that is turned into an embedding vector
+    // before the call (variable "modelDefinedEmbedding").
+    const embeddingFields = new Set();
     const userStaticValues = {};
 
     // Field configuration lives in config.transform[inPortName][gatewayComponentId][TOOL_PORT]
@@ -303,10 +312,16 @@ function buildComponentToolDef(componentId, componentDescriptor, manifest, conne
         const modifiers = transform.modifiers || {};
         const lambda = transform.lambda || {};
 
-        // AI fields: modifier entries whose variable references modelDefinedParameter.
+        // AI fields: modifier entries whose variable references modelDefinedParameter
+        // or modelDefinedEmbedding.
         for (const [key, modifier] of Object.entries(modifiers)) {
             if (!modifier || typeof modifier !== 'object') continue;
             for (const entry of Object.values(modifier)) {
+                if (entry?.variable && entry.variable.includes('modelDefinedEmbedding')) {
+                    aiFields.add(key);
+                    embeddingFields.add(key);
+                    break;
+                }
                 if (entry?.variable && entry.variable.includes('modelDefinedParameter')) {
                     aiFields.add(key);
                     break;
@@ -338,24 +353,25 @@ function buildComponentToolDef(componentId, componentDescriptor, manifest, conne
 
     const parameters = { type: 'object', properties: {}, required: [] };
 
-    for (const [key, schemaProp] of Object.entries(inPortSchemaProps)) {
-        if (!aiFields.has(key)) continue;
-        const inp = inPortInspector[key] || {};
-        parameters.properties[key] = {
+    // The model writes a text for an embedding field; what the component's own tooltip
+    // says about the vector would only mislead it.
+    const parameterFor = (key, schemaProp, inp) => (embeddingFields.has(key)
+        ? { type: 'string', description: 'Text to search for. It is converted to an embedding vector before the call.' }
+        : {
             type: schemaProp.type || 'string',
             description: [inp.label, inp.tooltip].filter(Boolean).join(' — ') || key
-        };
+        });
+
+    for (const [key, schemaProp] of Object.entries(inPortSchemaProps)) {
+        if (!aiFields.has(key)) continue;
+        parameters.properties[key] = parameterFor(key, schemaProp, inPortInspector[key] || {});
         if (inPortRequired.has(key)) parameters.required.push(key);
     }
 
     for (const [key, schemaProp] of Object.entries(propSchemaProps)) {
         if (!aiFields.has(key)) continue;
         if (key in parameters.properties) continue;
-        const inp = propInspector[key] || {};
-        parameters.properties[key] = {
-            type: schemaProp.type || 'string',
-            description: [inp.label, inp.tooltip].filter(Boolean).join(' — ') || key
-        };
+        parameters.properties[key] = parameterFor(key, schemaProp, propInspector[key] || {});
         if (propRequired.has(key)) parameters.required.push(key);
     }
 
@@ -367,18 +383,24 @@ function buildComponentToolDef(componentId, componentDescriptor, manifest, conne
     const rawLabel = componentDescriptor.label || manifest.label || manifest.name
         || componentDescriptor.type.split('.').pop();
 
+    // A manifest description says what the component does ("Query Pinecone for vectors."),
+    // not what this instance is for. The label the user gave it leads the description, so
+    // the model can tell e.g. which data a generic query component holds.
+    const description = [componentDescriptor.label, manifest.description].filter(Boolean).join(' - ') || rawLabel;
+
     return {
         type: 'function',
         function: {
             name: buildToolName(componentId, rawLabel),
-            description: manifest.description || rawLabel,
+            description,
             ...(Object.keys(parameters.properties).length ? { parameters } : {}),
             _componentTool: true,
             _componentId: componentId,
             _componentType: manifest.name || componentDescriptor.type,
             _inPort: inPortDef?.name || 'in',
             _userStaticValues: userStaticValues,
-            _aiFields: [...aiFields]
+            _aiFields: [...aiFields],
+            _embeddingFields: [...embeddingFields]
         }
     };
 }
@@ -392,9 +414,9 @@ function buildComponentToolDef(componentId, componentDescriptor, manifest, conne
  *
  * @returns {Promise<string>} tool output, always a string.
  */
-async function executeComponentTool(context, toolDef, args, { correlationId } = {}) {
+async function executeComponentTool(context, toolDef, args, { correlationId, embed } = {}) {
     const { name: fullToolName, _isMCP, _componentId, _mcpToolName,
-        _componentType, _inPort, _userStaticValues, _aiFields } = toolDef.function;
+        _componentType, _inPort, _userStaticValues, _aiFields, _embeddingFields } = toolDef.function;
     const displayName = _isMCP ? _mcpToolName : fullToolName;
 
     if (_isMCP) {
@@ -417,6 +439,21 @@ async function executeComponentTool(context, toolDef, args, { correlationId } = 
     for (const key of _aiFields || []) {
         if (args && args[key] !== undefined) modelArgs[key] = args[key];
     }
+    // Embedding fields: the model wrote a text, the component gets the vector. `embed` is
+    // supplied by the component owning the port (it holds the credentials for the model).
+    const embedded = {};
+    for (const key of _embeddingFields || []) {
+        if (typeof modelArgs[key] !== 'string') continue;
+        try {
+            if (!embed) throw new Error('no embedding model is available');
+            const vector = await embed(modelArgs[key]);
+            embedded[key] = `[embedding of ${vector.length} values]`;
+            modelArgs[key] = vector;
+        } catch (err) {
+            await context.log({ step: 'component-tool-embedding-error', displayName, field: key, error: err.message });
+            return `Error calling tool ${displayName}: could not create the embedding for "${key}": ${err.message}`;
+        }
+    }
     const messagePayload = { ...modelArgs, ..._userStaticValues };
     await context.log({
         step: 'component-tool-call',
@@ -425,7 +462,8 @@ async function executeComponentTool(context, toolDef, args, { correlationId } = 
         inPort: _inPort,
         aiArgs: args,
         staticValues: _userStaticValues,
-        mergedPayload: messagePayload
+        // The vectors themselves would only flood the log.
+        mergedPayload: { ...messagePayload, ...embedded }
     });
     try {
         const result = await context.callAppmixer({
