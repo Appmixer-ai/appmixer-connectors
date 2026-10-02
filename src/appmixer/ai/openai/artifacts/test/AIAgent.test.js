@@ -350,3 +350,402 @@ describe('AIAgent - history summary', () => {
         assert.strictEqual(JSON.parse(await context.stateGet('thread_summary_thread-1')).length, 2);
     });
 });
+
+describe('AIAgent - tool port', () => {
+
+    const AGENT_ID = 'agent-1';
+    const TOOL_NAME = 'rows-1_Employee_contacts';
+
+    let sandbox;
+    let context;
+
+    beforeEach(() => {
+        context = createMockContext({
+            componentId: AGENT_ID,
+            messages: { in: { correlationId: 'corr-1', content: { prompt: 'Who is the CEO?' } } },
+            flowDescriptor: {
+                [AGENT_ID]: { type: 'appmixer.ai.openai.AIAgent' },
+                'rows-1': {
+                    type: 'appmixer.google.spreadsheets.GetRows',
+                    label: 'Employee contacts',
+                    source: { in: { [AGENT_ID]: ['tool'] } },
+                    config: {
+                        transform: {
+                            in: {
+                                [AGENT_ID]: {
+                                    tool: {
+                                        modifiers: {
+                                            sheetId: {},
+                                            filter: {
+                                                'var-1': {
+                                                    variable: `$.${AGENT_ID}.tool.modelDefinedParameter`,
+                                                    functions: []
+                                                }
+                                            }
+                                        },
+                                        lambda: { sheetId: 'sheet-1', filter: '{{{var-1}}}' }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        context.callAppmixer = sinon.stub().callsFake(async ({ endPoint }) => {
+            if (endPoint.startsWith('/components?selector=')) {
+                return [{
+                    name: 'appmixer.google.spreadsheets.GetRows',
+                    description: 'Get rows from a sheet.',
+                    inPorts: [{
+                        name: 'in',
+                        schema: {
+                            type: 'object',
+                            properties: { sheetId: { type: 'string' }, filter: { type: 'string' } },
+                            required: ['sheetId']
+                        },
+                        inspector: { inputs: { filter: { label: 'Filter', tooltip: 'Rows to return.' } } }
+                    }]
+                }];
+            }
+            return { rows: [['Jane Doe', 'CEO']] };
+        });
+
+        sandbox = sinon.createSandbox();
+        sandbox.stub(AIAgent, 'publishChatProgressEvent').resolves();
+    });
+
+    afterEach(() => {
+        sandbox.restore();
+    });
+
+    it('should expose a component wired to the tool port as a tool', async () => {
+
+        const tools = await AIAgent.getAllToolsDefinition(context);
+
+        assert.deepStrictEqual(tools, [{
+            type: 'function',
+            function: {
+                name: TOOL_NAME,
+                description: 'Employee contacts - Get rows from a sheet.',
+                parameters: {
+                    type: 'object',
+                    properties: { filter: { type: 'string', description: 'Filter — Rows to return.' } }
+                }
+            }
+        }]);
+    });
+
+    it('should call the component directly with the model arguments and the static values', async () => {
+
+        await AIAgent.getAllToolsDefinition(context);
+
+        const outputs = await AIAgent.callTools(context, [{
+            id: 'call-1',
+            function: { name: TOOL_NAME, arguments: '{"filter":"CEO","sheetId":"other"}' }
+        }]);
+
+        assert.deepStrictEqual(outputs, [{
+            tool_call_id: 'call-1',
+            output: JSON.stringify({ rows: [['Jane Doe', 'CEO']] }, null, 2)
+        }]);
+        const call = context.callAppmixer.lastCall.args[0];
+        assert.strictEqual(call.endPoint, '/component/appmixer/google/spreadsheets/GetRows');
+        assert.deepStrictEqual(call.body, {
+            componentId: 'rows-1',
+            messages: { in: { filter: 'CEO', sheetId: 'sheet-1' } }
+        });
+        assert(context.sendJson.notCalled, 'nothing should be sent to the tools port');
+    });
+});
+
+describe('AIAgent - tool port with a chain of components', () => {
+
+    const AGENT_ID = 'agent-1';
+    const TOOL_NAME = 'emb-1_Search_policies';
+    const VECTOR = [0.1, 0.2, 0.3];
+
+    let sandbox;
+    let context;
+    let componentCalls;
+    let transformCalls;
+    let embeddingsOutput;
+
+    const toolTransform = (modifiers, lambda) => ({ in: { [AGENT_ID]: { tool: { modifiers, lambda } } } });
+
+    // What the engine's POST /modifiers/transform does, as far as these tests need it.
+    const engineTransform = ({ template, modifiers, data }) => {
+        const dig = (value, path) => path.split('.').reduce((item, key) => item?.[key], value);
+        const resolve = (key) => {
+            const { variable, functions } = modifiers[key];
+            return functions.reduce(
+                (value, fn) => (fn.name === 'g_jsonPath' ? dig(value, fn.params[0].value) : value),
+                dig(data.$, variable.replace(/^\$\./, ''))
+            );
+        };
+        const single = /^\{\{\{([^{}]+)\}\}\}$/.exec(template);
+        return {
+            result: single
+                ? resolve(single[1])
+                : template.replace(/\{\{\{([^{}]+)\}\}\}/g, (match, key) => String(resolve(key)))
+        };
+    };
+
+    beforeEach(() => {
+        embeddingsOutput = { out: { firstVector: VECTOR } };
+        componentCalls = [];
+        transformCalls = [];
+        context = createMockContext({
+            flowId: 'flow-1',
+            componentId: AGENT_ID,
+            messages: {
+                in: {
+                    correlationId: 'corr-1',
+                    content: { prompt: 'Is there a password policy?' },
+                    scope: { 'trigger-1': { out: { channel: 'policies-ns' } } }
+                }
+            },
+            flowDescriptor: {
+                'trigger-1': { type: 'appmixer.utils.controls.OnStart' },
+                [AGENT_ID]: { type: 'appmixer.ai.openai.AIAgent', source: { in: { 'trigger-1': ['out'] } } },
+                'emb-1': {
+                    type: 'appmixer.ai.openai.GenerateEmbeddings',
+                    label: 'Search policies',
+                    source: { in: { [AGENT_ID]: ['tool'] } },
+                    config: {
+                        transform: toolTransform(
+                            {
+                                model: {},
+                                text: { 'var-1': { variable: `$.${AGENT_ID}.tool.modelDefinedParameter`, functions: [] } }
+                            },
+                            { model: 'text-embedding-ada-002', text: '{{{var-1}}}' }
+                        )
+                    }
+                },
+                'query-1': {
+                    type: 'appmixer.pinecone.database.QueryVectors',
+                    source: { in: { 'emb-1': ['out'] } },
+                    config: {
+                        transform: {
+                            in: {
+                                'emb-1': {
+                                    out: {
+                                        modifiers: {
+                                            index: {},
+                                            vector: { 'var-2': { variable: '$.emb-1.out.firstVector', functions: [] } },
+                                            namespace: { 'var-3': { variable: '$.trigger-1.out.channel', functions: [] } }
+                                        },
+                                        lambda: { index: 'policies', vector: '{{{var-2}}}', namespace: '{{{var-3}}}' }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                // The agent's own output must not be taken for a step of the tool.
+                'send-1': { type: 'appmixer.utils.controls.SetVariable', source: { in: { [AGENT_ID]: ['out'] } } }
+            }
+        });
+        context.callAppmixer = sinon.stub().callsFake(async ({ endPoint, body }) => {
+            if (endPoint.includes('GenerateEmbeddings') && endPoint.startsWith('/components?selector=')) {
+                return [{
+                    name: 'appmixer.ai.openai.GenerateEmbeddings',
+                    description: 'Generate embeddings for a text.',
+                    inPorts: [{
+                        name: 'in',
+                        schema: { type: 'object', properties: { text: { type: 'string' }, model: { type: 'string' } }, required: ['text'] },
+                        inspector: { inputs: { text: { label: 'Text', tooltip: 'The text to embed.' } } }
+                    }]
+                }];
+            }
+            if (endPoint.startsWith('/components?selector=')) {
+                return [{
+                    name: 'appmixer.pinecone.database.QueryVectors',
+                    description: 'Query Pinecone for vectors.',
+                    inPorts: [{ name: 'in', schema: { type: 'object', properties: {} }, inspector: { inputs: {} } }]
+                }];
+            }
+            if (endPoint === '/modifiers/transform') {
+                transformCalls.push(body);
+                return engineTransform(body);
+            }
+            componentCalls.push({ endPoint, body });
+            return endPoint.endsWith('GenerateEmbeddings')
+                ? embeddingsOutput
+                : { out: { result: { matches: [{ id: 'chunk-1' }] } } };
+        });
+
+        sandbox = sinon.createSandbox();
+        sandbox.stub(AIAgent, 'publishChatProgressEvent').resolves();
+    });
+
+    afterEach(() => {
+        sandbox.restore();
+    });
+
+    const callTool = () => AIAgent.callTools(context, [{
+        id: 'call-1',
+        function: { name: TOOL_NAME, arguments: '{"text":"password policy"}' }
+    }]);
+
+    it('should describe the whole chain as one tool', async () => {
+
+        const tools = await AIAgent.getAllToolsDefinition(context);
+
+        assert.deepStrictEqual(tools, [{
+            type: 'function',
+            function: {
+                name: TOOL_NAME,
+                description: 'Search policies - Generate embeddings for a text. Then: Query Pinecone for vectors.'
+                    + ' The tool runs these steps in a row and returns the output of the last step,'
+                    + ' one result for every item when a step returns several.',
+                parameters: {
+                    type: 'object',
+                    properties: { text: { type: 'string', description: 'Text — The text to embed.' } },
+                    required: ['text']
+                }
+            }
+        }]);
+    });
+
+    it('should feed each step from the previous one and return the output of the last', async () => {
+
+        await AIAgent.getAllToolsDefinition(context);
+
+        const outputs = await callTool();
+
+        assert.deepStrictEqual(componentCalls, [{
+            endPoint: '/component/appmixer/ai/openai/GenerateEmbeddings',
+            body: { componentId: 'emb-1', messages: { in: { text: 'password policy', model: 'text-embedding-ada-002' } } }
+        }, {
+            endPoint: '/component/appmixer/pinecone/database/QueryVectors',
+            // The vector keeps its type; the namespace comes from a component in front of the agent.
+            body: { componentId: 'query-1', messages: { in: { index: 'policies', vector: VECTOR, namespace: 'policies-ns' } } }
+        }]);
+        assert.deepStrictEqual(outputs, [{
+            tool_call_id: 'call-1',
+            output: JSON.stringify({ out: { result: { matches: [{ id: 'chunk-1' }] } } }, null, 2)
+        }]);
+    });
+
+    it('should not run a step whose source port sent nothing', async () => {
+
+        await AIAgent.getAllToolsDefinition(context);
+        embeddingsOutput = { notFound: {} };
+
+        const outputs = await callTool();
+
+        assert.strictEqual(componentCalls.length, 1);
+        assert.strictEqual(outputs[0].output, JSON.stringify({ notFound: {} }, null, 2));
+    });
+
+    it('should let the engine resolve the variables, modifiers included', async () => {
+
+        const namespace = { variable: '$.trigger-1.out', functions: [{ name: 'g_jsonPath', params: [{ value: 'channel' }] }] };
+        context.flowDescriptor['query-1'].config.transform.in['emb-1'].out.modifiers.namespace = { 'var-3': namespace };
+        await AIAgent.getAllToolsDefinition(context);
+
+        await callTool();
+
+        assert.deepStrictEqual(transformCalls.find((call) => call.template === '{{{var-3}}}'), {
+            template: '{{{var-3}}}',
+            modifiers: { 'var-3': namespace },
+            // Only the outputs the field refers to are sent.
+            data: { $: { 'trigger-1': { out: { channel: 'policies-ns' } } } },
+            context: { flowId: 'flow-1' }
+        });
+        assert.strictEqual(componentCalls[1].body.messages.in.namespace, 'policies-ns');
+    });
+
+    it('should fill a field of the first component from a variable in front of the agent', async () => {
+
+        const transform = context.flowDescriptor['emb-1'].config.transform.in[AGENT_ID].tool;
+        transform.modifiers.text = { 'var-1': { variable: '$.trigger-1.out.channel', functions: [] } };
+
+        const tools = await AIAgent.getAllToolsDefinition(context);
+        await AIAgent.callTools(context, [{ id: 'call-1', function: { name: TOOL_NAME, arguments: '{}' } }]);
+
+        assert.strictEqual(tools[0].function.parameters, undefined);
+        assert.deepStrictEqual(componentCalls[0].body.messages.in, {
+            text: 'policies-ns',
+            model: 'text-embedding-ada-002'
+        });
+    });
+
+    it('should hand a failed variable resolution back to the model as an error', async () => {
+
+        await AIAgent.getAllToolsDefinition(context);
+        const callAppmixer = context.callAppmixer;
+        context.callAppmixer = sinon.stub().callsFake(async (request) => {
+            if (request.endPoint === '/modifiers/transform') throw new Error('transform failed');
+            return callAppmixer(request);
+        });
+
+        const outputs = await callTool();
+
+        assert.strictEqual(componentCalls.length, 1);
+        assert.match(outputs[0].output, /step "QueryVectors": transform failed/);
+    });
+
+    describe('when a step sends several messages', () => {
+
+        const match = { out: { result: { matches: [{ id: 'chunk-1' }] } } };
+
+        beforeEach(async () => {
+            // What a static call returns for a component that sent two messages to 'out'.
+            embeddingsOutput = { out: [{ firstVector: [1] }, { firstVector: [2] }] };
+            await AIAgent.getAllToolsDefinition(context);
+        });
+
+        it('should run the next step for each of them and return a list', async () => {
+
+            const outputs = await callTool();
+
+            assert.deepStrictEqual(componentCalls.slice(1).map((call) => call.body.messages.in.vector), [[1], [2]]);
+            assert.deepStrictEqual(JSON.parse(outputs[0].output), [match, match]);
+        });
+
+        it('should keep the other results when one of them fails', async () => {
+
+            const callAppmixer = context.callAppmixer;
+            context.callAppmixer = sinon.stub().callsFake(async (request) => {
+                if (request.body?.messages?.in?.vector?.[0] === 1) throw new Error('index not found');
+                return callAppmixer(request);
+            });
+
+            const outputs = await callTool();
+
+            assert.deepStrictEqual(JSON.parse(outputs[0].output), [
+                { error: 'Step "QueryVectors" failed: index not found' },
+                match
+            ]);
+        });
+
+        it('should stop at the configured number of items and say so', async () => {
+
+            context.config = { AI_AGENT_TOOL_MAX_ITEMS: 1 };
+
+            const outputs = await callTool();
+
+            assert.deepStrictEqual(JSON.parse(outputs[0].output), [
+                match,
+                { note: 'Only the first 1 of 2 items were processed.' }
+            ]);
+        });
+    });
+
+    it('should turn a model defined field of a later step into a tool parameter', async () => {
+
+        const transform = context.flowDescriptor['query-1'].config.transform.in['emb-1'].out;
+        transform.modifiers.namespace = { 'var-3': { variable: `$.${AGENT_ID}.tool.modelDefinedParameter`, functions: [] } };
+
+        const tools = await AIAgent.getAllToolsDefinition(context);
+        await AIAgent.callTools(context, [{
+            id: 'call-1',
+            function: { name: TOOL_NAME, arguments: '{"text":"password policy","namespace":"hr"}' }
+        }]);
+
+        assert.deepStrictEqual(Object.keys(tools[0].function.parameters.properties), ['text', 'namespace']);
+        assert.strictEqual(componentCalls[1].body.messages.in.namespace, 'hr');
+    });
+});

@@ -1,6 +1,7 @@
 'use strict';
 
 const lib = require('../lib');
+const componentTool = require('../tool');
 const shortuuid = require('short-uuid');
 const uuid = require('uuid');
 
@@ -66,7 +67,11 @@ module.exports = {
 
         const toolsDefinition = this.getToolsDefinition(tools);
         const mcpToolsDefinition = await this.getMCPToolsDefinition(context);
-        return toolsDefinition.concat(mcpToolsDefinition);
+        // Components wired to the 'tool' port are tools on their own, with no
+        // 'ToolStart'/'ToolOutput' chain around them.
+        const componentToolsDefinition = (await componentTool.collectComponentTools(context))
+            .map(componentTool.toPublicToolDef);
+        return toolsDefinition.concat(mcpToolsDefinition, componentToolsDefinition);
     },
 
     mcpListTools: async function(context, componentId) {
@@ -253,12 +258,15 @@ module.exports = {
 
         const outputs = [];
 
+        const componentToolDefs = await componentTool.getComponentToolDefs(context);
         const toolCalls = [];
         for (const toolCall of modelToolCalls) {
+            // A tool wired to the 'tool' port is resolved by its full name, never by the prefix.
+            const componentToolDef = componentToolDefs.find((def) => def.function.name === toolCall.function.name);
             let componentId = toolCall.function.name.split('_')[0];
             const toolName = toolCall.function.name.split('_').slice(1).join('_');
             await this.publishChatProgressEvent(context, 'tool-call', `Calling tool ${toolName}.`);
-            if (!uuid.validate(componentId)) {
+            if (!componentToolDef && !uuid.validate(componentId)) {
                 // Short version of the UUID.
                 // Get back the original compoennt UUID back from the short version.
                 componentId = shortuuid().toUUID(componentId);
@@ -279,6 +287,15 @@ module.exports = {
                     tool_call_id: toolCall.id,
                     output: `Error: Failed to parse tool arguments - ${err.message}. Raw arguments: ${toolCall.function.arguments}`
                 });
+                continue;
+            }
+            if (componentToolDef) {
+                // Called directly, so the output is here right away. Errors come back
+                // as the output text for the model to deal with.
+                const output = await componentTool.executeComponentTool(context, componentToolDef, args, {
+                    correlationId: context.messages?.in?.correlationId
+                });
+                outputs.push({ tool_call_id: toolCall.id, output });
                 continue;
             }
             if (this.isMCPserver(context, componentId)) {
