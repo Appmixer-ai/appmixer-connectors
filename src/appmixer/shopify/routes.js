@@ -24,6 +24,14 @@ function verifyWebhookHmac(rawBody, signature, clientSecret) {
     return safeEqual(expected, signature);
 }
 
+// Plugin routes cannot declare a required scope, so the admin scope of the
+// authenticated user is checked by hand. Anything unexpected counts as no admin.
+function isAdmin(req) {
+
+    const scope = req.auth && req.auth.credentials && req.auth.credentials.scope;
+    return Array.isArray(scope) && scope.includes('admin');
+}
+
 module.exports = function(context) {
 
     const models = {
@@ -110,7 +118,14 @@ module.exports = function(context) {
             method: 'GET',
             path,
             options: {
-                handler: async () => {
+                // The stored requests hold personal data of the customers of
+                // every connected store — for tenant admins only.
+                handler: async (req, h) => {
+
+                    if (!isAdmin(req)) {
+                        return h.response({ error: 'Admin access required.' }).code(403);
+                    }
+
                     return (await Model.find()) || [];
                 }
             }

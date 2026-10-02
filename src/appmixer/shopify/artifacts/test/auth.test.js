@@ -248,6 +248,30 @@ describe('Shopify compliance webhooks', () => {
             assert.strictEqual(saved[0].request['shop_domain'], 'test-store.myshopify.com');
         });
 
+        it('should list the stored requests to tenant admins only', async () => {
+            const { find } = mockPluginContext({ clientSecret: secret });
+            const post = find('POST', '/shop/redact');
+            await post.options.handler({ payload: body, headers: { 'x-shopify-hmac-sha256': signature } }, h);
+
+            const list = find('GET', '/shop/redact');
+            // No `auth: false` — the engine authenticates the request first.
+            assert.strictEqual(list.options.auth, undefined);
+
+            const requests = [
+                { auth: { credentials: { scope: ['user'] } } },
+                { auth: { credentials: {} } },
+                { auth: {} },
+                {}
+            ];
+            for (const req of requests) {
+                const denied = await list.options.handler(req, h);
+                assert.strictEqual(denied.statusCode, 403, JSON.stringify(req));
+            }
+
+            const listed = await list.options.handler({ auth: { credentials: { scope: ['user', 'admin'] } } }, h);
+            assert.strictEqual(listed.length, 1);
+        });
+
         it('should register all three compliance topics', () => {
             const { find } = mockPluginContext({ clientSecret: secret });
             for (const path of ['/customers/data_request', '/customers/redact', '/shop/redact']) {
