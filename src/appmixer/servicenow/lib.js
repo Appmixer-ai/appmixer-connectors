@@ -142,6 +142,40 @@ async function fetchLatestRecord(context, { tableName, orderField = 'sys_created
     return records[0] || null;
 }
 
+const WEBHOOK_SECRET_MIN_LENGTH = 16;
+
+function hashWebhookSecret(secret) {
+    return crypto.createHash('sha256').update(`${secret}`).digest('hex');
+}
+
+/**
+ * Builds the params for the webhook triggers' listeners. The event name already contains the
+ * instance; the hash of the connection's webhook secret makes sure the plugin route only triggers
+ * listeners of the connection whose secret the ServiceNow business rule knows.
+ * The credentials are checked against the instance first, so a listener is never registered
+ * for an instance the connection can't access.
+ * @param {object} context Appmixer context of the trigger.
+ * @returns {Promise<{instance: string, secretHash: string}>}
+ */
+async function getListenerParams(context) {
+
+    const { instance, webhookSecret } = context.auth;
+    if (!webhookSecret || `${webhookSecret}`.length < WEBHOOK_SECRET_MIN_LENGTH) {
+        throw new context.CancelError(
+            `Webhook Secret (at least ${WEBHOOK_SECRET_MIN_LENGTH} characters) is required in the ServiceNow connection to use triggers. `
+            + 'Reconnect your account with a Webhook Secret and send it in the X-Appmixer-Secret header from your business rule.'
+        );
+    }
+
+    await callEndpoint(context, {
+        method: 'GET',
+        action: 'table/sys_db_object',
+        params: { sysparm_limit: 1, sysparm_fields: 'sys_id' }
+    });
+
+    return { instance, secretHash: hashWebhookSecret(webhookSecret) };
+}
+
 // Expects standardized outputType: 'item', 'items', 'file'
 async function sendArrayOutput({ context, outputPortName = 'out', outputType = 'items', records = [] }) {
     if (outputType === 'item') {
@@ -319,6 +353,7 @@ module.exports = {
     sendArrayOutput,
     callEndpoint,
     fetchLatestRecord,
+    getListenerParams,
     toInspector,
     toOutputScheme,
     getColumns

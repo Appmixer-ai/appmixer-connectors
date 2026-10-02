@@ -27,6 +27,11 @@ module.exports = {
                 type: 'text',
                 name: 'Instance name (Required)',
                 tooltip: 'For example: dev144860'
+            },
+            webhookSecret: {
+                type: 'password',
+                name: 'Webhook Secret (Required for triggers)',
+                tooltip: 'A random string of at least 16 characters. Your ServiceNow business rule must send it in the X-Appmixer-Secret header of every event; events without the matching secret are ignored.'
             }
         },
 
