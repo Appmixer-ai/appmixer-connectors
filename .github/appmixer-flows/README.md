@@ -209,8 +209,9 @@ instances stay on their revision until
 
 ## pr-connector-labels.json
 
-Labels every new pull request with the connector it touches, so one search lists
-a connector's issues and PRs together across both repositories:
+Labels every new pull request with the connector it touches, and every new issue in
+`appmixer-components` with the connector its title names, so one search lists a
+connector's issues and PRs together across both repositories:
 `org:Appmixer-ai label:"appmixer:slack"`.
 
 The labels are one per releasable unit — per `bundle.json` — named after the
@@ -224,26 +225,55 @@ connectors, which would show up in every one of their overviews.
 
 ### Shape
 
-`New Pull Request` → `Find Files` ×2 (every `bundle.json` under `src/appmixer` at
-the PR's **head commit** and at its **base commit**) → `Make API Call` (GraphQL `resource(url:)`: the PR's
-number, repository and changed files) → `Code Block` (a changed file takes the
-deepest bundle directory containing it, else the nearest ancestor that holds
-bundles) → `Condition` (at least one label) → `Make API Call` (`POST
-/repos/{repo}/issues/{number}/labels`).
+Pull requests: `New Pull Request` → `Find Files` ×2 (every `bundle.json` under
+`src/appmixer` at the PR's **head commit** and at its **base commit**) → `Make API
+Call` (GraphQL `resource(url:)`: the PR's number, repository and changed files) →
+`Code Block` (a changed file takes the deepest bundle directory containing it, else
+the nearest ancestor that holds bundles) → `Condition` (at least one label) → `Make
+API Call` (`POST /repos/{repo}/issues/{number}/labels`) → `Make API Call` (GraphQL
+`createLabel` for the same labels in `appmixer-components`).
+
+Issues: `New Issue` (`appmixer-components`, open) → `Find Files` (every `bundle.json`
+on `dev`) → `Code Block` (title rule below) → `Condition` → `Make API Call` (`POST
+.../issues/{number}/labels`).
 
 The bundle set comes from the repository on every run, so a PR that adds a
 connector is labelled with its new label, a PR that removes or renames one with
 its old label, and adding a connector needs no change here. Only the first 100
 changed files can be read in one request, so a PR changing more than 100 files
-gets no labels rather than labels from part of it.
+gets no labels rather than labels from part of it. The changed files come from
+GraphQL because `Find Files` reads a tree, not the diff of a pull request.
+
+**Labels in appmixer-components.** GitHub creates a missing label only in the repo
+it is added in, so the PR branch creates every label of the PR in
+`appmixer-components` too — one GraphQL call with one aliased `createLabel` per
+label. A label that exists already fails on its own alias ("Name has already been
+taken"); the others go through and the response is still HTTP 200. A brand-new
+connector therefore has its label in both repositories from its first PR on.
+
+**Issue title rule** — only the title, never the body:
+
+- an explicit ref anywhere: `microsoft.mail`, `ai/openai`, `appmixer.ai.typesafe`,
+  or a component ref `jira.createIssue`;
+- the head of the title (before `: ` or ` - `), each listed name by its first one
+  to three words: `Slack: …`, `Google Drive - …`, `slack 5.5.1: …`,
+  `Microsoft Teams SendChannelMessage: …`, `Hubspot, Asana: …`; the vendor alone
+  gives the shared root label (`Microsoft: …` → `appmixer:microsoft`);
+- connector names that are ordinary words (`front`, `box`, `tasks`, `http`, …)
+  count only as an explicit ref;
+- an issue that already has a connector label, or names more than five, is left alone.
+
+Run against every issue in the repository, the rule agrees with 635 of the 646
+labels set so far (by the title-only backfill or by hand) and finds a label for 348
+issues that have none.
 
 ### Setup
 
-The wizard asks for two GitHub accounts and the repository:
+The wizard asks for two GitHub accounts and the two repositories:
 
-- **Reads pull requests** — any account that can read the repository.
-- **Push access** — adds the labels. Adding a label that does not exist yet
-  creates it, which needs push; `apx-vero` has only triage.
+- **Reads pull requests and issues** — any account that can read both repositories.
+- **Push access** — adds the labels and creates them in `appmixer-components`.
+  Creating a label needs push; `apx-vero` has only triage.
 
-The matching labels in `appmixer-components` (for issues) are not created by
-this flow; create one there when a new connector gets its first issue.
+`New Issue` polls GitHub search and remembers the issues it has seen, so the first
+run only takes a baseline; issues filed before the instance started are not touched.
