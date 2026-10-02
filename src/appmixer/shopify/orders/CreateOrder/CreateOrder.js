@@ -371,7 +371,7 @@ module.exports = {
                     index: 8,
                     label: 'Discount Codes',
                     levels: ['ADD'],
-                    tooltip: 'A list of discount codes to apply to the order.',
+                    tooltip: 'The discount code to apply to the order. Shopify accepts one code per order; an order with more than one is refused.',
                     group: 'discount',
                     fields: {
                         code: {
@@ -405,7 +405,7 @@ module.exports = {
                     label: 'Total Discounts',
                     index: 9,
                     group: 'discount',
-                    tooltip: 'The total discounts applied to the price of the order in the shop currency.'
+                    tooltip: 'Not used: Shopify calculates the total discounts from the discount code. Kept for existing flows.'
                 },
                 taxes_included: {
                     type: 'toggle',
@@ -504,13 +504,13 @@ module.exports = {
                     group: 'customer',
                     label: 'Customer accepts marketing',
                     defaultValue: false,
-                    tooltip: 'Whether the customer has consented to receive marketing material via email.',
+                    tooltip: 'Not used: an order cannot set the marketing consent of a new customer. Use Update Customer after the order is created. Kept for existing flows.',
                     index: 19
                 },
                 customer_accepts_marketing_updated_at: {
                     type: 'date-time',
                     group: 'customer',
-                    tooltip: 'The date and time when the customer consented or objected to receiving marketing material by email',
+                    tooltip: 'Not used: an order cannot set the marketing consent of a new customer. Kept for existing flows.',
                     label: 'Marketing Opt-in Date',
                     index: 20
                 },

@@ -56,43 +56,21 @@ module.exports = {
 
         const discountCode = code ? String(code).trim() : generateCode();
 
-        const priceRulePayload = {
-            'title': title || discountCode,
-            'value_type': valueType,
-            'value': String(-amount),
-            'target_type': 'line_item',
-            'target_selection': 'all',
-            'allocation_method': 'across',
-            'customer_selection': 'all',
-            'starts_at': startsAt || new Date().toISOString(),
-            'once_per_customer': !!oncePerCustomer
-        };
-
-        if (endsAt) {
-            priceRulePayload['ends_at'] = endsAt;
-        }
-        if (usageLimit) {
-            priceRulePayload['usage_limit'] = Number(usageLimit);
-        }
-        if (prerequisiteSubtotalRange) {
-            priceRulePayload['prerequisite_subtotal_range'] = {
-                'greater_than_or_equal_to': String(prerequisiteSubtotalRange)
-            };
-        }
-
         const shopify = commons.getShopifyAPI(context);
-        const priceRule = await shopify.priceRule.create(priceRulePayload);
+        // One mutation creates the discount terms and the code together, so a
+        // refused code (typically a duplicate) leaves no orphaned discount behind.
+        const created = await shopify.discount.createBasicCode({
+            code: discountCode,
+            title: title || discountCode,
+            valueType,
+            amount,
+            startsAt: startsAt || new Date().toISOString(),
+            endsAt,
+            usageLimit,
+            oncePerCustomer: !!oncePerCustomer,
+            minimumSubtotal: prerequisiteSubtotalRange || undefined
+        });
 
-        let created;
-        try {
-            created = await shopify.discountCode.create(priceRule.id, { code: discountCode });
-        } catch (error) {
-            // The code was refused (typically a duplicate): a price rule without
-            // a code is useless, so do not leave it behind in the store.
-            await shopify.priceRule.delete(priceRule.id).catch(() => {});
-            throw error;
-        }
-
-        return context.sendJson({ ...created, 'price_rule': priceRule }, 'out');
+        return context.sendJson(created, 'out');
     }
 };
