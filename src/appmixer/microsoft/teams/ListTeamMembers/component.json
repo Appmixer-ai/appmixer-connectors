@@ -1,12 +1,12 @@
 {
-    "name": "appmixer.microsoft.teams.ListChannels",
-    "author": "David Durman <david@client.io>",
-    "label": "List Channels",
-    "description": "Lists the channels in a team.",
+    "name": "appmixer.microsoft.teams.ListTeamMembers",
+    "author": "Appmixer <info@appmixer.com>",
+    "label": "List Team Members",
+    "description": "Lists the members of a team with their roles. Requires tenant admin consent for the TeamMember.Read.All permission. In a newly created tenant Microsoft Graph can answer 401 for a while after the permission is granted.",
     "auth": {
         "service": "appmixer:microsoft",
         "scope": [
-            "Channel.ReadBasic.All"
+            "TeamMember.Read.All"
         ]
     },
     "quota": {
@@ -25,9 +25,6 @@
                     "teamId": {
                         "type": "string"
                     },
-                    "isSource": {
-                        "type": "boolean"
-                    },
                     "outputType": {
                         "type": "string",
                         "enum": [
@@ -37,7 +34,10 @@
                             "file"
                         ]
                     }
-                }
+                },
+                "required": [
+                    "teamId"
+                ]
             },
             "inspector": {
                 "inputs": {
@@ -45,7 +45,7 @@
                         "type": "text",
                         "label": "Team",
                         "index": 1,
-                        "tooltip": "Required. Pick a team, or enter a Team ID directly.",
+                        "tooltip": "Required. Pick a team, or enter a Team ID directly. Requires tenant admin consent for the TeamMember.Read.All permission.",
                         "source": {
                             "url": "/component/appmixer/microsoft/teams/ListTeams?outPort=out",
                             "data": {
@@ -90,12 +90,13 @@
         {
             "name": "out",
             "source": {
-                "url": "/component/appmixer/microsoft/teams/ListChannels?outPort=out&ignoreAuth=true",
+                "url": "/component/appmixer/microsoft/teams/ListTeamMembers?outPort=out&ignoreAuth=true",
                 "data": {
                     "properties": {
                         "generateOutputPortOptions": true
                     },
                     "messages": {
+                        "in/teamId": "dummy",
                         "in/outputType": "inputs/in/outputType"
                     }
                 }
