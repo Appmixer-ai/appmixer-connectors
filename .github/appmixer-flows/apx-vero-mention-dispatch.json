@@ -1,6 +1,6 @@
 {
     "name": "CI - @apx-vero mention -> repository_dispatch",
-    "description": "When someone mentions @apx-vero on a pull request, starts the vero-mention-responder workflow (repository_dispatch `apx-vero-mention`), which replies and pushes fixes.",
+    "description": "When someone mentions @apx-vero on a pull request, starts the vero-mention-responder workflow (repository_dispatch `apx-vero-mention`) and, in parallel, the OpenClaw vero agent (shadow pilot).",
     "flow": {
         "a2000000-0000-4000-8000-000000000001": {
             "type": "appmixer.github.list.NewMention",
@@ -118,6 +118,47 @@
             },
             "x": 592,
             "y": 128
+        },
+        "a2000000-0000-4000-8000-000000000004": {
+            "type": "appmixer.utils.http.Post",
+            "label": "Notify the OpenClaw vero agent",
+            "x": 592,
+            "y": 320,
+            "source": {
+                "in": {
+                    "a2000000-0000-4000-8000-000000000002": [
+                        "true"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "a2000000-0000-4000-8000-000000000002": {
+                            "true": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "url": {},
+                                    "headers": {},
+                                    "bodyType": {},
+                                    "body": {
+                                        "b2000000-0000-4000-8000-000000000004": {
+                                            "variable": "$.a2000000-0000-4000-8000-000000000001.out.subject.url",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "url": "https://91-99-144-37.nip.io/hooks/vero-mention",
+                                    "headers": "{\"Content-Type\": \"application/json\", \"Authorization\": \"Bearer <OPENCLAW_HOOK_TOKEN>\"}",
+                                    "bodyType": "raw",
+                                    "body": "{\"pr_url\": \"{{{b2000000-0000-4000-8000-000000000004}}}\"}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
     },
     "notes": {
@@ -172,6 +213,15 @@
                 "tooltip": "owner/repo, comma-separated. Each needs .github/workflows/vero-mention-responder.yml on its default branch.",
                 "placeholder": "Appmixer-ai/appmixer-connectors",
                 "source": "a2000000-0000-4000-8000-000000000001.config.properties.repositories",
+                "attrs": {},
+                "options": {}
+            },
+            {
+                "type": "inspectorField",
+                "label": "OpenClaw hook headers",
+                "tooltip": "Headers for the call to the OpenClaw vero agent. Replace <OPENCLAW_HOOK_TOKEN> with hooks.token of the gateway (root-only file /root/backups/hook-token.txt on the host).",
+                "placeholder": "",
+                "source": "a2000000-0000-4000-8000-000000000004.config.transform.in.a2000000-0000-4000-8000-000000000002.true.lambda.headers",
                 "attrs": {},
                 "options": {}
             }

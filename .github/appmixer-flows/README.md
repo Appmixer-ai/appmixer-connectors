@@ -103,6 +103,10 @@ secrets on PRs from forks, and apx-vero's PRs always come from its fork.
   which then lets everything through.
 - `GitHub / Repository Dispatch` — into the repository the mention came from
   (`repository.full_name`), with `{"pr_url": "<subject.url>"}`.
+- `HTTP Post` (pilot) — the same `{"pr_url": …}` to the OpenClaw `vero` agent
+  (`/hooks/vero-mention`), which runs the responder in shadow mode. See
+  `.github/openclaw/vero-mention/README.md`. The wizard asks for its headers,
+  which carry the hook token.
 
 GitHub keeps one notification per PR thread, so the payload only says "something
 on this PR mentions the bot". The workflow validates that `pr_url` is a pull
