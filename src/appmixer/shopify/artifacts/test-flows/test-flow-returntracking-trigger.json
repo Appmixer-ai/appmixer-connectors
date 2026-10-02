@@ -176,5 +176,14 @@
     },
     "wizard": {
         "fields": []
+    },
+    "notes": {
+        "11111111-e2e0-4000-8000-000000000005": {
+            "content": "## ⚠️ Manual E2E — requires a return on a fulfilled order\n\nThe trigger listens to every `returns/*` topic. A return needs a **fulfilled order**, and creating one through the API needs the `write_returns` scope, which the connector does not request.\n\n### How to test\n1. Start this flow (the webhooks are registered on start).\n2. With `write_returns` granted to the app, call the GraphQL Admin API on a fulfilled order: `returnRequest` (fires `returns/request`) → `returnApproveRequest` (`returns/approve`) → `returnClose` (`returns/close`). It needs the `fulfillmentLineItemId` of the order.\n3. Without that scope, create the return in the Shopify admin: **Orders** → a fulfilled order → **Return** → select the items and a reason → **Create return**.\n\nThe Assert verifies the return id and that the topic starts with `returns/`. AfterAll timeout is 300 s — create the return within 5 minutes of starting the flow. `returns/update` alone never fires during a standard return journey.",
+            "height": 400,
+            "width": 400,
+            "x": 64,
+            "y": -128
+        }
     }
 }

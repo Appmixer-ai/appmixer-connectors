@@ -37,10 +37,23 @@ function schedule(task) {
     return requestChain;
 }
 
+// The store handle is the only part of the request host that comes from user
+// input, and both the access token and the app's client secret are sent to that
+// host — so anything but a plain myshopify.com handle is rejected.
+const STORE_HANDLE_PATTERN = /^[a-z0-9][a-z0-9-]*$/i;
+
+function normalizeStore(store) {
+
+    const handle = String(store || '').trim().replace(/\.myshopify\.com$/i, '');
+    if (!STORE_HANDLE_PATTERN.test(handle)) {
+        throw new Error('Invalid Shopify store address. Enter the store name only, without .myshopify.com.');
+    }
+    return handle.toLowerCase();
+}
+
 function baseUrl(auth, apiVersion) {
 
-    const store = String(auth.store || '').replace(/\.myshopify\.com$/i, '');
-    return `https://${store}.myshopify.com/admin/api/${apiVersion || DEFAULT_API_VERSION}`;
+    return `https://${normalizeStore(auth.store)}.myshopify.com/admin/api/${apiVersion || DEFAULT_API_VERSION}`;
 }
 
 // Parse the `page_info` cursor for the next page out of the Link response header.
@@ -174,6 +187,8 @@ function crud(context, resource) {
 }
 
 module.exports = {
+
+    normalizeStore,
 
     /**
      * Normalize multiselect input (array or string) to array format.

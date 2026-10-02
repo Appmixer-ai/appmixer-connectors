@@ -1,6 +1,6 @@
 {
     "name": "appmixer.shopify",
-    "version": "2.1.0",
+    "version": "3.0.0",
     "changelog": {
         "1.0.1": [
             "Initial version."
@@ -35,6 +35,13 @@
         ],
         "2.1.0": [
             "Added the discounts module with Create Discount Code (generates a code plus the price rule holding its terms; the code is generated for you when left empty) and Get Discount Code (looks an existing code up and returns it with its discount terms). Both need the read_discounts/write_discounts and read_price_rules/write_price_rules scopes on the custom app token."
+        ],
+        "3.0.0": [
+            "BREAKING: Authentication switched back from an Admin API access token (apiKey) to OAuth 2.0. Merchants connect a store through the consent screen of the Shopify app whose client ID and secret are set in the connector configuration; accounts connected with a token must be reconnected. Shopify stopped allowing new custom apps to be created in the store admin on January 1, 2026, so the token could no longer be obtained by new merchants.",
+            "OAuth uses expiring offline access tokens with refresh token rotation, which Shopify requires of public apps created since April 2026 and of all public apps from January 2027. Shopify keeps one current token per app and store: connecting the same store a second time invalidates the earlier account within an hour.",
+            "All scopes are requested in one consent: read/write customers, products, orders, discounts and price rules; read draft orders, fulfillments, inventory, locations, reports and returns.",
+            "Restored the mandatory compliance webhooks of a public app (customers/data_request, customers/redact, shop/redact) and the install route. The webhook signature is now verified against the raw request body and no longer echoed in the error response.",
+            "The store address is validated before the client secret or an access token is sent to it."
         ]
     }
 }

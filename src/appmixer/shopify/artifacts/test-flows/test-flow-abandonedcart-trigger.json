@@ -175,5 +175,14 @@
     },
     "wizard": {
         "fields": []
+    },
+    "notes": {
+        "11111111-e2e0-4000-8000-000000000004": {
+            "content": "## ⚠️ Manual E2E — requires a storefront action\n\nAn abandoned checkout cannot be created through the Admin API (checkout POST returns 406, storefront tokens are denied). The trigger polls `/checkouts.json`, where a checkout shows up about 10 minutes after it was abandoned.\n\n### How to test\n1. Start this flow and keep it running — the first poll after the start only records the checkouts that already exist.\n2. Open the online store in an **incognito window** (https://<store>.myshopify.com; the dev-store password is in Online Store → Preferences). A fresh window forces a NEW checkout session.\n3. Add a product to the cart, go to the checkout, enter an **email address and a shipping address** (a checkout without contact details is not listed) and close the window before paying.\n4. Wait about 10 minutes. The trigger then emits the checkout and the Assert verifies it.\n\nAfterAll timeout is 600 s, which the visibility delay can exceed — `appmixer e2e run` may then report a timeout although the trigger works. Abandon the checkout right after starting the flow; if the run still times out, start the flow by hand and read the flow log.",
+            "height": 400,
+            "width": 400,
+            "x": 64,
+            "y": -128
+        }
     }
 }
