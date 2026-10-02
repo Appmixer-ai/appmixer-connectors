@@ -17,16 +17,14 @@ module.exports = {
 
         const shopify = commons.getShopifyAPI(context);
         const trimmedCode = String(code).trim();
-        const discountCode = await shopify.discountCode.lookup(trimmedCode);
+        // The discount comes back with its terms (value, validity, usage limit)
+        // embedded as `price_rule`.
+        const discountCode = await shopify.discount.lookupCode(trimmedCode);
 
         if (!discountCode) {
             throw new context.CancelError(`Discount code ${trimmedCode} was not found.`);
         }
 
-        // The code alone carries no terms (value, validity, usage limit) — those
-        // live on the price rule it belongs to, so return both.
-        const priceRule = await shopify.priceRule.get(discountCode['price_rule_id']);
-
-        return context.sendJson({ ...discountCode, 'price_rule': priceRule }, 'out');
+        return context.sendJson(discountCode, 'out');
     }
 };

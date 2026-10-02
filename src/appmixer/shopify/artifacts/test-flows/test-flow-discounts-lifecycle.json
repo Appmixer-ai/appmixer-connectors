@@ -311,17 +311,19 @@
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
-                                    "url": {
+                                    "url": {},
+                                    "method": {},
+                                    "body": {
                                         "9d278fc6-9f8d-4f8c-8032-740e1fc30937": {
                                             "variable": "$.9710c4b6-f840-4f98-85a9-78823a2901bf.out.price_rule.id",
                                             "functions": []
                                         }
-                                    },
-                                    "method": {}
+                                    }
                                 },
                                 "lambda": {
-                                    "url": "/price_rules/{{{9d278fc6-9f8d-4f8c-8032-740e1fc30937}}}.json",
-                                    "method": "DELETE"
+                                    "url": "/graphql.json",
+                                    "method": "POST",
+                                    "body": "{\"query\":\"mutation DiscountCodeDelete($id: ID!) { discountCodeDelete(id: $id) { deletedCodeDiscountId userErrors { field message } } }\",\"variables\":{\"id\":\"gid://shopify/DiscountCodeNode/{{{9d278fc6-9f8d-4f8c-8032-740e1fc30937}}}\"}}"
                                 }
                             }
                         }
@@ -386,7 +388,7 @@
             "y": 320,
             "width": 672,
             "height": 256,
-            "content": "## ⚠️ Test data & scopes\n\nThe flow provokes all of its own data — no tenant fixtures needed:\n\n1. **Create Discount Code** leaves the code field empty on purpose, so the component generates a random 8-character code. That keeps the run repeatable: Shopify rejects a duplicate discount code, so a hardcoded one would fail on the second run.\n2. **Get Discount Code** looks the generated code up again and the asserts check the price rule terms (title, usage limit, validity window, minimum subtotal) came back with it.\n3. **Cleanup** is the `Make API Call` after `AfterAll`: `DELETE /price_rules/<id>.json`. Deleting the price rule removes its discount code with it — there is no Delete component for discounts yet.\n\nThe custom app token needs the `read_discounts`, `write_discounts`, `read_price_rules` and `write_price_rules` scopes; without the write scopes the create fails and the cleanup leaves the price rule behind."
+            "content": "## ⚠️ Test data & scopes\n\nThe flow provokes all of its own data — no tenant fixtures needed:\n\n1. **Create Discount Code** leaves the code field empty on purpose, so the component generates a random 8-character code. That keeps the run repeatable: Shopify rejects a duplicate discount code, so a hardcoded one would fail on the second run.\n2. **Get Discount Code** looks the generated code up again and the asserts check the price rule terms (title, usage limit, validity window, minimum subtotal) came back with it.\n3. **Cleanup** is the `Make API Call` after `AfterAll`: `POST /graphql.json` with a `discountCodeDelete` mutation for `gid://shopify/DiscountCodeNode/<price_rule.id>`. Deleting the discount removes its code with it — there is no Delete component for discounts yet.\n\nThe account needs the `read_discounts` and `write_discounts` scopes; without the write scope the create fails and the cleanup leaves the discount behind."
         }
     }
 }

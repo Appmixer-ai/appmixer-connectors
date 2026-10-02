@@ -64,9 +64,7 @@ module.exports = {
             'read_reports',
             'read_returns',
             'read_discounts',
-            'write_discounts',
-            'read_price_rules',
-            'write_price_rules'
+            'write_discounts'
         ],
 
         accountNameFromProfileInfo: context => {

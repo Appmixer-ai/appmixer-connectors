@@ -161,11 +161,23 @@ describe('Shopify auth', () => {
 
     describe('validateAccessToken', () => {
 
-        it('should call the shop endpoint with the access token', async () => {
-            const context = mockContext({ accessToken: 'at-1' }, () => ({ data: { shop: { name: 'Test' } }, headers: {} }));
+        it('should query the shop through the GraphQL Admin API with the access token', async () => {
+            const context = mockContext({ accessToken: 'at-1' }, () => ({
+                data: { data: { shop: { id: 'gid://shopify/Shop/1', name: 'Test' }, location: { id: 'gid://shopify/Location/2' } } },
+                headers: {}
+            }));
             await definition.validateAccessToken(context);
-            assert.strictEqual(context.requests[0].url, 'https://test-store.myshopify.com/admin/api/2024-04/shop.json');
+            assert.strictEqual(context.requests[0].url, 'https://test-store.myshopify.com/admin/api/2026-10/graphql.json');
+            assert.strictEqual(context.requests[0].method, 'POST');
             assert.strictEqual(context.requests[0].headers['X-Shopify-Access-Token'], 'at-1');
+        });
+
+        it('should report a GraphQL access error on the shop as an invalid token', async () => {
+            const context = mockContext({ accessToken: 'at-1' }, () => ({
+                data: { errors: [{ message: 'Access denied', extensions: { code: 'ACCESS_DENIED' } }] },
+                headers: {}
+            }));
+            await assert.rejects(async () => definition.validateAccessToken(context), InvalidTokenError);
         });
 
         it('should report a rejected token as invalid', async () => {

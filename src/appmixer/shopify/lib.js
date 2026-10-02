@@ -1,16 +1,23 @@
 'use strict';
 
-// Shopify Admin REST API accessed directly through context.httpRequest — no
-// third-party client. This module provides:
-//   - a throttled, 429-aware request layer (Shopify allows ~2 req/s),
-//   - cursor (Link header) pagination,
-//   - response-envelope unwrapping ({ order } / { orders } -> value),
-//   - a getShopifyAPI(context) facade whose method shapes mirror the resources
-//     the components use, so component bodies stay declarative.
+// Shopify Admin API accessed directly through context.httpRequest — no
+// third-party client. Every resource goes through the GraphQL Admin API
+// (graphql-client.js + gql-*.js); the facade returned by getShopifyAPI(context)
+// keeps the REST object shapes (snake_case keys, numeric ids) the components
+// and their users' flows were built on. This module provides:
+//   - a throttled, 429-aware request layer,
+//   - the getShopifyAPI(context) facade,
+//   - webhook registration and the shared output helpers.
 
 const pathModule = require('path');
+const graphqlClient = require('./graphql-client');
+const gqlCustomers = require('./gql-customers');
+const gqlOrders = require('./gql-orders');
+const gqlProducts = require('./gql-products');
+const gqlDiscounts = require('./gql-discounts');
+const gqlStore = require('./gql-store');
 
-const DEFAULT_API_VERSION = '2024-04';
+const DEFAULT_API_VERSION = graphqlClient.API_VERSION;
 const MIN_REQUEST_INTERVAL_MS = 500; // ~2 requests/second
 const MAX_429_RETRIES = 4;
 const DEFAULT_EXPORT_PREFIX = 'shopify-objects-export';
@@ -56,33 +63,6 @@ function baseUrl(auth, apiVersion) {
     return `https://${normalizeStore(auth.store)}.myshopify.com/admin/api/${apiVersion || DEFAULT_API_VERSION}`;
 }
 
-// Parse the `page_info` cursor for the next page out of the Link response header.
-function parseNextPageParameters(linkHeader) {
-
-    if (!linkHeader) {
-        return undefined;
-    }
-
-    const match = String(linkHeader).split(',').find(part => /rel="next"/.test(part));
-    if (!match) {
-        return undefined;
-    }
-
-    const urlMatch = match.match(/<([^>]+)>/);
-    if (!urlMatch) {
-        return undefined;
-    }
-
-    const query = urlMatch[1].split('?')[1] || '';
-    const params = {};
-    for (const pair of query.split('&')) {
-        if (!pair) continue;
-        const [key, value] = pair.split('=');
-        params[decodeURIComponent(key)] = decodeURIComponent(value || '');
-    }
-    return Object.keys(params).length ? params : undefined;
-}
-
 // Low-level request with throttling and 429 (Retry-After) handling. Returns the
 // parsed body plus the response headers (needed for pagination).
 async function shopifyRequest(context, { method = 'GET', path, query, body, apiVersion }) {
@@ -126,64 +106,6 @@ async function shopifyRequest(context, { method = 'GET', path, query, body, apiV
             throw error;
         }
     }
-}
-
-// Build a plain array carrying a non-enumerable `nextPageParameters` (mirrors the
-// old client's contract, so `pager` works unchanged).
-function toListResult(items, headers) {
-
-    const result = Array.isArray(items) ? items.slice() : [];
-    Object.defineProperty(result, 'nextPageParameters', {
-        value: parseNextPageParameters(headers.link || headers.Link),
-        enumerable: false
-    });
-    return result;
-}
-
-// Resource descriptor: REST path segment + singular/plural envelope keys.
-const RESOURCES = {
-    order: { path: 'orders', one: 'order', many: 'orders' },
-    customer: { path: 'customers', one: 'customer', many: 'customers' },
-    product: { path: 'products', one: 'product', many: 'products' },
-    checkout: { path: 'checkouts', one: 'checkout', many: 'checkouts' },
-    location: { path: 'locations', one: 'location', many: 'locations' },
-    inventoryLevel: { path: 'inventory_levels', one: 'inventory_level', many: 'inventory_levels' },
-    draftOrder: { path: 'draft_orders', one: 'draft_order', many: 'draft_orders' },
-    priceRule: { path: 'price_rules', one: 'price_rule', many: 'price_rules' },
-    webhook: { path: 'webhooks', one: 'webhook', many: 'webhooks' }
-};
-
-// Standard CRUD closures for a resource.
-function crud(context, resource) {
-
-    const { path, one, many } = resource;
-
-    return {
-        async list(query = {}) {
-            const { data, headers } = await shopifyRequest(context, { path: `${path}.json`, query });
-            return toListResult(data[many], headers);
-        },
-        async get(id, query = {}) {
-            const { data } = await shopifyRequest(context, { path: `${path}/${id}.json`, query });
-            return data[one];
-        },
-        async count(query = {}) {
-            const { data } = await shopifyRequest(context, { path: `${path}/count.json`, query });
-            return data.count;
-        },
-        async create(payload) {
-            const { data } = await shopifyRequest(context, { method: 'POST', path: `${path}.json`, body: { [one]: payload } });
-            return data[one];
-        },
-        async update(id, payload) {
-            const { data } = await shopifyRequest(context, { method: 'PUT', path: `${path}/${id}.json`, body: { [one]: payload } });
-            return data[one];
-        },
-        async delete(id) {
-            await shopifyRequest(context, { method: 'DELETE', path: `${path}/${id}.json` });
-            return {};
-        }
-    };
 }
 
 module.exports = {
@@ -344,123 +266,45 @@ module.exports = {
     },
 
     /**
-     * Facade over the Shopify Admin REST API. Method shapes mirror the resources
-     * the components rely on. Requires the full `context` (for context.httpRequest).
+     * Facade over the Shopify Admin API. Method shapes mirror the REST resources
+     * the components were written against; underneath, every call is a GraphQL
+     * Admin API query or mutation (gql-*.js), mapped back to the REST shape.
+     * Requires the full `context` (for context.httpRequest).
      * @param {Context} context
      */
     getShopifyAPI(context) {
 
-        const customer = crud(context, RESOURCES.customer);
+        const run = (query, variables) => graphqlClient.gql(context, query, variables, shopifyRequest);
+
+        const customers = gqlCustomers(run);
+        const orders = gqlOrders(run);
+        const store = gqlStore(run);
+        const products = gqlProducts(run, {
+            // Base64 image attachments go to a staged upload target first.
+            putFile: (url, data, headers) => context.httpRequest({ method: 'PUT', url, data, headers })
+        });
 
         return {
-            order: crud(context, RESOURCES.order),
-            product: crud(context, RESOURCES.product),
-            location: crud(context, RESOURCES.location),
-            inventoryLevel: crud(context, RESOURCES.inventoryLevel),
-            checkout: crud(context, RESOURCES.checkout),
-            draftOrder: crud(context, RESOURCES.draftOrder),
-            // A price rule holds the terms of a discount; the codes customers
-            // type at checkout hang off it.
-            priceRule: crud(context, RESOURCES.priceRule),
-
             customer: {
-                ...customer,
-                async search(query = {}) {
-                    const { data, headers } = await shopifyRequest(context, { path: 'customers/search.json', query });
-                    return toListResult(data.customers, headers);
-                },
-                async orders(id, query = {}) {
-                    const { data, headers } = await shopifyRequest(context, { path: `customers/${id}/orders.json`, query });
-                    return toListResult(data.orders, headers);
-                }
+                ...customers,
+                orders: (id, query) => orders.listForCustomer(id, query)
             },
-
+            order: orders.order,
             // Refunds and fulfillments are nested under an order.
-            refund: {
-                async list(orderId, query = {}) {
-                    const { data, headers } = await shopifyRequest(context, { path: `orders/${orderId}/refunds.json`, query });
-                    return toListResult(data.refunds, headers);
-                }
-            },
-            fulfillment: {
-                async list(orderId, query = {}) {
-                    const { data, headers } = await shopifyRequest(context, { path: `orders/${orderId}/fulfillments.json`, query });
-                    return toListResult(data.fulfillments, headers);
-                }
-            },
+            refund: orders.refund,
+            fulfillment: orders.fulfillment,
+            product: products,
+            location: store.location,
+            inventoryLevel: store.inventoryLevel,
+            checkout: store.checkout,
+            draftOrder: store.draftOrder,
+            webhook: store.webhook,
+            shop: store.shop,
+            returnsForOrder: (orderId, limit) => store.returnsForOrder(orderId, limit),
+            // Code discounts (the GraphQL Admin API has no price rules).
+            discount: gqlDiscounts(run),
 
-            // Discount codes are nested under the price rule they belong to.
-            discountCode: {
-                async list(priceRuleId, query = {}) {
-                    const { data, headers } = await shopifyRequest(context, { path: `price_rules/${priceRuleId}/discount_codes.json`, query });
-                    return toListResult(data.discount_codes, headers);
-                },
-                async get(priceRuleId, id) {
-                    const { data } = await shopifyRequest(context, { path: `price_rules/${priceRuleId}/discount_codes/${id}.json` });
-                    return data.discount_code;
-                },
-                async create(priceRuleId, payload) {
-                    const { data } = await shopifyRequest(context, {
-                        method: 'POST',
-                        path: `price_rules/${priceRuleId}/discount_codes.json`,
-                        body: { discount_code: payload }
-                    });
-                    return data.discount_code;
-                },
-                // Resolve a code string to its discount code record. Returns null
-                // when no such code exists. The lookup endpoint answers with a 303
-                // to the canonical price_rules/<id>/discount_codes/<id> URL; the
-                // HTTP client normally follows it, so fall back to resolving the
-                // Location header by hand only when it did not.
-                async lookup(code) {
-                    let response;
-                    try {
-                        response = await shopifyRequest(context, { path: 'discount_codes/lookup.json', query: { code } });
-                    } catch (error) {
-                        if (error.statusCode === 404) {
-                            return null;
-                        }
-                        throw error;
-                    }
-
-                    if (response.data && response.data.discount_code) {
-                        return response.data.discount_code;
-                    }
-
-                    const location = response.headers.location || response.headers.Location;
-                    const match = location && String(location).match(/price_rules\/(\d+)\/discount_codes\/(\d+)/);
-                    if (!match) {
-                        return null;
-                    }
-                    return this.get(match[1], match[2]);
-                }
-            },
-
-            webhook: {
-                async list(query = {}) {
-                    const { data, headers } = await shopifyRequest(context, { path: 'webhooks.json', query });
-                    return toListResult(data.webhooks, headers);
-                },
-                async create(payload) {
-                    const { data } = await shopifyRequest(context, { method: 'POST', path: 'webhooks.json', body: { webhook: payload } });
-                    return data.webhook;
-                },
-                async delete(id) {
-                    await shopifyRequest(context, { method: 'DELETE', path: `webhooks/${id}.json` });
-                    return {};
-                }
-            },
-
-            shop: {
-                async get() {
-                    const { data } = await shopifyRequest(context, { path: 'shop.json' });
-                    return data.shop;
-                }
-            },
-
-            // Run a ShopifyQL query through the GraphQL Admin API and return the
-            // table result. Unlike the (plan-gated) REST Report resource, the
-            // shopifyqlQuery field is available on developer/basic plans.
+            // Run a ShopifyQL query and return the table result.
             report: {
                 async run(query) {
                     const gql = `query RunShopifyql($q: String!) {
@@ -472,21 +316,13 @@ module.exports = {
                             }
                         }
                     }`;
-                    const result = await shopifyRequest(context, {
-                        method: 'POST',
-                        path: 'graphql.json',
-                        body: { query: gql, variables: { q: query } }
-                    });
-                    return result.data.data.shopifyqlQuery;
+                    const data = await run(gql, { q: query });
+                    return data.shopifyqlQuery;
                 }
             },
 
-            // Minimal GraphQL passthrough (returns the `data` payload).
-            async graphql(query, variables, apiVersion) {
-                const body = variables ? { query, variables } : { query };
-                const { data } = await shopifyRequest(context, { method: 'POST', path: 'graphql.json', body, apiVersion });
-                return data.data;
-            }
+            // Raw GraphQL (returns the `data` payload).
+            graphql: (query, variables) => run(query, variables)
         };
     },
 
@@ -528,59 +364,27 @@ module.exports = {
         const address = context.getWebhookUrl();
 
         const webhooks = await shopify.webhook.list({ address });
+        const existing = (webhooks || []).find(webhook => webhook.topic === topic);
+        const webhook = existing || await shopify.webhook.create({ address, topic });
 
-        let response;
-        if (Array.isArray(webhooks) && webhooks.length > 0) {
-            response = webhooks[0];
-        } else {
-            response = await shopify.webhook.create({ address, topic });
-        }
-
-        return context.saveState({ webhookId: response.id });
+        return context.saveState({ webhookId: webhook.id });
     },
 
-    // Registers one webhook per topic through GraphQL webhookSubscriptionCreate —
-    // most returns/* topics are not exposed on the REST webhook endpoint at all.
+    // Registers one webhook per topic (Return Tracking subscribes to the whole
+    // returns/* family), reusing subscriptions already pointing at this component.
     async registerWebhooks(context, topics) {
 
         const shopify = this.getShopifyAPI(context);
         const address = context.getWebhookUrl();
 
-        const listQuery = `query {
-            webhookSubscriptions(first: 100) {
-                edges { node {
-                    id topic
-                    endpoint { ... on WebhookHttpEndpoint { callbackUrl } }
-                } }
-            }
-        }`;
-        const listResult = await shopify.graphql(listQuery);
-        const existing = new Map();
-        (listResult.webhookSubscriptions.edges || []).forEach(({ node }) => {
-            if (node.endpoint && node.endpoint.callbackUrl === address) {
-                existing.set(node.topic, node.id);
-            }
-        });
+        const existing = new Map((await shopify.webhook.list({ address })).map(webhook => [webhook.topic, webhook.id]));
 
         const webhookIds = [];
         for (const topic of topics) {
-            const gqlTopic = topic.toUpperCase().replace('/', '_');
-            if (existing.has(gqlTopic)) {
-                webhookIds.push(existing.get(gqlTopic));
-                continue;
-            }
-            const mutation = `mutation {
-                webhookSubscriptionCreate(topic: ${gqlTopic}, webhookSubscription: { callbackUrl: "${address}", format: JSON }) {
-                    webhookSubscription { id }
-                    userErrors { message }
-                }
-            }`;
-            const result = await shopify.graphql(mutation);
-            const { webhookSubscription, userErrors } = result.webhookSubscriptionCreate;
-            if (!webhookSubscription) {
-                throw new Error(`Failed to subscribe to ${topic}: ${(userErrors || []).map(e => e.message).join('; ')}`);
-            }
-            webhookIds.push(webhookSubscription.id);
+            const id = existing.has(topic)
+                ? existing.get(topic)
+                : (await shopify.webhook.create({ address, topic })).id;
+            webhookIds.push(id);
         }
 
         return context.saveState({ webhookIds });
@@ -601,16 +405,10 @@ module.exports = {
         const shopify = this.getShopifyAPI(context);
         const { webhookId, webhookIds } = await context.loadState();
 
+        // Subscriptions registered before 3.1.0 carry a gid (GraphQL) or a number
+        // (REST); webhook.delete takes both.
         const ids = Array.isArray(webhookIds) ? webhookIds : (webhookId ? [webhookId] : []);
-        return Promise.all(ids.map(id => {
-            // GraphQL-registered subscriptions carry a gid, REST-registered ones a number.
-            const remove = String(id).startsWith('gid://')
-                ? shopify.graphql(`mutation {
-                    webhookSubscriptionDelete(id: "${id}") { deletedWebhookSubscriptionId userErrors { message } }
-                }`)
-                : shopify.webhook.delete(id);
-            return remove.catch(() => {});
-        }));
+        return Promise.all(ids.map(id => shopify.webhook.delete(id).catch(() => {})));
     },
 
     async fetchLatestWebhookExample(context, { resource, topic, params = {} }) {

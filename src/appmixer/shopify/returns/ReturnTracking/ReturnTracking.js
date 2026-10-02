@@ -44,34 +44,14 @@ module.exports = {
     async test(context) {
 
         const shopify = commons.getShopifyAPI(context);
-        // Returns are only exposed through GraphQL; fetch the newest return of the
-        // most recent order so the emitted shape matches the webhook payload.
+        // Emit the newest return of the most recent orders, in the shape of the
+        // webhook payload.
         const orders = await shopify.order.list({ status: 'any', limit: 10, order: 'created_at DESC' });
 
-        if (!Array.isArray(orders)) {
-            throw new Error('No orders to look up returns for.');
-        }
-
         for (const order of orders) {
-            const query = `query {
-                order(id: "gid://shopify/Order/${order.id}") {
-                    returns(first: 1) {
-                        edges { node {
-                            id name status totalQuantity
-                            order { id name }
-                        } }
-                    }
-                }
-            }`;
-            let result;
-            try {
-                result = await shopify.graphql(query);
-            } catch (err) {
-                continue;
-            }
-            const edges = result && result.order && result.order.returns && result.order.returns.edges;
-            if (Array.isArray(edges) && edges[0]) {
-                return context.sendJson({ ...edges[0].node, webhookTopic: 'returns/request' }, 'return');
+            const [latest] = await shopify.returnsForOrder(order.id, 1);
+            if (latest) {
+                return context.sendJson({ ...latest, webhookTopic: 'returns/request' }, 'return');
             }
         }
 
