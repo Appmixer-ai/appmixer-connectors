@@ -1,6 +1,6 @@
 {
     "name": "appmixer.servicenow",
-    "version": "3.2.0",
+    "version": "3.2.1",
     "engine": ">=6.0.0",
     "changelog": {
         "1.0.0": [
@@ -38,6 +38,9 @@
         ],
         "3.2.0": [
             "Added test() method to NewRecord, UpdatedRecord and DeletedRecord triggers for Flow Test Mode support."
+        ],
+        "3.2.1": [
+            "Fixed intermittent \"Parse Error: Expected HTTP/\" (HPE_INVALID_CONSTANT) failures in components that read from ServiceNow. Every GET request was sent with an empty JSON body ({}), which ServiceNow does not read; on a reused connection those stray bytes corrupted the next response. This hit paginated reads such as List Records hardest, because they issue many GET requests in a row. GET and HEAD requests are now sent without a body."
         ]
     }
 }
