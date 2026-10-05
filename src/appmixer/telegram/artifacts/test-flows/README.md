@@ -1,6 +1,6 @@
 # Telegram E2E test flows
 
-Five flows covering all 13 components. Import with:
+Seven flows: five for the bot components (`core`) and two for the Telegram User module (`user`). Import with:
 
 ```bash
 appmixer e2e import src/appmixer/telegram/artifacts/test-flows --account <accountId>
@@ -68,3 +68,13 @@ document) with `--record` on a bot that has no webhook registered.
 
 To disable the bot's privacy mode and let the trigger see every group message,
 send `/setprivacy` to @BotFather and pick Disable. The flows do not need it.
+
+## Telegram User module (`appmixer.telegram.user`)
+
+These flows need a **Telegram User** account (`appmixer:telegram:user`: API ID,
+API Hash and a gramjs session string of a user, not bot, account).
+
+| Flow | Covers |
+|---|---|
+| `test-flow-user-channel.json` | GetChannel and FindChannelMessages on the public channel **@telegram**. Read-only, fully automatic. |
+| `test-flow-user-newchannelpost-trigger.json` | NewChannelPost. **Manual:** point it at a public channel you can post to, start the flow, then publish a post. Flow start records the newest post as the baseline, so only posts published after it are emitted. AfterAll waits 600 s. |
