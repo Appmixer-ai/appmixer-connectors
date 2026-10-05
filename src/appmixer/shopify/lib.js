@@ -296,8 +296,12 @@ module.exports = {
      * through GraphQL.
      * @param {Context} context
      * @param {string[]} topics
+     * @param {object} [options]
+     * @param {string[]} [options.extraFields] payload fields a trigger needs besides the ids
      */
-    async registerWebhooks(context, topics) {
+    async registerWebhooks(context, topics, { extraFields = [] } = {}) {
+
+        const includeFields = WEBHOOK_INCLUDE_FIELDS.concat(extraFields);
 
         const uri = context.getWebhookUrl();
         const data = await this.graphql(context, LIST_WEBHOOKS, { uri });
@@ -312,7 +316,7 @@ module.exports = {
             }
             const created = await this.graphql(context, CREATE_WEBHOOK, {
                 topic: enumTopic,
-                webhookSubscription: { uri, format: 'JSON', includeFields: WEBHOOK_INCLUDE_FIELDS }
+                webhookSubscription: { uri, format: 'JSON', includeFields }
             });
             const payload = graphqlClient.checkUserErrors(created.webhookSubscriptionCreate, 'webhookSubscriptionCreate');
             webhookIds.push(payload.webhookSubscription.id);
@@ -369,7 +373,9 @@ module.exports = {
             return context.response();
         }
 
-        const id = data.admin_graphql_api_id || graphqlClient.toGid(type, data.id);
+        // Some payloads carry no id at all (a checkout before Shopify lists it);
+        // `fetch` then gets null and decides from the payload.
+        const id = data.admin_graphql_api_id || graphqlClient.toGid(type, data.id) || null;
         const item = fetch ? await fetch(id, data) : { id };
         if (item) {
             await context.sendJson({ ...item, webhookTopic: topic }, port);

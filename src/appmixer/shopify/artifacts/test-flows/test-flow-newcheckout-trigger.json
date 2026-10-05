@@ -7,7 +7,7 @@
             "y": -128,
             "width": 400,
             "height": 400,
-            "content": "## ⚠️ Manual E2E — requires a storefront action\n\n`checkouts/create` cannot be provoked through the Admin API — only a real storefront checkout session fires it.\n\n### How to test\n1. Start this flow (the webhook is registered on start).\n2. Open the online store in an **incognito window** (https://<store>.myshopify.com; the dev-store password is in Online Store → Preferences). A fresh window forces a NEW checkout session — a reused window resumes the previous checkout instead.\n3. Add a product to the cart and click through to the checkout page — creating the checkout session fires **checkouts/create**.\n\nThe Assert checks the checkout id and topic. A checkout Shopify does not list as abandoned yet is emitted with its id only. AfterAll timeout is 600 s — finish the storefront steps within 10 minutes of starting the flow."
+            "content": "## ⚠️ Manual E2E — requires a storefront action\n\n`checkouts/create` cannot be provoked through the Admin API — only a real storefront checkout session fires it.\n\n### How to test\n1. Start this flow (the webhook is registered on start).\n2. Open the online store in an **incognito window** (https://<store>.myshopify.com; the dev-store password is in Online Store → Preferences). A fresh window forces a NEW checkout session — a reused window resumes the previous checkout instead.\n3. Add a product to the cart and click through to the checkout page — creating the checkout session fires **checkouts/create**.\n\nThe Assert checks the checkout token and topic. A checkout Shopify does not list as abandoned yet (no contact details entered) is emitted with its token only; once listed it carries the full abandoned checkout. AfterAll timeout is 600 s — finish the storefront steps within 10 minutes of starting the flow."
         }
     },
     "flow": {
@@ -44,7 +44,7 @@
                                 "modifiers": {
                                     "expression": {
                                         "51e7b348-45aa-46f7-a9bd-7990e74d737e": {
-                                            "variable": "$.4a4737dd-d208-4841-bdf1-07b7d6a281f9.out.id",
+                                            "variable": "$.4a4737dd-d208-4841-bdf1-07b7d6a281f9.out.token",
                                             "functions": []
                                         },
                                         "7aa336ec-2d07-4bba-a633-330e3f6305ea": {
@@ -58,8 +58,7 @@
                                         "AND": [
                                             {
                                                 "field": "{{{51e7b348-45aa-46f7-a9bd-7990e74d737e}}}",
-                                                "assertion": "regex",
-                                                "regex": "^gid://shopify/AbandonedCheckout/\\d+$"
+                                                "assertion": "notEmpty"
                                             },
                                             {
                                                 "field": "{{{7aa336ec-2d07-4bba-a633-330e3f6305ea}}}",

@@ -120,7 +120,8 @@ describe('Shopify store resources (GraphQL)', () => {
         it('should emit the checkout id alone when the checkout is not listed yet', async () => {
             const { run } = mockRun(() => ({ node: null }));
             const fetch = gqlStore.checkoutFetcher(gqlStore(run));
-            assert.deepStrictEqual(await fetch(undefined, { id: 123 }), { id: 'gid://shopify/AbandonedCheckout/123' });
+            assert.deepStrictEqual(await fetch(undefined, { id: 123, token: 'tok' }), { id: 'gid://shopify/AbandonedCheckout/123', token: 'tok' });
+            assert.deepStrictEqual(await fetch(null, { token: 'tok' }), { id: null, token: 'tok' });
         });
 
         it('should read an inventory level by gid or by item and location', async () => {
@@ -214,7 +215,7 @@ describe('Shopify store resources (GraphQL)', () => {
             await require('../../checkouts/NewCheckout/NewCheckout').receive(context);
             assert.deepStrictEqual(context.sent, [{
                 port: 'out',
-                payload: { id: 'gid://shopify/AbandonedCheckout/123', webhookTopic: 'checkouts/create' }
+                payload: { id: 'gid://shopify/AbandonedCheckout/123', token: null, webhookTopic: 'checkouts/create' }
             }]);
         });
 
@@ -239,8 +240,8 @@ describe('Shopify store resources (GraphQL)', () => {
         // component → [item schema key, extra properties of the port]
         const PORTS = {
             'checkouts/AbandonedCart': ['checkout', []],
-            'checkouts/NewCheckout': ['checkout', ['webhookTopic']],
-            'checkouts/UpdatedCheckout': ['checkout', ['webhookTopic']],
+            'checkouts/NewCheckout': ['checkout', ['webhookTopic', 'token']],
+            'checkouts/UpdatedCheckout': ['checkout', ['webhookTopic', 'token']],
             'draftorders/NewDraftOrder': ['draftOrder', ['webhookTopic']],
             'draftorders/UpdatedDraftOrder': ['draftOrder', ['webhookTopic']],
             'inventory/InventoryLevelUpdated': ['inventoryLevel', ['webhookTopic']],

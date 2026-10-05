@@ -13,7 +13,7 @@ module.exports = {
 
     async start(context) {
 
-        return lib.registerWebhooks(context, [TOPIC]);
+        return lib.registerWebhooks(context, [TOPIC], { extraFields: gqlStore.CHECKOUT_WEBHOOK_FIELDS });
     },
 
     async stop(context) {

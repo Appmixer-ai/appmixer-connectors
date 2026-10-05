@@ -299,10 +299,17 @@ module.exports = (run) => ({
  */
 module.exports.checkoutFetcher = api => async (gid, payload = {}) => {
 
+    // A checkout gets its id only once Shopify lists it (after the buyer
+    // entered contact details); until then the payload carries the token alone.
     const id = payload.id !== undefined && payload.id !== null ? payload.id : client.fromGid(gid);
-    const checkout = await api.getCheckout(id);
-    return checkout || { id: client.toGid('AbandonedCheckout', id) };
+    const checkout = id ? await api.getCheckout(id) : null;
+    return checkout
+        ? { ...checkout, token: payload.token || null }
+        : { id: id ? client.toGid('AbandonedCheckout', id) : null, token: payload.token || null };
 };
+
+// Payload fields the checkout triggers need besides the ids.
+module.exports.CHECKOUT_WEBHOOK_FIELDS = ['token'];
 
 module.exports.CHECKOUT_FIELDS = CHECKOUT_FIELDS;
 module.exports.DRAFT_ORDER_FIELDS = DRAFT_ORDER_FIELDS;
