@@ -11,8 +11,9 @@ class ZohoClient {
 
     /**
      * @param {*} context Component context
-     * @param {{ region?: string, apiDomain?: string }} [dataCenterAuth] Data center of an account
-     *   being connected, from auth.js. Used only when the account's profileInfo does not carry one.
+     * @param {{ region?: string, apiDomain?: string }|string} [dataCenterAuth] Data center of an account
+     *   being connected, from auth.js (older copies of auth.js pass the region as a string). Used
+     *   only when the account's profileInfo does not carry one.
      * @param {Object} [options]
      * @param {string} [options.apiVersion] Zoho CRM API version used to build request paths.
      *   Defaults to 'v2' so existing components keep their behaviour. Newer components opt into
@@ -25,7 +26,9 @@ class ZohoClient {
         // context.accessToken for calls from auth.js
         const accessToken = context.auth?.accessToken || context.accessToken;
         const profileInfo = context.profileInfo;
-        const dataCenter = (profileInfo?.apiDomain || profileInfo?.region) ? profileInfo : dataCenterAuth;
+        // Older copies of auth.js pass the region as a plain string.
+        const dataCenterOfAuth = typeof dataCenterAuth === 'string' ? { region: dataCenterAuth } : dataCenterAuth;
+        const dataCenter = (profileInfo?.apiDomain || profileInfo?.region) ? profileInfo : dataCenterOfAuth;
 
         check.assert.string(accessToken, `Missing accessToken: ${accessToken}.`);
 

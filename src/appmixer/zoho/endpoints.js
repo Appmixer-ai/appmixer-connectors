@@ -115,6 +115,12 @@ const dataCenterCandidates = ({ region, accountsServer, apiDomain } = {}) => {
 };
 
 module.exports = {
+    // accountsEndpoint and apiEndpoint are not used by this version of the connector any more. They
+    // stay exported for older copies of auth.js and of the components: this file is shared by all
+    // of them (the service version does not change), and the engine can still load an older
+    // auth.js or component next to it - the Auth Hub in particular keeps older copies around.
+    accountsEndpoint,
+    apiEndpoint,
     dataCenterCandidates,
     resolveAccountsServer,
     resolveApiDomain,

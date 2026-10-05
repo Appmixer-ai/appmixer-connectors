@@ -314,6 +314,24 @@ describe('Zoho data centers', () => {
         });
     });
 
+    describe('older copies of auth.js and of the components', () => {
+
+        // The shared files (endpoints.js, ZohoClient.js) are loaded next to older copies of auth.js
+        // and of the components, which still use the previous interface.
+        it('should keep accountsEndpoint and apiEndpoint exported', () => {
+
+            assert.strictEqual(endpoints.accountsEndpoint('eu'), 'https://accounts.zoho.eu');
+            assert.strictEqual(endpoints.apiEndpoint('EU'), 'https://www.zohoapis.eu');
+        });
+
+        it('should accept the region as a string in ZohoClient', () => {
+
+            const { httpRequest, calls } = mockHttpRequest(CANADA_TOKEN, {});
+            new ZohoClient({ accessToken: 'token', httpRequest }, 'eu');
+            assert.strictEqual(calls.baseURLs[0], 'https://www.zohoapis.eu');
+        });
+    });
+
     describe('MakeApiCall', () => {
 
         function makeApiCallContext(profileInfo, httpRequest) {
