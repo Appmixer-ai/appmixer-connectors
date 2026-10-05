@@ -8,10 +8,10 @@ module.exports = (context) => {
         },
         resubmitFailedWebhooksJob: {
             schedule: context.config.failedWebhooksSchedule || '0 */10 * * * *', // Every 10 minutes
-            // Delivery attempts (including the first one) before a task with a failing webhook is removed.
-            maxAttempts: parseInt(context.config.failedWebhooksMaxAttempts, 10) || 8,
             // Delay before the first retry, doubled with every failed attempt (5, 10, 20 ... minutes).
-            backoffBaseMs: parseInt(context.config.failedWebhooksBackoffBaseMs, 10) || 5 * 60 * 1000
+            backoffBaseMs: parseInt(context.config.failedWebhooksBackoffBaseMs, 10) || 5 * 60 * 1000,
+            // Upper limit of the delay between two attempts.
+            backoffMaxMs: parseInt(context.config.failedWebhooksBackoffMaxMs, 10) || 6 * 60 * 60 * 1000
         },
         triggerWebhooksConcurrencyLimit: context.config.triggerWebhooksConcurrency || 50
     };

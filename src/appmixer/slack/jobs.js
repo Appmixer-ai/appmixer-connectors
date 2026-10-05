@@ -17,7 +17,7 @@ module.exports = async context => {
                 deleteBefore.setDate(deleteBefore.getDate() - 60);
                 context.log('info', `[slack-job-due-tasks] Deleting old tasks older than ${deleteBefore.toISOString()}`);
 
-                const filter = { 'createdAt': { '$lt': deleteBefore } };
+                const filter = { 'created': { '$lt': deleteBefore } };
                 const resultDel = await context.db.collection(Task.collection).deleteMany(filter);
                 const deletedCount = resultDel?.deletedCount || 0;
                 context.log('info', `[slack-job-due-tasks] Old tasks deletion finished. Deleted: ${deletedCount}`);
@@ -79,8 +79,8 @@ module.exports = async context => {
                 });
                 const res = await context.utils.P.mapArray(tasksToRetry, async function(taskToRetry) {
                     // Deliver again the status that failed. triggerWebhook persists the failure itself:
-                    // the task is removed when the target is gone (404/410) or attempts are exhausted,
-                    // otherwise it stays in error and is retried later.
+                    // the task is removed when the target is gone (404/410), otherwise it stays in error
+                    // and is retried later.
                     taskToRetry.setStatus(taskToRetry.failedStatus || Task.STATUS_PENDING);
                     try {
                         const { ok, removed } = await utils.triggerWebhook(taskToRetry);

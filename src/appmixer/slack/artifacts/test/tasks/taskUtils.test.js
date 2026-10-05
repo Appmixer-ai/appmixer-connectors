@@ -7,7 +7,7 @@ const testUtils = require('../../../../../../test/utils.js');
  * Tests for src/appmixer/slack/taskUtils.js triggerWebhook.
  * Verifies that a failing webhook is not retried forever:
  *  - 404/410 (flow or component gone) removes the task immediately
- *  - other failures are retried with backoff and the task is removed after maxAttempts
+ *  - other failures are retried with a capped backoff and never remove the task
  */
 
 describe('slack taskUtils.triggerWebhook', () => {
@@ -25,7 +25,7 @@ describe('slack taskUtils.triggerWebhook', () => {
 
     beforeEach(() => {
         context = testUtils.createMockContext();
-        context.config = { failedWebhooksMaxAttempts: '3', failedWebhooksBackoffBaseMs: '1000' };
+        context.config = { failedWebhooksBackoffBaseMs: '1000', failedWebhooksBackoffMaxMs: '8000' };
         deleteOneStub = sinon.stub().resolves({ deletedCount: 1 });
         context.db.collection = sinon.stub().returns({ deleteOne: deleteOneStub });
 
@@ -120,16 +120,23 @@ describe('slack taskUtils.triggerWebhook', () => {
         assert.equal(deleteOneStub.callCount, 0);
     });
 
-    it('removes the task when the maximum number of attempts is reached', async () => {
+    it('keeps a task that keeps failing and caps the backoff', async () => {
 
-        context.httpRequest.rejects(httpError(500));
-        const task = newTask({ webhookAttempts: 2 });
+        // A stopped flow answers 400 for as long as it is stopped.
+        context.httpRequest.rejects(httpError(400));
+        const task = newTask({ webhookAttempts: 50 });
+        const before = Date.now();
 
         const result = await utils.triggerWebhook(task);
 
-        assert.deepEqual(result, { ok: false, permanent: false, removed: true, httpStatus: 500 });
-        assert.equal(deleteOneStub.callCount, 1);
-        assert.equal(task.save.callCount, 0);
+        assert.deepEqual(result, { ok: false, permanent: false, removed: false, httpStatus: 400 });
+        assert.equal(task.status, 'error');
+        assert.equal(task.failedStatus, 'approved');
+        assert.equal(task.webhookAttempts, 51);
+        assert(task.nextAttemptAt.getTime() >= before + 8000);
+        assert(task.nextAttemptAt.getTime() <= Date.now() + 8000);
+        assert.equal(task.save.callCount, 1);
+        assert.equal(deleteOneStub.callCount, 0);
     });
 
     it('retries a network error without a response', async () => {

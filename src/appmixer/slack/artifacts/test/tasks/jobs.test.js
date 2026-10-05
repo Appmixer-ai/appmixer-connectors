@@ -237,7 +237,7 @@ describe('slack-due-tasks', () => {
         const tenTasks = Array.from({ length: 10 }).map((_, i) => ({
             taskId: `old-${i + 1}`,
             status: 'pending',
-            createdAt: new Date(),
+            created: new Date(),
             decisionBy: new Date()
         }));
         setMockTasks(tenTasks);
@@ -254,10 +254,11 @@ describe('slack-due-tasks', () => {
         assert(context.db.collection.calledWith('slack_tasks'));
         assert.equal(coll.deleteMany.callCount, 1);
         const filterArg = coll.deleteMany.getCall(0).args[0];
-        assert(filterArg && filterArg.createdAt && filterArg.createdAt.$lt instanceof Date);
+        // The task model stores the creation time in `created`.
+        assert(filterArg && filterArg.created && filterArg.created.$lt instanceof Date);
         const expectedCutoff = new Date(Date.now());
         expectedCutoff.setDate(expectedCutoff.getDate() - 60);
-        assert.equal(filterArg.createdAt.$lt.getTime(), expectedCutoff.getTime());
+        assert.equal(filterArg.created.$lt.getTime(), expectedCutoff.getTime());
 
         clock.restore();
     });

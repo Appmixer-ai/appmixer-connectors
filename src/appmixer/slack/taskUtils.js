@@ -19,8 +19,9 @@ module.exports = context => {
          * Trigger a single webhook.
          * On success, the caller is responsible for saving the task.
          * On failure, the task is persisted here: deleted when the failure is permanent (flow or component
-         * no longer exists) or when the maximum number of attempts is reached, otherwise marked as error
-         * and scheduled for the next attempt with an exponential backoff.
+         * no longer exists), otherwise marked as error and scheduled for the next attempt with an exponential
+         * backoff. A task that keeps failing (e.g. its flow is stopped) is never dropped here, so the decision
+         * is delivered once the flow runs again. The cleanup of old tasks in the due tasks job removes it.
          * @param {Task} [task]
          * @return {Promise<{ ok: boolean, permanent?: boolean, removed?: boolean, httpStatus?: number }>}
          */
@@ -49,19 +50,18 @@ module.exports = context => {
                 const attempts = (task.getWebhookAttempts() || 0) + 1;
                 const logData = { taskId: task.taskId, httpStatus, attempts };
 
-                if (permanent || attempts >= config.resubmitFailedWebhooksJob.maxAttempts) {
+                if (permanent) {
                     await context.db.collection(Task.collection).deleteOne({ [Task.idProperty]: task.taskId });
                     context.log(
-                        permanent ? 'warn' : 'error',
-                        permanent
-                            ? '[slack-trigger-webhook-gone] Webhook target no longer exists, task removed.'
-                            : '[slack-trigger-webhook-error] Maximum webhook attempts reached, task removed.',
+                        'warn',
+                        '[slack-trigger-webhook-gone] Webhook target no longer exists, task removed.',
                         { ...logData, err: context.utils.Error.stringify(err) }
                     );
-                    return { ok: false, permanent, removed: true, httpStatus };
+                    return { ok: false, permanent: true, removed: true, httpStatus };
                 }
 
-                const delay = config.resubmitFailedWebhooksJob.backoffBaseMs * Math.pow(2, attempts - 1);
+                const { backoffBaseMs, backoffMaxMs } = config.resubmitFailedWebhooksJob;
+                const delay = Math.min(backoffBaseMs * Math.pow(2, attempts - 1), backoffMaxMs);
                 task.setFailedStatus(status);
                 task.setWebhookAttempts(attempts);
                 task.setNextAttemptAt(new Date(Date.now() + delay));

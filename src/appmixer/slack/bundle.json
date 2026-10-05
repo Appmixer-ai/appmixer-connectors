@@ -88,8 +88,9 @@
         ],
         "5.5.2": [
             "RequestApproval: a task whose flow or component no longer exists (webhook answers 404/410) is removed instead of being resubmitted every 10 minutes forever.",
-            "RequestApproval: other failed webhook deliveries are retried with an exponential backoff and the task is removed after 8 attempts (configurable via failedWebhooksMaxAttempts and failedWebhooksBackoffBaseMs).",
-            "RequestApproval: a resubmitted webhook delivers the original decision (approved / rejected / due) instead of pending; the resubmit job reports delivered, failed and removed tasks correctly."
+            "RequestApproval: other failed webhook deliveries (e.g. a stopped flow) are retried with an exponential backoff, at most 6 hours apart (configurable via failedWebhooksBackoffBaseMs and failedWebhooksBackoffMaxMs), so the decision is delivered once the flow runs again.",
+            "RequestApproval: a resubmitted webhook delivers the original decision (approved / rejected / due) instead of pending; the resubmit job reports delivered, failed and removed tasks correctly.",
+            "RequestApproval: the cleanup of tasks older than 60 days never removed anything (it filtered by a property the tasks do not have); it works now."
         ]
     }
 }
