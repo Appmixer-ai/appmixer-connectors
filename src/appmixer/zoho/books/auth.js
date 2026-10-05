@@ -25,7 +25,7 @@ const validateUser = async (context) => {
 };
 
 /**
- * Different accounts live in different data centers - us | eu | in | au | cn | jp | ca | sa | uk.
+ * Different accounts live in different data centers - us | eu | in | au | cn | jp | ca | sa | uk | ae | sg.
  * The redirect callback names the region (`location`) and the accounts server (`accounts-server`),
  * the token response names the API host (`api_domain`). They are kept in a closure during the
  * OAuth flow and then saved into account.profileInfo (region, accountsServer, apiDomain) for

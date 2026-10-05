@@ -49,7 +49,9 @@ describe('Zoho data centers', () => {
                 jp: ['https://accounts.zoho.jp', 'https://www.zohoapis.jp'],
                 ca: ['https://accounts.zohocloud.ca', 'https://www.zohoapis.ca'],
                 sa: ['https://accounts.zoho.sa', 'https://www.zohoapis.sa'],
-                uk: ['https://accounts.zoho.uk', 'https://www.zohoapis.uk']
+                uk: ['https://accounts.zoho.uk', 'https://www.zohoapis.uk'],
+                ae: ['https://accounts.zoho.ae', 'https://www.zohoapis.ae'],
+                sg: ['https://accounts.zoho.sg', 'https://www.zohoapis.sg']
             };
             for (const [region, [accounts, api]] of Object.entries(expected)) {
                 assert.strictEqual(endpoints.resolveAccountsServer({ region }), accounts, region);

@@ -4,7 +4,8 @@ const check = require('check-types');
 // Zoho data centers, keyed by the `location` code Zoho sends in the OAuth redirect callback.
 // The accounts server and the API host do not always share a TLD (Canada: accounts.zohocloud.ca
 // vs. www.zohoapis.ca), so both are listed explicitly.
-// See https://www.zoho.com/accounts/protocol/oauth/multi-dc.html
+// See https://www.zoho.com/accounts/protocol/oauth/multi-dc.html; the current list of data centers
+// is published at https://accounts.zoho.com/oauth/serverinfo.
 const DATA_CENTERS = {
     'us': { accounts: 'https://accounts.zoho.com', api: 'https://www.zohoapis.com' },
     'eu': { accounts: 'https://accounts.zoho.eu', api: 'https://www.zohoapis.eu' },
@@ -14,7 +15,9 @@ const DATA_CENTERS = {
     'jp': { accounts: 'https://accounts.zoho.jp', api: 'https://www.zohoapis.jp' },
     'ca': { accounts: 'https://accounts.zohocloud.ca', api: 'https://www.zohoapis.ca' },
     'sa': { accounts: 'https://accounts.zoho.sa', api: 'https://www.zohoapis.sa' },
-    'uk': { accounts: 'https://accounts.zoho.uk', api: 'https://www.zohoapis.uk' }
+    'uk': { accounts: 'https://accounts.zoho.uk', api: 'https://www.zohoapis.uk' },
+    'ae': { accounts: 'https://accounts.zoho.ae', api: 'https://www.zohoapis.ae' },
+    'sg': { accounts: 'https://accounts.zoho.sg', api: 'https://www.zohoapis.sg' }
 };
 
 const ACCOUNTS_SERVERS = new Set(Object.values(DATA_CENTERS).map(dc => dc.accounts));
