@@ -312,7 +312,7 @@ module.exports = {
             }
             const created = await this.graphql(context, CREATE_WEBHOOK, {
                 topic: enumTopic,
-                webhookSubscription: { uri, format: 'JSON', includeFields: ['id', 'admin_graphql_api_id'] }
+                webhookSubscription: { uri, format: 'JSON', includeFields: WEBHOOK_INCLUDE_FIELDS }
             });
             const payload = graphqlClient.checkUserErrors(created.webhookSubscriptionCreate, 'webhookSubscriptionCreate');
             webhookIds.push(payload.webhookSubscription.id);
@@ -428,6 +428,12 @@ const CREATE_WEBHOOK = `mutation CreateWebhook($topic: WebhookSubscriptionTopic!
 const DELETE_WEBHOOK = `mutation DeleteWebhook($id: ID!) {
     webhookSubscriptionDelete(id: $id) { deletedWebhookSubscriptionId userErrors { field message } }
 }`;
+
+// The trigger reads the object itself, so the payload only needs the ids.
+// `updated_at` must be there too: Shopify drops a delivery whose payload equals
+// the previous one, so with ids alone every */update after the first (an order
+// fires orders/updated when it is created) would never arrive.
+const WEBHOOK_INCLUDE_FIELDS = ['id', 'admin_graphql_api_id', 'updated_at'];
 
 // Shopify retries a delivery it did not see acknowledged in time; the same
 // event id then arrives twice.
