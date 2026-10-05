@@ -3,8 +3,21 @@
 const { Api } = require('telegram');
 const lib = require('./lib');
 
-const getMe = async (context) => {
+class AuthError extends Error {}
 
+// The auth context is not a component context: the auth fields sit directly on it and it
+// has InvalidTokenError instead of CancelError. Everything the user has to fix (wrong API ID,
+// revoked or bot session) is raised as InvalidTokenError, which is what makes the engine mark
+// a connected account as invalid. FLOOD_WAIT and network failures stay plain errors, so a
+// temporary problem never invalidates the account.
+const libContext = (context) => ({
+    auth: { apiId: context.apiId, apiHash: context.apiHash, session: context.session },
+    CancelError: context.InvalidTokenError || AuthError
+});
+
+const getMe = async (authContext) => {
+
+    const context = libContext(authContext);
     const client = await lib.getClient(context);
     const users = await lib.invoke(context, client, new Api.users.GetUsers({ id: [new Api.InputUserSelf()] }), 'your account');
     const user = (users || [])[0] || {};
@@ -49,7 +62,9 @@ module.exports = {
                         + '<i>client.session.save()</i> - see <i>https://gram.js.org/getting-started/authorization</i>), '
                         + 'which asks for your phone number, the login code and your 2FA password. '
                         + 'The string grants full access to the Telegram account, so treat it as a password. '
-                        + 'Use a dedicated account if possible.'
+                        + 'Generate a session just for this connection and do not use the same string in another '
+                        + 'application at the same time - Telegram revokes a session that is used from two places '
+                        + 'at once. Use a dedicated account if possible.'
                 }
             },
 

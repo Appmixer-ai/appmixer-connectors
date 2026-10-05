@@ -15,14 +15,16 @@ module.exports = {
 
         const username = lib.normalizeUsername(context, channelInput);
         const client = await lib.getClient(context);
-        const channel = await lib.resolveChannel(context, client, username);
+        const ref = await lib.resolveChannel(context, client, username);
         const result = await lib.invoke(
             context,
             client,
-            new Api.channels.GetFullChannel({ channel: lib.inputChannel(channel) }),
+            new Api.channels.GetFullChannel({ channel: lib.inputChannel(ref) }),
             `@${username}`
         );
         const full = result.fullChat || {};
+        // The reference only addresses the channel; its flags come with the full channel.
+        const channel = (result.chats || []).find(chat => String(chat.id) === ref.id) || ref;
         const channelUsername = lib.channelUsername(channel);
 
         return context.sendJson({

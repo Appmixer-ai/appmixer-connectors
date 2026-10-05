@@ -15,8 +15,11 @@ const FLOOD_SLEEP_THRESHOLD = 60;
 const IDLE_DISCONNECT_MS = 5 * 60 * 1000;
 
 // contacts.resolveUsername is the most aggressively flood-limited call a user account can
-// make. A channel's id and access hash never change, so resolving it once an hour is plenty.
-const RESOLVE_CACHE_TTL_MS = 60 * 60 * 1000;
+// make: a few hundred calls a day earn a FLOOD_WAIT of many hours. A channel's id and access
+// hash never change for an account, so a resolved channel is kept for a day - in this process
+// and in the static cache shared by all engine processes - and the trigger keeps the channels
+// it watches in its own state, so a running flow does not resolve usernames at all.
+const RESOLVE_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 
 // messages.getHistory returns at most 100 messages per call.
 const PAGE_SIZE = 100;
@@ -250,20 +253,61 @@ module.exports = {
     },
 
     /**
-     * Resolve a public username to its Channel object without joining it.
+     * The part of a channel that is needed to address it and to label its messages. Plain
+     * data, so it can be kept in the trigger state and in the static cache.
+     * @param {object} channel - Api.Channel or a channel reference
+     * @returns {{id: string, accessHash: string, username: string|null, title: string}}
+     */
+    channelRef(channel) {
+
+        return {
+            id: String(channel.id),
+            accessHash: String(channel.accessHash),
+            username: this.channelUsername(channel),
+            title: channel.title
+        };
+    },
+
+    /**
+     * Resolve a public username to a channel reference without joining the channel.
+     * contacts.resolveUsername is called only when neither this process nor the static
+     * cache knows the channel.
      * @param {object} context
      * @param {TelegramClient} client
      * @param {string} username - bare username
-     * @returns {Promise<object>} Api.Channel
+     * @returns {Promise<{id: string, accessHash: string, username: string|null, title: string}>}
      */
     async resolveChannel(context, client, username) {
 
-        const cacheKey = `${client.appmixerKey}:${username.toLowerCase()}`;
+        const cacheKey = `telegram-user:channel:${client.appmixerKey}:${username.toLowerCase()}`;
         const cached = resolved.get(cacheKey);
 
         if (cached && Date.now() - cached.at < RESOLVE_CACHE_TTL_MS) {
             return cached.channel;
         }
+
+        const shared = await staticCacheGet(context, cacheKey);
+
+        if (shared && shared.id && shared.accessHash) {
+            resolved.set(cacheKey, { channel: shared, at: Date.now() });
+            return shared;
+        }
+
+        const ref = this.channelRef(await this.resolveUsername(context, client, username));
+
+        resolved.set(cacheKey, { channel: ref, at: Date.now() });
+        await staticCacheSet(context, cacheKey, ref, RESOLVE_CACHE_TTL_MS);
+        return ref;
+    },
+
+    /**
+     * One contacts.resolveUsername call. Use resolveChannel instead, which caches.
+     * @param {object} context
+     * @param {TelegramClient} client
+     * @param {string} username - bare username
+     * @returns {Promise<object>} Api.Channel
+     */
+    async resolveUsername(context, client, username) {
 
         const target = `@${username}`;
         const result = await this.invoke(context, client, new Api.contacts.ResolveUsername({ username }), target);
@@ -281,18 +325,23 @@ module.exports = {
             );
         }
 
-        resolved.set(cacheKey, { channel, at: Date.now() });
         return channel;
     },
 
     inputPeer(channel) {
 
-        return new Api.InputPeerChannel({ channelId: channel.id, accessHash: channel.accessHash });
+        return new Api.InputPeerChannel({
+            channelId: bigInt(String(channel.id)),
+            accessHash: bigInt(String(channel.accessHash))
+        });
     },
 
     inputChannel(channel) {
 
-        return new Api.InputChannel({ channelId: channel.id, accessHash: channel.accessHash });
+        return new Api.InputChannel({
+            channelId: bigInt(String(channel.id)),
+            accessHash: bigInt(String(channel.accessHash))
+        });
     },
 
     /**
@@ -302,7 +351,9 @@ module.exports = {
      * @param {TelegramClient} client
      * @param {object} channel
      * @param {object} params - offsetId, offsetDate, addOffset, limit, maxId, minId
-     * @returns {Promise<{messages: object[], chats: Map<string, object>}>}
+     * @returns {Promise<{messages: object[], chats: Map<string, object>, channel: object}>}
+     *   `channel` is the reference with the username and title Telegram reports right now,
+     *   so a channel that was renamed since it was resolved is labelled correctly.
      */
     async getHistory(context, client, channel, params = {}) {
 
@@ -317,20 +368,16 @@ module.exports = {
             hash: bigInt.zero
         }), this.channelLabel(channel));
 
+        const chats = new Map((result.chats || []).map(chat => [String(chat.id), chat]));
+        const current = chats.get(String(channel.id));
+
         return {
             messages: result.messages || [],
-            chats: new Map((result.chats || []).map(chat => [String(chat.id), chat]))
+            chats,
+            channel: current && current.className === 'Channel' && current.accessHash !== undefined
+                ? this.channelRef(current)
+                : channel
         };
-    },
-
-    /**
-     * Id of the newest message in the channel, 0 for an empty channel.
-     * @returns {Promise<number>}
-     */
-    async getLatestMessageId(context, client, channel) {
-
-        const { messages } = await this.getHistory(context, client, channel, { limit: 1 });
-        return messages.length ? messages[0].id : 0;
     },
 
     /**
@@ -342,13 +389,14 @@ module.exports = {
      * @param {object} channel
      * @param {number} sinceId
      * @param {number} max
-     * @returns {Promise<{messages: object[], chats: Map<string, object>, lastId: number}>}
+     * @returns {Promise<{messages: object[], chats: Map<string, object>, lastId: number, channel: object}>}
      */
     async getMessagesSince(context, client, channel, sinceId, max) {
 
         const messages = [];
         const chats = new Map();
         let cursor = sinceId;
+        let current = channel;
 
         while (messages.length < max) {
             const limit = Math.min(PAGE_SIZE, max - messages.length);
@@ -361,6 +409,8 @@ module.exports = {
             const newer = page.messages
                 .filter(message => message.id > cursor)
                 .sort((a, b) => a.id - b.id);
+
+            current = page.channel;
 
             if (!newer.length) {
                 break;
@@ -375,7 +425,7 @@ module.exports = {
             }
         }
 
-        return { messages, chats, lastId: cursor };
+        return { messages, chats, lastId: cursor, channel: current };
     },
 
     channelUsername(channel) {
@@ -462,5 +512,27 @@ module.exports = {
 };
 
 const toIso = (seconds) => new Date(Number(seconds) * 1000).toISOString();
+
+// The static cache only saves resolveUsername calls. It must never fail a component: it is
+// absent in the auth context and in the CLI test harness.
+const staticCacheGet = async (context, key) => {
+
+    try {
+        return context.staticCache ? await context.staticCache.get(key) : null;
+    } catch (error) {
+        return null;
+    }
+};
+
+const staticCacheSet = async (context, key, value, ttl) => {
+
+    try {
+        if (context.staticCache) {
+            await context.staticCache.set(key, value, ttl);
+        }
+    } catch (error) {
+        // Not cached - the next call resolves the username again.
+    }
+};
 
 const numberOrNull = (value) => (value === undefined || value === null ? null : Number(value));

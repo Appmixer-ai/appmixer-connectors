@@ -70,7 +70,7 @@ module.exports = {
 
         while (records.length < max) {
             const pageLimit = Math.min(lib.PAGE_SIZE, max - records.length);
-            const { messages, chats } = await lib.getHistory(context, client, channel, {
+            const { messages, chats, channel: current } = await lib.getHistory(context, client, channel, {
                 offsetId,
                 offsetDate: offsetId ? 0 : before,
                 limit: pageLimit,
@@ -82,7 +82,7 @@ module.exports = {
             }
 
             messages.forEach(message => {
-                const record = lib.formatMessage(message, channel, chats);
+                const record = lib.formatMessage(message, current, chats);
                 if (record && records.length < max) {
                     records.push(record);
                 }
