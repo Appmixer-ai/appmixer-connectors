@@ -2,7 +2,7 @@
 'use strict';
 const moment = require('moment');
 const check = require('check-types');
-const { apiEndpoint } = require('./endpoints');
+const { resolveApiDomain } = require('./endpoints');
 
 // Methods whose requests never carry a body.
 const BODYLESS_METHODS = new Set(['GET', 'HEAD', 'DELETE']);
@@ -11,25 +11,26 @@ class ZohoClient {
 
     /**
      * @param {*} context Component context
-     * @param {string} [regionAuth] Region from global variable in auth.js
+     * @param {{ region?: string, apiDomain?: string }} [dataCenterAuth] Data center of an account
+     *   being connected, from auth.js. Used only when the account's profileInfo does not carry one.
      * @param {Object} [options]
      * @param {string} [options.apiVersion] Zoho CRM API version used to build request paths.
      *   Defaults to 'v2' so existing components keep their behaviour. Newer components opt into
      *   a higher version when they need features v2 does not have (e.g. the Appointments module,
      *   or the greater_equal/less_equal/between search comparators, which v2 rejects).
      */
-    constructor(context, regionAuth, { apiVersion = 'v2' } = {}) {
+    constructor(context, dataCenterAuth, { apiVersion = 'v2' } = {}) {
 
         // context.auth.accessToken for component calls
         // context.accessToken for calls from auth.js
         const accessToken = context.auth?.accessToken || context.accessToken;
-        const region = context.profileInfo?.region || regionAuth;
+        const profileInfo = context.profileInfo;
+        const dataCenter = (profileInfo?.apiDomain || profileInfo?.region) ? profileInfo : dataCenterAuth;
 
         check.assert.string(accessToken, `Missing accessToken: ${accessToken}.`);
-        check.assert.string(region, `Missing region: ${region}.`);
 
         this.apiVersion = apiVersion;
-        const apiUrl = apiEndpoint(region);
+        const apiUrl = resolveApiDomain(dataCenter);
         this.client = context.httpRequest.create({
             baseURL: apiUrl,
             timeout: 6 * 1000,

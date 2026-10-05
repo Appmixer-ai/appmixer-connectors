@@ -1,18 +1,17 @@
 'use strict';
 const ZohoClient = require('../ZohoClient');
-const { accountsEndpoint } = require('../endpoints');
+const { resolveAccountsServer, trustedAccountsServer, trustedApiDomain } = require('../endpoints');
 const { assertTokenResponse, assertRefreshToken, accessTokenExpDate } = require('../oauth');
 
 /**
- * Validate user - get user info. 'region' property has to be in context.profileInfo.region or the second
- * parameter region has to be passed.
- * @param {string} accessToken
- * @param {string} [region]
+ * Validate user - get user info. The data center is taken from context.profileInfo, or from the
+ * account being connected (dataCenter) when there is no profileInfo yet.
+ * @param {*} context
  * @return {Promise<*|null>}
  */
 const validateUser = async (context) => {
 
-    const zc = new ZohoClient(context, region);
+    const zc = new ZohoClient(context, dataCenter);
     const { organizations } = await zc.request('GET', '/books/v3/organizations');
 
     if (organizations.length === 0) {
@@ -26,11 +25,13 @@ const validateUser = async (context) => {
 };
 
 /**
- * Different accounts may have different regions - us | in | eu | ...
- * We get that information from the Oauth2 redirect callback, store it in a closure and then save it into
- * the account.profileInfo.region property where it can later be used for other API requests.
+ * Different accounts live in different data centers - us | eu | in | au | cn | jp | ca | sa | uk.
+ * The redirect callback names the region (`location`) and the accounts server (`accounts-server`),
+ * the token response names the API host (`api_domain`). They are kept in a closure during the
+ * OAuth flow and then saved into account.profileInfo (region, accountsServer, apiDomain) for
+ * later API requests and token refreshes.
  */
-let region;
+let dataCenter = {};
 
 module.exports = {
 
@@ -48,16 +49,15 @@ module.exports = {
 
         processRedirectionCallback: async params => {
 
-            if (params.location) {
-                region = params.location;
-            } else {
-                region = null;
-            }
+            dataCenter = {
+                region: params.location || null,
+                accountsServer: trustedAccountsServer(params['accounts-server'])
+            };
         },
 
         requestAccessToken: async context => {
 
-            const url = accountsEndpoint(region);
+            const url = resolveAccountsServer(dataCenter);
             const tokenUrl = `${url}/oauth/v2/token?` +
                 'grant_type=authorization_code' +
                 '&client_id=' + context.clientId +
@@ -66,6 +66,8 @@ module.exports = {
                 '&redirect_uri=' + context.callbackUrl;
             const { data } = await context.httpRequest.post(tokenUrl);
             assertTokenResponse(data, 'issue an access token');
+            dataCenter.accountsServer = url;
+            dataCenter.apiDomain = trustedApiDomain(data.api_domain);
 
             return {
                 accessToken: data.access_token,
@@ -79,10 +81,11 @@ module.exports = {
         requestProfileInfo: async context => {
 
             const user = await validateUser(context);
-            if (region) {
-                user.region = region;
-            } else if (context.profileInfo?.region) {
-                user.region = context.profileInfo.region;
+            const source = (dataCenter.region || dataCenter.apiDomain) ? dataCenter : (context.profileInfo || {});
+            for (const key of ['region', 'accountsServer', 'apiDomain']) {
+                if (source[key]) {
+                    user[key] = source[key];
+                }
             }
             return user;
         },
@@ -91,7 +94,7 @@ module.exports = {
 
             assertRefreshToken(context.refreshToken);
 
-            const url = accountsEndpoint(context.profileInfo.region);
+            const url = resolveAccountsServer(context.profileInfo);
             const tokenUrl = `${url}/oauth/v2/token?` +
                 'grant_type=refresh_token&refresh_token=' + context.refreshToken +
                 '&client_id=' + context.clientId +
