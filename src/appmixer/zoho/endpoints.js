@@ -93,7 +93,29 @@ const resolveApiDomain = ({ apiDomain, region } = {}) => {
     return trustedServer(apiDomain, API_DOMAINS) || apiEndpoint(region);
 };
 
+/**
+ * All data centers in the order to try them when the account's data center is not known: the one
+ * the hint points to first (region, accounts server or API host), the rest in DATA_CENTERS order.
+ * The hint only orders the list, it is never trusted on its own: in the Auth Hub the redirect
+ * callback, the code exchange and the profile request may run in different processes, so a hint
+ * kept in memory can be missing or belong to another account being connected at the same time.
+ * @param {{ region?: String, accountsServer?: String, apiDomain?: String }} [hint]
+ * @returns {Array<{ region: String, accountsServer: String, apiDomain: String }>}
+ */
+const dataCenterCandidates = ({ region, accountsServer, apiDomain } = {}) => {
+
+    const all = Object.entries(DATA_CENTERS)
+        .map(([code, dc]) => ({ region: code, accountsServer: dc.accounts, apiDomain: dc.api }));
+    const accounts = trustedServer(accountsServer, ACCOUNTS_SERVERS);
+    const api = trustedServer(apiDomain, API_DOMAINS);
+    const hinted = all.find(dc => dc.accountsServer === accounts) ||
+        all.find(dc => dc.apiDomain === api) ||
+        all.find(dc => typeof region === 'string' && dc.region === region.toLowerCase());
+    return hinted ? [hinted, ...all.filter(dc => dc !== hinted)] : all;
+};
+
 module.exports = {
+    dataCenterCandidates,
     resolveAccountsServer,
     resolveApiDomain,
     trustedAccountsServer: url => trustedServer(url, ACCOUNTS_SERVERS),
