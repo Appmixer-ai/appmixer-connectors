@@ -244,7 +244,7 @@ describe('Zoho data centers', () => {
             await forgetCallback(crmAuth);
             await assert.rejects(
                 crmAuth.definition.requestAccessToken({ clientId: 'c', clientSecret: 's', httpRequest }),
-                /No Zoho data center issued an access token \(us: invalid_code, eu: invalid_code, .*sg: invalid_code\)/
+                /No Zoho data center agreed to issue an access token \(us: invalid_code, .*, cn: invalid_code\)/
             );
         });
 
@@ -279,7 +279,42 @@ describe('Zoho data centers', () => {
             await forgetCallback(booksAuth);
             const profileInfo = await booksAuth.definition.requestProfileInfo({ accessToken: 't', httpRequest });
             assert.strictEqual(profileInfo.region, 'sg');
-            assert.strictEqual(urls.length, 11);
+            // every data center before Singapore was asked; China, tried last, was not
+            assert.strictEqual(urls.length, 10);
+            assert.ok(!urls.some(url => url.includes('.com.cn')));
+        });
+
+        it('should refresh a token without profileInfo, as the Auth Hub does', async () => {
+
+            for (const auth of [crmAuth, booksAuth]) {
+                const { httpRequest, calls } = mockZoho({
+                    accountsServer: 'https://accounts.zoho.eu',
+                    apiDomain: 'https://www.zohoapis.eu',
+                    tokenResponse: EU_TOKEN
+                });
+                const token = await auth.definition.refreshAccessToken({
+                    clientId: 'c', clientSecret: 's', refreshToken: 'r', profileInfo: null, httpRequest
+                });
+                assert.strictEqual(token.accessToken, 'access-token');
+                assert.deepStrictEqual(calls.posts.map(host), ['https://accounts.zoho.com', 'https://accounts.zoho.eu']);
+                assert.ok(calls.posts[1].includes('grant_type=refresh_token&refresh_token=r'), calls.posts[1]);
+            }
+        });
+
+        it('should ask only the data center of the account when profileInfo names it', async () => {
+
+            const { httpRequest, calls } = mockZoho({
+                accountsServer: 'https://accounts.zoho.com',
+                apiDomain: 'https://www.zohoapis.com',
+                tokenResponse: EU_TOKEN
+            });
+            await assert.rejects(
+                crmAuth.definition.refreshAccessToken({
+                    clientId: 'c', clientSecret: 's', refreshToken: 'r', profileInfo: { region: 'eu' }, httpRequest
+                }),
+                /Zoho refused to refresh the access token: invalid_code/
+            );
+            assert.deepStrictEqual(calls.posts.map(host), ['https://accounts.zoho.eu']);
         });
 
         it('should not try other data centers when the API fails for another reason', async () => {

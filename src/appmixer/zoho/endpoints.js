@@ -102,10 +102,15 @@ const resolveApiDomain = ({ apiDomain, region } = {}) => {
  * @param {{ region?: String, accountsServer?: String, apiDomain?: String }} [hint]
  * @returns {Array<{ region: String, accountsServer: String, apiDomain: String }>}
  */
-const dataCenterCandidates = ({ region, accountsServer, apiDomain } = {}) => {
+const dataCenterCandidates = hint => {
 
+    const { region, accountsServer, apiDomain } = hint || {};
+    // Every data center tried sees the client secret and the code or token, so the list is walked
+    // one by one and stops at the first that answers. China goes last: it is the least likely one
+    // and the slowest to answer.
     const all = Object.entries(DATA_CENTERS)
-        .map(([code, dc]) => ({ region: code, accountsServer: dc.accounts, apiDomain: dc.api }));
+        .map(([code, dc]) => ({ region: code, accountsServer: dc.accounts, apiDomain: dc.api }))
+        .sort((a, b) => (a.region === 'cn') - (b.region === 'cn'));
     const accounts = trustedServer(accountsServer, ACCOUNTS_SERVERS);
     const api = trustedServer(apiDomain, API_DOMAINS);
     const hinted = all.find(dc => dc.accountsServer === accounts) ||

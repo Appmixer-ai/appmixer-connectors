@@ -1,5 +1,5 @@
 'use strict';
-const { dataCenterCandidates } = require('./endpoints');
+const { dataCenterCandidates, resolveAccountsServer } = require('./endpoints');
 
 // Zoho's token endpoint answers with HTTP 200 even when it refuses the request: the body then
 // carries `{ error: 'invalid_code' }` and no `access_token`. Reading the token straight out of
@@ -83,50 +83,89 @@ const WRONG_DATA_CENTER_STATUSES = new Set([401, 404]);
 const DATA_CENTER_PROBE_TIMEOUT = 10 * 1000;
 
 /**
- * Exchanges the authorization code at the accounts server of the account's data center.
- *
- * The data center is found by trying them, not remembered from the redirect callback: in the
- * Auth Hub the callback and the code exchange are separate requests that may land on different
- * processes, and the exchange gets only the code and the scope. A data center that did not issue
- * the code refuses it, so only the right one answers with a token.
- * @param {Object} context Auth context (clientId, clientSecret, authorizationCode, callbackUrl).
- * @param {Object} [hint] Data center the redirect callback named, tried first when known.
+ * Asks the accounts servers of the given data centers for a token, one by one, and returns the
+ * answer of the first that issues one. A data center that does not know the code or the refresh
+ * token refuses it, so only the right one answers with a token.
+ * @param {Object} context Auth context (clientId, clientSecret, httpRequest).
+ * @param {Array<Object>} dataCenters Data centers to try (see dataCenterCandidates).
+ * @param {string} grant Query string of the grant, without the client credentials.
+ * @param {string} action What is attempted, for the error message.
  * @returns {Promise<{ data: Object, dataCenter: { region: String, accountsServer: String, apiDomain: String } }>}
  */
-const exchangeAuthorizationCode = async (context, hint) => {
+const requestToken = async (context, dataCenters, grant, action) => {
 
     const refusals = [];
-    for (const dataCenter of dataCenterCandidates(hint)) {
-        const tokenUrl = `${dataCenter.accountsServer}/oauth/v2/token?` +
-            'grant_type=authorization_code' +
+    for (const dataCenter of dataCenters) {
+        const tokenUrl = `${dataCenter.accountsServer}/oauth/v2/token?${grant}` +
             '&client_id=' + context.clientId +
-            '&client_secret=' + context.clientSecret +
-            '&code=' + context.authorizationCode +
-            '&redirect_uri=' + context.callbackUrl;
+            '&client_secret=' + context.clientSecret;
 
         let data;
         try {
             ({ data } = await context.httpRequest.post(tokenUrl, null, { timeout: DATA_CENTER_PROBE_TIMEOUT }));
         } catch (err) {
             if (!err.response?.data?.error) {
+                if (dataCenters.length === 1) {
+                    throw err;
+                }
                 refusals.push(`${dataCenter.region}: ${err.message}`);
                 continue;
             }
             data = err.response.data;
         }
-        if (data && WRONG_DATA_CENTER_ERRORS.has(data.error)) {
+        if (dataCenters.length > 1 && data && WRONG_DATA_CENTER_ERRORS.has(data.error)) {
             refusals.push(`${dataCenter.region}: ${data.error}`);
             continue;
         }
-        assertTokenResponse(data, 'issue an access token');
+        assertTokenResponse(data, action);
         return { data, dataCenter };
     }
 
     throw new Error(
-        `No Zoho data center issued an access token (${refusals.join(', ')}). Reconnect the account. ` +
+        `No Zoho data center agreed to ${action} (${refusals.join(', ')}). Reconnect the account. ` +
         'If it keeps happening, check that the OAuth client is enabled for the data center of the ' +
         'account and uses the same client secret in all of them.'
     );
+};
+
+/**
+ * Exchanges the authorization code at the accounts server of the account's data center.
+ *
+ * The data center is found by trying them, not remembered from the redirect callback: in the
+ * Auth Hub the callback and the code exchange are separate requests that may land on different
+ * processes, and the exchange gets only the code and the scope.
+ * @param {Object} context Auth context (clientId, clientSecret, authorizationCode, callbackUrl).
+ * @param {Object} [hint] Data center the redirect callback named, tried first when known.
+ * @returns {Promise<{ data: Object, dataCenter: { region: String, accountsServer: String, apiDomain: String } }>}
+ */
+const exchangeAuthorizationCode = (context, hint) => {
+
+    const grant = 'grant_type=authorization_code' +
+        '&code=' + context.authorizationCode +
+        '&redirect_uri=' + context.callbackUrl;
+    return requestToken(context, dataCenterCandidates(hint), grant, 'issue an access token');
+};
+
+/**
+ * Refreshes the access token at the accounts server of the account's data center.
+ *
+ * A token refreshed by the Auth Hub comes without the account's profileInfo, so the data center
+ * the account was connected in is not known there. It is then found the same way as during the
+ * code exchange. With profileInfo at hand only the account's own data center is asked.
+ * @param {Object} context Auth context (clientId, clientSecret, refreshToken, profileInfo).
+ * @returns {Promise<Object>} Body of the token endpoint response.
+ */
+const refreshToken = async context => {
+
+    assertRefreshToken(context.refreshToken);
+
+    const profileInfo = context.profileInfo || {};
+    const dataCenters = (profileInfo.accountsServer || profileInfo.region)
+        ? [{ region: profileInfo.region, accountsServer: resolveAccountsServer(profileInfo) }]
+        : dataCenterCandidates();
+    const grant = 'grant_type=refresh_token&refresh_token=' + context.refreshToken;
+    const { data } = await requestToken(context, dataCenters, grant, 'refresh the access token');
+    return data;
 };
 
 /**
@@ -160,6 +199,7 @@ const findApiDataCenter = async (context, hint, path) => {
 
 module.exports = {
     exchangeAuthorizationCode,
+    refreshToken,
     findApiDataCenter,
     assertTokenResponse,
     assertRefreshToken,

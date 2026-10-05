@@ -1,11 +1,10 @@
 'use strict';
 const ZohoClient = require('../ZohoClient');
-const { resolveAccountsServer, trustedAccountsServer, trustedApiDomain } = require('../endpoints');
+const { trustedAccountsServer, trustedApiDomain } = require('../endpoints');
 const {
     exchangeAuthorizationCode,
     findApiDataCenter,
-    assertTokenResponse,
-    assertRefreshToken,
+    refreshToken,
     accessTokenExpDate
 } = require('../oauth');
 
@@ -112,16 +111,7 @@ module.exports = {
 
         refreshAccessToken: async context => {
 
-            assertRefreshToken(context.refreshToken);
-
-            const url = resolveAccountsServer(context.profileInfo);
-            const tokenUrl = `${url}/oauth/v2/token?` +
-                'grant_type=refresh_token&refresh_token=' + context.refreshToken +
-                '&client_id=' + context.clientId +
-                '&client_secret=' + context.clientSecret;
-
-            const { data } = await context.httpRequest.post(tokenUrl);
-            assertTokenResponse(data, 'refresh the access token');
+            const data = await refreshToken(context);
 
             return {
                 accessToken: data.access_token,
