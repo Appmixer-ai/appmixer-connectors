@@ -2,6 +2,8 @@
 
 const lib = require('../../lib');
 
+const SENSITIVE_HEADERS = ['authorization', 'web-api-key', 'cookie', 'set-cookie'];
+
 // Convert Appmixer key-value inspector rows ([{ key, value }]) into a plain object.
 function kvToObject(rows) {
     if (rows && typeof rows === 'object' && !Array.isArray(rows)) {
@@ -58,9 +60,14 @@ module.exports = {
 
         const response = await context.httpRequest(requestOptions);
 
+        // The CSAS gateway echoes request headers back in the response, including the
+        // bearer token and the API key — keep them out of the flow data and logs.
+        const responseHeaders = Object.fromEntries(Object.entries(response.headers || {})
+            .filter(([name]) => !SENSITIVE_HEADERS.includes(name.toLowerCase())));
+
         return context.sendJson({
             statusCode: response.status,
-            headers: response.headers,
+            headers: responseHeaders,
             body: response.data
         }, 'out');
     }

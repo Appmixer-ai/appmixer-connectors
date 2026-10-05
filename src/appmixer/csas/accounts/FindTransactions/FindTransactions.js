@@ -40,7 +40,7 @@ const ITEM_SCHEMA = {
                     type: 'object',
                     title: 'Bank Transaction Code.Proprietary',
                     properties: {
-                        code: { type: 'string', title: 'Bank Transaction Code.Proprietary.Code', example: '10000107000' },
+                        code: { type: 'number', title: 'Bank Transaction Code.Proprietary.Code', example: 10000101000 },
                         issuer: { type: 'string', title: 'Bank Transaction Code.Proprietary.Issuer', example: 'CBA' }
                     }
                 }
@@ -80,7 +80,37 @@ const ITEM_SCHEMA = {
                                             }
                                         }
                                     }
+                                },
+                                counterValueAmount: {
+                                    type: 'object',
+                                    title: 'Entry Details.Transaction Details.Amount Details.Counter Value Amount',
+                                    properties: {
+                                        amount: {
+                                            type: 'object',
+                                            title: 'Entry Details.Transaction Details.Amount Details.Counter Value Amount.Amount',
+                                            properties: {
+                                                value: { type: 'number', title: 'Entry Details.Transaction Details.Amount Details.Counter Value Amount.Amount.Value', example: 1250.5 },
+                                                currency: { type: 'string', title: 'Entry Details.Transaction Details.Amount Details.Counter Value Amount.Amount.Currency', example: 'CZK' }
+                                            }
+                                        },
+                                        currencyExchange: {
+                                            type: 'object',
+                                            title: 'Entry Details.Transaction Details.Amount Details.Counter Value Amount.Currency Exchange',
+                                            properties: {
+                                                sourceCurrency: { type: 'string', title: 'Entry Details.Transaction Details.Amount Details.Counter Value Amount.Currency Exchange.Source Currency', example: 'EUR' },
+                                                targetCurrency: { type: 'string', title: 'Entry Details.Transaction Details.Amount Details.Counter Value Amount.Currency Exchange.Target Currency', example: 'CZK' },
+                                                exchangeRate: { type: 'number', title: 'Entry Details.Transaction Details.Amount Details.Counter Value Amount.Currency Exchange.Exchange Rate', example: 24.35 }
+                                            }
+                                        }
+                                    }
                                 }
+                            }
+                        },
+                        charges: {
+                            type: 'object',
+                            title: 'Entry Details.Transaction Details.Charges',
+                            properties: {
+                                bearer: { type: 'string', title: 'Entry Details.Transaction Details.Charges.Bearer', example: 'SHAR' }
                             }
                         },
                         relatedParties: {
@@ -143,15 +173,66 @@ const ITEM_SCHEMA = {
                                 }
                             }
                         },
+                        relatedAgents: {
+                            type: 'object',
+                            title: 'Entry Details.Transaction Details.Related Agents',
+                            properties: {
+                                debtorAgent: {
+                                    type: 'object',
+                                    title: 'Entry Details.Transaction Details.Related Agents.Debtor Agent',
+                                    properties: {
+                                        financialInstitutionIdentification: {
+                                            type: 'object',
+                                            title: 'Entry Details.Transaction Details.Related Agents.Debtor Agent.Financial Institution Identification',
+                                            properties: {
+                                                bic: { type: 'string', title: 'Entry Details.Transaction Details.Related Agents.Debtor Agent.Financial Institution Identification.BIC', example: 'GIBACZPX' }
+                                            }
+                                        }
+                                    }
+                                },
+                                creditorAgent: {
+                                    type: 'object',
+                                    title: 'Entry Details.Transaction Details.Related Agents.Creditor Agent',
+                                    properties: {
+                                        financialInstitutionIdentification: {
+                                            type: 'object',
+                                            title: 'Entry Details.Transaction Details.Related Agents.Creditor Agent.Financial Institution Identification',
+                                            properties: {
+                                                bic: { type: 'string', title: 'Entry Details.Transaction Details.Related Agents.Creditor Agent.Financial Institution Identification.BIC', example: 'CEKOCZPP' }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        },
                         remittanceInformation: {
                             type: 'object',
                             title: 'Entry Details.Transaction Details.Remittance Information',
                             properties: {
-                                unstructured: { type: 'string', title: 'Entry Details.Transaction Details.Remittance Information.Unstructured', example: 'Invoice 2026001' }
+                                unstructured: { type: 'string', title: 'Entry Details.Transaction Details.Remittance Information.Unstructured', example: 'Invoice 2026001' },
+                                structured: {
+                                    type: 'object',
+                                    title: 'Entry Details.Transaction Details.Remittance Information.Structured',
+                                    properties: {
+                                        creditorReferenceInformation: {
+                                            type: 'object',
+                                            title: 'Entry Details.Transaction Details.Remittance Information.Structured.Creditor Reference Information',
+                                            properties: {
+                                                reference: {
+                                                    type: 'array',
+                                                    title: 'Entry Details.Transaction Details.Remittance Information.Structured.Creditor Reference Information.Reference',
+                                                    items: { type: 'string' },
+                                                    example: ['VS:2026001', 'KS:0308']
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
                             }
                         },
                         additionalTransactionInformation: { type: 'string', title: 'Entry Details.Transaction Details.Additional Transaction Information', example: 'Platba kartou' },
-                        additionalRemittanceInformation: { type: 'string', title: 'Entry Details.Transaction Details.Additional Remittance Information', example: 'Monthly subscription' }
+                        additionalRemittanceInformation: { type: 'string', title: 'Entry Details.Transaction Details.Additional Remittance Information', example: 'Monthly subscription' },
+                        additionalTransactionDescription: { type: 'string', title: 'Entry Details.Transaction Details.Additional Transaction Description', example: 'Odchozí úhrada' }
                     }
                 }
             }

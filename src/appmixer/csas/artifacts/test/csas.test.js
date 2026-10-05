@@ -207,6 +207,19 @@ describe('csas', () => {
             }
         });
 
+        it('drops echoed credentials from the response headers', async () => {
+            const context = makeContext({ url: '/my/accounts', method: 'GET' });
+            context.httpRequest.resolves({
+                status: 200,
+                headers: { 'content-type': 'application/json', authorization: 'Bearer token-1', 'WEB-API-key': 'web-api-key' },
+                data: {}
+            });
+
+            await MakeApiCall.receive(context);
+
+            assert.deepStrictEqual(context.sendJson.firstCall.args[0].headers, { 'content-type': 'application/json' });
+        });
+
         it('rejects a body that is not JSON', async () => {
             const context = makeContext({ url: '/my/accounts', method: 'POST', body: '{nope' });
             await assert.rejects(() => MakeApiCall.receive(context), /valid JSON/);
