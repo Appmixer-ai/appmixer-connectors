@@ -42,7 +42,7 @@ describe('slack-due-tasks', () => {
                 triggerWebhook: triggerWebhookStub
             })
         });
-        triggerWebhookStub = sinon.stub().resolves(true);
+        triggerWebhookStub = sinon.stub().resolves({ ok: true });
         rootTaskUtilsPath = path.resolve(__dirname, '../../../taskUtils.js');
         require.cache[rootTaskUtilsPath] = createUtilsStub(rootTaskUtilsPath);
 
@@ -153,13 +153,17 @@ describe('slack-due-tasks', () => {
         setMockTasks(errorTasks);
 
         // Configure triggerWebhook: succeed for first, fail for second
-        triggerWebhookStub.onCall(0).resolves(true);
+        triggerWebhookStub.onCall(0).resolves({ ok: true });
         triggerWebhookStub.onCall(1).rejects(new Error('webhook failed'));
 
         await resubmitHandler();
 
-        // Verify Task.find called for error status
+        // Verify Task.find called for error status whose backoff has elapsed
         assert(taskFindSpy.called);
+        const queryArg = taskFindSpy.getCall(0).args[0];
+        assert.equal(queryArg.status, 'error');
+        assert.deepEqual(queryArg.$or[0], { nextAttemptAt: null });
+        assert(queryArg.$or[1].nextAttemptAt.$lte instanceof Date);
 
         const saved = getSavedTasks();
         // First task should have been set to pending then saved, second should be reverted back to error and saved
@@ -176,6 +180,47 @@ describe('slack-due-tasks', () => {
         // triggerWebhook should be called twice
         assert.equal(triggerWebhookStub.callCount, 2);
 
+    });
+
+    it('should resubmit the status that failed to be delivered', async () => {
+
+        setMockTasks([{ taskId: 'e1', status: 'error', failedStatus: 'approved' }]);
+
+        await resubmitHandler();
+
+        assert.equal(triggerWebhookStub.getCall(0).args[0].status, 'approved');
+        assert.equal(getSavedTasks()[0].status, 'approved');
+    });
+
+    it('should report real outcomes and not save failed or removed tasks', async () => {
+
+        setMockTasks([
+            { taskId: 'ok', status: 'error' },
+            { taskId: 'gone', status: 'error' },
+            { taskId: 'retry', status: 'error' }
+        ]);
+        triggerWebhookStub.onCall(0).resolves({ ok: true });
+        triggerWebhookStub.onCall(1).resolves({ ok: false, permanent: true, removed: true, httpStatus: 404 });
+        triggerWebhookStub.onCall(2).resolves({ ok: false, permanent: false, removed: false, httpStatus: 500 });
+
+        await resubmitHandler();
+
+        // Only the delivered task is saved by the job, triggerWebhook persists the failures itself.
+        assert.deepEqual(getSavedTasks().map(t => t.taskId), ['ok']);
+
+        const summary = context.log.getCalls().find(c => /Resubmit failed webhooks finished/.test(c.args[1]));
+        assert(summary, 'summary was not logged');
+        assert.deepEqual(summary.args[2], { webhooks: 3, success: 1, errors: 1, removed: 1 });
+    });
+
+    it('should not save a due task whose webhook failed', async () => {
+
+        setMockTasks([{ taskId: 't1', status: 'pending', decisionBy: new Date(Date.now() - 1000) }]);
+        triggerWebhookStub.resolves({ ok: false, permanent: true, removed: true, httpStatus: 404 });
+
+        await dueHandler();
+
+        assert.equal(getSavedTasks().length, 0);
     });
 
     it('should handle no failed webhooks gracefully', async () => {
