@@ -71,10 +71,38 @@ send `/setprivacy` to @BotFather and pick Disable. The flows do not need it.
 
 ## Telegram User module (`appmixer.telegram.user`)
 
-These flows need a **Telegram User** account (`appmixer:telegram:user`: API ID,
-API Hash and a gramjs session string of a user, not bot, account).
+Both flows are fully automatic. They need a **Telegram User** account
+(`appmixer:telegram:user`: API ID, API Hash and the session string of a user, not
+bot, account) next to the bot account. `artifacts/tools/generate-session.js` logs
+a user account in and prints the three values:
 
-| Flow | Covers |
-|---|---|
-| `test-flow-user-channel.json` | GetChannel and FindChannelMessages on the public channel **@telegram**. Read-only, fully automatic. |
-| `test-flow-user-newchannelpost-trigger.json` | NewChannelPost. **Manual:** point it at a public channel you can post to, start the flow, then publish a post. Flow start records the newest post as the baseline, so only posts published after it are emitted. AfterAll waits 600 s. |
+```bash
+cd src/appmixer/telegram && npm install
+node artifacts/tools/generate-session.js
+```
+
+### `test-flow-user-channel.json`
+
+GetChannel and FindChannelMessages on the public channel **@telegram**, which the
+test account has not joined. Read-only.
+
+### `test-flow-user-newchannelpost-trigger.json`
+
+NewChannelPost, provoked from inside the flow: the **bot** publishes a post, the
+**user account** reads it.
+
+- Fixture: public channel **@appmixer_e2e_channel** with `@appmixer_test_bot` as an
+  administrator that may post and delete messages. To run it elsewhere, create a
+  public channel, add your bot as an administrator and replace the username in
+  SendMessage, NewChannelPost, the Assert and DeleteMessage.
+- `OnStart -> Wait 1m -> SendMessage` publishes the post. The Wait must stay: flow
+  start records the newest post as the trigger's baseline, and a post published
+  before that is never emitted.
+- `NewChannelPost -> Assert -> AfterAll -> DeleteMessage` asserts the post and
+  deletes it by the ID the trigger emitted, so the cleanup also proves the trigger
+  fired. The poll runs once a minute; AfterAll waits 300 s.
+
+Behaviour that cannot be provoked on a live account (FLOOD_WAIT, a channel going
+private, a backlog read over several polls, overlapping polls) is covered by the
+unit tests in `artifacts/test/user.test.js`, which run the module against an
+in-memory Telegram.

@@ -4,11 +4,19 @@ const crypto = require('crypto');
 const bigInt = require('big-integer');
 const { TelegramClient, Api } = require('telegram');
 const { StringSession } = require('telegram/sessions');
+const { Logger } = require('telegram/extensions/Logger');
 const coreLib = require('../lib');
 
 // gramjs sleeps through a FLOOD_WAIT on its own when Telegram asks for at most this many
 // seconds. Longer waits surface as a retryable error instead of blocking the engine.
 const FLOOD_SLEEP_THRESHOLD = 60;
+
+// gramjs has no deadline of its own: when Telegram does not answer - which is what happens
+// to a session whose authorization key the server no longer knows - connect() and invoke()
+// wait forever and would hold an engine worker with them. A request may legitimately take
+// as long as the FLOOD_WAIT gramjs sleeps through, hence the longer request deadline.
+const CONNECT_TIMEOUT_MS = 30 * 1000;
+const REQUEST_TIMEOUT_MS = (FLOOD_SLEEP_THRESHOLD + 60) * 1000;
 
 // One MTProto connection per account and engine process, reused by every component and
 // trigger of that account. Dropped after a quiet period so idle accounts hold no socket.
@@ -102,35 +110,38 @@ module.exports = {
                     floodSleepThreshold: FLOOD_SLEEP_THRESHOLD,
                     // Updates only arrive for joined channels and are lost while offline;
                     // the components poll history instead, so the update loop is not needed.
-                    receiveUpdates: false
+                    receiveUpdates: false,
+                    // Errors only - gramjs writes to stdout, which is the engine's log.
+                    baseLogger: new Logger('error')
                 });
             } catch (error) {
                 throw new context.CancelError(
                     'Invalid Session String. Generate a new one for this API ID with gramjs or Telethon.'
                 );
             }
-            client.setLogLevel('error');
             entry = { key, client, ready: null, timer: null };
             clients.set(key, entry);
         }
 
         if (!entry.client.connected) {
-            entry.ready = entry.ready || entry.client.connect().finally(() => {
+            entry.ready = entry.ready || withTimeout(
+                entry.client.connect(),
+                CONNECT_TIMEOUT_MS,
+                `Telegram did not answer within ${CONNECT_TIMEOUT_MS / 1000} seconds while connecting. `
+                + 'If this keeps happening, the session may have been revoked - generate a new Session String.'
+            ).finally(() => {
                 entry.ready = null;
             });
             try {
                 await entry.ready;
             } catch (error) {
-                clients.delete(key);
+                this.dropClient(entry.client, key);
                 throw this.normalizeError(context, error, 'connect');
             }
         }
 
         clearTimeout(entry.timer);
-        entry.timer = setTimeout(() => {
-            clients.delete(key);
-            entry.client.destroy().catch(() => {});
-        }, IDLE_DISCONNECT_MS);
+        entry.timer = setTimeout(() => this.dropClient(entry.client, key), IDLE_DISCONNECT_MS);
         if (entry.timer.unref) {
             entry.timer.unref();
         }
@@ -150,9 +161,35 @@ module.exports = {
     async invoke(context, client, request, target) {
 
         try {
-            return await client.invoke(request);
+            return await withTimeout(
+                client.invoke(request),
+                REQUEST_TIMEOUT_MS,
+                `Telegram did not answer the request for ${target} within ${REQUEST_TIMEOUT_MS / 1000} seconds.`
+            );
         } catch (error) {
+            if (error.telegramTimeout) {
+                // The connection is most likely dead; the next call opens a new one.
+                this.dropClient(client, client.appmixerKey);
+            }
             throw this.normalizeError(context, error, target);
+        }
+    },
+
+    /**
+     * Forget a client and close its connection.
+     * @param {TelegramClient} client
+     * @param {string} key
+     */
+    dropClient(client, key) {
+
+        const entry = clients.get(key);
+
+        if (entry && entry.client === client) {
+            clearTimeout(entry.timer);
+            clients.delete(key);
+        }
+        if (client && typeof client.destroy === 'function') {
+            client.destroy().catch(() => {});
         }
     },
 
@@ -512,6 +549,21 @@ module.exports = {
 };
 
 const toIso = (seconds) => new Date(Number(seconds) * 1000).toISOString();
+
+// Rejects with a plain (retryable) Error when the promise does not settle in time.
+const withTimeout = (promise, ms, message) => {
+
+    let timer;
+    const deadline = new Promise((resolve, reject) => {
+        timer = setTimeout(() => {
+            const error = new Error(message);
+            error.telegramTimeout = true;
+            reject(error);
+        }, ms);
+    });
+
+    return Promise.race([promise, deadline]).finally(() => clearTimeout(timer));
+};
 
 // The static cache only saves resolveUsername calls. It must never fail a component: it is
 // absent in the auth context and in the CLI test harness.
