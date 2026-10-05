@@ -1,31 +1,38 @@
 'use strict';
 
-// Customers on the GraphQL Admin API, returned in the REST customer shape the
-// customer components and their users' flows were built on.
+// Customers on the GraphQL Admin API. Objects are returned as GraphQL returns
+// them (camelCase fields, global ids); the only reshaping is that connections
+// become plain arrays (`addresses: [...]` instead of `{ nodes: [...] }`).
 
 const client = require('./graphql-client');
 
+const ADDRESS_FIELDS = `id firstName lastName company address1 address2 city province provinceCode
+    country countryCodeV2 zip phone`;
+
 const CUSTOMER_FIELDS = `
-    id firstName lastName note tags state taxExempt taxExemptions verifiedEmail multipassIdentifier
-    createdAt updatedAt numberOfOrders
+    id legacyResourceId displayName firstName lastName note tags state locale verifiedEmail
+    taxExempt taxExemptions numberOfOrders createdAt updatedAt
     amountSpent { amount currencyCode }
-    lastOrder { id name }
     defaultEmailAddress { emailAddress marketingState marketingOptInLevel marketingUpdatedAt }
-    defaultPhoneNumber { phoneNumber marketingState marketingOptInLevel marketingUpdatedAt }
-    defaultAddress { ${client.ADDRESS_FIELDS} }
-    addressesV2(first: 50) { nodes { ${client.ADDRESS_FIELDS} } }`;
+    defaultPhoneNumber { phoneNumber smsMarketingConsent { state optInLevel updatedAt } }
+    defaultAddress { ${ADDRESS_FIELDS} }
+    addresses: addressesV2(first: 50) { nodes { ${ADDRESS_FIELDS} } }
+    lastOrder { id name }
+    metafields(first: 20) { nodes { namespace key type value } }`;
 
 const GET_CUSTOMER = `query GetCustomer($id: ID!) {
     customer(id: $id) { ${CUSTOMER_FIELDS} }
 }`;
 
-const LIST_CUSTOMERS = `query ListCustomers($first: Int!, $after: String, $query: String, $sortKey: CustomerSortKeys, $reverse: Boolean) {
+const FIND_CUSTOMERS = `query FindCustomers($first: Int!, $after: String, $query: String, $sortKey: CustomerSortKeys, $reverse: Boolean) {
     customers(first: $first, after: $after, query: $query, sortKey: $sortKey, reverse: $reverse) {
         nodes { ${CUSTOMER_FIELDS} }
         pageInfo { hasNextPage endCursor }
     }
 }`;
 
+// customersCount only understands the id, created_at and updated_at search
+// fields; any other field is ignored and everything is counted.
 const COUNT_CUSTOMERS = `query CountCustomers($query: String) {
     customersCount(query: $query, limit: null) { count }
 }`;
@@ -38,6 +45,10 @@ const UPDATE_CUSTOMER = `mutation UpdateCustomer($input: CustomerInput!) {
     customerUpdate(input: $input) { customer { id } userErrors { field message } }
 }`;
 
+const UPDATE_EMAIL_MARKETING_CONSENT = `mutation UpdateEmailMarketingConsent($input: CustomerEmailMarketingConsentUpdateInput!) {
+    customerEmailMarketingConsentUpdate(input: $input) { customer { id } userErrors { field message } }
+}`;
+
 const DELETE_CUSTOMER = `mutation DeleteCustomer($input: CustomerDeleteInput!) {
     customerDelete(input: $input) { deletedCustomerId userErrors { field message } }
 }`;
@@ -48,167 +59,163 @@ const CREATE_ADDRESS = `mutation CreateCustomerAddress($customerId: ID!, $addres
     }
 }`;
 
-// REST `order` values of the components → GraphQL sort.
-const SORTS = {
-    'created_at': 'CREATED_AT',
-    'updated_at': 'UPDATED_AT',
-    'name': 'NAME',
-    'id': 'ID'
-};
+// connection { nodes } → array, for the fields that are connections.
+function flatten(customer) {
 
-// Sorts REST search offered that GraphQL has no sort key for; the page is
-// fetched by relevance and sorted here.
-const LOCAL_SORTS = {
-    'total_spent': customer => Number(customer.total_spent) || 0,
-    'orders_count': customer => customer.orders_count || 0
-};
-
-// Legacy REST metafield value types → metafield definition types.
-const METAFIELD_TYPES = {
-    'string': 'single_line_text_field',
-    'integer': 'number_integer',
-    'json_string': 'json'
-};
-
-function decimal(value) {
-
-    if (value === null || value === undefined || value === '') return null;
-    const number = Number(value);
-    return Number.isFinite(number) ? number.toFixed(2) : String(value);
-}
-
-function consent(contact) {
-
-    if (!contact) return null;
+    if (!customer) return customer;
     return {
-        state: client.enumValue(contact.marketingState),
-        opt_in_level: client.enumValue(contact.marketingOptInLevel),
-        consent_updated_at: contact.marketingUpdatedAt || null
+        ...customer,
+        addresses: customer.addresses ? customer.addresses.nodes : [],
+        metafields: customer.metafields ? customer.metafields.nodes : []
     };
 }
 
+function isSet(value) {
+
+    return value !== undefined && value !== null && String(value).trim() !== '';
+}
+
+// Quote a value for the search syntax: 'a b' → "a b".
+function quote(value) {
+
+    return `"${String(value).replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`;
+}
+
 /**
- * GraphQL Customer → REST customer.
- * @param {object} node
- * @returns {object|null}
+ * Typed Find filters → customer search query, ANDed with the free-form query.
+ * @param {object} filters
+ * @returns {string|null}
  */
-function toRestCustomer(node) {
+function buildSearchQuery({ query, email, phone, tag, createdAtMin, updatedAtMin } = {}) {
 
-    if (!node) return null;
-
-    const id = client.fromGid(node.id);
-    const email = node.defaultEmailAddress || null;
-    const phone = node.defaultPhoneNumber || null;
-    const defaultAddressId = node.defaultAddress ? node.defaultAddress.id : null;
-    const toAddress = address => ({
-        ...client.address(address),
-        customer_id: id,
-        default: address.id === defaultAddressId
-    });
-    const addresses = ((node.addressesV2 && node.addressesV2.nodes) || []).map(toAddress);
-
-    return {
-        id,
-        email: email ? email.emailAddress : null,
-        first_name: node.firstName,
-        last_name: node.lastName,
-        phone: phone ? phone.phoneNumber : null,
-        state: client.enumValue(node.state),
-        note: node.note,
-        tags: client.tagString(node.tags),
-        currency: node.amountSpent ? node.amountSpent.currencyCode : null,
-        orders_count: node.numberOfOrders === undefined || node.numberOfOrders === null
-            ? 0
-            : Number(node.numberOfOrders),
-        total_spent: decimal(node.amountSpent && node.amountSpent.amount),
-        last_order_id: node.lastOrder ? client.fromGid(node.lastOrder.id) : null,
-        last_order_name: node.lastOrder ? node.lastOrder.name : null,
-        accepts_marketing: !!email && email.marketingState === 'SUBSCRIBED',
-        accepts_marketing_updated_at: email ? email.marketingUpdatedAt || null : null,
-        marketing_opt_in_level: email ? client.enumValue(email.marketingOptInLevel) : null,
-        email_marketing_consent: consent(email),
-        sms_marketing_consent: consent(phone),
-        multipass_identifier: node.multipassIdentifier || null,
-        tax_exempt: !!node.taxExempt,
-        tax_exemptions: node.taxExemptions || [],
-        verified_email: !!node.verifiedEmail,
-        addresses,
-        default_address: node.defaultAddress ? toAddress(node.defaultAddress) : null,
-        created_at: node.createdAt,
-        updated_at: node.updatedAt,
-        admin_graphql_api_id: node.id
-    };
+    const terms = [];
+    if (isSet(query)) terms.push(`(${String(query).trim()})`);
+    if (isSet(email)) terms.push(`email:${quote(String(email).trim())}`);
+    if (isSet(phone)) terms.push(`phone:${quote(String(phone).trim())}`);
+    if (isSet(tag)) terms.push(`tag:${quote(String(tag).trim())}`);
+    if (isSet(createdAtMin)) terms.push(`customer_date:>=${quote(new Date(createdAtMin).toISOString())}`);
+    if (isSet(updatedAtMin)) terms.push(`updated_at:>=${quote(new Date(updatedAtMin).toISOString())}`);
+    return terms.length ? terms.join(' AND ') : null;
 }
 
 /**
- * REST customer payload (Create/Update Customer) → CustomerInput. Only keys
- * present in the payload are sent, so an update leaves the rest untouched.
- * @param {object} payload
+ * Count filters → customersCount search query (created_at / updated_at only).
+ * @param {object} filters
+ * @returns {string|null}
+ */
+function buildCountQuery({ createdAtMin, createdAtMax, updatedAtMin, updatedAtMax } = {}) {
+
+    const terms = [];
+    if (isSet(createdAtMin)) terms.push(`created_at:>=${quote(new Date(createdAtMin).toISOString())}`);
+    if (isSet(createdAtMax)) terms.push(`created_at:<=${quote(new Date(createdAtMax).toISOString())}`);
+    if (isSet(updatedAtMin)) terms.push(`updated_at:>=${quote(new Date(updatedAtMin).toISOString())}`);
+    if (isSet(updatedAtMax)) terms.push(`updated_at:<=${quote(new Date(updatedAtMax).toISOString())}`);
+    return terms.length ? terms.join(' AND ') : null;
+}
+
+/**
+ * Sort input ('UPDATED_AT_DESC', 'NAME_ASC', 'RELEVANCE') → { sortKey, reverse }.
+ * @param {string} sort
+ * @returns {{sortKey: string|null, reverse: boolean}}
+ */
+function parseSort(sort) {
+
+    if (!isSet(sort)) return { sortKey: null, reverse: false };
+    const match = String(sort).trim().toUpperCase().match(/^(.+?)(?:_(ASC|DESC))?$/);
+    return { sortKey: match[1], reverse: match[2] === 'DESC' };
+}
+
+/**
+ * Component inputs → CustomerInput. Empty values are left out, so an update
+ * changes only the fields that were filled in.
+ * @param {object} fields
  * @returns {object}
  */
-function toCustomerInput(payload) {
+function customerInput(fields = {}) {
 
     const input = {};
-    const set = (key, value) => {
-        if (value !== undefined && value !== null && value !== '') input[key] = value;
-    };
-
-    set('firstName', payload.first_name);
-    set('lastName', payload.last_name);
-    set('email', payload.email);
-    set('phone', payload.phone);
-    set('note', payload.note);
-    if (payload.tags !== undefined && payload.tags !== null && payload.tags !== '') {
-        input.tags = client.tagList(payload.tags);
+    for (const key of ['firstName', 'lastName', 'email', 'phone', 'note', 'locale']) {
+        if (isSet(fields[key])) input[key] = String(fields[key]).trim();
     }
-    if (typeof payload.tax_exempt === 'boolean') {
-        input.taxExempt = payload.tax_exempt;
+    if (isSet(fields.tags) || Array.isArray(fields.tags)) {
+        input.tags = client.tagList(fields.tags);
     }
-    if (Array.isArray(payload.tax_exemptions) && payload.tax_exemptions.length) {
-        input.taxExemptions = payload.tax_exemptions;
+    if (typeof fields.taxExempt === 'boolean') {
+        input.taxExempt = fields.taxExempt;
     }
-    if (typeof payload.accepts_marketing === 'boolean' && payload.email) {
-        input.emailMarketingConsent = {
-            marketingState: payload.accepts_marketing ? 'SUBSCRIBED' : 'NOT_SUBSCRIBED',
-            marketingOptInLevel: 'SINGLE_OPT_IN',
-            ...(payload.accepts_marketing_updated_at ? { consentUpdatedAt: payload.accepts_marketing_updated_at } : {})
-        };
+    const exemptions = client.tagList(fields.taxExemptions);
+    if (exemptions && exemptions.length) {
+        input.taxExemptions = exemptions;
     }
-    if (Array.isArray(payload.metafields) && payload.metafields.length) {
-        input.metafields = payload.metafields.map(metafield => ({
-            namespace: metafield.namespace,
-            key: metafield.key,
-            value: metafield.value === undefined || metafield.value === null ? '' : String(metafield.value),
-            type: METAFIELD_TYPES[metafield.value_type] || metafield.type || metafield.value_type || 'single_line_text_field'
+    const metafields = (Array.isArray(fields.metafields) ? fields.metafields : [])
+        .filter(metafield => metafield && isSet(metafield.key))
+        .map(metafield => ({
+            namespace: isSet(metafield.namespace) ? String(metafield.namespace).trim() : undefined,
+            key: String(metafield.key).trim(),
+            type: isSet(metafield.type) ? metafield.type : 'single_line_text_field',
+            value: metafield.value === undefined || metafield.value === null ? '' : String(metafield.value)
         }));
+    if (metafields.length) {
+        input.metafields = metafields;
     }
-
     return input;
 }
 
-// REST `order: 'updated_at DESC'` / search `order: 'name asc'` → { sortKey, reverse, local }.
-function sortFrom(order) {
+/**
+ * Address inputs → MailingAddressInput, or undefined when no address field
+ * other than the name or phone is filled in. Country and province are codes.
+ * @param {object} address
+ * @returns {object|undefined}
+ */
+function mailingAddressInput(address = {}) {
 
-    if (!order) return {};
-    const [field, direction = 'asc'] = String(order).trim().split(/\s+/);
-    const reverse = direction.toLowerCase() === 'desc';
-    if (SORTS[field]) return { sortKey: SORTS[field], reverse };
-    if (LOCAL_SORTS[field]) return { local: LOCAL_SORTS[field], reverse };
-    return {};
+    const input = {};
+    for (const key of ['firstName', 'lastName', 'company', 'address1', 'address2', 'city', 'zip', 'phone']) {
+        if (isSet(address[key])) input[key] = String(address[key]).trim();
+    }
+    if (isSet(address.countryCode)) {
+        const code = String(address.countryCode).trim();
+        if (!/^[A-Za-z]{2}$/.test(code)) {
+            throw new client.ShopifyError(`Country must be a two-letter ISO code (for example CZ or US), got "${code}".`, 422);
+        }
+        input.countryCode = code.toUpperCase();
+    }
+    if (isSet(address.provinceCode)) {
+        const code = String(address.provinceCode).trim();
+        if (!/^[A-Za-z0-9]{1,3}$/.test(code)) {
+            throw new client.ShopifyError(`Province must be a province or state code (for example ON or CA), got "${code}".`, 422);
+        }
+        input.provinceCode = code.toUpperCase();
+    }
+    const hasAddress = Object.keys(input).some(key => !['firstName', 'lastName', 'phone'].includes(key));
+    return hasAddress ? input : undefined;
 }
 
-// REST list filters → customer search syntax.
-function searchFrom(params) {
+/**
+ * Email marketing consent for a subscribed / unsubscribed choice.
+ * @param {boolean} subscribed
+ * @returns {object}
+ */
+function emailMarketingConsent(subscribed) {
 
-    const terms = [];
-    if (params.query) terms.push(String(params.query));
-    if (params.ids) terms.push(`(${String(params.ids).split(',').map(id => `id:${client.fromGid(id.trim())}`).join(' OR ')})`);
-    if (params.since_id) terms.push(`id:>${client.fromGid(params.since_id)}`);
-    if (params.created_at_min) terms.push(`created_at:>='${params.created_at_min}'`);
-    if (params.created_at_max) terms.push(`created_at:<='${params.created_at_max}'`);
-    if (params.updated_at_min) terms.push(`updated_at:>='${params.updated_at_min}'`);
-    if (params.updated_at_max) terms.push(`updated_at:<='${params.updated_at_max}'`);
-    return terms.length ? terms.join(' AND ') : undefined;
+    return {
+        marketingState: subscribed ? 'SUBSCRIBED' : 'UNSUBSCRIBED',
+        marketingOptInLevel: 'SINGLE_OPT_IN',
+        consentUpdatedAt: new Date().toISOString()
+    };
+}
+
+/**
+ * Whether the customer's last update came later than `thresholdMs` after it
+ * was created. Creating a customer with an address is followed by an update
+ * (the address) within a second; that one is not a change of its own.
+ * @param {object} customer
+ * @param {number} [thresholdMs=2000]
+ * @returns {boolean}
+ */
+function updatedAfterCreate(customer, thresholdMs = 2000) {
+
+    return Date.parse(customer.updatedAt) > Date.parse(customer.createdAt) + thresholdMs;
 }
 
 module.exports = (run) => {
@@ -219,89 +226,137 @@ module.exports = (run) => {
         if (!data.customer) {
             throw new client.ShopifyError(`Customer ${id} not found.`, 404);
         }
-        return toRestCustomer(data.customer);
+        return flatten(data.customer);
     }
 
-    async function list(params = {}) {
+    async function remove(id) {
 
-        const sort = sortFrom(params.order);
-        // A sort GraphQL cannot do is applied to the page; fetch a full page so
-        // the top results are right for result sets up to 250 customers.
-        const first = sort.local ? 250 : client.pageSize(params.limit);
-        const data = await run(LIST_CUSTOMERS, {
-            first,
-            after: params.after || null,
-            query: searchFrom(params) || null,
-            sortKey: sort.sortKey || (sort.local ? (params.query ? 'RELEVANCE' : 'ID') : null),
-            reverse: sort.sortKey ? sort.reverse : null
-        });
-
-        let customers = data.customers.nodes.map(toRestCustomer);
-        let pageInfo = data.customers.pageInfo;
-        if (sort.local) {
-            customers.sort((a, b) => (sort.local(a) - sort.local(b)) * (sort.reverse ? -1 : 1));
-            customers = customers.slice(0, client.pageSize(params.limit));
-            pageInfo = null;
-        }
-        return client.toListResult(customers, pageInfo, params);
-    }
-
-    async function createAddresses(customerId, addresses) {
-
-        for (const [index, address] of (addresses || []).entries()) {
-            const input = client.addressInput(address);
-            // CreateCustomer always sends one address; one that carries only
-            // the customer's name is not an address.
-            if (!input || !Object.keys(input).some(key => !['firstName', 'lastName', 'phone'].includes(key))) {
-                continue;
-            }
-            const data = await run(CREATE_ADDRESS, { customerId, address: input, setAsDefault: index === 0 });
-            client.checkUserErrors(data.customerAddressCreate, 'customerAddressCreate');
-        }
+        const data = await run(DELETE_CUSTOMER, { input: { id: client.toGid('Customer', id) } });
+        client.checkUserErrors(data.customerDelete, 'customerDelete');
     }
 
     return {
 
-        list,
         get,
 
-        async count(params = {}) {
+        /**
+         * The customer, or null when it does not exist (any more).
+         * @param {string} id gid or numeric id
+         */
+        async getOrNull(id) {
 
-            const data = await run(COUNT_CUSTOMERS, { query: searchFrom(params) || null });
+            const data = await run(GET_CUSTOMER, { id: client.toGid('Customer', id) });
+            return data.customer ? flatten(data.customer) : null;
+        },
+
+        /**
+         * Customers matching a Shopify search query, up to `max` of them.
+         * @param {object} params
+         * @param {string} [params.query] Shopify customer search syntax; empty = all customers
+         * @param {string} [params.sortKey] CustomerSortKeys value
+         * @param {boolean} [params.reverse]
+         * @param {number} [params.max=250]
+         */
+        async find({ query, sortKey, reverse, max = 250 } = {}) {
+
+            const customers = [];
+            let after = null;
+            do {
+                const data = await run(FIND_CUSTOMERS, {
+                    first: Math.min(100, max - customers.length),
+                    after,
+                    query: query || null,
+                    sortKey: sortKey || null,
+                    reverse: !!reverse
+                });
+                customers.push(...data.customers.nodes.map(flatten));
+                after = data.customers.pageInfo.hasNextPage ? data.customers.pageInfo.endCursor : null;
+            } while (after && customers.length < max);
+            return customers;
+        },
+
+        async count(query) {
+
+            const data = await run(COUNT_CUSTOMERS, { query: query || null });
             return data.customersCount.count;
         },
 
-        // REST customers/search.json: `query` in Shopify search syntax.
-        async search(params = {}) {
+        /**
+         * Create a customer, add the address as its default one and return the
+         * customer. When the address is rejected the customer is deleted again,
+         * so a retry does not hit "email has already been taken".
+         * @param {object} fields CustomerInput fields (see customerInput)
+         * @param {object} [options]
+         * @param {object} [options.address] MailingAddressInput fields
+         * @param {boolean} [options.acceptsEmailMarketing]
+         */
+        async create(fields, { address, acceptsEmailMarketing } = {}) {
 
-            return list(params);
-        },
+            const input = customerInput(fields);
+            const addressInput = mailingAddressInput(address);
+            if (!input.firstName && !input.lastName && !input.email && !input.phone) {
+                throw new client.ShopifyError('A customer needs a first name, last name, email or phone.', 422);
+            }
+            if (acceptsEmailMarketing === true) {
+                if (!input.email) {
+                    throw new client.ShopifyError('Email marketing consent needs an email address.', 422);
+                }
+                input.emailMarketingConsent = emailMarketingConsent(true);
+            }
 
-        async create(payload = {}) {
-
-            const data = await run(CREATE_CUSTOMER, { input: toCustomerInput(payload) });
+            const data = await run(CREATE_CUSTOMER, { input });
             const { customer } = client.checkUserErrors(data.customerCreate, 'customerCreate');
-            await createAddresses(customer.id, payload.addresses);
+
+            if (addressInput) {
+                try {
+                    const created = await run(CREATE_ADDRESS, {
+                        customerId: customer.id,
+                        address: addressInput,
+                        setAsDefault: true
+                    });
+                    client.checkUserErrors(created.customerAddressCreate, 'customerAddressCreate');
+                } catch (err) {
+                    await remove(customer.id).catch(() => {});
+                    throw err;
+                }
+            }
             return get(customer.id);
         },
 
-        async update(id, payload = {}) {
+        /**
+         * Update the filled-in fields of a customer.
+         * @param {string} id gid or numeric id
+         * @param {object} fields CustomerInput fields (see customerInput)
+         * @param {object} [options]
+         * @param {string} [options.emailMarketingState] SUBSCRIBED | UNSUBSCRIBED
+         */
+        async update(id, fields, { emailMarketingState } = {}) {
 
-            const input = { ...toCustomerInput(payload), id: client.toGid('Customer', id) };
-            const data = await run(UPDATE_CUSTOMER, { input });
-            client.checkUserErrors(data.customerUpdate, 'customerUpdate');
-            return get(id);
+            const customerId = client.toGid('Customer', id);
+            const input = customerInput(fields);
+            if (Object.keys(input).length) {
+                const data = await run(UPDATE_CUSTOMER, { input: { ...input, id: customerId } });
+                client.checkUserErrors(data.customerUpdate, 'customerUpdate');
+            }
+            if (isSet(emailMarketingState)) {
+                const data = await run(UPDATE_EMAIL_MARKETING_CONSENT, {
+                    input: {
+                        customerId,
+                        emailMarketingConsent: emailMarketingConsent(String(emailMarketingState).toUpperCase() === 'SUBSCRIBED')
+                    }
+                });
+                client.checkUserErrors(data.customerEmailMarketingConsentUpdate, 'customerEmailMarketingConsentUpdate');
+            }
         },
 
-        async delete(id) {
-
-            const data = await run(DELETE_CUSTOMER, { input: { id: client.toGid('Customer', id) } });
-            client.checkUserErrors(data.customerDelete, 'customerDelete');
-            return {};
-        }
+        delete: remove
     };
 };
 
-module.exports.toRestCustomer = toRestCustomer;
-module.exports.toCustomerInput = toCustomerInput;
 module.exports.CUSTOMER_FIELDS = CUSTOMER_FIELDS;
+module.exports.buildSearchQuery = buildSearchQuery;
+module.exports.buildCountQuery = buildCountQuery;
+module.exports.parseSort = parseSort;
+module.exports.customerInput = customerInput;
+module.exports.mailingAddressInput = mailingAddressInput;
+module.exports.updatedAfterCreate = updatedAfterCreate;

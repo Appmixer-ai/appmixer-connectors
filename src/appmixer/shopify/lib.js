@@ -1,21 +1,15 @@
 'use strict';
 
-// Shopify Admin API accessed directly through context.httpRequest — no
-// third-party client. Every resource goes through the GraphQL Admin API
-// (graphql-client.js + gql-*.js); the facade returned by getShopifyAPI(context)
-// keeps the REST object shapes (snake_case keys, numeric ids) the components
-// and their users' flows were built on. This module provides:
-//   - a throttled, 429-aware request layer,
-//   - the getShopifyAPI(context) facade,
-//   - webhook registration and the shared output helpers.
+// Shopify GraphQL Admin API accessed directly through context.httpRequest — no
+// third-party client. This module provides:
+//   - a throttled, 429-aware request layer and graphql()/runner() on top of it,
+//   - the outputType helpers (sendArrayOutput, getOutputPortOptions),
+//   - ShopifyQL reports,
+//   - webhook registration and the webhook-to-trigger helper.
+// Resource queries live in gql-*.js; objects are emitted as GraphQL returns them.
 
 const pathModule = require('path');
 const graphqlClient = require('./graphql-client');
-const gqlCustomers = require('./gql-customers');
-const gqlOrders = require('./gql-orders');
-const gqlProducts = require('./gql-products');
-const gqlDiscounts = require('./gql-discounts');
-const gqlStore = require('./gql-store');
 
 const DEFAULT_API_VERSION = graphqlClient.API_VERSION;
 const MIN_REQUEST_INTERVAL_MS = 500; // ~2 requests/second
@@ -113,6 +107,33 @@ module.exports = {
     normalizeStore,
 
     /**
+     * Run a GraphQL Admin API query or mutation and return its `data`.
+     * GraphQL errors become a ShopifyError with an HTTP-like statusCode.
+     * @param {Context} context
+     * @param {string} query
+     * @param {object} [variables]
+     * @returns {Promise<object>}
+     */
+    graphql(context, query, variables) {
+
+        return graphqlClient.gql(context, query, variables, shopifyRequest)
+            .catch(err => {
+                throw permanentAsCancel(context, err);
+            });
+    },
+
+    /**
+     * `(query, variables) => data` bound to the context — the shape the
+     * gql-*.js resource modules take.
+     * @param {Context} context
+     * @returns {function}
+     */
+    runner(context) {
+
+        return (query, variables) => this.graphql(context, query, variables);
+    },
+
+    /**
      * Normalize multiselect input (array or string) to array format.
      * @param {string|string[]} input
      * @param {object} context
@@ -186,7 +207,7 @@ module.exports = {
      * @param {object} itemSchema map of field -> JSON schema (with title)
      * @param {object} arrayOption { label, value } for the array wrapper
      */
-    getOutputPortOptions(context, outputType, itemSchema, { label, value }) {
+    getOutputPortOptions(context, outputType, itemSchema, { label, value = 'result' }) {
 
         if (outputType === 'object' || outputType === 'first') {
             const options = Object.keys(itemSchema)
@@ -217,6 +238,10 @@ module.exports = {
                     type: 'array',
                     items: { type: 'object', properties: itemSchema }
                 }
+            }, {
+                label: 'Items Count',
+                value: 'count',
+                schema: { type: 'integer' }
             }], 'out');
         }
 
@@ -242,16 +267,15 @@ module.exports = {
     },
 
     /**
-     * Run a ShopifyQL query (GraphQL shopifyqlQuery) and normalize the result to
-     * { columns, rows, rowCount }. Throws a CancelError on ShopifyQL parse errors.
-     * Shared by RunReport and the curated report components.
+     * Run a ShopifyQL query and normalize the result to { columns, rows, rowCount }.
+     * Throws a CancelError on ShopifyQL parse errors.
      * @param {Context} context
      * @param {string} query
      */
     async runReport(context, query) {
 
-        const shopify = this.getShopifyAPI(context);
-        const response = await shopify.report.run(query);
+        const data = await this.graphql(context, RUN_SHOPIFYQL, { q: query });
+        const response = data.shopifyqlQuery;
 
         const parseErrors = (response && response.parseErrors) || [];
         if (parseErrors.length) {
@@ -266,221 +290,148 @@ module.exports = {
     },
 
     /**
-     * Facade over the Shopify Admin API. Method shapes mirror the REST resources
-     * the components were written against; underneath, every call is a GraphQL
-     * Admin API query or mutation (gql-*.js), mapped back to the REST shape.
-     * Requires the full `context` (for context.httpRequest).
+     * Subscribe this trigger's webhook URL to the given topics (REST names,
+     * e.g. 'orders/create'), reusing subscriptions that already exist for it.
+     * The payload is cut down to the ids — triggers read the object itself
+     * through GraphQL.
      * @param {Context} context
+     * @param {string[]} topics
      */
-    getShopifyAPI(context) {
-
-        const run = (query, variables) => graphqlClient.gql(context, query, variables, shopifyRequest);
-
-        const customers = gqlCustomers(run);
-        const orders = gqlOrders(run);
-        const store = gqlStore(run);
-        const products = gqlProducts(run, {
-            // Base64 image attachments go to a staged upload target first.
-            putFile: (url, data, headers) => context.httpRequest({ method: 'PUT', url, data, headers })
-        });
-
-        return {
-            customer: {
-                ...customers,
-                orders: (id, query) => orders.listForCustomer(id, query)
-            },
-            order: orders.order,
-            // Refunds and fulfillments are nested under an order.
-            refund: orders.refund,
-            fulfillment: orders.fulfillment,
-            product: products,
-            location: store.location,
-            inventoryLevel: store.inventoryLevel,
-            checkout: store.checkout,
-            draftOrder: store.draftOrder,
-            webhook: store.webhook,
-            shop: store.shop,
-            returnsForOrder: (orderId, limit) => store.returnsForOrder(orderId, limit),
-            // Code discounts (the GraphQL Admin API has no price rules).
-            discount: gqlDiscounts(run),
-
-            // Run a ShopifyQL query and return the table result.
-            report: {
-                async run(query) {
-                    const gql = `query RunShopifyql($q: String!) {
-                        shopifyqlQuery(query: $q) {
-                            parseErrors
-                            tableData {
-                                columns { name displayName dataType }
-                                rows
-                            }
-                        }
-                    }`;
-                    const data = await run(gql, { q: query });
-                    return data.shopifyqlQuery;
-                }
-            },
-
-            // Raw GraphQL (returns the `data` payload).
-            graphql: (query, variables) => run(query, variables)
-        };
-    },
-
-    /**
-     * Follow Shopify cursor pagination until all pages are collected.
-     * Kept signature-compatible with the previous client-based pager.
-     */
-    async pager({ shopify, target, operation, params = {} }) {
-
-        const currentPage = await shopify[target][operation](params);
-        if (
-            currentPage.length === 0 ||
-            currentPage.length < (params.limit || 250) ||
-            !currentPage.nextPageParameters
-        ) {
-            return currentPage;
-        }
-
-        const nextPage = await this.pager({
-            shopify,
-            target,
-            operation,
-            params: currentPage.nextPageParameters
-        });
-        return currentPage.concat(nextPage);
-    },
-
-    processItems(knownItems, actualItems, newItems, item) {
-
-        if (knownItems && !knownItems.has(item['id'])) {
-            newItems.add(item);
-        }
-        actualItems.add(item['id']);
-    },
-
-    async registerWebhook(context, topic) {
-
-        const shopify = this.getShopifyAPI(context);
-        const address = context.getWebhookUrl();
-
-        const webhooks = await shopify.webhook.list({ address });
-        const existing = (webhooks || []).find(webhook => webhook.topic === topic);
-        const webhook = existing || await shopify.webhook.create({ address, topic });
-
-        return context.saveState({ webhookId: webhook.id });
-    },
-
-    // Registers one webhook per topic (Return Tracking subscribes to the whole
-    // returns/* family), reusing subscriptions already pointing at this component.
     async registerWebhooks(context, topics) {
 
-        const shopify = this.getShopifyAPI(context);
-        const address = context.getWebhookUrl();
-
-        const existing = new Map((await shopify.webhook.list({ address })).map(webhook => [webhook.topic, webhook.id]));
+        const uri = context.getWebhookUrl();
+        const data = await this.graphql(context, LIST_WEBHOOKS, { uri });
+        const existing = new Map(data.webhookSubscriptions.nodes.map(node => [node.topic, node.id]));
 
         const webhookIds = [];
         for (const topic of topics) {
-            const id = existing.has(topic)
-                ? existing.get(topic)
-                : (await shopify.webhook.create({ address, topic })).id;
-            webhookIds.push(id);
+            const enumTopic = toTopicEnum(topic);
+            if (existing.has(enumTopic)) {
+                webhookIds.push(existing.get(enumTopic));
+                continue;
+            }
+            const created = await this.graphql(context, CREATE_WEBHOOK, {
+                topic: enumTopic,
+                webhookSubscription: { uri, format: 'JSON', includeFields: ['id', 'admin_graphql_api_id'] }
+            });
+            const payload = graphqlClient.checkUserErrors(created.webhookSubscriptionCreate, 'webhookSubscriptionCreate');
+            webhookIds.push(payload.webhookSubscription.id);
         }
 
         return context.saveState({ webhookIds });
     },
 
-    async onReceive(context, port) {
+    /**
+     * Remove the subscriptions registered by registerWebhooks. Failures are
+     * ignored: a subscription that is already gone must not block stopping
+     * the flow.
+     * @param {Context} context
+     */
+    async unregisterWebhooks(context) {
 
-        const { headers, data } = context.messages.webhook.content;
-
-        data.webhookTopic = headers['x-shopify-topic'];
-        await context.sendJson(data, port);
-
-        return context.response();
-    },
-
-    async unregisterWebhook(context) {
-
-        const shopify = this.getShopifyAPI(context);
-        const { webhookId, webhookIds } = await context.loadState();
-
-        // Subscriptions registered before 3.1.0 carry a gid (GraphQL) or a number
-        // (REST); webhook.delete takes both.
-        const ids = Array.isArray(webhookIds) ? webhookIds : (webhookId ? [webhookId] : []);
-        return Promise.all(ids.map(id => shopify.webhook.delete(id).catch(() => {})));
-    },
-
-    async fetchLatestWebhookExample(context, { resource, topic, params = {} }) {
-
-        const shopify = this.getShopifyAPI(context);
-        const records = await shopify[resource].list({ limit: 1, ...params });
-
-        const record = Array.isArray(records) ? records[0] : null;
-        if (!record) {
-            return null;
-        }
-
-        record.webhookTopic = topic;
-        return record;
-    },
-
-    async fetchLatestDeleteExample(context, { resource, topic, params = {} }) {
-
-        const shopify = this.getShopifyAPI(context);
-        const listParams = resource === 'order' ? { status: 'any', ...params } : params;
-        const records = await shopify[resource].list({ limit: 1, ...listParams });
-
-        const record = Array.isArray(records) ? records[0] : null;
-        if (!record) {
-            return null;
-        }
-
-        return { id: record.id, webhookTopic: topic };
-    },
-
-    async fetchLatestOrderChildExample(context, { child, topic }) {
-
-        const shopify = this.getShopifyAPI(context);
-        const orders = await shopify.order.list({ status: 'any', limit: 20, order: 'created_at DESC' });
-
-        if (!Array.isArray(orders)) {
-            return null;
-        }
-
-        for (const order of orders) {
-            const children = await shopify[child].list(order.id, { limit: 1 });
-            if (Array.isArray(children) && children[0]) {
-                const record = children[0];
-                record.webhookTopic = topic;
-                return record;
+        const { webhookIds = [] } = await context.loadState();
+        for (const id of webhookIds) {
+            try {
+                await this.graphql(context, DELETE_WEBHOOK, { id: graphqlClient.toGid('WebhookSubscription', id) });
+            } catch (err) {
+                await context.log({ step: 'webhook-unregister-failed', id, error: err.message });
             }
         }
-
-        return null;
     },
 
-    async fetchLatestInventoryLevelExample(context, topic) {
+    /**
+     * Handle a webhook delivery in a trigger: drop repeated deliveries of the
+     * same event, read the object through `fetch(gid)` and emit it with the
+     * webhook topic. `fetch` returning null (the object is gone already) emits
+     * nothing. Without `fetch` the trigger emits `{ id }` (delete topics).
+     * @param {Context} context
+     * @param {object} options
+     * @param {string} options.port output port
+     * @param {string} options.type GraphQL type of the object, for the gid of delete payloads
+     * @param {function} [options.fetch] async gid => object|null
+     * @param {function} [options.accept] (payload, topic) => boolean — skip deliveries
+     */
+    async receiveWebhook(context, { port, type, fetch, accept }) {
 
-        const shopify = this.getShopifyAPI(context);
-        const locations = await shopify.location.list({ limit: 1 });
-        const location = Array.isArray(locations) ? locations[0] : null;
+        const { headers = {}, data = {} } = context.messages.webhook.content;
+        const topic = headers['x-shopify-topic'];
+        const eventId = headers['x-shopify-event-id'] || headers['x-shopify-webhook-id'];
 
-        if (!location) {
-            return null;
+        if (eventId) {
+            const cacheKey = `shopify-webhook-${context.componentId}-${eventId}`;
+            if (await context.staticCache.get(cacheKey)) {
+                return context.response();
+            }
+            await context.staticCache.set(cacheKey, true, WEBHOOK_DEDUPE_TTL_MS);
         }
 
-        const levels = await shopify.inventoryLevel.list({ location_ids: String(location.id), limit: 1 });
-        const level = Array.isArray(levels) ? levels[0] : null;
-
-        if (!level) {
-            return null;
+        if (accept && !accept(data, topic)) {
+            return context.response();
         }
 
-        level.webhookTopic = topic;
-        return level;
+        const id = data.admin_graphql_api_id || graphqlClient.toGid(type, data.id);
+        const item = fetch ? await fetch(id, data) : { id };
+        if (item) {
+            await context.sendJson({ ...item, webhookTopic: topic }, port);
+        }
+
+        return context.response();
     }
 };
+
+// Shopify answers these the same way however often the message is retried
+// (invalid query or input, missing scope, unknown object, rejected mutation).
+// In a component they become a CancelError, so the engine does not retry them;
+// 429 and 5xx stay retryable. The status stays on the error for callers that
+// branch on it (auth.js).
+const PERMANENT_STATUSES = new Set([400, 403, 404, 422]);
+
+function permanentAsCancel(context, err) {
+
+    if (!err || !PERMANENT_STATUSES.has(err.statusCode) || typeof context.CancelError !== 'function') {
+        return err;
+    }
+    if (err instanceof context.CancelError) {
+        return err;
+    }
+    const cancel = new context.CancelError(err.message);
+    cancel.statusCode = err.statusCode;
+    cancel.statusMessage = err.statusMessage;
+    cancel.details = err.details;
+    return cancel;
+}
+
+// REST topic ('orders/create', 'draft_orders/update') → WebhookSubscriptionTopic enum.
+function toTopicEnum(topic) {
+
+    return String(topic).toUpperCase().replace(/\//g, '_');
+}
+
+const RUN_SHOPIFYQL = `query RunShopifyql($q: String!) {
+    shopifyqlQuery(query: $q) {
+        parseErrors
+        tableData { columns { name displayName dataType } rows }
+    }
+}`;
+
+const LIST_WEBHOOKS = `query ListWebhooks($uri: String!) {
+    webhookSubscriptions(first: 100, uri: $uri) { nodes { id topic } }
+}`;
+
+const CREATE_WEBHOOK = `mutation CreateWebhook($topic: WebhookSubscriptionTopic!, $webhookSubscription: WebhookSubscriptionInput!) {
+    webhookSubscriptionCreate(topic: $topic, webhookSubscription: $webhookSubscription) {
+        webhookSubscription { id }
+        userErrors { field message }
+    }
+}`;
+
+const DELETE_WEBHOOK = `mutation DeleteWebhook($id: ID!) {
+    webhookSubscriptionDelete(id: $id) { deletedWebhookSubscriptionId userErrors { field message } }
+}`;
+
+// Shopify retries a delivery it did not see acknowledged in time; the same
+// event id then arrives twice.
+const WEBHOOK_DEDUPE_TTL_MS = 10 * 60 * 1000;
 
 /**
  * Serialize an array of flat objects to CSV.

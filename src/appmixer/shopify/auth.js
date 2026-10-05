@@ -7,6 +7,10 @@ const EXPIRY_MARGIN_MS = 5 * 60 * 1000;
 
 const tokenUrl = context => `https://${commons.normalizeStore(context.store)}.myshopify.com/admin/oauth/access_token`;
 
+const SHOP_PROFILE = `query ShopProfile {
+    shop { id name email myshopifyDomain currencyCode ianaTimezone plan { publicDisplayName } }
+}`;
+
 // Shopify answers a token request either with an expiring offline token
 // ({ access_token, expires_in, refresh_token }) or, for apps that are still
 // allowed non-expiring tokens, with { access_token } alone.
@@ -64,7 +68,9 @@ module.exports = {
             'read_reports',
             'read_returns',
             'read_discounts',
-            'write_discounts'
+            'write_discounts',
+            'read_publications',
+            'write_publications'
         ],
 
         accountNameFromProfileInfo: context => {
@@ -119,19 +125,17 @@ module.exports = {
             }
         },
 
-        requestProfileInfo: context => {
+        // `name` is the account name (accountNameFromProfileInfo).
+        requestProfileInfo: async context => {
 
-            const shopify = commons.getShopifyAPI(context);
-
-            return shopify.shop.get();
+            const { shop } = await commons.graphql(context, SHOP_PROFILE);
+            return shop;
         },
 
         validateAccessToken: async context => {
 
-            const shopify = commons.getShopifyAPI(context);
-
             try {
-                await shopify.shop.get();
+                await commons.graphql(context, SHOP_PROFILE);
             } catch (err) {
                 if (err.statusCode === 401 || err.statusCode === 402 || err.statusCode === 403) {
                     throw new context.InvalidTokenError(err.statusMessage || 'Invalid Shopify access token.');

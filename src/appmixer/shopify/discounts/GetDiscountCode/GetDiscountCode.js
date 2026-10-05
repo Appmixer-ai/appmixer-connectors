@@ -1,8 +1,9 @@
 'use strict';
-const commons = require('../../lib');
+const lib = require('../../lib');
+const gqlDiscounts = require('../../gql-discounts');
 
 /**
- * Get an existing discount code together with the terms of its price rule.
+ * Get the discount a discount code belongs to.
  * @extends {Component}
  */
 module.exports = {
@@ -15,16 +16,13 @@ module.exports = {
             throw new context.CancelError('Discount Code is required!');
         }
 
-        const shopify = commons.getShopifyAPI(context);
         const trimmedCode = String(code).trim();
-        // The discount comes back with its terms (value, validity, usage limit)
-        // embedded as `price_rule`.
-        const discountCode = await shopify.discount.lookupCode(trimmedCode);
+        const discount = await gqlDiscounts(lib.runner(context)).getByCode(trimmedCode);
 
-        if (!discountCode) {
+        if (!discount) {
             throw new context.CancelError(`Discount code ${trimmedCode} was not found.`);
         }
 
-        return context.sendJson(discountCode, 'out');
+        return context.sendJson(discount, 'out');
     }
 };

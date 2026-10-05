@@ -1,453 +1,443 @@
 const assert = require('assert');
 const gqlProducts = require('../../gql-products');
-const { toRestProduct, toSearchQuery, toSort, toProductInput, decodeAttachment } = gqlProducts;
+const { flatten, buildSearchQuery, toProductInput, decodeAttachment, imageList, queries } = gqlProducts;
+
+const PNG_BASE64 = 'iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAIAAAAmkwkpAAAADklEQVR4nGNoQAIMxHEAcFIYAYPG8BkAAAAASUVORK5CYII=';
+const PRODUCT_GID = 'gid://shopify/Product/16347478065233';
 
 // Product as returned live by the 2026-10 Admin API (QA store), trimmed.
-function liveProduct() {
+function liveProduct(overrides = {}) {
 
     return {
-        id: 'gid://shopify/Product/16345061294161',
-        title: 'gql-probe B',
+        id: PRODUCT_GID,
+        legacyResourceId: '16347478065233',
+        title: 'gql4-probe A',
+        handle: 'gql4-probe-a',
         descriptionHtml: '<b>hi</b>',
-        vendor: 'gql-probe',
-        productType: 'Probe',
-        handle: 'gql-probe-b',
-        status: 'ACTIVE',
+        vendor: 'gql4-probe',
+        productType: 'Probe4',
+        status: 'DRAFT',
         tags: ['x', 'y z'],
+        createdAt: '2026-10-05T08:22:31Z',
+        updatedAt: '2026-10-05T08:22:33Z',
         publishedAt: null,
         templateSuffix: null,
-        createdAt: '2026-10-02T14:38:37Z',
-        updatedAt: '2026-10-02T14:38:39Z',
+        onlineStoreUrl: null,
+        totalInventory: 0,
+        tracksInventory: false,
+        hasOnlyDefaultVariant: true,
         seo: { title: null, description: null },
-        options: [{ id: 'gid://shopify/ProductOption/18957344014417', name: 'Title', position: 1, values: ['Default Title'] }],
+        category: null,
+        priceRangeV2: {
+            minVariantPrice: { amount: '0.0', currencyCode: 'USD' },
+            maxVariantPrice: { amount: '0.0', currencyCode: 'USD' }
+        },
+        options: [{ id: 'gid://shopify/ProductOption/18960245588049', name: 'Title', position: 1, values: ['Default Title'] }],
         variants: {
             nodes: [{
-                id: 'gid://shopify/ProductVariant/62790507298897',
+                id: 'gid://shopify/ProductVariant/62809874268241',
+                legacyResourceId: '62809874268241',
                 title: 'Default Title',
+                displayName: 'gql4-probe A - Default Title',
+                sku: null,
                 price: '0.00',
                 compareAtPrice: null,
-                sku: null,
                 position: 1,
                 inventoryPolicy: 'DENY',
                 inventoryQuantity: 0,
                 taxable: true,
-                createdAt: '2026-10-02T14:38:37Z',
-                updatedAt: '2026-10-02T14:38:38Z',
+                availableForSale: true,
+                createdAt: '2026-10-05T08:22:31Z',
+                updatedAt: '2026-10-05T08:22:31Z',
                 barcodes: { nodes: [] },
                 selectedOptions: [{ name: 'Title', value: 'Default Title' }],
                 inventoryItem: {
-                    id: 'gid://shopify/InventoryItem/64808416903249',
+                    id: 'gid://shopify/InventoryItem/64827969437777',
                     tracked: false,
                     requiresShipping: true,
                     measurement: { weight: { unit: 'POUNDS', value: 0 } }
-                },
-                media: { nodes: [] }
+                }
             }]
         },
         media: {
             nodes: [{
-                id: 'gid://shopify/MediaImage/73866459676753',
-                alt: '',
+                id: 'gid://shopify/MediaImage/73881115492433',
+                alt: 'ph',
                 mediaContentType: 'IMAGE',
                 status: 'READY',
-                createdAt: '2026-10-02T14:38:37Z',
-                updatedAt: '2026-10-02T14:38:39Z',
-                image: { url: 'https://cdn.shopify.com/s/files/1/1079/6174/5489/files/placeholder.png?v=1790951919', width: 480, height: 480 }
+                preview: { image: { url: 'https://cdn.shopify.com/s/files/1/1079/6174/5489/files/placeholder.png?v=1791188552', width: 480, height: 480 } }
             }]
-        }
+        },
+        ...overrides
     };
 }
 
-// Two option, two variant product; the second variant shows the image.
-function variantProduct() {
-
-    const product = liveProduct();
-    product.seo = { title: 'SEO title', description: 'SEO description' };
-    product.publishedAt = '2026-10-02T12:14:53Z';
-    product.options = [
-        { id: 'gid://shopify/ProductOption/1', name: 'Size', position: 1, values: ['S', 'M'] },
-        { id: 'gid://shopify/ProductOption/2', name: 'Color', position: 2, values: ['Red'] }
-    ];
-    const base = product.variants.nodes[0];
-    product.variants.nodes = [
-        {
-            ...base, id: 'gid://shopify/ProductVariant/11', title: 'S / Red', price: '9.99', compareAtPrice: '12.50', sku: 'SKU-S',
-            barcodes: { nodes: [{ value: '4006381333931' }] },
-            selectedOptions: [{ name: 'Color', value: 'Red' }, { name: 'Size', value: 'S' }],
-            inventoryItem: { ...base.inventoryItem, tracked: true, measurement: { weight: { unit: 'KILOGRAMS', value: 1.5 } } }
-        },
-        {
-            ...base, id: 'gid://shopify/ProductVariant/12', title: 'M / Red', position: 2, inventoryPolicy: 'CONTINUE',
-            selectedOptions: [{ name: 'Size', value: 'M' }, { name: 'Color', value: 'Red' }],
-            media: { nodes: [{ id: 'gid://shopify/MediaImage/73866459676753' }] }
-        }
-    ];
-    product.media.nodes.push({ id: 'gid://shopify/Video/5', alt: null, mediaContentType: 'VIDEO', status: 'READY' });
-    return product;
-}
-
-// Mock `run`: records each call and answers from the handler.
-function mockRun(handler) {
+// Fake `run`: records the calls and answers by operation name.
+function fakeRun(handlers) {
 
     const calls = [];
     const run = async (query, variables) => {
-        calls.push({ query, variables });
-        return handler(query, variables, calls.length - 1);
+        const name = query.match(/(?:query|mutation) (\w+)/)[1];
+        calls.push({ name, query, variables });
+        const handler = handlers[name];
+        if (!handler) throw new Error(`unexpected ${name}`);
+        return typeof handler === 'function' ? handler(variables, calls) : handler;
     };
-    run.calls = calls;
-    return run;
+    return { run, calls };
 }
 
-const noSleep = async () => {};
+const UPDATED = { productUpdate: { product: { id: PRODUCT_GID }, userErrors: [] } };
+const DELETED = { productDelete: { deletedProductId: PRODUCT_GID, userErrors: [] } };
 
-describe('Shopify GraphQL products', () => {
+const PUBLICATIONS_PAGE = {
+    publications: {
+        nodes: [
+            { id: 'gid://shopify/Publication/1', catalog: { title: 'Point of Sale', apps: { nodes: [{ handle: 'pos' }] } } },
+            { id: 'gid://shopify/Publication/2', catalog: { title: 'Online Store', apps: { nodes: [{ handle: 'online_store' }] } } }
+        ],
+        pageInfo: { hasNextPage: false, endCursor: null }
+    }
+};
 
-    describe('toRestProduct', () => {
+describe('gql-products', () => {
 
-        it('should map a live product to the REST shape', () => {
+    describe('flatten', () => {
 
-            const product = toRestProduct(liveProduct());
-
-            assert.strictEqual(product.id, 16345061294161);
-            assert.strictEqual(product.admin_graphql_api_id, 'gid://shopify/Product/16345061294161');
-            assert.strictEqual(product.body_html, '<b>hi</b>');
-            assert.strictEqual(product.product_type, 'Probe');
-            assert.strictEqual(product.status, 'active');
-            assert.strictEqual(product.tags, 'x, y z');
-            assert.strictEqual(product.published_at, null);
-            assert.strictEqual(product.metafields_global_title_tag, null);
-            assert.deepStrictEqual(product.options, [
-                { id: 18957344014417, product_id: 16345061294161, name: 'Title', position: 1, values: ['Default Title'] }
-            ]);
-
-            const [variant] = product.variants;
-            assert.deepStrictEqual(variant, {
-                id: 62790507298897,
-                product_id: 16345061294161,
-                title: 'Default Title',
-                price: '0.00',
-                compare_at_price: null,
-                sku: null,
-                position: 1,
-                inventory_policy: 'deny',
-                inventory_quantity: 0,
-                inventory_item_id: 64808416903249,
-                inventory_management: null,
-                barcode: null,
-                taxable: true,
-                requires_shipping: true,
-                grams: 0,
-                weight: 0,
-                weight_unit: 'lb',
-                option1: 'Default Title',
-                option2: null,
-                option3: null,
-                image_id: null,
-                created_at: '2026-10-02T14:38:37Z',
-                updated_at: '2026-10-02T14:38:38Z',
-                admin_graphql_api_id: 'gid://shopify/ProductVariant/62790507298897'
-            });
-
-            assert.strictEqual(product.images.length, 1);
-            assert.deepStrictEqual(product.images[0], {
-                id: 73866459676753,
-                product_id: 16345061294161,
-                position: 1,
-                alt: null,
-                width: 480,
-                height: 480,
-                src: 'https://cdn.shopify.com/s/files/1/1079/6174/5489/files/placeholder.png?v=1790951919',
-                variant_ids: [],
-                created_at: '2026-10-02T14:38:37Z',
-                updated_at: '2026-10-02T14:38:39Z',
-                admin_graphql_api_id: 'gid://shopify/MediaImage/73866459676753'
-            });
-            assert.strictEqual(product.image, product.images[0]);
+        it('should turn the connections into arrays and keep everything else', () => {
+            const product = flatten(liveProduct());
+            assert.strictEqual(product.id, PRODUCT_GID);
+            assert.strictEqual(product.legacyResourceId, '16347478065233');
+            assert.deepStrictEqual(product.tags, ['x', 'y z']);
+            assert.strictEqual(product.status, 'DRAFT');
+            assert.ok(Array.isArray(product.variants));
+            assert.deepStrictEqual(product.variants[0].barcodes, []);
+            assert.strictEqual(product.variants[0].price, '0.00');
+            assert.strictEqual(product.media[0].preview.image.width, 480);
         });
 
-        it('should map options by position, variant images, weights, SEO and skip non-image media', () => {
-
-            const product = toRestProduct(variantProduct());
-
-            assert.strictEqual(product.published_at, '2026-10-02T12:14:53Z');
-            assert.strictEqual(product.metafields_global_title_tag, 'SEO title');
-            assert.strictEqual(product.metafields_global_description_tag, 'SEO description');
-
-            const [small, medium] = product.variants;
-            assert.strictEqual(small.option1, 'S');
-            assert.strictEqual(small.option2, 'Red');
-            assert.strictEqual(small.option3, null);
-            assert.strictEqual(small.price, '9.99');
-            assert.strictEqual(small.compare_at_price, '12.50');
-            assert.strictEqual(small.barcode, '4006381333931');
-            assert.strictEqual(small.inventory_management, 'shopify');
-            assert.strictEqual(small.grams, 1500);
-            assert.strictEqual(small.weight_unit, 'kg');
-            assert.strictEqual(medium.option1, 'M');
-            assert.strictEqual(medium.inventory_policy, 'continue');
-            assert.strictEqual(medium.image_id, 73866459676753);
-
-            assert.strictEqual(product.images.length, 1);
-            assert.deepStrictEqual(product.images[0].variant_ids, [12]);
-        });
-
-        it('should return null for a missing product and an empty image list without media', () => {
-
-            assert.strictEqual(toRestProduct(null), null);
-            const product = liveProduct();
-            product.media = { nodes: [] };
-            const rest = toRestProduct(product);
-            assert.deepStrictEqual(rest.images, []);
-            assert.strictEqual(rest.image, null);
+        it('should give empty arrays for missing connections', () => {
+            const product = flatten({ id: PRODUCT_GID });
+            assert.deepStrictEqual(product.variants, []);
+            assert.deepStrictEqual(product.media, []);
         });
     });
 
-    describe('filters', () => {
+    describe('buildSearchQuery', () => {
 
-        it('should translate the CountProducts input to search syntax', () => {
-
-            const query = toSearchQuery({
-                vendor: 'Acme "Co"',
-                product_type: 'Shoes',
-                collection_id: '703179849809',
-                created_at_min: '2026-01-01T00:00:00Z',
-                created_at_max: '2026-02-01T00:00:00Z',
-                updated_at_min: '',
-                updated_at_max: null,
-                published_at_min: '2026-01-05',
-                published_status: 'published'
-            });
-
-            assert.strictEqual(query, 'vendor:"Acme \\"Co\\"" AND product_type:"Shoes" AND collection_id:"703179849809"'
-                + ' AND created_at:>="2026-01-01T00:00:00Z" AND created_at:<="2026-02-01T00:00:00Z"'
-                + ' AND published_at:>="2026-01-05" AND published_status:"published"');
+        it('should return undefined without filters', () => {
+            assert.strictEqual(buildSearchQuery({}), undefined);
+            assert.strictEqual(buildSearchQuery({ vendor: '', status: '  ' }), undefined);
         });
 
-        it('should drop published_status any and empty filters', () => {
-
-            assert.strictEqual(toSearchQuery({ published_status: 'any', vendor: '' }), undefined);
-            assert.strictEqual(toSearchQuery({}), undefined);
+        it('should AND the query with quoted filters', () => {
+            assert.strictEqual(buildSearchQuery({
+                query: 'title:shirt*',
+                vendor: 'Acme "Best"',
+                productType: 'T-Shirts',
+                status: 'ACTIVE',
+                collectionId: 'gid://shopify/Collection/703179849809',
+                tag: 'summer'
+            }), '(title:shirt*) AND vendor:"Acme \\"Best\\"" AND product_type:"T-Shirts" AND status:"active"'
+                + ' AND collection_id:"703179849809" AND tag:"summer"');
         });
 
-        it('should translate ids, since_id and status lists', () => {
-
-            assert.strictEqual(
-                toSearchQuery({ ids: '1, gid://shopify/Product/2', since_id: 5, status: 'active,DRAFT' }),
-                '(id:"1" OR id:"2") AND id:>"5" AND (status:"active" OR status:"draft")'
-            );
+        it('should OR several statuses', () => {
+            assert.strictEqual(buildSearchQuery({ status: 'ACTIVE, draft' }), '(status:"active" OR status:"draft")');
         });
 
-        it('should translate REST order to sortKey and reverse', () => {
+        it('should turn date ranges into ISO timestamps', () => {
+            assert.strictEqual(buildSearchQuery({
+                createdAtMin: '2026-10-05T00:00:00Z',
+                createdAtMax: '2026-10-06',
+                updatedAtMin: '2026-10-05T10:00:00+02:00',
+                updatedAtMax: '2030-01-01T00:00:00.000Z'
+            }), 'created_at:>="2026-10-05T00:00:00.000Z" AND created_at:<="2026-10-06T00:00:00.000Z"'
+                + ' AND updated_at:>="2026-10-05T08:00:00.000Z" AND updated_at:<="2030-01-01T00:00:00.000Z"');
+        });
 
-            assert.deepStrictEqual(toSort('created_at DESC'), { sortKey: 'CREATED_AT', reverse: true });
-            assert.deepStrictEqual(toSort('updated_at desc'), { sortKey: 'UPDATED_AT', reverse: true });
-            assert.deepStrictEqual(toSort('title'), { sortKey: 'TITLE', reverse: false });
-            assert.deepStrictEqual(toSort('unknown DESC'), {});
-            assert.deepStrictEqual(toSort(undefined), {});
+        it('should reject an invalid date', () => {
+            assert.throws(() => buildSearchQuery({ createdAtMin: 'yesterday-ish' }), /Created After is not a valid date/);
         });
     });
 
     describe('toProductInput', () => {
 
-        it('should map the CreateProduct payload and published to status', () => {
-
+        it('should map the inputs and leave empty ones out', () => {
             assert.deepStrictEqual(toProductInput({
-                title: 'Shoe', vendor: 'Acme', tags: 'a, b', published: true, body_html: '<p>x</p>', product_type: 'Shoes', images: []
-            }), {
-                title: 'Shoe', vendor: 'Acme', descriptionHtml: '<p>x</p>', productType: 'Shoes', tags: ['a', 'b'], status: 'ACTIVE'
-            });
-            assert.strictEqual(toProductInput({ published: false }).status, 'DRAFT');
-            assert.strictEqual(toProductInput({ published: 'false' }).status, 'DRAFT');
-            assert.strictEqual(toProductInput({ published: true, status: 'archived' }).status, 'ARCHIVED');
-            assert.strictEqual(toProductInput({}).status, undefined);
-            assert.deepStrictEqual(toProductInput({ metafields_global_title_tag: 'T' }).seo, { title: 'T' });
+                title: 'T', descriptionHtml: '<p>d</p>', vendor: '', productType: 'P', tags: 'a, b ,', status: 'draft',
+                publishToOnlineStore: true, images: { ADD: [] }
+            }), { title: 'T', descriptionHtml: '<p>d</p>', productType: 'P', tags: ['a', 'b'], status: 'DRAFT' });
+            assert.deepStrictEqual(toProductInput({}), {});
+        });
+    });
+
+    describe('imageList', () => {
+
+        it('should accept the expression shape and arrays', () => {
+            assert.deepStrictEqual(imageList({ ADD: [{ url: 'u' }] }), [{ url: 'u' }]);
+            assert.deepStrictEqual(imageList([{ url: 'u' }]), [{ url: 'u' }]);
+            assert.deepStrictEqual(imageList(undefined), []);
+            assert.deepStrictEqual(imageList('x'), []);
         });
     });
 
     describe('decodeAttachment', () => {
 
-        it('should detect the image type from the data', () => {
+        it('should detect PNG from base64 and from a data URL', () => {
+            assert.strictEqual(decodeAttachment(PNG_BASE64).mimeType, 'image/png');
+            const decoded = decodeAttachment('data:image/png;base64,' + PNG_BASE64);
+            assert.strictEqual(decoded.extension, 'png');
+            assert.ok(decoded.buffer.length > 0);
+        });
 
-            const png = Buffer.from('89504e470d0a1a0a0000000d49484452', 'hex').toString('base64');
-            assert.strictEqual(decodeAttachment(png).mimeType, 'image/png');
-            assert.strictEqual(decodeAttachment(`data:image/png;base64,${png}`).extension, 'png');
-            assert.strictEqual(decodeAttachment(Buffer.from('GIF89a....').toString('base64')).mimeType, 'image/gif');
-            assert.strictEqual(decodeAttachment(Buffer.from('ffd8ffe0', 'hex').toString('base64')).mimeType, 'image/jpeg');
+        it('should reject empty data', () => {
+            assert.throws(() => decodeAttachment(''), /empty or not valid base64/);
         });
     });
 
-    describe('methods', () => {
+    describe('get', () => {
 
-        it('get() should query by gid and throw 404 when the product does not exist', async () => {
-
-            const run = mockRun((query, variables) => ({ product: variables.id.endsWith('/1') ? null : liveProduct() }));
-            const api = gqlProducts(run);
-
-            const product = await api.get(16345061294161, { fields: 'id,images' });
-            assert.strictEqual(product.id, 16345061294161);
-            assert.strictEqual(product.images.length, 1);
-            assert.deepStrictEqual(run.calls[0].variables, { id: 'gid://shopify/Product/16345061294161' });
-
-            await assert.rejects(api.get(1), error => error.statusCode === 404);
+        it('should query by gid built from a numeric id and flatten', async () => {
+            const { run, calls } = fakeRun({ GetProduct: { product: liveProduct() } });
+            const product = await gqlProducts(run).get('16347478065233');
+            assert.strictEqual(calls[0].variables.id, PRODUCT_GID);
+            assert.ok(Array.isArray(product.variants));
         });
 
-        it('list() should translate limit/order, return variants for the picker and page by cursor', async () => {
-
-            const run = mockRun(() => ({
-                products: {
-                    nodes: [variantProduct()],
-                    pageInfo: { hasNextPage: true, endCursor: 'cursor-1' }
-                }
-            }));
-            const api = gqlProducts(run);
-
-            const page = await api.list({ limit: 1, order: 'created_at DESC' });
-            assert.deepStrictEqual(run.calls[0].variables, { first: 1, sortKey: 'CREATED_AT', reverse: true });
-            assert.strictEqual(page.length, 1);
-            assert.strictEqual(page[0].title, 'gql-probe B');
-            assert.deepStrictEqual(page[0].variants.map(v => [v.id, v.title]), [[11, 'S / Red'], [12, 'M / Red']]);
-            assert.deepStrictEqual(page.nextPageParameters, { limit: 1, order: 'created_at DESC', after: 'cursor-1' });
-
-            await api.list(page.nextPageParameters);
-            assert.strictEqual(run.calls[1].variables.after, 'cursor-1');
+        it('should throw 404 when the product does not exist', async () => {
+            const { run } = fakeRun({ GetProduct: { product: null } });
+            await assert.rejects(gqlProducts(run).get(PRODUCT_GID), err => err.statusCode === 404);
         });
 
-        it('list() should cap the page at 50 and pass the search query', async () => {
-
-            const run = mockRun(() => ({ products: { nodes: [], pageInfo: { hasNextPage: false, endCursor: null } } }));
-            const page = await gqlProducts(run).list({ limit: 250, vendor: 'Acme' });
-
-            assert.deepStrictEqual(run.calls[0].variables, { first: 50, query: 'vendor:"Acme"' });
-            assert.deepStrictEqual(page, []);
-            assert.strictEqual(page.nextPageParameters, undefined);
+        it('should return null from getOrNull when the product does not exist', async () => {
+            const { run } = fakeRun({ GetProduct: { product: null } });
+            assert.strictEqual(await gqlProducts(run).getOrNull(PRODUCT_GID), null);
         });
+    });
 
-        it('count() should pass the filter and return the number', async () => {
+    describe('find', () => {
 
-            const run = mockRun(() => ({ productsCount: { count: 8 } }));
-            const api = gqlProducts(run);
-
-            assert.strictEqual(await api.count({ collection_id: '703179849809', published_status: 'any' }), 8);
-            assert.deepStrictEqual(run.calls[0].variables, { query: 'collection_id:"703179849809"' });
-            assert.strictEqual(await api.count(), 8);
-            assert.deepStrictEqual(run.calls[1].variables, {});
-        });
-
-        it('create() should stage base64 attachments, add src images and wait for media processing', async () => {
-
-            const processing = liveProduct();
-            processing.media.nodes[0] = { ...processing.media.nodes[0], status: 'PROCESSING', image: null };
-            const uploads = [];
-
-            const run = mockRun((query) => {
-                if (query.includes('stagedUploadsCreate')) {
+        it('should page by 50 up to 250 products with query, sort and reverse', async () => {
+            let page = 0;
+            const { run, calls } = fakeRun({
+                FindProducts: () => {
+                    page++;
                     return {
-                        stagedUploadsCreate: {
-                            stagedTargets: [{
-                                url: 'https://shopify-staged-uploads.storage.googleapis.com/tmp/1/image.png?X-Goog-Signature=x',
-                                resourceUrl: 'https://shopify-staged-uploads.storage.googleapis.com/tmp/1/image.png',
-                                parameters: [{ name: 'content_type', value: 'image/png' }, { name: 'acl', value: 'private' }]
-                            }],
-                            userErrors: []
+                        products: {
+                            nodes: Array.from({ length: 50 }, () => liveProduct()),
+                            pageInfo: { hasNextPage: true, endCursor: 'c' + page }
                         }
                     };
                 }
-                if (query.includes('productCreate')) {
-                    return { productCreate: { product: processing, userErrors: [] } };
+            });
+            const products = await gqlProducts(run).find({ vendor: 'Acme', sortKey: 'CREATED_AT', reverse: true });
+            assert.strictEqual(products.length, 250);
+            assert.strictEqual(calls.length, 5);
+            assert.deepStrictEqual(calls[0].variables, {
+                first: 50, after: null, query: 'vendor:"Acme"', sortKey: 'CREATED_AT', reverse: true
+            });
+            assert.strictEqual(calls[1].variables.after, 'c1');
+        });
+
+        it('should stop at the last page and send nulls for no filters', async () => {
+            const { run, calls } = fakeRun({
+                FindProducts: {
+                    products: { nodes: [liveProduct()], pageInfo: { hasNextPage: false, endCursor: null } }
                 }
-                return { product: liveProduct() };
             });
-            const putFile = async (url, buffer, headers) => uploads.push({ url, buffer, headers });
-            const api = gqlProducts(run, { putFile, sleep: noSleep });
+            const products = await gqlProducts(run).find();
+            assert.strictEqual(products.length, 1);
+            assert.deepStrictEqual(calls[0].variables,
+                { first: 50, after: null, query: null, sortKey: null, reverse: false });
+        });
 
-            const png = Buffer.from('89504e470d0a1a0a', 'hex').toString('base64');
+        it('should keep the Find selection within the query cost limit (100 variants, 50 media)', () => {
+            assert.ok(queries.FIND_PRODUCTS.includes('variants: variants(first: 100)'));
+            assert.ok(queries.FIND_PRODUCTS.includes('media: media(first: 50)'));
+        });
+    });
+
+    describe('recent', () => {
+
+        it('should ask for the newest products by the sort key', async () => {
+            const { run, calls } = fakeRun({
+                FindProducts: { products: { nodes: [liveProduct()], pageInfo: { hasNextPage: false } } }
+            });
+            const products = await gqlProducts(run).recent('UPDATED_AT', 10);
+            assert.deepStrictEqual(calls[0].variables, { first: 10, sortKey: 'UPDATED_AT', reverse: true });
+            assert.ok(Array.isArray(products[0].media));
+        });
+    });
+
+    describe('count', () => {
+
+        it('should count with the same filters as find', async () => {
+            const { run, calls } = fakeRun({ CountProducts: { productsCount: { count: 7 } } });
+            assert.strictEqual(await gqlProducts(run).count({ tag: 'summer', outputType: 'array' }), 7);
+            assert.deepStrictEqual(calls[0].variables, { query: 'tag:"summer"' });
+        });
+
+        it('should send a null query without filters', async () => {
+            const { run, calls } = fakeRun({ CountProducts: { productsCount: { count: 24 } } });
+            assert.strictEqual(await gqlProducts(run).count({}), 24);
+            assert.deepStrictEqual(calls[0].variables, { query: null });
+        });
+    });
+
+    describe('create', () => {
+
+        it('should create with URL and base64 images, wait for media, and return the product', async () => {
+            const puts = [];
+            let gets = 0;
+            const { run, calls } = fakeRun({
+                StagedUpload: {
+                    stagedUploadsCreate: {
+                        stagedTargets: [{ url: 'https://upload.example/put', resourceUrl: 'https://upload.example/res', parameters: [] }],
+                        userErrors: []
+                    }
+                },
+                CreateProduct: { productCreate: { product: { id: PRODUCT_GID }, userErrors: [] } },
+                GetProduct: () => {
+                    gets++;
+                    const status = gets === 1 ? 'PROCESSING' : 'READY';
+                    return { product: liveProduct({ media: { nodes: [{ id: 'm', mediaContentType: 'IMAGE', status }] } }) };
+                }
+            });
+            const api = gqlProducts(run, {
+                putFile: async (url, data, headers) => puts.push({ url, size: data.length, headers }),
+                sleep: async () => {}
+            });
+
             const product = await api.create({
-                title: 'Shoe', vendor: 'Acme', tags: 'a', published: true, body_html: '<p>x</p>', product_type: 'Shoes',
-                images: [{ attachment: png, position: 2 }, { src: 'https://example.com/a.png', position: 1 }]
+                title: 'T',
+                status: 'DRAFT',
+                images: { ADD: [{ url: 'https://img.example/a.png', alt: 'A' }, { attachment: PNG_BASE64 }, {}] }
             });
 
-            assert.deepStrictEqual(run.calls[0].variables.input, [{
-                resource: 'IMAGE', filename: 'image.png', mimeType: 'image/png', httpMethod: 'PUT', fileSize: '8'
-            }]);
-            assert.strictEqual(uploads.length, 1);
-            assert.deepStrictEqual(uploads[0].headers, { 'Content-Type': 'image/png' });
-            assert.strictEqual(uploads[0].buffer.toString('base64'), png);
-
-            assert.deepStrictEqual(run.calls[1].variables, {
-                product: { title: 'Shoe', vendor: 'Acme', descriptionHtml: '<p>x</p>', productType: 'Shoes', tags: ['a'], status: 'ACTIVE' },
+            const create = calls.find(call => call.name === 'CreateProduct');
+            assert.deepStrictEqual(create.variables, {
+                product: { title: 'T', status: 'DRAFT' },
                 media: [
-                    { originalSource: 'https://example.com/a.png', mediaContentType: 'IMAGE' },
-                    { originalSource: 'https://shopify-staged-uploads.storage.googleapis.com/tmp/1/image.png', mediaContentType: 'IMAGE' }
+                    { originalSource: 'https://img.example/a.png', mediaContentType: 'IMAGE', alt: 'A' },
+                    { originalSource: 'https://upload.example/res', mediaContentType: 'IMAGE' }
                 ]
             });
-            // Media were still processing → product re-read once.
-            assert.strictEqual(run.calls.length, 3);
-            assert.ok(run.calls[2].query.includes('product(id: $id)'));
-            assert.strictEqual(product.image.src, 'https://cdn.shopify.com/s/files/1/1079/6174/5489/files/placeholder.png?v=1790951919');
+            const staged = calls.find(call => call.name === 'StagedUpload');
+            assert.strictEqual(staged.variables.input[0].mimeType, 'image/png');
+            assert.strictEqual(staged.variables.input[0].httpMethod, 'PUT');
+            assert.deepStrictEqual(puts[0].headers, { 'Content-Type': 'image/png' });
+            assert.strictEqual(gets, 2);
+            assert.strictEqual(product.media[0].status, 'READY');
+            assert.ok(!calls.some(call => call.name === 'Publications'));
         });
 
-        it('create() should reject attachments when no uploader is available', async () => {
-
-            const run = mockRun(() => assert.fail('no GraphQL call expected'));
-            await assert.rejects(
-                gqlProducts(run).create({ title: 'x', images: [{ attachment: 'iVBORw0KGgo=' }] }),
-                error => error.statusCode === 422 && /src/.test(error.message)
-            );
+        it('should fail a base64 image without an upload function', async () => {
+            const { run } = fakeRun({});
+            await assert.rejects(gqlProducts(run).create({ title: 'T', images: [{ attachment: PNG_BASE64 }] }), /need a file upload/);
         });
 
-        it('create() should turn userErrors into a 422', async () => {
-
-            const run = mockRun(() => ({
-                productCreate: { product: null, userErrors: [{ field: ['title'], message: 'Title can\'t be blank' }] }
-            }));
-            await assert.rejects(
-                gqlProducts(run).create({ title: '' }),
-                error => error.statusCode === 422 && /title: Title can't be blank/.test(error.message)
-            );
-        });
-
-        it('update() should add only new images and keep existing ones', async () => {
-
-            const run = mockRun(() => ({ productUpdate: { product: liveProduct(), userErrors: [] } }));
-            const api = gqlProducts(run, { sleep: noSleep });
-
-            const existing = toRestProduct(liveProduct()).images;
-            const product = await api.update('16345061294161', {
-                id: '16345061294161', title: 'New', published: true,
-                images: existing.concat([{ src: 'https://example.com/b.png' }])
+        it('should publish to the Online Store publication', async () => {
+            const { run, calls } = fakeRun({
+                CreateProduct: { productCreate: { product: { id: PRODUCT_GID }, userErrors: [] } },
+                Publications: PUBLICATIONS_PAGE,
+                Publish: { publishablePublish: { userErrors: [] } },
+                GetProduct: { product: liveProduct({ publishedAt: '2026-10-05T08:30:00Z' }) }
             });
+            const product = await gqlProducts(run).create({ title: 'T', publishToOnlineStore: true });
+            const publish = calls.find(call => call.name === 'Publish');
+            assert.deepStrictEqual(publish.variables, { id: PRODUCT_GID, input: [{ publicationId: 'gid://shopify/Publication/2' }] });
+            assert.ok(publish.query.includes('publishablePublish'));
+            assert.strictEqual(product.publishedAt, '2026-10-05T08:30:00Z');
+        });
 
-            assert.deepStrictEqual(run.calls[0].variables, {
-                product: { title: 'New', status: 'ACTIVE', id: 'gid://shopify/Product/16345061294161' },
-                media: [{ originalSource: 'https://example.com/b.png', mediaContentType: 'IMAGE' }]
+        it('should find the Online Store by catalog title on a later page', async () => {
+            const { run, calls } = fakeRun({
+                Publications: variables => variables.after
+                    ? { publications: { nodes: [{ id: 'gid://shopify/Publication/9', catalog: { title: 'Online Store' } }], pageInfo: { hasNextPage: false } } }
+                    : { publications: { nodes: [{ id: 'gid://shopify/Publication/1', catalog: null }], pageInfo: { hasNextPage: true, endCursor: 'p1' } } }
             });
-            assert.strictEqual(product.title, 'gql-probe B');
+            assert.strictEqual(await gqlProducts(run).onlineStorePublicationId(), 'gid://shopify/Publication/9');
+            assert.strictEqual(calls.length, 2);
         });
 
-        it('update() should not send media when there is nothing new', async () => {
-
-            const run = mockRun(() => ({ productUpdate: { product: liveProduct(), userErrors: [] } }));
-            await gqlProducts(run).update(1, { vendor: 'V' });
-            assert.deepStrictEqual(run.calls[0].variables, { product: { vendor: 'V', id: 'gid://shopify/Product/1' } });
+        it('should fail when the store has no Online Store', async () => {
+            const { run } = fakeRun({
+                Publications: { publications: { nodes: [], pageInfo: { hasNextPage: false } } }
+            });
+            await assert.rejects(gqlProducts(run).onlineStorePublicationId(), /no Online Store/);
         });
 
-        it('update() and delete() should map "Product does not exist" to 404', async () => {
-
-            const notFound = { userErrors: [{ field: ['id'], message: 'Product does not exist' }] };
-            const run = mockRun(query => (query.includes('productDelete')
-                ? { productDelete: { deletedProductId: null, ...notFound } }
-                : { productUpdate: { product: null, ...notFound } }));
-            const api = gqlProducts(run);
-
-            await assert.rejects(api.update(1, { title: 'x' }), error => error.statusCode === 404);
-            await assert.rejects(api.delete(1), error => error.statusCode === 404);
-            assert.deepStrictEqual(run.calls[1].variables, { input: { id: 'gid://shopify/Product/1' } });
+        it('should delete the new product when publishing fails (no publications access)', async () => {
+            const denied = Object.assign(new Error('Access denied for publications field.'), { statusCode: 403 });
+            const { run, calls } = fakeRun({
+                CreateProduct: { productCreate: { product: { id: PRODUCT_GID }, userErrors: [] } },
+                Publications: () => { throw denied; },
+                DeleteProduct: { productDelete: { deletedProductId: PRODUCT_GID, userErrors: [] } }
+            });
+            await assert.rejects(gqlProducts(run).create({ title: 'T', publishToOnlineStore: true }),
+                err => err.statusCode === 403 && /the product was not created: Access denied/.test(err.message));
+            const deleted = calls.find(call => call.name === 'DeleteProduct');
+            assert.deepStrictEqual(deleted.variables, { input: { id: PRODUCT_GID } });
         });
 
-        it('delete() should return an empty object', async () => {
+        it('should throw 422 on userErrors', async () => {
+            const { run } = fakeRun({
+                CreateProduct: { productCreate: { product: null, userErrors: [{ field: ['title'], message: "Title can't be blank" }] } }
+            });
+            await assert.rejects(gqlProducts(run).create({ title: ' ' }), err => err.statusCode === 422);
+        });
+    });
 
-            const run = mockRun(() => ({ productDelete: { deletedProductId: 'gid://shopify/Product/1', userErrors: [] } }));
-            assert.deepStrictEqual(await gqlProducts(run).delete('1'), {});
+    describe('update', () => {
+
+        it('should update the given fields and add images', async () => {
+            const { run, calls } = fakeRun({ UpdateProduct: UPDATED });
+            const result = await gqlProducts(run).update('16347478065233', {
+                title: 'New', tags: 'q', images: { ADD: [{ url: 'https://img.example/b.png' }] }
+            });
+            assert.strictEqual(result, undefined);
+            assert.deepStrictEqual(calls[0].variables, {
+                product: { title: 'New', tags: ['q'], id: PRODUCT_GID },
+                media: [{ originalSource: 'https://img.example/b.png', mediaContentType: 'IMAGE' }]
+            });
+        });
+
+        it('should only publish when nothing else changes', async () => {
+            const { run, calls } = fakeRun({
+                Publications: PUBLICATIONS_PAGE,
+                Publish: { publishablePublish: { userErrors: [] } }
+            });
+            await gqlProducts(run).update(PRODUCT_GID, { publishToOnlineStore: true });
+            assert.deepStrictEqual(calls.map(call => call.name), ['Publications', 'Publish']);
+        });
+
+        it('should not unpublish when the toggle is off', async () => {
+            const { run, calls } = fakeRun({ UpdateProduct: UPDATED });
+            await gqlProducts(run).update(PRODUCT_GID, { title: 'x', publishToOnlineStore: false });
+            assert.deepStrictEqual(calls.map(call => call.name), ['UpdateProduct']);
+        });
+
+        it('should answer a missing product with 404', async () => {
+            const { run } = fakeRun({
+                UpdateProduct: { productUpdate: { product: null, userErrors: [{ field: ['id'], message: 'Product does not exist' }] } }
+            });
+            await assert.rejects(gqlProducts(run).update(PRODUCT_GID, { title: 'x' }), err => err.statusCode === 404);
+        });
+    });
+
+    describe('delete', () => {
+
+        it('should delete by gid', async () => {
+            const { run, calls } = fakeRun({ DeleteProduct: DELETED });
+            await gqlProducts(run).delete('16347478065233');
+            assert.deepStrictEqual(calls[0].variables, { input: { id: PRODUCT_GID } });
+        });
+
+        it('should answer a missing product with 404', async () => {
+            const { run } = fakeRun({
+                DeleteProduct: { productDelete: { deletedProductId: null, userErrors: [{ field: ['id'], message: 'Product does not exist' }] } }
+            });
+            await assert.rejects(gqlProducts(run).delete(PRODUCT_GID), err => err.statusCode === 404);
         });
     });
 });

@@ -1,12 +1,13 @@
 'use strict';
-const commons = require('../../lib');
+const lib = require('../../lib');
+const gqlDiscounts = require('../../gql-discounts');
 
 // Unambiguous alphabet — no I/O/0/1 — so a generated code survives being read
 // off a screen or dictated over the phone.
 const CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const GENERATED_CODE_LENGTH = 8;
 
-// Shopify has no "generate a code for me" endpoint: the code string is always
+// Shopify has no "generate a code for me" option: the code string is always
 // supplied by the caller, so build one when the user left the field empty.
 function generateCode() {
 
@@ -18,7 +19,8 @@ function generateCode() {
 }
 
 /**
- * Generate a discount code together with the price rule holding its terms.
+ * Create a basic code discount (a percentage or a fixed amount off the order)
+ * with one discount code.
  * @extends {Component}
  */
 module.exports = {
@@ -30,11 +32,11 @@ module.exports = {
             value,
             code,
             title,
-            prerequisiteSubtotalRange,
+            minimumSubtotal,
             startsAt,
             endsAt,
             usageLimit,
-            oncePerCustomer
+            appliesOncePerCustomer
         } = context.messages.in.content;
 
         if (!valueType) {
@@ -44,8 +46,6 @@ module.exports = {
             throw new context.CancelError('Discount Value is required!');
         }
 
-        // The UI asks for a positive number; the API expects the discount as a
-        // negative value.
         const amount = Math.abs(Number(value));
         if (!Number.isFinite(amount) || amount === 0) {
             throw new context.CancelError('Discount Value must be a non-zero number!');
@@ -56,21 +56,18 @@ module.exports = {
 
         const discountCode = code ? String(code).trim() : generateCode();
 
-        const shopify = commons.getShopifyAPI(context);
-        // One mutation creates the discount terms and the code together, so a
-        // refused code (typically a duplicate) leaves no orphaned discount behind.
-        const created = await shopify.discount.createBasicCode({
+        const discount = await gqlDiscounts(lib.runner(context)).createBasicCode({
             code: discountCode,
-            title: title || discountCode,
+            title,
             valueType,
-            amount,
-            startsAt: startsAt || new Date().toISOString(),
+            value: amount,
+            startsAt,
             endsAt,
             usageLimit,
-            oncePerCustomer: !!oncePerCustomer,
-            minimumSubtotal: prerequisiteSubtotalRange || undefined
+            appliesOncePerCustomer,
+            minimumSubtotal
         });
 
-        return context.sendJson(created, 'out');
+        return context.sendJson(discount, 'out');
     }
 };
