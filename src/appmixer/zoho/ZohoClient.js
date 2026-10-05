@@ -2,31 +2,38 @@
 'use strict';
 const moment = require('moment');
 const check = require('check-types');
-const { apiEndpoint } = require('./endpoints');
+const { resolveApiDomain } = require('./endpoints');
+
+// Methods whose requests never carry a body.
+const BODYLESS_METHODS = new Set(['GET', 'HEAD', 'DELETE']);
 
 class ZohoClient {
 
     /**
      * @param {*} context Component context
-     * @param {string} [regionAuth] Region from global variable in auth.js
+     * @param {{ region?: string, apiDomain?: string }|string} [dataCenterAuth] Data center of an account
+     *   being connected, from auth.js (older copies of auth.js pass the region as a string). Used
+     *   only when the account's profileInfo does not carry one.
      * @param {Object} [options]
      * @param {string} [options.apiVersion] Zoho CRM API version used to build request paths.
      *   Defaults to 'v2' so existing components keep their behaviour. Newer components opt into
      *   a higher version when they need features v2 does not have (e.g. the Appointments module,
      *   or the greater_equal/less_equal/between search comparators, which v2 rejects).
      */
-    constructor(context, regionAuth, { apiVersion = 'v2' } = {}) {
+    constructor(context, dataCenterAuth, { apiVersion = 'v2' } = {}) {
 
         // context.auth.accessToken for component calls
         // context.accessToken for calls from auth.js
         const accessToken = context.auth?.accessToken || context.accessToken;
-        const region = context.profileInfo?.region || regionAuth;
+        const profileInfo = context.profileInfo;
+        // Older copies of auth.js pass the region as a plain string.
+        const dataCenterOfAuth = typeof dataCenterAuth === 'string' ? { region: dataCenterAuth } : dataCenterAuth;
+        const dataCenter = (profileInfo?.apiDomain || profileInfo?.region) ? profileInfo : dataCenterOfAuth;
 
         check.assert.string(accessToken, `Missing accessToken: ${accessToken}.`);
-        check.assert.string(region, `Missing region: ${region}.`);
 
         this.apiVersion = apiVersion;
-        const apiUrl = apiEndpoint(region);
+        const apiUrl = resolveApiDomain(dataCenter);
         this.client = context.httpRequest.create({
             baseURL: apiUrl,
             timeout: 6 * 1000,
@@ -240,9 +247,21 @@ class ZohoClient {
             method,
             url,
             headers,
-            data,
             params
         };
+
+        // GET, HEAD and DELETE must go out without a body. Axios serializes even an empty
+        // object to '{}' (Content-Length: 2); Zoho does not read it, so on a reused keep-alive
+        // connection those bytes desync the stream and the next response fails to parse with
+        // 'Parse Error: Expected HTTP/' (HPE_INVALID_CONSTANT). The connector's DELETEs pass
+        // their arguments as query parameters and never have a body to send.
+        //
+        // POST/PUT keep the defaulted '{}': three Books components (MarkAsSent, MarkAsDraft,
+        // VoidInvoice) POST to a status endpoint with parameters only, and a body-less POST
+        // is a different request than the one they send today.
+        if (!BODYLESS_METHODS.has(String(method || 'GET').toUpperCase())) {
+            request.data = data;
+        }
 
         return this.client(request)
             .then(response => response.data)
