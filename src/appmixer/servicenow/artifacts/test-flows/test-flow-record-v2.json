@@ -1,6 +1,6 @@
 {
     "name": "E2E ServiceNow - Record Create/Update v2",
-    "description": "Creates an incident with CreateRecordV2, updates it with UpdateRecordV2 and deletes it.",
+    "description": "Creates an incident with CreateRecordV2 (asserts sys_id), sets short_description and description with UpdateRecordV2 and deletes it. CreateRecordV2 sets no fields here: the engine drops the dynamic-inspector fields of CreateRecordV2 from the transform when the flow is saved.",
     "flow": {
         "2f098c1d-484c-4321-bf61-89722a157899": {
             "type": "appmixer.utils.controls.OnStart",
@@ -36,19 +36,10 @@
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
-                                    "sysparm_fields": {},
-                                    "short_description": {
-                                        "fef03359-7863-4bbb-84b3-af2174d0d1ed": {
-                                            "variable": "$.2f098c1d-484c-4321-bf61-89722a157899.out.started",
-                                            "functions": []
-                                        }
-                                    },
-                                    "description": {}
+                                    "sysparm_fields": {}
                                 },
                                 "lambda": {
-                                    "sysparm_fields": "short_description,description",
-                                    "short_description": "E2E ServiceNow v2 {{{fef03359-7863-4bbb-84b3-af2174d0d1ed}}}",
-                                    "description": "Created by the Appmixer E2E test flow."
+                                    "sysparm_fields": "short_description,description"
                                 }
                             }
                         }
@@ -83,10 +74,6 @@
                                         "8de384a0-df32-449b-9110-0eeb5cb8224a": {
                                             "variable": "$.54a858aa-e11b-418c-b6f7-deff6837e7b5.out.sys_id",
                                             "functions": []
-                                        },
-                                        "1d5921c5-9b87-4e5e-a9f9-6cea29c28df6": {
-                                            "variable": "$.54a858aa-e11b-418c-b6f7-deff6837e7b5.out.short_description",
-                                            "functions": []
                                         }
                                     }
                                 },
@@ -96,11 +83,6 @@
                                             {
                                                 "field": "{{{8de384a0-df32-449b-9110-0eeb5cb8224a}}}",
                                                 "assertion": "notEmpty"
-                                            },
-                                            {
-                                                "field": "{{{1d5921c5-9b87-4e5e-a9f9-6cea29c28df6}}}",
-                                                "assertion": "regex",
-                                                "regex": "^E2E ServiceNow v2 "
                                             }
                                         ]
                                     }
@@ -149,12 +131,14 @@
                                             "variable": "$.2f098c1d-484c-4321-bf61-89722a157899.out.started",
                                             "functions": []
                                         }
-                                    }
+                                    },
+                                    "description": {}
                                 },
                                 "lambda": {
                                     "record_sys_id": "{{{e220c445-b0cf-4e21-ac9e-108c4defd38b}}}",
                                     "sysparm_fields": "short_description,description",
-                                    "short_description": "E2E ServiceNow v2 updated {{{dcf7d1e9-2920-45fb-bad4-cac414f1d59a}}}"
+                                    "short_description": "E2E ServiceNow v2 updated {{{dcf7d1e9-2920-45fb-bad4-cac414f1d59a}}}",
+                                    "description": "Updated by the Appmixer E2E test flow."
                                 }
                             }
                         }
@@ -207,7 +191,7 @@
                                             {
                                                 "field": "{{{5215f080-dd01-4ca5-9839-6d417d80ee28}}}",
                                                 "assertion": "equal",
-                                                "expected": "Created by the Appmixer E2E test flow."
+                                                "expected": "Updated by the Appmixer E2E test flow."
                                             }
                                         ]
                                     }

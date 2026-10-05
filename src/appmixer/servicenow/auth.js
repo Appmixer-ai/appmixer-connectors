@@ -16,7 +16,8 @@ module.exports = {
             },
             password: {
                 type: 'text',
-                name: 'Password (Auth Option 1)'
+                name: 'Password (Auth Option 1)',
+                tooltip: 'On instances that restrict Basic auth, the user needs the snc_basic_auth_api_access role.'
             },
             apiKey: {
                 type: 'text',
@@ -85,7 +86,17 @@ module.exports = {
                 url: 'https://' + context.instance + '.service-now.com/api/now/table/problem?sysparm_limit=1',
                 headers
             };
-            await context.httpRequest(options);
+            try {
+                await context.httpRequest(options);
+            } catch (err) {
+                // Instances that restrict Basic auth reject a correct password with 401 unless the user
+                // has the snc_basic_auth_api_access role.
+                if (!context.apiKey && err.response?.status === 401) {
+                    throw new Error('ServiceNow rejected the username and password (401). Check them, and make sure the user has '
+                        + 'the snc_basic_auth_api_access role: instances that restrict Basic auth require it for API access.');
+                }
+                throw err;
+            }
 
             return true;
         }
