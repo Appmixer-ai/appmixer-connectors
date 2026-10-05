@@ -1,22 +1,16 @@
 const assert = require('assert');
 const ZohoClient = require('../../ZohoClient');
 
-// Client whose every API request is answered by `respond(request)`; throwing a Zoho error body
-// from it stands for an HTTP 4xx answer.
-function clientAnswering(respond, options) {
+// Client whose every API request fails with the HTTP status and Zoho error body given.
+function clientRefusing(status, data) {
 
     const httpRequest = () => {};
-    httpRequest.create = () => async request => {
-        const answer = respond(request);
-        if (answer.status >= 400) {
-            const err = new Error(`Request failed with status code ${answer.status}`);
-            err.response = answer;
-            throw err;
-        }
-        return answer;
+    httpRequest.create = () => async () => {
+        const err = new Error(`Request failed with status code ${status}`);
+        err.response = { status, data };
+        throw err;
     };
-    const context = { auth: { accessToken: 'token' }, profileInfo: { region: 'eu' }, httpRequest };
-    return new ZohoClient(context, undefined, options);
+    return new ZohoClient({ auth: { accessToken: 'token' }, profileInfo: { region: 'eu' }, httpRequest });
 }
 
 const INVALID_MODULE = {
@@ -28,82 +22,38 @@ const NO_PERMISSION = {
 
 describe('Zoho module errors', () => {
 
-    it('should name the module and the likely reasons on INVALID_MODULE', async () => {
+    it('should add the request and a hint to INVALID_MODULE', async () => {
 
-        const client = clientAnswering(() => ({ status: 400, data: INVALID_MODULE }));
-        await assert.rejects(client.getRecords('Cases'), err => {
-            assert.match(err.message, /does not recognize the module "Cases"/);
-            assert.match(err.message, /not included in its edition/);
-            assert.match(err.message, /the module name given seems to be invalid \(INVALID_MODULE\)/);
-            assert.strictEqual(err.code, 'INVALID_MODULE');
-            assert.strictEqual(err.status, 'error');
-            assert.deepStrictEqual(err.details, {});
+        await assert.rejects(clientRefusing(400, INVALID_MODULE).getRecords('Cases'), err => {
+            assert.match(err.message, /^the module name given seems to be invalid \(GET \/crm\/v2\/Cases\)\. /);
+            assert.match(err.message, /not in its edition/);
+            assert.deepStrictEqual({ ...err, message: INVALID_MODULE.message }, INVALID_MODULE);
             return true;
         });
     });
 
-    it('should show a module name with a space as it was given', async () => {
+    it('should add the request and a hint to NO_PERMISSION on a module, also from an array answer', async () => {
 
-        const client = clientAnswering(() => ({ status: 400, data: INVALID_MODULE }));
-        await assert.rejects(client.getRecords('Sales Orders'), err => {
-            assert.match(err.message, /the module "Sales Orders"/);
-            return true;
-        });
-    });
-
-    it('should take the module from the parameters of a settings request', async () => {
-
-        const client = clientAnswering(() => ({ status: 400, data: INVALID_MODULE }));
-        await assert.rejects(client.getFields('Solutions'), err => {
-            assert.match(err.message, /the module "Solutions"/);
-            return true;
-        });
-    });
-
-    it('should explain NO_PERMISSION on a module, also when Zoho answers with an array', async () => {
-
-        const client = clientAnswering(() => ({ status: 403, data: [NO_PERMISSION] }), { apiVersion: 'v8' });
-        await assert.rejects(client.getRecords('Appointments__s'), err => {
-            assert.match(err.message, /denied access to the module "Appointments__s"/);
+        await assert.rejects(clientRefusing(403, [NO_PERMISSION]).getRecords('Appointments__s'), err => {
+            assert.match(err.message, /^permission denied to access the module \(GET \/crm\/v2\/Appointments__s\)\. /);
             assert.match(err.message, /profile of the connected Zoho user/);
             assert.strictEqual(err.code, 'NO_PERMISSION');
             return true;
         });
     });
 
-    it('should explain a module error reported for a record of a bulk request', async () => {
-
-        const client = clientAnswering(() => ({ status: 200, data: { data: [NO_PERMISSION] } }), { apiVersion: 'v8' });
-        await assert.rejects(client.executeRecordsRequest('POST', 'Appointments__s', [{}]), err => {
-            assert.ok(err instanceof Error);
-            assert.match(err.message, /denied access to the module "Appointments__s"/);
-            assert.strictEqual(err.code, 'NO_PERMISSION');
-            assert.deepStrictEqual(err.data, NO_PERMISSION);
-            return true;
-        });
-    });
-
     it('should leave other errors as Zoho sent them', async () => {
 
-        const invalidData = { code: 'INVALID_DATA', details: { id: '1' }, message: 'the id given seems to be invalid', status: 'error' };
-        const noPermission = { code: 'NO_PERMISSION', details: {}, message: 'permission denied', status: 'error' };
-        const booksError = { code: 57, message: 'You are not authorized to perform this operation' };
-
-        for (const data of [invalidData, noPermission, booksError]) {
-            const client = clientAnswering(() => ({ status: 400, data }));
-            await assert.rejects(client.getRecords('Cases'), err => {
+        const errors = [
+            { code: 'INVALID_DATA', details: { id: '1' }, message: 'the id given seems to be invalid', status: 'error' },
+            { code: 'NO_PERMISSION', details: {}, message: 'permission denied', status: 'error' },
+            { code: 57, message: 'You are not authorized to perform this operation' }
+        ];
+        for (const data of errors) {
+            await assert.rejects(clientRefusing(400, data).getRecords('Cases'), err => {
                 assert.deepStrictEqual(err, data);
                 return true;
             });
         }
-    });
-
-    it('should not name a module for a request that has none', async () => {
-
-        const client = clientAnswering(() => ({ status: 400, data: INVALID_MODULE }));
-        await assert.rejects(client.request('GET', '/crm/v2/settings/modules'), err => {
-            assert.match(err.message, /does not recognize the requested module/);
-            return true;
-        });
     });
 });

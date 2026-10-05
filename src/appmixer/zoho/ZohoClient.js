@@ -7,69 +7,12 @@ const { resolveApiDomain } = require('./endpoints');
 // Methods whose requests never carry a body.
 const BODYLESS_METHODS = new Set(['GET', 'HEAD', 'DELETE']);
 
-// Path segments right after the API version that are not a module ('/crm/v2/users', ...).
-const NON_MODULE_SEGMENTS = new Set(['settings', 'actions', 'users', 'org', 'coql', 'files']);
-
-/**
- * API name of the module a CRM request works with: the first path segment after the version
- * ('/crm/v2/Cases/123' -> 'Cases') or the `module` parameter of a settings request.
- * @param {string} url
- * @param {Object} [params]
- * @returns {string|null}
- */
-const moduleOfRequest = (url, params = {}) => {
-
-    const [, segment] = /^\/crm\/v[\d.]+\/([^/?]+)/.exec(String(url || '')) || [];
-    if (!segment) {
-        return null;
-    }
-    if (NON_MODULE_SEGMENTS.has(segment)) {
-        return typeof params.module === 'string' && params.module ? params.module : null;
-    }
-    try {
-        return decodeURIComponent(segment);
-    } catch (e) {
-        return segment;
-    }
-};
-
-/**
- * Zoho answers a request for a module the connected organization cannot use with a bare
- * INVALID_MODULE ("the module name given seems to be invalid") or NO_PERMISSION ("permission
- * denied to access the module"). Neither names the module nor a reason, so the message is
- * extended with both. `code`, `details` and `status` stay as Zoho sent them.
- * @param {*} errorData Error body of a Zoho response.
- * @param {{ url?: string, params?: Object }} request
- * @returns {*}
- */
-const describeModuleError = (errorData, { url, params } = {}) => {
-
-    if (!errorData || typeof errorData !== 'object') {
-        return errorData;
-    }
-    const { code, message } = errorData;
-    const moduleName = moduleOfRequest(url, params);
-    const named = moduleName ? `the module "${moduleName}"` : 'the requested module';
-    const zohoSays = `Zoho says: ${message} (${code}).`;
-
-    if (code === 'INVALID_MODULE') {
-        return {
-            ...errorData,
-            message: `Zoho CRM does not recognize ${named}. Either the module is not available in the ` +
-                'connected Zoho CRM organization (not included in its edition, or disabled in Setup > ' +
-                'Modules and Fields), or the name is not a module API name (for example ' +
-                `"Sales_Orders", not "Sales Orders"). ${zohoSays}`
-        };
-    }
-    if (code === 'NO_PERMISSION' && /module/i.test(String(message || ''))) {
-        return {
-            ...errorData,
-            message: `Zoho CRM denied access to ${named}. Either the module is not available in the ` +
-                'connected Zoho CRM organization (not included in its edition, or not enabled), or the ' +
-                `profile of the connected Zoho user has no permission for it. ${zohoSays}`
-        };
-    }
-    return errorData;
+// Zoho refuses a module the connected organization cannot use without saying which one or why.
+const MODULE_ERROR_HINTS = {
+    INVALID_MODULE: 'The module is not available in the connected Zoho CRM organization (not in its edition, ' +
+        'or disabled), or the name is not a module API name (e.g. "Sales_Orders", not "Sales Orders").',
+    NO_PERMISSION: 'The module is not available in the connected Zoho CRM organization (not in its edition), ' +
+        'or the profile of the connected Zoho user has no permission for it.'
 };
 
 class ZohoClient {
@@ -267,7 +210,7 @@ class ZohoClient {
         const arrayRecord = response[arrayDataKey];
         const result = Array.isArray(arrayRecord) ? arrayRecord.pop() : null;
         if (result?.status === 'error') {
-            const error = new Error(describeModuleError(result, { url: endpoint, params }).message);
+            const error = new Error(result.message);
             error.code = result.code;
             error.data = result;
             throw error;
@@ -332,11 +275,13 @@ class ZohoClient {
             .then(response => response.data)
             .catch(e => {
                 if (e.response?.data) {
-                    if (Array.isArray(e.response.data)) {
-                        const errorData = e.response.data[0];
-                        throw describeModuleError(errorData, request);
+                    const errorData = Array.isArray(e.response.data) ? e.response.data[0] : e.response.data;
+                    const hint = MODULE_ERROR_HINTS[errorData?.code];
+                    // NO_PERMISSION is also used for other refusals; only the one about a module is explained.
+                    if (hint && /module/i.test(errorData.message)) {
+                        throw { ...errorData, message: `${errorData.message} (${method} ${url}). ${hint}` };
                     }
-                    throw describeModuleError(e.response.data, request);
+                    throw errorData;
                 }
                 throw e;
             });
