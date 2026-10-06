@@ -141,14 +141,31 @@ module.exports = {
             }
         }
 
+        entry.client.appmixerKey = key;
+        this.touchClient(entry.client);
+        return entry.client;
+    },
+
+    /**
+     * Restart the idle countdown of a shared client. Called for every request, before and
+     * after it, so a long read (many pages or channels) keeps its connection and the
+     * countdown only runs while the client is not in use.
+     * @param {TelegramClient} client
+     */
+    touchClient(client) {
+
+        const key = client && client.appmixerKey;
+        const entry = clients.get(key);
+
+        if (!entry || entry.client !== client) {
+            return;
+        }
+
         clearTimeout(entry.timer);
-        entry.timer = setTimeout(() => this.dropClient(entry.client, key), IDLE_DISCONNECT_MS);
+        entry.timer = setTimeout(() => this.dropClient(client, key), IDLE_DISCONNECT_MS);
         if (entry.timer.unref) {
             entry.timer.unref();
         }
-
-        entry.client.appmixerKey = key;
-        return entry.client;
     },
 
     /**
@@ -161,12 +178,16 @@ module.exports = {
      */
     async invoke(context, client, request, target) {
 
+        this.touchClient(client);
+
         try {
-            return await withTimeout(
+            const result = await withTimeout(
                 client.invoke(request),
                 REQUEST_TIMEOUT_MS,
                 `Telegram did not answer the request for ${target} within ${REQUEST_TIMEOUT_MS / 1000} seconds.`
             );
+            this.touchClient(client);
+            return result;
         } catch (error) {
             if (error.telegramTimeout) {
                 // The connection is most likely dead; the next call opens a new one.
@@ -220,11 +241,12 @@ module.exports = {
         }
 
         if (NOT_FOUND_ERRORS.includes(code)) {
-            return new context.CancelError(`Channel ${target} does not exist. Check the username.`);
+            return channelError(context, `Channel ${target} does not exist. Check the username.`);
         }
 
         if (PRIVATE_ERRORS.includes(code)) {
-            return new context.CancelError(
+            return channelError(
+                context,
                 `Channel ${target} is private or not accessible to this account. Only public channels can be read without joining them.`
             );
         }
@@ -352,13 +374,14 @@ module.exports = {
         const peer = result.peer;
 
         if (!peer || peer.className !== 'PeerChannel') {
-            throw new context.CancelError(`${target} is a user or a bot, not a channel.`);
+            throw channelError(context, `${target} is a user or a bot, not a channel.`);
         }
 
         const channel = (result.chats || []).find(chat => String(chat.id) === String(peer.channelId));
 
         if (!channel || channel.className !== 'Channel') {
-            throw new context.CancelError(
+            throw channelError(
+                context,
                 `Channel ${target} is private or not accessible to this account (it may be banned or restricted).`
             );
         }
@@ -550,6 +573,16 @@ module.exports = {
 };
 
 const toIso = (seconds) => new Date(Number(seconds) * 1000).toISOString();
+
+// A CancelError about one channel (unknown, private, not a channel), as opposed to one about
+// the account (revoked session, wrong API credentials). The trigger skips a channel for the
+// former and fails for the latter.
+const channelError = (context, message) => {
+
+    const error = new context.CancelError(message);
+    error.channelError = true;
+    return error;
+};
 
 // Rejects with a plain (retryable) Error when the promise does not settle in time.
 const withTimeout = (promise, ms, message) => {

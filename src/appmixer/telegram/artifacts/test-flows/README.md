@@ -83,7 +83,8 @@ node artifacts/tools/generate-session.js
 
 ### `test-flow-user-channel.json`
 
-GetChannel and FindChannelMessages on the public channel **@telegram**. The test
+GetChannel and FindChannelMessages (first item, and the Store to CSV file output) on
+the public channel **@telegram**. The test
 account does not need to be a member of it. Read-only.
 
 ### `test-flow-user-newchannelpost-trigger.json`

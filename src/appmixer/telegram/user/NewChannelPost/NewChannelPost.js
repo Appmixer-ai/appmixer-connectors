@@ -12,6 +12,10 @@ const MAX_POSTS_PER_TICK = 200;
 // a tick that finds it taken is skipped - the running one delivers the posts.
 const TICK_LOCK_TTL_MS = 5 * 60 * 1000;
 
+// The lease is renewed before every channel and after this many deliveries, so a long
+// batch cannot outlive it.
+const RENEW_LOCK_EVERY = 25;
+
 const acquireTickLock = async (context) => {
 
     if (typeof context.lock !== 'function') {
@@ -26,9 +30,14 @@ const acquireTickLock = async (context) => {
         });
         return { lock, busy: false };
     } catch (error) {
-        // redlock gives up with a LockError when another tick holds the lock. Anything else
-        // means locking itself is unavailable, which must not stop the trigger.
-        return { lock: null, busy: Boolean(error && error.name === 'LockError') };
+        // redlock gives up with a LockError when another tick holds the lock: that tick
+        // delivers the posts. Any other failure means the lock cannot be relied on, and
+        // polling without it could emit every post twice. The tick fails instead and the
+        // next one tries again - the cursor is untouched, so nothing is lost.
+        if (error && error.name === 'LockError') {
+            return { lock: null, busy: true };
+        }
+        throw error;
     }
 };
 
@@ -133,15 +142,31 @@ const poll = async (context, usernames, lock) => {
         }
     });
 
+    // Once the lease is lost another tick may be running. This one must then neither deliver
+    // nor write state: its snapshot would overwrite the cursor the other tick has saved.
+    let leaseLost = false;
+    const renewLease = async () => {
+        if (!lock) {
+            return;
+        }
+        try {
+            await lock.extend(TICK_LOCK_TTL_MS);
+        } catch (error) {
+            leaseLost = true;
+            throw error;
+        }
+    };
+    const saveProgress = async () => {
+        if (!leaseLost) {
+            await context.saveState({ channels, lastIds });
+        }
+    };
+
     for (const username of usernames) {
         const key = username.toLowerCase();
 
         try {
-            if (lock) {
-                // Throws when the lock was lost (it expired while a previous channel was
-                // being read), in which case another tick may already be running.
-                await lock.extend(TICK_LOCK_TTL_MS);
-            }
+            await renewLease();
 
             if (!channels[key]) {
                 channels[key] = await lib.resolveChannel(context, client, username);
@@ -164,18 +189,34 @@ const poll = async (context, usernames, lock) => {
 
             channels[key] = channel;
 
+            let delivered = 0;
+
             for (const message of messages) {
                 const post = lib.formatMessage(message, channel, chats);
                 if (post) {
                     await context.sendJson(post, 'out');
                 }
-                // Move the cursor post by post, so a failure in the middle of a batch does
-                // not send the posts before it again.
                 lastIds[key] = message.id;
+                if (post) {
+                    // Saved after every delivery: a failure, or a worker that dies in the
+                    // middle of a batch, repeats at most the post it was sending.
+                    await saveProgress();
+                    delivered += 1;
+                    if (delivered % RENEW_LOCK_EVERY === 0) {
+                        await renewLease();
+                    }
+                }
             }
 
             lastIds[key] = Math.max(lastIds[key], lastId);
         } catch (error) {
+            if (leaseLost) {
+                await context.log('warn', {
+                    message: 'The tick took too long and lost its lock, the rest is read on the next tick.',
+                    channel: username
+                });
+                break;
+            }
             if (error.floodWait) {
                 // Do not fail the flow - the remaining channels are read on the next tick.
                 await context.log('warn', {
@@ -185,23 +226,16 @@ const poll = async (context, usernames, lock) => {
                 });
                 break;
             }
-            if (error.name === 'LockError') {
-                await context.log('warn', {
-                    message: 'The tick took too long and lost its lock, the rest is read on the next tick.',
-                    channel: username
-                });
-                break;
-            }
-            if (error instanceof context.CancelError) {
-                // One channel going private or being deleted must not stop the others.
+            if (error instanceof context.CancelError && error.channelError) {
+                // One channel going private or being deleted must not stop the others. A
+                // revoked session or wrong API credentials are not channel errors: they
+                // fail the tick, there is no point in trying the remaining channels.
                 await context.log('error', { message: error.message, channel: username });
                 continue;
             }
             throw error;
         } finally {
-            // Persist per channel, so posts already sent are not sent again if a
-            // later channel fails or the engine restarts mid-tick.
-            await context.saveState({ channels, lastIds });
+            await saveProgress();
         }
     }
 };

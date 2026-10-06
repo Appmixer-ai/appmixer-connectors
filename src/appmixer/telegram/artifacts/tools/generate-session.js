@@ -74,6 +74,10 @@ const ask = (question, { hidden = false } = {}) => new Promise((resolve) => {
         throw new Error('--out needs a file path.');
     }
 
+    if (outFile && fs.existsSync(outFile)) {
+        throw new Error(`${outFile} already exists. Choose a new file name or delete the file first.`);
+    }
+
     const apiId = parseInt(process.env.TELEGRAM_API_ID || await ask('API ID: '), 10);
     const apiHash = process.env.TELEGRAM_API_HASH || await ask('API Hash: ', { hidden: true });
 
@@ -110,7 +114,12 @@ const ask = (question, { hidden = false } = {}) => new Promise((resolve) => {
     const name = me.username ? `@${me.username}` : [me.firstName, me.lastName].filter(Boolean).join(' ');
 
     if (outFile) {
-        fs.writeFileSync(outFile, JSON.stringify({ apiId: String(apiId), apiHash, session }, null, 4) + '\n', { mode: 0o600 });
+        // 'wx' refuses an existing file: the 0600 mode only applies to a file this call
+        // creates, an existing one would keep whatever permissions it has.
+        fs.writeFileSync(outFile, JSON.stringify({ apiId: String(apiId), apiHash, session }, null, 4) + '\n', {
+            mode: 0o600,
+            flag: 'wx'
+        });
         console.log(`Logged in as ${name}. API ID, API Hash and Session String written to ${outFile}.`);
     } else {
         console.log(`\nLogged in as ${name}. Session String (treat it as a password):\n\n${session}\n`);

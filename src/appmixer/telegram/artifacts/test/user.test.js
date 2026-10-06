@@ -165,9 +165,13 @@ describe('telegram.user', function() {
             sent.push({ data, port });
         });
         ctx.log = sinon.stub().callsFake(async (severity, data) => {
-            // Same contract as the engine: context.log(severity, object).
-            assert.strictEqual(typeof severity, 'string');
-            assert.strictEqual(typeof data, 'object');
+            // Same contract as the engine: context.log(object) or context.log(severity, object).
+            if (typeof severity === 'string') {
+                assert.strictEqual(typeof data, 'object');
+            } else {
+                assert.strictEqual(typeof severity, 'object');
+                assert.strictEqual(data, undefined);
+            }
         });
         ctx.lock = sinon.stub().callsFake(async () => ({
             extend: sinon.stub().resolves(),
@@ -382,6 +386,96 @@ describe('telegram.user', function() {
             assert.strictEqual(context.state.lastIds.news, 1);
         });
 
+        it('fails the tick when the lock cannot be taken for another reason than contention', async function() {
+
+            telegram.addChannel('news', { id: 1017, messages: 1 });
+            await NewChannelPost.start(context);
+            telegram.post('news', 2);
+            context.lock = sinon.stub().rejects(new Error('Redis is down'));
+
+            await assert.rejects(NewChannelPost.tick(context), /Redis is down/);
+            assert.deepStrictEqual(sentIds(), []);
+            assert.strictEqual(context.state.lastIds.news, 1);
+        });
+
+        it('saves the cursor after every delivery', async function() {
+
+            telegram.addChannel('news', { id: 1018, messages: 1 });
+            await NewChannelPost.start(context);
+            telegram.post('news', 3);
+            const saved = [];
+            const save = context.saveState;
+            context.saveState = sinon.stub().callsFake(async (value) => {
+                saved.push({ cursor: value.lastIds.news, delivered: sent.length });
+                return save(value);
+            });
+
+            await NewChannelPost.tick(context);
+            assert.deepStrictEqual(saved.slice(0, 3), [
+                { cursor: 2, delivered: 1 },
+                { cursor: 3, delivered: 2 },
+                { cursor: 4, delivered: 3 }
+            ]);
+        });
+
+        it('a revoked session fails the tick instead of being logged channel by channel', async function() {
+
+            context = createContext({ channels: '@first, @second' });
+            telegram.addChannel('first', { id: 1019, messages: 1 });
+            telegram.addChannel('second', { id: 1020, messages: 1 });
+            await NewChannelPost.start(context);
+            telegram.post('second', 1);
+            telegram.failNext('messages.GetHistory', 'AUTH_KEY_UNREGISTERED', 401, 1019);
+
+            await assert.rejects(NewChannelPost.tick(context), (error) => {
+                assert.ok(error instanceof context.CancelError);
+                assert.match(error.message, /Session String is no longer valid/);
+                return true;
+            });
+            assert.deepStrictEqual(sentIds(), []);
+            assert.strictEqual(context.log.callCount, 0);
+        });
+
+        it('stops delivering and leaves the state alone once the lock is lost', async function() {
+
+            context = createContext({ channels: '@first, @second' });
+            telegram.addChannel('first', { id: 1021, messages: 1 });
+            telegram.addChannel('second', { id: 1022, messages: 1 });
+            await NewChannelPost.start(context);
+            telegram.post('first', 1);
+            telegram.post('second', 1);
+            const lockError = new Error('Cannot extend lock, it has already expired');
+            lockError.name = 'LockError';
+            let savesAtLoss;
+            const extend = sinon.stub();
+            extend.onFirstCall().resolves();
+            extend.onSecondCall().callsFake(async () => {
+                savesAtLoss = context.saveState.callCount;
+                throw lockError;
+            });
+            context.lock = sinon.stub().resolves({ extend, unlock: sinon.stub().resolves() });
+
+            await NewChannelPost.tick(context);
+            assert.deepStrictEqual(sent.map(item => item.data.channel_username), ['first']);
+            assert.strictEqual(context.saveState.callCount, savesAtLoss);
+            assert.strictEqual(context.state.lastIds.second, 1);
+            assert.strictEqual(context.log.firstCall.args[0], 'warn');
+        });
+
+        it('renews the lock during a long batch', async function() {
+
+            telegram.addChannel('news', { id: 1023, messages: 1 });
+            await NewChannelPost.start(context);
+            telegram.post('news', 60);
+            const extend = sinon.stub().resolves();
+            context.lock = sinon.stub().resolves({ extend, unlock: sinon.stub().resolves() });
+
+            await NewChannelPost.tick(context);
+            assert.strictEqual(sent.length, 60);
+            // Once before the channel, then after the 25th and the 50th delivery.
+            assert.strictEqual(extend.callCount, 3);
+        });
+
         it('reads the state saved by the previous tick, not the one the tick was created with', async function() {
 
             telegram.addChannel('news', { id: 1014, messages: 1 });
@@ -521,6 +615,24 @@ describe('telegram.user', function() {
                 assert.strictEqual(error.floodWait, 900);
                 return true;
             });
+        });
+
+        it('file output escapes commas, quotes and line breaks', async function() {
+
+            telegram.addChannel('news', { id: 2008, messages: 0 });
+            telegram.post('news', 1, { message: 'Results: revenue up 12%, "record" quarter\nMore soon' });
+            let csv;
+            context.saveFileStream = sinon.stub().callsFake(async (name, buffer) => {
+                csv = buffer.toString('utf8');
+                return { fileId: 'file-1' };
+            });
+            const { data } = await find({ channel: '@news', outputType: 'file' });
+
+            assert.deepStrictEqual(data, { fileId: 'file-1' });
+            assert.strictEqual(csv.split('\n')[0].split(',').length, 18);
+            assert.ok(csv.includes(',"Results: revenue up 12%, ""record"" quarter\nMore soon",'));
+            // Absent values are empty fields, not the word "null".
+            assert.ok(!csv.includes('null'));
         });
 
         it('the declared item schema covers exactly the emitted fields', async function() {
