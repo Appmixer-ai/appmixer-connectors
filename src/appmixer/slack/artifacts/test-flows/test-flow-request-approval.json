@@ -385,7 +385,7 @@
             "y": 320,
             "width": 672,
             "height": 256,
-            "content": "## ⚠️ Test data assumption\n\n- The workspace must have **at least two users** (ListUsers `$[0]` / `$[1]`); requester and approver must differ.\n- Only the `created` port is asserted. Approve/Reject needs a human click in Slack, so the task stays **pending** after the run.\n- At *decisionBy* (+60 min) the plugin's due job fires the `due` webhook at this (by then stopped) flow. Since slack 5.5.2 a 404/410 removes the task instead of resubmitting it forever (issue #2901), so check the plugin logs to see the task removed."
+            "content": "## ⚠️ Test data assumption\n\n- The workspace must have **at least two users** (ListUsers `$[0]` / `$[1]`); requester and approver must differ.\n- Only the `created` port is asserted. Approve/Reject needs a human click in Slack, so the task stays **pending** after the run.\n- At *decisionBy* (+60 min) the plugin's due job fires the `due` webhook at this flow. If the flow is only **stopped**, the webhook fails with 400 and the task stays in `error`, retried with a growing backoff until the flow runs again or the 60-day cleanup removes it. Only if the flow is **deleted** (404/410) is the task removed right away (slack 5.5.2, issue #2901). Check the plugin logs for `slack-trigger-webhook-error` / `slack-trigger-webhook-gone`."
         }
     }
 }
