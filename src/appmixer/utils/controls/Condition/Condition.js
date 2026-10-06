@@ -18,7 +18,8 @@ module.exports = {
         const expressions = context.messages.in.content.expression['AND'];
         context.log({ step: 'expressions', expressions });
 
-        // A broken clause fails the same way on every message, so report it (by position) before evaluating anything.
+        // The 'in' port schema rejects a clause without a supported operator before receive() is called (the engine
+        // and the CLI both validate the port first). This is the fallback for a caller that skips port validation.
         validateClauses(context, expressions);
 
         for (let i in expressions) {
