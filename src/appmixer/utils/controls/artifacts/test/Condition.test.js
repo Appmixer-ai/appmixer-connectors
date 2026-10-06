@@ -151,6 +151,17 @@ describe('Condition Component', () => {
             assert.deepStrictEqual(clause.required, ['operator']);
         });
 
+        it('marks the operator as required in the inspector, with a guard for the AND groups', () => {
+            // 'required' makes the designer highlight the Operator select of a clause that has none.
+            // The engine's flow validator walks only the first level of an expression, so without the 'when' it
+            // would take every { OR: [...] } group for a row with no operator and report a valid Condition.
+            // The engine compares strictly, so the 'when' is never met there (the schema enforces the operator).
+            // The designer compares loosely, so the 'when' is met in every clause and the select stays visible.
+            const operator = component.inPorts[0].inspector.inputs.expression.fields.operator;
+            assert.strictEqual(operator.required, true);
+            assert.deepStrictEqual(operator.when, { eq: { './OR': null } });
+        });
+
         it('allows exactly the operators offered in the inspector', () => {
             const options = component.inPorts[0].inspector.inputs.expression.fields.operator.options.map(o => o.value);
             assert.deepStrictEqual(clause.properties.operator.enum, options);
