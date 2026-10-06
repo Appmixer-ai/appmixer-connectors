@@ -457,6 +457,208 @@ describe('AIAgent - tool port', () => {
         });
         assert(context.sendJson.notCalled, 'nothing should be sent to the tools port');
     });
+
+    it('should describe an array input with its items and a select with its options', async () => {
+
+        const manifest = (await context.callAppmixer({ endPoint: '/components?selector=x' }))[0];
+        manifest.inPorts[0].schema.properties.filter = { type: 'array' };
+        manifest.inPorts[0].schema.properties.sheetId = { type: 'string', enum: ['sheet-1', 'sheet-2'] };
+        context.callAppmixer = sinon.stub().resolves([manifest]);
+        const transform = context.flowDescriptor['rows-1'].config.transform.in[AGENT_ID].tool;
+        transform.modifiers.sheetId = transform.modifiers.filter;
+
+        const [tool] = await AIAgent.getAllToolsDefinition(context);
+
+        assert.deepStrictEqual(tool.function.parameters.properties.filter.items, {});
+        assert.deepStrictEqual(tool.function.parameters.properties.sheetId.enum, ['sheet-1', 'sheet-2']);
+    });
+
+    it('should send the properties set on the component along with the call', async () => {
+
+        const manifest = (await context.callAppmixer({ endPoint: '/components?selector=x' }))[0];
+        manifest.properties = { schema: { properties: { range: { type: 'string' } } } };
+        context.callAppmixer = sinon.stub().callsFake(async ({ endPoint }) => {
+            return endPoint.startsWith('/components?selector=') ? [manifest] : {};
+        });
+        // Only the declared properties are sent, the engine validates them against the schema.
+        context.flowDescriptor['rows-1'].config.properties = { range: 'A1:B9', account: 'account-1' };
+
+        await AIAgent.getAllToolsDefinition(context);
+        await AIAgent.callTools(context, [{ id: 'call-1', function: { name: TOOL_NAME, arguments: '{}' } }]);
+
+        assert.deepStrictEqual(context.callAppmixer.lastCall.args[0].body.properties, { range: 'A1:B9' });
+    });
+
+    it('should resolve a variable inside an object value', async () => {
+
+        const transform = context.flowDescriptor['rows-1'].config.transform.in[AGENT_ID].tool;
+        transform.modifiers.sheetId = { 'var-2': { variable: '$.trigger-1.out.sheet', functions: [] } };
+        transform.lambda.sheetId = { AND: [{ field: 'id', value: '{{{var-2}}}' }, { field: 'kind', value: 'sheet' }] };
+        context.messages.in.scope = { 'trigger-1': { out: { sheet: 'sheet-9' } } };
+        const callAppmixer = context.callAppmixer;
+        context.callAppmixer = sinon.stub().callsFake(async (request) => {
+            return request.endPoint === '/modifiers/transform' ? { result: 'sheet-9' } : callAppmixer(request);
+        });
+
+        await AIAgent.getAllToolsDefinition(context);
+        await AIAgent.callTools(context, [{ id: 'call-1', function: { name: TOOL_NAME, arguments: '{"filter":"CEO"}' } }]);
+
+        assert.deepStrictEqual(context.callAppmixer.lastCall.args[0].body.messages.in, {
+            sheetId: { AND: [{ field: 'id', value: 'sheet-9' }, { field: 'kind', value: 'sheet' }] },
+            filter: 'CEO'
+        });
+    });
+
+    it('should tell the model when a variable refers to an output the engine did not pass on', async () => {
+
+        const transform = context.flowDescriptor['rows-1'].config.transform.in[AGENT_ID].tool;
+        transform.modifiers.sheetId = { 'var-2': { variable: '$.trigger-1.out.sheet', functions: [] } };
+        transform.lambda.sheetId = '{{{var-2}}}';
+        // What the engine leaves in the scope of an output over its size limit.
+        context.messages.in.scope = { 'trigger-1': { out: null }, _storedScopes: { 'trigger-1': { out: 'scope-1' } } };
+
+        await AIAgent.getAllToolsDefinition(context);
+        const callsBefore = context.callAppmixer.callCount;
+        const outputs = await AIAgent.callTools(context, [{
+            id: 'call-1',
+            function: { name: TOOL_NAME, arguments: '{"filter":"CEO"}' }
+        }]);
+
+        assert.match(outputs[0].output, /output 'out' of component trigger-1 is too large/);
+        assert.strictEqual(context.callAppmixer.callCount, callsBefore, 'the component should not be called');
+    });
+
+    it('should not start with a tool that cannot be loaded', async () => {
+
+        context.callAppmixer = sinon.stub().rejects(new Error('503'));
+
+        await assert.rejects(AIAgent.getAllToolsDefinition(context), /Employee contacts .* could not be loaded: 503/);
+    });
+
+    it('should not start when an MCP server on the tool port does not list its tools', async () => {
+
+        context.flowDescriptor['mcp-1'] = {
+            type: 'appmixer.mcpservers.github.MCPServer',
+            source: { in: { [AGENT_ID]: ['tool'] } }
+        };
+        context.httpRequest = sinon.stub().rejects(new Error('ECONNREFUSED'));
+
+        await assert.rejects(AIAgent.getAllToolsDefinition(context), /MCP server mcp-1 did not list its tools/);
+    });
+
+    it('should refuse a ToolStart connected to the tool port', async () => {
+
+        context.flowDescriptor['rows-1'].type = 'appmixer.ai.agenttools.ToolStart';
+
+        await assert.rejects(AIAgent.getAllToolsDefinition(context), /'ToolStart' chain belongs to the 'tools' port/);
+    });
+});
+
+describe('AIAgent - tools and mcp ports next to the tool port', () => {
+
+    const AGENT_ID = '11111111-1111-4111-8111-111111111111';
+    const TOOL_START_ID = '22222222-2222-4222-8222-222222222222';
+    const MCP_ID = '44444444-4444-4444-8444-444444444444';
+    const TOOL_START_NAME = `${TOOL_START_ID}_Get_weather`;
+    // The MCP tools carry the short form of the server's component ID.
+    const MCP_TOOL_NAME = '9qW3E4QPKWVfwFkC8mcPdq_list_issues';
+
+    let sandbox;
+    let context;
+
+    // `port` builds the source the way the flow stores it: the designer writes an array,
+    // the flow schema also allows a single port as a string.
+    const createContext = (port) => {
+        context = createMockContext({
+            flowId: 'flow-1',
+            componentId: AGENT_ID,
+            messages: { in: { correlationId: 'corr-1', content: { prompt: 'What is the weather?' } } },
+            config: { TOOLS_OUTPUT_POLL_INTERVAL: 1 },
+            flowDescriptor: {
+                [AGENT_ID]: { type: 'appmixer.ai.openai.AIAgent' },
+                [TOOL_START_ID]: {
+                    type: 'appmixer.ai.agenttools.ToolStart',
+                    label: 'Get weather',
+                    source: { in: { [AGENT_ID]: port('tools') } },
+                    config: {
+                        properties: {
+                            description: 'Weather in a city.',
+                            parameters: { ADD: [{ name: 'city', type: 'string', description: 'City' }] }
+                        }
+                    }
+                },
+                'output-1': {
+                    type: 'appmixer.ai.agenttools.ToolOutput',
+                    source: { in: { [TOOL_START_ID]: port('out') } }
+                },
+                [MCP_ID]: { type: 'appmixer.mcpservers.github.MCPServer', source: { in: { [AGENT_ID]: port('mcp') } } }
+            }
+        });
+        context.httpRequest = sinon.stub().callsFake(async ({ url }) => ({
+            data: url.includes('listTools') ? [{ name: 'list_issues', description: 'List issues.' }] : { issues: [] }
+        }));
+        context.callAppmixer = sinon.stub().rejects(new Error('no static call is expected'));
+        // ToolOutput stores the output of a tool call in the flow state.
+        context.flow = {
+            stateGet: sinon.stub().resolves({ output: 'sunny' }),
+            stateUnset: sinon.stub().resolves()
+        };
+    };
+
+    beforeEach(() => {
+        sandbox = sinon.createSandbox();
+    });
+
+    afterEach(() => {
+        sandbox.restore();
+    });
+
+    [
+        ['an array', (name) => [name]],
+        ['a string', (name) => name]
+    ].forEach(([shape, port]) => {
+
+        it(`should keep the tools of both ports as they were, with the ports stored as ${shape}`, async () => {
+
+            createContext(port);
+            sandbox.stub(AIAgent, 'publishChatProgressEvent').resolves();
+
+            const tools = await AIAgent.getAllToolsDefinition(context);
+
+            assert.deepStrictEqual(tools.map((tool) => tool.function.name), [
+                TOOL_START_NAME,
+                MCP_TOOL_NAME
+            ]);
+            assert.deepStrictEqual(tools[0].function.parameters, {
+                type: 'object',
+                properties: { city: { type: 'string', description: 'City' } }
+            });
+            assert(context.callAppmixer.notCalled, 'nothing on these ports is a tool of the tool port');
+            assert.deepStrictEqual(await context.stateGet('componentTools'), []);
+        });
+
+        it(`should run a ToolStart chain through the flow, with the ports stored as ${shape}`, async () => {
+
+            createContext(port);
+            sandbox.stub(AIAgent, 'publishChatProgressEvent').resolves();
+            await AIAgent.getAllToolsDefinition(context);
+
+            const outputs = await AIAgent.callTools(context, [
+                { id: 'call-1', function: { name: TOOL_START_NAME, arguments: '{"city":"Brno"}' } },
+                { id: 'call-2', function: { name: MCP_TOOL_NAME, arguments: '{}' } }
+            ]);
+
+            assert.deepStrictEqual(context.sendJson.firstCall.args, [{
+                toolCalls: [{ componentId: TOOL_START_ID, args: { city: 'Brno' }, id: 'call-1' }],
+                prompt: 'What is the weather?'
+            }, 'tools']);
+            assert.deepStrictEqual(outputs, [
+                { tool_call_id: 'call-2', output: JSON.stringify({ issues: [] }, null, 2) },
+                { tool_call_id: 'call-1', output: 'sunny' }
+            ]);
+            assert(context.callAppmixer.notCalled, 'no static call is expected');
+        });
+    });
 });
 
 describe('AIAgent - tool port with a chain of components', () => {
@@ -732,6 +934,13 @@ describe('AIAgent - tool port with a chain of components', () => {
                 { note: 'Only the first 1 of 2 items were processed.' }
             ]);
         });
+    });
+
+    it('should not start when the tool branches', async () => {
+
+        context.flowDescriptor['log-1'] = { type: 'appmixer.utils.controls.SetVariable', source: { in: { 'emb-1': ['out'] } } };
+
+        await assert.rejects(AIAgent.getAllToolsDefinition(context), /has to be\s+a straight line of components/);
     });
 
     it('should turn a model defined field of a later step into a tool parameter', async () => {

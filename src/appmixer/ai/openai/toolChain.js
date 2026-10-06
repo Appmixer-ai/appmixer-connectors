@@ -21,7 +21,10 @@
  * When a step sends several messages, the next one runs for each of them and the tool
  * returns a list (Find Emails -> Get Email returns the content of every email found).
  *
- * Limit: the chain is a straight line. It ends where the flow branches.
+ * Limits: the chain is a straight line, a flow that branches inside a tool does not
+ * start. An output of a component in front of the agent that the engine moved out of
+ * the message (over 2 kB by default) cannot be read here; the tool call fails with an
+ * error saying so.
  */
 
 const TOOL_PORT = 'tool';
@@ -42,13 +45,49 @@ function findSuccessors(flowDescriptor, componentId) {
     const successors = [];
     for (const [id, component] of Object.entries(flowDescriptor)) {
         for (const [inPort, sources] of Object.entries(component.source || {})) {
-            const ports = sources[componentId];
-            if (ports && ports.length) {
+            // A stored flow may hold a single port as a string.
+            const ports = [].concat(sources?.[componentId] || []);
+            if (ports.length) {
                 successors.push({ id, inPort, sourcePort: ports[0] });
             }
         }
     }
     return successors;
+}
+
+/**
+ * Does the value of an input hold a flow variable? Inputs such as filters are objects
+ * with the variables somewhere inside.
+ */
+function hasVariable(value) {
+    if (typeof value === 'string') return VARIABLE.test(value);
+    return value !== null && typeof value === 'object' && VARIABLE.test(JSON.stringify(value));
+}
+
+/**
+ * A tool parameter for an input the model fills. 'enum' and 'items' go along with the
+ * type: OpenAI refuses a function whose array parameter has no 'items'.
+ */
+function toParameter(schema, input, key) {
+    const parameter = {
+        type: schema?.type || 'string',
+        description: [input?.label, input?.tooltip].filter(Boolean).join(' — ') || key
+    };
+    if (schema?.enum) parameter.enum = schema.enum;
+    if ([].concat(parameter.type).includes('array')) parameter.items = schema?.items || {};
+    return parameter;
+}
+
+/**
+ * The properties set on a component in the flow. A static call does not load them from
+ * the flow, so they are sent with it. Only the ones the component declares are taken.
+ */
+function pickProperties(component, manifest) {
+    const declared = Object.keys(manifest?.properties?.schema?.properties || {});
+    const values = component?.config?.properties || {};
+    return Object.fromEntries(declared
+        .filter((key) => values[key] !== undefined && values[key] !== null && values[key] !== '')
+        .map((key) => [key, values[key]]));
 }
 
 /**
@@ -66,7 +105,7 @@ function readFields(transform) {
 
         if (isModelDefined) {
             fields[key] = { kind: 'model' };
-        } else if (typeof value === 'string' && VARIABLE.test(value)) {
+        } else if (hasVariable(value)) {
             fields[key] = { kind: 'variable', value, variables };
         } else if (value !== null && value !== undefined && value !== '') {
             fields[key] = { kind: 'static', value };
@@ -111,14 +150,11 @@ async function extendToolDef(context, toolDef, fetchManifest) {
             .filter((next) => !visited.has(next.id) && flowDescriptor[next.id].type !== TOOL_OUTPUT_TYPE);
         if (!successors.length) break;
         if (successors.length > 1) {
-            await context.log({
-                step: 'component-tool-chain-branch',
-                tool: fn.name,
-                componentId: previousId,
-                message: 'A tool chain has to be a straight line. It ends here; the branches are not run.',
-                branches: successors.map((next) => next.id)
-            });
-            break;
+            // Running only a part of what the user connected would return a wrong output quietly.
+            throw new context.CancelError(`The tool starting with component ${firstComponentId} branches behind
+                component ${previousId}. A tool connected to the '${TOOL_PORT}' port of the AI Agent has to be
+                a straight line of components. Use the 'tools' port with 'ToolStart' and 'ToolOutput'
+                for a tool that branches.`);
         }
 
         const [next] = successors;
@@ -144,11 +180,9 @@ async function extendToolDef(context, toolDef, fetchManifest) {
             fn.parameters = fn.parameters || { type: 'object', properties: {} };
             // Two steps can have a field of the same name; the later one gets a suffix.
             field.parameter = key in fn.parameters.properties ? `${key}_${steps.length + 2}` : key;
-            const input = inPortDef.inspector?.inputs?.[key] || {};
-            fn.parameters.properties[field.parameter] = {
-                type: inPortDef.schema?.properties?.[key]?.type || 'string',
-                description: [input.label, input.tooltip].filter(Boolean).join(' — ') || key
-            };
+            fn.parameters.properties[field.parameter] = toParameter(
+                inPortDef.schema?.properties?.[key], inPortDef.inspector?.inputs?.[key], key
+            );
             if ((inPortDef.schema?.required || []).includes(key)) {
                 fn.parameters.required = [...(fn.parameters.required || []), field.parameter];
             }
@@ -161,7 +195,8 @@ async function extendToolDef(context, toolDef, fetchManifest) {
             inPort: next.inPort,
             sourceId: previousId,
             sourcePort: next.sourcePort,
-            fields
+            fields,
+            properties: pickProperties(component, manifest)
         });
         if (manifest.description) descriptions.push(manifest.description);
         visited.add(next.id);
@@ -207,28 +242,48 @@ async function resolveVariables(context, fields, outputs) {
 
         // Send only the outputs the field refers to; the scope can be large.
         const data = {};
+        const { _storedScopes: storedScopes } = outputs;
         for (const entry of Object.values(field.variables)) {
-            const componentId = /^\$\.([^.]+)\./.exec(entry?.variable || '')?.[1];
-            if (componentId && outputs[componentId] !== undefined) {
-                data[componentId] = outputs[componentId];
+            const [, componentId, port] = /^\$\.([^.]+)\.([^.]+)/.exec(entry?.variable || '') || [];
+            if (!componentId || outputs[componentId] === undefined) continue;
+            // The engine keeps a large output out of the message and leaves only its ID in
+            // the scope. A component cannot load it, and an empty value would be a silent error.
+            if (outputs[componentId]?.[port] == null && storedScopes?.[componentId]?.[port]) {
+                throw new Error(`the output '${port}' of component ${componentId} is too large to be used in a tool`
+                    + ` (field '${key}'). The engine does not pass large outputs (over 2 kB by default) to the AI Agent.`);
             }
+            data[componentId] = outputs[componentId];
         }
 
-        const response = await context.callAppmixer({
-            endPoint: '/modifiers/transform',
-            method: 'POST',
-            body: {
-                template: field.value,
-                modifiers: field.variables,
-                data: { $: data },
-                context: { flowId: context.flowId }
+        // The variables can sit anywhere inside the value (a filter is an object), the engine
+        // takes one text at a time.
+        const resolve = async (value) => {
+            if (Array.isArray(value)) return Promise.all(value.map(resolve));
+            if (value !== null && typeof value === 'object') {
+                const resolved = {};
+                for (const [name, item] of Object.entries(value)) resolved[name] = await resolve(item);
+                return resolved;
             }
-        });
-        if (response?.errors) {
-            await context.log({ step: 'component-tool-variable-warning', field: key, errors: response.errors });
-        }
-        if (response?.result !== undefined) {
-            values[key] = response.result;
+            if (!hasVariable(value)) return value;
+            const response = await context.callAppmixer({
+                endPoint: '/modifiers/transform',
+                method: 'POST',
+                body: {
+                    template: value,
+                    modifiers: field.variables,
+                    data: { $: data },
+                    context: { flowId: context.flowId }
+                }
+            });
+            if (response?.errors) {
+                await context.log({ step: 'component-tool-variable-warning', field: key, errors: response.errors });
+            }
+            return response?.result;
+        };
+
+        const result = await resolve(field.value);
+        if (result !== undefined) {
+            values[key] = result;
         }
     }
     return values;
@@ -263,7 +318,8 @@ async function callStep(context, fn, step, args, outputs) {
         method: 'POST',
         body: {
             componentId: step.componentId,
-            messages: { [step.inPort]: payload }
+            messages: { [step.inPort]: payload },
+            ...(Object.keys(step.properties || {}).length ? { properties: step.properties } : {})
         }
     });
     await context.log({ step: 'component-tool-chain-result', tool: fn.name, label: step.label, result: forLog(result) });
@@ -354,6 +410,9 @@ async function run(context, toolDef, args, firstResult) {
 module.exports = {
     extendToolDef,
     getScope,
+    hasVariable,
+    pickProperties,
+    toParameter,
     resolveVariables,
     run
 };

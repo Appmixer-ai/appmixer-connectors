@@ -5,9 +5,11 @@
  * as a tool of the AI Agent.
  *
  * Based on ai/mcptools/tool.js (MCP Gateway), which is why the code below still says
- * "gateway" for the component owning the port. Two things differ and have to be kept
- * when syncing the files: tool chains (see toolChain.js) and the component label leading
- * the tool description. Components wired to the "tool" port are either:
+ * "gateway" for the component owning the port. These things differ and have to be kept
+ * when syncing the files: tool chains (see toolChain.js), the component label leading
+ * the tool description, the component properties sent with the call, and a tool that
+ * cannot be loaded failing the start instead of being left out. Components wired to
+ * the "tool" port are either:
  *
  *   - Regular action components: called synchronously via context.callAppmixer()
  *     (static component call, no ToolStart/ToolOutput chain, no flow-state polling).
@@ -34,6 +36,7 @@ const mcp = require('./mcp');
 const toolChain = require('./toolChain');
 
 const TOOL_PORT = 'tool';
+const TOOL_START_TYPE = 'appmixer.ai.agenttools.ToolStart';
 const MAX_TOOL_NAME_LENGTH = 64;
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -135,7 +138,9 @@ async function fetchManifest(context, componentType) {
 function findToolInPort(component, gatewayComponentId) {
     const sources = component.source || {};
     for (const [port, src] of Object.entries(sources)) {
-        if (src[gatewayComponentId] && src[gatewayComponentId].includes(TOOL_PORT)) {
+        // A stored flow may hold a single port as a string, and 'tools'.includes('tool')
+        // would take a component on the 'tools' port for one of ours.
+        if ([].concat(src?.[gatewayComponentId] || []).includes(TOOL_PORT)) {
             return port;
         }
     }
@@ -206,21 +211,27 @@ async function buildDefsFromManifests(context, manifests) {
         const inPortName = findToolInPort(component, gatewayComponentId);
         if (!inPortName) continue;
 
+        if (component.type === TOOL_START_TYPE) {
+            throw new context.CancelError(`Component ${componentId} is a 'ToolStart' connected to the
+                '${TOOL_PORT}' port of the AI Agent. A 'ToolStart' chain belongs to the 'tools' port;
+                on the '${TOOL_PORT}' port connect the component that does the work directly.`);
+        }
+
+        // The tools are cached for the whole run of the flow, so a tool that cannot be loaded
+        // now would be missing until the next start. Fail instead, as the 'mcp' port does.
         let resolvedManifest = manifest;
         if (!resolvedManifest) {
             try {
                 resolvedManifest = await fetchManifest(context, component.type);
             } catch (err) {
-                await context.log({
-                    step: 'component-tool-manifest-error',
-                    componentId,
-                    type: component.type,
-                    error: err.message
-                });
-                continue;
+                throw new Error(`The tool ${component.label || componentId} (${component.type}) could not be loaded: `
+                    + err.message);
             }
         }
-        if (!resolvedManifest) continue;
+        if (!resolvedManifest) {
+            throw new Error(`The tool ${component.label || componentId} could not be loaded: `
+                + `component ${component.type} was not found.`);
+        }
 
         const def = buildComponentToolDef(componentId, component, resolvedManifest, inPortName, gatewayComponentId);
         // Whatever is connected behind the component belongs to the same tool.
@@ -276,7 +287,7 @@ async function buildMCPToolDefs(context, componentId) {
         });
     } catch (err) {
         await context.log({ step: 'mcp-tool-port-list-tools-error', componentId, error: err.message });
-        return [];
+        throw new Error(`The MCP server ${componentId} did not list its tools: ${err.message}`);
     }
 }
 
@@ -327,7 +338,9 @@ function buildComponentToolDef(componentId, componentDescriptor, manifest, conne
         for (const [key, val] of Object.entries(lambda)) {
             if (aiFields.has(key)) continue;
             if (val === null || val === undefined || val === '') continue;
-            if (!isHandlebarsExpression(String(val))) {
+            // A value with flow variables, also when they sit inside an object, is resolved
+            // on every call (toolChain.js).
+            if (!isHandlebarsExpression(String(val)) && !toolChain.hasVariable(val)) {
                 userStaticValues[key] = val;
             }
         }
@@ -349,22 +362,14 @@ function buildComponentToolDef(componentId, componentDescriptor, manifest, conne
 
     for (const [key, schemaProp] of Object.entries(inPortSchemaProps)) {
         if (!aiFields.has(key)) continue;
-        const inp = inPortInspector[key] || {};
-        parameters.properties[key] = {
-            type: schemaProp.type || 'string',
-            description: [inp.label, inp.tooltip].filter(Boolean).join(' — ') || key
-        };
+        parameters.properties[key] = toolChain.toParameter(schemaProp, inPortInspector[key], key);
         if (inPortRequired.has(key)) parameters.required.push(key);
     }
 
     for (const [key, schemaProp] of Object.entries(propSchemaProps)) {
         if (!aiFields.has(key)) continue;
         if (key in parameters.properties) continue;
-        const inp = propInspector[key] || {};
-        parameters.properties[key] = {
-            type: schemaProp.type || 'string',
-            description: [inp.label, inp.tooltip].filter(Boolean).join(' — ') || key
-        };
+        parameters.properties[key] = toolChain.toParameter(schemaProp, propInspector[key], key);
         if (propRequired.has(key)) parameters.required.push(key);
     }
 
@@ -392,7 +397,8 @@ function buildComponentToolDef(componentId, componentDescriptor, manifest, conne
             _componentType: manifest.name || componentDescriptor.type,
             _inPort: inPortDef?.name || 'in',
             _userStaticValues: userStaticValues,
-            _aiFields: [...aiFields]
+            _aiFields: [...aiFields],
+            _properties: toolChain.pickProperties(componentDescriptor, manifest)
         }
     };
 }
@@ -408,7 +414,8 @@ function buildComponentToolDef(componentId, componentDescriptor, manifest, conne
  */
 async function executeComponentTool(context, toolDef, args, { correlationId } = {}) {
     const { name: fullToolName, _isMCP, _componentId, _mcpToolName,
-        _componentType, _inPort, _userStaticValues, _aiFields, _variableFields, _chain } = toolDef.function;
+        _componentType, _inPort, _userStaticValues, _aiFields, _variableFields, _chain,
+        _properties } = toolDef.function;
     const displayName = _isMCP ? _mcpToolName : fullToolName;
 
     if (_isMCP) {
@@ -455,7 +462,8 @@ async function executeComponentTool(context, toolDef, args, { correlationId } = 
             method: 'POST',
             body: {
                 componentId: _componentId,
-                messages: { [_inPort]: messagePayload }
+                messages: { [_inPort]: messagePayload },
+                ...(Object.keys(_properties || {}).length ? { properties: _properties } : {})
             }
         });
         await context.log({ step: 'component-tool-result', displayName, result });
