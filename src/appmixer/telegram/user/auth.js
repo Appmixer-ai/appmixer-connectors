@@ -1,6 +1,6 @@
 'use strict';
 
-const { Api } = require('telegram');
+const { Api } = require('teleproto');
 const lib = require('./lib');
 
 class AuthError extends Error {}
@@ -58,9 +58,10 @@ module.exports = {
                     type: 'password',
                     name: 'Session String',
                     tooltip: 'A pre-generated user session for the API ID above. Create it once on your own machine '
-                        + 'with gramjs (<i>npm install telegram</i>, then <i>client.start()</i> and '
-                        + '<i>client.session.save()</i> - see <i>https://gram.js.org/getting-started/authorization</i>), '
-                        + 'which asks for your phone number, the login code and your 2FA password. '
+                        + 'by logging in with the teleproto library (<i>npm install teleproto</i>, then '
+                        + '<i>client.start()</i> and <i>client.session.save()</i>), which asks for your phone number, '
+                        + 'the login code and your 2FA password. The Telegram User page of the connector '
+                        + 'configuration guide has a ready-made script. '
                         + 'The string grants full access to the Telegram account, so treat it as a password. '
                         + 'Generate a session just for this connection and do not use the same string in another '
                         + 'application at the same time - Telegram revokes a session that is used from two places '

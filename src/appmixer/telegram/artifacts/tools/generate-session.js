@@ -23,9 +23,9 @@
 const fs = require('fs');
 const readline = require('readline');
 const { Writable } = require('stream');
-const { TelegramClient } = require('telegram');
-const { StringSession } = require('telegram/sessions');
-const { Logger } = require('telegram/extensions/Logger');
+const { TelegramClient } = require('teleproto');
+const { StringSession } = require('teleproto/sessions');
+const { Logger } = require('teleproto/extensions/Logger');
 
 const outIndex = process.argv.indexOf('--out');
 const outFile = outIndex !== -1 ? process.argv[outIndex + 1] : null;
@@ -90,7 +90,7 @@ const ask = (question, { hidden = false } = {}) => new Promise((resolve) => {
         phoneNumber: () => ask('Phone number (international format, e.g. +420123456789): '),
         phoneCode: () => ask('Login code Telegram sent to the account: '),
         password: () => ask('Two-step verification password: ', { hidden: true }),
-        // gramjs asks again after an error for as long as this returns false. Only a
+        // teleproto asks again after an error for as long as this returns false. Only a
         // mistyped phone number, code or password is worth another try.
         onError: (error) => {
             const code = error.errorMessage || error.message;

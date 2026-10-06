@@ -2,19 +2,19 @@
 
 const crypto = require('crypto');
 const bigInt = require('big-integer');
-const { TelegramClient, Api } = require('telegram');
-const { StringSession } = require('telegram/sessions');
-const { Logger } = require('telegram/extensions/Logger');
+const { TelegramClient, Api } = require('teleproto');
+const { StringSession } = require('teleproto/sessions');
+const { Logger } = require('teleproto/extensions/Logger');
 const coreLib = require('../lib');
 
-// gramjs sleeps through a FLOOD_WAIT on its own when Telegram asks for at most this many
+// teleproto sleeps through a FLOOD_WAIT on its own when Telegram asks for at most this many
 // seconds. Longer waits surface as a retryable error instead of blocking the engine.
 const FLOOD_SLEEP_THRESHOLD = 60;
 
-// gramjs has no deadline of its own: when Telegram does not answer - which is what happens
-// to a session whose authorization key the server no longer knows - connect() and invoke()
-// wait forever and would hold an engine worker with them. A request may legitimately take
-// as long as the FLOOD_WAIT gramjs sleeps through, hence the longer request deadline.
+// A guard, so an engine worker never waits on Telegram indefinitely: the client keeps
+// reconnecting and a request waits for its answer for as long as it takes. A request may
+// legitimately take as long as the FLOOD_WAIT teleproto sleeps through, hence the longer
+// request deadline.
 const CONNECT_TIMEOUT_MS = 30 * 1000;
 const REQUEST_TIMEOUT_MS = (FLOOD_SLEEP_THRESHOLD + 60) * 1000;
 
@@ -108,15 +108,17 @@ module.exports = {
                     connectionRetries: 3,
                     autoReconnect: true,
                     floodSleepThreshold: FLOOD_SLEEP_THRESHOLD,
-                    // Updates only arrive for joined channels and are lost while offline;
-                    // the components poll history instead, so the update loop is not needed.
-                    receiveUpdates: false,
-                    // Errors only - gramjs writes to stdout, which is the engine's log.
+                    // The components address channels by the id and access hash they keep
+                    // themselves, and never use the account's updates (they only arrive for
+                    // joined channels and are lost while offline). teleproto cannot switch its
+                    // update handling off, so at least nothing from it is kept in memory.
+                    entityCache: false,
+                    // Errors only - teleproto writes to stdout, which is the engine's log.
                     baseLogger: new Logger('error')
                 });
             } catch (error) {
                 throw new context.CancelError(
-                    'Invalid Session String. Generate a new one for this API ID with gramjs or Telethon.'
+                    'Invalid Session String. Generate a new one for this API ID.'
                 );
             }
             entry = { key, client, ready: null, timer: null };
@@ -127,8 +129,7 @@ module.exports = {
             entry.ready = entry.ready || withTimeout(
                 entry.client.connect(),
                 CONNECT_TIMEOUT_MS,
-                `Telegram did not answer within ${CONNECT_TIMEOUT_MS / 1000} seconds while connecting. `
-                + 'If this keeps happening, the session may have been revoked - generate a new Session String.'
+                `Telegram did not answer within ${CONNECT_TIMEOUT_MS / 1000} seconds while connecting.`
             ).finally(() => {
                 entry.ready = null;
             });
@@ -503,7 +504,7 @@ module.exports = {
     },
 
     /**
-     * Flatten a gramjs Message into the shape the components emit. Service messages
+     * Flatten a teleproto Message into the shape the components emit. Service messages
      * ("channel created", "message pinned") and empty slots return null.
      * The forward source is exposed only when it is a channel - never a private user.
      * @param {object} message

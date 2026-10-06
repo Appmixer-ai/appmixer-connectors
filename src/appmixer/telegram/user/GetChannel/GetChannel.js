@@ -1,6 +1,6 @@
 'use strict';
 
-const { Api } = require('telegram');
+const { Api } = require('teleproto');
 const lib = require('../lib');
 
 module.exports = {

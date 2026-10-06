@@ -3,8 +3,8 @@
 const assert = require('assert');
 const sinon = require('sinon');
 const bigInt = require('big-integer');
-const { Api } = require('telegram');
-const { RPCMessageToError } = require('telegram/errors');
+const { Api } = require('teleproto');
+const { RPCMessageToError } = require('teleproto/errors');
 const testUtils = require('../../../../../test/utils');
 const lib = require('../../user/lib');
 const auth = require('../../user/auth');
