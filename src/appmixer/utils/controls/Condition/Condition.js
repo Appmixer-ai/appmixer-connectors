@@ -3,6 +3,8 @@
 const _ = require('lodash');
 const moment = require('moment');
 
+const OPERATORS = ['=', '!=', '>', '>=', '<', '<=', '%', 'empty', 'notEmpty', 'contains', 'range', 'regex'];
+
 module.exports = {
 
     receive(context) {
@@ -15,6 +17,9 @@ module.exports = {
         /** All AND expressions */
         const expressions = context.messages.in.content.expression['AND'];
         context.log({ step: 'expressions', expressions });
+
+        // A broken clause fails the same way on every message, so report it (by position) before evaluating anything.
+        validateClauses(context, expressions);
 
         for (let i in expressions) {
             const expressionAnd = expressions[i];
@@ -104,6 +109,25 @@ module.exports = {
         return context.sendJson({}, 'false');
     }
 };
+
+function validateClauses(context, expressions) {
+
+    for (let i in expressions) {
+        for (let j in (expressions[i] || {})['OR']) {
+            const exp = expressions[i]['OR'][j];
+            const path = `AND[${i}].OR[${j}]`;
+            const operator = exp ? exp.operator : undefined;
+            if (operator === undefined || operator === null || operator === '') {
+                throw new context.CancelError(`${path}: missing operator. Supported operators: ${OPERATORS.join(', ')}.`);
+            }
+            if (!OPERATORS.includes(operator)) {
+                throw new context.CancelError(
+                    `${path}: unsupported operator '${operator}'. Supported operators: ${OPERATORS.join(', ')}.`
+                );
+            }
+        }
+    }
+}
 
 function isLooseEqual(a, b) {
 
