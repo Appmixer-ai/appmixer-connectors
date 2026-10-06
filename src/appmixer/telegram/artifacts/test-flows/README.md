@@ -83,15 +83,15 @@ node artifacts/tools/generate-session.js
 
 ### `test-flow-user-channel.json`
 
-GetChannel and FindChannelMessages on the public channel **@telegram**, which the
-test account has not joined. Read-only.
+GetChannel and FindChannelMessages on the public channel **@telegram**. The test
+account does not need to be a member of it. Read-only.
 
 ### `test-flow-user-newchannelpost-trigger.json`
 
 NewChannelPost, provoked from inside the flow: the **bot** publishes a post, the
 **user account** reads it.
 
-- Fixture: public channel **@appmixer_e2e_channel** with `@appmixer_test_bot` as an
+- Fixture: public channel **@appmixerE2Evladimir** with `@appmixer_test_bot` as an
   administrator that may post and delete messages. To run it elsewhere, create a
   public channel, add your bot as an administrator and replace the username in
   SendMessage, NewChannelPost, the Assert and DeleteMessage.
@@ -101,6 +101,9 @@ NewChannelPost, provoked from inside the flow: the **bot** publishes a post, the
 - `NewChannelPost -> Assert -> AfterAll -> DeleteMessage` asserts the post and
   deletes it by the ID the trigger emitted, so the cleanup also proves the trigger
   fired. The poll runs once a minute; AfterAll waits 300 s.
+- The flow uses two services, and `appmixer e2e import` binds the account of one
+  (the bot). Bind the Telegram User account to the trigger after every import:
+  `appmixer auth bind 36ca0e84-d11e-4b30-a735-ebf9fac786bf <Telegram User accountId>`.
 
 Behaviour that cannot be provoked on a live account (FLOOD_WAIT, a channel going
 private, a backlog read over several polls, overlapping polls) is covered by the
