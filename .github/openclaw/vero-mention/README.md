@@ -1,13 +1,13 @@
-# apx-vero mention responder on OpenClaw (pilot)
+# apx-vero mention responder on OpenClaw
 
 The same job as `.github/workflows/vero-mention-responder.yml`, run by the `vero` agent of the
 OpenClaw gateway on `hetzner-appmixer-agents` instead of a GitHub Actions runner. The agent keeps a
 warm checkout with dependencies and, later, access to the QA instance, which a fresh runner lacks.
 
-**Status: shadow pilot.** The Appmixer integration `CI - @apx-vero mention` calls both. The workflow
-answers on GitHub; OpenClaw does the same work but posts and pushes nothing — it logs what it would
-have posted to `shadow-log.jsonl`. Remove the `SHADOW` file and the `Repository Dispatch` step to
-switch over.
+**Status: live since 2026-10-07.** The Appmixer integration `CI - @apx-vero mention -> OpenClaw vero
+agent` calls only this hook; the GitHub Actions workflow no longer receives a `repository_dispatch` and
+stays as a manual fallback (`workflow_dispatch` with a PR number). The shadow pilot (2026-10-02 to
+2026-10-07) compared one run on PR #1363 with the Actions reply; they matched.
 
 ## Flow of a mention
 
@@ -23,8 +23,9 @@ switch over.
    edits and checks → `push.sh` (trusted) → writes `replies.json` → `post.sh` (trusted: posts only
    replies to collected mentions, each with the `<!-- apx-vero-mention:<kind>:<id> -->` marker).
 
-In shadow mode `resolve.sh` counts a mention as answered only when it is in the shadow log; the
-workflow's markers would otherwise make every shadow run find nothing to do.
+Shadow mode is still built in: while the file `SHADOW` exists, `push.sh` and `post.sh` write to
+`shadow-log.jsonl` instead of GitHub and `resolve.sh` counts only that log as answered, so another
+responder can answer first. Create the file to compare, remove it to go live.
 
 ## On the host
 

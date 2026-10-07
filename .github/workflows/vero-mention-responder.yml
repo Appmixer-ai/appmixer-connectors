@@ -12,10 +12,13 @@ name: Vero Mention Responder (apx-vero mentioned on a PR)
 # responder existed), which listened to the comment and review events
 # directly; two of those run WITHOUT secrets on PRs from forks, and apx-vero's
 # PRs always come from its fork. So this one, like the Copilot responder,
-# starts ONLY from `repository_dispatch` of type `apx-vero-mention`, fired by
-# the Appmixer integration "@mention → Claude"
-# (.github/appmixer-flows/apx-vero-mention-dispatch.json): GitHub New Mention
-# on the apx-vero account → Repository Dispatch.
+# starts ONLY from `repository_dispatch` of type `apx-vero-mention` or by hand.
+#
+# MANUAL FALLBACK since 2026-10-07: the Appmixer integration
+# (.github/appmixer-flows/apx-vero-mention-dispatch.json) now calls the vero
+# agent on the OpenClaw gateway (.github/openclaw/vero-mention/) instead of
+# dispatching here. Nothing fires this workflow automatically any more; run it
+# from the Actions tab when the gateway is down.
 #
 # The payload is {pr_url} — the notification's subject URL and nothing else.
 # GitHub keeps one notification per PR thread, so it says "something on PR N
