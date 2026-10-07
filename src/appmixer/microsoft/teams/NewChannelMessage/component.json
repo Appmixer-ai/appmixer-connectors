@@ -1,12 +1,13 @@
 {
-    "name": "appmixer.microsoft.teams.SendChannelMessage",
-    "author": "David Durman <david@client.io>",
-    "label": "Send Channel Message",
-    "description": "Sends a message to a team channel as the signed-in user.",
+    "name": "appmixer.microsoft.teams.NewChannelMessage",
+    "author": "Appmixer <info@appmixer.com>",
+    "label": "New Channel Message",
+    "description": "Triggers when a new message is posted to a team channel, optionally including replies. Requires tenant admin consent for the ChannelMessage.Read.All permission.",
+    "webhook": true,
     "auth": {
         "service": "appmixer:microsoft",
         "scope": [
-            "ChannelMessage.Send"
+            "ChannelMessage.Read.All"
         ]
     },
     "quota": {
@@ -16,143 +17,80 @@
             "userId": "{{userId}}"
         }
     },
-    "inPorts": [
-        {
-            "name": "in",
-            "schema": {
-                "type": "object",
-                "properties": {
-                    "teamId": {
-                        "type": "string"
-                    },
-                    "channelId": {
-                        "type": "string"
-                    },
-                    "content": {
-                        "type": "string"
-                    },
-                    "contentType": {
-                        "type": "string",
-                        "enum": [
-                            "text",
-                            "html"
-                        ]
-                    },
-                    "replyToMessageId": {
-                        "type": "string"
-                    },
-                    "subject": {
-                        "type": "string"
-                    },
-                    "importance": {
-                        "type": "string",
-                        "enum": [
-                            "normal",
-                            "high",
-                            "urgent"
-                        ]
+    "properties": {
+        "schema": {
+            "type": "object",
+            "properties": {
+                "teamId": {
+                    "type": "string"
+                },
+                "channelId": {
+                    "type": "string"
+                },
+                "includeReplies": {
+                    "type": "boolean"
+                },
+                "ignoreOwnMessages": {
+                    "type": "boolean"
+                }
+            },
+            "required": [
+                "teamId",
+                "channelId"
+            ]
+        },
+        "inspector": {
+            "inputs": {
+                "teamId": {
+                    "type": "text",
+                    "label": "Team",
+                    "index": 1,
+                    "tooltip": "Required. Pick a team, or enter a Team ID directly.",
+                    "source": {
+                        "url": "/component/appmixer/microsoft/teams/ListTeams?outPort=out",
+                        "data": {
+                            "messages": {
+                                "in/outputType": "array",
+                                "in/isSource": true
+                            },
+                            "transform": "./ListTeams#toSelectArray"
+                        }
                     }
                 },
-                "required": [
-                    "channelId",
-                    "content"
-                ]
-            },
-            "inspector": {
-                "inputs": {
-                    "teamId": {
-                        "type": "text",
-                        "label": "Team",
-                        "index": 1,
-                        "tooltip": "Required. Pick a team, or enter a Team ID directly.",
-                        "source": {
-                            "url": "/component/appmixer/microsoft/teams/ListTeams?outPort=out",
-                            "data": {
-                                "messages": {
-                                    "in/outputType": "array",
-                                    "in/isSource": true
-                                },
-                                "transform": "./ListTeams#toSelectArray"
-                            }
+                "channelId": {
+                    "type": "text",
+                    "label": "Channel",
+                    "index": 2,
+                    "tooltip": "Required. Pick a channel of the selected team, or enter a Channel ID directly. Requires tenant admin consent for the ChannelMessage.Read.All permission.",
+                    "source": {
+                        "url": "/component/appmixer/microsoft/teams/ListChannels?outPort=out",
+                        "data": {
+                            "messages": {
+                                "in/teamId": "properties/teamId",
+                                "in/outputType": "array",
+                                "in/isSource": true
+                            },
+                            "transform": "./ListChannels#toSelectArray"
                         }
-                    },
-                    "channelId": {
-                        "type": "text",
-                        "label": "Channel",
-                        "index": 2,
-                        "tooltip": "Pick a channel of the selected team, or enter a Channel ID directly (for example <code>19:4a95f7d8db4c4e7fae857bcebe0623e6@thread.tacv2</code>).",
-                        "source": {
-                            "url": "/component/appmixer/microsoft/teams/ListChannels?outPort=out",
-                            "data": {
-                                "messages": {
-                                    "in/teamId": "inputs/in/teamId",
-                                    "in/outputType": "array",
-                                    "in/isSource": true
-                                },
-                                "transform": "./ListChannels#toSelectArray"
-                            }
-                        }
-                    },
-                    "content": {
-                        "type": "textarea",
-                        "label": "Content",
-                        "index": 3,
-                        "tooltip": "The text of the message. Set Content Type to HTML to send rich text, for example a clickable link <code>&lt;a href=\"https://example.com\"&gt;Example&lt;/a&gt;</code>. Microsoft Teams does not support Markdown."
-                    },
-                    "contentType": {
-                        "type": "select",
-                        "label": "Content Type",
-                        "index": 4,
-                        "defaultValue": "text",
-                        "tooltip": "The format of Content. Use HTML for rich text and clickable links.",
-                        "options": [
-                            {
-                                "label": "Text",
-                                "value": "text"
-                            },
-                            {
-                                "label": "HTML",
-                                "value": "html"
-                            }
-                        ]
-                    },
-                    "replyToMessageId": {
-                        "type": "text",
-                        "label": "Reply To Message ID",
-                        "index": 5,
-                        "tooltip": "Optional. The ID of the message to reply to. Leave empty to start a new conversation in the channel."
-                    },
-                    "subject": {
-                        "type": "text",
-                        "label": "Subject",
-                        "index": 6,
-                        "tooltip": "Optional. The title shown above the message. Only for new conversations - Microsoft Teams ignores it on replies."
-                    },
-                    "importance": {
-                        "type": "select",
-                        "label": "Importance",
-                        "index": 7,
-                        "defaultValue": "normal",
-                        "tooltip": "Optional. High and Urgent mark the message in Microsoft Teams; Urgent repeats the notification every 2 minutes for 20 minutes.",
-                        "options": [
-                            {
-                                "label": "Normal",
-                                "value": "normal"
-                            },
-                            {
-                                "label": "High",
-                                "value": "high"
-                            },
-                            {
-                                "label": "Urgent",
-                                "value": "urgent"
-                            }
-                        ]
                     }
+                },
+                "includeReplies": {
+                    "type": "toggle",
+                    "label": "Include Replies",
+                    "defaultValue": false,
+                    "tooltip": "Also trigger on replies to existing messages. When off, only new conversations in the channel trigger the flow.",
+                    "index": 3
+                },
+                "ignoreOwnMessages": {
+                    "type": "toggle",
+                    "label": "Ignore Own Messages",
+                    "defaultValue": true,
+                    "tooltip": "Skip messages sent by the connected user. Keep this on when the flow also posts to the same channel, otherwise it triggers itself.",
+                    "index": 4
                 }
             }
         }
-    ],
+    },
     "outPorts": [
         {
             "name": "out",

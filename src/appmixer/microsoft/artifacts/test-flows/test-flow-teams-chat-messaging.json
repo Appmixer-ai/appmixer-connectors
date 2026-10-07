@@ -1,0 +1,681 @@
+{
+    "name": "E2E Microsoft Teams - Chat Messaging",
+    "type": "automation",
+    "flow": {
+        "c3d9a110-0000-4000-9000-00000000a001": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 100,
+            "y": 320,
+            "source": {},
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "c3d9a110-0000-4000-9000-00000000a002": {
+            "type": "appmixer.utils.controls.SetVariable",
+            "x": 300,
+            "y": 320,
+            "source": {
+                "in": {
+                    "c3d9a110-0000-4000-9000-00000000a001": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "c3d9a110-0000-4000-9000-00000000a001": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "variables": {}
+                                },
+                                "lambda": {
+                                    "variables": {
+                                        "ADD": [
+                                            {
+                                                "type": "text",
+                                                "name": "content",
+                                                "text": "Hello from the Microsoft connector E2E chat test flow."
+                                            },
+                                            {
+                                                "type": "text",
+                                                "name": "recipient",
+                                                "text": "testadmin@appmixer.onmicrosoft.com"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "c3d9a110-0000-4000-9000-00000000a004": {
+            "type": "appmixer.microsoft.teams.SendChatMessage",
+            "x": 500,
+            "y": 320,
+            "source": {
+                "in": {
+                    "c3d9a110-0000-4000-9000-00000000a002": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "c3d9a110-0000-4000-9000-00000000a002": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "chatId": {},
+                                    "recipients": {
+                                        "c3d9a110-0001-4000-9000-00000000b001": {
+                                            "variable": "$.c3d9a110-0000-4000-9000-00000000a002.out.recipient",
+                                            "functions": []
+                                        }
+                                    },
+                                    "content": {
+                                        "c3d9a110-0002-4000-9000-00000000b002": {
+                                            "variable": "$.c3d9a110-0000-4000-9000-00000000a002.out.content",
+                                            "functions": []
+                                        }
+                                    },
+                                    "contentType": {},
+                                    "importance": {},
+                                    "topic": {}
+                                },
+                                "lambda": {
+                                    "recipients": "{{{c3d9a110-0001-4000-9000-00000000b001}}}",
+                                    "content": "{{{c3d9a110-0002-4000-9000-00000000b002}}}",
+                                    "contentType": "text",
+                                    "importance": "normal"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "c3d9a110-0000-4000-9000-00000000a009": {
+            "type": "appmixer.microsoft.teams.AddReaction",
+            "x": 700,
+            "y": 320,
+            "source": {
+                "in": {
+                    "c3d9a110-0000-4000-9000-00000000a004": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "c3d9a110-0000-4000-9000-00000000a004": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "teamId": {},
+                                    "channelId": {},
+                                    "parentMessageId": {},
+                                    "chatId": {
+                                        "c3d9a110-0003-4000-9000-00000000b003": {
+                                            "variable": "$.c3d9a110-0000-4000-9000-00000000a004.out.chatId",
+                                            "functions": []
+                                        }
+                                    },
+                                    "messageId": {
+                                        "c3d9a110-0004-4000-9000-00000000b004": {
+                                            "variable": "$.c3d9a110-0000-4000-9000-00000000a004.out.id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "reactionType": {}
+                                },
+                                "lambda": {
+                                    "location": "chat",
+                                    "chatId": "{{{c3d9a110-0003-4000-9000-00000000b003}}}",
+                                    "messageId": "{{{c3d9a110-0004-4000-9000-00000000b004}}}",
+                                    "reactionType": "👍"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "c3d9a110-0000-4000-9000-00000000a010": {
+            "type": "appmixer.microsoft.teams.RemoveReaction",
+            "x": 900,
+            "y": 320,
+            "source": {
+                "in": {
+                    "c3d9a110-0000-4000-9000-00000000a009": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "c3d9a110-0000-4000-9000-00000000a009": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "teamId": {},
+                                    "channelId": {},
+                                    "parentMessageId": {},
+                                    "chatId": {
+                                        "c3d9a110-0005-4000-9000-00000000b005": {
+                                            "variable": "$.c3d9a110-0000-4000-9000-00000000a004.out.chatId",
+                                            "functions": []
+                                        }
+                                    },
+                                    "messageId": {
+                                        "c3d9a110-0006-4000-9000-00000000b006": {
+                                            "variable": "$.c3d9a110-0000-4000-9000-00000000a004.out.id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "reactionType": {}
+                                },
+                                "lambda": {
+                                    "location": "chat",
+                                    "chatId": "{{{c3d9a110-0005-4000-9000-00000000b005}}}",
+                                    "messageId": "{{{c3d9a110-0006-4000-9000-00000000b006}}}",
+                                    "reactionType": "👍"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "c3d9a110-0000-4000-9000-00000000a003": {
+            "type": "appmixer.microsoft.teams.ListChats",
+            "x": 1100,
+            "y": 320,
+            "source": {
+                "in": {
+                    "c3d9a110-0000-4000-9000-00000000a013": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "c3d9a110-0000-4000-9000-00000000a013": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "outputType": {}
+                                },
+                                "lambda": {
+                                    "outputType": "array"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "c3d9a110-0000-4000-9000-00000000a005": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1350,
+            "y": 176,
+            "source": {
+                "in": {
+                    "c3d9a110-0000-4000-9000-00000000a003": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "c3d9a110-0000-4000-9000-00000000a003": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "c3d9a110-0007-4000-9000-00000000b007": {
+                                            "variable": "$.c3d9a110-0000-4000-9000-00000000a004.out.id",
+                                            "functions": []
+                                        },
+                                        "c3d9a110-0008-4000-9000-00000000b008": {
+                                            "variable": "$.c3d9a110-0000-4000-9000-00000000a004.out.chatId",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{c3d9a110-0007-4000-9000-00000000b007}}}",
+                                                "assertion": "notEmpty"
+                                            },
+                                            {
+                                                "field": "{{{c3d9a110-0008-4000-9000-00000000b008}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "c3d9a110-0000-4000-9000-00000000a006": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1350,
+            "y": 464,
+            "source": {
+                "in": {
+                    "c3d9a110-0000-4000-9000-00000000a003": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "c3d9a110-0000-4000-9000-00000000a003": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "c3d9a110-0009-4000-9000-00000000b009": {
+                                            "variable": "$.c3d9a110-0000-4000-9000-00000000a003.out",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$.result[0].id"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{c3d9a110-0009-4000-9000-00000000b009}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "c3d9a110-0000-4000-9000-00000000a007": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 1600,
+            "y": 320,
+            "source": {
+                "in": {
+                    "c3d9a110-0000-4000-9000-00000000a005": [
+                        "out"
+                    ],
+                    "c3d9a110-0000-4000-9000-00000000a006": [
+                        "out"
+                    ],
+                    "c3d9a110-0000-4000-9000-00000000a014": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "properties": {
+                    "timeout": 180
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "c3d9a110-0000-4000-9000-00000000a008": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1900,
+            "y": 320,
+            "source": {
+                "in": {
+                    "c3d9a110-0000-4000-9000-00000000a015": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "properties": {},
+                "transform": {
+                    "in": {
+                        "c3d9a110-0000-4000-9000-00000000a015": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "c3d9a110-0005-4000-9000-00000000b005": {
+                                            "variable": "$.c3d9a110-0000-4000-9000-00000000a007.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.com",
+                                    "testCase": "E2E Microsoft Teams - Chat Messaging",
+                                    "result": "{{{c3d9a110-0005-4000-9000-00000000b005}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "c3d9a110-0000-4000-9000-00000000a011": {
+            "type": "appmixer.microsoft.teams.GetMessage",
+            "source": {
+                "in": {
+                    "c3d9a110-0000-4000-9000-00000000a010": [
+                        "out"
+                    ]
+                }
+            },
+            "x": 1050,
+            "y": 320,
+            "config": {
+                "transform": {
+                    "in": {
+                        "c3d9a110-0000-4000-9000-00000000a010": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "location": {},
+                                    "chatId": {
+                                        "c3d9a110-0021-4000-9000-00000000b021": {
+                                            "variable": "$.c3d9a110-0000-4000-9000-00000000a004.out.chatId",
+                                            "functions": []
+                                        }
+                                    },
+                                    "messageId": {
+                                        "c3d9a110-0022-4000-9000-00000000b022": {
+                                            "variable": "$.c3d9a110-0000-4000-9000-00000000a004.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "location": "chat",
+                                    "chatId": "{{{c3d9a110-0021-4000-9000-00000000b021}}}",
+                                    "messageId": "{{{c3d9a110-0022-4000-9000-00000000b022}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "c3d9a110-0000-4000-9000-00000000a012": {
+            "type": "appmixer.microsoft.teams.UpdateMessage",
+            "source": {
+                "in": {
+                    "c3d9a110-0000-4000-9000-00000000a011": [
+                        "out"
+                    ]
+                }
+            },
+            "x": 1200,
+            "y": 320,
+            "config": {
+                "transform": {
+                    "in": {
+                        "c3d9a110-0000-4000-9000-00000000a011": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "location": {},
+                                    "chatId": {
+                                        "c3d9a110-0023-4000-9000-00000000b023": {
+                                            "variable": "$.c3d9a110-0000-4000-9000-00000000a004.out.chatId",
+                                            "functions": []
+                                        }
+                                    },
+                                    "messageId": {
+                                        "c3d9a110-0024-4000-9000-00000000b024": {
+                                            "variable": "$.c3d9a110-0000-4000-9000-00000000a004.out.id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "content": {},
+                                    "contentType": {}
+                                },
+                                "lambda": {
+                                    "location": "chat",
+                                    "chatId": "{{{c3d9a110-0023-4000-9000-00000000b023}}}",
+                                    "messageId": "{{{c3d9a110-0024-4000-9000-00000000b024}}}",
+                                    "content": "Edited by the Microsoft connector E2E chat test flow.",
+                                    "contentType": "text"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "c3d9a110-0000-4000-9000-00000000a013": {
+            "type": "appmixer.microsoft.teams.GetMessage",
+            "source": {
+                "in": {
+                    "c3d9a110-0000-4000-9000-00000000a012": [
+                        "out"
+                    ]
+                }
+            },
+            "x": 1350,
+            "y": 320,
+            "config": {
+                "transform": {
+                    "in": {
+                        "c3d9a110-0000-4000-9000-00000000a012": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "location": {},
+                                    "chatId": {
+                                        "c3d9a110-0025-4000-9000-00000000b025": {
+                                            "variable": "$.c3d9a110-0000-4000-9000-00000000a004.out.chatId",
+                                            "functions": []
+                                        }
+                                    },
+                                    "messageId": {
+                                        "c3d9a110-0026-4000-9000-00000000b026": {
+                                            "variable": "$.c3d9a110-0000-4000-9000-00000000a004.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "location": "chat",
+                                    "chatId": "{{{c3d9a110-0025-4000-9000-00000000b025}}}",
+                                    "messageId": "{{{c3d9a110-0026-4000-9000-00000000b026}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "c3d9a110-0000-4000-9000-00000000a014": {
+            "type": "appmixer.utils.test.Assert",
+            "source": {
+                "in": {
+                    "c3d9a110-0000-4000-9000-00000000a013": [
+                        "out"
+                    ]
+                }
+            },
+            "x": 1350,
+            "y": 470,
+            "config": {
+                "transform": {
+                    "in": {
+                        "c3d9a110-0000-4000-9000-00000000a013": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "c3d9a110-0027-4000-9000-00000000b027": {
+                                            "variable": "$.c3d9a110-0000-4000-9000-00000000a011.out.id",
+                                            "functions": []
+                                        },
+                                        "c3d9a110-0028-4000-9000-00000000b028": {
+                                            "variable": "$.c3d9a110-0000-4000-9000-00000000a013.out.body.content",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{c3d9a110-0027-4000-9000-00000000b027}}}",
+                                                "assertion": "notEmpty"
+                                            },
+                                            {
+                                                "field": "{{{c3d9a110-0028-4000-9000-00000000b028}}}",
+                                                "assertion": "regex",
+                                                "regex": "Edited by the Microsoft connector"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "c3d9a110-0000-4000-9000-00000000a015": {
+            "type": "appmixer.microsoft.teams.DeleteMessage",
+            "source": {
+                "in": {
+                    "c3d9a110-0000-4000-9000-00000000a007": [
+                        "out"
+                    ]
+                }
+            },
+            "x": 1750,
+            "y": 320,
+            "config": {
+                "transform": {
+                    "in": {
+                        "c3d9a110-0000-4000-9000-00000000a007": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "location": {},
+                                    "chatId": {
+                                        "c3d9a110-0029-4000-9000-00000000b029": {
+                                            "variable": "$.c3d9a110-0000-4000-9000-00000000a004.out.chatId",
+                                            "functions": []
+                                        }
+                                    },
+                                    "messageId": {
+                                        "c3d9a110-002a-4000-9000-00000000b02a": {
+                                            "variable": "$.c3d9a110-0000-4000-9000-00000000a004.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "location": "chat",
+                                    "chatId": "{{{c3d9a110-0029-4000-9000-00000000b029}}}",
+                                    "messageId": "{{{c3d9a110-002a-4000-9000-00000000b02a}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        }
+    }
+}
