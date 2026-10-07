@@ -39,9 +39,12 @@ with a fresh `resolve.sh`, run dir and worktree (`INSTRUCTIONS.md`, "Earlier tur
   `maxEntries: 30` on the host); hook sessions are among the first removed under the cap. A PR
   whose session is gone simply starts a new one, as every mention did before.
 - **Host config.** The key is computed by the transform, which the gateway treats like a
-  caller-supplied key: it needs `hooks.allowRequestSessionKey: true` and a prefix allowlist.
-  `hooks.allowedSessionKeyPrefixes: ["hook:vero:gh:"]` admits only these keys; nginx exposes only
-  `/hooks/vero-mention`, whose transform sets the key itself.
+  caller-supplied key: it needs `hooks.allowRequestSessionKey: true` and
+  `hooks.allowedSessionKeyPrefixes: ["hook:"]`. A narrower `["hook:vero:gh:"]` is refused on reload
+  ("must include 'hook:' when hooks.defaultSessionKey is unset" — generated keys are `hook:<uuid>`).
+  The opt-in opens nothing from outside: nginx exposes only `/hooks/vero-mention`, whose transform
+  sets the key itself, and the gateway listens on loopback. The gateway stores the session as
+  `agent:vero:hook:vero:gh:appmixer-connectors:pr:<number>` (`openclaw sessions --agent vero`).
 
 Shadow mode is still built in: while the file `SHADOW` exists, `push.sh` and `post.sh` write to
 `shadow-log.jsonl` instead of GitHub and `resolve.sh` counts only that log as answered, so another
