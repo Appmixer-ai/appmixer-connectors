@@ -53,3 +53,11 @@ jq -c --slurpfile m "$RUN/mentions.json" '
       gh pr comment "$NUM" --repo "$REPO" --body "$FULL"
     fi
   done
+
+# Re-check the PR (INSTRUCTIONS.md step 8): mentions written while this run worked are not in it, and
+# their own hook call may have been dropped while this turn held the PR's session. Done here rather
+# than left to the agent, which chained it into one command or skipped it. Prints RUN_DIR=<dir> when
+# there is more to answer, else SKIP: … — after a failed run above it is not reached, so its open
+# mentions wait for the next hook instead of being retried in a loop.
+echo "RE-CHECK:"
+"$ROOT/resolve.sh" "$NUM" || echo "SKIP: re-check failed (resolve.sh exit $?)"

@@ -23,6 +23,34 @@ with the reply of the former Actions workflow; they matched.
    edits and checks → `push.sh` (trusted) → writes `replies.json` → `post.sh` (trusted: posts only
    replies to collected mentions, each with the `<!-- apx-vero-mention:<kind>:<id> -->` marker).
 
+## Sessions
+
+Every pull request has its own persistent session, `hook:vero:gh:appmixer-connectors:pr:<number>`
+(`sessionMode: 'persistent'` in the transform). A later mention on the same PR continues the
+conversation of the earlier ones, so a follow-up such as "that didn't work" has the previous turn
+as context; mentions on other PRs never see it. The facts still come from GitHub: every turn starts
+with a fresh `resolve.sh`, run dir and worktree (`INSTRUCTIONS.md`, "Earlier turns on the same PR").
+
+- **One turn per PR at a time.** The gateway serializes requests of one session key. A request that
+  cannot start within 15 s gets HTTP 503 and is dropped, so a mention written while its PR's turn is
+  running may lose its hook call. `post.sh` therefore re-runs `resolve.sh` after posting and prints
+  its output under `RE-CHECK:`; the agent handles a new `RUN_DIR` in the same turn (steps 7–8 of
+  `INSTRUCTIONS.md`). It is in the script, not left to the agent: told to run it as a separate
+  command, the agent still chained it to `post.sh`. Different PRs still run in parallel.
+- **Lifetime.** Sessions follow the gateway's `session.maintenance`: `pruneAfter: 7d` and
+  `maxEntries: 1000` on the host. The cap matters: hook sessions are the first removed when the
+  store is over it, and with the former `maxEntries: 30` (vero alone keeps ~460 rows) every new
+  session evicted the PR session of the previous mention — #1378's lasted 18 minutes, until #1379's
+  was created. `openclaw sessions cleanup --agent vero --dry-run` shows `cap-overflow` rows when it
+  bites again. A PR whose session is gone simply starts a new one, as every mention did before.
+- **Host config.** The key is computed by the transform, which the gateway treats like a
+  caller-supplied key: it needs `hooks.allowRequestSessionKey: true` and
+  `hooks.allowedSessionKeyPrefixes: ["hook:"]`. A narrower `["hook:vero:gh:"]` is refused on reload
+  ("must include 'hook:' when hooks.defaultSessionKey is unset" — generated keys are `hook:<uuid>`).
+  The opt-in opens nothing from outside: nginx exposes only `/hooks/vero-mention`, whose transform
+  sets the key itself, and the gateway listens on loopback. The gateway stores the session as
+  `agent:vero:hook:vero:gh:appmixer-connectors:pr:<number>` (`openclaw sessions --agent vero`).
+
 Shadow mode is still built in: while the file `SHADOW` exists, `push.sh` and `post.sh` write to
 `shadow-log.jsonl` instead of GitHub and `resolve.sh` counts only that log as answered, so another
 responder can answer first. Create the file to compare, remove it to go live.
@@ -31,7 +59,8 @@ responder can answer first. Create the file to compare, remove it to go live.
 
 - Gateway: OpenClaw (`openclaw --version`), user systemd unit `openclaw-gateway`
   (`XDG_RUNTIME_DIR=/run/user/0 systemctl --user status openclaw-gateway`), config
-  `/root/.openclaw/openclaw.json` (`hooks.*`, `gateway.trustedProxies`), secrets
+  `/root/.openclaw/openclaw.json` (`hooks.*` incl. `allowRequestSessionKey` and
+  `allowedSessionKeyPrefixes`, see "Sessions"; `gateway.trustedProxies`), secrets
   `/root/.openclaw/.env`.
 - These files: `/root/.openclaw/workspace-vero/mention-responder/` (scripts, `INSTRUCTIONS.md`,
   `SHADOW`, `shadow-log.jsonl`, `repo/` base clone, `runs/<pr>-<timestamp>/`).
