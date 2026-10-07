@@ -50,13 +50,19 @@ const journalRuns = journal.split('\n').filter(Boolean).map((line) => {
     };
 }).reverse().slice(0, 15);
 
-// What each run did, from the agent's session transcript. A hook run is an isolated session that
-// the gateway archives (zstd) when it ends; the transcript holds the prompt (with the PR number),
-// every model call with its usage and cost, the exec steps by title, and the agent's closing text.
+// What each run did, from the agent's session transcripts: the prompt (with the PR number), every
+// model call with its usage and cost, the exec steps by title, and the agent's closing text.
+// Each pull request has one persistent session (`hook:vero:gh:appmixer-connectors:pr:<n>`) that
+// holds one turn per hook run. While it lives, its transcript is in the gateway's database and is
+// read through `openclaw sessions export-trajectory`; once maintenance removes it, the gateway
+// archives it (zstd) next to the isolated sessions of the earlier runs.
 const SESSIONS = '/root/.openclaw/agents/vero/sessions';
 const SESSION_AGE_MS = 8 * 24 * 3600 * 1000;
 const SESSION_LIMIT = 30;
-const sessionRuns = (() => {
+const LIVE_PREFIX = 'agent:vero:hook:vero:gh:';
+const PROMPT = /apx-vero mention on PR #(\d+)/;
+
+const archivedTranscripts = () => {
     let files;
     try {
         files = fs.readdirSync(SESSIONS).filter((f) => f.endsWith('.zst'));
@@ -69,42 +75,94 @@ const sessionRuns = (() => {
         .sort((a, b) => b.mtime - a.mtime)
         .slice(0, SESSION_LIMIT)
         .map(({ f }) => {
-            let entries;
             try {
-                entries = sh('zstd', ['-dc', path.join(SESSIONS, f)]).split('\n').filter(Boolean).map((l) => JSON.parse(l));
+                return sh('zstd', ['-dc', path.join(SESSIONS, f)]).split('\n').filter(Boolean).map((l) => JSON.parse(l));
             } catch {
                 return null;
             }
-            const text = (m) => typeof m?.content === 'string' ? m.content : (Array.isArray(m?.content) ? m.content : []).filter((c) => c.type === 'text').map((c) => c.text).join('\n');
-            const user = entries.find((e) => e.type === 'message' && e.message?.role === 'user');
-            const pr = (text(user?.message).match(/apx-vero mention on PR #(\d+)/) || [])[1];
-            if (!pr) return null; // another kind of vero session
-            const assistant = entries.filter((e) => e.type === 'message' && e.message?.role === 'assistant').map((e) => e.message);
-            const steps = assistant.flatMap((m) => (m.content || []).filter((c) => c.type === 'toolCall').map((c) => c.arguments?.title || c.name));
-            const last = assistant.length ? text(assistant[assistant.length - 1]).trim() : '';
-            const sum = (pick) => assistant.reduce((n, m) => n + (Number(pick(m.usage || {})) || 0), 0);
-            const startedAt = entries[0]?.timestamp || null;
-            const endedAt = entries[entries.length - 1]?.timestamp || null;
-            return {
-                pr: Number(pr),
-                startedAt,
-                endedAt,
-                durationSec: startedAt && endedAt ? Math.round((Date.parse(endedAt) - Date.parse(startedAt)) / 1000) : null,
-                model: assistant[assistant.length - 1]?.model || null,
-                modelCalls: assistant.length,
-                toolCalls: steps.length,
-                steps: steps.slice(0, 20),
-                outputTokens: sum((u) => u.output),
-                costUsd: Math.round(sum((u) => u.cost?.total) * 10000) / 10000,
-                result: last.slice(0, 600),
-                commentUrl: (last.match(/https:\/\/github\.com\/\S+#issuecomment-\d+/) || [])[0] || null
-            };
         })
         .filter(Boolean);
-})();
+};
 
-// A journal line is matched to the session that ended just before it (the gateway logs
-// "completed" right after the transcript closes). Rejected runs (model policy) have no session.
+const liveTranscripts = () => {
+    let sessions;
+    try {
+        const listed = sh('openclaw', ['sessions', '--agent', 'vero', '--json', '--limit', 'all', '--active', String(SESSION_AGE_MS / 60000)]);
+        sessions = JSON.parse(listed.slice(listed.indexOf('{'))).sessions || [];
+    } catch {
+        return [];
+    }
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'openclaw-status-'));
+    try {
+        return sessions
+            .filter((s) => String(s.key || '').startsWith(LIVE_PREFIX))
+            .slice(0, SESSION_LIMIT)
+            .map((s, i) => {
+                sh('openclaw', ['sessions', 'export-trajectory', '--agent', 'vero', '--session-key', s.key, '--workspace', tmp, '--output', `s${i}`]);
+                // events.jsonl, not session-branch.json: the branch replaces entries past the first
+                // few with "[Truncated]", the events keep every message (only long texts are cut).
+                // Transcript events become transcript entries, the shape the archives have.
+                let events;
+                try {
+                    events = fs.readFileSync(path.join(tmp, '.openclaw', 'trajectory-exports', `s${i}`, 'events.jsonl'), 'utf8')
+                        .split('\n').filter(Boolean).map((l) => JSON.parse(l));
+                } catch {
+                    return null;
+                }
+                return events
+                    .filter((e) => e.source === 'transcript')
+                    .map((e) => e.data?.message && typeof e.data.message === 'object'
+                        ? { type: 'message', message: e.data.message, timestamp: e.ts }
+                        : { type: e.type, timestamp: e.ts });
+            })
+            .filter(Boolean);
+    } finally {
+        fs.rmSync(tmp, { recursive: true, force: true });
+    }
+};
+
+const text = (m) => typeof m?.content === 'string' ? m.content : (Array.isArray(m?.content) ? m.content : []).filter((c) => c.type === 'text').map((c) => c.text).join('\n');
+const isPrompt = (e) => e.type === 'message' && e.message?.role === 'user' && PROMPT.test(text(e.message));
+
+// One entry per hook run: a transcript is split at every hook prompt, so a persistent session yields
+// one turn per mention. An isolated session has a single prompt; a session without one is not ours.
+const turnsOf = (entries) => {
+    const turns = [];
+    for (const e of entries) {
+        if (isPrompt(e)) turns.push([e]);
+        else if (turns.length) turns[turns.length - 1].push(e);
+    }
+    return turns;
+};
+
+const describeTurn = (entries) => {
+    const pr = text(entries[0].message).match(PROMPT)[1];
+    const assistant = entries.filter((e) => e.type === 'message' && e.message?.role === 'assistant').map((e) => e.message);
+    const steps = assistant.flatMap((m) => (m.content || []).filter((c) => c.type === 'toolCall').map((c) => c.arguments?.title || c.name));
+    const last = assistant.length ? text(assistant[assistant.length - 1]).trim() : '';
+    const sum = (pick) => assistant.reduce((n, m) => n + (Number(pick(m.usage || {})) || 0), 0);
+    const startedAt = entries[0]?.timestamp || null;
+    const endedAt = entries[entries.length - 1]?.timestamp || null;
+    return {
+        pr: Number(pr),
+        startedAt,
+        endedAt,
+        durationSec: startedAt && endedAt ? Math.round((Date.parse(endedAt) - Date.parse(startedAt)) / 1000) : null,
+        model: assistant[assistant.length - 1]?.model || null,
+        modelCalls: assistant.length,
+        toolCalls: steps.length,
+        steps: steps.slice(0, 20),
+        outputTokens: sum((u) => u.output),
+        costUsd: Math.round(sum((u) => u.cost?.total) * 10000) / 10000,
+        result: last.slice(0, 600),
+        commentUrl: (last.match(/https:\/\/github\.com\/\S+#issuecomment-\d+/) || [])[0] || null
+    };
+};
+
+const sessionRuns = [...liveTranscripts(), ...archivedTranscripts()].flatMap(turnsOf).map(describeTurn);
+
+// A journal line is matched to the turn that ended just before it (the gateway logs "completed"
+// right after the turn's last transcript entry). Rejected runs (model policy) have no turn.
 const hookRuns = journalRuns.map((run) => {
     const at = Date.parse(run.at || '');
     const session = sessionRuns.find((s) => !s.used && s.endedAt && at - Date.parse(s.endedAt) >= 0 && at - Date.parse(s.endedAt) < 30000);
