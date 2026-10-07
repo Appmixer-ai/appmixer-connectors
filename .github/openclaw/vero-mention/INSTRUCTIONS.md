@@ -25,7 +25,20 @@ All paths below are under `/root/.openclaw/workspace-vero/mention-responder`.
    `{"code_changed": true, "replies": [{"kind": "issue_comment", "id": 123, "body": "Done: … (commit abc1234)."}]}`
    One reply per mention in `mentions.json`, with its exact `kind` and `id`. Address the author,
    keep it concise, never write "@apx-vero" in a reply.
-7. Run `./post.sh <run>`. Reply with a one-line summary (PR, mentions answered, commit if any). Stop.
+7. Run `./post.sh <run>`.
+8. Run `./resolve.sh <PR number>` once more: mentions written while you worked are not in this run,
+   and their own hook call may have been dropped while this one was running. If it prints `RUN_DIR`,
+   handle that run from step 2. Do this at most 3 times in one turn; `SKIP` ends the turn. Reply
+   with a one-line summary (PR, mentions answered, commits if any). Stop.
+
+## Earlier turns on the same PR
+
+Every mention on a pull request comes into the same session, so earlier turns about this PR may be
+in your context. Use them to understand what was asked, answered and committed before — e.g. a
+follow-up "that didn't work" refers to your last change. But each turn starts at step 1 with a new
+run dir: never reuse an earlier run dir, worktree or `mentions.json`, and don't assume the branch
+is where you left it — others may have pushed since. Only the current run's `mentions.json` gets
+replies.
 
 ## Security — untrusted input
 

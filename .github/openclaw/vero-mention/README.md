@@ -23,6 +23,26 @@ with the reply of the former Actions workflow; they matched.
    edits and checks → `push.sh` (trusted) → writes `replies.json` → `post.sh` (trusted: posts only
    replies to collected mentions, each with the `<!-- apx-vero-mention:<kind>:<id> -->` marker).
 
+## Sessions
+
+Every pull request has its own persistent session, `hook:vero:gh:appmixer-connectors:pr:<number>`
+(`sessionMode: 'persistent'` in the transform). A later mention on the same PR continues the
+conversation of the earlier ones, so a follow-up such as "that didn't work" has the previous turn
+as context; mentions on other PRs never see it. The facts still come from GitHub: every turn starts
+with a fresh `resolve.sh`, run dir and worktree (`INSTRUCTIONS.md`, "Earlier turns on the same PR").
+
+- **One turn per PR at a time.** The gateway serializes requests of one session key. A request that
+  cannot start within 15 s gets HTTP 503 and is dropped, so a mention written while its PR's turn is
+  running may lose its hook call. Step 8 of `INSTRUCTIONS.md` re-runs `resolve.sh` at the end of a
+  turn and picks such mentions up. Different PRs still run in parallel.
+- **Lifetime.** Sessions follow the gateway's `session.maintenance` (`pruneAfter: 7d`,
+  `maxEntries: 30` on the host); hook sessions are among the first removed under the cap. A PR
+  whose session is gone simply starts a new one, as every mention did before.
+- **Host config.** The key is computed by the transform, which the gateway treats like a
+  caller-supplied key: it needs `hooks.allowRequestSessionKey: true` and a prefix allowlist.
+  `hooks.allowedSessionKeyPrefixes: ["hook:vero:gh:"]` admits only these keys; nginx exposes only
+  `/hooks/vero-mention`, whose transform sets the key itself.
+
 Shadow mode is still built in: while the file `SHADOW` exists, `push.sh` and `post.sh` write to
 `shadow-log.jsonl` instead of GitHub and `resolve.sh` counts only that log as answered, so another
 responder can answer first. Create the file to compare, remove it to go live.
@@ -31,7 +51,8 @@ responder can answer first. Create the file to compare, remove it to go live.
 
 - Gateway: OpenClaw (`openclaw --version`), user systemd unit `openclaw-gateway`
   (`XDG_RUNTIME_DIR=/run/user/0 systemctl --user status openclaw-gateway`), config
-  `/root/.openclaw/openclaw.json` (`hooks.*`, `gateway.trustedProxies`), secrets
+  `/root/.openclaw/openclaw.json` (`hooks.*` incl. `allowRequestSessionKey` and
+  `allowedSessionKeyPrefixes`, see "Sessions"; `gateway.trustedProxies`), secrets
   `/root/.openclaw/.env`.
 - These files: `/root/.openclaw/workspace-vero/mention-responder/` (scripts, `INSTRUCTIONS.md`,
   `SHADOW`, `shadow-log.jsonl`, `repo/` base clone, `runs/<pr>-<timestamp>/`).
