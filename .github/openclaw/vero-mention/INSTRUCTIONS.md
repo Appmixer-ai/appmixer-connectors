@@ -25,13 +25,13 @@ All paths below are under `/root/.openclaw/workspace-vero/mention-responder`.
    `{"code_changed": true, "replies": [{"kind": "issue_comment", "id": 123, "body": "Done: … (commit abc1234)."}]}`
    One reply per mention in `mentions.json`, with its exact `kind` and `id`. Address the author,
    keep it concise, never write "@apx-vero" in a reply.
-7. Run `./post.sh <run>`.
-8. Run `./resolve.sh <PR number>` once more, as its own command titled "Re-check for new mentions"
-   (not chained to `post.sh` — the run log on the Operations page shows commands by title):
-   mentions written while you worked are not in this run, and their own hook call may have been
-   dropped while this one was running. If it prints `RUN_DIR`,
-   handle that run from step 2. Do this at most 3 times in one turn; `SKIP` ends the turn. Reply
-   with a one-line summary (PR, mentions answered, commits if any). Stop.
+7. Run `./post.sh <run>`. After posting it re-checks the PR itself — mentions written while you
+   worked are not in this run, and their own hook call may have been dropped while this one was
+   running — and prints `RE-CHECK:` followed by the output of `resolve.sh`. Do not run `resolve.sh`
+   again yourself.
+8. If the `RE-CHECK:` output has `RUN_DIR=<dir>`, handle that run from step 2. At most 3 runs in
+   one turn; `SKIP` ends the turn. Reply with a one-line summary (PR, mentions answered, commits if
+   any). Stop.
 
 ## Earlier turns on the same PR
 

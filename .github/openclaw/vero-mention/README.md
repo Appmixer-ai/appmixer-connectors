@@ -33,8 +33,10 @@ with a fresh `resolve.sh`, run dir and worktree (`INSTRUCTIONS.md`, "Earlier tur
 
 - **One turn per PR at a time.** The gateway serializes requests of one session key. A request that
   cannot start within 15 s gets HTTP 503 and is dropped, so a mention written while its PR's turn is
-  running may lose its hook call. Step 8 of `INSTRUCTIONS.md` re-runs `resolve.sh` at the end of a
-  turn and picks such mentions up. Different PRs still run in parallel.
+  running may lose its hook call. `post.sh` therefore re-runs `resolve.sh` after posting and prints
+  its output under `RE-CHECK:`; the agent handles a new `RUN_DIR` in the same turn (steps 7–8 of
+  `INSTRUCTIONS.md`). It is in the script, not left to the agent: told to run it as a separate
+  command, the agent still chained it to `post.sh`. Different PRs still run in parallel.
 - **Lifetime.** Sessions follow the gateway's `session.maintenance`: `pruneAfter: 7d` and
   `maxEntries: 1000` on the host. The cap matters: hook sessions are the first removed when the
   store is over it, and with the former `maxEntries: 30` (vero alone keeps ~460 rows) every new
