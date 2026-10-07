@@ -35,9 +35,12 @@ with a fresh `resolve.sh`, run dir and worktree (`INSTRUCTIONS.md`, "Earlier tur
   cannot start within 15 s gets HTTP 503 and is dropped, so a mention written while its PR's turn is
   running may lose its hook call. Step 8 of `INSTRUCTIONS.md` re-runs `resolve.sh` at the end of a
   turn and picks such mentions up. Different PRs still run in parallel.
-- **Lifetime.** Sessions follow the gateway's `session.maintenance` (`pruneAfter: 7d`,
-  `maxEntries: 30` on the host); hook sessions are among the first removed under the cap. A PR
-  whose session is gone simply starts a new one, as every mention did before.
+- **Lifetime.** Sessions follow the gateway's `session.maintenance`: `pruneAfter: 7d` and
+  `maxEntries: 1000` on the host. The cap matters: hook sessions are the first removed when the
+  store is over it, and with the former `maxEntries: 30` (vero alone keeps ~460 rows) every new
+  session evicted the PR session of the previous mention — #1378's lasted 18 minutes, until #1379's
+  was created. `openclaw sessions cleanup --agent vero --dry-run` shows `cap-overflow` rows when it
+  bites again. A PR whose session is gone simply starts a new one, as every mention did before.
 - **Host config.** The key is computed by the transform, which the gateway treats like a
   caller-supplied key: it needs `hooks.allowRequestSessionKey: true` and
   `hooks.allowedSessionKeyPrefixes: ["hook:"]`. A narrower `["hook:vero:gh:"]` is refused on reload
