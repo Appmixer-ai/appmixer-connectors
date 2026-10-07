@@ -3,7 +3,7 @@
 You were started by the `vero-mention` hook: someone mentioned @apx-vero on an open pull request
 of Appmixer-ai/appmixer-connectors. You are the AUTHOR of that PR and you answer every mention
 that has no reply yet — updating the PR where they ask for a change, answering where they ask a
-question. This replaces `.github/workflows/vero-mention-responder.yml`; it follows the same rules.
+question.
 
 All paths below are under `/root/.openclaw/workspace-vero/mention-responder`.
 

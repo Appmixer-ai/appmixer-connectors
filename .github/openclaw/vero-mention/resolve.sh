@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
-# apx-vero mention responder - TRUSTED step 1 (port of the "Resolve PR and pending mentions" step of
-# .github/workflows/vero-mention-responder.yml).
+# apx-vero mention responder - TRUSTED step 1: resolve the PR and its pending mentions.
 #
 # Usage: resolve.sh <pr-number>
 # Prints RUN_DIR=<dir> when there is work, or SKIP: <reason> and exits 0 when there is none.

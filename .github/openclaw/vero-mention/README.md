@@ -1,13 +1,13 @@
 # apx-vero mention responder on OpenClaw
 
-The same job as `.github/workflows/vero-mention-responder.yml`, run by the `vero` agent of the
-OpenClaw gateway on `hetzner-appmixer-agents` instead of a GitHub Actions runner. The agent keeps a
-warm checkout with dependencies and, later, access to the QA instance, which a fresh runner lacks.
+Answers people who @-mention apx-vero on its pull requests. Runs as the `vero` agent of the OpenClaw
+gateway on `hetzner-appmixer-agents`; it replaced the GitHub Actions workflow
+`vero-mention-responder.yml` (removed 2026-10-07). The agent keeps a warm checkout with dependencies
+and, later, access to the QA instance, which a fresh runner lacked.
 
 **Status: live since 2026-10-07.** The Appmixer integration `CI - @apx-vero mention -> OpenClaw vero
-agent` calls only this hook; the GitHub Actions workflow no longer receives a `repository_dispatch` and
-stays as a manual fallback (`workflow_dispatch` with a PR number). The shadow pilot (2026-10-02 to
-2026-10-07) compared one run on PR #1363 with the Actions reply; they matched.
+agent` calls only this hook. The shadow pilot (2026-10-02 to 2026-10-07) compared one run on PR #1363
+with the reply of the former Actions workflow; they matched.
 
 ## Flow of a mention
 

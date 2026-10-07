@@ -92,9 +92,8 @@ review body. The `vero` agent on the gateway then runs the responder in
 It replaces `claude-pr-author.yml` (#1153, removed in #1169), which listened to
 the comment and review events directly. Two of those three events run without
 secrets on PRs from forks, and apx-vero's PRs always come from its fork. Until
-2026-10 the flow fired a `repository_dispatch` into
-`.github/workflows/vero-mention-responder.yml` instead; that workflow is kept
-only as a manual fallback (`workflow_dispatch` with a PR number).
+2026-10-07 the flow fired a `repository_dispatch` into the Actions workflow
+`vero-mention-responder.yml`, which is removed; the hook is the only path.
 
 ### Shape
 
