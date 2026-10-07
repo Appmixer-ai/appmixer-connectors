@@ -39,7 +39,11 @@ responder can answer first. Create the file to compare, remove it to go live.
 - nginx site: `/etc/nginx/sites-enabled/openclaw-webhooks`. It also serves `/status/openclaw.json`
   (bearer token) for the appmixer-sanity Operations page: `build-status.js` here is the reference copy
   of `/root/openclaw-status/build-status.js`, run by the `openclaw-status` systemd timer every 5 min.
-  It lists the recent runs of this responder from `runs/` (replied / skipped / pending / failed).
+  It lists the recent runs of this responder from `runs/` (replied / skipped / pending / failed) and
+  pairs each hook run of the gateway journal with the agent's archived session transcript
+  (`/root/.openclaw/agents/vero/sessions/*.zst`): PR, duration, model calls, exec steps, cost and the
+  closing text. The gateway archives a run's transcript when the next run starts, so the newest run
+  has no details until then.
 - Hook token: `hooks.token` in the config (copy in `/root/backups/hook-token.txt`, root-only). The
   integration wizard field "OpenClaw hook headers" carries it; never commit it.
 
