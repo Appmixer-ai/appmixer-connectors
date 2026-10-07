@@ -65,7 +65,17 @@ responder can answer first. Create the file to compare, remove it to go live.
 - These files: `/root/.openclaw/workspace-vero/mention-responder/` (scripts, `INSTRUCTIONS.md`,
   `SHADOW`, `shadow-log.jsonl`, `repo/` base clone, `runs/<pr>-<timestamp>/`).
 - Transform: `/root/.openclaw/hooks/transforms/vero-mention.mjs`.
-- nginx site: `/etc/nginx/sites-enabled/openclaw-webhooks`.
+- nginx site: `/etc/nginx/sites-enabled/openclaw-webhooks`. It also serves `/status/openclaw.json`
+  (bearer token) for the appmixer-sanity Operations page: `build-status.js` here is the reference copy
+  of `/root/openclaw-status/build-status.js`, run by the `openclaw-status` systemd timer every 5 min.
+  It lists the recent runs of this responder from `runs/` (replied / skipped / pending / failed) and
+  pairs each hook run of the gateway journal with its turn in the agent's session transcripts: PR,
+  duration, model calls, exec steps, cost and the closing text. A PR's persistent session holds one
+  turn per run; while it lives it is read with `openclaw sessions export-trajectory` (its
+  `events.jsonl` — `session-branch.json` truncates entries), afterwards from the archive the gateway
+  leaves in `/root/.openclaw/agents/vero/sessions/*.zst`, like the isolated sessions of older runs.
+  Transcripts are split at every hook prompt and a run is paired with the turn that ended within
+  30 s before the journal line. Runs the gateway rejected before starting (model policy) have none.
 - Hook token: `hooks.token` in the config (copy in `/root/backups/hook-token.txt`, root-only). The
   integration wizard field "OpenClaw hook headers" carries it; never commit it.
 
