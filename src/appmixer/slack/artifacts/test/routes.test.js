@@ -281,7 +281,33 @@ describe('POST /events handler', () => {
             assert.equal(filter({ params: {} }), false);
         });
 
-        it('team_join keeps the unfiltered delivery when no authToken is configured', async () => {
+        it('team_join without authToken is scoped by the payload authorizations', async () => {
+
+            const payload = {
+                team_id: 'T07XXUJTGNB',
+                type: 'event_callback',
+                event: { type: 'team_join', user: { id: 'U07XX2HP37H', team_id: 'T07XXUJTGNB' } },
+                authorizations: [{ team_id: 'T07XXUJTGNB', user_id: 'U07XXCHPJQK' }]
+            };
+            const timestamp = '1729856453';
+            const mySignature = 'v0=' + createHmac('sha256', 'signing_secret')
+                .update(`v0:${timestamp}:${JSON.stringify(payload)}`).digest('hex');
+            delete context.config.authToken;
+
+            await handler({
+                payload,
+                headers: { 'x-slack-signature': mySignature, 'x-slack-request-timestamp': timestamp }
+            }, h);
+
+            assert.equal(context.httpRequest.callCount, 0, 'no authorization lookup without the app token');
+            assert.equal(context.triggerListeners.callCount, 1);
+            const { filter } = context.triggerListeners.getCall(0).args[0];
+            assert.equal(typeof filter, 'function', 'triggerListeners should be called with a filter function');
+            assert.equal(filter({ params: { userId: 'U07XXCHPJQK' } }), true);
+            assert.equal(filter({ params: { userId: 'U_OTHER_WORKSPACE' } }), false);
+        });
+
+        it('team_join without authToken and payload authorizations is not delivered', async () => {
 
             const payload = {
                 team_id: 'T07XXUJTGNB',
@@ -298,9 +324,8 @@ describe('POST /events handler', () => {
                 headers: { 'x-slack-signature': mySignature, 'x-slack-request-timestamp': timestamp }
             }, h);
 
-            assert.equal(context.httpRequest.callCount, 0, 'no authorization lookup without the app token');
-            assert.equal(context.triggerListeners.callCount, 1);
-            assert.equal(context.triggerListeners.getCall(0).args[0].filter, undefined);
+            assert.equal(context.httpRequest.callCount, 0);
+            assert.equal(context.triggerListeners.callCount, 0);
         });
 
         it('team_join is not delivered when Slack refuses the authorizations lookup', async () => {

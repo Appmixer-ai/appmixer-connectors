@@ -202,21 +202,24 @@ module.exports = async context => {
             return;
         }
 
-        if (!context.config?.authToken) {
-            // The authorization lookup needs the app token, and New User (unlike message triggers) only ever
-            // required the signing secret - an install without it keeps the unfiltered delivery.
-            context.log('warn', 'slack-plugin-route-webhook-event-team-join-unfiltered', {
-                reason: 'Missing authToken: team_join cannot be scoped to its workspace.'
-            });
-            await context.triggerListeners({ eventName: 'slack_team_join', payload: event.user });
-            return;
-        }
-
         // A team_join of one workspace is for the New User triggers of that workspace only - the same
         // authorization filter as messages. Without it every listener, in every tenant using the app,
         // received the profile of anyone joining any workspace that installed it.
-        const authorizedUsers = await getAuthorizedUserIds(context, req);
-        if (!authorizedUsers) {
+        let authorizedUsers;
+        if (context.config?.authToken) {
+            authorizedUsers = await getAuthorizedUserIds(context, req);
+        } else {
+            // The full lookup needs the app token, and New User (unlike message triggers) only ever required
+            // the signing secret. Fall back to the authorizations of the signed payload - Slack includes one
+            // installation there, so delivery stays within the workspace. Nothing is delivered without them.
+            authorizedUsers = (req.payload.authorizations || []).map(item => item['user_id']).filter(Boolean);
+            context.log('error', 'slack-plugin-route-webhook-event-team-join-missing-authToken', {
+                reason: 'Missing authToken: team_join is scoped by the event payload authorizations only. ' +
+                    'Configure authToken to deliver it to all New User triggers of the workspace.',
+                authorizedUsers: authorizedUsers.length
+            });
+        }
+        if (!authorizedUsers?.length) {
             return;
         }
         await context.triggerListeners({
