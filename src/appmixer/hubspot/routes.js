@@ -22,7 +22,22 @@ module.exports = async (context) => {
 
         /** Is this AuthHub or Engine pod? */
         const isAuthHubPod = !!process.env.AUTH_HUB_URL && !process.env.AUTH_HUB_TOKEN;
+        /** Tenant pod forwarding its listeners to the AuthHub: the AuthHub verifies the token. */
+        const isAuthHubTenantPod = !!process.env.AUTH_HUB_URL && !!process.env.AUTH_HUB_TOKEN;
+
+        if (!isAuthHubTenantPod) {
+            // Bind the listener to the HubSpot portal of the account that registers it, so that
+            // a registration can not name another portal and receive its events.
+            await verifyListenerPortal(context, listener);
+        }
+
         if (isAuthHubPod) {
+            // The AuthHub does not create subscriptions (see below), so the tenant's developer
+            // API key and app ID are not needed in the stored listener.
+            if (listener.params) {
+                delete listener.params.apiKey;
+                delete listener.params.appId;
+            }
             // This is AuthHub — the shared app's subscriptions are configured manually in its HubSpot
             // webhook settings, so there is nothing to register here.
             return;
@@ -177,6 +192,66 @@ module.exports = async (context) => {
         }
     });
 };
+
+/**
+ * Checks that the portal in the listener's event name (`<subscriptionType>:<portalId>`) is the portal
+ * of the access token the component sent in `params.accessToken`. Throws (403) on a mismatch.
+ * The token is removed from the params before the listener is stored and is never logged.
+ *
+ * Transition: listeners registered by older connector versions carry no token. They are accepted
+ * with a warning unless the connector setting `requireListenerAccessToken` is set, then rejected.
+ */
+async function verifyListenerPortal(context, listener) {
+
+    const params = listener.params || {};
+    const accessToken = params.accessToken;
+    delete params.accessToken;
+
+    const eventName = listener.eventName || '';
+    const portalId = eventName.split(':')[1];
+
+    if (!accessToken) {
+        if (isTruthy(context.config?.requireListenerAccessToken)) {
+            context.log('error', 'hubspot-plugin-listener-added-missing-token-rejected', { eventName });
+            throw forbidden('HubSpot listener registration rejected: missing access token.');
+        }
+        context.log('warn', 'hubspot-plugin-listener-added-missing-token', { eventName });
+        return;
+    }
+
+    let tokenPortalId;
+    try {
+        // The same endpoint the auth module reads profileInfo (hub_id) from (auth.js requestProfileInfo).
+        const { data } = await context.httpRequest({
+            method: 'GET',
+            url: `https://api.hubapi.com/oauth/v1/access-tokens/${encodeURIComponent(accessToken)}`
+        });
+        tokenPortalId = data?.hub_id;
+    } catch (err) {
+        // Never log the error object: the request URL contains the token.
+        const status = err?.response?.status ?? err?.status;
+        context.log('error', 'hubspot-plugin-listener-added-token-lookup-failed', { eventName, status });
+        throw forbidden('HubSpot listener registration rejected: the access token could not be verified.');
+    }
+
+    if (tokenPortalId === undefined || tokenPortalId === null || String(tokenPortalId) !== String(portalId)) {
+        context.log('error', 'hubspot-plugin-listener-added-portal-mismatch', { eventName, tokenPortalId });
+        throw forbidden('HubSpot listener registration rejected: the portal does not match the account.');
+    }
+}
+
+function forbidden(message) {
+
+    const error = new Error(message);
+    error.statusCode = 403;
+    error.status = 403;
+    return error;
+}
+
+function isTruthy(value) {
+
+    return value === true || value === 'true' || value === '1' || value === 1;
+}
 
 // Verifies the X-HubSpot-Signature-v3 header: base64 HMAC-SHA256 of method + URI + raw body + timestamp,
 // keyed with the app's client secret. Requests without a valid, recent signature are rejected.

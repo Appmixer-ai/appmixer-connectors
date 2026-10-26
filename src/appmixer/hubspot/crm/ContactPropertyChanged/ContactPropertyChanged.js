@@ -20,7 +20,9 @@ class ContactPropertyChanged extends BaseSubscriptionComponent {
         return context.addListener(`${subscriptionType}:${portalId}`, {
             apiKey: context.config.apiKey,
             appId: context.config.appId,
-            propertyName
+            propertyName,
+            // Lets the plugin (AuthHub) verify that portalId is the account's own portal.
+            accessToken: context.auth?.accessToken
         });
     }
 

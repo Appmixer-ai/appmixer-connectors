@@ -59,6 +59,8 @@ describe('BaseSubscriptionComponent', () => {
 
         const addListenerArgs = context.addListener.getCall(0).args[0];
         assert.equal(addListenerArgs, 'contact.PropertyChange:33', 'The trigger component should be registered by Appmixer.');
+        // The access token lets the plugin (AuthHub) verify that the portal is the account's own.
+        assert.equal(context.addListener.getCall(0).args[1].accessToken, context.auth.accessToken);
     });
 
     it('should unsubscribe', async () => {

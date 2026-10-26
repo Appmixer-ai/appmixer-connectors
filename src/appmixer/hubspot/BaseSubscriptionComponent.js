@@ -102,7 +102,12 @@ class BaseSubscriptionComponent {
 
         // Use hub_id from context to differentiate between different HubSpot portals/users.
         const portalId = context.auth?.profileInfo?.hub_id;
-        return context.addListener(`${this.subscriptionType}:${portalId}`, { apiKey: context.config.apiKey, appId: context.config.appId });
+        // The access token lets the plugin (AuthHub) verify that portalId is the account's own portal.
+        return context.addListener(`${this.subscriptionType}:${portalId}`, {
+            apiKey: context.config.apiKey,
+            appId: context.config.appId,
+            accessToken: context.auth?.accessToken
+        });
     }
 
     async stop(context) {
