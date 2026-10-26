@@ -43,17 +43,18 @@ async function listAllChannels(context) {
     const client = new WebClient(context.auth.accessToken);
     const options = { exclude_archived: 1, types: 'private_channel,public_channel,im,mpim', limit: 1000 };
 
+    let channels;
     try {
-        const channels = await client.conversations.list(options);
-        const myChannels = channels.channels?.filter(channel => channel.is_member).map(channel => {
-            return {
-                label: channel.name,
-                value: channel.id
-            };
-        });
-        context.sendJson(myChannels, 'out');
+        channels = await client.conversations.list(options);
     } catch (err) {
         context.log({ step: 'List channels error', error: err });
-        context.sendJson([], 'out');
+        return context.sendJson([], 'out');
     }
+    const myChannels = channels.channels?.filter(channel => channel.is_member).map(channel => {
+        return {
+            label: channel.name,
+            value: channel.id
+        };
+    });
+    return context.sendJson(myChannels, 'out');
 }
