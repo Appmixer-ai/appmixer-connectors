@@ -1,0 +1,686 @@
+{
+    "name": "E2E OpenAI - AI Agent Tool Start",
+    "flow": {
+        "c5a1ee86-1b09-4078-8a6d-a7f756960b2b": {
+            "type": "appmixer.utils.controls.OnStart",
+            "version": "1.0.0",
+            "x": 64,
+            "y": 320,
+            "source": {},
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "9aa067e1-54c5-4fdd-83c1-947b50679e1c": {
+            "type": "appmixer.utils.controls.SetVariable",
+            "version": "1.0.0",
+            "x": 272,
+            "y": 320,
+            "source": {
+                "in": {
+                    "c5a1ee86-1b09-4078-8a6d-a7f756960b2b": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "c5a1ee86-1b09-4078-8a6d-a7f756960b2b": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "variables": {}
+                                },
+                                "lambda": {
+                                    "variables": {
+                                        "ADD": [
+                                            {
+                                                "type": "text",
+                                                "name": "Test Case",
+                                                "text": "AI Agent"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "31dfb673-9e8a-4c1d-8580-247a18653d33": {
+            "type": "appmixer.ai.openai.AIAgent",
+            "version": "1.0.0",
+            "x": 480,
+            "y": 320,
+            "source": {
+                "in": {
+                    "9aa067e1-54c5-4fdd-83c1-947b50679e1c": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "9aa067e1-54c5-4fdd-83c1-947b50679e1c": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "model": {},
+                                    "instructions": {},
+                                    "prompt": {},
+                                    "threadId": {}
+                                },
+                                "lambda": {
+                                    "model": "gpt-4o-mini",
+                                    "instructions": "You are a test agent. Look the secret code up with the Secret code tool and call the Order lookup tool with the value 5512. Answer with the secret code, then the exact text the Order lookup tool returned, and nothing else.",
+                                    "prompt": "What is the secret code, and what is the state of order 5512?",
+                                    "threadId": "openai-e2e-agent-tools"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "edb79002-f675-4747-8dbc-489d0646a193": {
+            "type": "appmixer.utils.controls.MockValue",
+            "version": "1.0.0",
+            "x": 480,
+            "y": 576,
+            "source": {
+                "in": {
+                    "31dfb673-9e8a-4c1d-8580-247a18653d33": [
+                        "tools"
+                    ]
+                }
+            },
+            "label": "Secret code",
+            "config": {
+                "transform": {
+                    "in": {
+                        "31dfb673-9e8a-4c1d-8580-247a18653d33": {
+                            "tools": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "value": {}
+                                },
+                                "lambda": {
+                                    "value": "MISTRAL-KIWI-7731"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "fbb401b1-71ec-4f85-8cfa-ab186a9ba3a2": {
+            "type": "appmixer.utils.controls.MockValue",
+            "version": "1.0.0",
+            "x": 480,
+            "y": 704,
+            "source": {
+                "in": {
+                    "31dfb673-9e8a-4c1d-8580-247a18653d33": [
+                        "tools"
+                    ]
+                }
+            },
+            "label": "Order lookup",
+            "config": {
+                "transform": {
+                    "in": {
+                        "31dfb673-9e8a-4c1d-8580-247a18653d33": {
+                            "tools": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "value": {
+                                        "1c22a90c-cc54-40a7-9857-6ef46581b04a": {
+                                            "variable": "$.31dfb673-9e8a-4c1d-8580-247a18653d33.tools.modelDefinedParameter",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "value": "{{{1c22a90c-cc54-40a7-9857-6ef46581b04a}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "19cebe79-75d6-47cd-8e06-b06f0d667221": {
+            "type": "appmixer.utils.controls.MockValue",
+            "version": "1.0.0",
+            "x": 688,
+            "y": 704,
+            "source": {
+                "in": {
+                    "fbb401b1-71ec-4f85-8cfa-ab186a9ba3a2": [
+                        "out"
+                    ]
+                }
+            },
+            "label": "Order state",
+            "config": {
+                "transform": {
+                    "in": {
+                        "fbb401b1-71ec-4f85-8cfa-ab186a9ba3a2": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "value": {
+                                        "997fa596-7d6b-45f7-8b67-2f91e7f10979": {
+                                            "variable": "$.fbb401b1-71ec-4f85-8cfa-ab186a9ba3a2.out.outvalue",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "value": "ORDER-{{{997fa596-7d6b-45f7-8b67-2f91e7f10979}}}-SHIPPED"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "256d032e-91ca-4826-8d43-5cf1c09c09f1": {
+            "type": "appmixer.utils.test.Assert",
+            "version": "1.0.0",
+            "x": 688,
+            "y": 320,
+            "source": {
+                "in": {
+                    "31dfb673-9e8a-4c1d-8580-247a18653d33": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "31dfb673-9e8a-4c1d-8580-247a18653d33": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "9e13d88b-283f-451f-9be4-c8f520511b6d": {
+                                            "variable": "$.31dfb673-9e8a-4c1d-8580-247a18653d33.out.answer",
+                                            "functions": []
+                                        },
+                                        "54b992ca-5c27-4d91-b483-0f889120cead": {
+                                            "variable": "$.31dfb673-9e8a-4c1d-8580-247a18653d33.out.usage.total_tokens",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{9e13d88b-283f-451f-9be4-c8f520511b6d}}}",
+                                                "assertion": "regex",
+                                                "regex": "KIWI-7731"
+                                            },
+                                            {
+                                                "field": "{{{9e13d88b-283f-451f-9be4-c8f520511b6d}}}",
+                                                "assertion": "regex",
+                                                "regex": "ORDER-5512-SHIPPED"
+                                            },
+                                            {
+                                                "field": "{{{54b992ca-5c27-4d91-b483-0f889120cead}}}",
+                                                "assertion": "notEmpty",
+                                                "expected": ""
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "9288d6aa-aa93-4ed9-8136-012fb0173838": {
+            "type": "appmixer.ai.openai.AIAgent",
+            "version": "1.0.0",
+            "x": 688,
+            "y": 448,
+            "source": {
+                "in": {
+                    "31dfb673-9e8a-4c1d-8580-247a18653d33": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "31dfb673-9e8a-4c1d-8580-247a18653d33": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "model": {},
+                                    "instructions": {},
+                                    "prompt": {},
+                                    "threadId": {}
+                                },
+                                "lambda": {
+                                    "model": "gpt-4o-mini",
+                                    "instructions": "You are a test agent. First call the Prompt echo tool once. Then look the weather up with the Weather tool for the city the user asks about and answer with exactly the text the Weather tool returned, nothing else.",
+                                    "prompt": "What is the weather in Prague?",
+                                    "threadId": "openai-e2e-agent-toolstart"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "d7919af4-4168-4fbb-8a1c-a5fc04de3e07": {
+            "type": "appmixer.ai.agenttools.ToolStart",
+            "version": "1.0.0",
+            "x": 688,
+            "y": 832,
+            "source": {
+                "in": {
+                    "9288d6aa-aa93-4ed9-8136-012fb0173838": [
+                        "tools"
+                    ]
+                }
+            },
+            "label": "Weather",
+            "config": {
+                "properties": {
+                    "description": "Returns the current weather for a city.",
+                    "parameters": {
+                        "ADD": [
+                            {
+                                "name": "city",
+                                "type": "string",
+                                "description": "Name of the city, e.g. Prague."
+                            }
+                        ]
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "25620611-590a-4539-8342-2e602d446fcf": {
+            "type": "appmixer.utils.controls.Condition",
+            "version": "1.0.0",
+            "x": 896,
+            "y": 832,
+            "source": {
+                "in": {
+                    "d7919af4-4168-4fbb-8a1c-a5fc04de3e07": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "d7919af4-4168-4fbb-8a1c-a5fc04de3e07": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "e885276c-61f9-4aa2-a3bb-1b908d51cdc6": {
+                                            "variable": "$.d7919af4-4168-4fbb-8a1c-a5fc04de3e07.out.args.city",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "OR": [
+                                                    {
+                                                        "input": "{{{e885276c-61f9-4aa2-a3bb-1b908d51cdc6}}}",
+                                                        "operator": "=",
+                                                        "value": "Prague"
+                                                    }
+                                                ]
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "27bed53d-c073-422a-8fd2-e8ae5a9daa81": {
+            "type": "appmixer.utils.controls.MockValue",
+            "version": "1.0.0",
+            "x": 1104,
+            "y": 768,
+            "source": {
+                "in": {
+                    "25620611-590a-4539-8342-2e602d446fcf": [
+                        "true"
+                    ]
+                }
+            },
+            "label": "Prague weather",
+            "config": {
+                "transform": {
+                    "in": {
+                        "25620611-590a-4539-8342-2e602d446fcf": {
+                            "true": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "value": {}
+                                },
+                                "lambda": {
+                                    "value": "Sunny, 24 degrees in Prague."
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "9f377e47-b047-4d03-8b3c-e060a9154095": {
+            "type": "appmixer.utils.controls.MockValue",
+            "version": "1.0.0",
+            "x": 1104,
+            "y": 896,
+            "source": {
+                "in": {
+                    "25620611-590a-4539-8342-2e602d446fcf": [
+                        "false"
+                    ]
+                }
+            },
+            "label": "Other weather",
+            "config": {
+                "transform": {
+                    "in": {
+                        "25620611-590a-4539-8342-2e602d446fcf": {
+                            "false": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "value": {}
+                                },
+                                "lambda": {
+                                    "value": "Rainy, 12 degrees."
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "1c5688e2-c442-46ca-8a57-59478087b1b5": {
+            "type": "appmixer.ai.agenttools.ToolOutput",
+            "version": "1.0.0",
+            "x": 1312,
+            "y": 832,
+            "source": {
+                "in": {
+                    "27bed53d-c073-422a-8fd2-e8ae5a9daa81": [
+                        "out"
+                    ],
+                    "9f377e47-b047-4d03-8b3c-e060a9154095": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "27bed53d-c073-422a-8fd2-e8ae5a9daa81": {
+                            "out": {
+                                "type": "json2new",
+                                "lambda": {
+                                    "output": "{{{7b0bf7d7-656d-4490-aedc-ecc24bfc6620}}}"
+                                },
+                                "modifiers": {
+                                    "output": {
+                                        "7b0bf7d7-656d-4490-aedc-ecc24bfc6620": {
+                                            "variable": "$.27bed53d-c073-422a-8fd2-e8ae5a9daa81.out.outvalue",
+                                            "functions": []
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        "9f377e47-b047-4d03-8b3c-e060a9154095": {
+                            "out": {
+                                "type": "json2new",
+                                "lambda": {
+                                    "output": "{{{2ff4d988-2cdc-4dd3-99ba-8b811ace151e}}}"
+                                },
+                                "modifiers": {
+                                    "output": {
+                                        "2ff4d988-2cdc-4dd3-99ba-8b811ace151e": {
+                                            "variable": "$.9f377e47-b047-4d03-8b3c-e060a9154095.out.outvalue",
+                                            "functions": []
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "f00c28c3-5087-42fd-8ea8-a1d782849cd0": {
+            "type": "appmixer.utils.test.Assert",
+            "version": "1.0.0",
+            "x": 896,
+            "y": 448,
+            "source": {
+                "in": {
+                    "9288d6aa-aa93-4ed9-8136-012fb0173838": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "9288d6aa-aa93-4ed9-8136-012fb0173838": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "c64442f5-0d86-4f01-a120-fb26f17c1363": {
+                                            "variable": "$.9288d6aa-aa93-4ed9-8136-012fb0173838.out.answer",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{c64442f5-0d86-4f01-a120-fb26f17c1363}}}",
+                                                "assertion": "regex",
+                                                "regex": "[Ss]unny"
+                                            },
+                                            {
+                                                "field": "{{{c64442f5-0d86-4f01-a120-fb26f17c1363}}}",
+                                                "assertion": "regex",
+                                                "regex": "Prague"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "e94fff8d-93f6-4aa5-8cf7-6184070af760": {
+            "type": "appmixer.utils.test.AfterAll",
+            "version": "1.0.0",
+            "x": 1104,
+            "y": 448,
+            "source": {
+                "in": {
+                    "256d032e-91ca-4826-8d43-5cf1c09c09f1": [
+                        "out"
+                    ],
+                    "f00c28c3-5087-42fd-8ea8-a1d782849cd0": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 180
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "d586ae81-115d-4379-8df1-301055ede665": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "version": "1.0.0",
+            "x": 1312,
+            "y": 448,
+            "source": {
+                "in": {
+                    "e94fff8d-93f6-4aa5-8cf7-6184070af760": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {},
+                "transform": {
+                    "in": {
+                        "e94fff8d-93f6-4aa5-8cf7-6184070af760": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "44d809f5-3e02-4211-8bee-6478d75b7dc8": {
+                                            "variable": "$.e94fff8d-93f6-4aa5-8cf7-6184070af760.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E OpenAI - AI Agent Tool Start",
+                                    "result": "{{{44d809f5-3e02-4211-8bee-6478d75b7dc8}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "da90134e-586b-4b1a-8ec3-3a93b1a4420d": {
+            "type": "appmixer.utils.controls.MockValue",
+            "version": "1.0.0",
+            "x": 688,
+            "y": 736,
+            "source": {
+                "in": {
+                    "9288d6aa-aa93-4ed9-8136-012fb0173838": [
+                        "tools"
+                    ]
+                }
+            },
+            "label": "Prompt echo",
+            "config": {
+                "transform": {
+                    "in": {
+                        "9288d6aa-aa93-4ed9-8136-012fb0173838": {
+                            "tools": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "value": {
+                                        "e5c0e5c0-0000-4000-8000-00000000ec02": {
+                                            "variable": "$.9288d6aa-aa93-4ed9-8136-012fb0173838.tools.prompt",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "value": "{{{e5c0e5c0-0000-4000-8000-00000000ec02}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        }
+    }
+}
