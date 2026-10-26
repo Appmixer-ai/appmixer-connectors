@@ -145,14 +145,13 @@ module.exports = async context => {
         return response.message;
     }
 
-    async function processMessages(context, req) {
-
-        const { event } = req.payload;
-        const channelId = event?.channel;
-        if (!channelId) {
-            context.log('error', 'Missing channel property.', req.payload);
-            return;
-        }
+    /**
+     * Slack users (of any workspace) the app is authorized for in the workspace the event came from.
+     * Listeners carry the Slack user_id of their owner (see onListenerAdded), so filtering on this list
+     * delivers an event only to listeners of that workspace.
+     * @return {Promise<string[]|null>} null when Slack refused the lookup (nothing should be delivered)
+     */
+    async function getAuthorizedUserIds(context, req) {
 
         const response = await context.httpRequest({
             method: 'POST',
@@ -167,10 +166,25 @@ module.exports = async context => {
 
         if (response?.data?.ok === false) {
             context.log('error', response?.data?.error);
-            return {};
+            return null;
         }
 
-        const authorizedUsers = response.data.authorizations.map(item => item['user_id']);
+        return (response?.data?.authorizations || []).map(item => item['user_id']);
+    }
+
+    async function processMessages(context, req) {
+
+        const { event } = req.payload;
+        const channelId = event?.channel;
+        if (!channelId) {
+            context.log('error', 'Missing channel property.', req.payload);
+            return;
+        }
+
+        const authorizedUsers = await getAuthorizedUserIds(context, req);
+        if (!authorizedUsers) {
+            return {};
+        }
         await context.triggerListeners({
             eventName: channelId,
             payload: event,
@@ -188,9 +202,30 @@ module.exports = async context => {
             return;
         }
 
+        // A team_join of one workspace is for the New User triggers of that workspace only - the same
+        // authorization filter as messages. Without it every listener, in every tenant using the app,
+        // received the profile of anyone joining any workspace that installed it.
+        let authorizedUsers;
+        if (context.config?.authToken) {
+            authorizedUsers = await getAuthorizedUserIds(context, req);
+        } else {
+            // The full lookup needs the app token, and New User (unlike message triggers) only ever required
+            // the signing secret. Fall back to the authorizations of the signed payload - Slack includes one
+            // installation there, so delivery stays within the workspace. Nothing is delivered without them.
+            authorizedUsers = (req.payload.authorizations || []).map(item => item['user_id']).filter(Boolean);
+            context.log('error', 'slack-plugin-route-webhook-event-team-join-missing-authToken', {
+                reason: 'Missing authToken: team_join is scoped by the event payload authorizations only. ' +
+                    'Configure authToken to deliver it to all New User triggers of the workspace.',
+                authorizedUsers: authorizedUsers.length
+            });
+        }
+        if (!authorizedUsers?.length) {
+            return;
+        }
         await context.triggerListeners({
             eventName: 'slack_team_join',
-            payload: event.user
+            payload: event.user,
+            filter: listener => authorizedUsers.indexOf(listener.params?.userId) !== -1
         });
     }
 };
