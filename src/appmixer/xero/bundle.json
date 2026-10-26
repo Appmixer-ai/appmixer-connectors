@@ -1,6 +1,6 @@
 {
     "name": "appmixer.xero",
-    "version": "2.1.0",
+    "version": "2.2.0",
     "engine": ">=6.0.0",
     "changelog": {
         "1.0.0": [
@@ -84,6 +84,10 @@
         "2.1.0": [
             "MakeApiCall: added a Tenant input (the organisation dropdown the other Xero components have), so a connection with access to several organisations can call the one it needs. Before, every call went to the connection's first organisation.",
             "MakeApiCall: Request Headers and Query Parameters set in the Designer are now sent. They were silently dropped: the key-value field stores its rows as a JSON object string, which the component did not parse, so a xero-tenant-id header could not select the organisation either. A xero-tenant-id header (any letter case) is used when Tenant is empty."
+        ],
+        "2.2.0": [
+            "Security: the NewInvoice, UpdatedInvoice, NewContact and UpdatedContact triggers now send the connection's access token with their webhook registration, and the Xero plugin accepts the registration only if the Tenant ID is one of the organisations the connection is authorised for (GET https://api.xero.com/connections). Before, a flow could subscribe to webhook events of any Xero organisation by typing its Tenant ID. The token is removed before the listener is stored and is never logged.",
+            "Transition: registrations without a token (triggers of older connector versions) are still accepted and logged as xero-plugin-listener-accepted-without-token. Set the requireListenerToken config of the Xero connector to true to reject them once every tenant runs this version."
         ]
     }
 }

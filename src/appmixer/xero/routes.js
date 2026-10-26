@@ -2,7 +2,14 @@
 
 const crypto = require('crypto');
 
+const XERO_CONNECTIONS_URL = 'https://api.xero.com/connections';
+
 module.exports = async context => {
+
+    // Every Xero trigger registers for `<CATEGORY>.<TYPE>:<tenantId>`. The tenantId comes from a
+    // component property that any flow user can edit, so the registration must prove that the
+    // user's Xero connection is authorised for that organisation. See verifyListener().
+    context.onListenerAdded(async listener => module.exports.verifyListener(context, listener));
 
     context.http.router.register({
         method: 'GET',
@@ -26,6 +33,119 @@ module.exports = async context => {
             }
         }
     });
+};
+
+/**
+ * Error thrown when a listener registration is rejected. statusCode/isClientError mark it as a
+ * client (4xx) error for the caller of POST /listeners.
+ */
+class ListenerRejectedError extends Error {
+    constructor(message, statusCode = 403) {
+        super(message);
+        this.name = 'ListenerRejectedError';
+        this.statusCode = statusCode;
+        this.isClientError = true;
+    }
+}
+
+module.exports.ListenerRejectedError = ListenerRejectedError;
+
+/**
+ * Whether listeners registered without an access token are rejected. During the transition period
+ * (default) they are accepted and logged, so tenants running an older Xero connector version (which
+ * does not send the token) keep their webhooks; set the `requireListenerToken` config to true to
+ * reject them.
+ */
+module.exports.isTokenRequired = context => {
+
+    const value = context.config?.requireListenerToken;
+    return value === true || `${value}`.toLowerCase() === 'true';
+};
+
+/**
+ * Returns the tenantId (Xero organisation) of a listener event name `<CATEGORY>.<TYPE>:<tenantId>`.
+ * @param {string} eventName
+ * @returns {string|null}
+ */
+module.exports.getTenantIdFromEventName = eventName => {
+
+    if (typeof eventName !== 'string') {
+        return null;
+    }
+    const separator = eventName.indexOf(':');
+    if (separator <= 0) {
+        return null;
+    }
+    const tenantId = eventName.slice(separator + 1).trim();
+    return tenantId || null;
+};
+
+/**
+ * Hub-side check of a listener registration (context.onListenerAdded). The trigger sends its
+ * current access token in `params.accessToken`; the tenantId in the event name must be one of the
+ * organisations that token is connected to (GET https://api.xero.com/connections). The token is
+ * removed from the params before the listener is stored and is never logged.
+ * @param {object} context Plugin context.
+ * @param {{ eventName: string, params?: object }} listener The listener before it is stored.
+ * @returns {Promise<void>}
+ */
+module.exports.verifyListener = async (context, listener) => {
+
+    const params = listener.params || {};
+    const { accessToken } = params;
+    // Never store the token with the listener, whatever the outcome of the check.
+    delete params.accessToken;
+    listener.params = params;
+
+    const eventName = listener.eventName;
+    const tenantId = module.exports.getTenantIdFromEventName(eventName);
+    if (!tenantId) {
+        throw new ListenerRejectedError('Invalid Xero listener event name.', 400);
+    }
+
+    if (!accessToken) {
+        if (module.exports.isTokenRequired(context)) {
+            context.log('error', 'xero-plugin-listener-rejected-missing-token', { eventName });
+            throw new ListenerRejectedError(
+                'Missing access token. Upgrade the Xero connector to register Xero triggers.',
+                401
+            );
+        }
+        // Transition period: an older connector version registered the listener without a token.
+        context.log('warn', 'xero-plugin-listener-accepted-without-token', { eventName });
+        return;
+    }
+
+    let connections;
+    try {
+        const response = await context.httpRequest({
+            method: 'GET',
+            url: XERO_CONNECTIONS_URL,
+            headers: {
+                Authorization: `Bearer ${accessToken}`,
+                Accept: 'application/json'
+            }
+        });
+        connections = response?.data;
+    } catch (err) {
+        // Log the status only: the error object carries the request headers (the token).
+        const status = err?.response?.status;
+        context.log('error', 'xero-plugin-listener-connections-failed', { eventName, status });
+        if (status === 401 || status === 403) {
+            throw new ListenerRejectedError('The Xero access token is not valid.', 401);
+        }
+        throw new Error(`Unable to verify the Xero organisation of the listener (status ${status || 'unknown'}).`);
+    }
+
+    const tenantIds = (Array.isArray(connections) ? connections : [])
+        .map(connection => connection?.tenantId)
+        .filter(Boolean);
+    if (!tenantIds.includes(tenantId)) {
+        context.log('error', 'xero-plugin-listener-rejected-foreign-tenant', { eventName });
+        throw new ListenerRejectedError('The Xero connection is not authorised for this organisation (Tenant ID).');
+    }
+
+    context.log('info', 'xero-plugin-listener-verified', { eventName });
 };
 
 module.exports.webhookHandler = async (context, req, h) => {
