@@ -1,5 +1,32 @@
 'use strict';
 
+/**
+ * Values of the "Custom Field Value" expression field as an array of strings.
+ * The Designer stores the rows as { AND: [{ customFieldValue_item: 'red' }, ...] }.
+ * Rows stored with the former default levels ({ OR: [{ AND: [...] }] }) and plain arrays are accepted too.
+ * @param {object|Array|string} value
+ * @returns {string[]}
+ */
+function getCustomFieldValues(value) {
+
+    if (value === undefined || value === null || value === '') {
+        return [];
+    }
+    if (Array.isArray(value)) {
+        return value.filter(item => item !== undefined && item !== null && item !== '').map(String);
+    }
+    if (typeof value !== 'object') {
+        return [String(value)];
+    }
+
+    const groups = Array.isArray(value.OR) ? value.OR : [value];
+    return groups
+        .flatMap(group => (Array.isArray(group?.AND) ? group.AND : []))
+        .map(row => row?.customFieldValue_item)
+        .filter(item => item !== undefined && item !== null && item !== '')
+        .map(String);
+}
+
 module.exports = {
     async receive(context) {
         const {
@@ -53,11 +80,12 @@ module.exports = {
             body.scoring = scoring;
         }
 
-        if (customFieldId && customFieldValue) {
+        const customFieldValues = getCustomFieldValues(customFieldValue);
+        if (customFieldId && customFieldValues.length) {
             body.customFieldValues = [
                 {
                     customFieldId,
-                    value: Array.isArray(customFieldValue) ? customFieldValue : [customFieldValue]
+                    value: customFieldValues
                 }
             ];
         }

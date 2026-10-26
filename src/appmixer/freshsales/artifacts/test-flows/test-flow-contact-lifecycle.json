@@ -114,7 +114,14 @@
                                     "first_name": "{{{var-first-name}}}",
                                     "last_name": "{{{var-last-name}}}",
                                     "email": "{{{var-email}}}",
-                                    "job_title": "{{{var-job-title}}}"
+                                    "job_title": "{{{var-job-title}}}",
+                                    "tags": {
+                                        "AND": [
+                                            {
+                                                "tags_item": "e2e-tag"
+                                            }
+                                        ]
+                                    }
                                 }
                             }
                         }
@@ -153,6 +160,19 @@
                                         "field-email": {
                                             "variable": "$.create-contact.out.email",
                                             "functions": []
+                                        },
+                                        "field-first-tag": {
+                                            "variable": "$.create-contact.out.tags",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$[0]"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
                                         }
                                     }
                                 },
@@ -172,6 +192,11 @@
                                                 "field": "{{{field-email}}}",
                                                 "assertion": "equal",
                                                 "expected": "e2e.freshsales.test@appmixer-e2e.com"
+                                            },
+                                            {
+                                                "field": "{{{field-first-tag}}}",
+                                                "assertion": "equal",
+                                                "expected": "e2e-tag"
                                             }
                                         ]
                                     }

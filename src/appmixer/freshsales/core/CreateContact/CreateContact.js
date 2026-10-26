@@ -1,5 +1,31 @@
 'use strict';
 
+/**
+ * Items of an expression field with levels ["AND"] as an array of strings.
+ * The Designer stores the rows as { AND: [{ <field>_item: 'value' }, ...] }; a plain array is accepted too.
+ * @param {object|Array|string} value
+ * @param {string} itemField Name of the row field, e.g. 'tags_item'.
+ * @returns {string[]}
+ */
+function getExpressionItems(value, itemField) {
+
+    if (value === undefined || value === null || value === '') {
+        return [];
+    }
+    let items;
+    if (Array.isArray(value)) {
+        items = value;
+    } else if (typeof value === 'object') {
+        items = (Array.isArray(value.AND) ? value.AND : []).map(row => row?.[itemField]);
+    } else {
+        items = [value];
+    }
+    return items
+        .filter(item => item !== undefined && item !== null && item !== '')
+        .map(item => String(item).trim())
+        .filter(Boolean);
+}
+
 module.exports = {
     async receive(context) {
 
@@ -20,6 +46,10 @@ module.exports = {
             sales_accounts: salesAccounts,
             tags
         } = context.messages.in.content;
+
+        if (!firstName) {
+            throw new context.CancelError('First Name is required!');
+        }
 
         // Build the contact object
         const contactData = {
@@ -45,12 +75,19 @@ module.exports = {
             }
         });
 
-        // Add optional array fields if provided
-        if (salesAccounts) {
-            contactData.sales_accounts = salesAccounts;
+        // https://developers.freshworks.com/crm/api/#create_contact
+        // sales_accounts is an array of hashes: [{ "id": 1, "is_primary": true }, { "id": 2, "is_primary": false }].
+        // The first account entered becomes the primary one.
+        const salesAccountIds = getExpressionItems(salesAccounts, 'sales_accounts_item');
+        if (salesAccountIds.length) {
+            contactData.sales_accounts = salesAccountIds.map((id, index) => ({
+                id: /^\d+$/.test(id) ? Number(id) : id,
+                is_primary: index === 0
+            }));
         }
-        if (tags) {
-            contactData.tags = tags;
+        const tagList = getExpressionItems(tags, 'tags_item');
+        if (tagList.length) {
+            contactData.tags = tagList;
         }
 
         const { domain, apiKey } = context.auth;
