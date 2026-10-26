@@ -1,6 +1,6 @@
 'use strict';
 
-const { webhookHandler, fetchLatestExample } = require('../../commons');
+const { webhookHandler, fetchLatestExample, getListenerParams } = require('../../commons');
 const ENTITY_NAME = 'Bill';
 
 module.exports = {
@@ -9,7 +9,7 @@ module.exports = {
 
         const eventName = `${ENTITY_NAME}.Update`;
         await context.log({ step: 'Registering listener', eventName, realmId: context.profileInfo && context.profileInfo.companyId });
-        return context.addListener(eventName, { realmId: context.profileInfo.companyId });
+        return context.addListener(eventName, getListenerParams(context));
     },
 
     stop: async function(context) {

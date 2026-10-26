@@ -483,15 +483,106 @@ describe('Quickbooks webhooks: realm grouping', function() {
 describe('Quickbooks onListenerAdded', function() {
 
     let onListenerAdded;
+    let context;
 
     beforeEach(async function() {
 
-        const context = {
+        context = {
             ...testUtils.createMockContext(),
             http: { router: { register: sinon.stub() } }
         };
         await require('../../routes')(context);
         onListenerAdded = context.onListenerAdded.args[0][0];
+    });
+
+    it('should verify the realm with the access token and drop the token', async function() {
+
+        context.httpRequest.resolves({ data: { CompanyInfo: { Id: '1', CompanyName: 'Airbus' } } });
+        const listener = { eventName: 'Invoice.Create', params: { realmId: REALM_ID_AIRBUS, accessToken: 'tokenA' } };
+        await onListenerAdded(listener);
+
+        assert.deepEqual(listener.params, { realmId: REALM_ID_AIRBUS });
+        assert(context.httpRequest.calledOnce);
+        const request = context.httpRequest.args[0][0];
+        assert.equal(request.method, 'GET');
+        assert.equal(request.url,
+            `https://quickbooks.api.intuit.com/v3/company/${REALM_ID_AIRBUS}/companyinfo/${REALM_ID_AIRBUS}`);
+        assert.equal(request.headers.Authorization, 'Bearer tokenA');
+        assert(!JSON.stringify(context.log.args).includes('tokenA'), 'the token must not be logged');
+    });
+
+    it('should check the sandbox API first when sandbox is configured', async function() {
+
+        context.config = { sandbox: 'true' };
+        context.httpRequest.resolves({ data: { CompanyInfo: { Id: '1' } } });
+        await onListenerAdded({ params: { realmId: REALM_ID_AIRBUS, accessToken: 'tokenA' } });
+        assert(context.httpRequest.args[0][0].url.startsWith('https://sandbox-quickbooks.api.intuit.com/v3/company/'));
+    });
+
+    it('should accept a realm readable in the other environment', async function() {
+
+        const forbidden = Object.assign(new Error('Forbidden'), { response: { status: 403 } });
+        context.httpRequest.onFirstCall().rejects(forbidden);
+        context.httpRequest.onSecondCall().resolves({ data: { CompanyInfo: { Id: '1' } } });
+        const listener = { params: { realmId: REALM_ID_AIRBUS, accessToken: 'tokenA' } };
+        await onListenerAdded(listener);
+        assert.equal(context.httpRequest.callCount, 2);
+        assert(context.httpRequest.args[1][0].url.startsWith('https://sandbox-quickbooks.api.intuit.com/'));
+        assert.deepEqual(listener.params, { realmId: REALM_ID_AIRBUS });
+    });
+
+    it('should reject a realm the token cannot read, without logging the token', async function() {
+
+        const forbidden = Object.assign(new Error('Forbidden'), {
+            response: { status: 403 },
+            config: { headers: { Authorization: 'Bearer tokenA' } }
+        });
+        context.httpRequest.rejects(forbidden);
+        const listener = { params: { realmId: REALM_ID_BOEING, accessToken: 'tokenA' } };
+
+        await assert.rejects(() => onListenerAdded(listener), error => {
+            assert.equal(error.statusCode, 403);
+            assert.match(error.message, /cannot access company/);
+            return true;
+        });
+        assert.equal(listener.params.accessToken, undefined);
+        assert(!JSON.stringify(context.log.args).includes('tokenA'), 'the token must not be logged');
+    });
+
+    it('should reject when the response has no CompanyInfo', async function() {
+
+        context.httpRequest.resolves({ data: {} });
+        await assert.rejects(
+            () => onListenerAdded({ params: { realmId: REALM_ID_AIRBUS, accessToken: 'tokenA' } }),
+            /cannot access company/
+        );
+    });
+
+    it('should reject an invalid realmId without calling the API', async function() {
+
+        await assert.rejects(
+            () => onListenerAdded({ params: { realmId: '../../x', accessToken: 'tokenA' } }),
+            /Invalid realmId/
+        );
+        assert.equal(context.httpRequest.callCount, 0);
+    });
+
+    it('should accept and log a listener without a token during the transition period', async function() {
+
+        const listener = { eventName: 'Invoice.Create', params: { realmId: REALM_ID_AIRBUS } };
+        await onListenerAdded(listener);
+        assert.deepEqual(listener.params, { realmId: REALM_ID_AIRBUS });
+        assert.equal(context.httpRequest.callCount, 0);
+        assert(context.log.args.some(args => args[1] === 'quickbooks-plugin-listener-without-token'));
+    });
+
+    it('should reject a listener without a token when requireListenerAccessToken is set', async function() {
+
+        context.config = { requireListenerAccessToken: true };
+        await assert.rejects(
+            () => onListenerAdded({ params: { realmId: REALM_ID_AIRBUS } }),
+            error => error.statusCode === 400 && /Missing accessToken/.test(error.message)
+        );
     });
 
     it('should normalize realmId to a string', async function() {
@@ -660,10 +751,12 @@ describe('Quickbooks trigger registration', function() {
                 ...testUtils.createMockContext(),
                 profileInfo: { companyId: REALM_ID_AIRBUS }
             };
+            context.auth.accessToken = 'tokenA';
 
             await start(context);
             assert(context.addListener.calledOnce);
-            assert.deepEqual(context.addListener.args[0], [trigger.eventName, { realmId: REALM_ID_AIRBUS }]);
+            assert.deepEqual(context.addListener.args[0],
+                [trigger.eventName, { realmId: REALM_ID_AIRBUS, accessToken: 'tokenA' }]);
             // The state-based registration must be gone — it is not AuthHub-compatible.
             assert.equal(context.service.stateAddToSet.callCount, 0);
 
