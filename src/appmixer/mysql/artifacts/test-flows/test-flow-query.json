@@ -1,0 +1,431 @@
+{
+    "name": "E2E MySQL - Query",
+    "description": "End-to-end test for the MySQL Query component: rows, row and file output types. Needs only a working MySQL account (no tables). Checks the value types of the mysql2 driver: JSON as a string, DECIMAL as a number, DATETIME as the MySQL string 'YYYY-MM-DD HH:MM:SS'.",
+    "flow": {
+        "7d49df87-c761-49bb-b82b-dbdbbb379eb5": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16,
+            "source": {},
+            "version": "1.0.0",
+            "config": {},
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "0f6dda17-a5e5-4443-899e-59d75d1cfa26": {
+            "type": "appmixer.mysql.db.Query",
+            "x": 272,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "7d49df87-c761-49bb-b82b-dbdbbb379eb5": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "7d49df87-c761-49bb-b82b-dbdbbb379eb5": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "query": {},
+                                    "outputType": {}
+                                },
+                                "lambda": {
+                                    "query": "SELECT 1 AS id, 'appmixer' AS name, CAST('{\"a\": 1}' AS JSON) AS doc, CAST(12.50 AS DECIMAL(10,2)) AS amount, NOW() AS created_at",
+                                    "outputType": "rows"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "7e07b84f-7f1a-4b5c-bc39-62890b0465dc": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 480,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "0f6dda17-a5e5-4443-899e-59d75d1cfa26": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "0f6dda17-a5e5-4443-899e-59d75d1cfa26": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "c109ae1d-2744-4bfc-a175-c52424c38206": {
+                                            "variable": "$.0f6dda17-a5e5-4443-899e-59d75d1cfa26.out.rows",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$[0].id"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        },
+                                        "e45c2e44-8427-4e6a-bb36-d30698c29864": {
+                                            "variable": "$.0f6dda17-a5e5-4443-899e-59d75d1cfa26.out.rows",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$[0].name"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        },
+                                        "4127694c-a208-46ed-8c14-57f841d452a6": {
+                                            "variable": "$.0f6dda17-a5e5-4443-899e-59d75d1cfa26.out.rows",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$[0].doc"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        },
+                                        "6a46facd-afa0-43bd-a056-6201e7e1720a": {
+                                            "variable": "$.0f6dda17-a5e5-4443-899e-59d75d1cfa26.out.rows",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$[0].amount"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        },
+                                        "e37c3547-dd18-4746-bdaf-5b63fc0d6d49": {
+                                            "variable": "$.0f6dda17-a5e5-4443-899e-59d75d1cfa26.out.rows",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$[0].created_at"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{c109ae1d-2744-4bfc-a175-c52424c38206}}}",
+                                                "assertion": "regex",
+                                                "regex": "^1$"
+                                            },
+                                            {
+                                                "field": "{{{e45c2e44-8427-4e6a-bb36-d30698c29864}}}",
+                                                "assertion": "equal",
+                                                "expected": "appmixer"
+                                            },
+                                            {
+                                                "field": "{{{4127694c-a208-46ed-8c14-57f841d452a6}}}",
+                                                "assertion": "regex",
+                                                "regex": "^\\{\"a\": ?1\\}$"
+                                            },
+                                            {
+                                                "field": "{{{6a46facd-afa0-43bd-a056-6201e7e1720a}}}",
+                                                "assertion": "regex",
+                                                "regex": "^12\\.5$"
+                                            },
+                                            {
+                                                "field": "{{{e37c3547-dd18-4746-bdaf-5b63fc0d6d49}}}",
+                                                "assertion": "regex",
+                                                "regex": "^\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}$"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "e96ab12e-150c-4abb-9efb-e40c55931744": {
+            "type": "appmixer.mysql.db.Query",
+            "x": 480,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "7d49df87-c761-49bb-b82b-dbdbbb379eb5": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "7d49df87-c761-49bb-b82b-dbdbbb379eb5": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "query": {},
+                                    "outputType": {}
+                                },
+                                "lambda": {
+                                    "query": "SELECT 1 AS id, 'appmixer' AS name, CAST('{\"a\": 1}' AS JSON) AS doc, CAST(12.50 AS DECIMAL(10,2)) AS amount, NOW() AS created_at",
+                                    "outputType": "row"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "639e0293-4bff-4f53-8e25-2d46698befc8": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 688,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "e96ab12e-150c-4abb-9efb-e40c55931744": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "e96ab12e-150c-4abb-9efb-e40c55931744": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "6b827d3a-369a-45e6-974f-25fdf9cb10c6": {
+                                            "variable": "$.e96ab12e-150c-4abb-9efb-e40c55931744.out.row",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$.name"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{6b827d3a-369a-45e6-974f-25fdf9cb10c6}}}",
+                                                "assertion": "equal",
+                                                "expected": "appmixer"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "e3f9e843-1c3d-4008-8a19-ea1ba5d2159e": {
+            "type": "appmixer.mysql.db.Query",
+            "x": 688,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "7d49df87-c761-49bb-b82b-dbdbbb379eb5": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "7d49df87-c761-49bb-b82b-dbdbbb379eb5": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "query": {},
+                                    "outputType": {}
+                                },
+                                "lambda": {
+                                    "query": "SELECT 1 AS id, 'appmixer' AS name, CAST('{\"a\": 1}' AS JSON) AS doc, CAST(12.50 AS DECIMAL(10,2)) AS amount, NOW() AS created_at",
+                                    "outputType": "file"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "3a325b5f-0f73-4ea7-9d8b-31c8ad884a99": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 896,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "e3f9e843-1c3d-4008-8a19-ea1ba5d2159e": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "e3f9e843-1c3d-4008-8a19-ea1ba5d2159e": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "444281ed-5eb4-4c2a-a1d2-1f17615ab31a": {
+                                            "variable": "$.e3f9e843-1c3d-4008-8a19-ea1ba5d2159e.out.fileId",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{444281ed-5eb4-4c2a-a1d2-1f17615ab31a}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "fa6cd208-845a-454d-9418-0d01687515ab": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 1104,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "7e07b84f-7f1a-4b5c-bc39-62890b0465dc": [
+                        "out"
+                    ],
+                    "639e0293-4bff-4f53-8e25-2d46698befc8": [
+                        "out"
+                    ],
+                    "3a325b5f-0f73-4ea7-9d8b-31c8ad884a99": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 180
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "eb15e46e-4adb-4d6c-8b5f-a59a569ca8c3": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1312,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "fa6cd208-845a-454d-9418-0d01687515ab": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "successStoreId": "64f6f1f9193228000754082f",
+                    "failedStoreId": "64f6f1f0193228000754082e"
+                },
+                "transform": {
+                    "in": {
+                        "fa6cd208-845a-454d-9418-0d01687515ab": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "8346b60b-4049-445b-b0ce-5f724422dbfe": {
+                                            "variable": "$.fa6cd208-845a-454d-9418-0d01687515ab.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E MySQL - Query",
+                                    "result": "{{{8346b60b-4049-445b-b0ce-5f724422dbfe}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        }
+    }
+}

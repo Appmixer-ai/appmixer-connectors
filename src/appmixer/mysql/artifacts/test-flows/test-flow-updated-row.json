@@ -1,0 +1,169 @@
+{
+    "name": "E2E MySQL - Updated Row",
+    "description": "End-to-end test for the MySQL UpdatedRow trigger. Needs no tables: the query produces its own changing data.",
+    "flow": {
+        "c89b981a-09c4-431a-b8c4-8739e5d32933": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16,
+            "source": {},
+            "version": "1.0.0",
+            "config": {},
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "d9d6ea60-0ddc-48ee-9186-a601d6edba81": {
+            "type": "appmixer.mysql.db.UpdatedRow",
+            "x": 272,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {},
+            "config": {
+                "properties": {
+                    "query": "SELECT 1 AS id, UNIX_TIMESTAMP() AS ts, FROM_UNIXTIME(?) AS since",
+                    "idField": "id"
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "65b68edd-9cb0-48f1-9b44-d709ab0b846f": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 480,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "d9d6ea60-0ddc-48ee-9186-a601d6edba81": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "d9d6ea60-0ddc-48ee-9186-a601d6edba81": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "eedad39a-343e-4397-a690-9b9162a02255": {
+                                            "variable": "$.d9d6ea60-0ddc-48ee-9186-a601d6edba81.out.updatedRow",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$.id"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{eedad39a-343e-4397-a690-9b9162a02255}}}",
+                                                "assertion": "regex",
+                                                "regex": "^1$"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "dff89606-0c3b-45ff-9eb2-c7d9f6c32103": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 688,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "65b68edd-9cb0-48f1-9b44-d709ab0b846f": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 420
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "6cfd3795-0b09-4622-a5d1-9bcf16d7603e": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 896,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "dff89606-0c3b-45ff-9eb2-c7d9f6c32103": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "successStoreId": "64f6f1f9193228000754082f",
+                    "failedStoreId": "64f6f1f0193228000754082e"
+                },
+                "transform": {
+                    "in": {
+                        "dff89606-0c3b-45ff-9eb2-c7d9f6c32103": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "1d8d2a56-e172-4af0-8e6a-b71f6178f82a": {
+                                            "variable": "$.dff89606-0c3b-45ff-9eb2-c7d9f6c32103.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E MySQL - Updated Row",
+                                    "result": "{{{1d8d2a56-e172-4af0-8e6a-b71f6178f82a}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        }
+    },
+    "notes": {
+        "cd68a58d-ffe8-4c16-ba34-4d2167eeb561": {
+            "x": 64,
+            "y": 288,
+            "width": 672,
+            "height": 224,
+            "content": "## ⚠️ Timing\n\nThe query returns the row `id = 1` with `ts` = the current UNIX timestamp, so the row changes on every poll and UpdatedRow emits it.\n\nThe first poll after the flow starts is skipped and the start itself only records the baseline, so the trigger fires on the **second poll** after start. The AfterAll timeout (420 s) must stay longer than two tick intervals of the instance. No tables are needed."
+        }
+    }
+}

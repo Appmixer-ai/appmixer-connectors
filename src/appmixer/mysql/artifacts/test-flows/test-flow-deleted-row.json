@@ -1,0 +1,168 @@
+{
+    "name": "E2E MySQL - Deleted Row",
+    "description": "End-to-end test for the MySQL DeletedRow trigger. Needs no tables: the query produces its own changing data.",
+    "flow": {
+        "4c97c5e7-319f-4b23-a747-6ac3465095d3": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16,
+            "source": {},
+            "version": "1.0.0",
+            "config": {},
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "12d95f56-b310-4a4a-b7cd-2673e6afcdb7": {
+            "type": "appmixer.mysql.db.DeletedRow",
+            "x": 272,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {},
+            "config": {
+                "properties": {
+                    "query": "SELECT UNIX_TIMESTAMP() AS id",
+                    "idField": "id"
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "a9360426-2473-40a7-832b-e36d546d8595": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 480,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "12d95f56-b310-4a4a-b7cd-2673e6afcdb7": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "12d95f56-b310-4a4a-b7cd-2673e6afcdb7": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "4a981f60-1306-47dc-8c0b-23ac5be71466": {
+                                            "variable": "$.12d95f56-b310-4a4a-b7cd-2673e6afcdb7.out.row",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$.id"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{4a981f60-1306-47dc-8c0b-23ac5be71466}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "de5a0f98-22f8-4ab0-ab5f-d3accb0067d0": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 688,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "a9360426-2473-40a7-832b-e36d546d8595": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 420
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "4065a0b9-1e47-4b15-9622-b8ea78fd305a": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 896,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "de5a0f98-22f8-4ab0-ab5f-d3accb0067d0": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "successStoreId": "64f6f1f9193228000754082f",
+                    "failedStoreId": "64f6f1f0193228000754082e"
+                },
+                "transform": {
+                    "in": {
+                        "de5a0f98-22f8-4ab0-ab5f-d3accb0067d0": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "e72de522-64cf-4ed2-a48d-10c2d32d5a96": {
+                                            "variable": "$.de5a0f98-22f8-4ab0-ab5f-d3accb0067d0.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E MySQL - Deleted Row",
+                                    "result": "{{{e72de522-64cf-4ed2-a48d-10c2d32d5a96}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        }
+    },
+    "notes": {
+        "2de22448-37ea-4914-8baa-1678eb17ae8e": {
+            "x": 64,
+            "y": 288,
+            "width": 672,
+            "height": 224,
+            "content": "## ⚠️ Timing\n\nThe query returns one row whose `id` is the current UNIX timestamp, so the row of the previous poll disappears from the result and DeletedRow emits it.\n\nThe first poll after the flow starts is skipped and the start itself only records the baseline, so the trigger fires on the **second poll** after start. The AfterAll timeout (420 s) must stay longer than two tick intervals of the instance. No tables are needed."
+        }
+    }
+}

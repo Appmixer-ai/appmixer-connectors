@@ -1,0 +1,169 @@
+{
+    "name": "E2E MySQL - List Tables",
+    "description": "End-to-end test for the MySQL ListTables component.",
+    "flow": {
+        "be3bf446-0aee-4289-83a3-3735d3e6a839": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16,
+            "source": {},
+            "version": "1.0.0",
+            "config": {},
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "401652f0-5a81-4538-a10b-dd90d36c9236": {
+            "type": "appmixer.mysql.db.ListTables",
+            "x": 272,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "be3bf446-0aee-4289-83a3-3735d3e6a839": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {},
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "d9ca57d8-b77b-463b-b2d3-bed5a8d48a0a": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 480,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "401652f0-5a81-4538-a10b-dd90d36c9236": [
+                        "tables"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "401652f0-5a81-4538-a10b-dd90d36c9236": {
+                            "tables": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "679b8249-7f30-4662-84da-6b71f4420e93": {
+                                            "variable": "$.401652f0-5a81-4538-a10b-dd90d36c9236.tables.tables",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$[0]"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{679b8249-7f30-4662-84da-6b71f4420e93}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "b324f89c-a9b2-41d2-a74c-be865e12037a": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 688,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "d9ca57d8-b77b-463b-b2d3-bed5a8d48a0a": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 180
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "114046ac-5637-4c0c-815a-c4fdea393019": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 896,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "b324f89c-a9b2-41d2-a74c-be865e12037a": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "successStoreId": "64f6f1f9193228000754082f",
+                    "failedStoreId": "64f6f1f0193228000754082e"
+                },
+                "transform": {
+                    "in": {
+                        "b324f89c-a9b2-41d2-a74c-be865e12037a": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "9d5205bf-53ce-4bb3-844a-962163c25e50": {
+                                            "variable": "$.b324f89c-a9b2-41d2-a74c-be865e12037a.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E MySQL - List Tables",
+                                    "result": "{{{9d5205bf-53ce-4bb3-844a-962163c25e50}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        }
+    },
+    "notes": {
+        "267b7ebe-090a-4275-bee7-041105ebb91c": {
+            "x": 64,
+            "y": 160,
+            "width": 672,
+            "height": 192,
+            "content": "## ⚠️ Test data assumption\n\nThe database of the connected account must contain **at least one table** — the Assert checks the first table name. On a fresh database create one, e.g. `CREATE TABLE e2e_test (id INT PRIMARY KEY);`"
+        }
+    }
+}
