@@ -227,6 +227,50 @@ describe('google.drive.lib checkMonitoredFiles paging & locking', () => {
         assert.strictEqual(context.stateUnset.callCount, 0);
     });
 
+    it('should pass newFilesSince from state to the filter', async () => {
+
+        stubPages(1);
+        context.loadState.resolves({ startPageToken: 'p0', processedFiles: [], newFilesSince: 1234 });
+        const filter = sandbox.stub().returns(true);
+
+        await lib.checkMonitoredFiles(context, { filter });
+
+        assert.deepStrictEqual(filter.firstCall.args[1], { newFilesSince: 1234 });
+    });
+
+    it('should advance newFilesSince to the run start minus the slack once the feed is drained', async () => {
+
+        stubPages(2);
+        const now = new Date('2026-10-27T10:00:00.000Z').getTime();
+        sandbox.stub(Date, 'now').returns(now);
+        context.loadState.resolves({ startPageToken: 'p0', processedFiles: [], newFilesSince: now - 3 * 60 * 60 * 1000 });
+
+        await lib.checkMonitoredFiles(context, { filter: () => true });
+
+        assert.ok(context.stateSet.calledWith('newFilesSince', now - 60 * 60 * 1000));
+    });
+
+    it('should never move newFilesSince backwards (trigger started less than the slack ago)', async () => {
+
+        stubPages(1);
+        const now = new Date('2026-10-27T10:00:00.000Z').getTime();
+        sandbox.stub(Date, 'now').returns(now);
+        context.loadState.resolves({ startPageToken: 'p0', processedFiles: [], newFilesSince: now - 60 * 1000 });
+
+        await lib.checkMonitoredFiles(context, { filter: () => true });
+
+        assert.ok(context.stateSet.calledWith('newFilesSince', now - 60 * 1000));
+    });
+
+    it('should not advance newFilesSince while a backlog is deferred to the next tick', async () => {
+
+        stubPages(1000);
+
+        await lib.checkMonitoredFiles(context, { filter: () => true });
+
+        assert.ok(!context.stateSet.calledWith('newFilesSince'));
+    });
+
 });
 
 describe('google.drive.lib registerWebhook lock contention', () => {
@@ -355,6 +399,25 @@ describe('google.drive.lib registerWebhook startPageToken handling', () => {
         assert.strictEqual(getStartPageTokenStub.callCount, 0);
         assert.deepStrictEqual(startPageTokenWrites(), []);
         assert.ok(context.stateSet.calledWith('webhookId', 'res-1'));
+    });
+
+    it('should start counting new files from the first registration', async () => {
+
+        const now = new Date('2026-10-27T10:00:00.000Z').getTime();
+        sandbox.stub(Date, 'now').returns(now);
+
+        await lib.registerWebhook(context);
+
+        assert.ok(context.stateSet.calledWith('newFilesSince', now));
+    });
+
+    it('should leave newFilesSince untouched on renewal', async () => {
+
+        context.stateGet.withArgs('startPageToken').resolves('p42');
+
+        await lib.registerWebhook(context);
+
+        assert.ok(!context.stateSet.calledWith('newFilesSince'));
     });
 
 });

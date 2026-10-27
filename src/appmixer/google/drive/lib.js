@@ -23,6 +23,12 @@ const LOCK_REARM_AFTER = LOCK_TTL / 3;
 // Hard HTTP timeout for the Google Drive API so a hung call cannot outlive the lock.
 const HTTP_TIMEOUT = 30 * 1000;
 
+// How far before the start of the last run that caught up with the change feed a file may have
+// been created and still count as new. Covers changes that reach the feed late (notably changes
+// made by other users) and clock skew. Files re-listed within this window are suppressed by the
+// processed-files buffer.
+const NEW_FILES_SINCE_SLACK = 60 * 60 * 1000;
+
 // Raised when the component lock could no longer be extended. Processing must stop rather
 // than continue unprotected - progress is durable, so the next tick() resumes where we left off.
 class LockLostError extends Error {}
@@ -231,6 +237,7 @@ const registerWebhook = async (context, { includeRemoved, maxRetryCount } = {}) 
         const storedPageToken = await context.stateGet('startPageToken');
         let pageToken = storedPageToken;
 
+        const registeredAt = Date.now();
         if (!pageToken) {
             // when triggered for the first time, we have to get the startPageToken
             await extendLock(lock);
@@ -259,6 +266,9 @@ const registerWebhook = async (context, { includeRemoved, maxRetryCount } = {}) 
             // should the lock have expired underneath us, would clobber the progress a concurrent
             // checkMonitoredFiles() has persisted in the meantime.
             await context.stateSet('startPageToken', pageToken);
+            // Files created from now on are new no matter what happens to them before the
+            // change feed is read (see checkMonitoredFiles).
+            await context.stateSet('newFilesSince', registeredAt);
         }
         await context.stateSet('channelId', channelId);
         await context.stateSet('webhookId', data.resourceId);
@@ -324,7 +334,8 @@ const getChangedFilesPage = async (
     folderIds,
     fileTypesRestriction,
     includeRemoved,
-    pageToken) => {
+    pageToken,
+    filterOptions) => {
 
     const { data: { changes = [], newStartPageToken, nextPageToken } } = await drive.changes.list({
         pageToken,
@@ -348,7 +359,7 @@ const getChangedFilesPage = async (
             subfolderStructureChanged = true;
         }
 
-        if (filter(change)) {
+        if (filter(change, filterOptions)) {
             if (files.find(file => file.id === change.file.id)) {
                 // We've already processed this file (sometimes the same file change may occur multiple times in the change list).
                 return;
@@ -424,7 +435,7 @@ const checkMonitoredFiles = async function(context, { filter, includeRemoved } =
     const lease = { armedAt: Date.now() };
 
     try {
-        const { startPageToken, processedFiles = [] } = await context.loadState();
+        const { startPageToken, processedFiles = [], newFilesSince } = await context.loadState();
         const drive = getDriveClient(context.auth);
 
         let folderIds = rootFolderIds;
@@ -454,7 +465,8 @@ const checkMonitoredFiles = async function(context, { filter, includeRemoved } =
                 folderIds,
                 normalizedFileTypesRestriction,
                 includeRemoved,
-                pageToken);
+                pageToken,
+                { newFilesSince });
 
             if (page.subfolderStructureChanged && watchesSubfolders) {
                 // The page was filtered against a subfolder list that this very page has made
@@ -471,7 +483,8 @@ const checkMonitoredFiles = async function(context, { filter, includeRemoved } =
                     folderIds,
                     normalizedFileTypesRestriction,
                     includeRemoved,
-                    pageToken);
+                    pageToken,
+                    { newFilesSince });
                 if (page.subfolderStructureChanged) {
                     // Still reported after the rebuild (a subfolder trashed or removed on this
                     // page keeps matching): the fresh list already reflects it for this run,
@@ -511,6 +524,14 @@ const checkMonitoredFiles = async function(context, { filter, includeRemoved } =
                 await context.stateSet('hasSkippedMessage', true);
                 break;
             }
+        }
+
+        if (!pageToken) {
+            // Caught up with the change feed: everything created before this run (minus the
+            // slack) has been seen. Advance only when drained, a deferred backlog may still
+            // hold older files.
+            const nextNewFilesSince = Math.max(newFilesSince || 0, startedAt - NEW_FILES_SINCE_SLACK);
+            await context.stateSet('newFilesSince', nextNewFilesSince);
         }
 
         // One line per run so that a support log export shows how much work each webhook or
