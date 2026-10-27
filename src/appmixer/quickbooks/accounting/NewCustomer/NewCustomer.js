@@ -1,6 +1,6 @@
 'use strict';
 
-const { webhookHandler, fetchLatestExample } = require('../../commons');
+const { webhookHandler, fetchLatestExample, getListenerParams } = require('../../commons');
 const ENTITY_NAME = 'Customer';
 
 module.exports = {
@@ -11,7 +11,7 @@ module.exports = {
         await context.log({ step: 'Registering listener', eventName, realmId: context.profileInfo && context.profileInfo.companyId });
         // Register a listener so webhook events received via ../../routes.js can be routed
         // to this component by realmId. This is AuthHub-compatible (shared webhook endpoint).
-        return context.addListener(eventName, { realmId: context.profileInfo.companyId });
+        return context.addListener(eventName, getListenerParams(context));
     },
 
     stop: async function(context) {
