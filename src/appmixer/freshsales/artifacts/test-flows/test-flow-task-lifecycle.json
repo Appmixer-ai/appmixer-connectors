@@ -1,461 +1,516 @@
 {
-  "flow": {
-    "on-start": {
-      "type": "appmixer.utils.controls.OnStart",
-      "x": 64,
-      "y": 16,
-      "source": {},
-      "version": "1.0.0",
-      "config": {}
-    },
-    "set-variables": {
-      "type": "appmixer.utils.controls.SetVariable",
-      "x": 256,
-      "y": 16,
-      "version": "1.0.0",
-      "source": {
-        "in": {
-          "on-start": [
-            "out"
-          ]
-        }
-      },
-      "config": {
-        "transform": {
-          "in": {
-            "on-start": {
-              "out": {
-                "type": "json2new",
-                "modifiers": {
-                  "variables": {}
-                },
-                "lambda": {
-                  "variables": {
-                    "ADD": [
-                      {
-                        "type": "text",
-                        "name": "taskTitle",
-                        "text": "E2E Test Task"
-                      },
-                      {
-                        "type": "text",
-                        "name": "taskDescription",
-                        "text": "E2E Test Task Description"
-                      },
-                      {
-                        "type": "text",
-                        "name": "updatedTitle",
-                        "text": "E2E Test Task Updated"
-                      },
-                      {
-                        "type": "text",
-                        "name": "updatedDescription",
-                        "text": "E2E Test Task Description Updated"
-                      }
+    "flow": {
+        "28c849e4-ccf9-4872-b25e-2928153d2ff1": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16,
+            "source": {},
+            "version": "1.0.0",
+            "config": {},
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "label": "on-start"
+        },
+        "60e7c655-a0c6-4e86-b1fe-f5c5ca015eb1": {
+            "type": "appmixer.utils.controls.SetVariable",
+            "x": 256,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "28c849e4-ccf9-4872-b25e-2928153d2ff1": [
+                        "out"
                     ]
-                  }
                 }
-              }
-            }
-          }
-        }
-      }
-    },
-    "create-task": {
-      "type": "appmixer.freshsales.core.CreateTask",
-      "x": 448,
-      "y": 16,
-      "version": "1.0.0",
-      "source": {
-        "in": {
-          "set-variables": [
-            "out"
-          ]
-        }
-      },
-      "config": {
-        "transform": {
-          "in": {
-            "set-variables": {
-              "out": {
-                "type": "json2new",
-                "modifiers": {
-                  "title": {
-                    "var-task-title": {
-                      "variable": "$.set-variables.out.taskTitle",
-                      "functions": []
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "28c849e4-ccf9-4872-b25e-2928153d2ff1": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "variables": {}
+                                },
+                                "lambda": {
+                                    "variables": {
+                                        "ADD": [
+                                            {
+                                                "type": "text",
+                                                "name": "taskTitle",
+                                                "text": "E2E Test Task"
+                                            },
+                                            {
+                                                "type": "text",
+                                                "name": "taskDescription",
+                                                "text": "E2E Test Task Description"
+                                            },
+                                            {
+                                                "type": "text",
+                                                "name": "updatedTitle",
+                                                "text": "E2E Test Task Updated"
+                                            },
+                                            {
+                                                "type": "text",
+                                                "name": "updatedDescription",
+                                                "text": "E2E Test Task Description Updated"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
                     }
-                  },
-                  "description": {
-                    "var-task-desc": {
-                      "variable": "$.set-variables.out.taskDescription",
-                      "functions": []
-                    }
-                  }
-                },
-                "lambda": {
-                  "title": "{{{var-task-title}}}",
-                  "description": "{{{var-task-desc}}}",
-                  "task_type": "Follow-up",
-                  "priority": "Medium",
-                  "status": "Open",
-                  "due_date": "2027-12-31"
                 }
-              }
-            }
-          }
-        }
-      }
-    },
-    "assert-create": {
-      "type": "appmixer.utils.test.Assert",
-      "x": 1200,
-      "y": 16,
-      "version": "1.0.0",
-      "source": {
-        "in": {
-          "create-task": [
-            "out"
-          ]
-        }
-      },
-      "config": {
-        "transform": {
-          "in": {
-            "create-task": {
-              "out": {
-                "type": "json2new",
-                "modifiers": {
-                  "expression": {
-                    "field-create-id": {
-                      "variable": "$.create-task.out.id",
-                      "functions": []
-                    },
-                    "field-create-title": {
-                      "variable": "$.create-task.out.title",
-                      "functions": []
-                    },
-                    "expected-title": {
-                      "variable": "$.set-variables.out.taskTitle",
-                      "functions": []
-                    }
-                  }
-                },
-                "lambda": {
-                  "expression": {
-                    "AND": [
-                      {
-                        "field": "{{{field-create-id}}}",
-                        "assertion": "notEmpty"
-                      },
-                      {
-                        "field": "{{{field-create-title}}}",
-                        "assertion": "equal",
-                        "expected": "{{{expected-title}}}"
-                      }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "label": "set-variables"
+        },
+        "385c772b-adc5-4356-880d-f9da8fae34ab": {
+            "type": "appmixer.freshsales.core.CreateTask",
+            "x": 448,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "60e7c655-a0c6-4e86-b1fe-f5c5ca015eb1": [
+                        "out"
                     ]
-                  }
                 }
-              }
-            }
-          }
-        }
-      }
-    },
-    "get-task": {
-      "type": "appmixer.freshsales.core.GetTask",
-      "x": 640,
-      "y": 144,
-      "version": "1.0.0",
-      "source": {
-        "in": {
-          "create-task": [
-            "out"
-          ]
-        }
-      },
-      "config": {
-        "transform": {
-          "in": {
-            "create-task": {
-              "out": {
-                "type": "json2new",
-                "modifiers": {
-                  "id": {
-                    "var-task-id": {
-                      "variable": "$.create-task.out.id",
-                      "functions": []
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "60e7c655-a0c6-4e86-b1fe-f5c5ca015eb1": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "title": {
+                                        "var-task-title": {
+                                            "variable": "$.60e7c655-a0c6-4e86-b1fe-f5c5ca015eb1.out.taskTitle",
+                                            "functions": []
+                                        }
+                                    },
+                                    "description": {
+                                        "var-task-desc": {
+                                            "variable": "$.60e7c655-a0c6-4e86-b1fe-f5c5ca015eb1.out.taskDescription",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "title": "{{{var-task-title}}}",
+                                    "description": "{{{var-task-desc}}}",
+                                    "task_type": "Follow-up",
+                                    "priority": "Medium",
+                                    "status": "Open",
+                                    "due_date": "2027-12-31"
+                                }
+                            }
+                        }
                     }
-                  }
-                },
-                "lambda": {
-                  "id": "{{{var-task-id}}}"
                 }
-              }
-            }
-          }
-        }
-      }
-    },
-    "assert-get": {
-      "type": "appmixer.utils.test.Assert",
-      "x": 1200,
-      "y": 144,
-      "version": "1.0.0",
-      "source": {
-        "in": {
-          "get-task": [
-            "out"
-          ]
-        }
-      },
-      "config": {
-        "transform": {
-          "in": {
-            "get-task": {
-              "out": {
-                "type": "json2new",
-                "modifiers": {
-                  "expression": {
-                    "field-get-id": {
-                      "variable": "$.get-task.out.id",
-                      "functions": []
-                    },
-                    "field-get-title": {
-                      "variable": "$.get-task.out.title",
-                      "functions": []
-                    },
-                    "expected-get-title": {
-                      "variable": "$.set-variables.out.taskTitle",
-                      "functions": []
-                    }
-                  }
-                },
-                "lambda": {
-                  "expression": {
-                    "AND": [
-                      {
-                        "field": "{{{field-get-id}}}",
-                        "assertion": "notEmpty"
-                      },
-                      {
-                        "field": "{{{field-get-title}}}",
-                        "assertion": "equal",
-                        "expected": "{{{expected-get-title}}}"
-                      }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "label": "create-task"
+        },
+        "ab7968a6-ae4c-47e8-bbec-a85713b731a5": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1200,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "385c772b-adc5-4356-880d-f9da8fae34ab": [
+                        "out"
                     ]
-                  }
                 }
-              }
-            }
-          }
-        }
-      }
-    },
-    "update-task": {
-      "type": "appmixer.freshsales.core.UpdateTask",
-      "x": 832,
-      "y": 272,
-      "version": "1.0.0",
-      "source": {
-        "in": {
-          "get-task": [
-            "out"
-          ]
-        }
-      },
-      "config": {
-        "transform": {
-          "in": {
-            "get-task": {
-              "out": {
-                "type": "json2new",
-                "modifiers": {
-                  "id": {
-                    "var-update-id": {
-                      "variable": "$.create-task.out.id",
-                      "functions": []
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "385c772b-adc5-4356-880d-f9da8fae34ab": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "field-create-id": {
+                                            "variable": "$.385c772b-adc5-4356-880d-f9da8fae34ab.out.id",
+                                            "functions": []
+                                        },
+                                        "field-create-title": {
+                                            "variable": "$.385c772b-adc5-4356-880d-f9da8fae34ab.out.title",
+                                            "functions": []
+                                        },
+                                        "expected-title": {
+                                            "variable": "$.60e7c655-a0c6-4e86-b1fe-f5c5ca015eb1.out.taskTitle",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{field-create-id}}}",
+                                                "assertion": "notEmpty"
+                                            },
+                                            {
+                                                "field": "{{{field-create-title}}}",
+                                                "assertion": "equal",
+                                                "expected": "{{{expected-title}}}"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
                     }
-                  },
-                  "title": {
-                    "var-updated-title": {
-                      "variable": "$.set-variables.out.updatedTitle",
-                      "functions": []
-                    }
-                  },
-                  "description": {
-                    "var-updated-desc": {
-                      "variable": "$.set-variables.out.updatedDescription",
-                      "functions": []
-                    }
-                  }
-                },
-                "lambda": {
-                  "id": "{{{var-update-id}}}",
-                  "title": "{{{var-updated-title}}}",
-                  "description": "{{{var-updated-desc}}}"
                 }
-              }
-            }
-          }
-        }
-      }
-    },
-    "assert-update": {
-      "type": "appmixer.utils.test.Assert",
-      "x": 1200,
-      "y": 272,
-      "version": "1.0.0",
-      "source": {
-        "in": {
-          "update-task": [
-            "out"
-          ]
-        }
-      },
-      "config": {
-        "transform": {
-          "in": {
-            "update-task": {
-              "out": {
-                "type": "json2new",
-                "modifiers": {
-                  "expression": {
-                    "field-update-id": {
-                      "variable": "$.update-task.out.id",
-                      "functions": []
-                    },
-                    "field-updated-title": {
-                      "variable": "$.update-task.out.title",
-                      "functions": []
-                    },
-                    "expected-updated-title": {
-                      "variable": "$.set-variables.out.updatedTitle",
-                      "functions": []
-                    }
-                  }
-                },
-                "lambda": {
-                  "expression": {
-                    "AND": [
-                      {
-                        "field": "{{{field-update-id}}}",
-                        "assertion": "notEmpty"
-                      },
-                      {
-                        "field": "{{{field-updated-title}}}",
-                        "assertion": "equal",
-                        "expected": "{{{expected-updated-title}}}"
-                      }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "label": "assert-create"
+        },
+        "9c3a16bd-a265-4087-a319-bea057b73149": {
+            "type": "appmixer.freshsales.core.GetTask",
+            "x": 640,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "385c772b-adc5-4356-880d-f9da8fae34ab": [
+                        "out"
                     ]
-                  }
                 }
-              }
-            }
-          }
-        }
-      }
-    },
-    "after-all": {
-      "type": "appmixer.utils.test.AfterAll",
-      "x": 1392,
-      "y": 144,
-      "version": "1.0.0",
-      "source": {
-        "in": {
-          "assert-create": [
-            "out"
-          ],
-          "assert-get": [
-            "out"
-          ],
-          "assert-update": [
-            "out"
-          ]
-        }
-      },
-      "config": {
-        "properties": {
-          "timeout": 30
-        }
-      }
-    },
-    "delete-task": {
-      "type": "appmixer.freshsales.core.DeleteTask",
-      "x": 1584,
-      "y": 144,
-      "version": "1.0.0",
-      "source": {
-        "in": {
-          "after-all": [
-            "out"
-          ]
-        }
-      },
-      "config": {
-        "transform": {
-          "in": {
-            "after-all": {
-              "out": {
-                "type": "json2new",
-                "modifiers": {
-                  "id": {
-                    "var-delete-id": {
-                      "variable": "$.create-task.out.id",
-                      "functions": []
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "385c772b-adc5-4356-880d-f9da8fae34ab": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "id": {
+                                        "var-task-id": {
+                                            "variable": "$.385c772b-adc5-4356-880d-f9da8fae34ab.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "id": "{{{var-task-id}}}"
+                                }
+                            }
+                        }
                     }
-                  }
-                },
-                "lambda": {
-                  "id": "{{{var-delete-id}}}"
                 }
-              }
-            }
-          }
-        }
-      }
-    },
-    "process-results": {
-      "type": "appmixer.utils.test.ProcessE2EResults",
-      "x": 1776,
-      "y": 144,
-      "version": "1.0.1",
-      "source": {
-        "in": {
-          "delete-task": [
-            "out"
-          ]
-        }
-      },
-      "config": {
-        "properties": {},
-        "transform": {
-          "in": {
-            "delete-task": {
-              "out": {
-                "type": "json2new",
-                "modifiers": {
-                  "recipients": {},
-                  "testCase": {},
-                  "result": {
-                    "result-var": {
-                      "variable": "$.after-all.out",
-                      "functions": []
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "label": "get-task"
+        },
+        "66f8941e-ede1-4a7e-b54e-eea96e1c2042": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1200,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "9c3a16bd-a265-4087-a319-bea057b73149": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "9c3a16bd-a265-4087-a319-bea057b73149": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "field-get-id": {
+                                            "variable": "$.9c3a16bd-a265-4087-a319-bea057b73149.out.id",
+                                            "functions": []
+                                        },
+                                        "field-get-title": {
+                                            "variable": "$.9c3a16bd-a265-4087-a319-bea057b73149.out.title",
+                                            "functions": []
+                                        },
+                                        "expected-get-title": {
+                                            "variable": "$.60e7c655-a0c6-4e86-b1fe-f5c5ca015eb1.out.taskTitle",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{field-get-id}}}",
+                                                "assertion": "notEmpty"
+                                            },
+                                            {
+                                                "field": "{{{field-get-title}}}",
+                                                "assertion": "equal",
+                                                "expected": "{{{expected-get-title}}}"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
                     }
-                  }
-                },
-                "lambda": {
-                  "recipients": "test@appmixer.ai",
-                  "testCase": "E2E Freshsales - Task Lifecycle",
-                  "result": "{{{result-var}}}"
                 }
-              }
-            }
-          }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "label": "assert-get"
+        },
+        "8d4df583-7149-4784-9ac3-a1fe0830a859": {
+            "type": "appmixer.freshsales.core.UpdateTask",
+            "x": 832,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "9c3a16bd-a265-4087-a319-bea057b73149": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "9c3a16bd-a265-4087-a319-bea057b73149": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "id": {
+                                        "var-update-id": {
+                                            "variable": "$.385c772b-adc5-4356-880d-f9da8fae34ab.out.id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "title": {
+                                        "var-updated-title": {
+                                            "variable": "$.60e7c655-a0c6-4e86-b1fe-f5c5ca015eb1.out.updatedTitle",
+                                            "functions": []
+                                        }
+                                    },
+                                    "description": {
+                                        "var-updated-desc": {
+                                            "variable": "$.60e7c655-a0c6-4e86-b1fe-f5c5ca015eb1.out.updatedDescription",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "id": "{{{var-update-id}}}",
+                                    "title": "{{{var-updated-title}}}",
+                                    "description": "{{{var-updated-desc}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "label": "update-task"
+        },
+        "3abb1b46-f3c1-4fbf-ac0f-08c468797e20": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1200,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "8d4df583-7149-4784-9ac3-a1fe0830a859": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "8d4df583-7149-4784-9ac3-a1fe0830a859": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "field-update-id": {
+                                            "variable": "$.8d4df583-7149-4784-9ac3-a1fe0830a859.out.id",
+                                            "functions": []
+                                        },
+                                        "field-updated-title": {
+                                            "variable": "$.8d4df583-7149-4784-9ac3-a1fe0830a859.out.title",
+                                            "functions": []
+                                        },
+                                        "expected-updated-title": {
+                                            "variable": "$.60e7c655-a0c6-4e86-b1fe-f5c5ca015eb1.out.updatedTitle",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{field-update-id}}}",
+                                                "assertion": "notEmpty"
+                                            },
+                                            {
+                                                "field": "{{{field-updated-title}}}",
+                                                "assertion": "equal",
+                                                "expected": "{{{expected-updated-title}}}"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "label": "assert-update"
+        },
+        "b7969a28-1451-44ea-8819-54945bc5a2c6": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 1392,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "ab7968a6-ae4c-47e8-bbec-a85713b731a5": [
+                        "out"
+                    ],
+                    "66f8941e-ede1-4a7e-b54e-eea96e1c2042": [
+                        "out"
+                    ],
+                    "3abb1b46-f3c1-4fbf-ac0f-08c468797e20": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 30
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "label": "after-all"
+        },
+        "c3479073-48d4-4340-9bb8-2b9ec45f36d5": {
+            "type": "appmixer.freshsales.core.DeleteTask",
+            "x": 1584,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "b7969a28-1451-44ea-8819-54945bc5a2c6": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "b7969a28-1451-44ea-8819-54945bc5a2c6": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "id": {
+                                        "var-delete-id": {
+                                            "variable": "$.385c772b-adc5-4356-880d-f9da8fae34ab.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "id": "{{{var-delete-id}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "label": "delete-task"
+        },
+        "5efbfb28-20af-4d88-a78d-df915aaa4886": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1776,
+            "y": 144,
+            "version": "1.0.1",
+            "source": {
+                "in": {
+                    "c3479073-48d4-4340-9bb8-2b9ec45f36d5": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {},
+                "transform": {
+                    "in": {
+                        "c3479073-48d4-4340-9bb8-2b9ec45f36d5": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "result-var": {
+                                            "variable": "$.b7969a28-1451-44ea-8819-54945bc5a2c6.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E Freshsales - Task Lifecycle",
+                                    "result": "{{{result-var}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "label": "process-results"
         }
-      }
-    }
-  },
-  "name": "E2E Freshsales - Task Lifecycle",
-  "type": "automation"
+    },
+    "name": "E2E Freshsales - Task Lifecycle",
+    "type": "automation"
 }
