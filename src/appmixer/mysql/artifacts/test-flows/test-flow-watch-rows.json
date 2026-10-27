@@ -1,0 +1,178 @@
+{
+    "name": "E2E MySQL - Watch Rows",
+    "description": "End-to-end test for the MySQL WatchRows trigger. Needs no tables: the query produces its own changing data.",
+    "flow": {
+        "4fc9fdef-09b9-492b-92db-03b031fd63c5": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16,
+            "source": {},
+            "version": "1.0.0",
+            "config": {},
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "9c6d6126-053c-4c28-b2ee-3733568cb45b": {
+            "type": "appmixer.mysql.db.WatchRows",
+            "x": 272,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {},
+            "config": {
+                "properties": {
+                    "query": "SELECT 1 AS id, UNIX_TIMESTAMP() AS ts",
+                    "idField": "id"
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "e0399f40-8763-4295-9dc0-a2fd7bd82240": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 480,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "9c6d6126-053c-4c28-b2ee-3733568cb45b": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "9c6d6126-053c-4c28-b2ee-3733568cb45b": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "bd0c493b-d867-49a3-80a3-9469bdae745c": {
+                                            "variable": "$.9c6d6126-053c-4c28-b2ee-3733568cb45b.out.event",
+                                            "functions": []
+                                        },
+                                        "bebeb5e3-ac69-4a23-b21b-7244bc486bdc": {
+                                            "variable": "$.9c6d6126-053c-4c28-b2ee-3733568cb45b.out.updatedRow",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$.id"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{bd0c493b-d867-49a3-80a3-9469bdae745c}}}",
+                                                "assertion": "equal",
+                                                "expected": "update"
+                                            },
+                                            {
+                                                "field": "{{{bebeb5e3-ac69-4a23-b21b-7244bc486bdc}}}",
+                                                "assertion": "regex",
+                                                "regex": "^1$"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "4419fba0-a1dc-479f-ac14-3c5c962fca62": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 688,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "e0399f40-8763-4295-9dc0-a2fd7bd82240": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 420
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "a998c376-c194-469f-8898-924597d0f881": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 896,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "4419fba0-a1dc-479f-ac14-3c5c962fca62": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "successStoreId": "64f6f1f9193228000754082f",
+                    "failedStoreId": "64f6f1f0193228000754082e"
+                },
+                "transform": {
+                    "in": {
+                        "4419fba0-a1dc-479f-ac14-3c5c962fca62": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "e7e5069a-5ccc-4c4c-b89c-f3342a5abfa8": {
+                                            "variable": "$.4419fba0-a1dc-479f-ac14-3c5c962fca62.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E MySQL - Watch Rows",
+                                    "result": "{{{e7e5069a-5ccc-4c4c-b89c-f3342a5abfa8}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        }
+    },
+    "notes": {
+        "7471b175-c8d9-4fc5-ba03-dd9a277736d7": {
+            "x": 64,
+            "y": 288,
+            "width": 672,
+            "height": 224,
+            "content": "## ⚠️ Timing\n\nThe query returns the row `id = 1` with `ts` = the current UNIX timestamp, so the row changes on every poll and WatchRows emits an `update` event.\n\nThe first poll after the flow starts is skipped and the start itself only records the baseline, so the trigger fires on the **second poll** after start. The AfterAll timeout (420 s) must stay longer than two tick intervals of the instance. No tables are needed."
+        }
+    }
+}

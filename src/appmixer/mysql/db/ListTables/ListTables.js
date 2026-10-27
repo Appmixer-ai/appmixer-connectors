@@ -1,6 +1,6 @@
 'use strict';
 
-const mysql = require('mysql');
+const { createConnection } = require('../../common');
 
 module.exports = {
 
@@ -8,24 +8,7 @@ module.exports = {
 
         const query = 'SHOW TABLES';
 
-        const opt = {
-            user: context.auth.dbUser,
-            host: context.auth.dbHost,
-            database: context.auth.database,
-            password: context.auth.dbPassword
-        };
-        if (context.auth.dbPort) {
-            opt.port = context.auth.dbPort;
-        }
-
-        const conn = mysql.createConnection(opt);
-
-        await new Promise((resolve, reject) => {
-            conn.connect(err => {
-                if (err) return reject(err);
-                resolve();
-            });
-        });
+        const conn = await createConnection(context);
 
         try {
             const tables = await new Promise((resolve, reject) => {
