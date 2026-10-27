@@ -1,0 +1,197 @@
+{
+    "name": "E2E Arcmira - Find Transcripts",
+    "description": "Searches transcripts for OpenAI and checks the first timestamped passage.",
+    "flow": {
+        "f5123ed5-9b13-4883-ba14-7f4720b435a2": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16,
+            "source": {},
+            "version": "1.0.0",
+            "config": {},
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "7d2d8a22-a1fd-4eb8-8205-f5a0edd0ae3a": {
+            "type": "appmixer.arcmira.core.FindTranscripts",
+            "x": 272,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "f5123ed5-9b13-4883-ba14-7f4720b435a2": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "f5123ed5-9b13-4883-ba14-7f4720b435a2": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "query": {},
+                                    "maxResults": {},
+                                    "outputType": {}
+                                },
+                                "lambda": {
+                                    "query": "OpenAI",
+                                    "maxResults": 1,
+                                    "outputType": "first"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "dcb33055-78aa-43b2-bf08-647a071c5883": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 480,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "7d2d8a22-a1fd-4eb8-8205-f5a0edd0ae3a": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "7d2d8a22-a1fd-4eb8-8205-f5a0edd0ae3a": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "765094db-782a-4bb8-844a-0dd4560541a3": {
+                                            "variable": "$.7d2d8a22-a1fd-4eb8-8205-f5a0edd0ae3a.out.videoId",
+                                            "functions": []
+                                        },
+                                        "999d967f-5bcd-4141-9f20-73d0124e70bb": {
+                                            "variable": "$.7d2d8a22-a1fd-4eb8-8205-f5a0edd0ae3a.out.text",
+                                            "functions": []
+                                        },
+                                        "0a260555-5eb9-46bd-b1f1-a354eaecd517": {
+                                            "variable": "$.7d2d8a22-a1fd-4eb8-8205-f5a0edd0ae3a.out.watchUrl",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{765094db-782a-4bb8-844a-0dd4560541a3}}}",
+                                                "assertion": "notEmpty"
+                                            },
+                                            {
+                                                "field": "{{{999d967f-5bcd-4141-9f20-73d0124e70bb}}}",
+                                                "assertion": "notEmpty"
+                                            },
+                                            {
+                                                "field": "{{{0a260555-5eb9-46bd-b1f1-a354eaecd517}}}",
+                                                "assertion": "regex",
+                                                "regex": "^https://"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "69f0fff3-adf8-4734-bb3c-a98002caf42f": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 688,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "dcb33055-78aa-43b2-bf08-647a071c5883": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 180
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "e1894aa0-da29-4f20-a1cb-4283bbce61ec": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 896,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "69f0fff3-adf8-4734-bb3c-a98002caf42f": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "successStoreId": "64f6f1f9193228000754082f",
+                    "failedStoreId": "64f6f1f0193228000754082e"
+                },
+                "transform": {
+                    "in": {
+                        "69f0fff3-adf8-4734-bb3c-a98002caf42f": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "e2b8478b-92f1-40f5-b143-2ae47a29c067": {
+                                            "variable": "$.69f0fff3-adf8-4734-bb3c-a98002caf42f.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E Arcmira - Find Transcripts",
+                                    "result": "{{{e2b8478b-92f1-40f5-b143-2ae47a29c067}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        }
+    },
+    "notes": {
+        "bd3bd95b-2a21-486f-9a85-7090d928b152": {
+            "x": 64,
+            "y": 160,
+            "width": 672,
+            "height": 200,
+            "content": "## ⚠️ Test data assumption\n\nRuns read-only calls against the Arcmira index with the connected account's API key. The free plan reads media after a delay (freshness window); the search has no date filter, so older indexed passages still match. Find Transcripts asks for 1 passage, within the 5 included per call, so it uses no extra credits."
+        }
+    }
+}

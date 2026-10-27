@@ -1,0 +1,189 @@
+{
+    "name": "E2E Arcmira - Make API Call",
+    "description": "Reads the API key context (GET /v1/me) through the generic API call.",
+    "flow": {
+        "064d411c-57d3-47a4-8730-556f80db900c": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16,
+            "source": {},
+            "version": "1.0.0",
+            "config": {},
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "c0891182-aa4c-43ea-ab32-331693156eb6": {
+            "type": "appmixer.arcmira.core.MakeApiCall",
+            "x": 272,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "064d411c-57d3-47a4-8730-556f80db900c": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "064d411c-57d3-47a4-8730-556f80db900c": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "url": {},
+                                    "method": {},
+                                    "headers": {}
+                                },
+                                "lambda": {
+                                    "url": "/me",
+                                    "method": "GET",
+                                    "headers": "{\"Accept\":\"application/json\"}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "c39af16b-02ef-475c-87eb-1f641a672b7b": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 480,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "c0891182-aa4c-43ea-ab32-331693156eb6": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "c0891182-aa4c-43ea-ab32-331693156eb6": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "0aa1bdd5-01ec-4f06-b2fc-83be697b8faa": {
+                                            "variable": "$.c0891182-aa4c-43ea-ab32-331693156eb6.out.status",
+                                            "functions": []
+                                        },
+                                        "d6d00baa-1fb2-4b40-8ce7-d063ea97706c": {
+                                            "variable": "$.c0891182-aa4c-43ea-ab32-331693156eb6.out.body",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$.tier"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{0aa1bdd5-01ec-4f06-b2fc-83be697b8faa}}}",
+                                                "assertion": "equal",
+                                                "expected": "200"
+                                            },
+                                            {
+                                                "field": "{{{d6d00baa-1fb2-4b40-8ce7-d063ea97706c}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "ed298a5c-bd25-48c5-8fdb-4d90ac50db6f": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 688,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "c39af16b-02ef-475c-87eb-1f641a672b7b": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 180
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "89cef8df-375e-4c6f-a602-6b082ad9a72d": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 896,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "ed298a5c-bd25-48c5-8fdb-4d90ac50db6f": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "successStoreId": "64f6f1f9193228000754082f",
+                    "failedStoreId": "64f6f1f0193228000754082e"
+                },
+                "transform": {
+                    "in": {
+                        "ed298a5c-bd25-48c5-8fdb-4d90ac50db6f": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "2fb8594c-c99f-405a-9ed8-3ebb3ec6014e": {
+                                            "variable": "$.ed298a5c-bd25-48c5-8fdb-4d90ac50db6f.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E Arcmira - Make API Call",
+                                    "result": "{{{2fb8594c-c99f-405a-9ed8-3ebb3ec6014e}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        }
+    }
+}

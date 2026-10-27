@@ -1,0 +1,191 @@
+{
+    "name": "E2E Arcmira - Resolve Entity",
+    "description": "Resolves the organization name OpenAI to one Arcmira entity ID.",
+    "flow": {
+        "a407c6d8-2eb2-4c9a-995e-afadd11e7b99": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16,
+            "source": {},
+            "version": "1.0.0",
+            "config": {},
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "823cdb13-e9ed-432d-aa38-6bd489c8590a": {
+            "type": "appmixer.arcmira.core.ResolveEntity",
+            "x": 272,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "a407c6d8-2eb2-4c9a-995e-afadd11e7b99": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "a407c6d8-2eb2-4c9a-995e-afadd11e7b99": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "query": {},
+                                    "type": {},
+                                    "context": {},
+                                    "maxCandidates": {}
+                                },
+                                "lambda": {
+                                    "query": "OpenAI",
+                                    "type": "organization",
+                                    "context": "the company behind ChatGPT",
+                                    "maxCandidates": 3
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "3afe2071-ed2a-45d4-a9ed-d17bff0a7261": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 480,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "823cdb13-e9ed-432d-aa38-6bd489c8590a": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "823cdb13-e9ed-432d-aa38-6bd489c8590a": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "4584324b-51ea-422b-b71b-63bf4bf593af": {
+                                            "variable": "$.823cdb13-e9ed-432d-aa38-6bd489c8590a.out.confidence",
+                                            "functions": []
+                                        },
+                                        "49946d73-7827-4db8-8fb8-a2f2d7301770": {
+                                            "variable": "$.823cdb13-e9ed-432d-aa38-6bd489c8590a.out.entityId",
+                                            "functions": []
+                                        },
+                                        "ff46e2c3-be23-4a64-8bd4-98dbb7d5e542": {
+                                            "variable": "$.823cdb13-e9ed-432d-aa38-6bd489c8590a.out.entityName",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{4584324b-51ea-422b-b71b-63bf4bf593af}}}",
+                                                "assertion": "regex",
+                                                "regex": "^(exact|single_fuzzy)$"
+                                            },
+                                            {
+                                                "field": "{{{49946d73-7827-4db8-8fb8-a2f2d7301770}}}",
+                                                "assertion": "regex",
+                                                "regex": "^ent_"
+                                            },
+                                            {
+                                                "field": "{{{ff46e2c3-be23-4a64-8bd4-98dbb7d5e542}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "5e54ee3f-262b-49b9-9a17-3580f6f9589a": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 688,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "3afe2071-ed2a-45d4-a9ed-d17bff0a7261": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 180
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "01d62598-0685-4b48-aff5-bcadbe6b73c0": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 896,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "5e54ee3f-262b-49b9-9a17-3580f6f9589a": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "successStoreId": "64f6f1f9193228000754082f",
+                    "failedStoreId": "64f6f1f0193228000754082e"
+                },
+                "transform": {
+                    "in": {
+                        "5e54ee3f-262b-49b9-9a17-3580f6f9589a": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "aedf92d6-4fd9-421b-936f-48cd8e3324c7": {
+                                            "variable": "$.5e54ee3f-262b-49b9-9a17-3580f6f9589a.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E Arcmira - Resolve Entity",
+                                    "result": "{{{aedf92d6-4fd9-421b-936f-48cd8e3324c7}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        }
+    }
+}

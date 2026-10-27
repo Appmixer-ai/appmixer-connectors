@@ -1,0 +1,158 @@
+{
+    "name": "appmixer.arcmira.core.MakeApiCall",
+    "label": "Make API Call",
+    "description": "Performs an arbitrary authorized call to the Arcmira API (https://api.arcmira.com/v1). Write methods can change account data (monitors, trackers, settings) according to the API key's scopes; paid reads use credits.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "private": false,
+    "auth": {
+        "service": "appmixer:arcmira"
+    },
+    "quota": {
+        "manager": "appmixer:arcmira",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "url": {
+                        "type": "string"
+                    },
+                    "method": {
+                        "type": "string",
+                        "enum": [
+                            "GET",
+                            "POST",
+                            "PUT",
+                            "PATCH",
+                            "DELETE"
+                        ]
+                    },
+                    "headers": {
+                        "type": "string"
+                    },
+                    "parameters": {
+                        "type": "string"
+                    },
+                    "body": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "url",
+                    "method"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "url": {
+                        "type": "text",
+                        "index": 1,
+                        "label": "API Endpoint Path",
+                        "tooltip": "Path relative to <code>https://api.arcmira.com/v1</code>, for example <code>/me</code>, <code>/search</code> or <code>/monitors</code>, or a full URL under it. Other hosts are rejected so your API key is never sent outside Arcmira. See <a href=\"https://arcmira.com/docs\" target=\"_blank\">arcmira.com/docs</a>."
+                    },
+                    "method": {
+                        "type": "select",
+                        "index": 2,
+                        "label": "HTTP Method",
+                        "defaultValue": "GET",
+                        "tooltip": "Select the HTTP method for the API call.",
+                        "options": [
+                            {
+                                "label": "GET",
+                                "value": "GET"
+                            },
+                            {
+                                "label": "POST",
+                                "value": "POST"
+                            },
+                            {
+                                "label": "PUT",
+                                "value": "PUT"
+                            },
+                            {
+                                "label": "PATCH",
+                                "value": "PATCH"
+                            },
+                            {
+                                "label": "DELETE",
+                                "value": "DELETE"
+                            }
+                        ]
+                    },
+                    "parameters": {
+                        "type": "key-value",
+                        "keyLabel": "Key",
+                        "valueLabel": "Value",
+                        "addLabel": "Add item",
+                        "removeLabel": "Remove item",
+                        "label": "Query Parameters",
+                        "index": 3,
+                        "tooltip": "Optional query parameters."
+                    },
+                    "body": {
+                        "type": "textarea",
+                        "index": 4,
+                        "label": "Request Body",
+                        "tooltip": "Request body as JSON (for POST, PUT and PATCH)."
+                    },
+                    "headers": {
+                        "type": "key-value",
+                        "keyLabel": "Key",
+                        "valueLabel": "Value",
+                        "addLabel": "Add item",
+                        "removeLabel": "Remove item",
+                        "label": "Request Headers",
+                        "index": 5,
+                        "tooltip": "Optional additional request headers. Authorization comes from the connected account."
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "options": [
+                {
+                    "label": "Status Code",
+                    "value": "status",
+                    "schema": {
+                        "type": "integer",
+                        "example": 200
+                    }
+                },
+                {
+                    "label": "Response Headers",
+                    "value": "headers",
+                    "schema": {
+                        "type": "object",
+                        "properties": {},
+                        "example": {
+                            "content-type": "application/json"
+                        }
+                    }
+                },
+                {
+                    "label": "Response Body",
+                    "value": "body",
+                    "schema": {
+                        "type": "object",
+                        "properties": {},
+                        "example": {
+                            "tier": "free",
+                            "rate_limit": 60
+                        }
+                    }
+                }
+            ]
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MDAgNTAwIiB3aWR0aD0iMzIiIGhlaWdodD0iMzIiPgoJPHJlY3QgeD0iMCIgeT0iMCIgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0iYmxhY2siLz4KCTxwYXRoIGQ9Ik0gMTk1LjY4NiA5OC40NTcgQyAxOTQuODU2IDk5LjI4NywgMTkyLjU5MiAxMDQuODExLCAxOTAuNjU2IDExMC43MzMgQyAxNjguMjgwIDE3OS4xNTYsIDE0OS4zNjUgMjM2LjgzMCwgMTQzLjAxNSAyNTYgQyAxMzUuNDY4IDI3OC43ODQsIDEwNy41MzcgMzY0LjEzNywgMTAwLjkzMiAzODQuNjAxIEMgOTkuMTM5IDM5MC4xNTcsIDk3Ljk1OCAzOTUuNDQ5LCA5OC4zMDggMzk2LjM2MSBDIDk4Ljg5MSAzOTcuODc4LCAxMDIuOTY0IDM5Ny45OTgsIDE0Ni4xNTcgMzk3Ljc2MCBMIDE5My4zNzAgMzk3LjUwMCAyMDQuNzE4IDM1Mi41MDAgQyAyMTAuOTYwIDMyNy43NTAsIDIxNi42ODggMzA0LjgwMCwgMjE3LjQ0OCAzMDEuNTAwIEMgMjE4LjIwOCAyOTguMjAwLCAyMjAuNTE1IDI4OC44NDcsIDIyMi41NzUgMjgwLjcxNSBMIDIyNi4zMjEgMjY1LjkzMSAyMjAuODQ1IDI2MS4wNDkgQyAyMDMuOTQ3IDI0NS45ODksIDIwMy4yMDMgMjIxLjg5MiwgMjE5LjE0NCAyMDUuOTUxIEMgMjI2Ljk2OCAxOTguMTI3LCAyMzYuOTI1IDE5NCwgMjQ3Ljk3NSAxOTQgQyAyNTYuNTYyIDE5NCwgMjYzLjE0NiAxOTYuMDAyLCAyNzAuNzc2IDIwMC45MzQgQyAyOTIuMTg2IDIxNC43NzEsIDI5My43NjAgMjQ1LjM1NCwgMjczLjkzNiAyNjIuMzIzIEwgMjY5LjU5NyAyNjYuMDM3IDI3MC43ODggMjcwLjI2OSBDIDI3MS40NDMgMjcyLjU5NiwgMjc1Ljc4NCAyODkuNTc1LCAyODAuNDM2IDMwOCBDIDI4NS4wODcgMzI2LjQyNSwgMjkyLjA2NyAzNTQuMDU2LCAyOTUuOTQ2IDM2OS40MDMgQyAyOTkuODI2IDM4NC43NTAsIDMwMyAzOTcuNDY3LCAzMDMgMzk3LjY2MyBDIDMwMyAzOTcuODU5LCAzMjQuNDgxIDM5Ny45MDMsIDM1MC43MzYgMzk3Ljc2MCBDIDM5NS40NDcgMzk3LjUxNiwgMzk4LjQ5NCAzOTcuMzg4LCAzOTguODEzIDM5NS43MzQgQyAzOTkgMzk0Ljc2MywgMzg3LjEyMyAzNTcuNjM4LCAzNzIuNDIxIDMxMy4yMzQgQyAzMzAuMjYyIDE4NS45MTEsIDMwOC4yNjQgMTE5LjIwOSwgMzA1LjM1NiAxMDkuODgzIEMgMzAxLjAzNCA5Ni4wMjcsIDMwNy44MzIgOTcuNTQzLCAyNDguNTU1IDk3LjIyNCBDIDIwMy44NDUgOTYuOTg0LCAxOTcgOTcuMTQzLCAxOTUuNjg2IDk4LjQ1NyIgZmlsbD0id2hpdGUiIGZpbGwtcnVsZT0iZXZlbm9kZCIvPgo8L3N2Zz4K"
+}
