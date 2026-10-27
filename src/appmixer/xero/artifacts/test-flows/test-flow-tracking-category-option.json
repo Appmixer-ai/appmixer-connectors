@@ -115,7 +115,7 @@
             }
         },
         "e41a07e8-8711-4b9b-8823-064da9db2114": {
-            "type": "appmixer.xero.accounting.ListTrackingCategories",
+            "type": "appmixer.xero.accounting.CreateTrackingCategory",
             "x": 912,
             "y": 320,
             "source": {
@@ -137,17 +137,22 @@
                             "out": {
                                 "type": "json2new",
                                 "lambda": {
-                                    "tenantId": "{{{c4ebff94-48eb-4225-b14a-783e63e06c82}}}",
-                                    "outputType": "items"
+                                    "tenantId": "{{{a1c4e7d2-3b5f-4a69-8c0d-1e2f3a4b5c61}}}",
+                                    "name": "E2E Category {{{a1c4e7d2-3b5f-4a69-8c0d-1e2f3a4b5c62}}}"
                                 },
                                 "modifiers": {
                                     "tenantId": {
-                                        "c4ebff94-48eb-4225-b14a-783e63e06c82": {
-                                            "functions": [],
-                                            "variable": "$.b9f325f3-837e-45f8-9c1e-60e4797bde03.out.tenantId"
+                                        "a1c4e7d2-3b5f-4a69-8c0d-1e2f3a4b5c61": {
+                                            "variable": "$.b9f325f3-837e-45f8-9c1e-60e4797bde03.out.tenantId",
+                                            "functions": []
                                         }
                                     },
-                                    "outputType": {}
+                                    "name": {
+                                        "a1c4e7d2-3b5f-4a69-8c0d-1e2f3a4b5c62": {
+                                            "variable": "$.ac78b25d-ace9-46e3-afcd-b28ea29410bd.out.started",
+                                            "functions": []
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -157,7 +162,7 @@
                     "account": "6a341625422c3ef50ebfd509"
                 }
             },
-            "label": "List Tracking Categories (pick one)"
+            "label": "Create Tracking Category (temporary)"
         },
         "cc10b5d9-10a2-4a55-b207-08db9a9dfe2c": {
             "type": "appmixer.xero.accounting.CreateTrackingCategoryOption",
@@ -166,7 +171,7 @@
             "source": {
                 "in": {
                     "e41a07e8-8711-4b9b-8823-064da9db2114": [
-                        "trackingCategories"
+                        "out"
                     ]
                 }
             },
@@ -179,7 +184,7 @@
                 "transform": {
                     "in": {
                         "e41a07e8-8711-4b9b-8823-064da9db2114": {
-                            "trackingCategories": {
+                            "out": {
                                 "type": "json2new",
                                 "modifiers": {
                                     "tenantId": {
@@ -190,17 +195,8 @@
                                     },
                                     "trackingCategoryId": {
                                         "99e33545-6d2d-4e2d-b87a-f8f9323e6354": {
-                                            "variable": "$.e41a07e8-8711-4b9b-8823-064da9db2114.trackingCategories.items",
-                                            "functions": [
-                                                {
-                                                    "name": "g_jsonPath",
-                                                    "params": [
-                                                        {
-                                                            "value": "$[0].TrackingCategoryID"
-                                                        }
-                                                    ]
-                                                }
-                                            ]
+                                            "variable": "$.e41a07e8-8711-4b9b-8823-064da9db2114.out.TrackingCategoryID",
+                                            "functions": []
                                         }
                                     },
                                     "name": {
@@ -372,28 +368,22 @@
                                 "modifiers": {
                                     "url": {
                                         "e82830a8-7da3-49bd-b09a-fa5fb88781f5": {
-                                            "variable": "$.e41a07e8-8711-4b9b-8823-064da9db2114.trackingCategories.items",
-                                            "functions": [
-                                                {
-                                                    "name": "g_jsonPath",
-                                                    "params": [
-                                                        {
-                                                            "value": "$[0].TrackingCategoryID"
-                                                        }
-                                                    ]
-                                                }
-                                            ]
-                                        },
-                                        "5100579e-e580-44cc-a593-a45536a5e20f": {
-                                            "variable": "$.cc10b5d9-10a2-4a55-b207-08db9a9dfe2c.out.TrackingOptionID",
+                                            "variable": "$.e41a07e8-8711-4b9b-8823-064da9db2114.out.TrackingCategoryID",
                                             "functions": []
                                         }
                                     },
-                                    "method": {}
+                                    "method": {},
+                                    "tenantId": {
+                                        "a1c4e7d2-3b5f-4a69-8c0d-1e2f3a4b5c63": {
+                                            "variable": "$.b9f325f3-837e-45f8-9c1e-60e4797bde03.out.tenantId",
+                                            "functions": []
+                                        }
+                                    }
                                 },
                                 "lambda": {
-                                    "url": "/api.xro/2.0/TrackingCategories/{{{e82830a8-7da3-49bd-b09a-fa5fb88781f5}}}/Options/{{{5100579e-e580-44cc-a593-a45536a5e20f}}}",
-                                    "method": "DELETE"
+                                    "url": "/api.xro/2.0/TrackingCategories/{{{e82830a8-7da3-49bd-b09a-fa5fb88781f5}}}",
+                                    "method": "DELETE",
+                                    "tenantId": "{{{a1c4e7d2-3b5f-4a69-8c0d-1e2f3a4b5c63}}}"
                                 }
                             }
                         }
@@ -403,7 +393,7 @@
                     "account": "6a341625422c3ef50ebfd509"
                 }
             },
-            "label": "Cleanup: Delete Tracking Option"
+            "label": "Cleanup: Delete Tracking Category"
         }
     },
     "name": "E2E Xero - Create Tracking Category Option",
