@@ -10,6 +10,22 @@ function makeGetRows() {
     return Promise.promisify(sheets.spreadsheets.values.get, { context: sheets.spreadsheets.values });
 }
 
+// Validates and normalises the "Index Column" property (A1 column letters, e.g. "A" or "AA").
+// Runs before any Google API call. Strings and numbers are trimmed and upper-cased; anything else
+// (object, array, empty value, "1A", ...) fails with a CancelError that names the property.
+function getIndexColumn(context) {
+
+    const raw = context.properties.index;
+    const value = (typeof raw === 'string' || typeof raw === 'number') ? String(raw).trim().toUpperCase() : '';
+    if (!/^[A-Z]{1,3}$/.test(value)) {
+        throw new context.CancelError(
+            'Invalid "Index Column" value. Expected a column letter such as "A" or "AA", got '
+            + `${JSON.stringify(raw)}.`
+        );
+    }
+    return value;
+}
+
 // Shared row-building helper used by both tick() and test() so the emitted shape is identical.
 // Fetches the row at `rowNumber` (1-based) together with the header row and returns the same
 // object tick() emits: { rowId, ...addHeaders(headers, row) }.
@@ -37,9 +53,9 @@ async function fetchRowAsOutput(context, getRows, worksheetName, rowNumber) {
 module.exports = {
 
     async tick(context) {
+        const indexColumn = getIndexColumn(context);
         const getRows = makeGetRows();
 
-        const indexColumn = context.properties.index.toUpperCase();
         const worksheetName = encodeURIComponent(context.properties.worksheetId.split('/')[1]);
 
         // Construct the range based on the index column
@@ -119,9 +135,9 @@ module.exports = {
     // directly. Read-only, no state writes.
     async test(context) {
 
+        const indexColumn = getIndexColumn(context);
         const getRows = makeGetRows();
 
-        const indexColumn = context.properties.index.toUpperCase();
         const worksheetName = encodeURIComponent(context.properties.worksheetId.split('/')[1]);
 
         const res = await getRows({
