@@ -100,20 +100,50 @@ class BaseSubscriptionComponent {
 
         await this.ensureWebhook(context);
 
-        // Use hub_id from context to differentiate between different HubSpot portals/users.
-        const portalId = context.auth?.profileInfo?.hub_id;
+        return this.registerListener(context);
+    }
+
+    /**
+     * Registers the listener for `<subscriptionType>:<portalId>`. The portal is the portal of the access
+     * token, not profileInfo.hub_id: an account holds a token per consent and each consent can pick
+     * a different portal, so profileInfo (stored on the first consent) can name a portal whose events
+     * this token never sees. The portal is kept in the state so stop() removes the same listener.
+     */
+    async registerListener(context, params = {}) {
+
+        const portalId = await this.getTokenPortalId(context);
+        await context.stateSet('portalId', portalId);
         // The access token lets the plugin (AuthHub) verify that portalId is the account's own portal.
         return context.addListener(`${this.subscriptionType}:${portalId}`, {
             apiKey: context.config.apiKey,
             appId: context.config.appId,
+            ...params,
             accessToken: context.auth?.accessToken
         });
+    }
+
+    async getTokenPortalId(context) {
+
+        const fallback = context.auth?.profileInfo?.hub_id;
+        try {
+            // The same endpoint the auth module reads profileInfo (hub_id) from.
+            const { data } = await context.httpRequest({
+                method: 'GET',
+                url: `https://api.hubapi.com/oauth/v1/access-tokens/${encodeURIComponent(context.auth?.accessToken)}`
+            });
+            return data?.hub_id ?? fallback;
+        } catch (err) {
+            // Never log the error object: the request URL contains the token.
+            const status = err?.response?.status ?? err?.status;
+            context.log({ step: 'hubspot-token-portal-lookup-failed', status, fallbackPortalId: fallback });
+            return fallback;
+        }
     }
 
     async stop(context) {
 
         this.configureHubspot(context);
-        const portalId = context.auth?.profileInfo?.hub_id;
+        const portalId = await context.stateGet('portalId') ?? context.auth?.profileInfo?.hub_id;
         return context.removeListener(`${this.subscriptionType}:${portalId}`);
     }
 

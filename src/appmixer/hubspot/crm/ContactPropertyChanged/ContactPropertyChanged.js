@@ -13,17 +13,8 @@ class ContactPropertyChanged extends BaseSubscriptionComponent {
 
         await this.ensureWebhook(context);
 
-        const portalId = context.auth?.profileInfo?.hub_id;
-        const propertyName = context.properties.propertyName;
-
         // Pass propertyName in listener params so routes.js can ensure a subscription exists for it.
-        return context.addListener(`${subscriptionType}:${portalId}`, {
-            apiKey: context.config.apiKey,
-            appId: context.config.appId,
-            propertyName,
-            // Lets the plugin (AuthHub) verify that portalId is the account's own portal.
-            accessToken: context.auth?.accessToken
-        });
+        return this.registerListener(context, { propertyName: context.properties.propertyName });
     }
 
     async receive(context) {

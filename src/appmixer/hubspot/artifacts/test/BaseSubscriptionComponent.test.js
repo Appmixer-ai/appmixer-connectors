@@ -63,6 +63,37 @@ describe('BaseSubscriptionComponent', () => {
         assert.equal(context.addListener.getCall(0).args[1].accessToken, context.auth.accessToken);
     });
 
+    it('registers the listener for the token\'s portal, not profileInfo.hub_id', async () => {
+
+        // An account holds a token per consent; this token was consented in portal 44.
+        const component = new TestComponent('contact.creation');
+        context.config.usesAuthHub = true;
+        context.httpRequest.resolves({ data: { hub_id: 44 } });
+
+        await component.start(context);
+
+        assert.equal(context.httpRequest.getCall(0).args[0].url,
+            `https://api.hubapi.com/oauth/v1/access-tokens/${context.auth.accessToken}`);
+        assert.equal(context.addListener.getCall(0).args[0], 'contact.creation:44');
+        assert.equal(await context.stateGet('portalId'), 44);
+
+        await component.stop(context);
+        assert.equal(context.removeListener.getCall(0).args[0], 'contact.creation:44', 'stop() removes the same listener');
+    });
+
+    it('falls back to profileInfo.hub_id when the token lookup fails', async () => {
+
+        const component = new TestComponent('contact.creation');
+        context.config.usesAuthHub = true;
+        const error = new Error('Unauthorized');
+        error.response = { status: 401 };
+        context.httpRequest.rejects(error);
+
+        await component.start(context);
+
+        assert.equal(context.addListener.getCall(0).args[0], 'contact.creation:33');
+    });
+
     it('should unsubscribe', async () => {
 
         // Unsubscribe
