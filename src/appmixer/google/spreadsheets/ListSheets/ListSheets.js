@@ -1,10 +1,9 @@
 'use strict';
 const commons = require('../../google-commons');
-const google = require('googleapis');
-const Promise = require('bluebird');
+const { google } = require('googleapis');
 
 const drive = google.drive('v3');
-const listFiles = Promise.promisify(drive.files.list);
+const listFiles = params => drive.files.list(params).then(res => res.data);
 
 const listSheets = async function(args, sheets = [], nextPageToken = null) {
 
@@ -26,10 +25,11 @@ module.exports = {
 
     async receive(context) {
 
-        google.options({ auth: commons.getOauth2Client(context.auth) });
-        const sheets = await listSheets(
-            { q: 'mimeType=\'application/vnd.google-apps.spreadsheet\'', pageSize: 1000 }
-        );
+        const sheets = await listSheets({
+            auth: commons.getOauth2Client(context.auth),
+            q: 'mimeType=\'application/vnd.google-apps.spreadsheet\'',
+            pageSize: 1000
+        });
         return context.sendJson(sheets, 'out');
     },
 

@@ -1,10 +1,9 @@
 'use strict';
-const GoogleApi = require('googleapis');
+const { google } = require('googleapis');
 const commons = require('../../google-commons');
-const Promise = require('bluebird');
 
-const calendar = GoogleApi.calendar('v3');
-const listEvents = Promise.promisify(calendar.events.list, { context: calendar.events });
+const calendar = google.calendar('v3');
+const listEvents = params => calendar.events.list(params).then(res => res.data);
 
 module.exports = {
 
@@ -26,7 +25,7 @@ module.exports = {
         const payload = {
             auth: commons.getOauth2Client(context.auth),
             quotaUser: context.auth.userId,
-            calendarId: encodeURIComponent(calendarId),
+            calendarId: calendarId,
             timeMin: startTime,
             timeMax: endTime,
             singleEvents: true,

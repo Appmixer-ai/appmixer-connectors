@@ -1,11 +1,10 @@
 'use strict';
-const GoogleApi = require('googleapis');
+const { google } = require('googleapis');
 const commons = require('../../google-commons');
-const Promise = require('bluebird');
 
-// GoogleApi initialization & promisify of some api function for convenience
-const calendar = GoogleApi.calendar('v3');
-const patchEvent = Promise.promisify(calendar.events.patch, { context: calendar.events });
+// Google API client & helpers resolving to the response body for convenience
+const calendar = google.calendar('v3');
+const patchEvent = params => calendar.events.patch(params).then(res => res.data);
 
 /**
  * Component for declining a calendar event invitation on Google Calendar.
@@ -31,8 +30,8 @@ module.exports = {
             auth: commons.getOauth2Client(context.auth),
             userId: 'me',
             quotaUser: context.auth.userId,
-            calendarId: encodeURIComponent(calendarId),
-            eventId: encodeURIComponent(eventId),
+            calendarId: calendarId,
+            eventId: eventId,
             resource: {
                 attendees: [
                     {

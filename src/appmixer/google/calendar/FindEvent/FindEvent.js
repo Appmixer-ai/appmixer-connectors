@@ -1,11 +1,11 @@
 'use strict';
-const GoogleApi = require('googleapis');
+const { google } = require('googleapis');
 const commons = require('../../google-commons');
 const Promise = require('bluebird');
 
-// GoogleApi initialization & promisify of some api function for convenience
-const calendar = GoogleApi.calendar('v3');
-const listEvents = Promise.promisify(calendar.events.list, { context: calendar.events });
+// Google API client & helpers resolving to the response body for convenience
+const calendar = google.calendar('v3');
+const listEvents = params => calendar.events.list(params).then(res => res.data);
 
 const findEvents = async context => {
 
@@ -18,7 +18,7 @@ const findEvents = async context => {
             auth: commons.getOauth2Client(context.auth),
             userId: 'me',
             quotaUser: context.auth.userId,
-            calendarId: encodeURIComponent(context.messages.in.content.calendarId),
+            calendarId: context.messages.in.content.calendarId,
             q: context.messages.in.content.query,
             maxResults: 250,
             ...(nextPageToken ? { pageToken: nextPageToken } : {})

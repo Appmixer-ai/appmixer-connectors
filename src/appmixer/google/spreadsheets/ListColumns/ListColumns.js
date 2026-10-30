@@ -1,8 +1,7 @@
 'use strict';
 const commons = require('../../google-commons');
 const { normalizeHeader } = require('../common');
-const google = require('googleapis');
-const Promise = require('bluebird');
+const { google } = require('googleapis');
 
 /**
  * Helper function - returns true, if value is null or empty
@@ -30,9 +29,9 @@ module.exports = {
 
     receive(context) {
         const sheets = google.sheets('v4');
-        const listRows = Promise.promisify(sheets.spreadsheets.values.get, { context: sheets.spreadsheets.values });
+        const listRows = params => sheets.spreadsheets.values.get(params).then(res => res.data);
         const workSheetName = context.properties.worksheetId.split('/')[1];
-        const range = `${encodeURIComponent(workSheetName)}!1:1`;
+        const range = `${workSheetName}!1:1`;
         return listRows({
             auth: commons.getOauth2Client(context.auth),
             spreadsheetId: context.properties.sheetId,

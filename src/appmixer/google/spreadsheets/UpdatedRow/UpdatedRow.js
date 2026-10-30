@@ -1,6 +1,5 @@
 'use strict';
-const google = require('googleapis');
-const Promise = require('bluebird');
+const { google } = require('googleapis');
 const commons = require('../../google-commons');
 const { normalizeHeader } = require('../common');
 
@@ -72,14 +71,12 @@ async function fetchSheetRows(context) {
     const { sheetId, worksheetId } = context.properties;
     const [, worksheetName] = worksheetId.split('/');
     const sheets = google.sheets('v4');
-    const getSheetRows = Promise.promisify(sheets.spreadsheets.values.get, {
-        context: sheets.spreadsheets.values
-    });
+    const getSheetRows = params => sheets.spreadsheets.values.get(params).then(res => res.data);
 
     const response = await getSheetRows({
         auth: commons.getOauth2Client(context.auth),
         spreadsheetId: sheetId,
-        range: encodeURIComponent(worksheetName),
+        range: worksheetName,
         majorDimension: 'ROWS',
         dateTimeRenderOption: 'FORMATTED_STRING',
         valueRenderOption: 'UNFORMATTED_VALUE'

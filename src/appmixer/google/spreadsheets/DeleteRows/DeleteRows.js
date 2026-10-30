@@ -1,10 +1,9 @@
 'use strict';
-const google = require('googleapis');
+const { google } = require('googleapis');
 const commons = require('../../google-commons');
-const Promise = require('bluebird');
 
 const sheets = google.sheets('v4');
-const deleteRow = Promise.promisify(sheets.spreadsheets.batchUpdate, { context: sheets.spreadsheets });
+const deleteRow = params => sheets.spreadsheets.batchUpdate(params).then(res => res.data);
 
 module.exports = {
 

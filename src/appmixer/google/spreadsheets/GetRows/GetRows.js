@@ -1,11 +1,10 @@
 'use strict';
-const google = require('googleapis');
+const { google } = require('googleapis');
 const commons = require('../../google-commons');
 const { normalizeHeader } = require('../common');
-const Promise = require('bluebird');
 
 const sheets = google.sheets('v4');
-const getRows = Promise.promisify(sheets.spreadsheets.values.get, { context: sheets.spreadsheets.values });
+const getRows = params => sheets.spreadsheets.values.get(params).then(res => res.data);
 
 module.exports = {
 
@@ -71,7 +70,7 @@ module.exports = {
         const response = await getRows({
             auth: commons.getOauth2Client(context.auth),
             spreadsheetId: sheetId,
-            range: encodeURIComponent(worksheetName),
+            range: worksheetName,
             majorDimension: 'ROWS'
         });
         let rows = response['values'] || [];

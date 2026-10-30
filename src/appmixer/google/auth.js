@@ -1,5 +1,5 @@
 'use strict';
-const GoogleApi = require('googleapis');
+const { google } = require('googleapis');
 const Promise = require('bluebird');
 
 module.exports = {
@@ -8,7 +8,7 @@ module.exports = {
 
     definition: initData => {
 
-        let googleApi = new GoogleApi.auth.OAuth2(
+        let googleApi = new google.auth.OAuth2(
             initData.clientId,
             initData.clientSecret,
             initData.callbackUrl
@@ -46,13 +46,14 @@ module.exports = {
             requestProfileInfo: function(context) {
 
                 return new Promise((resolve, reject) => {
-                    let oauth2 = GoogleApi.oauth2('v2');
+                    let oauth2 = google.oauth2('v2');
                     oauth2.userinfo.get({
                         'access_token': context.accessToken
-                    }, (error, result) => {
+                    }, (error, response) => {
                         if (error) {
                             return reject(error);
                         }
+                        const result = response?.data;
                         if (!result) {
                             return reject('No profile info from google');
                         }
@@ -120,10 +121,10 @@ module.exports = {
             validateAccessToken: function(context) {
 
                 return new Promise((resolve, reject) => {
-                    let oauth2 = GoogleApi.oauth2('v2');
+                    let oauth2 = google.oauth2('v2');
                     oauth2.tokeninfo({
                         ['access_token']: context.accessToken
-                    }, (error, response) => {
+                    }, (error, res) => {
                         if (error?.message === 'invalid_grant') {
                             return reject(new context.InvalidTokenError('invalid_grant while validating', {
                                 googleErr: error
@@ -135,6 +136,7 @@ module.exports = {
                         if (error) {
                             return reject(error);
                         }
+                        const response = res?.data;
                         if (!response) {
                             return reject('No response from google API.');
                         }

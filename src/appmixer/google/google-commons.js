@@ -1,5 +1,5 @@
 'use strict';
-const GoogleApi = require('googleapis');
+const { google } = require('googleapis');
 const { OAuth2Client } = require('google-auth-library');
 const pathModule = require('path');
 
@@ -7,7 +7,7 @@ module.exports = {
 
     get GoogleApi() {
 
-        return GoogleApi;
+        return google;
     },
 
     ERROR_MAP: {
@@ -17,13 +17,12 @@ module.exports = {
 
     getOauth2Client(auth) {
 
-        let { clientId, clientSecret, callback, accessToken } = auth;
-        let OAuth2 = GoogleApi.auth.OAuth2;
-        let oauth2Client = new OAuth2(clientId, clientSecret, callback);
+        const { clientId, clientSecret, callback, accessToken } = auth;
+        const oauth2Client = new google.auth.OAuth2(clientId, clientSecret, callback);
 
-        oauth2Client.credentials = {
+        oauth2Client.setCredentials({
             'access_token': accessToken
-        };
+        });
 
         return oauth2Client;
     },

@@ -20,20 +20,20 @@ describe('google.spreadsheets.NewRow', function() {
 
     before(function() {
         // The Google connector's dependencies are installed per connector, not at the repo root.
-        // Replace them with small fakes: values.get uses the node callback style.
+        // Replace them with small fakes: values.get returns a promise of { data }, like
+        // googleapis >= 26.
         getStub = sinon.stub();
         const fakes = {
             googleapis: {
-                sheets: () => ({ spreadsheets: { values: { get: getStub } } }),
-                auth: { OAuth2: function OAuth2() {} }
+                google: {
+                    sheets: () => ({ spreadsheets: { values: { get: getStub } } }),
+                    auth: { OAuth2: function OAuth2() { this.setCredentials = () => {}; } }
+                }
             },
             'google-auth-library': { OAuth2Client: function OAuth2Client() {} },
             'google-spreadsheet': { GoogleSpreadsheet: function GoogleSpreadsheet() {} },
             '@fast-csv/parse': { parse: () => {} },
             bluebird: {
-                promisify: (fn, { context } = {}) => (...args) => new Promise((resolve, reject) => {
-                    fn.call(context, ...args, (err, res) => err ? reject(err) : resolve(res));
-                }),
                 map: (items, fn) => Promise.all(items.map(fn))
             }
         };
@@ -58,7 +58,7 @@ describe('google.spreadsheets.NewRow', function() {
 
     beforeEach(function() {
         getStub.reset();
-        getStub.callsFake((params, cb) => cb(null, { values: [['id', '1', '2']] }));
+        getStub.resolves({ data: { values: [['id', '1', '2']] } });
         context = createMockContext();
         context.auth = { clientId: 'id', clientSecret: 'secret', accessToken: 'token' };
         context.properties = { sheetId: 'sheet-1', worksheetId: '0/Sheet1', index: 'a' };

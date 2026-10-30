@@ -1,11 +1,10 @@
 'use strict';
-const GoogleApi = require('googleapis');
+const { google } = require('googleapis');
 const commons = require('../../google-commons');
-const Promise = require('bluebird');
 
-// GoogleApi initialization & promisify of some api function for convenience
-const calendar = GoogleApi.calendar('v3');
-const deleteEvent = Promise.promisify(calendar.events.delete, { context: calendar.events });
+// Google API client & helpers resolving to the response body for convenience
+const calendar = google.calendar('v3');
+const deleteEvent = params => calendar.events.delete(params).then(res => res.data);
 
 /**
  * Component for event deletion on google calendar.
@@ -27,8 +26,8 @@ module.exports = {
             auth: commons.getOauth2Client(context.auth),
             userId: 'me',
             quotaUser: context.auth.userId,
-            calendarId: encodeURIComponent(context.messages.in.content.calendarId),
-            eventId: encodeURIComponent(context.messages.in.content.eventId)
+            calendarId: context.messages.in.content.calendarId,
+            eventId: context.messages.in.content.eventId
         }).then(() => {
             return context.sendJson({ eventId: context.messages.in.content.eventId }, 'deleted');
         });

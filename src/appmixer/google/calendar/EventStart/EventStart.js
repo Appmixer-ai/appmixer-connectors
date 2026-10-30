@@ -1,12 +1,12 @@
 'use strict';
-const GoogleApi = require('googleapis');
+const { google } = require('googleapis');
 const commons = require('../../google-commons');
 const Promise = require('bluebird');
 const moment = require('moment-timezone');
 
-// GoogleApi initialization & promisify of some api function for convenience
-const calendar = GoogleApi.calendar('v3');
-const listEvents = Promise.promisify(calendar.events.list, { context: calendar.events });
+// Google API client & helpers resolving to the response body for convenience
+const calendar = google.calendar('v3');
+const listEvents = params => calendar.events.list(params).then(res => res.data);
 
 function getReminder(reminders = [], defaultReminder = { minutes: 0 }) {
 
@@ -50,7 +50,7 @@ function fetchUpcomingEvents(context, from) {
         auth: commons.getOauth2Client(context.auth),
         userId: 'me',
         quotaUser: context.auth.userId,
-        calendarId: encodeURIComponent(context.properties.calendarId),
+        calendarId: context.properties.calendarId,
         singleEvents: true,
         // limits events start time to this range
         timeMin: from.toISOString(),

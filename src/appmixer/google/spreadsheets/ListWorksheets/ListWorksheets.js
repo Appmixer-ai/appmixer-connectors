@@ -1,10 +1,9 @@
 'use strict';
 const commons = require('../../google-commons');
-const google = require('googleapis');
-const Promise = require('bluebird');
+const { google } = require('googleapis');
 
 const sheets = google.sheets('v4');
-const listWorksheets = Promise.promisify(sheets.spreadsheets.get, { context: sheets.spreadsheets });
+const listWorksheets = params => sheets.spreadsheets.get(params).then(res => res.data);
 
 /**
  * ListWorksheets
