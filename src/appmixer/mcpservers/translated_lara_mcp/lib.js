@@ -7,6 +7,11 @@ const pidusage = require('pidusage');
 const SERVER_SCRIPT_PATH = __dirname + '/node_modules/@translated/lara-mcp/dist/index.js';
 const SERVER_SCRIPT_ARGS = '';
 
+// import_tmx in @translated/lara-mcp <= 0.0.11 interpolates tmx_url into a shell command
+// (GHSA-xj5p-8h7g-76m7). Every patched release needs Node >= 20.11 and fails to start on
+// Node 18, so the tool is hidden and refused here instead.
+const BLOCKED_TOOLS = ['import_tmx'];
+
 module.exports = {
 
     /**
@@ -30,6 +35,10 @@ module.exports = {
     },
 
     mcpCall: async (context, env, method, args) => {
+
+        if (method === 'callTool' && BLOCKED_TOOLS.includes(args?.[0]?.name)) {
+            throw new context.CancelError(`Tool ${args[0].name} is disabled for security reasons.`);
+        }
 
         const clientName = `mcp-client:${context.flowId}:${context.componentId}:${Math.random().toString(36).substring(7)}`;
 
@@ -66,6 +75,9 @@ module.exports = {
             }
 
             result = await client[method].apply(client, args);
+            if (method === 'listTools' && Array.isArray(result?.tools)) {
+                result.tools = result.tools.filter(tool => !BLOCKED_TOOLS.includes(tool.name));
+            }
 
             if (context.config.DEBUG === 'true') {
                 await context.log({ step: 'called-mcp-client', result, clientName });
