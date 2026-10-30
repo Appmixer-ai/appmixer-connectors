@@ -184,5 +184,70 @@ describe('google.drive.NewFileOrFolder', () => {
 
             assert.strictEqual(isNewFileOrFolder(change), false);
         });
+
+        describe('with newFilesSince', () => {
+
+            const newFilesSince = new Date('2026-10-27T09:00:00.000Z').getTime();
+
+            it('should detect a file another user uploaded and the connected account opened before processing', () => {
+
+                const change = {
+                    file: {
+                        ownedByMe: false,
+                        createdTime: '2026-10-27T09:11:02.000Z',
+                        modifiedTime: '2026-10-27T09:11:02.000Z',
+                        viewedByMeTime: '2026-10-27T09:13:40.000Z'
+                    },
+                    changeType: 'file',
+                    removed: false
+                };
+
+                assert.strictEqual(isNewFileOrFolder(change), false);
+                assert.strictEqual(isNewFileOrFolder(change, { newFilesSince }), true);
+            });
+
+            it('should detect a file edited right after upload', () => {
+
+                const change = {
+                    file: {
+                        createdTime: '2026-10-27T09:11:02.000Z',
+                        modifiedTime: '2026-10-27T09:11:09.000Z'
+                    },
+                    changeType: 'file',
+                    removed: false
+                };
+
+                assert.strictEqual(isNewFileOrFolder(change, { newFilesSince }), true);
+            });
+
+            it('should NOT detect an update to a file created before newFilesSince', () => {
+
+                const change = {
+                    file: {
+                        createdTime: '2026-10-20T08:00:00.000Z',
+                        modifiedTime: '2026-10-27T09:11:09.000Z'
+                    },
+                    changeType: 'file',
+                    removed: false
+                };
+
+                assert.strictEqual(isNewFileOrFolder(change, { newFilesSince }), false);
+            });
+
+            it('should still exclude trashed files created after newFilesSince', () => {
+
+                const change = {
+                    file: {
+                        trashed: true,
+                        createdTime: '2026-10-27T09:11:02.000Z',
+                        modifiedTime: '2026-10-27T09:12:00.000Z'
+                    },
+                    changeType: 'file',
+                    removed: false
+                };
+
+                assert.strictEqual(isNewFileOrFolder(change, { newFilesSince }), false);
+            });
+        });
     });
 });
