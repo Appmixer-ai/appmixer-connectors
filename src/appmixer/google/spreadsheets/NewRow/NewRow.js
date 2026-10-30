@@ -1,5 +1,5 @@
 'use strict';
-const google = require('googleapis');
+const { google } = require('googleapis');
 const commons = require('../../google-commons');
 const { normalizeHeader } = require('../common');
 const Promise = require('bluebird');
@@ -7,7 +7,7 @@ const Promise = require('bluebird');
 // Shared fetch helper used by both tick() and test() so requests go through the same path.
 function makeGetRows() {
     const sheets = google.sheets('v4');
-    return Promise.promisify(sheets.spreadsheets.values.get, { context: sheets.spreadsheets.values });
+    return params => sheets.spreadsheets.values.get(params).then(res => res.data);
 }
 
 // Validates and normalises the "Index Column" property (A1 column letters, e.g. "A" or "AA").
@@ -56,7 +56,7 @@ module.exports = {
         const indexColumn = getIndexColumn(context);
         const getRows = makeGetRows();
 
-        const worksheetName = encodeURIComponent(context.properties.worksheetId.split('/')[1]);
+        const worksheetName = context.properties.worksheetId.split('/')[1];
 
         // Construct the range based on the index column
         const range = `${worksheetName}!${indexColumn}1:${indexColumn}`;
@@ -138,7 +138,7 @@ module.exports = {
         const indexColumn = getIndexColumn(context);
         const getRows = makeGetRows();
 
-        const worksheetName = encodeURIComponent(context.properties.worksheetId.split('/')[1]);
+        const worksheetName = context.properties.worksheetId.split('/')[1];
 
         const res = await getRows({
             auth: commons.getOauth2Client(context.auth),

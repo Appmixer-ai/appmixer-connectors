@@ -1,16 +1,15 @@
 'use strict';
-const google = require('googleapis');
+const { google } = require('googleapis');
 const commons = require('../../google-commons');
-const Promise = require('bluebird');
 
 const sheets = google.sheets('v4');
-const findRow = Promise.promisify(sheets.spreadsheets.values.get, { context: sheets.spreadsheets.values });
+const findRow = params => sheets.spreadsheets.values.get(params).then(res => res.data);
 
 module.exports = {
 
     receive(context) {
 
-        const worksheetName = encodeURIComponent(context.messages.in.content.worksheetId.split('/')[1]);
+        const worksheetName = context.messages.in.content.worksheetId.split('/')[1];
         return findRow({
             auth: commons.getOauth2Client(context.auth),
             spreadsheetId: context.properties.sheetId,

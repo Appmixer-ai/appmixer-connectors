@@ -1,5 +1,5 @@
 'use strict';
-const google = require('googleapis');
+const { google } = require('googleapis');
 const commons = require('../../google-commons');
 const { normalizeHeader } = require('../common');
 const _ = require('lodash');
@@ -78,8 +78,8 @@ module.exports = {
     receive(context) {
 
         const sheets = google.sheets('v4');
-        const findRow = Promise.promisify(sheets.spreadsheets.values.get, { context: sheets.spreadsheets.values });
-        const worksheetName = encodeURIComponent(context.properties.worksheetId.split('/')[1]);
+        const findRow = params => sheets.spreadsheets.values.get(params).then(res => res.data);
+        const worksheetName = context.properties.worksheetId.split('/')[1];
         return findRow({
             auth: commons.getOauth2Client(context.auth),
             spreadsheetId: context.properties.sheetId,

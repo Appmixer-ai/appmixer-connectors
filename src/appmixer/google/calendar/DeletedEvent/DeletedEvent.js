@@ -1,11 +1,11 @@
 'use strict';
-const GoogleApi = require('googleapis');
+const { google } = require('googleapis');
 const commons = require('../../google-commons');
 const Promise = require('bluebird');
 
-// GoogleApi initialization & promisify of some api function for convenience
-const calendar = GoogleApi.calendar('v3');
-const listEvents = Promise.promisify(calendar.events.list, { context: calendar.events });
+// Google API client & helpers resolving to the response body for convenience
+const calendar = google.calendar('v3');
+const listEvents = params => calendar.events.list(params).then(res => res.data);
 
 // Shared fetch: one page of events for a calendar ordered by their last modification, including
 // the deleted (cancelled) ones. Both tick() and test() go through this so the emitted item shape
@@ -16,7 +16,7 @@ async function getEvents(context, { calendarId, updatedMin, nextPageToken } = {}
         auth: commons.getOauth2Client(context.auth),
         userId: 'me',
         quotaUser: context.auth.userId,
-        calendarId: encodeURIComponent(calendarId),
+        calendarId: calendarId,
         orderBy: 'updated',
         singleEvents: false,    // treat recurring events as one
         showDeleted: true,      // cancelled events are what this trigger reports

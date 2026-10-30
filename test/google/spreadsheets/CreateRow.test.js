@@ -23,22 +23,20 @@ describe('google.spreadsheets.CreateRow', function() {
 
     before(function() {
         // The Google connector's dependencies are installed per connector, not at the repo root.
-        // Replace them with small fakes: values.get/values.append use the node callback style.
+        // Replace them with small fakes: values.get/values.append return a promise of
+        // { data }, like googleapis >= 26.
         getStub = sinon.stub();
         appendStub = sinon.stub();
         const fakes = {
             googleapis: {
-                sheets: () => ({ spreadsheets: { values: { get: getStub, append: appendStub } } }),
-                auth: { OAuth2: function OAuth2() {} }
+                google: {
+                    sheets: () => ({ spreadsheets: { values: { get: getStub, append: appendStub } } }),
+                    auth: { OAuth2: function OAuth2() { this.setCredentials = () => {}; } }
+                }
             },
             'google-auth-library': { OAuth2Client: function OAuth2Client() {} },
             'google-spreadsheet': { GoogleSpreadsheet: function GoogleSpreadsheet() {} },
-            '@fast-csv/parse': { parse: () => {} },
-            bluebird: {
-                promisify: (fn, { context } = {}) => (...args) => new Promise((resolve, reject) => {
-                    fn.call(context, ...args, (err, res) => err ? reject(err) : resolve(res));
-                })
-            }
+            '@fast-csv/parse': { parse: () => {} }
         };
         originalLoad = Module._load;
         Module._load = function(request, ...rest) {
@@ -63,16 +61,18 @@ describe('google.spreadsheets.CreateRow', function() {
     beforeEach(function() {
         getStub.reset();
         appendStub.reset();
-        getStub.callsFake((params, cb) => cb(null, { values: [['Name', 'Stays', 'Count', 'Active', 'Tags']] }));
-        appendStub.callsFake((params, cb) => cb(null, {
-            updates: {
-                spreadsheetId: 'sheet-1',
-                updatedRange: 'Sheet1!A2:E2',
-                updatedRows: 1,
-                updatedColumns: 5,
-                updatedCells: 5
+        getStub.resolves({ data: { values: [['Name', 'Stays', 'Count', 'Active', 'Tags']] } });
+        appendStub.resolves({
+            data: {
+                updates: {
+                    spreadsheetId: 'sheet-1',
+                    updatedRange: 'Sheet1!A2:E2',
+                    updatedRows: 1,
+                    updatedColumns: 5,
+                    updatedCells: 5
+                }
             }
-        }));
+        });
         context = createMockContext();
         context.auth = { clientId: 'id', clientSecret: 'secret', accessToken: 'token' };
         context.properties = { sheetId: 'sheet-1', worksheetId: '0/Sheet1' };
@@ -111,10 +111,10 @@ describe('google.spreadsheets.CreateRow', function() {
     });
 
     it('turns a 400 from values.append into a CancelError', async function() {
-        appendStub.callsFake((params, cb) => {
+        appendStub.callsFake(() => {
             const err = new Error('Invalid values[1][1]: list_value');
             err.code = 400;
-            cb(err);
+            return Promise.reject(err);
         });
         context.messages = { in: { content: { Name: 'C' } } };
 
@@ -126,10 +126,10 @@ describe('google.spreadsheets.CreateRow', function() {
     });
 
     it('rethrows other errors unchanged so the engine can retry them', async function() {
-        appendStub.callsFake((params, cb) => {
+        appendStub.callsFake(() => {
             const err = new Error('Backend Error');
             err.code = 503;
-            cb(err);
+            return Promise.reject(err);
         });
         context.messages = { in: { content: { Name: 'D' } } };
 

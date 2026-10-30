@@ -1,11 +1,10 @@
 'use strict';
-const GoogleApi = require('googleapis');
+const { google } = require('googleapis');
 const commons = require('../../google-commons');
-const Promise = require('bluebird');
 
-// GoogleApi initialization & promisify of some api function for convenience
-const calendar = GoogleApi.calendar('v3');
-const listCalendars = Promise.promisify(calendar.calendarList.list, { context: calendar.calendarList });
+// Google API client & helpers resolving to the response body for convenience
+const calendar = google.calendar('v3');
+const listCalendars = params => calendar.calendarList.list(params).then(res => res.data);
 
 /**
  * Trigger for GMail when new email appears.
