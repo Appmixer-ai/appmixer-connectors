@@ -26,10 +26,13 @@ module.exports = {
 
     async receive(context) {
 
-        google.options({ auth: commons.getOauth2Client(context.auth) });
-        const sheets = await listSheets(
-            { q: 'mimeType=\'application/vnd.google-apps.spreadsheet\'', pageSize: 1000 }
-        );
+        // Pass auth per request: google.options() is process-global and would leak this user's
+        // token into concurrent calls of other users (and theirs into our next page).
+        const sheets = await listSheets({
+            auth: commons.getOauth2Client(context.auth),
+            q: 'mimeType=\'application/vnd.google-apps.spreadsheet\'',
+            pageSize: 1000
+        });
         return context.sendJson(sheets, 'out');
     },
 
