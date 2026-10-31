@@ -44,7 +44,7 @@ module.exports = {
                     }
                     archive.finalize();
                 } else if (outputFormat === 'tar') {
-                    const tarParser = new tar.Parse();
+                    const tarParser = new tar.Parser();
                     const tarStream = readStream.pipe(tarParser);
                     tarStream.on('entry', async (entry) => {
                         const passThrough = new Stream.PassThrough();
