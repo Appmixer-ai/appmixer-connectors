@@ -1,6 +1,6 @@
 'use strict';
 const XPath = require('xpath');
-const DOMParser = require('xmldom').DOMParser;
+const DOMParser = require('@xmldom/xmldom').DOMParser;
 
 module.exports = {
 
