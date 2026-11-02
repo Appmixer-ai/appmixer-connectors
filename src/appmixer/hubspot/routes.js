@@ -1,7 +1,6 @@
 'use strict';
 
 const { createHmac, timingSafeEqual } = require('node:crypto');
-const _ = require('lodash');
 const { DEFAULT_SUBSCRIBED_PROPERTIES_CONTACT, DEFAULT_SUBSCRIBED_PROPERTIES_DEAL } = require('./commons');
 
 // HubSpot recommends rejecting requests with a timestamp older than 5 minutes.
@@ -140,7 +139,10 @@ module.exports = async (context) => {
 
                 // Portal ID (hub_id) is the same for all events.
                 const portalId = events[0].portalId;
-                const eventsBySubscriptionType = _.groupBy(events, 'subscriptionType');
+                const eventsBySubscriptionType = {};
+                for (const event of events) {
+                    (eventsBySubscriptionType[event.subscriptionType] ||= []).push(event);
+                }
 
                 // Note on batching: The batch size can vary, but will be under 100 notifications.
                 // See: https://legacydocs.hubspot.com/docs/methods/webhooks/webhooks-overview
