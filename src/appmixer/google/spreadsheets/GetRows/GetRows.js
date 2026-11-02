@@ -1,9 +1,9 @@
 'use strict';
-const { google } = require('googleapis');
+const { sheets: googleSheets } = require('@googleapis/sheets');
 const commons = require('../../google-commons');
 const { normalizeHeader } = require('../common');
 
-const sheets = google.sheets('v4');
+const sheets = googleSheets('v4');
 const getRows = params => sheets.spreadsheets.values.get(params).then(res => res.data);
 
 module.exports = {

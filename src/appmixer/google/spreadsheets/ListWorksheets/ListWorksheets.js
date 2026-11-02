@@ -1,8 +1,8 @@
 'use strict';
 const commons = require('../../google-commons');
-const { google } = require('googleapis');
+const { sheets: googleSheets } = require('@googleapis/sheets');
 
-const sheets = google.sheets('v4');
+const sheets = googleSheets('v4');
 const listWorksheets = params => sheets.spreadsheets.get(params).then(res => res.data);
 
 /**

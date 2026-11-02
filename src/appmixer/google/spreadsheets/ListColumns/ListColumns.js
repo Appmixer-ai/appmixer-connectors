@@ -1,7 +1,7 @@
 'use strict';
 const commons = require('../../google-commons');
 const { normalizeHeader } = require('../common');
-const { google } = require('googleapis');
+const { sheets: googleSheets } = require('@googleapis/sheets');
 
 /**
  * Helper function - returns true, if value is null or empty
@@ -28,7 +28,7 @@ function columnName(column, index) {
 module.exports = {
 
     receive(context) {
-        const sheets = google.sheets('v4');
+        const sheets = googleSheets('v4');
         const listRows = params => sheets.spreadsheets.values.get(params).then(res => res.data);
         const workSheetName = context.properties.worksheetId.split('/')[1];
         const range = `${workSheetName}!1:1`;

@@ -1,8 +1,8 @@
 'use strict';
-const { google } = require('googleapis');
+const { sheets: googleSheets } = require('@googleapis/sheets');
 const commons = require('../../google-commons');
 
-const sheets = google.sheets('v4');
+const sheets = googleSheets('v4');
 const deleteRow = params => sheets.spreadsheets.batchUpdate(params).then(res => res.data);
 
 module.exports = {

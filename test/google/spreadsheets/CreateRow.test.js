@@ -24,15 +24,15 @@ describe('google.spreadsheets.CreateRow', function() {
     before(function() {
         // The Google connector's dependencies are installed per connector, not at the repo root.
         // Replace them with small fakes: values.get/values.append return a promise of
-        // { data }, like googleapis >= 26.
+        // { data }, like the @googleapis/* clients.
         getStub = sinon.stub();
         appendStub = sinon.stub();
         const fakes = {
-            googleapis: {
-                google: {
-                    sheets: () => ({ spreadsheets: { values: { get: getStub, append: appendStub } } }),
-                    auth: { OAuth2: function OAuth2() { this.setCredentials = () => {}; } }
-                }
+            '@googleapis/sheets': {
+                sheets: () => ({ spreadsheets: { values: { get: getStub, append: appendStub } } })
+            },
+            '@googleapis/oauth2': {
+                auth: { OAuth2: function OAuth2() { this.setCredentials = () => {}; } }
             },
             'google-auth-library': { OAuth2Client: function OAuth2Client() {} },
             'google-spreadsheet': { GoogleSpreadsheet: function GoogleSpreadsheet() {} },

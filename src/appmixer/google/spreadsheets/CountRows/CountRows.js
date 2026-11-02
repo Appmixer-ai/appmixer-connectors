@@ -1,8 +1,8 @@
 'use strict';
-const { google } = require('googleapis');
+const { sheets: googleSheets } = require('@googleapis/sheets');
 const commons = require('../../google-commons');
 
-const sheets = google.sheets('v4');
+const sheets = googleSheets('v4');
 const findRow = params => sheets.spreadsheets.values.get(params).then(res => res.data);
 
 module.exports = {

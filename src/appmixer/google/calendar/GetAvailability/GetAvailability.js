@@ -1,8 +1,8 @@
 'use strict';
-const { google } = require('googleapis');
+const { calendar: googleCalendar } = require('@googleapis/calendar');
 const commons = require('../../google-commons');
 
-const calendar = google.calendar('v3');
+const calendar = googleCalendar('v3');
 const listEvents = params => calendar.events.list(params).then(res => res.data);
 
 module.exports = {

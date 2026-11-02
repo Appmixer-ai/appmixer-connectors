@@ -1,8 +1,8 @@
 'use strict';
 const commons = require('../../google-commons');
-const { google } = require('googleapis');
+const { drive: googleDrive } = require('@googleapis/drive');
 
-const drive = google.drive('v3');
+const drive = googleDrive('v3');
 const listFiles = params => drive.files.list(params).then(res => res.data);
 
 const listSheets = async function(args, sheets = [], nextPageToken = null) {
@@ -25,6 +25,8 @@ module.exports = {
 
     async receive(context) {
 
+        // Pass auth per request: google.options() is process-global and would leak this user's
+        // token into concurrent calls of other users (and theirs into our next page).
         const sheets = await listSheets({
             auth: commons.getOauth2Client(context.auth),
             q: 'mimeType=\'application/vnd.google-apps.spreadsheet\'',

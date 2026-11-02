@@ -1,11 +1,11 @@
 'use strict';
-const { google } = require('googleapis');
+const { calendar: googleCalendar } = require('@googleapis/calendar');
 const commons = require('../../google-commons');
 const Promise = require('bluebird');
 const moment = require('moment-timezone');
 
 // Google API client & helpers resolving to the response body for convenience
-const calendar = google.calendar('v3');
+const calendar = googleCalendar('v3');
 const listEvents = params => calendar.events.list(params).then(res => res.data);
 
 function getReminder(reminders = [], defaultReminder = { minutes: 0 }) {

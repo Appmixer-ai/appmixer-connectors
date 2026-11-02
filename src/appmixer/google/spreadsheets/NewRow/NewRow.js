@@ -1,12 +1,12 @@
 'use strict';
-const { google } = require('googleapis');
+const { sheets: googleSheets } = require('@googleapis/sheets');
 const commons = require('../../google-commons');
 const { normalizeHeader } = require('../common');
 const Promise = require('bluebird');
 
 // Shared fetch helper used by both tick() and test() so requests go through the same path.
 function makeGetRows() {
-    const sheets = google.sheets('v4');
+    const sheets = googleSheets('v4');
     return params => sheets.spreadsheets.values.get(params).then(res => res.data);
 }
 

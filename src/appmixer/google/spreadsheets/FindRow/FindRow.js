@@ -1,5 +1,5 @@
 'use strict';
-const { google } = require('googleapis');
+const { sheets: googleSheets } = require('@googleapis/sheets');
 const commons = require('../../google-commons');
 const { normalizeHeader } = require('../common');
 const _ = require('lodash');
@@ -77,7 +77,7 @@ module.exports = {
 
     receive(context) {
 
-        const sheets = google.sheets('v4');
+        const sheets = googleSheets('v4');
         const findRow = params => sheets.spreadsheets.values.get(params).then(res => res.data);
         const worksheetName = context.properties.worksheetId.split('/')[1];
         return findRow({

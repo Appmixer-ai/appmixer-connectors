@@ -1,6 +1,16 @@
 'use strict';
-const { google } = require('googleapis');
-const Promise = require('bluebird');
+const { auth: googleAuth, oauth2: googleOauth2 } = require('@googleapis/oauth2');
+
+/**
+ * Google reports OAuth errors such as invalid_grant either as the error message or in the
+ * token endpoint's response body, depending on the request path.
+ * @param {Error} error
+ * @return {string|undefined}
+ */
+function oauthErrorCode(error) {
+
+    return error?.response?.data?.error || error?.message;
+}
 
 module.exports = {
 
@@ -8,7 +18,9 @@ module.exports = {
 
     definition: initData => {
 
-        let googleApi = new google.auth.OAuth2(
+        // A new client for every token operation: an OAuth2 client holds credentials, and a client
+        // shared across accounts would let one account's request run with another account's tokens.
+        const newClient = () => new googleAuth.OAuth2(
             initData.clientId,
             initData.clientSecret,
             initData.callbackUrl
@@ -35,7 +47,7 @@ module.exports = {
 
             authUrl: function(context) {
 
-                return googleApi.generateAuthUrl({
+                return newClient().generateAuthUrl({
                     ['access_type']: 'offline',
                     scope: context.scope,
                     state: context.ticket,
@@ -43,112 +55,89 @@ module.exports = {
                 });
             },
 
-            requestProfileInfo: function(context) {
+            requestProfileInfo: async function(context) {
 
-                return new Promise((resolve, reject) => {
-                    let oauth2 = google.oauth2('v2');
-                    oauth2.userinfo.get({
-                        'access_token': context.accessToken
-                    }, (error, response) => {
-                        if (error) {
-                            return reject(error);
-                        }
-                        const result = response?.data;
-                        if (!result) {
-                            return reject('No profile info from google');
-                        }
-                        resolve(result);
-                    });
+                const { data } = await googleOauth2('v2').userinfo.get({
+                    'access_token': context.accessToken
                 });
+                if (!data) {
+                    throw 'No profile info from google';
+                }
+                return data;
             },
 
-            requestAccessToken: function(context) {
+            requestAccessToken: async function(context) {
 
-                return new Promise((resolve, reject) => {
-                    try {
-                        googleApi.getToken(
-                            context.authorizationCode,
-                            (error, tokens) => {
-                                if (error) {
-                                    return reject(error);
-                                }
-                                googleApi.credentials = tokens;
-                                resolve({
-                                    accessToken: tokens['access_token'],
-                                    accessTokenExpDate: new Date(tokens['expiry_date']),
-                                    refreshToken: tokens['refresh_token']
-                                });
-                            });
-                    } catch (error) {
-                        return reject(error);
-                    }
-                });
+                const { tokens } = await newClient().getToken(context.authorizationCode);
+                return {
+                    accessToken: tokens['access_token'],
+                    accessTokenExpDate: new Date(tokens['expiry_date']),
+                    refreshToken: tokens['refresh_token']
+                };
             },
 
-            refreshAccessToken: function(context) {
+            refreshAccessToken: async function(context) {
 
-                return new Promise((resolve, reject) => {
-                    try {
-                        googleApi.credentials = {
-                            ['access_token']: context.accessToken,
-                            ['refresh_token']: context.refreshToken
-                        };
-                    } catch (error) {
-                        return reject(error);
-                    }
+                const client = newClient();
+                client.setCredentials({
+                    ['access_token']: context.accessToken,
+                    ['refresh_token']: context.refreshToken
+                });
 
-                    googleApi.refreshAccessToken((error, tokens) => {
-                        if (error?.message === 'invalid_grant') {
-                            return reject(new context.InvalidTokenError('invalid_grant while refreshing', {
-                                googleErr: error
-                            }));
-                        }
-                        if (error?.message === 'unauthorized_client') {
-                            return reject(new context.InvalidTokenError(error.message));
-                        }
-                        if (error) {
-                            return reject(error);
-                        }
-
-                        resolve({
-                            accessToken: tokens['access_token'],
-                            accessTokenExpDate: tokens['expiry_date']
+                let credentials;
+                try {
+                    ({ credentials } = await client.refreshAccessToken());
+                } catch (error) {
+                    const code = oauthErrorCode(error);
+                    if (code === 'invalid_grant') {
+                        throw new context.InvalidTokenError('invalid_grant while refreshing', {
+                            googleErr: error
                         });
-                    });
-                });
+                    }
+                    if (code === 'unauthorized_client') {
+                        throw new context.InvalidTokenError(code);
+                    }
+                    throw error;
+                }
+
+                return {
+                    accessToken: credentials['access_token'],
+                    accessTokenExpDate: credentials['expiry_date']
+                };
             },
 
-            validateAccessToken: function(context) {
+            validateAccessToken: async function(context) {
 
-                return new Promise((resolve, reject) => {
-                    let oauth2 = google.oauth2('v2');
-                    oauth2.tokeninfo({
+                let response;
+                try {
+                    ({ data: response } = await googleOauth2('v2').tokeninfo({
                         ['access_token']: context.accessToken
-                    }, (error, res) => {
-                        if (error?.message === 'invalid_grant') {
-                            return reject(new context.InvalidTokenError('invalid_grant while validating', {
-                                googleErr: error
-                            }));
-                        }
-                        if (error?.message === 'unauthorized_client') {
-                            return reject(new context.InvalidTokenError(error.message));
-                        }
-                        if (error) {
-                            return reject(error);
-                        }
-                        const response = res?.data;
-                        if (!response) {
-                            return reject('No response from google API.');
-                        }
-                        if (response['expires_in']) {
-                            return resolve(response['expires_in']);
-                        }
-                        if (response['error_description'] === 'Invalid Value') {
-                            return reject(new context.InvalidTokenError('Token invalidated'));
-                        }
-                        return reject(new Error('token expired'));
-                    });
-                });
+                    }));
+                } catch (error) {
+                    const code = oauthErrorCode(error);
+                    if (code === 'invalid_grant') {
+                        throw new context.InvalidTokenError('invalid_grant while validating', {
+                            googleErr: error
+                        });
+                    }
+                    if (code === 'unauthorized_client') {
+                        throw new context.InvalidTokenError(code);
+                    }
+                    if (error?.response?.data?.['error_description'] === 'Invalid Value') {
+                        throw new context.InvalidTokenError('Token invalidated');
+                    }
+                    throw error;
+                }
+                if (!response) {
+                    throw 'No response from google API.';
+                }
+                if (response['expires_in']) {
+                    return response['expires_in'];
+                }
+                if (response['error_description'] === 'Invalid Value') {
+                    throw new context.InvalidTokenError('Token invalidated');
+                }
+                throw new Error('token expired');
             }
         };
     }

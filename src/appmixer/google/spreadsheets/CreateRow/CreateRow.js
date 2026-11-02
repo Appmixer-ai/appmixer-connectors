@@ -1,7 +1,7 @@
 'use strict';
 const commons = require('../../google-commons');
 const { normalizeHeader, toCellValue, isBadRequestError } = require('../common');
-const { google } = require('googleapis');
+const { sheets: googleSheets } = require('@googleapis/sheets');
 
 /**
  * Gsheet create row component.
@@ -9,7 +9,7 @@ const { google } = require('googleapis');
  */
 module.exports = {
     async receive(context) {
-        const sheets = google.sheets('v4');
+        const sheets = googleSheets('v4');
         const getHeader = params => sheets.spreadsheets.values.get(params).then(res => res.data);
         const createRow = params => sheets.spreadsheets.values.append(params).then(res => res.data);
 

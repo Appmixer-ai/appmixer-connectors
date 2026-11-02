@@ -1,9 +1,9 @@
 'use strict';
-const { google } = require('googleapis');
+const { calendar: googleCalendar } = require('@googleapis/calendar');
 const commons = require('../../google-commons');
 
 // Google API client & helpers resolving to the response body for convenience
-const calendar = google.calendar('v3');
+const calendar = googleCalendar('v3');
 const insertEvent = params => calendar.events.insert(params).then(res => res.data);
 
 function isDate(param) {

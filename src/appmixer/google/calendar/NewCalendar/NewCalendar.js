@@ -1,9 +1,9 @@
 'use strict';
-const { google } = require('googleapis');
+const { calendar: googleCalendar } = require('@googleapis/calendar');
 const googleCommons = require('../../google-commons');
 const Promise = require('bluebird');
 
-const calendar = google.calendar('v3');
+const calendar = googleCalendar('v3');
 const getCalendars = params => calendar.calendarList.list(params).then(res => res.data);
 
 // Shared fetch: list the user's calendars. Both tick() and test() go through this so the

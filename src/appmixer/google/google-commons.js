@@ -1,14 +1,9 @@
 'use strict';
-const { google } = require('googleapis');
+const { auth: googleAuth } = require('@googleapis/oauth2');
 const { OAuth2Client } = require('google-auth-library');
 const pathModule = require('path');
 
 module.exports = {
-
-    get GoogleApi() {
-
-        return google;
-    },
 
     ERROR_MAP: {
         'Invalid query parameter value for grid_id.': 'Invalid worksheet id! '
@@ -18,7 +13,8 @@ module.exports = {
     getOauth2Client(auth) {
 
         const { clientId, clientSecret, callback, accessToken } = auth;
-        const oauth2Client = new google.auth.OAuth2(clientId, clientSecret, callback);
+        // A new client per call: credentials must never be shared between users.
+        const oauth2Client = new googleAuth.OAuth2(clientId, clientSecret, callback);
 
         oauth2Client.setCredentials({
             'access_token': accessToken

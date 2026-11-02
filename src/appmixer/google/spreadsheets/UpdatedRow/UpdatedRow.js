@@ -1,5 +1,5 @@
 'use strict';
-const { google } = require('googleapis');
+const { sheets: googleSheets } = require('@googleapis/sheets');
 const commons = require('../../google-commons');
 const { normalizeHeader } = require('../common');
 
@@ -70,7 +70,7 @@ async function fetchSheetRows(context) {
 
     const { sheetId, worksheetId } = context.properties;
     const [, worksheetName] = worksheetId.split('/');
-    const sheets = google.sheets('v4');
+    const sheets = googleSheets('v4');
     const getSheetRows = params => sheets.spreadsheets.values.get(params).then(res => res.data);
 
     const response = await getSheetRows({
