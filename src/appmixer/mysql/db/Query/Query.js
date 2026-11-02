@@ -1,8 +1,7 @@
 'use strict';
 
-const mysql = require('mysql');
 const { stringify } = require('csv-stringify');
-const { runQuery } = require('../../common');
+const { runQuery, createConnection } = require('../../common');
 
 module.exports = {
 
@@ -14,26 +13,11 @@ module.exports = {
 
         const { query, outputType } = context.messages.in.content;
 
-        const connectionOptions = {
-            user: context.auth.dbUser,
-            host: context.auth.dbHost,
-            database: context.auth.database,
-            password: context.auth.dbPassword,
-            port: context.auth.dbPort || 3306 // Default MySQL port
-        };
-
         let conn;
         let hasData = false;
 
         try {
-            conn = mysql.createConnection(connectionOptions);
-
-            await new Promise((resolve, reject) => {
-                conn.connect(err => {
-                    if (err) return reject(err);
-                    resolve();
-                });
-            });
+            conn = await createConnection(context);
 
             const queryStream = await runQuery(conn, query, []);
 

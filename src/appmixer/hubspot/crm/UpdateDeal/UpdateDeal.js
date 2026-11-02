@@ -23,7 +23,7 @@ module.exports = {
         }
 
         const { auth } = context;
-        const hs = new Hubspot(auth.accessToken, context.config);
+        const hs = new Hubspot(auth.accessToken, context.config, context.httpRequest);
 
         const additionalPropertiesArray = context.messages.in.content.additionalProperties?.AND || [];
         const additionalProperties = additionalPropertiesArray.reduce((acc, field) => {

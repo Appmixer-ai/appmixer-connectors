@@ -1,6 +1,6 @@
 'use strict';
 
-const mysql = require('mysql');
+const mysql = require('mysql2');
 const EventEmitter = require('events');
 
 class StreamProcessor {
@@ -58,27 +58,85 @@ class StreamProcessor {
     }
 }
 
-async function createConnection(context) {
+const DEFAULT_PORT = 3306;
 
-    let conn;
+function isEnabled(value) {
+
+    return value === true || String(value).trim().toLowerCase() === 'true';
+}
+
+/**
+ * Builds the `ssl` option for mysql2 from the account fields.
+ * - CA certificate filled: encrypted connection, server certificate checked against the CA.
+ * - Use SSL on, no CA: encrypted connection, server certificate not checked.
+ * - Neither: no SSL (the behaviour of accounts created before 3.0.0).
+ * @param {Object} auth - The account fields (context.auth in components, context in auth.js).
+ * @returns {Object|undefined}
+ */
+function buildSslOptions(auth) {
+
+    const ca = typeof auth.sslCa === 'string' ? auth.sslCa.trim() : '';
+    if (ca) {
+        return { ca, rejectUnauthorized: true };
+    }
+    if (isEnabled(auth.useSsl)) {
+        return { rejectUnauthorized: false };
+    }
+    return undefined;
+}
+
+/**
+ * Connection options shared by auth.js validate() and every component.
+ * @param {Object} auth - The account fields (context.auth in components, context in auth.js).
+ * @returns {Object} Options for mysql2 createConnection().
+ */
+function buildConnectionOptions(auth) {
 
     const opt = {
-        user: context.auth.dbUser,
-        host: context.auth.dbHost,
-        database: context.auth.database,
-        password: context.auth.dbPassword,
+        user: auth.dbUser,
+        host: auth.dbHost,
+        database: auth.database,
+        password: auth.dbPassword,
+        port: DEFAULT_PORT,
         dateStrings: true,
-        supportBigNumbers: true
+        supportBigNumbers: true,
+        // Keep the value types of the old `mysql` driver: JSON columns as strings,
+        // DECIMAL columns as numbers.
+        jsonStrings: true,
+        decimalNumbers: true
     };
-    if (context.auth.dbPort) {
-        opt.port = context.auth.dbPort;
+
+    const port = auth.dbPort !== undefined && auth.dbPort !== null ? String(auth.dbPort).trim() : '';
+    if (port) {
+        if (!/^\d+$/.test(port)) {
+            throw new Error(`Invalid database port "${auth.dbPort}". Enter a number, e.g. 3306.`);
+        }
+        opt.port = parseInt(port, 10);
     }
 
-    conn = mysql.createConnection(opt);
+    const ssl = buildSslOptions(auth);
+    if (ssl) {
+        opt.ssl = ssl;
+    }
+
+    return opt;
+}
+
+/**
+ * Opens a connection with the shared options.
+ * @param {Object} auth - The account fields (context.auth in components, context in auth.js).
+ * @returns {Promise<Object>} A connected mysql2 connection. The caller must call end().
+ */
+async function connect(auth) {
+
+    const conn = mysql.createConnection(buildConnectionOptions(auth));
 
     await new Promise((resolve, reject) => {
         conn.connect(err => {
-            if (err) return reject(err);
+            if (err) {
+                conn.destroy();
+                return reject(err);
+            }
             resolve();
         });
     });
@@ -86,9 +144,14 @@ async function createConnection(context) {
     return conn;
 }
 
+async function createConnection(context) {
+
+    return connect(context.auth);
+}
+
 /**
  * Validates that a SQL query starts with SELECT or WITH (for CTEs).
- * Multiple statements are blocked by MySQL driver default (multipleStatements: false).
+ * Multiple statements are blocked by the mysql2 driver default (multipleStatements: false).
  * @param {string} query - The SQL query to validate
  * @throws {Error} If the query doesn't start with SELECT or WITH
  */
@@ -221,5 +284,8 @@ module.exports = {
 
     runQuery,
     validateQuery,
-    fetchLatestRow
+    fetchLatestRow,
+    buildConnectionOptions,
+    connect,
+    createConnection
 };
