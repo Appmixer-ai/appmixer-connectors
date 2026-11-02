@@ -1,0 +1,365 @@
+{
+    "name": "appmixer.arcmira.core.ResolveEntity",
+    "label": "Resolve Entity",
+    "description": "Resolve a name, @handle, YouTube URL or channel ID to one Arcmira entity ID for use in Find Transcripts filters. Returns the best match when the name is certain, a suggested match when one entity stands out, or the candidates to choose from. Resolving uses no credits.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:arcmira"
+    },
+    "quota": {
+        "manager": "appmixer:arcmira",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "query": {
+                        "type": "string",
+                        "minLength": 2
+                    },
+                    "type": {
+                        "type": "string",
+                        "enum": [
+                            "",
+                            "person",
+                            "organization",
+                            "product",
+                            "topic",
+                            "channel"
+                        ]
+                    },
+                    "context": {
+                        "type": "string",
+                        "maxLength": 300
+                    },
+                    "maxCandidates": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 15
+                    }
+                },
+                "required": [
+                    "query"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "query": {
+                        "type": "text",
+                        "label": "Name",
+                        "index": 1,
+                        "tooltip": "A name, @handle, YouTube URL or channel ID (<code>UC...</code>). One thing per call."
+                    },
+                    "type": {
+                        "type": "select",
+                        "label": "Entity Type",
+                        "index": 2,
+                        "tooltip": "Restrict candidates to one type. Use Channel for a show and read the YouTube Channel ID of the result.",
+                        "options": [
+                            {
+                                "label": "Any",
+                                "value": ""
+                            },
+                            {
+                                "label": "Person",
+                                "value": "person"
+                            },
+                            {
+                                "label": "Organization",
+                                "value": "organization"
+                            },
+                            {
+                                "label": "Product",
+                                "value": "product"
+                            },
+                            {
+                                "label": "Topic",
+                                "value": "topic"
+                            },
+                            {
+                                "label": "Channel",
+                                "value": "channel"
+                            }
+                        ]
+                    },
+                    "context": {
+                        "type": "text",
+                        "label": "Context",
+                        "index": 3,
+                        "tooltip": "Optional words describing the name, e.g. \"the startup bank\" or \"on My First Million\" (2–300 characters). Helps pick the right entity."
+                    },
+                    "maxCandidates": {
+                        "type": "number",
+                        "label": "Max Candidates",
+                        "index": 4,
+                        "min": 1,
+                        "max": 15,
+                        "defaultValue": 8,
+                        "tooltip": "Candidates to return, 1 to 15 (default 8)."
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "schema": {
+                "type": "object",
+                "required": [
+                    "query",
+                    "confidence",
+                    "candidates"
+                ],
+                "properties": {
+                    "query": {
+                        "type": "string",
+                        "title": "Query",
+                        "example": "OpenAI"
+                    },
+                    "confidence": {
+                        "type": "string",
+                        "title": "Confidence",
+                        "example": "exact"
+                    },
+                    "entityId": {
+                        "type": "string",
+                        "title": "Entity ID",
+                        "example": "ent_10234"
+                    },
+                    "entityName": {
+                        "type": "string",
+                        "title": "Entity Name",
+                        "example": "OpenAI"
+                    },
+                    "assumed": {
+                        "type": "boolean",
+                        "title": "Assumed",
+                        "example": false
+                    },
+                    "best": {
+                        "type": "object",
+                        "title": "Best",
+                        "properties": {
+                            "id": {
+                                "type": "string",
+                                "title": "Best.ID",
+                                "example": "ent_10234"
+                            },
+                            "name": {
+                                "type": "string",
+                                "title": "Best.Name",
+                                "example": "OpenAI"
+                            },
+                            "type": {
+                                "type": "string",
+                                "title": "Best.Type",
+                                "example": "organization"
+                            },
+                            "slug": {
+                                "type": "string",
+                                "title": "Best.Slug",
+                                "example": "openai"
+                            },
+                            "appearanceCount": {
+                                "type": "integer",
+                                "title": "Best.Appearance Count",
+                                "example": 18342
+                            },
+                            "youtubeChannelId": {
+                                "type": "string",
+                                "title": "Best.YouTube Channel ID",
+                                "example": "UCXZCJLdBC09xxGZ6gcdrc6A"
+                            },
+                            "description": {
+                                "type": "string",
+                                "title": "Best.Description",
+                                "example": "AI research and deployment company behind ChatGPT."
+                            },
+                            "page": {
+                                "type": "string",
+                                "title": "Best.Page",
+                                "example": "https://arcmira.com/organization/openai"
+                            },
+                            "match": {
+                                "type": "string",
+                                "title": "Best.Match",
+                                "example": "exact"
+                            }
+                        }
+                    },
+                    "suggested": {
+                        "type": "object",
+                        "title": "Suggested",
+                        "properties": {
+                            "id": {
+                                "type": "string",
+                                "title": "Suggested.ID",
+                                "example": "ent_10234"
+                            },
+                            "name": {
+                                "type": "string",
+                                "title": "Suggested.Name",
+                                "example": "OpenAI"
+                            },
+                            "type": {
+                                "type": "string",
+                                "title": "Suggested.Type",
+                                "example": "organization"
+                            },
+                            "slug": {
+                                "type": "string",
+                                "title": "Suggested.Slug",
+                                "example": "openai"
+                            },
+                            "appearanceCount": {
+                                "type": "integer",
+                                "title": "Suggested.Appearance Count",
+                                "example": 18342
+                            },
+                            "youtubeChannelId": {
+                                "type": "string",
+                                "title": "Suggested.YouTube Channel ID",
+                                "example": "UCXZCJLdBC09xxGZ6gcdrc6A"
+                            },
+                            "description": {
+                                "type": "string",
+                                "title": "Suggested.Description",
+                                "example": "AI research and deployment company behind ChatGPT."
+                            },
+                            "page": {
+                                "type": "string",
+                                "title": "Suggested.Page",
+                                "example": "https://arcmira.com/organization/openai"
+                            },
+                            "match": {
+                                "type": "string",
+                                "title": "Suggested.Match",
+                                "example": "exact"
+                            },
+                            "reason": {
+                                "type": "string",
+                                "title": "Suggested.Reason",
+                                "example": "dominant"
+                            },
+                            "evidence": {
+                                "type": "string",
+                                "title": "Suggested.Evidence",
+                                "example": "it has 4,399 appearances, 11x the next match (Sam Dunning, 397)"
+                            }
+                        }
+                    },
+                    "askQuestion": {
+                        "type": "string",
+                        "title": "Ask Question",
+                        "example": "Which Jordan do you mean?"
+                    },
+                    "askOptions": {
+                        "type": "array",
+                        "title": "Ask Options",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "id": {
+                                    "type": "string"
+                                },
+                                "name": {
+                                    "type": "string"
+                                },
+                                "type": {
+                                    "type": "string"
+                                },
+                                "label": {
+                                    "type": "string"
+                                }
+                            }
+                        },
+                        "example": [
+                            {
+                                "id": "ent_5521",
+                                "name": "Michael Jordan",
+                                "type": "person",
+                                "label": "Michael Jordan (person), basketball player, 2,113 appearances"
+                            }
+                        ]
+                    },
+                    "candidates": {
+                        "type": "array",
+                        "title": "Candidates",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "id": {
+                                    "type": "string"
+                                },
+                                "name": {
+                                    "type": "string"
+                                },
+                                "type": {
+                                    "type": "string"
+                                },
+                                "slug": {
+                                    "type": "string"
+                                },
+                                "appearance_count": {
+                                    "type": "integer"
+                                },
+                                "youtube_channel_id": {
+                                    "type": "string"
+                                },
+                                "description": {
+                                    "type": "string"
+                                },
+                                "page": {
+                                    "type": "string"
+                                },
+                                "match": {
+                                    "type": "string"
+                                }
+                            }
+                        },
+                        "example": [
+                            {
+                                "id": "ent_10234",
+                                "name": "OpenAI",
+                                "type": "organization",
+                                "slug": "openai",
+                                "appearance_count": 18342,
+                                "youtube_channel_id": null,
+                                "description": "AI research and deployment company behind ChatGPT.",
+                                "page": "https://arcmira.com/organization/openai",
+                                "match": "exact"
+                            }
+                        ]
+                    },
+                    "note": {
+                        "type": "string",
+                        "title": "Note",
+                        "example": "OpenAI is exact. Use ent_10234."
+                    }
+                }
+            }
+        },
+        {
+            "name": "notFound",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "query": {
+                        "type": "string",
+                        "title": "Query",
+                        "example": "Xyzzyq"
+                    }
+                }
+            }
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MDAgNTAwIiB3aWR0aD0iMzIiIGhlaWdodD0iMzIiPgoJPHJlY3QgeD0iMCIgeT0iMCIgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0iYmxhY2siLz4KCTxwYXRoIGQ9Ik0gMTk1LjY4NiA5OC40NTcgQyAxOTQuODU2IDk5LjI4NywgMTkyLjU5MiAxMDQuODExLCAxOTAuNjU2IDExMC43MzMgQyAxNjguMjgwIDE3OS4xNTYsIDE0OS4zNjUgMjM2LjgzMCwgMTQzLjAxNSAyNTYgQyAxMzUuNDY4IDI3OC43ODQsIDEwNy41MzcgMzY0LjEzNywgMTAwLjkzMiAzODQuNjAxIEMgOTkuMTM5IDM5MC4xNTcsIDk3Ljk1OCAzOTUuNDQ5LCA5OC4zMDggMzk2LjM2MSBDIDk4Ljg5MSAzOTcuODc4LCAxMDIuOTY0IDM5Ny45OTgsIDE0Ni4xNTcgMzk3Ljc2MCBMIDE5My4zNzAgMzk3LjUwMCAyMDQuNzE4IDM1Mi41MDAgQyAyMTAuOTYwIDMyNy43NTAsIDIxNi42ODggMzA0LjgwMCwgMjE3LjQ0OCAzMDEuNTAwIEMgMjE4LjIwOCAyOTguMjAwLCAyMjAuNTE1IDI4OC44NDcsIDIyMi41NzUgMjgwLjcxNSBMIDIyNi4zMjEgMjY1LjkzMSAyMjAuODQ1IDI2MS4wNDkgQyAyMDMuOTQ3IDI0NS45ODksIDIwMy4yMDMgMjIxLjg5MiwgMjE5LjE0NCAyMDUuOTUxIEMgMjI2Ljk2OCAxOTguMTI3LCAyMzYuOTI1IDE5NCwgMjQ3Ljk3NSAxOTQgQyAyNTYuNTYyIDE5NCwgMjYzLjE0NiAxOTYuMDAyLCAyNzAuNzc2IDIwMC45MzQgQyAyOTIuMTg2IDIxNC43NzEsIDI5My43NjAgMjQ1LjM1NCwgMjczLjkzNiAyNjIuMzIzIEwgMjY5LjU5NyAyNjYuMDM3IDI3MC43ODggMjcwLjI2OSBDIDI3MS40NDMgMjcyLjU5NiwgMjc1Ljc4NCAyODkuNTc1LCAyODAuNDM2IDMwOCBDIDI4NS4wODcgMzI2LjQyNSwgMjkyLjA2NyAzNTQuMDU2LCAyOTUuOTQ2IDM2OS40MDMgQyAyOTkuODI2IDM4NC43NTAsIDMwMyAzOTcuNDY3LCAzMDMgMzk3LjY2MyBDIDMwMyAzOTcuODU5LCAzMjQuNDgxIDM5Ny45MDMsIDM1MC43MzYgMzk3Ljc2MCBDIDM5NS40NDcgMzk3LjUxNiwgMzk4LjQ5NCAzOTcuMzg4LCAzOTguODEzIDM5NS43MzQgQyAzOTkgMzk0Ljc2MywgMzg3LjEyMyAzNTcuNjM4LCAzNzIuNDIxIDMxMy4yMzQgQyAzMzAuMjYyIDE4NS45MTEsIDMwOC4yNjQgMTE5LjIwOSwgMzA1LjM1NiAxMDkuODgzIEMgMzAxLjAzNCA5Ni4wMjcsIDMwNy44MzIgOTcuNTQzLCAyNDguNTU1IDk3LjIyNCBDIDIwMy44NDUgOTYuOTg0LCAxOTcgOTcuMTQzLCAxOTUuNjg2IDk4LjQ1NyIgZmlsbD0id2hpdGUiIGZpbGwtcnVsZT0iZXZlbm9kZCIvPgo8L3N2Zz4K"
+}

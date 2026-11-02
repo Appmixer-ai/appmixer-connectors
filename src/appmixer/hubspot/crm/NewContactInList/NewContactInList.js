@@ -1,6 +1,7 @@
 'use strict';
 const Hubspot = require('../../Hubspot');
 const { getObjectProperties } = require('../../commons');
+const ITEM_SCHEMA = require('../../item-schemas.json').contact;
 
 // Default polling interval: 5 minutes
 const DEFAULT_POLL_INTERVAL_MS = 5 * 60 * 1000;
@@ -34,6 +35,8 @@ async function readContactsBatch(hubspot, ids, properties) {
 
 module.exports = {
 
+    ITEM_SCHEMA,
+
     async start(context) {
 
         // Seed the join-time watermark to now so members already in the list are treated as
@@ -56,7 +59,7 @@ module.exports = {
         const { listId } = context.properties;
 
         try {
-            const hubspot = new Hubspot(context.auth.accessToken);
+            const hubspot = new Hubspot(context.auth.accessToken, {}, context.httpRequest);
             const state = context.state || {};
             const lastJoinedAt = state.lastJoinedAt || Date.now();
 
@@ -130,7 +133,7 @@ module.exports = {
     async test(context) {
 
         const { listId } = context.properties;
-        const hubspot = new Hubspot(context.auth.accessToken);
+        const hubspot = new Hubspot(context.auth.accessToken, {}, context.httpRequest);
 
         // Newest member of the configured list, read through the same batch/read
         // path receive() uses so the emitted shape is identical.

@@ -17,6 +17,8 @@ const INVOICE_A1_CREATED = { id: '1001', name: 'Invoice', operation: 'Create', l
 const INVOICE_A2_CREATED = { id: '1002', name: 'Invoice', operation: 'Create', lastUpdated: NOW };
 const INVOICE_B1_CREATED = { id: '1003', name: 'Invoice', operation: 'Create', lastUpdated: NOW };
 const INVOICE_B2_CREATED = { id: '1004', name: 'Invoice', operation: 'Create', lastUpdated: NOW };
+const BILL_A_CREATED = { id: '2001', name: 'Bill', operation: 'Create', lastUpdated: NOW };
+const BILL_B_UPDATED = { id: '2002', name: 'Bill', operation: 'Update', lastUpdated: NOW };
 
 describe('Quickbooks webhooks', function() {
 
@@ -481,15 +483,106 @@ describe('Quickbooks webhooks: realm grouping', function() {
 describe('Quickbooks onListenerAdded', function() {
 
     let onListenerAdded;
+    let context;
 
     beforeEach(async function() {
 
-        const context = {
+        context = {
             ...testUtils.createMockContext(),
             http: { router: { register: sinon.stub() } }
         };
         await require('../../routes')(context);
         onListenerAdded = context.onListenerAdded.args[0][0];
+    });
+
+    it('should verify the realm with the access token and drop the token', async function() {
+
+        context.httpRequest.resolves({ data: { CompanyInfo: { Id: '1', CompanyName: 'Airbus' } } });
+        const listener = { eventName: 'Invoice.Create', params: { realmId: REALM_ID_AIRBUS, accessToken: 'tokenA' } };
+        await onListenerAdded(listener);
+
+        assert.deepEqual(listener.params, { realmId: REALM_ID_AIRBUS });
+        assert(context.httpRequest.calledOnce);
+        const request = context.httpRequest.args[0][0];
+        assert.equal(request.method, 'GET');
+        assert.equal(request.url,
+            `https://quickbooks.api.intuit.com/v3/company/${REALM_ID_AIRBUS}/companyinfo/${REALM_ID_AIRBUS}`);
+        assert.equal(request.headers.Authorization, 'Bearer tokenA');
+        assert(!JSON.stringify(context.log.args).includes('tokenA'), 'the token must not be logged');
+    });
+
+    it('should check the sandbox API first when sandbox is configured', async function() {
+
+        context.config = { sandbox: 'true' };
+        context.httpRequest.resolves({ data: { CompanyInfo: { Id: '1' } } });
+        await onListenerAdded({ params: { realmId: REALM_ID_AIRBUS, accessToken: 'tokenA' } });
+        assert(context.httpRequest.args[0][0].url.startsWith('https://sandbox-quickbooks.api.intuit.com/v3/company/'));
+    });
+
+    it('should accept a realm readable in the other environment', async function() {
+
+        const forbidden = Object.assign(new Error('Forbidden'), { response: { status: 403 } });
+        context.httpRequest.onFirstCall().rejects(forbidden);
+        context.httpRequest.onSecondCall().resolves({ data: { CompanyInfo: { Id: '1' } } });
+        const listener = { params: { realmId: REALM_ID_AIRBUS, accessToken: 'tokenA' } };
+        await onListenerAdded(listener);
+        assert.equal(context.httpRequest.callCount, 2);
+        assert(context.httpRequest.args[1][0].url.startsWith('https://sandbox-quickbooks.api.intuit.com/'));
+        assert.deepEqual(listener.params, { realmId: REALM_ID_AIRBUS });
+    });
+
+    it('should reject a realm the token cannot read, without logging the token', async function() {
+
+        const forbidden = Object.assign(new Error('Forbidden'), {
+            response: { status: 403 },
+            config: { headers: { Authorization: 'Bearer tokenA' } }
+        });
+        context.httpRequest.rejects(forbidden);
+        const listener = { params: { realmId: REALM_ID_BOEING, accessToken: 'tokenA' } };
+
+        await assert.rejects(() => onListenerAdded(listener), error => {
+            assert.equal(error.statusCode, 403);
+            assert.match(error.message, /cannot access company/);
+            return true;
+        });
+        assert.equal(listener.params.accessToken, undefined);
+        assert(!JSON.stringify(context.log.args).includes('tokenA'), 'the token must not be logged');
+    });
+
+    it('should reject when the response has no CompanyInfo', async function() {
+
+        context.httpRequest.resolves({ data: {} });
+        await assert.rejects(
+            () => onListenerAdded({ params: { realmId: REALM_ID_AIRBUS, accessToken: 'tokenA' } }),
+            /cannot access company/
+        );
+    });
+
+    it('should reject an invalid realmId without calling the API', async function() {
+
+        await assert.rejects(
+            () => onListenerAdded({ params: { realmId: '../../x', accessToken: 'tokenA' } }),
+            /Invalid realmId/
+        );
+        assert.equal(context.httpRequest.callCount, 0);
+    });
+
+    it('should accept and log a listener without a token during the transition period', async function() {
+
+        const listener = { eventName: 'Invoice.Create', params: { realmId: REALM_ID_AIRBUS } };
+        await onListenerAdded(listener);
+        assert.deepEqual(listener.params, { realmId: REALM_ID_AIRBUS });
+        assert.equal(context.httpRequest.callCount, 0);
+        assert(context.log.args.some(args => args[1] === 'quickbooks-plugin-listener-without-token'));
+    });
+
+    it('should reject a listener without a token when requireListenerAccessToken is set', async function() {
+
+        context.config = { requireListenerAccessToken: true };
+        await assert.rejects(
+            () => onListenerAdded({ params: { realmId: REALM_ID_AIRBUS } }),
+            error => error.statusCode === 400 && /Missing accessToken/.test(error.message)
+        );
     });
 
     it('should normalize realmId to a string', async function() {
@@ -513,13 +606,141 @@ describe('Quickbooks onListenerAdded', function() {
     });
 });
 
+const RECEIVE_TRIGGERS = [
+    { label: 'NewBill', path: '../../accounting/NewBill/NewBill', entity: 'Bill', fixture: { id: '2001', name: 'Bill', operation: 'Create' } },
+    { label: 'UpdatedBill', path: '../../accounting/UpdatedBill/UpdatedBill', entity: 'Bill', fixture: { id: '2002', name: 'Bill', operation: 'Update' } }
+];
+
+for (const trigger of RECEIVE_TRIGGERS) {
+    describe(`${trigger.label} component`, function() {
+
+        const { receive } = require(trigger.path);
+        let context;
+
+        const QUICKBOOKS_BILL = { Id: trigger.fixture.id, TotalAmt: 2400, VendorRef: { value: '55', name: 'Acme Supplies' } };
+
+        beforeEach(function() {
+
+            context = {
+                ...testUtils.createMockContext(),
+                profileInfo: { companyId: 'companyId' }
+            };
+        });
+
+        it('should query and emit bills by id', async function() {
+
+            context.httpRequest = sinon.stub().resolves({
+                data: { QueryResponse: { Bill: [QUICKBOOKS_BILL] } }
+            });
+            context.messages = { webhook: { content: { data: [trigger.fixture.id] } } };
+
+            await receive(context);
+
+            assert(context.httpRequest.calledOnce);
+            const args = context.httpRequest.args[0];
+            assert.equal(args[0].method, 'GET');
+            assert.match(args[0].url, /v3\/company\/companyId\/query\?query=select/);
+            assert.match(args[0].url, /Bill/);
+            assert.match(args[0].url, new RegExp(`Id%20in%20\\('${trigger.fixture.id}'\\)`));
+            assert.equal(context.sendArray.callCount, 1);
+            assert.deepEqual(context.sendArray.args[0][0], [QUICKBOOKS_BILL]);
+        });
+    });
+}
+
+describe('Quickbooks webhooks: Bill routing', function() {
+
+    let context;
+    let req;
+    let h;
+
+    function sign() {
+        req.headers['intuit-signature'] = crypto.createHmac('sha256', context.config.webhookVerifierToken)
+            .update(JSON.stringify(req.payload)).digest('base64');
+    }
+
+    beforeEach(function() {
+
+        context = {
+            ...testUtils.createMockContext(),
+            config: { webhookVerifierToken: 'webhooksVerifier' },
+            profileInfo: { companyId: 'companyId' }
+        };
+        req = { payload: {}, query: {}, info: { hostname: 'hostname' }, headers: {} };
+        h = {
+            response: function(msg) {
+                return { code: function(code) { return { code, msg }; } };
+            }
+        };
+    });
+
+    it('should trigger Bill.Create listeners when a bill is created', async function() {
+
+        req.payload = {
+            eventNotifications: [{
+                realmId: REALM_ID_AIRBUS,
+                dataChangeEvent: { entities: [BILL_A_CREATED] }
+            }]
+        };
+        sign();
+
+        await webhookHandler(context, req, h);
+        assert.equal(context.triggerListeners.callCount, 1);
+        const call = context.triggerListeners.args[0][0];
+        assert.equal(call.eventName, 'Bill.Create');
+        assert.deepEqual(call.payload, [BILL_A_CREATED.id]);
+        assert.equal(call.filter({ params: { realmId: REALM_ID_AIRBUS } }), true);
+        assert.equal(call.filter({ params: { realmId: REALM_ID_BOEING } }), false);
+    });
+
+    it('should trigger Bill.Update listeners when a bill is updated', async function() {
+
+        req.payload = {
+            eventNotifications: [{
+                realmId: REALM_ID_AIRBUS,
+                dataChangeEvent: { entities: [BILL_B_UPDATED] }
+            }]
+        };
+        sign();
+
+        await webhookHandler(context, req, h);
+        assert.equal(context.triggerListeners.callCount, 1);
+        const call = context.triggerListeners.args[0][0];
+        assert.equal(call.eventName, 'Bill.Update');
+        assert.deepEqual(call.payload, [BILL_B_UPDATED.id]);
+    });
+
+    it('should route Bill.Create and Bill.Update independently in the same payload', async function() {
+
+        req.payload = {
+            eventNotifications: [{
+                realmId: REALM_ID_AIRBUS,
+                dataChangeEvent: { entities: [BILL_A_CREATED, BILL_B_UPDATED] }
+            }]
+        };
+        sign();
+
+        await webhookHandler(context, req, h);
+        assert.equal(context.triggerListeners.callCount, 2);
+        const calls = context.triggerListeners.args.map(args => args[0]);
+        const createCall = calls.find(c => c.eventName === 'Bill.Create');
+        const updateCall = calls.find(c => c.eventName === 'Bill.Update');
+        assert(createCall, 'Expected a Bill.Create call');
+        assert(updateCall, 'Expected a Bill.Update call');
+        assert.deepEqual(createCall.payload, [BILL_A_CREATED.id]);
+        assert.deepEqual(updateCall.payload, [BILL_B_UPDATED.id]);
+    });
+});
+
 describe('Quickbooks trigger registration', function() {
 
     const TRIGGERS = [
         { path: '../../accounting/NewInvoice/NewInvoice', eventName: 'Invoice.Create' },
         { path: '../../accounting/UpdatedInvoice/UpdatedInvoice', eventName: 'Invoice.Update' },
         { path: '../../accounting/NewCustomer/NewCustomer', eventName: 'Customer.Create' },
-        { path: '../../accounting/UpdatedCustomer/UpdatedCustomer', eventName: 'Customer.Update' }
+        { path: '../../accounting/UpdatedCustomer/UpdatedCustomer', eventName: 'Customer.Update' },
+        { path: '../../accounting/NewBill/NewBill', eventName: 'Bill.Create' },
+        { path: '../../accounting/UpdatedBill/UpdatedBill', eventName: 'Bill.Update' }
     ];
 
     for (const trigger of TRIGGERS) {
@@ -530,10 +751,12 @@ describe('Quickbooks trigger registration', function() {
                 ...testUtils.createMockContext(),
                 profileInfo: { companyId: REALM_ID_AIRBUS }
             };
+            context.auth.accessToken = 'tokenA';
 
             await start(context);
             assert(context.addListener.calledOnce);
-            assert.deepEqual(context.addListener.args[0], [trigger.eventName, { realmId: REALM_ID_AIRBUS }]);
+            assert.deepEqual(context.addListener.args[0],
+                [trigger.eventName, { realmId: REALM_ID_AIRBUS, accessToken: 'tokenA' }]);
             // The state-based registration must be gone — it is not AuthHub-compatible.
             assert.equal(context.service.stateAddToSet.callCount, 0);
 

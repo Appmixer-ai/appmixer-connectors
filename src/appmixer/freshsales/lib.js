@@ -1,8 +1,31 @@
 const pathModule = require('path');
 
+// The bundle alias is typed by the user and becomes the request host (and path), and the API key is
+// sent there - so only a Freshworks host, optionally followed by a plain path, is accepted
+// (e.g. "acme-123.myfreshworks.com/crm/sales", or a legacy "acme.freshsales.io").
+// Checked as typed, not normalized: components build their URLs from the stored value.
+const BUNDLE_ALIAS_PATTERN =
+    /^[a-z0-9][a-z0-9-]*(\.[a-z0-9][a-z0-9-]*)*\.(myfreshworks\.com|freshsales\.io)(\/[a-z0-9_-]+)*\/?$/i;
+
+/**
+ * @param {string} domain - bundle alias, e.g. "acme-123.myfreshworks.com/crm/sales"
+ * @return {string} https base URL of the Freshsales account, without a trailing slash
+ * @throws Error
+ */
+function freshsalesBaseUrl(domain) {
+
+    if (typeof domain !== 'string' || !BUNDLE_ALIAS_PATTERN.test(domain)) {
+        throw new Error('Invalid Freshsales bundle alias. Enter it as shown in your Profile settings, '
+            + 'e.g. "acme-123.myfreshworks.com/crm/sales".');
+    }
+    return `https://${domain.replace(/\/$/, '')}`;
+}
+
 const DEFAULT_PREFIX = '<SERVICE>-objects-export';
 
 module.exports = {
+
+    freshsalesBaseUrl,
 
     async sendArrayOutput({
         context,
@@ -99,28 +122,19 @@ module.exports = {
     }
 };
 
-/**
- * @param {array} array
- * @returns {string}
- */
-const toCsv = (array) => {
+// One CSV cell per RFC 4180: null/undefined → empty, objects → JSON, and a value
+// holding a comma, a double quote or a line break is quoted with inner quotes doubled.
+const csvCell = (value) => {
+    if (value == null) return '';
+    const text = typeof value === 'object' ? JSON.stringify(value) : String(value);
+    return /[",\r\n]/.test(text) ? '"' + text.replace(/"/g, '""') + '"' : text;
+};
 
-    if (!array || array.length === 0) {
-        return '';
-    }
-
-    const headers = Object.keys(array[0]);
-
-    return [
-        headers.join(','),
-        ...array.map(items => {
-
-            return Object.values(items).map(property => {
-                if (typeof property === 'object') {
-                    return JSON.stringify(property);
-                }
-                return property;
-            }).join(',');
-        })
-    ].join('\n');
+const toCsv = (records) => {
+    if (!records.length) return '';
+    // Cells are taken by header column, not Object.values(record), so a record with
+    // a different key order or a missing key stays under the right header.
+    const columns = Object.keys(records[0]);
+    const rows = records.map(record => columns.map(column => csvCell(record[column])).join(','));
+    return [columns.map(csvCell).join(','), ...rows].join('\n');
 };

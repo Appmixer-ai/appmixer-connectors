@@ -10,7 +10,7 @@ module.exports = {
         }
 
         const { auth } = context;
-        const hs = new Hubspot(auth.accessToken, context.config);
+        const hs = new Hubspot(auth.accessToken, context.config, context.httpRequest);
 
         // https://developers.hubspot.com/docs/api/crm/notes
         await hs.call('delete', `crm/v3/objects/notes/${noteId}`);

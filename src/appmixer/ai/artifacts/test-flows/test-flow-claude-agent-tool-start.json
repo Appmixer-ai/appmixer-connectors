@@ -1,0 +1,686 @@
+{
+    "name": "E2E Ai/claude - AI Agent Tool Start",
+    "flow": {
+        "e70f0df8-7cbf-4bb7-8ffd-9a56b2b0408b": {
+            "type": "appmixer.utils.controls.OnStart",
+            "version": "1.0.0",
+            "x": 64,
+            "y": 320,
+            "source": {},
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "a261fe59-0df2-4351-868b-e32fae8b4351": {
+            "type": "appmixer.utils.controls.SetVariable",
+            "version": "1.0.0",
+            "x": 272,
+            "y": 320,
+            "source": {
+                "in": {
+                    "e70f0df8-7cbf-4bb7-8ffd-9a56b2b0408b": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "e70f0df8-7cbf-4bb7-8ffd-9a56b2b0408b": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "variables": {}
+                                },
+                                "lambda": {
+                                    "variables": {
+                                        "ADD": [
+                                            {
+                                                "type": "text",
+                                                "name": "Test Case",
+                                                "text": "AI Agent"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "fc8a722f-51d4-4601-894a-38877bef2adf": {
+            "type": "appmixer.ai.claude.AIAgent",
+            "version": "1.0.0",
+            "x": 480,
+            "y": 320,
+            "source": {
+                "in": {
+                    "a261fe59-0df2-4351-868b-e32fae8b4351": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "a261fe59-0df2-4351-868b-e32fae8b4351": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "model": {},
+                                    "instructions": {},
+                                    "prompt": {},
+                                    "threadId": {}
+                                },
+                                "lambda": {
+                                    "model": "claude-haiku-4-5-20251001",
+                                    "instructions": "You are a test agent. Look the secret code up with the Secret code tool and call the Order lookup tool with the value 5512. Answer with the secret code, then the exact text the Order lookup tool returned, and nothing else.",
+                                    "prompt": "What is the secret code, and what is the state of order 5512?",
+                                    "threadId": "claude-e2e-agent-tools"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "3c21f6ce-6241-4e65-8eda-9f49cf05eeea": {
+            "type": "appmixer.utils.controls.MockValue",
+            "version": "1.0.0",
+            "x": 480,
+            "y": 576,
+            "source": {
+                "in": {
+                    "fc8a722f-51d4-4601-894a-38877bef2adf": [
+                        "tools"
+                    ]
+                }
+            },
+            "label": "Secret code",
+            "config": {
+                "transform": {
+                    "in": {
+                        "fc8a722f-51d4-4601-894a-38877bef2adf": {
+                            "tools": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "value": {}
+                                },
+                                "lambda": {
+                                    "value": "MISTRAL-KIWI-7731"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "474bfed6-4a37-427a-83bd-99ca7eea4fe4": {
+            "type": "appmixer.utils.controls.MockValue",
+            "version": "1.0.0",
+            "x": 480,
+            "y": 704,
+            "source": {
+                "in": {
+                    "fc8a722f-51d4-4601-894a-38877bef2adf": [
+                        "tools"
+                    ]
+                }
+            },
+            "label": "Order lookup",
+            "config": {
+                "transform": {
+                    "in": {
+                        "fc8a722f-51d4-4601-894a-38877bef2adf": {
+                            "tools": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "value": {
+                                        "1c22a90c-cc54-40a7-9857-6ef46581b04a": {
+                                            "variable": "$.fc8a722f-51d4-4601-894a-38877bef2adf.tools.modelDefinedParameter",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "value": "{{{1c22a90c-cc54-40a7-9857-6ef46581b04a}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "193113ab-7eab-4cea-88e5-ae5d1d7ad53b": {
+            "type": "appmixer.utils.controls.MockValue",
+            "version": "1.0.0",
+            "x": 688,
+            "y": 704,
+            "source": {
+                "in": {
+                    "474bfed6-4a37-427a-83bd-99ca7eea4fe4": [
+                        "out"
+                    ]
+                }
+            },
+            "label": "Order state",
+            "config": {
+                "transform": {
+                    "in": {
+                        "474bfed6-4a37-427a-83bd-99ca7eea4fe4": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "value": {
+                                        "997fa596-7d6b-45f7-8b67-2f91e7f10979": {
+                                            "variable": "$.474bfed6-4a37-427a-83bd-99ca7eea4fe4.out.outvalue",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "value": "ORDER-{{{997fa596-7d6b-45f7-8b67-2f91e7f10979}}}-SHIPPED"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "4fc27f28-68f5-4608-87f6-c19e6e8c4b51": {
+            "type": "appmixer.utils.test.Assert",
+            "version": "1.0.0",
+            "x": 688,
+            "y": 320,
+            "source": {
+                "in": {
+                    "fc8a722f-51d4-4601-894a-38877bef2adf": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "fc8a722f-51d4-4601-894a-38877bef2adf": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "9e13d88b-283f-451f-9be4-c8f520511b6d": {
+                                            "variable": "$.fc8a722f-51d4-4601-894a-38877bef2adf.out.answer",
+                                            "functions": []
+                                        },
+                                        "54b992ca-5c27-4d91-b483-0f889120cead": {
+                                            "variable": "$.fc8a722f-51d4-4601-894a-38877bef2adf.out.usage",
+                                            "functions": [{ "name": "g_jsonPath", "params": [{ "value": "$.output_tokens" }] }]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{9e13d88b-283f-451f-9be4-c8f520511b6d}}}",
+                                                "assertion": "regex",
+                                                "regex": "KIWI-7731"
+                                            },
+                                            {
+                                                "field": "{{{9e13d88b-283f-451f-9be4-c8f520511b6d}}}",
+                                                "assertion": "regex",
+                                                "regex": "ORDER-5512-SHIPPED"
+                                            },
+                                            {
+                                                "field": "{{{54b992ca-5c27-4d91-b483-0f889120cead}}}",
+                                                "assertion": "notEmpty",
+                                                "expected": ""
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "0940695a-3fc4-40e1-8bc4-c7b501f6279c": {
+            "type": "appmixer.ai.claude.AIAgent",
+            "version": "1.0.0",
+            "x": 688,
+            "y": 448,
+            "source": {
+                "in": {
+                    "fc8a722f-51d4-4601-894a-38877bef2adf": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "fc8a722f-51d4-4601-894a-38877bef2adf": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "model": {},
+                                    "instructions": {},
+                                    "prompt": {},
+                                    "threadId": {}
+                                },
+                                "lambda": {
+                                    "model": "claude-haiku-4-5-20251001",
+                                    "instructions": "You are a test agent. First call the Prompt echo tool once. Then look the weather up with the Weather tool for the city the user asks about and answer with exactly the text the Weather tool returned, nothing else.",
+                                    "prompt": "What is the weather in Prague?",
+                                    "threadId": "claude-e2e-agent-toolstart"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "e76b036c-9e77-4307-8062-4db9e049f64c": {
+            "type": "appmixer.ai.agenttools.ToolStart",
+            "version": "1.0.0",
+            "x": 688,
+            "y": 832,
+            "source": {
+                "in": {
+                    "0940695a-3fc4-40e1-8bc4-c7b501f6279c": [
+                        "tools"
+                    ]
+                }
+            },
+            "label": "Weather",
+            "config": {
+                "properties": {
+                    "description": "Returns the current weather for a city.",
+                    "parameters": {
+                        "ADD": [
+                            {
+                                "name": "city",
+                                "type": "string",
+                                "description": "Name of the city, e.g. Prague."
+                            }
+                        ]
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "42ae330e-8684-49b4-87ac-20470a00846e": {
+            "type": "appmixer.utils.controls.Condition",
+            "version": "1.0.0",
+            "x": 896,
+            "y": 832,
+            "source": {
+                "in": {
+                    "e76b036c-9e77-4307-8062-4db9e049f64c": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "e76b036c-9e77-4307-8062-4db9e049f64c": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "e885276c-61f9-4aa2-a3bb-1b908d51cdc6": {
+                                            "variable": "$.e76b036c-9e77-4307-8062-4db9e049f64c.out.args.city",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "OR": [
+                                                    {
+                                                        "input": "{{{e885276c-61f9-4aa2-a3bb-1b908d51cdc6}}}",
+                                                        "operator": "=",
+                                                        "value": "Prague"
+                                                    }
+                                                ]
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "8d696f6c-4e9c-4981-8a4c-f4d124c2c09a": {
+            "type": "appmixer.utils.controls.MockValue",
+            "version": "1.0.0",
+            "x": 1104,
+            "y": 768,
+            "source": {
+                "in": {
+                    "42ae330e-8684-49b4-87ac-20470a00846e": [
+                        "true"
+                    ]
+                }
+            },
+            "label": "Prague weather",
+            "config": {
+                "transform": {
+                    "in": {
+                        "42ae330e-8684-49b4-87ac-20470a00846e": {
+                            "true": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "value": {}
+                                },
+                                "lambda": {
+                                    "value": "Sunny, 24 degrees in Prague."
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "16f10b1a-c713-4d13-8647-b328128186bb": {
+            "type": "appmixer.utils.controls.MockValue",
+            "version": "1.0.0",
+            "x": 1104,
+            "y": 896,
+            "source": {
+                "in": {
+                    "42ae330e-8684-49b4-87ac-20470a00846e": [
+                        "false"
+                    ]
+                }
+            },
+            "label": "Other weather",
+            "config": {
+                "transform": {
+                    "in": {
+                        "42ae330e-8684-49b4-87ac-20470a00846e": {
+                            "false": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "value": {}
+                                },
+                                "lambda": {
+                                    "value": "Rainy, 12 degrees."
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "6a8c2aa5-e82b-47ac-8078-4c05c720ae51": {
+            "type": "appmixer.ai.agenttools.ToolOutput",
+            "version": "1.0.0",
+            "x": 1312,
+            "y": 832,
+            "source": {
+                "in": {
+                    "8d696f6c-4e9c-4981-8a4c-f4d124c2c09a": [
+                        "out"
+                    ],
+                    "16f10b1a-c713-4d13-8647-b328128186bb": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "8d696f6c-4e9c-4981-8a4c-f4d124c2c09a": {
+                            "out": {
+                                "type": "json2new",
+                                "lambda": {
+                                    "output": "{{{7b0bf7d7-656d-4490-aedc-ecc24bfc6620}}}"
+                                },
+                                "modifiers": {
+                                    "output": {
+                                        "7b0bf7d7-656d-4490-aedc-ecc24bfc6620": {
+                                            "variable": "$.8d696f6c-4e9c-4981-8a4c-f4d124c2c09a.out.outvalue",
+                                            "functions": []
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        "16f10b1a-c713-4d13-8647-b328128186bb": {
+                            "out": {
+                                "type": "json2new",
+                                "lambda": {
+                                    "output": "{{{2ff4d988-2cdc-4dd3-99ba-8b811ace151e}}}"
+                                },
+                                "modifiers": {
+                                    "output": {
+                                        "2ff4d988-2cdc-4dd3-99ba-8b811ace151e": {
+                                            "variable": "$.16f10b1a-c713-4d13-8647-b328128186bb.out.outvalue",
+                                            "functions": []
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "0d24fa74-4669-4458-827a-0c0c71212120": {
+            "type": "appmixer.utils.test.Assert",
+            "version": "1.0.0",
+            "x": 896,
+            "y": 448,
+            "source": {
+                "in": {
+                    "0940695a-3fc4-40e1-8bc4-c7b501f6279c": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "0940695a-3fc4-40e1-8bc4-c7b501f6279c": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "c64442f5-0d86-4f01-a120-fb26f17c1363": {
+                                            "variable": "$.0940695a-3fc4-40e1-8bc4-c7b501f6279c.out.answer",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{c64442f5-0d86-4f01-a120-fb26f17c1363}}}",
+                                                "assertion": "regex",
+                                                "regex": "[Ss]unny"
+                                            },
+                                            {
+                                                "field": "{{{c64442f5-0d86-4f01-a120-fb26f17c1363}}}",
+                                                "assertion": "regex",
+                                                "regex": "Prague"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "8b1697c9-3ace-4375-87f9-b7e0694bc5f2": {
+            "type": "appmixer.utils.test.AfterAll",
+            "version": "1.0.0",
+            "x": 1104,
+            "y": 448,
+            "source": {
+                "in": {
+                    "4fc27f28-68f5-4608-87f6-c19e6e8c4b51": [
+                        "out"
+                    ],
+                    "0d24fa74-4669-4458-827a-0c0c71212120": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 180
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "3690750b-4810-4364-8dbf-4db308a112be": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "version": "1.0.0",
+            "x": 1312,
+            "y": 448,
+            "source": {
+                "in": {
+                    "8b1697c9-3ace-4375-87f9-b7e0694bc5f2": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {},
+                "transform": {
+                    "in": {
+                        "8b1697c9-3ace-4375-87f9-b7e0694bc5f2": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "44d809f5-3e02-4211-8bee-6478d75b7dc8": {
+                                            "variable": "$.8b1697c9-3ace-4375-87f9-b7e0694bc5f2.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E Ai/claude - AI Agent Tool Start",
+                                    "result": "{{{44d809f5-3e02-4211-8bee-6478d75b7dc8}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "686b2b62-9a51-4ef4-8353-7381c7921510": {
+            "type": "appmixer.utils.controls.MockValue",
+            "version": "1.0.0",
+            "x": 688,
+            "y": 736,
+            "source": {
+                "in": {
+                    "0940695a-3fc4-40e1-8bc4-c7b501f6279c": [
+                        "tools"
+                    ]
+                }
+            },
+            "label": "Prompt echo",
+            "config": {
+                "transform": {
+                    "in": {
+                        "0940695a-3fc4-40e1-8bc4-c7b501f6279c": {
+                            "tools": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "value": {
+                                        "e5c0e5c0-0000-4000-8000-00000000ec02": {
+                                            "variable": "$.0940695a-3fc4-40e1-8bc4-c7b501f6279c.tools.prompt",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "value": "{{{e5c0e5c0-0000-4000-8000-00000000ec02}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        }
+    }
+}

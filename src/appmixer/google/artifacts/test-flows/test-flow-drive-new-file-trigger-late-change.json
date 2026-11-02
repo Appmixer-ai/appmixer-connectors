@@ -1,0 +1,464 @@
+{
+    "name": "E2E Google Drive - new file trigger (modified before processed)",
+    "description": "Regression for https://github.com/Appmixer-ai/appmixer-components/issues/2958. The file is created with a modifiedTime later than its createdTime, which is what the change feed shows for a file another user edited right after uploading it. NewFileOrFolder must still emit it (before 2.4.3 it was silently dropped).",
+    "type": "automation",
+    "notes": {},
+    "flow": {
+        "63ecec1d-5989-4efe-be3d-c55f7105768d": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16,
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "source": {}
+        },
+        "f7529161-f27f-404e-b0db-183165adaf3b": {
+            "type": "appmixer.utils.controls.SetVariable",
+            "x": 272,
+            "y": 16,
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "source": {
+                "in": {
+                    "63ecec1d-5989-4efe-be3d-c55f7105768d": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "63ecec1d-5989-4efe-be3d-c55f7105768d": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "variables": {
+                                        "f79578c1-685d-4956-a2ea-eed55a2293c7": {
+                                            "functions": [
+                                                {
+                                                    "name": "g_timestamp"
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "variables": {
+                                        "ADD": [
+                                            {
+                                                "type": "text",
+                                                "name": "fileName",
+                                                "text": "e2e-drive-late-{{{f79578c1-685d-4956-a2ea-eed55a2293c7}}}.txt"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "d24befdd-a58b-422b-bd1d-6503624d54a1": {
+            "type": "appmixer.utils.timers.Wait",
+            "x": 480,
+            "y": 16,
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "label": "Wait (let the Drive change channel propagate)",
+            "source": {
+                "in": {
+                    "f7529161-f27f-404e-b0db-183165adaf3b": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "f7529161-f27f-404e-b0db-183165adaf3b": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "interval": {}
+                                },
+                                "lambda": {
+                                    "interval": "1m"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "01bd3096-c66a-4978-bdda-19ab7dcf5de3": {
+            "type": "appmixer.google.drive.MakeApiCall",
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "label": "MakeApiCall (creates a file already modified after its creation)",
+            "x": 688,
+            "y": 16,
+            "source": {
+                "in": {
+                    "d24befdd-a58b-422b-bd1d-6503624d54a1": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "d24befdd-a58b-422b-bd1d-6503624d54a1": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "url": {},
+                                    "method": {},
+                                    "parameters": {},
+                                    "headers": {},
+                                    "body": {
+                                        "97d71f6e-31e2-4007-a88b-b6f26e2c8b5c": {
+                                            "variable": "$.f7529161-f27f-404e-b0db-183165adaf3b.out.fileName",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "url": "/files",
+                                    "method": "POST",
+                                    "parameters": "{\"fields\":\"id,name,createdTime,modifiedTime\"}",
+                                    "body": "{\"name\":\"{{{97d71f6e-31e2-4007-a88b-b6f26e2c8b5c}}}\",\"mimeType\":\"text/plain\",\"modifiedTime\":\"2099-01-01T00:00:00.000Z\"}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "daf6fdc6-f8da-4cad-aa7b-2c61f78e96f0": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 896,
+            "y": 16,
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "source": {
+                "in": {
+                    "01bd3096-c66a-4978-bdda-19ab7dcf5de3": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "01bd3096-c66a-4978-bdda-19ab7dcf5de3": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "e6e60d7c-2ab0-4608-ad3a-03c9f30ba250": {
+                                            "variable": "$.01bd3096-c66a-4978-bdda-19ab7dcf5de3.out.body",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$.id"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        },
+                                        "96ccf424-02fb-49f5-aa58-166a39dd89d4": {
+                                            "variable": "$.01bd3096-c66a-4978-bdda-19ab7dcf5de3.out.body",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$.modifiedTime"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{e6e60d7c-2ab0-4608-ad3a-03c9f30ba250}}}",
+                                                "assertion": "notEmpty"
+                                            },
+                                            {
+                                                "field": "{{{96ccf424-02fb-49f5-aa58-166a39dd89d4}}}",
+                                                "assertion": "regex",
+                                                "regex": "^2099-01-01T00:00:00"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "a3e2a127-24ba-43f4-992d-41fd39f122ae": {
+            "type": "appmixer.google.drive.NewFileOrFolder",
+            "x": 688,
+            "y": 144,
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "label": "NewFileOrFolder (whole drive)",
+            "source": {},
+            "config": {
+                "properties": {
+                    "recursive": false
+                }
+            }
+        },
+        "b3c6829a-163e-47e3-978c-5915e02d113e": {
+            "type": "appmixer.utils.controls.Condition",
+            "x": 896,
+            "y": 144,
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "label": "Condition (only the file this run created)",
+            "source": {
+                "in": {
+                    "a3e2a127-24ba-43f4-992d-41fd39f122ae": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "a3e2a127-24ba-43f4-992d-41fd39f122ae": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "918b2a64-958c-4ad8-8f37-970f918c30b0": {
+                                            "variable": "$.a3e2a127-24ba-43f4-992d-41fd39f122ae.out.googleDriveFileMetadata.name",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "OR": [
+                                                    {
+                                                        "input": "{{{918b2a64-958c-4ad8-8f37-970f918c30b0}}}",
+                                                        "operator": "regex",
+                                                        "regex": "^e2e-drive-late-\\d+\\.txt$"
+                                                    }
+                                                ]
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "369b2847-a8db-43a7-8613-6b2e38b3fdb5": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1104,
+            "y": 144,
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "source": {
+                "in": {
+                    "b3c6829a-163e-47e3-978c-5915e02d113e": [
+                        "true"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "b3c6829a-163e-47e3-978c-5915e02d113e": {
+                            "true": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "341dd440-9f8f-45f9-b853-02f16f390d60": {
+                                            "variable": "$.a3e2a127-24ba-43f4-992d-41fd39f122ae.out.googleDriveFileMetadata.id",
+                                            "functions": []
+                                        },
+                                        "661b7b7d-b597-48e2-95f0-7026800adfba": {
+                                            "variable": "$.a3e2a127-24ba-43f4-992d-41fd39f122ae.out.googleDriveFileMetadata.name",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{341dd440-9f8f-45f9-b853-02f16f390d60}}}",
+                                                "assertion": "notEmpty"
+                                            },
+                                            {
+                                                "field": "{{{661b7b7d-b597-48e2-95f0-7026800adfba}}}",
+                                                "assertion": "notEmpty"
+                                            },
+                                            {
+                                                "field": "{{{661b7b7d-b597-48e2-95f0-7026800adfba}}}",
+                                                "assertion": "regex",
+                                                "regex": "^e2e-drive-late-\\d+\\.txt$"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "76ce9a80-34a3-4e52-91f1-2e5704e039e2": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 1312,
+            "y": 144,
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "source": {
+                "in": {
+                    "daf6fdc6-f8da-4cad-aa7b-2c61f78e96f0": [
+                        "out"
+                    ],
+                    "369b2847-a8db-43a7-8613-6b2e38b3fdb5": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 420
+                }
+            }
+        },
+        "ce738a31-1230-412b-81ec-cd2ebdab4dff": {
+            "type": "appmixer.google.drive.DeleteFileOrFolder",
+            "x": 1520,
+            "y": 144,
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "label": "DeleteFileOrFolder (cleanup — deletes the file the trigger reported)",
+            "source": {
+                "in": {
+                    "76ce9a80-34a3-4e52-91f1-2e5704e039e2": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "76ce9a80-34a3-4e52-91f1-2e5704e039e2": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "fileId": {
+                                        "e7b647bb-01a8-4a01-8edb-7d3e5750cfb3": {
+                                            "variable": "$.a3e2a127-24ba-43f4-992d-41fd39f122ae.out.googleDriveFileMetadata.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "fileId": "{{{e7b647bb-01a8-4a01-8edb-7d3e5750cfb3}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "c92bc8e5-63fe-478f-943a-f9c2ed9fc110": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1728,
+            "y": 144,
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "source": {
+                "in": {
+                    "ce738a31-1230-412b-81ec-cd2ebdab4dff": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "successStoreId": "64cb41824421780007381f86",
+                    "failedStoreId": "64cb41969751560007caf0bf"
+                },
+                "transform": {
+                    "in": {
+                        "ce738a31-1230-412b-81ec-cd2ebdab4dff": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "c46dd169-216c-4363-97a0-e9209a706d51": {
+                                            "variable": "$.76ce9a80-34a3-4e52-91f1-2e5704e039e2.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.com",
+                                    "testCase": "E2E Google Drive - new file trigger (modified before processed)",
+                                    "result": "{{{c46dd169-216c-4363-97a0-e9209a706d51}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

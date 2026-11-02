@@ -36,6 +36,18 @@ function getCSVValue(value) {
 
 module.exports = {
 
+    /**
+     * Params a webhook trigger registers its listener with. The plugin (../routes.js) uses the
+     * access token to verify that the connected account can read the realm, then drops it.
+     */
+    getListenerParams(context) {
+
+        return {
+            realmId: context.profileInfo.companyId,
+            accessToken: context.auth?.accessToken || context.accessToken
+        };
+    },
+
     async makeRequest({ context, options }) {
 
         return context.httpRequest({

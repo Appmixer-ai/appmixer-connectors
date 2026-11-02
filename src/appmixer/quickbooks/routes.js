@@ -6,13 +6,32 @@ module.exports = async context => {
 
     context.onListenerAdded(async listener => {
 
-        // Components register with `realmId` (the QuickBooks company id) as a listener param.
-        // Unlike Slack (which resolves userId from an accessToken), the realmId is passed
-        // directly by the component, so no API call is needed here. We only validate and
-        // normalize the params so the webhook handler can filter listeners by realmId.
+        // Components register with `realmId` (the QuickBooks company id) and their current
+        // `accessToken`. Events are routed to listeners by realmId, so the realm must belong to
+        // the caller: the token has to be able to read that company, otherwise anyone could
+        // register another company's realmId and receive its events. The token is used only for
+        // this check — it is never logged and never stored with the listener.
         const realmId = listener.params?.realmId;
+        const accessToken = listener.params?.accessToken;
+        if (listener.params) {
+            delete listener.params.accessToken;
+        }
         if (!realmId) {
             throw new Error('Missing realmId listener param.');
+        }
+
+        if (accessToken) {
+            await module.exports.verifyRealmAccess(context, `${realmId}`, accessToken);
+        } else if (isTokenRequired(context)) {
+            throw listenerError('Missing accessToken listener param.', 400);
+        } else {
+            // Transition period: triggers of older connector versions register without a token.
+            // Accept them (so their webhooks keep working) but log it; set
+            // `requireListenerAccessToken` in the Backoffice to reject them.
+            context.log('warn', 'quickbooks-plugin-listener-without-token', {
+                eventName: listener.eventName,
+                realmId: `${realmId}`
+            });
         }
 
         listener.params = { realmId: `${realmId}` };
@@ -132,3 +151,68 @@ function isPayloadValid(payload) {
         && payload.eventNotifications?.map(notification => notification.realmId).length
         && Array.isArray(payload?.eventNotifications[0]?.dataChangeEvent?.entities);
 }
+
+function isTokenRequired(context) {
+
+    const value = context.config?.requireListenerAccessToken;
+    return value === true || value === 'true';
+}
+
+function listenerError(message, statusCode) {
+
+    const error = new Error(message);
+    error.statusCode = statusCode;
+    return error;
+}
+
+/**
+ * API base URLs the realm is checked against. The configured environment goes first; the other
+ * one follows because a single endpoint can serve both the Development (sandbox) and Production
+ * sections of the Intuit app (see the verifier tokens in the webhook handler).
+ * @return {string[]}
+ */
+function getApiUrls(context) {
+
+    const config = context.config || {};
+    const isSandbox = config.sandbox === true || config.sandbox === 'true';
+    const sandbox = config.sandboxApiURL || 'https://sandbox-quickbooks.api.intuit.com';
+    const production = config.prodApiURL || config.prodApiUrl || 'https://quickbooks.api.intuit.com';
+    return [...new Set(isSandbox ? [sandbox, production] : [production, sandbox])];
+}
+
+/**
+ * Throws (403) unless `accessToken` can read the company `realmId`
+ * (GET /v3/company/{realmId}/companyinfo/{realmId}).
+ */
+module.exports.verifyRealmAccess = async (context, realmId, accessToken) => {
+
+    if (!/^[0-9A-Za-z]+$/.test(realmId)) {
+        throw listenerError('Invalid realmId listener param.', 400);
+    }
+
+    const statuses = [];
+    for (const apiUrl of getApiUrls(context)) {
+        try {
+            const response = await context.httpRequest({
+                method: 'GET',
+                url: `${apiUrl}/v3/company/${realmId}/companyinfo/${realmId}`,
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                    Accept: 'application/json'
+                }
+            });
+            // The URL is scoped to the realm and Intuit rejects a token of another company (403),
+            // so a CompanyInfo in the response proves access. CompanyInfo.Id is not the realmId.
+            if (response?.data?.CompanyInfo) {
+                return;
+            }
+            statuses.push('no-company-info');
+        } catch (error) {
+            // Log only the status: the error object carries the request headers (the token).
+            statuses.push(error?.response?.status || error?.code || 'error');
+        }
+    }
+
+    context.log('error', 'quickbooks-plugin-listener-realm-denied', { realmId, statuses });
+    throw listenerError(`The connected QuickBooks account cannot access company ${realmId}.`, 403);
+};

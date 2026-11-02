@@ -1,8 +1,11 @@
 'use strict';
 
 const Hubspot = require('../../Hubspot');
+const ITEM_SCHEMA = require('../../item-schemas.json').companyUpdate;
 
 module.exports = {
+
+    ITEM_SCHEMA,
 
     async receive(context) {
 
@@ -21,7 +24,7 @@ module.exports = {
         }
 
         const { auth } = context;
-        const hs = new Hubspot(auth.accessToken, context.config);
+        const hs = new Hubspot(auth.accessToken, context.config, context.httpRequest);
 
         // Support for additional properties (for flexibility)
         const additionalPropertiesArray = context.messages.in.content.additionalProperties?.AND || [];

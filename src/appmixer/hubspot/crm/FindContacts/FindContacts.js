@@ -1,9 +1,12 @@
 const Hubspot = require('../../Hubspot');
 const commons = require('../../commons');
+const ITEM_SCHEMA = require('../../item-schemas.json').contact;
 
 // https://developers.hubspot.com/docs/api/crm/contacts#endpoint?spec=GET-/crm/v3/objects/contacts
 
 module.exports = {
+
+    ITEM_SCHEMA,
 
     async receive(context) {
 
@@ -14,7 +17,7 @@ module.exports = {
         }
 
         const { auth } = context;
-        const hs = new Hubspot(auth.accessToken, context.config);
+        const hs = new Hubspot(auth.accessToken, context.config, context.httpRequest);
 
         let params = {};
         if (search) {

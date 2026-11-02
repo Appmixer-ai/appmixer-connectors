@@ -21,7 +21,7 @@ module.exports = {
         }
 
         const { auth } = context;
-        const hs = new Hubspot(auth.accessToken, context.config);
+        const hs = new Hubspot(auth.accessToken, context.config, context.httpRequest);
 
         const payload = {
             properties: {
@@ -48,6 +48,7 @@ module.exports = {
             payload
         );
 
-        return context.sendJson(data, 'out');
+        // The create response carries no associations, so echo the association type back.
+        return context.sendJson({ ...data, associationTypeId }, 'out');
     }
 };

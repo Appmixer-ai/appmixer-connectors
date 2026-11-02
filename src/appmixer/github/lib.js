@@ -22,12 +22,19 @@ module.exports = {
                 'X-GitHub-Api-Version': '2022-11-28',
                 'Authorization': `Bearer ${context.accessToken || context.auth?.accessToken}`
             },
-            data: body,
             params: {
                 ...params,
                 per_page: 100
             }
         };
+
+        // A GET/HEAD must go out without a body. Axios serializes even an empty object to
+        // '{}' (Content-Length: 2); GitHub does not read it, so on a reused keep-alive
+        // connection those bytes desync the stream and the next response fails to parse
+        // with 'Parse Error: Expected HTTP/' (HPE_INVALID_CONSTANT).
+        if (!['GET', 'HEAD'].includes(String(method).toUpperCase())) {
+            options.data = body;
+        }
 
         return await context.httpRequest(options);
     },
@@ -395,28 +402,19 @@ module.exports = {
 
 };
 
-/**
- * @param {array} array
- * @returns {string}
- */
-const toCsv = (array) => {
-    if (!array || array.length === 0) {
-        return '';
-    }
+// One CSV cell per RFC 4180: null/undefined → empty, objects → JSON, and a value
+// holding a comma, a double quote or a line break is quoted with inner quotes doubled.
+const csvCell = (value) => {
+    if (value == null) return '';
+    const text = typeof value === 'object' ? JSON.stringify(value) : String(value);
+    return /[",\r\n]/.test(text) ? '"' + text.replace(/"/g, '""') + '"' : text;
+};
 
-    const headers = Object.keys(array[0]);
-
-    return [
-        headers.join(','),
-
-        ...array.map(items => {
-            return Object.values(items).map(property => {
-                if (typeof property === 'object') {
-                    return JSON.stringify(property);
-                }
-                return property;
-            }).join(',');
-        })
-
-    ].join('\n');
+const toCsv = (records) => {
+    if (!records.length) return '';
+    // Cells are taken by header column, not Object.values(record), so a record with
+    // a different key order or a missing key stays under the right header.
+    const columns = Object.keys(records[0]);
+    const rows = records.map(record => columns.map(column => csvCell(record[column])).join(','));
+    return [columns.map(csvCell).join(','), ...rows].join('\n');
 };

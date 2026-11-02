@@ -2,31 +2,46 @@
 'use strict';
 const moment = require('moment');
 const check = require('check-types');
-const { apiEndpoint } = require('./endpoints');
+const { resolveApiDomain } = require('./endpoints');
+
+// Methods whose requests never carry a body.
+const BODYLESS_METHODS = new Set(['GET', 'HEAD', 'DELETE']);
+
+// Zoho refuses a module the connected organization cannot use without saying which one or why.
+const MODULE_ERROR_HINTS = {
+    INVALID_MODULE: 'The module is not available in the connected Zoho CRM organization (not in its edition, ' +
+        'or disabled), or the name is not a module API name (e.g. "Sales_Orders", not "Sales Orders").',
+    NO_PERMISSION: 'The module is not available in the connected Zoho CRM organization (not in its edition), ' +
+        'or the profile of the connected Zoho user has no permission for it.'
+};
 
 class ZohoClient {
 
     /**
      * @param {*} context Component context
-     * @param {string} [regionAuth] Region from global variable in auth.js
+     * @param {{ region?: string, apiDomain?: string }|string} [dataCenterAuth] Data center of an account
+     *   being connected, from auth.js (older copies of auth.js pass the region as a string). Used
+     *   only when the account's profileInfo does not carry one.
      * @param {Object} [options]
      * @param {string} [options.apiVersion] Zoho CRM API version used to build request paths.
      *   Defaults to 'v2' so existing components keep their behaviour. Newer components opt into
      *   a higher version when they need features v2 does not have (e.g. the Appointments module,
      *   or the greater_equal/less_equal/between search comparators, which v2 rejects).
      */
-    constructor(context, regionAuth, { apiVersion = 'v2' } = {}) {
+    constructor(context, dataCenterAuth, { apiVersion = 'v2' } = {}) {
 
         // context.auth.accessToken for component calls
         // context.accessToken for calls from auth.js
         const accessToken = context.auth?.accessToken || context.accessToken;
-        const region = context.profileInfo?.region || regionAuth;
+        const profileInfo = context.profileInfo;
+        // Older copies of auth.js pass the region as a plain string.
+        const dataCenterOfAuth = typeof dataCenterAuth === 'string' ? { region: dataCenterAuth } : dataCenterAuth;
+        const dataCenter = (profileInfo?.apiDomain || profileInfo?.region) ? profileInfo : dataCenterOfAuth;
 
         check.assert.string(accessToken, `Missing accessToken: ${accessToken}.`);
-        check.assert.string(region, `Missing region: ${region}.`);
 
         this.apiVersion = apiVersion;
-        const apiUrl = apiEndpoint(region);
+        const apiUrl = resolveApiDomain(dataCenter);
         this.client = context.httpRequest.create({
             baseURL: apiUrl,
             timeout: 6 * 1000,
@@ -240,19 +255,33 @@ class ZohoClient {
             method,
             url,
             headers,
-            data,
             params
         };
+
+        // GET, HEAD and DELETE must go out without a body. Axios serializes even an empty
+        // object to '{}' (Content-Length: 2); Zoho does not read it, so on a reused keep-alive
+        // connection those bytes desync the stream and the next response fails to parse with
+        // 'Parse Error: Expected HTTP/' (HPE_INVALID_CONSTANT). The connector's DELETEs pass
+        // their arguments as query parameters and never have a body to send.
+        //
+        // POST/PUT keep the defaulted '{}': three Books components (MarkAsSent, MarkAsDraft,
+        // VoidInvoice) POST to a status endpoint with parameters only, and a body-less POST
+        // is a different request than the one they send today.
+        if (!BODYLESS_METHODS.has(String(method || 'GET').toUpperCase())) {
+            request.data = data;
+        }
 
         return this.client(request)
             .then(response => response.data)
             .catch(e => {
                 if (e.response?.data) {
-                    if (Array.isArray(e.response.data)) {
-                        const errorData = e.response.data[0];
-                        throw errorData;
+                    const errorData = Array.isArray(e.response.data) ? e.response.data[0] : e.response.data;
+                    const hint = MODULE_ERROR_HINTS[errorData?.code];
+                    // NO_PERMISSION is also used for other refusals; only the one about a module is explained.
+                    if (hint && /module/i.test(errorData.message)) {
+                        throw { ...errorData, message: `${errorData.message} (${method} ${url}). ${hint}` };
                     }
-                    throw e.response.data;
+                    throw errorData;
                 }
                 throw e;
             });

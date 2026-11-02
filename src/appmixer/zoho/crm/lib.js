@@ -15,6 +15,10 @@ const DEFAULT_PREFIX = 'zoho-crm-export';
 //   * APPOINTMENTS_API_VERSION - the Appointments module is not exposed before v5.
 const SEARCH_API_VERSION = 'v3';
 const APPOINTMENTS_API_VERSION = 'v8';
+// Creating a custom module exists from API v8 only; the module metadata reads use the same
+// version so all custom module components see one response shape.
+const MODULES_API_VERSION = 'v8';
+const MODULE_GENERATED_TYPE_CUSTOM = 'custom';
 
 // The out-of-the-box Appointments module is system defined, hence the `__s` suffix.
 const APPOINTMENTS_MODULE = 'Appointments__s';
@@ -126,12 +130,44 @@ const schemas = {
         Owner: { type: 'object', title: 'Quote Owner', example: { id: '4876876000000306001', name: 'John Smith', email: 'john@example.com' } },
         Created_Time: { type: 'string', title: 'Created Time', example: '2026-08-25T10:15:00+00:00' },
         Modified_Time: { type: 'string', title: 'Modified Time', example: '2026-08-28T16:40:00+00:00' }
+    },
+
+    // Module metadata as returned by /settings/modules, not a record of a module.
+    module: {
+        id: { type: 'string', title: 'ID', example: '4876876000000834002' },
+        api_name: { type: 'string', title: 'API Name', example: 'Service_Contracts' },
+        module_name: { type: 'string', title: 'Module Name', example: 'CustomModule1' },
+        singular_label: { type: 'string', title: 'Singular Label', example: 'Service Contract' },
+        plural_label: { type: 'string', title: 'Plural Label', example: 'Service Contracts' },
+        generated_type: { type: 'string', title: 'Generated Type', example: 'custom' },
+        status: { type: 'string', title: 'Status', example: 'visible' },
+        visibility: { type: 'integer', title: 'Visibility', example: 1 },
+        api_supported: { type: 'boolean', title: 'API Supported', example: true },
+        creatable: { type: 'boolean', title: 'Creatable', example: true },
+        editable: { type: 'boolean', title: 'Editable', example: true },
+        deletable: { type: 'boolean', title: 'Deletable', example: true },
+        modified_time: { type: 'string', title: 'Modified Time', example: '2026-08-28T16:40:00+00:00' },
+        modified_by: { type: 'object', title: 'Modified By', example: { id: '4876876000000306001', name: 'John Smith' } }
     }
 };
+
+/**
+ * Lists the metadata of all modules of the organization.
+ * @param {ZohoClient} client A client created with apiVersion MODULES_API_VERSION.
+ * @returns {Promise<Array<Object>>}
+ */
+async function getModules(client) {
+
+    const response = await client.request('GET', client.path('/settings/modules'));
+    return Array.isArray(response?.modules) ? response.modules : [];
+}
 
 module.exports = {
 
     SEARCH_API_VERSION,
+    MODULES_API_VERSION,
+    MODULE_GENERATED_TYPE_CUSTOM,
+    getModules,
     APPOINTMENTS_API_VERSION,
     APPOINTMENTS_MODULE,
     APPOINTMENT_FIELDS,

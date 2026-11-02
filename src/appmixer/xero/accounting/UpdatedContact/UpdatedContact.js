@@ -9,7 +9,8 @@ module.exports = {
         const { tenantId } = context.properties;
         const eventName = 'CONTACT.UPDATE:' + tenantId;
         await context.log({ step: 'Registering webhook', eventName });
-        return context.addListener(eventName);
+        // The plugin checks with this token that the connection is authorised for the tenant (and drops it).
+        return context.addListener(eventName, { accessToken: context.auth?.accessToken });
     },
 
     stop: async function(context) {
@@ -30,6 +31,10 @@ module.exports = {
     test: async function(context) {
 
         const record = await fetchLatestExample(context, '/api.xro/2.0/Contacts');
+        if (!record) {
+            throw new context.CancelError('No Contact record available to use as test data.');
+        }
+
         return context.sendJson(record, 'out');
     }
 };
