@@ -6,7 +6,7 @@ module.exports = {
     async receive(context) {
 
         const { auth } = context;
-        const hs = new Hubspot(auth.accessToken, context.config);
+        const hs = new Hubspot(auth.accessToken, context.config, context.httpRequest);
 
         const { data } = await hs.call('post', 'crm/v3/lists/search', { count: 500 });
         // Only contact lists — the list components and the NewContactInList

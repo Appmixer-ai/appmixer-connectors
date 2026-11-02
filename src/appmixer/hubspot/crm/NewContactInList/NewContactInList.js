@@ -59,7 +59,7 @@ module.exports = {
         const { listId } = context.properties;
 
         try {
-            const hubspot = new Hubspot(context.auth.accessToken);
+            const hubspot = new Hubspot(context.auth.accessToken, {}, context.httpRequest);
             const state = context.state || {};
             const lastJoinedAt = state.lastJoinedAt || Date.now();
 
@@ -133,7 +133,7 @@ module.exports = {
     async test(context) {
 
         const { listId } = context.properties;
-        const hubspot = new Hubspot(context.auth.accessToken);
+        const hubspot = new Hubspot(context.auth.accessToken, {}, context.httpRequest);
 
         // Newest member of the configured list, read through the same batch/read
         // path receive() uses so the emitted shape is identical.
