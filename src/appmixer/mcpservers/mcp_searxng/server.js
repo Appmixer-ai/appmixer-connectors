@@ -26,6 +26,7 @@ const http = require('http');
 const https = require('https');
 const net = require('net');
 const zlib = require('zlib');
+const { pipeline } = require('stream');
 const { Server } = require('@modelcontextprotocol/sdk/server/index.js');
 const { StdioServerTransport } = require('@modelcontextprotocol/sdk/server/stdio.js');
 const { CallToolRequestSchema, ListToolsRequestSchema } = require('@modelcontextprotocol/sdk/types.js');
@@ -204,6 +205,9 @@ function isBlockedIPv4(octets) {
         || (a === 169 && b === 254)                 // 169.254/16 link-local, cloud metadata
         || (a === 172 && b >= 16 && b <= 31)        // 172.16/12 private
         || (a === 192 && b === 168)                 // 192.168/16 private
+        || (a === 192 && b === 0 && octets[2] === 0) // 192.0.0/24 IETF protocol assignments
+        || (a === 192 && b === 0 && octets[2] === 2) // 192.0.2/24 TEST-NET-1
+        || (a === 198 && (b === 18 || b === 19))    // 198.18/15 benchmarking
         || a >= 224;                                // 224/4 multicast, 240/4 reserved, broadcast
 }
 
@@ -270,6 +274,15 @@ function isBlockedIPv6(ip) {
     }
     if (zeroPrefix(5) && g[5] === 0xffff) {
         return isBlockedIPv4(embeddedIPv4(g[6], g[7]));         // ::ffff:a.b.c.d IPv4-mapped
+    }
+    if (zeroPrefix(4) && g[4] === 0xffff && g[5] === 0) {
+        return isBlockedIPv4(embeddedIPv4(g[6], g[7]));         // ::ffff:0:a.b.c.d SIIT
+    }
+    if (g[0] === 0x0064 && g[1] === 0xff9b && g[2] === 0x0001) {
+        return true;                                            // 64:ff9b:1::/48 local-use NAT64
+    }
+    if (g[0] === 0x2001 && g[1] === 0x0000) {
+        return true;                                            // 2001::/32 Teredo
     }
     if (zeroPrefix(6)) {
         return isBlockedIPv4(embeddedIPv4(g[6], g[7]));         // ::a.b.c.d IPv4-compatible (deprecated)
@@ -355,6 +368,21 @@ function requestOnce(url, { address, family }, signal) {
             }
         };
         req.on('error', error => settle(reject, error));
+        // The timeout must not depend on the socket still being open.
+        const onAbort = () => {
+            // AbortError, so the caller reports "Request timed out after …".
+            const abortError = new Error('The operation was aborted');
+            abortError.name = 'AbortError';
+            settle(reject, abortError);
+            req.destroy();
+        };
+        if (signal) {
+            if (signal.aborted) {
+                return onAbort();
+            }
+            signal.addEventListener('abort', onAbort, { once: true });
+        }
+        req.on('close', () => signal && signal.removeEventListener('abort', onAbort));
         req.on('response', res => {
             const { statusCode, statusMessage, headers } = res;
             if (REDIRECT_STATUSES.has(statusCode) && headers.location) {
@@ -363,12 +391,24 @@ function requestOnce(url, { address, family }, signal) {
             }
             let stream = res;
             const encoding = (headers['content-encoding'] || '').trim().toLowerCase();
+            let decoder;
             if (encoding === 'gzip' || encoding === 'x-gzip') {
-                stream = res.pipe(zlib.createGunzip());
+                decoder = zlib.createGunzip();
             } else if (encoding === 'deflate') {
-                stream = res.pipe(zlib.createInflate());
+                decoder = zlib.createInflate();
             } else if (encoding === 'br') {
-                stream = res.pipe(zlib.createBrotliDecompress());
+                decoder = zlib.createBrotliDecompress();
+            }
+            if (decoder) {
+                // pipeline() (unlike pipe()) errors the decoder when `res` is closed early.
+                stream = decoder;
+                pipeline(res, decoder, error => {
+                    if (error && !settled) {
+                        settle(reject, error.code === 'ERR_STREAM_PREMATURE_CLOSE' ? new Error('aborted') : error);
+                    }
+                });
+            } else {
+                res.on('aborted', () => settle(reject, new Error('aborted')));
             }
             const chunks = [];
             let received = 0;
