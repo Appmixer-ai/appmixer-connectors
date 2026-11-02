@@ -1,0 +1,260 @@
+{
+    "name": "E2E AWS KB Retrieval MCP - List and Call Tool",
+    "flow": {
+        "0b6d2c51-6f0e-4b8e-9a51-3c1a2e7f4a01": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 100,
+            "y": 300,
+            "source": {},
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "1c7e3d62-7a1f-4c9f-8b62-4d2b3f8a5b02": {
+            "type": "appmixer.mcpservers.modelcontextprotocol_server_aws_kb_retrieval.ListTools",
+            "x": 300,
+            "y": 300,
+            "source": {
+                "in": {
+                    "0b6d2c51-6f0e-4b8e-9a51-3c1a2e7f4a01": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "0b6d2c51-6f0e-4b8e-9a51-3c1a2e7f4a01": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {},
+                                "lambda": {}
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "2d8f4e73-8b2a-4daf-9c73-5e3c4a9b6c03": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 500,
+            "y": 300,
+            "source": {
+                "in": {
+                    "1c7e3d62-7a1f-4c9f-8b62-4d2b3f8a5b02": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "1c7e3d62-7a1f-4c9f-8b62-4d2b3f8a5b02": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "a1b2c3d4-0001-4000-8000-000000000001": {
+                                            "variable": "$.1c7e3d62-7a1f-4c9f-8b62-4d2b3f8a5b02.out.tools",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$[0].name"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "assertion": "equal",
+                                                "field": "{{{a1b2c3d4-0001-4000-8000-000000000001}}}",
+                                                "expected": "retrieve_from_aws_kb"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "3e905f84-9c3b-4eb0-8d84-6f4d5bac7d04": {
+            "type": "appmixer.mcpservers.modelcontextprotocol_server_aws_kb_retrieval.CallTool",
+            "x": 700,
+            "y": 300,
+            "source": {
+                "in": {
+                    "2d8f4e73-8b2a-4daf-9c73-5e3c4a9b6c03": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "properties": {
+                    "tool": "retrieve_from_aws_kb"
+                },
+                "transform": {
+                    "in": {
+                        "2d8f4e73-8b2a-4daf-9c73-5e3c4a9b6c03": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "query": {},
+                                    "knowledgeBaseId": {}
+                                },
+                                "lambda": {
+                                    "query": "What is Appmixer?",
+                                    "knowledgeBaseId": "ZZZZZZZZZZ"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "4fa16095-ad4c-4fc1-9e95-7a6e6cbd8e05": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 900,
+            "y": 300,
+            "source": {
+                "in": {
+                    "3e905f84-9c3b-4eb0-8d84-6f4d5bac7d04": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "3e905f84-9c3b-4eb0-8d84-6f4d5bac7d04": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "a1b2c3d4-0002-4000-8000-000000000002": {
+                                            "variable": "$.3e905f84-9c3b-4eb0-8d84-6f4d5bac7d04.out.output",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "assertion": "equal",
+                                                "field": "{{{a1b2c3d4-0002-4000-8000-000000000002}}}",
+                                                "expected": "Retrieval failed or returned no results."
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "5ab271a6-be5d-4ad2-8fa6-8b7f7dce9f06": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 1100,
+            "y": 300,
+            "source": {
+                "in": {
+                    "2d8f4e73-8b2a-4daf-9c73-5e3c4a9b6c03": [
+                        "out"
+                    ],
+                    "4fa16095-ad4c-4fc1-9e95-7a6e6cbd8e05": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "properties": {
+                    "timeout": 180
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "6bc382b7-cf6e-4e33-90b7-9c8a8edfa007": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1300,
+            "y": 300,
+            "source": {
+                "in": {
+                    "5ab271a6-be5d-4ad2-8fa6-8b7f7dce9f06": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "properties": {
+                    "successStoreId": "64cb41824421780007381f86",
+                    "failedStoreId": "64cb41969751560007caf0bf"
+                },
+                "transform": {
+                    "in": {
+                        "5ab271a6-be5d-4ad2-8fa6-8b7f7dce9f06": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "a1b2c3d4-0003-4000-8000-000000000003": {
+                                            "variable": "$.5ab271a6-be5d-4ad2-8fa6-8b7f7dce9f06.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.com",
+                                    "testCase": "E2E AWS KB Retrieval MCP - List and Call Tool",
+                                    "result": "{{{a1b2c3d4-0003-4000-8000-000000000003}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        }
+    }
+}
