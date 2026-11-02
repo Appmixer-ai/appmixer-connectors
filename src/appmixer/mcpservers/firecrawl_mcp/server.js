@@ -505,11 +505,14 @@ async function fetchOnce(client, method, path, body, timeoutMs) {
     }
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), timeoutMs);
+    // Like axios, the timeout covers the whole response, body included.
     let response;
+    let text;
     try {
         response = await fetch(pinToApiOrigin(client.apiUrl, path), {
             method, headers, body: payload, signal: controller.signal
         });
+        text = await response.text();
     } catch (error) {
         if (controller.signal.aborted) {
             throw new Error(`timeout of ${timeoutMs}ms exceeded`);
@@ -518,7 +521,6 @@ async function fetchOnce(client, method, path, body, timeoutMs) {
     } finally {
         clearTimeout(timer);
     }
-    const text = await response.text();
     let data;
     try {
         data = text ? JSON.parse(text) : undefined;
@@ -638,7 +640,9 @@ function processingContinuesDelayMs(res) {
     if (body.code !== 'SCRAPE_TIMEOUT' || !body.details || body.details.state !== 'processing_continues') {
         return undefined;
     }
-    const headerSeconds = Number(res.headers.get('retry-after'));
+    // A missing header must fall back to 60 s like the original (Number(undefined) is NaN; Number(null) would be 0).
+    const retryAfter = res.headers.get('retry-after');
+    const headerSeconds = retryAfter === null ? NaN : Number(retryAfter);
     const seconds = typeof body.details.retryAfterSeconds === 'number' && Number.isFinite(body.details.retryAfterSeconds)
         ? body.details.retryAfterSeconds
         : Number.isFinite(headerSeconds) ? headerSeconds : 60;
