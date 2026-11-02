@@ -57,13 +57,20 @@ brew install mysql@8.4 mysql@8.0          # once
 ### Reaching the servers from an Appmixer instance
 
 ```bash
-./local-mysql.sh tunnel        # = ngrok tcp 3307 ; prints e.g. tcp://7.tcp.eu.ngrok.io:29849
+./local-mysql.sh tunnel          # both servers as ngrok tcp endpoints in ONE agent session
+./local-mysql.sh tunnel-status   # mysql-84-tls  7.tcp.eu.ngrok.io:29849  ->  localhost:3307
+                                 # mysql-80-plain  6.tcp.eu.ngrok.io:19516  ->  localhost:3308
 ```
 
 Put that host and port into the `appmixer:mysql` account on the instance (User `appmixer`,
 Database `appmixer_test`, Use SSL `Yes`, optionally the CA). On the free ngrok plan the address
-changes on every start, so the account has to be edited after each restart of the tunnel. Only
-one of the two servers is tunnelled at a time; the regression server is meant for the CLI.
+can change on every start, so check `tunnel-status` after each restart of the tunnel and edit the
+account if needed.
+
+Two things that do not work on the free plan: a second agent (`ngrok tcp 3308` next to a running
+agent fails with `ERR_NGROK_108`, hence the single session with two endpoints), and an **HTTP
+endpoint** (`ngrok http 3307`, `xxx.ngrok-free.app`): MySQL is not HTTP, ngrok answers
+`ERR_NGROK_3004` and the client reports `PROTOCOL_CONNECTION_LOST` after about five seconds.
 
 ## Connection test matrix (components#2952 test plan)
 
@@ -74,7 +81,7 @@ exercises exactly the options auth.js and the components build. Run it from
 driver comparison:
 
 ```bash
-node check-matrix.js 7.tcp.eu.ngrok.io 29849
+node check-matrix.js 7.tcp.eu.ngrok.io 29849 6.tcp.eu.ngrok.io 19516   # 84-tls, then 80-plain
 OLD_MYSQL_DRIVER=/path/to/node_modules/mysql node check-matrix.js
 ```
 
@@ -91,6 +98,8 @@ Result on 2026-11-02 (PR head `36b2a05`):
 | Use SSL Yes, no CA | 80-plain | connects | connects |
 | Use SSL Yes, correct CA, through ngrok (`7.tcp.eu.ngrok.io`) | 84-tls | connects (hostname check against SAN) | connects |
 | Use SSL Yes, no CA, through ngrok | 84-tls | connects | connects |
+| Use SSL No, through ngrok | 84-tls | fails | `ER_ACCESS_DENIED_ERROR` |
+| No SSL fields, through ngrok (`6.tcp.eu.ngrok.io`) | 80-plain | connects | connects, no cipher |
 
 A server that requires TLS refuses a plain connection with `ER_ACCESS_DENIED_ERROR` when the
 *user* has `REQUIRE SSL` (as here), and with `ER_SECURE_TRANSPORT_REQUIRED` when only

@@ -7,7 +7,7 @@
 #   80-plain  MySQL 8.0, port 3308, no TLS requirement, user `appmixer` with mysql_native_password.
 #             Regression server for accounts that set no SSL fields.
 #
-# Usage:  local-mysql.sh setup | start [name] | stop [name] | status | sql <name> [args…] | tunnel | print-auth [name]
+# Usage:  local-mysql.sh setup | start [name] | stop [name] | status | sql <name> [args…] | tunnel | tunnel-status | print-auth [name]
 # Files:  $MYSQL_TEST_DIR (default ~/mysql-test): certs/, <name>/{my.cnf,data,mysqld.log,mysql.sock,mysql.pid}, password
 # Needs:  brew install mysql@8.4 mysql@8.0 ; openssl ; ngrok (only for `tunnel`)
 
@@ -213,9 +213,33 @@ print_auth() {
 }
 
 tunnel() {
+    # Both servers through ONE ngrok agent session (the free plan allows a single session, but several
+    # endpoints in it). MySQL needs `tcp` endpoints: an `http` endpoint (ngrok http 3307,
+    # xxx.ngrok-free.app) answers ERR_NGROK_3004 and the client sees PROTOCOL_CONNECTION_LOST.
     command -v ngrok > /dev/null || die "ngrok not installed (brew install ngrok)"
-    echo "==> exposing 84-tls (127.0.0.1:$PORT_84) through ngrok. Host and port change on every start (free plan)."
-    exec ngrok tcp "$PORT_84"
+    mkdir -p "$ROOT"
+    cat > "$ROOT/ngrok.yml" <<EOF
+version: "3"
+endpoints:
+  - name: mysql-84-tls
+    url: tcp://
+    upstream:
+      url: $PORT_84
+  - name: mysql-80-plain
+    url: tcp://
+    upstream:
+      url: $PORT_80
+EOF
+    echo "==> exposing 84-tls (:$PORT_84) and 80-plain (:$PORT_80) through ngrok tcp endpoints."
+    echo "    Host and port change on every start (free plan). Current addresses: $0 tunnel-status"
+    exec ngrok start --all --config "${NGROK_CONFIG:-$HOME/.config/ngrok/ngrok.yml}" --config "$ROOT/ngrok.yml"
+}
+
+tunnel_status() {
+    # Reads the running agent's local API and prints host:port per server.
+    curl -sf localhost:4040/api/tunnels 2>/dev/null \
+        | jq -r '.tunnels[] | select(.proto=="tcp") | "\(.name)  \(.public_url | sub("^tcp://"; ""))  ->  \(.config.addr)"' \
+        || echo "no ngrok agent running on this machine (start one with: $0 tunnel)"
 }
 
 cmd="${1:-status}"
@@ -227,6 +251,7 @@ case "$cmd" in
     status)     status ;;
     sql)        sql "$@" ;;
     tunnel)     tunnel ;;
+    tunnel-status) tunnel_status ;;
     print-auth) print_auth "${1:-84-tls}" ;;
-    *)          die "usage: $0 setup | start [name] | stop [name] | status | sql <name> [args] | tunnel | print-auth [name]" ;;
+    *)          die "usage: $0 setup | start [name] | stop [name] | status | sql <name> [args] | tunnel | tunnel-status | print-auth [name]" ;;
 esac
