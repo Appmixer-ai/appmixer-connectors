@@ -99,6 +99,21 @@ describe('arcmira', () => {
             assert.deepStrictEqual(out.about, []);
             assert.strictEqual(out.count, 1);
         });
+        it('keeps multiline quotes and speaker lists in single CSV cells', async () => {
+            const context = makeContext({ query: 'quotes', outputType: 'file' });
+            context.httpRequest.resolves({ data: { chunks: [{
+                text: 'First, "quote"\r\nnext line',
+                speakers: ['Ada', 'Ben']
+            }] } });
+            context.saveFileStream.resolves({ fileId: 'csv-file' });
+            await FindTranscripts.receive(context);
+            const contents = context.saveFileStream.firstCall.args[1].toString('utf8');
+            assert.strictEqual(contents, [
+                'id,videoId,videoTitle,channelId,channelName,channelPage,text,startSeconds,watchUrl,citeLine,publishedAt,source,sourceLabel,score,speakers,about,speakersBy',
+                ',,,,,,"First, ""quote""\r\nnext line",,,,,,,,"[""Ada"",""Ben""]",[],[]'
+            ].join('\n'));
+            assert.deepStrictEqual(context.sendJson.firstCall.args, [{ fileId: 'csv-file' }, 'out']);
+        });
         it('sends notFound when there are no passages', async () => {
             const context = makeContext({ query: 'zzqx', outputType: 'array' });
             context.httpRequest.resolves({ status: 200, data: { returned: 0, chunks: [] } });
