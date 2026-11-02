@@ -1,11 +1,10 @@
 'use strict';
-const GoogleApi = require('googleapis');
+const { calendar: googleCalendar } = require('@googleapis/calendar');
 const commons = require('../../google-commons');
-const Promise = require('bluebird');
 
-// GoogleApi initialization & promisify of some api function for convenience
-const calendar = GoogleApi.calendar('v3');
-const insertCalendar = Promise.promisify(calendar.calendars.insert, { context: calendar.calendars });
+// Google API client & helpers resolving to the response body for convenience
+const calendar = googleCalendar('v3');
+const insertCalendar = params => calendar.calendars.insert(params).then(res => res.data);
 
 /**
  * Component for calendar creation on google calendar.
