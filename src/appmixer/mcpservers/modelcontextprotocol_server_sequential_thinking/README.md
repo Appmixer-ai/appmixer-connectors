@@ -1,12 +1,12 @@
 Sequential Thinking MCP Server
 -------------------------------
 
-An MCP server implementation that provides a tool for dynamic and reflective problem-solving through a structured thinking process. (@modelcontextprotocol/server-sequential-thinking 0.6.2). Documentation: <a target=_blank href='https://mcp.so/server/sequentialthinking/modelcontextprotocol?tab=content'>https://mcp.so/server/sequentialthinking/modelcontextprotocol?tab=content</a>
+An MCP server implementation that provides a tool for dynamic and reflective problem-solving through a structured thinking process. (@modelcontextprotocol/server-sequential-thinking 2.0.0). Documentation: <a target=_blank href='https://mcp.so/server/sequentialthinking/modelcontextprotocol?tab=content'>https://mcp.so/server/sequentialthinking/modelcontextprotocol?tab=content</a>
 
 NPM Repository
 --------------
 
-@modelcontextprotocol/server-sequential-thinking@0.6.2
+@modelcontextprotocol/server-sequential-thinking@2.0.0
 
 Generate Command
 ----------------

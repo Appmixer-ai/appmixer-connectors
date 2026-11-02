@@ -1,12 +1,12 @@
 SearXNG MCP Server
 -------------------------------
 
-Integrates the SearXNG API, providing web search capabilities. (mcp-searxng 0.4.6). Documentation: <a target=_blank href='https://github.com/ihor-sokoliuk/mcp-searxng'>https://github.com/ihor-sokoliuk/mcp-searxng</a>
+Integrates the SearXNG API, providing web search capabilities. The MCP server is bundled as `server.js` (a port of mcp-searxng 0.4.6 on MCP SDK 1.32.2 with a hardened `web_url_read`). Documentation: <a target=_blank href='https://github.com/ihor-sokoliuk/mcp-searxng'>https://github.com/ihor-sokoliuk/mcp-searxng</a>
 
 NPM Repository
 --------------
 
-mcp-searxng@0.4.6
+mcp-searxng@0.4.6 (no longer installed; replaced by the bundled `server.js`)
 
 Generate Command
 ----------------
