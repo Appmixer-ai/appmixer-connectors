@@ -252,27 +252,21 @@ function getOutputPortOptions(context, outputType, itemSchema, { label, value })
     }
 }
 
-/**
- * Converts an array of objects to CSV format.
- * @param {Array} array - Array of objects to convert
- * @returns {string} CSV formatted string
- */
-function toCsv(array) {
-    if (array.length === 0) {
-        return '';
-    }
-    const headers = Object.keys(array[0]);
-    return [
-        headers.join(','),
-        ...array.map(items => {
-            return Object.values(items).map(property => {
-                if (typeof property === 'object') {
-                    return JSON.stringify(property);
-                }
-                return property;
-            }).join(',');
-        })
-    ].join('\n');
+// One CSV cell per RFC 4180: null/undefined → empty, objects → JSON, and a value
+// holding a comma, a double quote or a line break is quoted with inner quotes doubled.
+function csvCell(value) {
+    if (value == null) return '';
+    const text = typeof value === 'object' ? JSON.stringify(value) : String(value);
+    return /[",\r\n]/.test(text) ? '"' + text.replace(/"/g, '""') + '"' : text;
+}
+
+function toCsv(records) {
+    if (!records.length) return '';
+    // Cells are taken by header column, not Object.values(record), so a record with
+    // a different key order or a missing key stays under the right header.
+    const columns = Object.keys(records[0]);
+    const rows = records.map(record => columns.map(column => csvCell(record[column])).join(','));
+    return [columns.map(csvCell).join(','), ...rows].join('\n');
 }
 
 module.exports = {

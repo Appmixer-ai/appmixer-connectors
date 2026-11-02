@@ -6,16 +6,21 @@ though the `ai` connector is split into per-provider modules, because that is wh
 
 ## Scope
 
-Right now only the **groq** module is covered:
+Right now the **groq**, **typesafe** and **claude** modules are covered:
 
 | Flow | Components |
 |------|------------|
 | `test-flow-prompt.json` | `groq.SendPrompt` (×2 — the output contract and conversation memory) |
 | `test-flow-api-call.json` | `groq.MakeApiCall` (×2 — relative `GET` path, `POST` with a JSON body) |
 | `test-flow-audio.json` | `groq.CreateTranscription`, `groq.CreateTranslation` |
+| `test-flow-typesafe-decisions.json` | `typesafe.ClassifyText`, `typesafe.ScoreText`, `typesafe.VerifyStatement`, `typesafe.AskQuestions` |
+| `test-flow-typesafe-models-api-call.json` | `typesafe.ListModels` (`first`), `typesafe.MakeApiCall` (×2 — relative `GET /v1/models`, absolute `POST /v1/systemone` with a JSON body) |
+| `test-flow-claude-usage.json` | `claude.SendPrompt`, `claude.TransformTextToJSON`, `claude.AIAgent` (the `usage` / `stop_reason` / `model` output), `claude.MakeApiCall` (`GET /models`) |
+| `test-flow-claude-agent-tool-port.json` | `claude.AIAgent` `tools` port: two Mock Value tools, one with a model defined value (the agent must call both, in order) |
+| `test-flow-claude-agent-tool-chain.json` | `claude.AIAgent` `tools` port with a chain of two components (the output of the last step is the tool output) |
 
 `appmixer e2e validate` therefore reports ~60 `component-coverage` warnings for the
-other modules (`openai`, `claude`, `gemini`, `bedrock`, `openrouter`, `requesty`,
+other modules (`openai`, `gemini`, `bedrock`, `openrouter`, `requesty`,
 `voyageai`, `agentcore`, `agenttools`). They are not regressions — those modules have
 never had E2E flows. Add them here as each module is brought onto the AI connector
 contract.
@@ -60,3 +65,27 @@ returns for the same role.
   `headers` are. Groq's OpenAI-compatible endpoints take no query parameters, so
   populating `parameters` would only add an argument the API is free to reject —
   hence the standing `input-coverage-optional` warning for that field.
+
+## TypeSafe notes
+
+- **`AskQuestions` asserts go through the generated variables.** Its questions are
+  inspector rows (one `choice`, one `score`, one `noul`) and its out port is built from
+  those rows, so the asserts read `answers.<id>.<field>` directly with no `g_jsonPath` —
+  a broken option list fails the import's variable check instead of hiding behind a
+  raw-object path. `appmixer connector verify` skips this component (it only samples
+  dynamic ports of `outputType` components), so this flow is its live check.
+- All decision calls pin `model: jev-latest`, so the model assertions are `regex ^jev-`
+  (the API resolves the alias to a concrete version such as `jev-1.13.0`).
+- The content in each decision flow is deliberately unambiguous (a double charge →
+  `billing`, an API 500 error → `technical`, an explicit "URGENT" → `true`), so the
+  `equal` asserts on the choice/result are stable. `ScoreText` only asserts the level is
+  one of the two upper levels, because the model may split probability between them.
+- Nothing is created on TypeSafe's side, so the flows have no cleanup step.
+
+## Claude account requirements
+
+`test-flow-claude-usage.json` pins `claude-haiku-4-5-20251001` (set once in the
+`SetVariable` node). The asserts accept any `claude-haiku-4-5*` model in the response.
+Token counts are asserted as positive integers, `stop_reason` as `end_turn`
+(SendPrompt, AIAgent) and `tool_use` (TransformTextToJSON forces its extraction tool).
+The AIAgent runs with no tools connected, so it answers in a single turn.

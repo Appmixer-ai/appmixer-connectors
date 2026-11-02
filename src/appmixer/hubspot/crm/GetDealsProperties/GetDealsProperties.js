@@ -1,14 +1,14 @@
 'use strict';
 
 const Hubspot = require('../../Hubspot');
-const { getObjectProperties, WATCHED_PROPERTIES_DEAL } = require('../../commons');
+const { getObjectProperties, INSPECTOR_FIELDS_DEAL } = require('../../commons');
 
 module.exports = {
 
     async receive(context) {
 
         const { auth } = context;
-        const hs = new Hubspot(auth.accessToken, context.config);
+        const hs = new Hubspot(auth.accessToken, context.config, context.httpRequest);
         const properties = await getObjectProperties(context, hs, 'deals', 'all');
 
         return context.sendJson(properties, 'out');
@@ -70,7 +70,7 @@ module.exports = {
     additionalFieldsToSelectArray(dealsProperties) {
 
         return dealsProperties
-            .filter((property) => !WATCHED_PROPERTIES_DEAL.includes(property.name))
+            .filter((property) => !INSPECTOR_FIELDS_DEAL.includes(property.name))
             .map((property) => {
                 return { label: property.label, value: property.name };
             });

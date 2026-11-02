@@ -16,7 +16,7 @@ module.exports = {
             throw new context.CancelError('At least one contact ID is required!');
         }
 
-        const hs = new Hubspot(context.auth.accessToken, context.config);
+        const hs = new Hubspot(context.auth.accessToken, context.config, context.httpRequest);
         await hs.call('put', `crm/v3/lists/${listId}/memberships/remove`, recordIds);
 
         return context.sendJson({

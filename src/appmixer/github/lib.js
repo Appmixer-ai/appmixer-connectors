@@ -22,12 +22,19 @@ module.exports = {
                 'X-GitHub-Api-Version': '2022-11-28',
                 'Authorization': `Bearer ${context.accessToken || context.auth?.accessToken}`
             },
-            data: body,
             params: {
                 ...params,
                 per_page: 100
             }
         };
+
+        // A GET/HEAD must go out without a body. Axios serializes even an empty object to
+        // '{}' (Content-Length: 2); GitHub does not read it, so on a reused keep-alive
+        // connection those bytes desync the stream and the next response fails to parse
+        // with 'Parse Error: Expected HTTP/' (HPE_INVALID_CONSTANT).
+        if (!['GET', 'HEAD'].includes(String(method).toUpperCase())) {
+            options.data = body;
+        }
 
         return await context.httpRequest(options);
     },
@@ -160,6 +167,103 @@ module.exports = {
             // Different lengths — timingSafeEqual throws instead of returning false.
             return false;
         }
+    },
+
+    /**
+     * Current UTC time as an ISO 8601 string without milliseconds
+     * (YYYY-MM-DDTHH:MM:SSZ) — the format GitHub's `since` query parameter expects.
+     * @returns {String}
+     */
+    nowIso() {
+        return new Date().toISOString().replace(/\.\d{3}Z$/, 'Z');
+    },
+
+    /**
+     * Merge the IDs seen on this tick into the ones already known, newest last, capped
+     * at `max` entries (oldest dropped first).
+     *
+     * Unlike `getNewItems()`, which *replaces* the known set every tick, this one
+     * *accumulates*. Comment triggers need that: GitHub's `since` filters on
+     * last-updated, not created, so an old comment that someone edits re-enters the
+     * window long after it has fallen out of the previous tick's page. Remembering only
+     * the current page would re-fire it.
+     *
+     * @param {Array} [previousKnown] IDs stored on the previous tick
+     * @param {Array} [currentIds] IDs seen on this tick
+     * @param {Number} [max] cap on the stored set
+     * @returns {Array<String>}
+     */
+    mergeKnownIds(previousKnown = [], currentIds = [], max = 500) {
+
+        const merged = [];
+        const seen = new Set();
+
+        for (const id of [...(previousKnown || []), ...(currentIds || [])]) {
+            const key = String(id);
+            if (seen.has(key)) continue;
+            seen.add(key);
+            merged.push(key);
+        }
+
+        return merged.length > max ? merged.slice(merged.length - max) : merged;
+    },
+
+    /**
+     * Case-insensitive *substring* match of an author login against a comma-separated
+     * filter, e.g. `copilot, dependabot`. An empty filter matches everything.
+     *
+     * Substring rather than equality on purpose: the same actor is reported under a
+     * different login per endpoint — and the disagreement is not merely REST vs GraphQL,
+     * the two REST endpoints differ from each other. One account, user id 175728472:
+     * `Copilot` on `/repos/{o}/{r}/pulls/comments`,
+     * `copilot-pull-request-reviewer[bot]` on `/repos/{o}/{r}/pulls/{n}/reviews`, and
+     * `copilot-pull-request-reviewer` in GraphQL. An exact-match filter would silently
+     * match nothing as soon as the user took the login from a different endpoint.
+     *
+     * @param {String} [login] the `user.login` of the item
+     * @param {String} [filter] comma-separated logins or fragments of logins
+     * @returns {Boolean}
+     */
+    matchesAuthor(login, filter) {
+
+        if (!filter) return true;
+
+        const wanted = filter.split(',').map(part => part.trim().toLowerCase()).filter(Boolean);
+        if (!wanted.length) return true;
+
+        const actual = (login || '').toLowerCase();
+        return wanted.some(part => actual.includes(part));
+    },
+
+    /**
+     * Match an item's author against a bots/humans switch.
+     *
+     * GitHub marks app accounts with `user.type = 'Bot'`, but not consistently across
+     * endpoints, so a trailing `[bot]` in the login counts as well.
+     *
+     * @param {Object} [user] the `user` object of the item
+     * @param {String} [authorType] one of `any`, `bots`, `humans`
+     * @returns {Boolean}
+     */
+    matchesAuthorType(user, authorType) {
+
+        if (!authorType || authorType === 'any') return true;
+
+        const isBot = user?.type === 'Bot' || /\[bot\]$/i.test(user?.login || '');
+        return authorType === 'bots' ? isBot : !isBot;
+    },
+
+    /**
+     * Tell apart the two things GitHub calls an "issue comment". The repo-wide
+     * `/issues/comments` endpoint returns conversation comments on issues *and* on pull
+     * requests, and nothing in the payload says which: `issue_url` uses `/issues/` for
+     * both. Only `html_url` distinguishes them, by containing `/pull/`.
+     *
+     * @param {Object} comment an item of `/repos/{owner}/{repo}/issues/comments`
+     * @returns {Boolean}
+     */
+    isPullRequestComment(comment) {
+        return /\/pull\//.test(comment?.html_url || '');
     },
 
     /**
@@ -298,24 +402,19 @@ module.exports = {
 
 };
 
-/**
- * @param {array} array
- * @returns {string}
- */
-const toCsv = (array) => {
-    const headers = Object.keys(array[0]);
+// One CSV cell per RFC 4180: null/undefined → empty, objects → JSON, and a value
+// holding a comma, a double quote or a line break is quoted with inner quotes doubled.
+const csvCell = (value) => {
+    if (value == null) return '';
+    const text = typeof value === 'object' ? JSON.stringify(value) : String(value);
+    return /[",\r\n]/.test(text) ? '"' + text.replace(/"/g, '""') + '"' : text;
+};
 
-    return [
-        headers.join(','),
-
-        ...array.map(items => {
-            return Object.values(items).map(property => {
-                if (typeof property === 'object') {
-                    return JSON.stringify(property);
-                }
-                return property;
-            }).join(',');
-        })
-
-    ].join('\n');
+const toCsv = (records) => {
+    if (!records.length) return '';
+    // Cells are taken by header column, not Object.values(record), so a record with
+    // a different key order or a missing key stays under the right header.
+    const columns = Object.keys(records[0]);
+    const rows = records.map(record => columns.map(column => csvCell(record[column])).join(','));
+    return [columns.map(csvCell).join(','), ...rows].join('\n');
 };

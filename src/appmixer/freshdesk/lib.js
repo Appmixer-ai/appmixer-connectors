@@ -2,6 +2,24 @@
 
 const pathModule = require('path');
 
+// The domain is typed by the user and becomes the request host, and the API key is sent to that
+// host - so anything but a plain Freshdesk subdomain (letters, digits, hyphens) is rejected.
+// Checked as typed, not normalized: components build their URLs from the stored value.
+const SUBDOMAIN_PATTERN = /^[a-z0-9][a-z0-9-]*$/i;
+
+/**
+ * @param {string} domain - e.g. "example" for example.freshdesk.com
+ * @return {string} https origin of the Freshdesk account
+ * @throws Error
+ */
+function freshdeskOrigin(domain) {
+
+    if (typeof domain !== 'string' || !SUBDOMAIN_PATTERN.test(domain)) {
+        throw new Error('Invalid Freshdesk domain. Enter the subdomain only, e.g. "example" for example.freshdesk.com.');
+    }
+    return `https://${domain}.freshdesk.com`;
+}
+
 /**
  * Authenticated Freshdesk API request via context.httpRequest (replaces the axios dependency).
  * Centralizes base URL, Basic auth (apiKey:X) and default JSON content type so every component
@@ -19,7 +37,7 @@ const pathModule = require('path');
  */
 async function apiCall(context, { method = 'GET', url, params, data, headers = {}, responseType } = {}) {
 
-    const baseUrl = `https://${context.auth.domain}.freshdesk.com/api/v2`;
+    const baseUrl = `${freshdeskOrigin(context.auth.domain)}/api/v2`;
     const targetUrl = /^https?:\/\//.test(url) ? url : `${baseUrl}${url}`;
     const credentials = Buffer.from(`${context.auth.apiKey}:X`).toString('base64');
     const hasContentType = Object.keys(headers).some(name => name.toLowerCase() === 'content-type');
@@ -141,24 +159,21 @@ const normalizeMultiselectInput = (input, context, fieldName) => {
     }
 };
 
-/**
- * Convert an array of objects to CSV string.
- * @param {Object[]} array
- * @returns {string}
- */
-function toCsv(array) {
+// One CSV cell per RFC 4180: null/undefined → empty, objects → JSON, and a value
+// holding a comma, a double quote or a line break is quoted with inner quotes doubled.
+function csvCell(value) {
+    if (value == null) return '';
+    const text = typeof value === 'object' ? JSON.stringify(value) : String(value);
+    return /[",\r\n]/.test(text) ? '"' + text.replace(/"/g, '""') + '"' : text;
+}
 
-    if (!array || array.length === 0) return '';
-    const headers = Object.keys(array[0]);
-    return [
-        headers.join(','),
-        ...array.map(item =>
-            Object.values(item).map(property => {
-                if (typeof property === 'object') return JSON.stringify(property);
-                return property;
-            }).join(',')
-        )
-    ].join('\n');
+function toCsv(records) {
+    if (!records.length) return '';
+    // Cells are taken by header column, not Object.values(record), so a record with
+    // a different key order or a missing key stays under the right header.
+    const columns = Object.keys(records[0]);
+    const rows = records.map(record => columns.map(column => csvCell(record[column])).join(','));
+    return [columns.map(csvCell).join(','), ...rows].join('\n');
 }
 
 /**
@@ -202,6 +217,7 @@ async function sendArrayOutput({ context, records, outputType, defaultPrefix = '
 }
 
 module.exports = {
+    freshdeskOrigin,
     apiCall,
     mapTicket,
     requestTickets,

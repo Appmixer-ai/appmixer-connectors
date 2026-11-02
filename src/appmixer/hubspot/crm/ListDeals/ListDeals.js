@@ -1,5 +1,6 @@
 'use strict';
 const Hubspot = require('../../Hubspot');
+const ITEM_SCHEMA = require('../../item-schemas.json').deal;
 
 const outputInspector = async (context) => {
     if (context.messages.in.content.allAtOnce) {
@@ -36,6 +37,8 @@ const outputInspector = async (context) => {
 
 module.exports = {
 
+    ITEM_SCHEMA,
+
     async receive(context) {
 
         if (context.properties.generateOutputPortOptions) {
@@ -51,7 +54,7 @@ module.exports = {
         } = context.messages.in.content;
 
         const { auth } = context;
-        const hs = new Hubspot(auth.accessToken, context.config);
+        const hs = new Hubspot(auth.accessToken, context.config, context.httpRequest);
 
         // Use search API when filtering by pipeline/stage or searching
         const useSearch = search || pipeline || dealstage;

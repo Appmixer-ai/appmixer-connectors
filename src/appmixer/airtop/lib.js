@@ -249,54 +249,40 @@ module.exports = {
     },
 
     /**
-     * Convert the rows produced by the key-value inspector input into a plain object.
-     * The inspector may hand over an array, an `{ ADD: [...] }` wrapper or — when the
-     * value is bound from another component — the JSON string of either shape.
-     * Anything else throws: silently returning `{}` would drop the user's headers or
-     * query parameters and run the call anyway, turning a filtered request into an
-     * unfiltered one that still reports success.
+     * Convert the value of a key-value inspector input into a plain object.
+     * The Designer stores the rows as the JSON string of an object; an object, an
+     * array of `{ key, value }` rows, an `{ ADD: [...] }` wrapper or the JSON string of
+     * any of them is accepted too. Invalid JSON throws: silently returning `{}` would
+     * drop the user's headers or query parameters and run the call anyway, turning a
+     * filtered request into an unfiltered one that still reports success.
      * @param {object} context
-     * @param {array|object|string} rows
+     * @param {string|object|array} value
      * @param {string} label
      * @returns {object}
      */
-    keyValueToObject(context, rows, label) {
-
-        let value = rows;
-
-        if (value === undefined || value === null) {
-            return {};
-        }
-
-        if (typeof value === 'string') {
-            const trimmed = value.trim();
-            if (!trimmed.length) {
-                return {};
-            }
+    keyValueToObject(context, value, label) {
+        // The Designer's key-value field sends its rows as a JSON object string
+        // ('{"Accept":"application/json"}'); a plain object and an array of
+        // {key, value} rows are accepted too.
+        let input = value;
+        if (typeof input === 'string') {
+            if (!input.trim()) return {};
             try {
-                value = JSON.parse(trimmed);
-            } catch (err) {
-                throw new context.CancelError(
-                    `${label} must be a list of key/value pairs, or the JSON string of one.`
-                );
+                input = JSON.parse(input);
+            } catch (e) {
+                throw new context.CancelError(`${label} must be a JSON object of key-value pairs.`);
             }
         }
-
-        const list = Array.isArray(value) ? value : (value && Array.isArray(value.ADD) ? value.ADD : null);
+        if (!input || typeof input !== 'object') return {};
+        if (!Array.isArray(input) && Array.isArray(input.ADD)) input = input.ADD;
+        const entries = Array.isArray(input)
+            ? input.filter(row => row && typeof row === 'object').map(row => [row.key, row.value])
+            : Object.entries(input);
         const out = {};
-
-        if (!list) {
-            throw new context.CancelError(
-                `${label} must be a list of key/value pairs, or the JSON string of one.`
-            );
+        for (const [key, val] of entries) {
+            if (typeof key !== 'string' || key.length === 0) continue;
+            out[key] = val;
         }
-
-        for (const row of list) {
-            if (!row || typeof row !== 'object') continue;
-            if (typeof row.key !== 'string' || row.key.length === 0) continue;
-            out[row.key] = row.value;
-        }
-
         return out;
     },
 
@@ -405,28 +391,19 @@ const describeIssues = (issues) => {
         .join('; ');
 };
 
-/**
- * @param {array} array
- * @returns {string}
- */
-const toCsv = (array) => {
+// One CSV cell per RFC 4180: null/undefined → empty, objects → JSON, and a value
+// holding a comma, a double quote or a line break is quoted with inner quotes doubled.
+const csvCell = (value) => {
+    if (value == null) return '';
+    const text = typeof value === 'object' ? JSON.stringify(value) : String(value);
+    return /[",\r\n]/.test(text) ? '"' + text.replace(/"/g, '""') + '"' : text;
+};
 
-    if (!array.length) {
-        return '';
-    }
-
-    const headers = Object.keys(array[0]);
-
-    return [
-        headers.join(','),
-        ...array.map(items => {
-
-            return Object.values(items).map(property => {
-                if (typeof property === 'object') {
-                    return JSON.stringify(property);
-                }
-                return property;
-            }).join(',');
-        })
-    ].join('\n');
+const toCsv = (records) => {
+    if (!records.length) return '';
+    // Cells are taken by header column, not Object.values(record), so a record with
+    // a different key order or a missing key stays under the right header.
+    const columns = Object.keys(records[0]);
+    const rows = records.map(record => columns.map(column => csvCell(record[column])).join(','));
+    return [columns.map(csvCell).join(','), ...rows].join('\n');
 };

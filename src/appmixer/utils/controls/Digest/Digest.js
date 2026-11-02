@@ -3,6 +3,12 @@ const uuid = require('uuid').v4;
 const parser = require('cron-parser');
 const moment = require('moment-timezone');
 
+// The engine rejects `context.setTimeout` delays above its maximum message delay
+// (INPUT_QUEUE_MAX_MESSAGE_DELAY, 31 days by default). The next run of a cron schedule can be
+// further away than that (monthly schedule across a DST change, dayMonth 29-31, rare matches),
+// so long waits are split into chained timeouts of at most MAX_TIMEOUT each.
+const MAX_TIMEOUT = 24 * 60 * 60 * 1000; // 1 day
+
 module.exports = {
 
     async receive(context) {
@@ -41,6 +47,14 @@ module.exports = {
             }
 
             if (context.messages.timeout) {
+                const timeoutContent = context.messages.timeout.content || {};
+                if (timeoutContent.intermediate && timeoutContent.nextDate) {
+                    // A chained step of a long wait. Do not drain, keep waiting for the original target date.
+                    return this.scheduleDrain(context, {
+                        previousDate: timeoutContent.previousDate,
+                        nextDate: timeoutContent.nextDate
+                    });
+                }
                 const wrappedEntries = await context.stateGet('entries') || [];
                 if (!threshold || (threshold && wrappedEntries.length >= threshold)) {
                     if (wrappedEntries.length > 0) {
@@ -49,8 +63,10 @@ module.exports = {
                         await context.stateUnset('entries');
                     }
                 }
-                const previousDate = context.messages.timeout.content.previousDate;
-                return this.scheduleDrain(context, { previousDate });
+                return this.scheduleDrain(context, {
+                    previousDate: timeoutContent.previousDate,
+                    after: timeoutContent.nextDate
+                });
             }
 
             // Wrap entry with a unique ID and add to set
@@ -122,26 +138,52 @@ module.exports = {
         }
     },
 
-    async scheduleDrain(context, { previousDate = null }) {
+    /**
+     * Schedule the next drain.
+     * @param {Object} context
+     * @param {Object} options
+     * @param {string|null} [options.previousDate] Date the current wait was scheduled at (passed through).
+     * @param {string|null} [options.nextDate] Target drain date of a wait already in progress. When set,
+     *  the cron expression is not evaluated again, so the target cannot move forward.
+     * @param {string|null} [options.after] Compute the next cron run after this date (if it is in the future)
+     *  instead of after now. Used after a drain so that a timeout delivered slightly early does not
+     *  schedule the same run again.
+     */
+    async scheduleDrain(context, { previousDate = null, nextDate = null, after = null } = {}) {
 
-        const { timezone, minute, hour, dayMonth, dayWeek } = context.properties;
-        if (timezone && !moment.tz.zone(timezone)) {
-            throw new context.CancelError('Invalid timezone');
+        const now = moment();
+
+        if (!nextDate) {
+            const { timezone, minute, hour, dayMonth, dayWeek } = context.properties;
+            if (timezone && !moment.tz.zone(timezone)) {
+                throw new context.CancelError('Invalid timezone');
+            }
+
+            const expression = `${minute || 0} ${hour || '*'} ${dayMonth || '*'} * ${dayWeek || '*'}`;
+            const options = timezone ? { tz: timezone } : {};
+            if (after && moment(after).isValid() && moment(after).isAfter(now)) {
+                options.currentDate = moment(after).toDate();
+            }
+            let interval;
+            try {
+                interval = parser.parseExpression(expression, options);
+            } catch (err) {
+                throw new context.CancelError(`Invalid schedule: ${err.message}`);
+            }
+            if (!interval.hasNext()) {
+                throw new context.CancelError('Next scheduled date doesn’t exist');
+            }
+
+            nextDate = interval.next().toISOString();
+            // A new wait starts now.
+            previousDate = now.toISOString();
         }
 
-        const expression = `${minute || 0} ${hour || '*'} ${dayMonth || '*'} * ${dayWeek || '*'}`;
-        const options = timezone ? { tz: timezone } : {};
-        const interval = parser.parseExpression(expression, options);
-        if (!interval.hasNext()) {
-            throw new context.CancelError('Next scheduled date doesn’t exist');
+        const diff = Math.max(moment(nextDate).diff(now), 0);
+        if (diff > MAX_TIMEOUT) {
+            return context.setTimeout({ previousDate, nextDate, intermediate: true }, MAX_TIMEOUT);
         }
-
-        const now = moment().toISOString();
-        const nextDate = interval.next().toISOString();
-        previousDate = previousDate ? moment(previousDate).toISOString() : null;
-
-        const diff = moment(nextDate).diff(now);
-        await context.setTimeout({ previousDate: now }, diff);
+        return context.setTimeout({ previousDate, nextDate }, diff);
     },
 
     getOutputPortOptions(context, outputType) {

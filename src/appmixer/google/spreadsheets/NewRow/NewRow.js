@@ -1,13 +1,29 @@
 'use strict';
-const google = require('googleapis');
+const { sheets: googleSheets } = require('@googleapis/sheets');
 const commons = require('../../google-commons');
 const { normalizeHeader } = require('../common');
 const Promise = require('bluebird');
 
 // Shared fetch helper used by both tick() and test() so requests go through the same path.
 function makeGetRows() {
-    const sheets = google.sheets('v4');
-    return Promise.promisify(sheets.spreadsheets.values.get, { context: sheets.spreadsheets.values });
+    const sheets = googleSheets('v4');
+    return params => sheets.spreadsheets.values.get(params).then(res => res.data);
+}
+
+// Validates and normalises the "Index Column" property (A1 column letters, e.g. "A" or "AA").
+// Runs before any Google API call. Strings and numbers are trimmed and upper-cased; anything else
+// (object, array, empty value, "1A", ...) fails with a CancelError that names the property.
+function getIndexColumn(context) {
+
+    const raw = context.properties.index;
+    const value = (typeof raw === 'string' || typeof raw === 'number') ? String(raw).trim().toUpperCase() : '';
+    if (!/^[A-Z]{1,3}$/.test(value)) {
+        throw new context.CancelError(
+            'Invalid "Index Column" value. Expected a column letter such as "A" or "AA", got '
+            + `${JSON.stringify(raw)}.`
+        );
+    }
+    return value;
 }
 
 // Shared row-building helper used by both tick() and test() so the emitted shape is identical.
@@ -37,10 +53,10 @@ async function fetchRowAsOutput(context, getRows, worksheetName, rowNumber) {
 module.exports = {
 
     async tick(context) {
+        const indexColumn = getIndexColumn(context);
         const getRows = makeGetRows();
 
-        const indexColumn = context.properties.index.toUpperCase();
-        const worksheetName = encodeURIComponent(context.properties.worksheetId.split('/')[1]);
+        const worksheetName = context.properties.worksheetId.split('/')[1];
 
         // Construct the range based on the index column
         const range = `${worksheetName}!${indexColumn}1:${indexColumn}`;
@@ -119,10 +135,10 @@ module.exports = {
     // directly. Read-only, no state writes.
     async test(context) {
 
+        const indexColumn = getIndexColumn(context);
         const getRows = makeGetRows();
 
-        const indexColumn = context.properties.index.toUpperCase();
-        const worksheetName = encodeURIComponent(context.properties.worksheetId.split('/')[1]);
+        const worksheetName = context.properties.worksheetId.split('/')[1];
 
         const res = await getRows({
             auth: commons.getOauth2Client(context.auth),

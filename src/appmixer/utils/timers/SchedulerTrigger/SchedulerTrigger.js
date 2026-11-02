@@ -212,7 +212,11 @@ module.exports = {
 
             const nextDate = this.getNextRun(context, { now, previousDate, firstTime });
 
-            if (timeoutId && context.messages.timeout.timeoutId !== timeoutId) {
+            // start() runs without a timeout message. It can still find a timeoutId saved by an earlier
+            // run (e.g. the component is started again during a running-flow update), so the duplicate-
+            // timeout check below applies only to a delivered timeout. Falling through re-schedules and
+            // overwrites timeoutId, so a leftover timeout is ignored here when it fires.
+            if (timeoutId && context.messages.timeout && context.messages.timeout.timeoutId !== timeoutId) {
                 // handling the case, when timeout has been set, but system crashed, and the timeoutId
                 // has not been saved into state, then the `original` timeout has been triggered again(
                 // because it did not finish correctly), state was 'JsonSent' and timeout was set

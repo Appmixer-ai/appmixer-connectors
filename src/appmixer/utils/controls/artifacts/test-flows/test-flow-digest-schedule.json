@@ -1,0 +1,237 @@
+{
+    "name": "E2E Utils Controls - Digest Schedule",
+    "description": "Starts a flow with a Digest set to Drain by Schedule on day 31 of the month (Europe/Prague) plus a threshold of 1. Starting the flow schedules the monthly drain (start() must not fail even when the next 31st is more than 31 days away — regression guard for the 'Parameter timeout should be less than 2678400000' bug, see appmixer-components#2950), and the single entry is drained by the threshold; asserts out.count == 1. The long-wait chaining itself is covered by the unit tests in artifacts/test/Digest.test.js.",
+    "flow": {
+        "5b1c2a10-0d1e-4c41-9a63-1f0e9d2c7a01": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {},
+            "config": {},
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "5b1c2a10-0d1e-4c41-9a63-1f0e9d2c7a02": {
+            "type": "appmixer.utils.controls.SetVariable",
+            "x": 272,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "5b1c2a10-0d1e-4c41-9a63-1f0e9d2c7a01": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "5b1c2a10-0d1e-4c41-9a63-1f0e9d2c7a01": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "variables": {}
+                                },
+                                "lambda": {
+                                    "variables": {
+                                        "ADD": [
+                                            {
+                                                "type": "text",
+                                                "name": "entry",
+                                                "text": "digest-e2e-entry"
+                                            },
+                                            {
+                                                "type": "text",
+                                                "name": "expectedCount",
+                                                "text": "1"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "5b1c2a10-0d1e-4c41-9a63-1f0e9d2c7a03": {
+            "type": "appmixer.utils.controls.Digest",
+            "label": "Digest (monthly schedule + threshold 1)",
+            "x": 480,
+            "y": 144,
+            "version": "1.0.1",
+            "source": {
+                "in": {
+                    "5b1c2a10-0d1e-4c41-9a63-1f0e9d2c7a02": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "threshold": 1,
+                    "dayMonth": "31",
+                    "hour": "0",
+                    "minute": "0",
+                    "timezone": "Europe/Prague",
+                    "outputType": "array"
+                },
+                "transform": {
+                    "in": {
+                        "5b1c2a10-0d1e-4c41-9a63-1f0e9d2c7a02": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "entry": {
+                                        "7c4e1d2a-3b5f-4a6e-8d9c-0e1f2a3b4c01": {
+                                            "variable": "$.5b1c2a10-0d1e-4c41-9a63-1f0e9d2c7a02.out.entry",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "entry": "{{{7c4e1d2a-3b5f-4a6e-8d9c-0e1f2a3b4c01}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "5b1c2a10-0d1e-4c41-9a63-1f0e9d2c7a04": {
+            "type": "appmixer.utils.test.Assert",
+            "label": "Assert out.count == 1",
+            "x": 688,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "5b1c2a10-0d1e-4c41-9a63-1f0e9d2c7a03": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "5b1c2a10-0d1e-4c41-9a63-1f0e9d2c7a03": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "7c4e1d2a-3b5f-4a6e-8d9c-0e1f2a3b4c02": {
+                                            "variable": "$.5b1c2a10-0d1e-4c41-9a63-1f0e9d2c7a03.out.count",
+                                            "functions": []
+                                        },
+                                        "7c4e1d2a-3b5f-4a6e-8d9c-0e1f2a3b4c03": {
+                                            "variable": "$.5b1c2a10-0d1e-4c41-9a63-1f0e9d2c7a02.out.expectedCount",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "assertion": "equal",
+                                                "field": "{{{7c4e1d2a-3b5f-4a6e-8d9c-0e1f2a3b4c02}}}",
+                                                "expected": "{{{7c4e1d2a-3b5f-4a6e-8d9c-0e1f2a3b4c03}}}"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "5b1c2a10-0d1e-4c41-9a63-1f0e9d2c7a05": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 896,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "5b1c2a10-0d1e-4c41-9a63-1f0e9d2c7a04": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 120
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "5b1c2a10-0d1e-4c41-9a63-1f0e9d2c7a06": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1104,
+            "y": 144,
+            "version": "1.0.1",
+            "source": {
+                "in": {
+                    "5b1c2a10-0d1e-4c41-9a63-1f0e9d2c7a05": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "successStoreId": "",
+                    "failedStoreId": ""
+                },
+                "transform": {
+                    "in": {
+                        "5b1c2a10-0d1e-4c41-9a63-1f0e9d2c7a05": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "55a6663f-cacc-44f3-a2cf-a0bccb81b54b": {
+                                            "variable": "$.5b1c2a10-0d1e-4c41-9a63-1f0e9d2c7a05.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E Utils Controls - Digest Schedule",
+                                    "result": "{{{55a6663f-cacc-44f3-a2cf-a0bccb81b54b}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        }
+    },
+    "customFields": {
+        "category": "E2E_test_flow"
+    }
+}

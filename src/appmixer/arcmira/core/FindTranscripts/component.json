@@ -1,0 +1,234 @@
+{
+    "name": "appmixer.arcmira.core.FindTranscripts",
+    "label": "Find Transcripts",
+    "description": "Search indexed YouTube and podcast transcripts for passages matching a word or phrase. Returns timestamped passages with source metadata and watch links. Returns at most 20 passages; the first 5 passages of a call are included, each further passage uses 4 credits.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:arcmira"
+    },
+    "quota": {
+        "manager": "appmixer:arcmira",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "query": {
+                        "type": "string",
+                        "minLength": 2
+                    },
+                    "about": {
+                        "type": "string"
+                    },
+                    "by": {
+                        "type": "string"
+                    },
+                    "entityIds": {
+                        "type": "string"
+                    },
+                    "channelIds": {
+                        "type": "string"
+                    },
+                    "kind": {
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "enum": [
+                                "sponsored",
+                                "organic",
+                                "mention"
+                            ]
+                        }
+                    },
+                    "after": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "before": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "source": {
+                        "type": "string",
+                        "enum": [
+                            "",
+                            "arcmira_premium",
+                            "creator_captions",
+                            "third_party_quick"
+                        ]
+                    },
+                    "maxResults": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 20
+                    },
+                    "outputType": {
+                        "type": "string",
+                        "enum": [
+                            "first",
+                            "array",
+                            "object",
+                            "file"
+                        ],
+                        "default": "array"
+                    }
+                },
+                "required": [
+                    "query"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "query": {
+                        "type": "text",
+                        "label": "Query",
+                        "index": 1,
+                        "tooltip": "One topic or phrase (at least 2 characters). Make one search per topic — do not combine unrelated names."
+                    },
+                    "about": {
+                        "type": "text",
+                        "label": "About Entity IDs",
+                        "index": 2,
+                        "tooltip": "Only passages about these entities (<code>ent_123</code>). Comma-separated entity IDs, at most 8. IDs only — resolve a name first with the Resolve Entity component."
+                    },
+                    "by": {
+                        "type": "text",
+                        "label": "Spoken By Person IDs",
+                        "index": 3,
+                        "tooltip": "Only passages where one of these people speaks the query words. Person IDs only; speaker labels cover a minority of shows. Comma-separated person IDs, at most 8. IDs only — resolve a name first with the Resolve Entity component."
+                    },
+                    "entityIds": {
+                        "type": "text",
+                        "label": "Entity IDs",
+                        "index": 4,
+                        "tooltip": "Scope by entities: a person ID filters to that person's appearances, a channel entity ID widens the channel scope. Comma-separated entity IDs, at most 8. IDs only — resolve a name first with the Resolve Entity component."
+                    },
+                    "channelIds": {
+                        "type": "text",
+                        "label": "YouTube Channel IDs",
+                        "index": 5,
+                        "tooltip": "Comma-separated YouTube channel IDs (<code>UC...</code>), at most 8. Resolve a show name with Resolve Entity (type Channel) and use its YouTube Channel ID."
+                    },
+                    "kind": {
+                        "type": "multiselect",
+                        "label": "Passage Kind",
+                        "index": 6,
+                        "tooltip": "Only these passage classes. Combine with About Entity IDs to read what was said about a brand in ad reads or organic talk.",
+                        "options": [
+                            {
+                                "label": "Sponsored",
+                                "value": "sponsored"
+                            },
+                            {
+                                "label": "Organic",
+                                "value": "organic"
+                            },
+                            {
+                                "label": "Mention",
+                                "value": "mention"
+                            }
+                        ]
+                    },
+                    "after": {
+                        "type": "date-time",
+                        "label": "Published After",
+                        "index": 7,
+                        "tooltip": "Only media published at or after this instant (UTC). A date past your plan's freshness window is refused."
+                    },
+                    "before": {
+                        "type": "date-time",
+                        "label": "Published Before",
+                        "index": 8,
+                        "tooltip": "Only media published before this instant (UTC, exclusive)."
+                    },
+                    "source": {
+                        "type": "select",
+                        "label": "Transcript Source",
+                        "index": 9,
+                        "tooltip": "Restrict to one transcript source. Premium transcripts require a plan that includes them.",
+                        "options": [
+                            {
+                                "label": "Any",
+                                "value": ""
+                            },
+                            {
+                                "label": "Arcmira Premium",
+                                "value": "arcmira_premium"
+                            },
+                            {
+                                "label": "Creator Captions",
+                                "value": "creator_captions"
+                            },
+                            {
+                                "label": "Third-Party Quick",
+                                "value": "third_party_quick"
+                            }
+                        ]
+                    },
+                    "maxResults": {
+                        "type": "number",
+                        "label": "Max Results",
+                        "index": 10,
+                        "min": 1,
+                        "max": 20,
+                        "defaultValue": 5,
+                        "tooltip": "Passages to return, 1 to 20 (default 5). Arcmira bills per passage: passages beyond the first 5 use 4 credits each."
+                    },
+                    "outputType": {
+                        "type": "select",
+                        "label": "Output Type",
+                        "index": 11,
+                        "defaultValue": "array",
+                        "tooltip": "Choose whether you want to receive the result set as one complete list, or first item only or one item at a time or stream the items to a file.",
+                        "options": [
+                            {
+                                "label": "First Item Only",
+                                "value": "first"
+                            },
+                            {
+                                "label": "All items at once",
+                                "value": "array"
+                            },
+                            {
+                                "label": "One item at a time",
+                                "value": "object"
+                            },
+                            {
+                                "label": "Store to CSV file",
+                                "value": "file"
+                            }
+                        ]
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "source": {
+                "url": "/component/appmixer/arcmira/core/FindTranscripts?outPort=out&ignoreAuth=true",
+                "data": {
+                    "properties": {
+                        "generateOutputPortOptions": true
+                    },
+                    "messages": {
+                        "in/query": "dummy",
+                        "in/outputType": "inputs/in/outputType"
+                    }
+                }
+            }
+        },
+        {
+            "name": "notFound"
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MDAgNTAwIiB3aWR0aD0iMzIiIGhlaWdodD0iMzIiPgoJPHJlY3QgeD0iMCIgeT0iMCIgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0iYmxhY2siLz4KCTxwYXRoIGQ9Ik0gMTk1LjY4NiA5OC40NTcgQyAxOTQuODU2IDk5LjI4NywgMTkyLjU5MiAxMDQuODExLCAxOTAuNjU2IDExMC43MzMgQyAxNjguMjgwIDE3OS4xNTYsIDE0OS4zNjUgMjM2LjgzMCwgMTQzLjAxNSAyNTYgQyAxMzUuNDY4IDI3OC43ODQsIDEwNy41MzcgMzY0LjEzNywgMTAwLjkzMiAzODQuNjAxIEMgOTkuMTM5IDM5MC4xNTcsIDk3Ljk1OCAzOTUuNDQ5LCA5OC4zMDggMzk2LjM2MSBDIDk4Ljg5MSAzOTcuODc4LCAxMDIuOTY0IDM5Ny45OTgsIDE0Ni4xNTcgMzk3Ljc2MCBMIDE5My4zNzAgMzk3LjUwMCAyMDQuNzE4IDM1Mi41MDAgQyAyMTAuOTYwIDMyNy43NTAsIDIxNi42ODggMzA0LjgwMCwgMjE3LjQ0OCAzMDEuNTAwIEMgMjE4LjIwOCAyOTguMjAwLCAyMjAuNTE1IDI4OC44NDcsIDIyMi41NzUgMjgwLjcxNSBMIDIyNi4zMjEgMjY1LjkzMSAyMjAuODQ1IDI2MS4wNDkgQyAyMDMuOTQ3IDI0NS45ODksIDIwMy4yMDMgMjIxLjg5MiwgMjE5LjE0NCAyMDUuOTUxIEMgMjI2Ljk2OCAxOTguMTI3LCAyMzYuOTI1IDE5NCwgMjQ3Ljk3NSAxOTQgQyAyNTYuNTYyIDE5NCwgMjYzLjE0NiAxOTYuMDAyLCAyNzAuNzc2IDIwMC45MzQgQyAyOTIuMTg2IDIxNC43NzEsIDI5My43NjAgMjQ1LjM1NCwgMjczLjkzNiAyNjIuMzIzIEwgMjY5LjU5NyAyNjYuMDM3IDI3MC43ODggMjcwLjI2OSBDIDI3MS40NDMgMjcyLjU5NiwgMjc1Ljc4NCAyODkuNTc1LCAyODAuNDM2IDMwOCBDIDI4NS4wODcgMzI2LjQyNSwgMjkyLjA2NyAzNTQuMDU2LCAyOTUuOTQ2IDM2OS40MDMgQyAyOTkuODI2IDM4NC43NTAsIDMwMyAzOTcuNDY3LCAzMDMgMzk3LjY2MyBDIDMwMyAzOTcuODU5LCAzMjQuNDgxIDM5Ny45MDMsIDM1MC43MzYgMzk3Ljc2MCBDIDM5NS40NDcgMzk3LjUxNiwgMzk4LjQ5NCAzOTcuMzg4LCAzOTguODEzIDM5NS43MzQgQyAzOTkgMzk0Ljc2MywgMzg3LjEyMyAzNTcuNjM4LCAzNzIuNDIxIDMxMy4yMzQgQyAzMzAuMjYyIDE4NS45MTEsIDMwOC4yNjQgMTE5LjIwOSwgMzA1LjM1NiAxMDkuODgzIEMgMzAxLjAzNCA5Ni4wMjcsIDMwNy44MzIgOTcuNTQzLCAyNDguNTU1IDk3LjIyNCBDIDIwMy44NDUgOTYuOTg0LCAxOTcgOTcuMTQzLCAxOTUuNjg2IDk4LjQ1NyIgZmlsbD0id2hpdGUiIGZpbGwtcnVsZT0iZXZlbm9kZCIvPgo8L3N2Zz4K"
+}
