@@ -1,8 +1,7 @@
 'use strict';
 const commons = require('../../google-commons');
 const { normalizeHeader } = require('../common');
-const google = require('googleapis');
-const Promise = require('bluebird');
+const { sheets: googleSheets } = require('@googleapis/sheets');
 
 /**
  * Helper function - returns true, if value is null or empty
@@ -29,10 +28,10 @@ function columnName(column, index) {
 module.exports = {
 
     receive(context) {
-        const sheets = google.sheets('v4');
-        const listRows = Promise.promisify(sheets.spreadsheets.values.get, { context: sheets.spreadsheets.values });
+        const sheets = googleSheets('v4');
+        const listRows = params => sheets.spreadsheets.values.get(params).then(res => res.data);
         const workSheetName = context.properties.worksheetId.split('/')[1];
-        const range = `${encodeURIComponent(workSheetName)}!1:1`;
+        const range = `${workSheetName}!1:1`;
         return listRows({
             auth: commons.getOauth2Client(context.auth),
             spreadsheetId: context.properties.sheetId,
