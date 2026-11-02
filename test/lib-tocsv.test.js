@@ -58,7 +58,11 @@ function walk(dir, out) {
         if (entry.name === 'node_modules' || entry.name === 'artifacts' || entry.name.startsWith('.')) continue;
         const full = path.join(dir, entry.name);
         if (entry.isDirectory()) walk(full, out);
-        else if (entry.name === 'lib.js' && /\btoCsv\b/.test(fs.readFileSync(full, 'utf8'))) out.push(full);
+        else if (entry.name.endsWith('.js') && !/\.(test|spec)\.js$/.test(entry.name)) {
+            // lib.js, lib.generated.js, google-commons.js, hubspot/commons.js, …
+            const source = fs.readFileSync(full, 'utf8');
+            if (/\btoCsv\b/.test(source) && /sendArrayOutput/.test(source)) out.push(full);
+        }
     }
     return out;
 }
@@ -98,7 +102,7 @@ describe('lib.js toCsv (file outputType)', () => {
     });
 
     for (const libPath of libs) {
-        const name = path.relative(ROOT, path.dirname(libPath));
+        const name = path.relative(ROOT, libPath);
 
         describe(name, () => {
 
@@ -124,7 +128,16 @@ describe('lib.js toCsv (file outputType)', () => {
             it('writes an empty file for an empty result set', async () => {
                 // posthog saves a lone newline on purpose (an empty buffer breaks the
                 // engine's S3 multipart upload), so only the content has to be empty.
-                assert.strictEqual((await writeCsv(lib, [])).trim(), '');
+                // tally refuses an empty result set with a CancelError instead; what
+                // matters here is that toCsv does not crash on records[0].
+                let text;
+                try {
+                    text = await writeCsv(lib, []);
+                } catch (err) {
+                    assert.match(err.message, /no records/i);
+                    return;
+                }
+                assert.strictEqual(text.trim(), '');
             });
         });
     }
