@@ -445,30 +445,19 @@ const WEBHOOK_INCLUDE_FIELDS = ['id', 'admin_graphql_api_id', 'updated_at'];
 // event id then arrives twice.
 const WEBHOOK_DEDUPE_TTL_MS = 10 * 60 * 1000;
 
-/**
- * Serialize an array of flat objects to CSV.
- * @param {Array<object>} array
- * @returns {string}
- */
-function toCsv(array) {
-    if (!array || array.length === 0) {
-        return '';
-    }
+// One CSV cell per RFC 4180: null/undefined → empty, objects → JSON, and a value
+// holding a comma, a double quote or a line break is quoted with inner quotes doubled.
+function csvCell(value) {
+    if (value == null) return '';
+    const text = typeof value === 'object' ? JSON.stringify(value) : String(value);
+    return /[",\r\n]/.test(text) ? '"' + text.replace(/"/g, '""') + '"' : text;
+}
 
-    const headers = Object.keys(array[0]);
-    if (headers.length === 0) {
-        return '';
-    }
-
-    return [
-        headers.join(','),
-        ...array.map(items => {
-            return Object.values(items).map(property => {
-                if (typeof property === 'object') {
-                    return JSON.stringify(property);
-                }
-                return property != null ? property : '';
-            }).join(',');
-        })
-    ].join('\n');
+function toCsv(records) {
+    if (!records.length) return '';
+    // Cells are taken by header column, not Object.values(record), so a record with
+    // a different key order or a missing key stays under the right header.
+    const columns = Object.keys(records[0]);
+    const rows = records.map(record => columns.map(column => csvCell(record[column])).join(','));
+    return [columns.map(csvCell).join(','), ...rows].join('\n');
 }
