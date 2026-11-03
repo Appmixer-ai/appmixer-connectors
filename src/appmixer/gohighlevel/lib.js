@@ -117,7 +117,7 @@ function toCsv(array) {
         ...array.map(item => {
             return headers.map(header => {
                 const val = item[header];
-                if (typeof val === 'object') {
+                if (val !== null && typeof val === 'object') {
                     return `"${JSON.stringify(val).replace(/"/g, '""')}"`;
                 }
                 return `"${String(val ?? '').replace(/"/g, '""')}"`;

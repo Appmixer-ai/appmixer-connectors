@@ -1,12 +1,12 @@
 CircleCI MCP Server
 -------------------------------
 
-A specialized server implementation for the Model Context Protocol (MCP) designed to integrate with CircleCI's development workflow. This project serves as a bridge between CircleCI's infrastructure and the Model Context Protocol, enabling enhanced AI-powered development experiences. (@circleci/mcp-server-circleci 0.7.1). Documentation: <a target=_blank href='https://github.com/CircleCI-Public/mcp-server-circleci'>https://github.com/CircleCI-Public/mcp-server-circleci</a>
+A specialized server implementation for the Model Context Protocol (MCP) designed to integrate with CircleCI's development workflow. This project serves as a bridge between CircleCI's infrastructure and the Model Context Protocol, enabling enhanced AI-powered development experiences. (@circleci/mcp-server-circleci 0.20.0). Documentation: <a target=_blank href='https://github.com/CircleCI-Public/mcp-server-circleci'>https://github.com/CircleCI-Public/mcp-server-circleci</a>
 
 NPM Repository
 --------------
 
-@circleci/mcp-server-circleci@0.7.1
+@circleci/mcp-server-circleci@0.20.0
 
 Generate Command
 ----------------
