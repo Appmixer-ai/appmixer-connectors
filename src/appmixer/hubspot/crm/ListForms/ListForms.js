@@ -6,7 +6,7 @@ module.exports = {
     async receive(context) {
 
         const { auth } = context;
-        const hs = new Hubspot(auth.accessToken, context.config);
+        const hs = new Hubspot(auth.accessToken, context.config, context.httpRequest);
 
         const forms = [];
         let after;

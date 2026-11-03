@@ -54,7 +54,7 @@ module.exports = {
         } = context.messages.in.content;
 
         const { auth } = context;
-        const hs = new Hubspot(auth.accessToken, context.config);
+        const hs = new Hubspot(auth.accessToken, context.config, context.httpRequest);
 
         // Use search API when filtering by pipeline/stage or searching
         const useSearch = search || pipeline || dealstage;
