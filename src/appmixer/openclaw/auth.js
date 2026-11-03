@@ -71,9 +71,11 @@ module.exports = {
                 if (status === 401) {
                     throw new Error('The gateway rejected the hook token.');
                 }
-                if (status === 404) {
+                if (status === 403 || status === 404) {
+                    // 404 from the gateway (hooks disabled, wrong path); 403 usually from a proxy
+                    // that forwards only listed paths
                     // eslint-disable-next-line max-len
-                    throw new Error(`No hooks endpoint at ${url}. Check that hooks are enabled on the gateway, the Hooks Path, and that a reverse proxy forwards ${url}.`);
+                    throw new Error(`No hooks endpoint at ${url} (HTTP ${status}). Check that hooks are enabled on the gateway, the Hooks Path, and that a reverse proxy forwards ${url}.`);
                 }
                 if (status === 429) {
                     throw new Error('The gateway throttles failed hook logins (HTTP 429). Wait a minute and check the token.');

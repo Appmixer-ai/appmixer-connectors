@@ -145,9 +145,10 @@ module.exports = {
             if (status === 401) {
                 throw new context.CancelError(`The gateway rejected the hook token (HTTP 401) at ${url}. Reconnect the account with the current hooks.token.`);
             }
-            if (status === 404) {
+            if (status === 403 || status === 404) {
                 throw new context.CancelError(
-                    `No hook at ${url} (HTTP 404). Check that hooks are enabled, that a mapping matches this path, and that a reverse proxy forwards it.`
+                    // eslint-disable-next-line max-len
+                    `No hook at ${url} (HTTP ${status}). Check that hooks are enabled, that a mapping matches this path, and that a reverse proxy forwards it.`
                 );
             }
             if (status === 400 || status === 409 || status === 413) {
