@@ -8,7 +8,7 @@ module.exports = {
     async receive(context) {
 
         const { auth } = context;
-        const hs = new Hubspot(auth.accessToken, context.config);
+        const hs = new Hubspot(auth.accessToken, context.config, context.httpRequest);
         const properties = await getObjectProperties(context, hs, 'deals', 'all');
 
         return context.sendJson(properties, 'out');

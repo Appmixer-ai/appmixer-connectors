@@ -1,7 +1,12 @@
 const lib = require('../lib');
 const moment = require('moment');
 
-function isNewFileOrFolder(change) {
+// `newFilesSince` (ms) is the point up to which the trigger has already caught up with the change
+// feed. The feed returns the file as it is when the feed is read, not when it was created, so a
+// file another user uploaded and then edited, or that the connected account opened before the
+// change was processed, has modifiedTime/viewedByMeTime after createdTime. Such a file is still
+// new if it was created after `newFilesSince`.
+function isNewFileOrFolder(change, { newFilesSince } = {}) {
 
     const file = change.file;
     if (!file) return false;
@@ -16,7 +21,9 @@ function isNewFileOrFolder(change) {
 
     if (isNaN(created) || isNaN(modified)) return false;
 
-    return created >= modified && created >= viewed;
+    if (created >= modified && created >= viewed) return true;
+
+    return typeof newFilesSince === 'number' && created >= newFilesSince;
 }
 
 module.exports = {

@@ -16,7 +16,7 @@ module.exports = {
         } = context.messages.in.content;
 
         const { auth } = context;
-        const hs = new Hubspot(auth.accessToken, context.config);
+        const hs = new Hubspot(auth.accessToken, context.config, context.httpRequest);
         const params = {
             properties: properties || '',
             associations: associations || [],

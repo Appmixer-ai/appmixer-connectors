@@ -1,5 +1,5 @@
 'use strict';
-const mysql = require('mysql');
+const { connect } = require('./common');
 
 module.exports = {
 
@@ -38,34 +38,28 @@ module.exports = {
                     type: 'password',
                     name: 'Password',
                     tooltip: 'Password'
+                },
+                useSsl: {
+                    type: 'select',
+                    name: 'Use SSL',
+                    tooltip: 'Optional. Select <code>Yes</code> to encrypt the connection with SSL/TLS (required when the server or the user requires a secure transport). Without a CA certificate the server certificate is not verified. Default: No.',
+                    placeholder: 'No',
+                    options: [
+                        { label: 'No', value: 'false' },
+                        { label: 'Yes', value: 'true' }
+                    ]
+                },
+                sslCa: {
+                    type: 'textarea',
+                    name: 'CA Certificate',
+                    tooltip: 'Optional. Paste the PEM content of the CA certificate (<code>-----BEGIN CERTIFICATE-----</code> ...) that signed the server certificate. When filled, the connection uses SSL and the server certificate is verified against this CA.'
                 }
             },
 
-            validate: context => {
+            validate: async context => {
 
-                const opt = {
-                    user: context.dbUser,
-                    host: context.dbHost,
-                    database: context.database,
-                    password: context.dbPassword
-                };
-
-                if (context.dbPort) {
-                    opt.port = context.dbPort;
-                }
-
-                const conn = mysql.createConnection(opt);
-
-                return new Promise((resolve, reject) => {
-                    conn.connect(err => {
-                        if (err) {
-                            conn.end();
-                            return reject(err);
-                        }
-                        conn.end();
-                        resolve();
-                    });
-                });
+                const conn = await connect(context);
+                conn.end();
             }
         };
     }

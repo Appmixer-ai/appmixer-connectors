@@ -5,7 +5,7 @@ module.exports = {
     async receive(context) {
 
         const { auth } = context;
-        const hs = new Hubspot(auth.accessToken, context.config);
+        const hs = new Hubspot(auth.accessToken, context.config, context.httpRequest);
 
         // https://developers.hubspot.com/docs/reference/api/automation/workflows/v3
         const { data } = await hs.call('get', 'automation/v3/workflows', {});
