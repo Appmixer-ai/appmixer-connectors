@@ -3,6 +3,7 @@
 const baseX = require('base-x').default;
 const BASE62_ALPHABET = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
 const base62 = baseX(BASE62_ALPHABET);
+const { CallbackError, resolveCallerWebhook } = require('./callerWebhook');
 
 module.exports = (context) => {
 
@@ -114,26 +115,38 @@ module.exports = (context) => {
         }
     });
 
-    // Send flow output back to the caller. This is called by FlowCallOutput.
+    // Send flow output back to the caller. This is called by FlowCallOutput (context.callAppmixer
+    // sends the user token), so the route is not public. The correlation ID is the base62 encoded
+    // webhook URL of the CallFlow component; the engine POSTs to it, so it is accepted only when it
+    // is the webhook of a CallFlow component of this instance in a flow owned by the caller.
 
     context.http.router.register({
         method: 'POST',
         path: '/callback',
         options: {
             auth: {
-                strategies: ['jwt-strategy', 'public']
+                strategies: ['jwt-strategy']
             },
-            handler: async (req) => {
+            handler: async (req, h) => {
 
-                const correlationId = req.payload.correlationId;
-                const payload = req.payload.payload;
-                // The correlation ID is base62 encoded webhook URL of the CallFlow component.
-                const callerWebhookUrl = Buffer.from(base62.decode(correlationId)).toString('utf8');
+                const { correlationId, payload } = req.payload || {};
+
+                let callerWebhookUrl;
+                try {
+                    callerWebhookUrl = await resolveCallerWebhook(context, req, correlationId, base62.decode);
+                } catch (err) {
+                    if (err instanceof CallbackError) {
+                        context.log('error', `[UTILS.SUBFLOWS] Callback rejected: ${err.message}`);
+                        return h.response({ error: err.message }).code(err.statusCode);
+                    }
+                    throw err;
+                }
 
                 await context.httpRequest({
                     method: 'POST',
                     url: callerWebhookUrl,
-                    data: payload
+                    data: payload,
+                    maxRedirects: 0
                 });
                 return {};
             }
