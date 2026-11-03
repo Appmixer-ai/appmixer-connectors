@@ -1,0 +1,151 @@
+{
+    "name": "E2E Sequential Thinking MCP - List and Call Tool",
+    "description": "Runs @modelcontextprotocol/server-sequential-thinking 2.0.0 (no account): ListTools returns sequentialthinking, CallTool records one thought.",
+    "flow": {
+        "3cec9816-9c22-44d9-a0f4-3aeb21aa4931": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64, "y": 16, "source": {}, "version": "1.0.0", "config": {},
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "e9fbdd28-0fe4-487d-8234-dcaa003eda97": {
+            "type": "appmixer.mcpservers.modelcontextprotocol_server_sequential_thinking.ListTools",
+            "x": 272, "y": 16, "version": "1.0.0",
+            "source": { "in": { "3cec9816-9c22-44d9-a0f4-3aeb21aa4931": ["out"] } },
+            "config": {
+                "transform": { "in": { "3cec9816-9c22-44d9-a0f4-3aeb21aa4931": { "out": { "type": "json2new", "modifiers": {}, "lambda": {} } } } }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "6c39278b-4c9c-46c6-a197-427b4b27e039": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 480, "y": 16, "version": "1.0.0",
+            "source": { "in": { "e9fbdd28-0fe4-487d-8234-dcaa003eda97": ["out"] } },
+            "config": {
+                "transform": {
+                    "in": {
+                        "e9fbdd28-0fe4-487d-8234-dcaa003eda97": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "adf20b42-bd86-46dd-998b-4fd71db7f66b": {
+                                            "variable": "$.e9fbdd28-0fe4-487d-8234-dcaa003eda97.out.tools",
+                                            "functions": [{ "name": "g_length" }]
+                                        },
+                                        "af950dd4-7916-44d8-bdc9-f641a19e0a82": {
+                                            "variable": "$.e9fbdd28-0fe4-487d-8234-dcaa003eda97.out.tools",
+                                            "functions": [{ "name": "g_jsonPath", "params": [{ "value": "$[0].name" }] }]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            { "field": "{{{adf20b42-bd86-46dd-998b-4fd71db7f66b}}}", "assertion": "equal", "expected": "1" },
+                                            { "field": "{{{af950dd4-7916-44d8-bdc9-f641a19e0a82}}}", "assertion": "equal", "expected": "sequentialthinking" }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "87f98587-db66-45c0-8692-87cf0d041515": {
+            "type": "appmixer.mcpservers.modelcontextprotocol_server_sequential_thinking.CallTool",
+            "x": 688, "y": 144, "version": "1.0.0",
+            "source": { "in": { "6c39278b-4c9c-46c6-a197-427b4b27e039": ["out"] } },
+            "config": {
+                "properties": { "tool": "sequentialthinking" },
+                "transform": {
+                    "in": {
+                        "6c39278b-4c9c-46c6-a197-427b4b27e039": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": { "thought": {}, "nextThoughtNeeded": {}, "thoughtNumber": {}, "totalThoughts": {} },
+                                "lambda": {
+                                    "thought": "Check that the MCP server answers over stdio.",
+                                    "nextThoughtNeeded": false,
+                                    "thoughtNumber": 1,
+                                    "totalThoughts": 1
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "500feaa9-729e-4a52-9929-f2afec8ecfe5": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 896, "y": 144, "version": "1.0.0",
+            "source": { "in": { "87f98587-db66-45c0-8692-87cf0d041515": ["out"] } },
+            "config": {
+                "transform": {
+                    "in": {
+                        "87f98587-db66-45c0-8692-87cf0d041515": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "735a56c4-8386-4ea2-a577-807c40e8f819": {
+                                            "variable": "$.87f98587-db66-45c0-8692-87cf0d041515.out.output",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            { "field": "{{{735a56c4-8386-4ea2-a577-807c40e8f819}}}", "assertion": "regex", "regex": "\"thoughtNumber\": 1,[\\s\\S]*\"nextThoughtNeeded\": false" }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "692fddf4-d8dc-458b-a672-049924f5fe18": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 1104, "y": 144, "version": "1.0.0",
+            "source": { "in": { "6c39278b-4c9c-46c6-a197-427b4b27e039": ["out"], "500feaa9-729e-4a52-9929-f2afec8ecfe5": ["out"] } },
+            "config": { "properties": { "timeout": 180 } },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "2bbae75f-b8ba-49d5-a997-2029f47c1929": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1312, "y": 144, "version": "1.0.0",
+            "source": { "in": { "692fddf4-d8dc-458b-a672-049924f5fe18": ["out"] } },
+            "config": {
+                "properties": { "successStoreId": "64f6f1f9193228000754082f", "failedStoreId": "64f6f1f0193228000754082e" },
+                "transform": {
+                    "in": {
+                        "692fddf4-d8dc-458b-a672-049924f5fe18": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "6299b053-4d87-4c81-8a73-4656f5d8fa05": { "variable": "$.692fddf4-d8dc-458b-a672-049924f5fe18.out", "functions": [] }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E Sequential Thinking MCP - List and Call Tool",
+                                    "result": "{{{6299b053-4d87-4c81-8a73-4656f5d8fa05}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        }
+    }
+}
