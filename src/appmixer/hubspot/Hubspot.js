@@ -1,5 +1,4 @@
 'use strict';
-const axios = require('axios');
 
 class Hubspot {
 
@@ -7,15 +6,21 @@ class Hubspot {
      * @param {string} [token]
      * @param {Object} options
      * @param {string} [options.apiKey]
-     * @param {string} [options.apiKey]
-     * @param appId
+     * @param {string} [options.appId]
+     * @param {Function} [httpRequest] the engine's HTTP client, `context.httpRequest`
      */
-    constructor(token = '', { apiKey, appId } = {}) {
+    constructor(token = '', { apiKey, appId } = {}, httpRequest) {
 
         this.url = 'https://api.hubapi.com';
         this.setToken(token);
         this.apiKey = apiKey;
         this.appId = appId;
+        this.httpRequest = httpRequest;
+    }
+
+    setHttpRequest(httpRequest) {
+
+        this.httpRequest = httpRequest;
     }
 
     setToken(token) {
@@ -34,6 +39,10 @@ class Hubspot {
     }
 
     async call(method, path, data = {}, opts = {}) {
+
+        if (typeof this.httpRequest !== 'function') {
+            throw new Error('Hubspot client has no HTTP client, pass context.httpRequest to the constructor.');
+        }
 
         const payload = {
             method,
@@ -56,7 +65,7 @@ class Hubspot {
 
         const url = `${this.url}/${path}`.concat(opts.query ? `?${opts.query}` : '');
         try {
-            return await axios(url, payload);
+            return await this.httpRequest({ url, ...payload });
         } catch (e) {
             if (e.response?.data?.message) {
                 const error = new Error(e.response.data.message);

@@ -1,12 +1,12 @@
 Lara Translate MCP Server
 -------------------------------
 
-Enabling powerful translation capabilities with support for language detection, context-aware translations and translation memories. (@translated/lara-mcp 0.0.10). Documentation: <a target=_blank href='https://github.com/translated/lara-mcp?tab=readme-ov-file'>https://github.com/translated/lara-mcp?tab=readme-ov-file</a>
+Enabling powerful translation capabilities with support for language detection, context-aware translations and translation memories. (@translated/lara-mcp 2.1.3). Documentation: <a target=_blank href='https://github.com/translated/lara-mcp?tab=readme-ov-file'>https://github.com/translated/lara-mcp?tab=readme-ov-file</a>
 
 NPM Repository
 --------------
 
-@translated/lara-mcp@0.0.10
+@translated/lara-mcp@2.1.3
 
 Generate Command
 ----------------

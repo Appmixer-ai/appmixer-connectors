@@ -1,12 +1,12 @@
 WHOIS MCP Server
 -------------------------------
 
-Perform WHOIS lookups and retrieve domain details. You can directly ask the AI to check if a domain is available, who owns it, when it was registered, and other important details. (@bharathvaj/whois-mcp 1.0.1). Documentation: <a target=_blank href='https://github.com/bharathvaj-ganesan/whois-mcp'>https://github.com/bharathvaj-ganesan/whois-mcp</a>
+Perform WHOIS lookups and retrieve domain details. You can directly ask the AI to check if a domain is available, who owns it, when it was registered, and other important details. The MCP server is bundled as `server.js` (a port of @bharathvaj/whois-mcp 1.0.1 on MCP SDK 1.32.2; the lookups still use whoiser 2.0.0-beta.3). Documentation: <a target=_blank href='https://github.com/bharathvaj-ganesan/whois-mcp'>https://github.com/bharathvaj-ganesan/whois-mcp</a>
 
 NPM Repository
 --------------
 
-@bharathvaj/whois-mcp@1.0.1
+@bharathvaj/whois-mcp@1.0.1 (no longer installed; replaced by the bundled `server.js`)
 
 Generate Command
 ----------------

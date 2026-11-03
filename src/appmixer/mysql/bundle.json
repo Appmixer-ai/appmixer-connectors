@@ -1,6 +1,6 @@
 {
     "name": "appmixer.mysql",
-    "version": "2.1.0",
+    "version": "3.0.0",
     "changelog": {
         "1.0.0": [
             "Initial version"
@@ -29,6 +29,14 @@
         ],
         "2.1.0": [
             "Added test() (Flow Test Mode) to all triggers: NewRow, UpdatedRow, DeletedRow, WatchRows."
+        ],
+        "3.0.0": [
+            "Breaking change: replaced the unmaintained mysql driver with mysql2. Adds support for the caching_sha2_password authentication (the default on MySQL 8.x; MySQL 8.4 disables mysql_native_password by default and MySQL 9 removes it).",
+            "Added optional SSL/TLS settings to the connection form: Use SSL (encrypted, server certificate not verified) and CA Certificate (encrypted, server certificate verified against the CA). Existing accounts without these fields connect without SSL as before.",
+            "All components and the connection check now share one set of connection options. Query now returns DATE/DATETIME/TIMESTAMP values as strings as returned by MySQL (e.g. '2024-05-01 10:00:00') instead of ISO dates converted to UTC, and BIGINT values outside the safe integer range as strings instead of rounded numbers, the same way the triggers already did.",
+            "Value differences of the new driver: ZEROFILL integer columns are returned as numbers (leading zeros are lost; the old driver returned a string). DECIMAL values are always returned as numbers; in triggers, DECIMAL values outside the safe integer range were strings before and are now rounded numbers. JSON columns are still returned as strings, BIT columns as binary data, TIME as strings.",
+            "An invalid Port value (not a number) is now rejected with a clear error.",
+            "Triggers: the Storage input is a text field with suggestions, so a data store ID can be entered when the list cannot be loaded."
         ]
     }
 }
