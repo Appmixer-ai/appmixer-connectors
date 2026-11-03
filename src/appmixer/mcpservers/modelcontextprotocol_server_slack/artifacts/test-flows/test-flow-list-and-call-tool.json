@@ -1,0 +1,225 @@
+{
+    "name": "E2E Slack MCP - List and Call Tool",
+    "description": "Spawns the bundled server.js: ListTools returns all 8 tools, CallTool slack_list_channels returns channels from the workspace of the bot token.",
+    "flow": {
+        "50310663-c278-421a-accd-ebfcf81275df": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16,
+            "source": {},
+            "version": "1.0.0",
+            "config": {},
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "8d297d84-0e44-466e-8931-9ce0df97209b": {
+            "type": "appmixer.mcpservers.modelcontextprotocol_server_slack.ListTools",
+            "x": 272,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "50310663-c278-421a-accd-ebfcf81275df": ["out"]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "50310663-c278-421a-accd-ebfcf81275df": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {},
+                                "lambda": {}
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "94bb8e90-981d-422c-a7be-afacaca6ceda": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 480,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "8d297d84-0e44-466e-8931-9ce0df97209b": ["out"]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "8d297d84-0e44-466e-8931-9ce0df97209b": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "7ef66ac5-3a8f-494f-a1f6-0b696d566de2": {
+                                            "variable": "$.8d297d84-0e44-466e-8931-9ce0df97209b.out.tools",
+                                            "functions": [{ "name": "g_length" }]
+                                        },
+                                        "2c661d76-67aa-4def-bb53-0947c1f9b9f0": {
+                                            "variable": "$.8d297d84-0e44-466e-8931-9ce0df97209b.out.tools",
+                                            "functions": [{ "name": "g_jsonPath", "params": [{ "value": "$[0].name" }] }]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{7ef66ac5-3a8f-494f-a1f6-0b696d566de2}}}",
+                                                "assertion": "equal",
+                                                "expected": "8"
+                                            },
+                                            {
+                                                "field": "{{{2c661d76-67aa-4def-bb53-0947c1f9b9f0}}}",
+                                                "assertion": "equal",
+                                                "expected": "slack_list_channels"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "3df83a74-2637-4bc3-adab-d1497e03b3ae": {
+            "type": "appmixer.mcpservers.modelcontextprotocol_server_slack.CallTool",
+            "x": 688,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "94bb8e90-981d-422c-a7be-afacaca6ceda": ["out"]
+                }
+            },
+            "config": {
+                "properties": {
+                    "tool": "slack_list_channels"
+                },
+                "transform": {
+                    "in": {
+                        "94bb8e90-981d-422c-a7be-afacaca6ceda": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "limit": {}
+                                },
+                                "lambda": {
+                                    "limit": 2
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "6ae8ea07-6a7c-4989-aced-c5e4b28598a1": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 896,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "3df83a74-2637-4bc3-adab-d1497e03b3ae": ["out"]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "3df83a74-2637-4bc3-adab-d1497e03b3ae": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "f7f51270-ae5b-4cb1-bb1d-8e3a8906ff55": {
+                                            "variable": "$.3df83a74-2637-4bc3-adab-d1497e03b3ae.out.output",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{f7f51270-ae5b-4cb1-bb1d-8e3a8906ff55}}}",
+                                                "assertion": "regex",
+                                                "regex": "^\\{\"ok\":true,\"channels\":\\[\\{\"id\":\"C"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "007e0585-9d6e-406a-a6ba-484d4762958e": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 1104,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "94bb8e90-981d-422c-a7be-afacaca6ceda": ["out"],
+                    "6ae8ea07-6a7c-4989-aced-c5e4b28598a1": ["out"]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 180
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "70686882-6ecc-404e-b71d-853f60824ee8": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1312,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "007e0585-9d6e-406a-a6ba-484d4762958e": ["out"]
+                }
+            },
+            "config": {
+                "properties": {
+                    "successStoreId": "64f6f1f9193228000754082f",
+                    "failedStoreId": "64f6f1f0193228000754082e"
+                },
+                "transform": {
+                    "in": {
+                        "007e0585-9d6e-406a-a6ba-484d4762958e": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "c8aa22a4-a50c-4fc0-b850-4dbb952526b1": {
+                                            "variable": "$.007e0585-9d6e-406a-a6ba-484d4762958e.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E Slack MCP - List and Call Tool",
+                                    "result": "{{{c8aa22a4-a50c-4fc0-b850-4dbb952526b1}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        }
+    }
+}

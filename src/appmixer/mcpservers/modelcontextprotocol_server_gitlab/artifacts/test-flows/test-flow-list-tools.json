@@ -1,0 +1,100 @@
+{
+    "name": "E2E GitLab MCP - List Tools",
+    "description": "Spawns the bundled server.js: ListTools returns all 9 tools. CallTool is not covered: the E2E account holds a placeholder token, and the server reports API errors as JSON-RPC errors (as the original package did), so a call fails the component.",
+    "notes": {
+        "197aec08-7be8-4840-aabd-c6774b75c4ed": {
+            "x": 64, "y": 160, "width": 672, "height": 192,
+            "content": "## Test data assumption\n\nThe E2E account `E2E GitLab MCP (placeholder token)` holds an invalid token (GITLAB_API_URL `https://gitlab.com/api/v4`), so this flow only proves that the engine installs the connector and spawns `server.js` over stdio.\n\nTo cover CallTool, put a real GitLab PAT in the account and add CallTool `search_repositories` with `search: appmixer`. With the placeholder token the call fails with `MCP error -32603: GitLab API error: Unauthorized`."
+        }
+    },
+    "flow": {
+        "7c6f2b1c-cdbb-41f9-8062-a54863a84456": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64, "y": 16, "source": {}, "version": "1.0.0", "config": {},
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "7f0bf8a4-51b2-4e60-ac46-ede15bf9d5ca": {
+            "type": "appmixer.mcpservers.modelcontextprotocol_server_gitlab.ListTools",
+            "x": 272, "y": 16, "version": "1.0.0",
+            "source": { "in": { "7c6f2b1c-cdbb-41f9-8062-a54863a84456": ["out"] } },
+            "config": {
+                "transform": { "in": { "7c6f2b1c-cdbb-41f9-8062-a54863a84456": { "out": { "type": "json2new", "modifiers": {}, "lambda": {} } } } }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "5b1baaad-996f-4f3f-b6e9-c928307b0801": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 480, "y": 16, "version": "1.0.0",
+            "source": { "in": { "7f0bf8a4-51b2-4e60-ac46-ede15bf9d5ca": ["out"] } },
+            "config": {
+                "transform": {
+                    "in": {
+                        "7f0bf8a4-51b2-4e60-ac46-ede15bf9d5ca": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "217313d2-3bb8-4a71-8403-65cf346534e0": {
+                                            "variable": "$.7f0bf8a4-51b2-4e60-ac46-ede15bf9d5ca.out.tools",
+                                            "functions": [{ "name": "g_length" }]
+                                        },
+                                        "3011865f-7d64-4817-a089-5e7ded5def79": {
+                                            "variable": "$.7f0bf8a4-51b2-4e60-ac46-ede15bf9d5ca.out.tools",
+                                            "functions": [{ "name": "g_jsonPath", "params": [{ "value": "$[1].name" }] }]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            { "field": "{{{217313d2-3bb8-4a71-8403-65cf346534e0}}}", "assertion": "equal", "expected": "9" },
+                                            { "field": "{{{3011865f-7d64-4817-a089-5e7ded5def79}}}", "assertion": "equal", "expected": "search_repositories" }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "c7eac480-05dc-4bfe-8b88-acaacdde8c78": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 688, "y": 16, "version": "1.0.0",
+            "source": { "in": { "5b1baaad-996f-4f3f-b6e9-c928307b0801": ["out"] } },
+            "config": { "properties": { "timeout": 180 } },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "a005ab11-e83e-42a2-b90a-dac9e6bf38ae": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 896, "y": 16, "version": "1.0.0",
+            "source": { "in": { "c7eac480-05dc-4bfe-8b88-acaacdde8c78": ["out"] } },
+            "config": {
+                "properties": { "successStoreId": "64f6f1f9193228000754082f", "failedStoreId": "64f6f1f0193228000754082e" },
+                "transform": {
+                    "in": {
+                        "c7eac480-05dc-4bfe-8b88-acaacdde8c78": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "5b19bc19-464a-437f-80a7-8c143f4bcd78": { "variable": "$.c7eac480-05dc-4bfe-8b88-acaacdde8c78.out", "functions": [] }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E GitLab MCP - List Tools",
+                                    "result": "{{{5b19bc19-464a-437f-80a7-8c143f4bcd78}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        }
+    }
+}

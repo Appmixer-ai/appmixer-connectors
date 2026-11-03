@@ -6,7 +6,7 @@ MCP Server for Github. Ported from @modelcontextprotocol/server-github 2025.4.8 
 NPM Repository
 --------------
 
-None - the server is `server.js` (plus `server/`) in this directory (originally @modelcontextprotocol/server-github@2025.4.8, now deprecated).
+None - the server is `server.js` (plus `server-common.js`, `server-schemas.js` and `server-operations.js`; a subdirectory would be loaded as a component and fail the publish) in this directory (originally @modelcontextprotocol/server-github@2025.4.8, now deprecated).
 
 Generate Command
 ----------------
