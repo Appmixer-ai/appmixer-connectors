@@ -9,6 +9,7 @@ module.exports = {
         const {
             message,
             agentId,
+            sessionKey,
             name,
             model,
             thinking,
@@ -26,6 +27,13 @@ module.exports = {
 
         const body = { message: String(message) };
         if (agentId) body.agentId = String(agentId);
+        // A key continues one conversation: the gateway creates the session on the first run
+        // with it and reuses it after. Without one every run gets a fresh, isolated session.
+        const key = sessionKey ? String(sessionKey).trim() : '';
+        if (key) {
+            body.sessionKey = key;
+            body.sessionMode = 'persistent';
+        }
         if (name) body.name = String(name);
         if (model) body.model = String(model);
         if (thinking) body.thinking = String(thinking);
@@ -55,6 +63,6 @@ module.exports = {
             throw new context.CancelError('The gateway accepted the request but returned no run ID.');
         }
 
-        return context.sendJson({ runId: data.runId }, 'out');
+        return context.sendJson({ runId: data.runId, sessionKey: key }, 'out');
     }
 };
