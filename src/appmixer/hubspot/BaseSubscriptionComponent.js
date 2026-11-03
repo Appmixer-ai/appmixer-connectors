@@ -17,6 +17,7 @@ class BaseSubscriptionComponent {
         this.hubspot.setApiKey(config.apiKey);
         this.hubspot.setAppId(config.appId);
         this.hubspot.setToken(auth.accessToken);
+        this.hubspot.setHttpRequest(context.httpRequest);
     }
 
     async ensureWebhook(context) {

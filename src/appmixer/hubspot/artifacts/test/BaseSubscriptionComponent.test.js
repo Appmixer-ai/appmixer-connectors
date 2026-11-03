@@ -142,7 +142,8 @@ describe('BaseSubscriptionComponent', () => {
             registerWebhook: registerSpy,
             setApiKey: sinon.stub(),
             setAppId: sinon.stub(),
-            setToken: sinon.stub()
+            setToken: sinon.stub(),
+            setHttpRequest: sinon.stub()
         };
 
         // Run start - it should call registerWebhook but then throw CancelError because webhookConfiguredProperly remains false
