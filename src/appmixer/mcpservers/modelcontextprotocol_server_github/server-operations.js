@@ -3,8 +3,8 @@
 // Port of operations/*.ts of the deprecated @modelcontextprotocol/server-github package:
 // same endpoints, query/body construction and response validation (common.parse replaces zod).
 
-const { githubRequest, buildUrl, parse } = require('./common');
-const schemas = require('./schemas');
+const { githubRequest, buildUrl, parse } = require('./server-common');
+const schemas = require('./server-schemas');
 
 // ---------------------------------------------------------------------------
 // operations/repository.ts
