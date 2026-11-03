@@ -1,0 +1,146 @@
+{
+    "name": "E2E Whois MCP - List and Call Tool",
+    "description": "Spawns the bundled server.js (no account): ListTools returns all 4 tools, CallTool whois_domain looks up example.com at the .com registry.",
+    "flow": {
+        "b317fbd8-3766-43da-8c7c-3074b5ac02f3": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64, "y": 16, "source": {}, "version": "1.0.0", "config": {},
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "583b5713-39d1-44e3-900d-6b47a0dcba19": {
+            "type": "appmixer.mcpservers.bharathvaj_whois_mcp.ListTools",
+            "x": 272, "y": 16, "version": "1.0.0",
+            "source": { "in": { "b317fbd8-3766-43da-8c7c-3074b5ac02f3": ["out"] } },
+            "config": {
+                "transform": { "in": { "b317fbd8-3766-43da-8c7c-3074b5ac02f3": { "out": { "type": "json2new", "modifiers": {}, "lambda": {} } } } }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "fba410de-4b00-4d3f-801d-2066b5c5e3e5": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 480, "y": 16, "version": "1.0.0",
+            "source": { "in": { "583b5713-39d1-44e3-900d-6b47a0dcba19": ["out"] } },
+            "config": {
+                "transform": {
+                    "in": {
+                        "583b5713-39d1-44e3-900d-6b47a0dcba19": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "225ad395-7afc-43df-be4e-54d5fe048712": {
+                                            "variable": "$.583b5713-39d1-44e3-900d-6b47a0dcba19.out.tools",
+                                            "functions": [{ "name": "g_length" }]
+                                        },
+                                        "de1dcb3f-ccd4-40c9-a926-08f0416dda01": {
+                                            "variable": "$.583b5713-39d1-44e3-900d-6b47a0dcba19.out.tools",
+                                            "functions": [{ "name": "g_jsonPath", "params": [{ "value": "$[0].name" }] }]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            { "field": "{{{225ad395-7afc-43df-be4e-54d5fe048712}}}", "assertion": "equal", "expected": "4" },
+                                            { "field": "{{{de1dcb3f-ccd4-40c9-a926-08f0416dda01}}}", "assertion": "equal", "expected": "whois_domain" }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "4bf9bef2-5672-4cb7-80ab-bd8b19790c8b": {
+            "type": "appmixer.mcpservers.bharathvaj_whois_mcp.CallTool",
+            "x": 688, "y": 144, "version": "1.0.0",
+            "source": { "in": { "fba410de-4b00-4d3f-801d-2066b5c5e3e5": ["out"] } },
+            "config": {
+                "properties": { "tool": "whois_domain" },
+                "transform": {
+                    "in": {
+                        "fba410de-4b00-4d3f-801d-2066b5c5e3e5": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": { "domain": {} },
+                                "lambda": { "domain": "example.com" }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "34d0f387-6922-42be-a9c6-8c25d5b80cf8": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 896, "y": 144, "version": "1.0.0",
+            "source": { "in": { "4bf9bef2-5672-4cb7-80ab-bd8b19790c8b": ["out"] } },
+            "config": {
+                "transform": {
+                    "in": {
+                        "4bf9bef2-5672-4cb7-80ab-bd8b19790c8b": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "43182195-ff9f-4a9a-b9df-ba63bc34d288": {
+                                            "variable": "$.4bf9bef2-5672-4cb7-80ab-bd8b19790c8b.out.output",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            { "field": "{{{43182195-ff9f-4a9a-b9df-ba63bc34d288}}}", "assertion": "regex", "regex": "^Domain whois lookup for: [\\s\\S]*whois\\.verisign-grs\\.com" }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "9630c3c3-3cf1-4bb5-b752-3d8a87965c16": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 1104, "y": 144, "version": "1.0.0",
+            "source": { "in": { "fba410de-4b00-4d3f-801d-2066b5c5e3e5": ["out"], "34d0f387-6922-42be-a9c6-8c25d5b80cf8": ["out"] } },
+            "config": { "properties": { "timeout": 180 } },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "688c00fe-9317-477b-81be-8a333f173a49": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1312, "y": 144, "version": "1.0.0",
+            "source": { "in": { "9630c3c3-3cf1-4bb5-b752-3d8a87965c16": ["out"] } },
+            "config": {
+                "properties": { "successStoreId": "64f6f1f9193228000754082f", "failedStoreId": "64f6f1f0193228000754082e" },
+                "transform": {
+                    "in": {
+                        "9630c3c3-3cf1-4bb5-b752-3d8a87965c16": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "723cb09e-0e60-49c4-b8f2-6b3563f96cab": { "variable": "$.9630c3c3-3cf1-4bb5-b752-3d8a87965c16.out", "functions": [] }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E Whois MCP - List and Call Tool",
+                                    "result": "{{{723cb09e-0e60-49c4-b8f2-6b3563f96cab}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        }
+    }
+}

@@ -1,0 +1,146 @@
+{
+    "name": "E2E EverArt MCP - List and Call Tool",
+    "description": "Spawns the bundled server.js: ListTools returns generate_image, CallTool generates one FLUX1.1 image (model 5000, image_count 1).",
+    "flow": {
+        "bbdaff45-e7fe-4a48-b5a4-8bbbd7a9bac5": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64, "y": 16, "source": {}, "version": "1.0.0", "config": {},
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "0083e51c-92b0-4a95-886d-6a08eeeee727": {
+            "type": "appmixer.mcpservers.modelcontextprotocol_server_everart.ListTools",
+            "x": 272, "y": 16, "version": "1.0.0",
+            "source": { "in": { "bbdaff45-e7fe-4a48-b5a4-8bbbd7a9bac5": ["out"] } },
+            "config": {
+                "transform": { "in": { "bbdaff45-e7fe-4a48-b5a4-8bbbd7a9bac5": { "out": { "type": "json2new", "modifiers": {}, "lambda": {} } } } }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "a70d5d84-289c-4c71-9a34-13f3f965faa6": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 480, "y": 16, "version": "1.0.0",
+            "source": { "in": { "0083e51c-92b0-4a95-886d-6a08eeeee727": ["out"] } },
+            "config": {
+                "transform": {
+                    "in": {
+                        "0083e51c-92b0-4a95-886d-6a08eeeee727": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "a19c9f89-ce1a-492e-a094-603ccbbd623d": {
+                                            "variable": "$.0083e51c-92b0-4a95-886d-6a08eeeee727.out.tools",
+                                            "functions": [{ "name": "g_length" }]
+                                        },
+                                        "4b8ab237-c0e3-44a9-97eb-a05191bf1e73": {
+                                            "variable": "$.0083e51c-92b0-4a95-886d-6a08eeeee727.out.tools",
+                                            "functions": [{ "name": "g_jsonPath", "params": [{ "value": "$[0].name" }] }]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            { "field": "{{{a19c9f89-ce1a-492e-a094-603ccbbd623d}}}", "assertion": "equal", "expected": "1" },
+                                            { "field": "{{{4b8ab237-c0e3-44a9-97eb-a05191bf1e73}}}", "assertion": "equal", "expected": "generate_image" }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "a10561c1-7829-42b6-b206-8a1c06484e6f": {
+            "type": "appmixer.mcpservers.modelcontextprotocol_server_everart.CallTool",
+            "x": 688, "y": 144, "version": "1.0.0",
+            "source": { "in": { "a70d5d84-289c-4c71-9a34-13f3f965faa6": ["out"] } },
+            "config": {
+                "properties": { "tool": "generate_image" },
+                "transform": {
+                    "in": {
+                        "a70d5d84-289c-4c71-9a34-13f3f965faa6": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": { "prompt": {}, "model": {}, "image_count": {} },
+                                "lambda": { "prompt": "A small red circle on a plain white background", "model": "5000", "image_count": 1 }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "c6ff59b6-fcd4-4d97-8fde-f5b421000ba3": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 896, "y": 144, "version": "1.0.0",
+            "source": { "in": { "a10561c1-7829-42b6-b206-8a1c06484e6f": ["out"] } },
+            "config": {
+                "transform": {
+                    "in": {
+                        "a10561c1-7829-42b6-b206-8a1c06484e6f": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "aaaf8339-9a67-433f-8c0d-57c33eb1a2b4": {
+                                            "variable": "$.a10561c1-7829-42b6-b206-8a1c06484e6f.out.output",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            { "field": "{{{aaaf8339-9a67-433f-8c0d-57c33eb1a2b4}}}", "assertion": "regex", "regex": "^Image generated successfully![\\s\\S]*Image URL: https://" }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "5e3aef6e-7b53-48d2-9c19-d9607660e031": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 1104, "y": 144, "version": "1.0.0",
+            "source": { "in": { "a70d5d84-289c-4c71-9a34-13f3f965faa6": ["out"], "c6ff59b6-fcd4-4d97-8fde-f5b421000ba3": ["out"] } },
+            "config": { "properties": { "timeout": 300 } },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "f02c6f8d-cd1c-49f0-99aa-6ff6fb9f1184": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1312, "y": 144, "version": "1.0.0",
+            "source": { "in": { "5e3aef6e-7b53-48d2-9c19-d9607660e031": ["out"] } },
+            "config": {
+                "properties": { "successStoreId": "64f6f1f9193228000754082f", "failedStoreId": "64f6f1f0193228000754082e" },
+                "transform": {
+                    "in": {
+                        "5e3aef6e-7b53-48d2-9c19-d9607660e031": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "009295e0-952e-4a2c-8a51-3ef3ec7771b7": { "variable": "$.5e3aef6e-7b53-48d2-9c19-d9607660e031.out", "functions": [] }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E EverArt MCP - List and Call Tool",
+                                    "result": "{{{009295e0-952e-4a2c-8a51-3ef3ec7771b7}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        }
+    }
+}

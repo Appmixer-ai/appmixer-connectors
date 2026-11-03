@@ -1,0 +1,146 @@
+{
+    "name": "E2E Firecrawl MCP - List and Call Tool",
+    "description": "Spawns the bundled server.js (Firecrawl v2 API): ListTools returns all 6 tools, CallTool firecrawl_scrape returns example.com as markdown (1 credit).",
+    "flow": {
+        "ddb91ded-a268-44db-b036-4f0a28995dc3": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64, "y": 16, "source": {}, "version": "1.0.0", "config": {},
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "52337830-99e2-48cc-aa26-932336950c27": {
+            "type": "appmixer.mcpservers.firecrawl_mcp.ListTools",
+            "x": 272, "y": 16, "version": "1.0.0",
+            "source": { "in": { "ddb91ded-a268-44db-b036-4f0a28995dc3": ["out"] } },
+            "config": {
+                "transform": { "in": { "ddb91ded-a268-44db-b036-4f0a28995dc3": { "out": { "type": "json2new", "modifiers": {}, "lambda": {} } } } }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "3529b6bb-aa4e-4324-aecf-3fe9a3cab1c4": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 480, "y": 16, "version": "1.0.0",
+            "source": { "in": { "52337830-99e2-48cc-aa26-932336950c27": ["out"] } },
+            "config": {
+                "transform": {
+                    "in": {
+                        "52337830-99e2-48cc-aa26-932336950c27": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "76c1fe1a-9fd3-4d05-912b-06071c4eb55d": {
+                                            "variable": "$.52337830-99e2-48cc-aa26-932336950c27.out.tools",
+                                            "functions": [{ "name": "g_length" }]
+                                        },
+                                        "6622675d-0a1b-431b-8ce5-a8554164d56a": {
+                                            "variable": "$.52337830-99e2-48cc-aa26-932336950c27.out.tools",
+                                            "functions": [{ "name": "g_jsonPath", "params": [{ "value": "$[0].name" }] }]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            { "field": "{{{76c1fe1a-9fd3-4d05-912b-06071c4eb55d}}}", "assertion": "equal", "expected": "6" },
+                                            { "field": "{{{6622675d-0a1b-431b-8ce5-a8554164d56a}}}", "assertion": "equal", "expected": "firecrawl_scrape" }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "c0af1328-f558-475b-aada-840882c77ed6": {
+            "type": "appmixer.mcpservers.firecrawl_mcp.CallTool",
+            "x": 688, "y": 144, "version": "1.0.0",
+            "source": { "in": { "3529b6bb-aa4e-4324-aecf-3fe9a3cab1c4": ["out"] } },
+            "config": {
+                "properties": { "tool": "firecrawl_scrape" },
+                "transform": {
+                    "in": {
+                        "3529b6bb-aa4e-4324-aecf-3fe9a3cab1c4": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": { "url": {}, "formats": {} },
+                                "lambda": { "url": "https://example.com", "formats": ["markdown"] }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "d2d2474f-e562-41ad-b729-a56fe7e69589": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 896, "y": 144, "version": "1.0.0",
+            "source": { "in": { "c0af1328-f558-475b-aada-840882c77ed6": ["out"] } },
+            "config": {
+                "transform": {
+                    "in": {
+                        "c0af1328-f558-475b-aada-840882c77ed6": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "2dd86b2a-b59c-4255-9560-b315f856809a": {
+                                            "variable": "$.c0af1328-f558-475b-aada-840882c77ed6.out.output",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            { "field": "{{{2dd86b2a-b59c-4255-9560-b315f856809a}}}", "assertion": "regex", "regex": "\"title\": \"Example Domain\"" }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "01a4fd25-6153-4182-8c28-865b20b11218": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 1104, "y": 144, "version": "1.0.0",
+            "source": { "in": { "3529b6bb-aa4e-4324-aecf-3fe9a3cab1c4": ["out"], "d2d2474f-e562-41ad-b729-a56fe7e69589": ["out"] } },
+            "config": { "properties": { "timeout": 180 } },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "770d5355-6eef-4882-8267-0df72515a238": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1312, "y": 144, "version": "1.0.0",
+            "source": { "in": { "01a4fd25-6153-4182-8c28-865b20b11218": ["out"] } },
+            "config": {
+                "properties": { "successStoreId": "64f6f1f9193228000754082f", "failedStoreId": "64f6f1f0193228000754082e" },
+                "transform": {
+                    "in": {
+                        "01a4fd25-6153-4182-8c28-865b20b11218": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "b061f7eb-5f6c-4679-9de7-a6abf2f2664a": { "variable": "$.01a4fd25-6153-4182-8c28-865b20b11218.out", "functions": [] }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E Firecrawl MCP - List and Call Tool",
+                                    "result": "{{{b061f7eb-5f6c-4679-9de7-a6abf2f2664a}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        }
+    }
+}
