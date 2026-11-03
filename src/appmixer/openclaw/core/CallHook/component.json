@@ -1,0 +1,168 @@
+{
+    "name": "appmixer.openclaw.core.CallHook",
+    "label": "Call Hook",
+    "description": "Send a payload to a mapped hook of your OpenClaw gateway (POST <hooks path>/<hook>) and wait for the result the gateway side sends back. The component adds a callbackUrl field to the payload; whatever the hook's transform or the run it starts POSTs to that URL comes out on Done, or on Progress when the JSON body has \"final\": false. \"Out\" fires as soon as the gateway accepts the request. A hook that never calls back leaves Done silent: there is no timeout.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "webhook": true,
+    "auth": {
+        "service": "appmixer:openclaw"
+    },
+    "quota": {
+        "manager": "appmixer:openclaw",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "hook": {
+                        "type": "string"
+                    },
+                    "payload": {
+                        "type": "string"
+                    },
+                    "correlationId": {
+                        "type": "string"
+                    },
+                    "idempotencyKey": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "hook"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "hook": {
+                        "type": "text",
+                        "index": 1,
+                        "label": "Hook",
+                        "tooltip": "The name of a mapped hook (<code>hooks.mappings</code> in the gateway config), the last part of its URL. For <code>https://openclaw.example.com/hooks/github-issue</code> type <code>github-issue</code>."
+                    },
+                    "payload": {
+                        "type": "textarea",
+                        "index": 2,
+                        "label": "Payload",
+                        "tooltip": "A JSON object for the hook's mapping or transform, for example <code>{\"issue\": 42}</code>. Call Hook adds a <code>callbackUrl</code> field: the gateway side POSTs the result there. Empty sends <code>{}</code>."
+                    },
+                    "correlationId": {
+                        "type": "text",
+                        "index": 3,
+                        "label": "Correlation ID",
+                        "tooltip": "Any value of your own (an order number, a record ID). It comes back on Out, Progress and Done, so you can tell which result belongs to which call when several run at once."
+                    },
+                    "idempotencyKey": {
+                        "type": "text",
+                        "index": 4,
+                        "label": "Idempotency Key",
+                        "tooltip": "Optional. A retried request with the same key and payload replays the run the gateway already admitted instead of starting another one."
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "jobId": {
+                        "type": "string",
+                        "title": "Job ID",
+                        "example": "6f1c2a9e-3b7d-4c51-9e2f-0a8b4d7c1e35"
+                    },
+                    "hook": {
+                        "type": "string",
+                        "title": "Hook",
+                        "example": "github-issue"
+                    },
+                    "correlationId": {
+                        "type": "string",
+                        "title": "Correlation ID",
+                        "example": "order-1042"
+                    },
+                    "runId": {
+                        "type": "string",
+                        "title": "Run ID",
+                        "example": "hook-req-01JCQ8Z4V7M3K2N5P6R8S9T0VW"
+                    }
+                }
+            }
+        },
+        {
+            "name": "progress",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "jobId": {
+                        "type": "string",
+                        "title": "Job ID",
+                        "example": "6f1c2a9e-3b7d-4c51-9e2f-0a8b4d7c1e35"
+                    },
+                    "hook": {
+                        "type": "string",
+                        "title": "Hook",
+                        "example": "github-issue"
+                    },
+                    "correlationId": {
+                        "type": "string",
+                        "title": "Correlation ID",
+                        "example": "order-1042"
+                    },
+                    "result": {
+                        "type": "object",
+                        "title": "Result",
+                        "properties": {},
+                        "example": {
+                            "final": true,
+                            "status": "passed",
+                            "summary": "All 5 flows passed."
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "name": "done",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "jobId": {
+                        "type": "string",
+                        "title": "Job ID",
+                        "example": "6f1c2a9e-3b7d-4c51-9e2f-0a8b4d7c1e35"
+                    },
+                    "hook": {
+                        "type": "string",
+                        "title": "Hook",
+                        "example": "github-issue"
+                    },
+                    "correlationId": {
+                        "type": "string",
+                        "title": "Correlation ID",
+                        "example": "order-1042"
+                    },
+                    "result": {
+                        "type": "object",
+                        "title": "Result",
+                        "properties": {},
+                        "example": {
+                            "final": true,
+                            "status": "passed",
+                            "summary": "All 5 flows passed."
+                        }
+                    }
+                }
+            }
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB2aWV3Qm94PSIwIDAgMTIwIDEyMCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8ZGVmcz4KICAgIDxsaW5lYXJHcmFkaWVudCBpZD0ibG9ic3Rlci1ncmFkaWVudCIgeDE9IjAlIiB5MT0iMCUiIHgyPSIxMDAlIiB5Mj0iMTAwJSI+CiAgICAgIDxzdG9wIG9mZnNldD0iMCUiIHN0b3AtY29sb3I9IiNmZjRkNGQiLz4KICAgICAgPHN0b3Agb2Zmc2V0PSIxMDAlIiBzdG9wLWNvbG9yPSIjOTkxYjFiIi8+CiAgICA8L2xpbmVhckdyYWRpZW50PgogIDwvZGVmcz4KICA8Zz4KICAgIDxwYXRoIGQ9Ik02MCAxMCBDMzAgMTAgMTUgMzUgMTUgNTUgQzE1IDc1IDMwIDk1IDQ1IDEwMCBMNDUgMTEwIEw1NSAxMTAgTDU1IDEwMCBDNTUgMTAwIDYwIDEwMiA2NSAxMDAgTDY1IDExMCBMNzUgMTEwIEw3NSAxMDAgQzkwIDk1IDEwNSA3NSAxMDUgNTUgQzEwNSAzNSA5MCAxMCA2MCAxMFoiIGZpbGw9InVybCgjbG9ic3Rlci1ncmFkaWVudCkiLz4KICAgIDxwYXRoIGQ9Ik0yMCA0NSBDNSA0MCAwIDUwIDUgNjAgQzEwIDcwIDIwIDY1IDI1IDU1IEMyOCA0OCAyNSA0NSAyMCA0NVoiIGZpbGw9InVybCgjbG9ic3Rlci1ncmFkaWVudCkiPgogICAgPC9wYXRoPgogICAgPHBhdGggZD0iTTEwMCA0NSBDMTE1IDQwIDEyMCA1MCAxMTUgNjAgQzExMCA3MCAxMDAgNjUgOTUgNTUgQzkyIDQ4IDk1IDQ1IDEwMCA0NVoiIGZpbGw9InVybCgjbG9ic3Rlci1ncmFkaWVudCkiPgogICAgPC9wYXRoPgogICAgPHBhdGggZD0iTTQ1IDE1IFEzNSA1IDMwIDgiIHN0cm9rZT0iI2ZmNGQ0ZCIgc3Ryb2tlLXdpZHRoPSIzIiBzdHJva2UtbGluZWNhcD0icm91bmQiPgogICAgPC9wYXRoPgogICAgPHBhdGggZD0iTTc1IDE1IFE4NSA1IDkwIDgiIHN0cm9rZT0iI2ZmNGQ0ZCIgc3Ryb2tlLXdpZHRoPSIzIiBzdHJva2UtbGluZWNhcD0icm91bmQiPgogICAgPC9wYXRoPgogICAgPGNpcmNsZSBjeD0iNDUiIGN5PSIzNSIgcj0iNiIgZmlsbD0iIzA1MDgxMCIvPgogICAgPGNpcmNsZSBjeD0iNzUiIGN5PSIzNSIgcj0iNiIgZmlsbD0iIzA1MDgxMCIvPgogICAgPGNpcmNsZSBjeD0iNDYiIGN5PSIzNCIgcj0iMi41IiBmaWxsPSIjMDBlNWNjIj4KICAgIDwvY2lyY2xlPgogICAgPGNpcmNsZSBjeD0iNzYiIGN5PSIzNCIgcj0iMi41IiBmaWxsPSIjMDBlNWNjIj4KICAgIDwvY2lyY2xlPgogIDwvZz4KPC9zdmc+Cg=="
+}
