@@ -1,0 +1,151 @@
+{
+    "name": "appmixer.openclaw.core.RunAgent",
+    "label": "Run Agent",
+    "description": "Start an agent turn on your OpenClaw gateway (POST <hooks path>/agent) with a message. Returns the run ID as soon as the gateway admits the run; the agent works on after that. To get its answer, let it post to a channel (Announce Result) or use Call Hook with a hook that reports back.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:openclaw"
+    },
+    "quota": {
+        "manager": "appmixer:openclaw",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "message": {
+                        "type": "string"
+                    },
+                    "agentId": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "model": {
+                        "type": "string"
+                    },
+                    "thinking": {
+                        "type": "string"
+                    },
+                    "timeoutSeconds": {
+                        "type": "integer",
+                        "minimum": 1
+                    },
+                    "announce": {
+                        "type": "boolean"
+                    },
+                    "channel": {
+                        "type": "string"
+                    },
+                    "to": {
+                        "type": "string"
+                    },
+                    "accountId": {
+                        "type": "string"
+                    },
+                    "idempotencyKey": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "message"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "message": {
+                        "type": "textarea",
+                        "index": 1,
+                        "label": "Message",
+                        "tooltip": "What the agent should do. The gateway wraps it as external content."
+                    },
+                    "agentId": {
+                        "type": "text",
+                        "index": 2,
+                        "label": "Agent ID",
+                        "tooltip": "A configured agent allowed by <code>hooks.allowedAgentIds</code>. Empty uses the gateway's default agent."
+                    },
+                    "name": {
+                        "type": "text",
+                        "index": 3,
+                        "label": "Run Name",
+                        "tooltip": "A label for the run in the gateway logs. Default: Hook."
+                    },
+                    "model": {
+                        "type": "text",
+                        "index": 4,
+                        "label": "Model",
+                        "tooltip": "Optional model ID or alias for this run, if the gateway's model policy allows it."
+                    },
+                    "thinking": {
+                        "type": "text",
+                        "index": 5,
+                        "label": "Thinking",
+                        "tooltip": "Optional thinking level for this run, for example <code>low</code> or <code>high</code>."
+                    },
+                    "timeoutSeconds": {
+                        "type": "number",
+                        "index": 6,
+                        "label": "Timeout (seconds)",
+                        "tooltip": "Optional limit for the agent turn. Default: the agent's own timeout."
+                    },
+                    "announce": {
+                        "type": "toggle",
+                        "index": 7,
+                        "label": "Announce Result",
+                        "defaultValue": false,
+                        "tooltip": "On: the agent's answer goes to Channel and To, or to its main session when they are empty. Off: the run only logs its completion."
+                    },
+                    "channel": {
+                        "type": "text",
+                        "index": 8,
+                        "label": "Channel",
+                        "tooltip": "With Announce Result: a configured channel ID such as <code>slack</code> or <code>telegram</code>. Needs To."
+                    },
+                    "to": {
+                        "type": "text",
+                        "index": 9,
+                        "label": "To",
+                        "tooltip": "With Announce Result: the recipient on Channel, such as a Slack channel ID."
+                    },
+                    "accountId": {
+                        "type": "text",
+                        "index": 10,
+                        "label": "Channel Account",
+                        "tooltip": "Optional: which configured account of Channel sends the answer."
+                    },
+                    "idempotencyKey": {
+                        "type": "text",
+                        "index": 11,
+                        "label": "Idempotency Key",
+                        "tooltip": "Optional. A retried request with the same key and message replays the run the gateway already admitted instead of starting another one."
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "runId": {
+                        "type": "string",
+                        "title": "Run ID",
+                        "example": "hook-req-01JCQ8Z4V7M3K2N5P6R8S9T0VW"
+                    }
+                }
+            }
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB2aWV3Qm94PSIwIDAgMTIwIDEyMCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8ZGVmcz4KICAgIDxsaW5lYXJHcmFkaWVudCBpZD0ibG9ic3Rlci1ncmFkaWVudCIgeDE9IjAlIiB5MT0iMCUiIHgyPSIxMDAlIiB5Mj0iMTAwJSI+CiAgICAgIDxzdG9wIG9mZnNldD0iMCUiIHN0b3AtY29sb3I9IiNmZjRkNGQiLz4KICAgICAgPHN0b3Agb2Zmc2V0PSIxMDAlIiBzdG9wLWNvbG9yPSIjOTkxYjFiIi8+CiAgICA8L2xpbmVhckdyYWRpZW50PgogIDwvZGVmcz4KICA8Zz4KICAgIDxwYXRoIGQ9Ik02MCAxMCBDMzAgMTAgMTUgMzUgMTUgNTUgQzE1IDc1IDMwIDk1IDQ1IDEwMCBMNDUgMTEwIEw1NSAxMTAgTDU1IDEwMCBDNTUgMTAwIDYwIDEwMiA2NSAxMDAgTDY1IDExMCBMNzUgMTEwIEw3NSAxMDAgQzkwIDk1IDEwNSA3NSAxMDUgNTUgQzEwNSAzNSA5MCAxMCA2MCAxMFoiIGZpbGw9InVybCgjbG9ic3Rlci1ncmFkaWVudCkiLz4KICAgIDxwYXRoIGQ9Ik0yMCA0NSBDNSA0MCAwIDUwIDUgNjAgQzEwIDcwIDIwIDY1IDI1IDU1IEMyOCA0OCAyNSA0NSAyMCA0NVoiIGZpbGw9InVybCgjbG9ic3Rlci1ncmFkaWVudCkiPgogICAgPC9wYXRoPgogICAgPHBhdGggZD0iTTEwMCA0NSBDMTE1IDQwIDEyMCA1MCAxMTUgNjAgQzExMCA3MCAxMDAgNjUgOTUgNTUgQzkyIDQ4IDk1IDQ1IDEwMCA0NVoiIGZpbGw9InVybCgjbG9ic3Rlci1ncmFkaWVudCkiPgogICAgPC9wYXRoPgogICAgPHBhdGggZD0iTTQ1IDE1IFEzNSA1IDMwIDgiIHN0cm9rZT0iI2ZmNGQ0ZCIgc3Ryb2tlLXdpZHRoPSIzIiBzdHJva2UtbGluZWNhcD0icm91bmQiPgogICAgPC9wYXRoPgogICAgPHBhdGggZD0iTTc1IDE1IFE4NSA1IDkwIDgiIHN0cm9rZT0iI2ZmNGQ0ZCIgc3Ryb2tlLXdpZHRoPSIzIiBzdHJva2UtbGluZWNhcD0icm91bmQiPgogICAgPC9wYXRoPgogICAgPGNpcmNsZSBjeD0iNDUiIGN5PSIzNSIgcj0iNiIgZmlsbD0iIzA1MDgxMCIvPgogICAgPGNpcmNsZSBjeD0iNzUiIGN5PSIzNSIgcj0iNiIgZmlsbD0iIzA1MDgxMCIvPgogICAgPGNpcmNsZSBjeD0iNDYiIGN5PSIzNCIgcj0iMi41IiBmaWxsPSIjMDBlNWNjIj4KICAgIDwvY2lyY2xlPgogICAgPGNpcmNsZSBjeD0iNzYiIGN5PSIzNCIgcj0iMi41IiBmaWxsPSIjMDBlNWNjIj4KICAgIDwvY2lyY2xlPgogIDwvZz4KPC9zdmc+Cg=="
+}
