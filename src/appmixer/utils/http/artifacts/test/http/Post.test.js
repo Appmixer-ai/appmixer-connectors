@@ -31,7 +31,7 @@ describe('HTTP POST Component with SSL/TLS Certificates', () => {
                 length: Buffer.byteLength(fileContents[fileId] || '')
             }),
             sendJson: async (data, port) => ({ data, port }),
-            httpRequest: require('../../../../http/node_modules/axios').request,
+            httpRequest: require('axios'),
             CancelError: class CancelError extends Error {
                 constructor(message) {
                     super(message);

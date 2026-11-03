@@ -1,5 +1,4 @@
 'use strict';
-const axios = require('axios');
 const secrets = require('../../secrets');
 
 module.exports = {
@@ -12,7 +11,7 @@ module.exports = {
         params['token'] = token;
         params['output'] = 'json';
 
-        const response = await axios.get(endpoint, {
+        const response = await context.httpRequest.get(endpoint, {
             params
         });
 

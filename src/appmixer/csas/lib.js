@@ -219,23 +219,19 @@ module.exports = {
     }
 };
 
-const toCsv = (array) => {
-    // An empty result set is ordinary (new account, filter matches nothing), so
-    // never index into array[0] before checking — that throws a TypeError that
-    // ends the flow instead of writing an empty file.
-    if (!array.length) {
-        return '';
-    }
-    const headers = Object.keys(array[0]);
-    return [
-        headers.join(','),
-        ...array.map(items => {
-            return Object.values(items).map(property => {
-                if (typeof property === 'object') {
-                    return JSON.stringify(property);
-                }
-                return property;
-            }).join(',');
-        })
-    ].join('\n');
+// One CSV cell per RFC 4180: null/undefined → empty, objects → JSON, and a value
+// holding a comma, a double quote or a line break is quoted with inner quotes doubled.
+const csvCell = (value) => {
+    if (value == null) return '';
+    const text = typeof value === 'object' ? JSON.stringify(value) : String(value);
+    return /[",\r\n]/.test(text) ? '"' + text.replace(/"/g, '""') + '"' : text;
+};
+
+const toCsv = (records) => {
+    if (!records.length) return '';
+    // Cells are taken by header column, not Object.values(record), so a record with
+    // a different key order or a missing key stays under the right header.
+    const columns = Object.keys(records[0]);
+    const rows = records.map(record => columns.map(column => csvCell(record[column])).join(','));
+    return [columns.map(csvCell).join(','), ...rows].join('\n');
 };
