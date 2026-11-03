@@ -1,8 +1,7 @@
 'use strict';
 const commons = require('../../google-commons');
 const { normalizeHeader, toCellValue, isBadRequestError } = require('../common');
-const google = require('googleapis');
-const Promise = require('bluebird');
+const { sheets: googleSheets } = require('@googleapis/sheets');
 
 /**
  * Gsheet create row component.
@@ -10,15 +9,15 @@ const Promise = require('bluebird');
  */
 module.exports = {
     async receive(context) {
-        const sheets = google.sheets('v4');
-        const getHeader = Promise.promisify(sheets.spreadsheets.values.get, { context: sheets.spreadsheets.values });
-        const createRow = Promise.promisify(sheets.spreadsheets.values.append, { context: sheets.spreadsheets.values });
+        const sheets = googleSheets('v4');
+        const getHeader = params => sheets.spreadsheets.values.get(params).then(res => res.data);
+        const createRow = params => sheets.spreadsheets.values.append(params).then(res => res.data);
 
         const { sheetId, worksheetId } = context.properties;
         const values = context.messages.in.content;
 
         // Retrieve header row to get the order of columns
-        const worksheetName = encodeURIComponent(worksheetId.split('/')[1]);
+        const worksheetName = worksheetId.split('/')[1];
         const headerResponse = await getHeader({
             auth: commons.getOauth2Client(context.auth),
             spreadsheetId: sheetId,

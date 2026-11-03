@@ -14,7 +14,7 @@ module.exports = {
         }
 
         const { auth } = context;
-        const hs = new Hubspot(auth.accessToken, context.config);
+        const hs = new Hubspot(auth.accessToken, context.config, context.httpRequest);
 
         await hs.call('delete', `crm/v3/objects/deals/${dealId}`);
 

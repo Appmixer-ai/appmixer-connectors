@@ -4,14 +4,13 @@ const https = require('https');
 
 describe('http processResponse', () => {
 
-    let axiosRequestStub;
+    let context;
 
     beforeEach(() => {
-        // Stub axios from the http connector's node_modules
-        const axios = require('../../../../http/node_modules/axios');
-        axiosRequestStub = sinon.stub(axios, 'request').callsFake((options) => {
-            return new Promise((resolve) => {
-                resolve({
+        // Stub the engine's HTTP client (context.httpRequest)
+        context = {
+            httpRequest: {
+                request: sinon.stub().callsFake(async (options) => ({
                     status: 200,
                     config: options,
                     headers: {
@@ -19,13 +18,9 @@ describe('http processResponse', () => {
                         'x-custom-header': 'custom-value'
                     },
                     data: { key: 'value' }
-                });
-            });
-        });
-    });
-
-    afterEach(() => {
-        axiosRequestStub.restore();
+                }))
+            }
+        };
     });
 
     it('should correctly parse and return response headers', async () => {
@@ -33,7 +28,7 @@ describe('http processResponse', () => {
         const testUrl = 'https://foo.bar/';
 
         const request = require('../../../http-commons');
-        const result = await request({}, 'get', {
+        const result = await request(context, 'get', {
             url: testUrl
         });
 

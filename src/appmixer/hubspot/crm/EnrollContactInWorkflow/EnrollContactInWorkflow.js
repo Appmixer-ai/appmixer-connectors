@@ -17,7 +17,7 @@ module.exports = {
         }
 
         const { auth } = context;
-        const hs = new Hubspot(auth.accessToken, context.config);
+        const hs = new Hubspot(auth.accessToken, context.config, context.httpRequest);
 
         // https://developers.hubspot.com/docs/reference/api/automation/workflows/v2
         await hs.call(

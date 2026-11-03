@@ -1,14 +1,9 @@
 'use strict';
-const GoogleApi = require('googleapis');
+const { auth: googleAuth } = require('@googleapis/oauth2');
 const { OAuth2Client } = require('google-auth-library');
 const pathModule = require('path');
 
 module.exports = {
-
-    get GoogleApi() {
-
-        return GoogleApi;
-    },
 
     ERROR_MAP: {
         'Invalid query parameter value for grid_id.': 'Invalid worksheet id! '
@@ -17,13 +12,13 @@ module.exports = {
 
     getOauth2Client(auth) {
 
-        let { clientId, clientSecret, callback, accessToken } = auth;
-        let OAuth2 = GoogleApi.auth.OAuth2;
-        let oauth2Client = new OAuth2(clientId, clientSecret, callback);
+        const { clientId, clientSecret, callback, accessToken } = auth;
+        // A new client per call: credentials must never be shared between users.
+        const oauth2Client = new googleAuth.OAuth2(clientId, clientSecret, callback);
 
-        oauth2Client.credentials = {
+        oauth2Client.setCredentials({
             'access_token': accessToken
-        };
+        });
 
         return oauth2Client;
     },
@@ -115,26 +110,19 @@ module.exports = {
     }
 };
 
-const toCsv = (array) => {
-    if (!array || array.length === 0) {
-        return '';
-    }
+// One CSV cell per RFC 4180: null/undefined → empty, objects → JSON, and a value
+// holding a comma, a double quote or a line break is quoted with inner quotes doubled.
+const csvCell = (value) => {
+    if (value == null) return '';
+    const text = typeof value === 'object' ? JSON.stringify(value) : String(value);
+    return /[",\r\n]/.test(text) ? '"' + text.replace(/"/g, '""') + '"' : text;
+};
 
-    const headers = Object.keys(array[0]);
-
-    return [
-        headers.join(','),
-
-        ...array.map(items => {
-            return Object.values(items).map(property => {
-                if (typeof property === 'object') {
-                    property = JSON.stringify(property);
-                    // Make stringified JSON valid CSV value.
-                    property = property.replace(/"/g, '""');
-                }
-                return `"${property}"`;
-            }).join(',');
-        })
-
-    ].join('\n');
+const toCsv = (records) => {
+    if (!records.length) return '';
+    // Cells are taken by header column, not Object.values(record), so a record with
+    // a different key order or a missing key stays under the right header.
+    const columns = Object.keys(records[0]);
+    const rows = records.map(record => columns.map(column => csvCell(record[column])).join(','));
+    return [columns.map(csvCell).join(','), ...rows].join('\n');
 };

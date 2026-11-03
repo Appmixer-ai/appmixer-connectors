@@ -29,7 +29,7 @@ module.exports = {
         const { formId } = context.properties;
 
         try {
-            const hubspot = new Hubspot(context.auth.accessToken);
+            const hubspot = new Hubspot(context.auth.accessToken, {}, context.httpRequest);
             const state = context.state || {};
             // lastSeenAt is seeded to Date.now() in start(), so historical submissions are already
             // excluded — no first-run flag needed.
@@ -96,7 +96,7 @@ module.exports = {
     async test(context) {
 
         const { formId } = context.properties;
-        const hubspot = new Hubspot(context.auth.accessToken);
+        const hubspot = new Hubspot(context.auth.accessToken, {}, context.httpRequest);
 
         // Latest submission of the configured form — the same raw submission
         // shape receive() emits (submittedAt, values, pageUrl, ...).

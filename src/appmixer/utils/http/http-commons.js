@@ -2,7 +2,6 @@
 const contentTypeUtil = require('content-type');
 const urlUtil = require('url');
 const qs = require('qs');
-const axios = require('axios');
 const https = require('https');
 
 /**
@@ -154,7 +153,8 @@ function processResponse(response) {
 
     data.statusCode = response.status;
     data.request = {
-        uri: response.config.url,
+        // Keep the url.parse() object the output has always carried.
+        uri: urlUtil.parse(response.config.url),
         method: response.config.method,
         headers: response.config.headers
     };
@@ -216,7 +216,8 @@ async function buildRequestOptions(context, method, options) {
 
     let json = {
         method,
-        url,
+        // The engine's axios 1.x only accepts a string URL, not a url.parse() object.
+        url: url?.href,
         headers,
         ...(method.toLowerCase() === 'get' ? { params: body } : { data: body })
     };
@@ -477,7 +478,7 @@ async function sendWithUndici(context, method, options) {
  */
 module.exports = async function(context, method, json) {
 
-    // Use undici if SSL options are provided, otherwise use axios
+    // Use undici if SSL options are provided, otherwise use the engine's HTTP client (context.httpRequest)
     if (hasSslOptions(json)) {
         return await sendWithUndici(context, method, json);
     }
@@ -489,7 +490,7 @@ module.exports = async function(context, method, json) {
     }
 
     try {
-        const response = await axios.request(options);
+        const response = await context.httpRequest.request(options);
         return processResponse(response);
     } catch (error) {
         if (error.response?.data?.message) {
