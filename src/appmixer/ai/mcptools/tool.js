@@ -103,6 +103,41 @@ function toPublicToolDef(toolDef) {
     return { type: toolDef.type, function: fn };
 }
 
+// ─── Tool descriptions ────────────────────────────────────────────────────────
+
+/**
+ * The descriptions the user wrote on the gateway ("Tool descriptions": rows of tool + description),
+ * keyed by the tool they name: the label of a component on the "tool" port, or the name of an MCP
+ * server's tool. Matched case-insensitively, blanks ignored.
+ *
+ * @returns {Map<string, string>} lower-cased tool → description
+ */
+function parseToolDescriptions(value) {
+    const rows = Array.isArray(value?.ADD) ? value.ADD : (Array.isArray(value) ? value : []);
+    const map = new Map();
+    for (const row of rows) {
+        const tool = String(row?.tool || '').trim().toLowerCase();
+        const description = String(row?.description || '').trim();
+        if (tool && description) map.set(tool, description);
+    }
+    return map;
+}
+
+/**
+ * What the model reads about a component tool: the description the user wrote for it on the
+ * gateway; else, when the component is labelled in the flow, that label in front of what the
+ * component does ("Save lead: Set value to Storage.") — the label says what the tool is for, the
+ * component description alone ("Set value to Storage.") does not.
+ */
+function describeComponentTool(label, manifest, descriptions) {
+    const custom = descriptions && descriptions.get(String(label || '').trim().toLowerCase());
+    if (custom) return custom;
+    const generic = manifest.description || '';
+    if (!generic) return label;
+    const ownLabel = label && label !== manifest.label && label !== manifest.name;
+    return ownLabel ? `${label}: ${generic}` : generic;
+}
+
 // ─── Manifest fetching ────────────────────────────────────────────────────────
 
 /**
@@ -180,6 +215,8 @@ async function fetchAndCacheManifests(context) {
 async function buildDefsFromManifests(context, manifests) {
     const flowDescriptor = context.flowDescriptor;
     const gatewayComponentId = context.componentId;
+    const descriptions = parseToolDescriptions(context.properties?.toolDescriptions);
+    const described = new Set();
     const defs = [];
 
     for (const componentId of Object.keys(manifests)) {
@@ -187,7 +224,12 @@ async function buildDefsFromManifests(context, manifests) {
         const { _isMCP: isMCP } = manifest || {};
 
         if (isMCP) {
-            const mcpDefs = await buildMCPToolDefs(context, componentId);
+            const mcpDefs = await buildMCPToolDefs(context, componentId, descriptions);
+            for (const def of mcpDefs) {
+                const { _mcpToolName: mcpToolName } = def.function;
+                const key = String(mcpToolName || '').toLowerCase();
+                if (descriptions.has(key)) described.add(key);
+            }
             defs.push(...mcpDefs);
             continue;
         }
@@ -214,8 +256,11 @@ async function buildDefsFromManifests(context, manifests) {
         }
         if (!resolvedManifest) continue;
 
-        const def = buildComponentToolDef(componentId, component, resolvedManifest, inPortName, gatewayComponentId);
-        const { _aiFields: aiFields, _userStaticValues: userStaticValues } = def.function;
+        const def = buildComponentToolDef(
+            componentId, component, resolvedManifest, inPortName, gatewayComponentId, descriptions
+        );
+        const { _aiFields: aiFields, _userStaticValues: userStaticValues, _label: label } = def.function;
+        if (descriptions.has(String(label || '').trim().toLowerCase())) described.add(String(label).trim().toLowerCase());
 
         await context.log({
             step: 'component-tool-manifest-inspect',
@@ -233,6 +278,13 @@ async function buildDefsFromManifests(context, manifests) {
     if (dropped.length) {
         await context.log({ step: 'component-tool-duplicate-names-dropped', dropped });
     }
+    // A description written for a tool that is not there (a typo, a renamed component) is lost
+    // silently otherwise
+    const unused = [...descriptions.keys()].filter(key => !described.has(key));
+    if (unused.length) {
+        await context.log('warn', { step: 'tool-descriptions-unmatched', tools: unused,
+            hint: 'Each "Tool" must be the label of a component on the tool port, or the name of an MCP server tool.' });
+    }
     return uniqueDefs;
 }
 
@@ -240,7 +292,7 @@ async function buildDefsFromManifests(context, manifests) {
  * Build tool defs for a single MCP server by listing its tools.
  * One MCP server can expose N tools — each becomes a separate tool def.
  */
-async function buildMCPToolDefs(context, componentId) {
+async function buildMCPToolDefs(context, componentId, descriptions = new Map()) {
     try {
         const mcpTools = await mcp.mcpListTools(context, componentId);
         await context.log({ step: 'mcp-tool-port-list-tools', componentId, tools: mcpTools });
@@ -256,7 +308,8 @@ async function buildMCPToolDefs(context, componentId) {
                 type: 'function',
                 function: {
                     name: buildToolName(componentId, mcpTool.name),
-                    description: mcpTool.description || mcpTool.name,
+                    description: descriptions.get(String(mcpTool.name).toLowerCase())
+                        || mcpTool.description || mcpTool.name,
                     parameters,
                     _isMCP: true,
                     _componentId: componentId,
@@ -265,7 +318,7 @@ async function buildMCPToolDefs(context, componentId) {
             };
         });
     } catch (err) {
-        await context.log({ step: 'mcp-tool-port-list-tools-error', componentId, error: err.message });
+        await context.log('error', { step: 'mcp-tool-port-list-tools-error', componentId, error: err.message });
         return [];
     }
 }
@@ -291,7 +344,9 @@ async function getComponentToolDefs(context) {
 
 // ─── Tool definition builder (regular action components) ──────────────────────
 
-function buildComponentToolDef(componentId, componentDescriptor, manifest, connectedInPortName, gatewayComponentId) {
+function buildComponentToolDef(
+    componentId, componentDescriptor, manifest, connectedInPortName, gatewayComponentId, descriptions = new Map()
+) {
     const aiFields = new Set();
     const userStaticValues = {};
 
@@ -370,10 +425,11 @@ function buildComponentToolDef(componentId, componentDescriptor, manifest, conne
         type: 'function',
         function: {
             name: buildToolName(componentId, rawLabel),
-            description: manifest.description || rawLabel,
+            description: describeComponentTool(rawLabel, manifest, descriptions),
             ...(Object.keys(parameters.properties).length ? { parameters } : {}),
             _componentTool: true,
             _componentId: componentId,
+            _label: rawLabel,
             _componentType: manifest.name || componentDescriptor.type,
             _inPort: inPortDef?.name || 'in',
             _userStaticValues: userStaticValues,
@@ -402,7 +458,8 @@ async function executeComponentTool(context, toolDef, args, { correlationId } = 
             await context.log({ step: 'mcp-tool-call-result', displayName, output });
             return typeof output === 'string' ? output : JSON.stringify(output, null, 2);
         } catch (err) {
-            await context.log({ step: 'mcp-tool-call-error', displayName, error: err.message });
+            // An error entry, not info: a failed tool call must show in the flow's errors
+            await context.log('error', { step: 'mcp-tool-call-error', displayName, args, error: err.message });
             return `Error calling tool ${displayName}: ${err.message}`;
         }
     }
@@ -438,7 +495,7 @@ async function executeComponentTool(context, toolDef, args, { correlationId } = 
         await context.log({ step: 'component-tool-result', displayName, result });
         return typeof result === 'string' ? result : JSON.stringify(result, null, 2);
     } catch (err) {
-        await context.log({ step: 'component-tool-call-error', displayName, endPoint, error: err.message });
+        await context.log('error', { step: 'component-tool-call-error', displayName, endPoint, payload: messagePayload, error: err.message });
         return `Error calling tool ${displayName}: ${err.message}`;
     }
 }
@@ -448,5 +505,8 @@ module.exports = {
     collectComponentTools,
     getComponentToolDefs,
     executeComponentTool,
-    toPublicToolDef
+    toPublicToolDef,
+    // For the unit tests
+    parseToolDescriptions,
+    buildComponentToolDef
 };
