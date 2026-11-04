@@ -3,6 +3,41 @@
     "author": "Appmixer <info@appmixer.com>",
     "description": "Expose action components and MCP servers as tools of the MCP Server that you can install into your LLM clients such as Claude. Connect the components you want to expose to the 'tool' output port and mark the fields the model should fill with the 'Model Defined Parameter' variable.",
     "webhook": true,
+    "properties": {
+        "schema": {
+            "type": "object",
+            "properties": {
+                "toolDescriptions": {
+                    "type": "object"
+                }
+            }
+        },
+        "inspector": {
+            "inputs": {
+                "toolDescriptions": {
+                    "type": "expression",
+                    "levels": ["ADD"],
+                    "label": "Tool descriptions",
+                    "tooltip": "What each tool is for, in the words the model reads when it picks a tool. Add a row per tool: 'Tool' is the label of a component on the 'tool' port (or the name of an MCP server's tool), 'Description' says when to use it and what it returns. A tool without a row is described by its label and what the component does.",
+                    "index": 1,
+                    "fields": {
+                        "tool": {
+                            "type": "text",
+                            "label": "Tool",
+                            "tooltip": "The label of the component on the 'tool' port, e.g. 'Save lead'.",
+                            "index": 1
+                        },
+                        "description": {
+                            "type": "textarea",
+                            "label": "Description",
+                            "tooltip": "E.g. 'Saves a sales lead. key: the company domain. value: JSON with company, web and stage.'",
+                            "index": 2
+                        }
+                    }
+                }
+            }
+        }
+    },
     "outPorts": [
         {
             "name": "out",
