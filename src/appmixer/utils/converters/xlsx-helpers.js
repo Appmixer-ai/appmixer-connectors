@@ -91,20 +91,28 @@ function isEmptyCell(value) {
 }
 
 /**
- * Column titles for a sheet whose first row is the header. Blank or duplicate titles get
- * `__EMPTY`, `__EMPTY_1`, ... so that every column keeps a distinct key.
+ * Column titles for a sheet whose first row is the header, named the way SheetJS did it:
+ * a blank title becomes `__EMPTY`, `__EMPTY_1`, ... and a repeated title gets a numeric suffix
+ * (`name`, `name_1`, `name_2`), so no column is lost and every key stays distinct.
  */
 function normalizeHeader(cells) {
 
-    const seen = new Set();
+    const used = new Set();
     let emptyIndex = 0;
     return cells.map(cell => {
         let title = isEmptyCell(cell) ? '' : String(cell).trim();
-        if (!title || seen.has(title)) {
+        if (!title) {
             title = emptyIndex === 0 ? '__EMPTY' : `__EMPTY_${emptyIndex}`;
             emptyIndex++;
         }
-        seen.add(title);
+        if (used.has(title)) {
+            let suffix = 1;
+            while (used.has(`${title}_${suffix}`)) {
+                suffix++;
+            }
+            title = `${title}_${suffix}`;
+        }
+        used.add(title);
         return title;
     });
 }
@@ -151,7 +159,8 @@ function isBlankRow(row) {
 }
 
 /**
- * Turn the first row of a sheet into the header and drop trailing blank rows.
+ * Turn the first row of a sheet into the header and drop trailing blank rows. A row that is
+ * wider than the header extends the header with `__EMPTY…` columns, so no cell is dropped.
  */
 function sheetRowsToTable(sheetRows) {
 
@@ -162,7 +171,12 @@ function sheetRowsToTable(sheetRows) {
     if (!rows.length) {
         return { header: [], rows: [] };
     }
-    const header = normalizeHeader(rows[0]);
+    const width = Math.max(...rows.map(row => row.length));
+    const headerCells = rows[0].slice();
+    while (headerCells.length < width) {
+        headerCells.push(null);
+    }
+    const header = normalizeHeader(headerCells);
     const data = rows.slice(1).map(row => header.map((title, index) => {
         const value = row[index];
         return isEmptyCell(value) ? null : value;
