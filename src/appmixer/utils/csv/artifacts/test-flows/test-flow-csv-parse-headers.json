@@ -1,0 +1,464 @@
+{
+    "name": "E2E utils.csv - semicolon CSV headers (csv-parse)",
+    "description": "Creates a semicolon-delimited CSV, adds a row by column name and reads it back filtered by column. AddRow and GetRows read the header row with csv-parse.",
+    "flow": {
+        "c9f900ad-2ad2-4719-b684-e8b6f52be37e": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {},
+            "config": {},
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "56ae6e08-eacd-4a6d-bc51-e52305ca4284": {
+            "type": "appmixer.utils.csv.CreateCSV",
+            "x": 272,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "c9f900ad-2ad2-4719-b684-e8b6f52be37e": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "c9f900ad-2ad2-4719-b684-e8b6f52be37e": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "filename": {},
+                                    "delimiter": {},
+                                    "initialContent": {}
+                                },
+                                "lambda": {
+                                    "filename": "e2e-utils-csv-parse.csv",
+                                    "delimiter": ";",
+                                    "initialContent": "ID;Full Name;Email\n1;John Doe;john.doe@example.com"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "ca54c317-0947-4cea-8a61-06b6d473e001": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 480,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "56ae6e08-eacd-4a6d-bc51-e52305ca4284": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "56ae6e08-eacd-4a6d-bc51-e52305ca4284": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "3cab9c32-9e4c-4fc2-a620-4ff9b48f63bf": {
+                                            "variable": "$.56ae6e08-eacd-4a6d-bc51-e52305ca4284.out.fileId",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{3cab9c32-9e4c-4fc2-a620-4ff9b48f63bf}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "5ffbc9ad-28e1-41f9-ae43-c91053e19dbc": {
+            "type": "appmixer.utils.csv.AddRow",
+            "x": 480,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "56ae6e08-eacd-4a6d-bc51-e52305ca4284": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "56ae6e08-eacd-4a6d-bc51-e52305ca4284": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "fileId": {
+                                        "c402b798-22a7-4618-a45e-33465e379ab3": {
+                                            "variable": "$.56ae6e08-eacd-4a6d-bc51-e52305ca4284.out.fileId",
+                                            "functions": []
+                                        }
+                                    },
+                                    "delimiter": {},
+                                    "rowWithColumns": {}
+                                },
+                                "lambda": {
+                                    "fileId": "{{{c402b798-22a7-4618-a45e-33465e379ab3}}}",
+                                    "delimiter": ";",
+                                    "rowWithColumns": {
+                                        "AND": [
+                                            {
+                                                "column": "ID",
+                                                "value": "2"
+                                            },
+                                            {
+                                                "column": "Full Name",
+                                                "value": "Jane Roe"
+                                            },
+                                            {
+                                                "column": "Email",
+                                                "value": "jane.roe@example.com"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "properties": {
+                    "withHeaders": true
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "1c679774-e25b-4c2a-b4aa-a584eebbb121": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 688,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "5ffbc9ad-28e1-41f9-ae43-c91053e19dbc": [
+                        "fileId"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "5ffbc9ad-28e1-41f9-ae43-c91053e19dbc": {
+                            "fileId": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "9040b9c6-3bea-4ee7-b2fa-1c19e848919c": {
+                                            "variable": "$.5ffbc9ad-28e1-41f9-ae43-c91053e19dbc.fileId.fileId",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{9040b9c6-3bea-4ee7-b2fa-1c19e848919c}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "09057334-8c81-4b88-a886-5018b2244a9d": {
+            "type": "appmixer.utils.csv.GetRows",
+            "x": 688,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "5ffbc9ad-28e1-41f9-ae43-c91053e19dbc": [
+                        "fileId"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "5ffbc9ad-28e1-41f9-ae43-c91053e19dbc": {
+                            "fileId": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "fileId": {
+                                        "556cfef0-ede2-4934-b9bc-8b8612d00076": {
+                                            "variable": "$.5ffbc9ad-28e1-41f9-ae43-c91053e19dbc.fileId.fileId",
+                                            "functions": []
+                                        }
+                                    },
+                                    "delimiter": {},
+                                    "allAtOnce": {},
+                                    "parseNumbers": {},
+                                    "parseBooleans": {},
+                                    "rowFormat": {},
+                                    "filters": {}
+                                },
+                                "lambda": {
+                                    "fileId": "{{{556cfef0-ede2-4934-b9bc-8b8612d00076}}}",
+                                    "delimiter": ";",
+                                    "allAtOnce": true,
+                                    "parseNumbers": false,
+                                    "parseBooleans": false,
+                                    "rowFormat": "object",
+                                    "filters": {
+                                        "OR": [
+                                            {
+                                                "AND": [
+                                                    {
+                                                        "column": "Email",
+                                                        "operator": "=",
+                                                        "value": "jane.roe@example.com"
+                                                    }
+                                                ]
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "properties": {
+                    "withHeaders": true,
+                    "filterRows": true
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "92f18c64-e673-481b-86bf-3e52af2e8561": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 896,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "09057334-8c81-4b88-a886-5018b2244a9d": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "09057334-8c81-4b88-a886-5018b2244a9d": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "f7ecfe1c-34a2-4709-93a1-e261dc8171cf": {
+                                            "variable": "$.09057334-8c81-4b88-a886-5018b2244a9d.out.rows",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$[0]['Full Name']"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        },
+                                        "68320bdb-9156-4c1c-a812-cb5b46e5361e": {
+                                            "variable": "$.09057334-8c81-4b88-a886-5018b2244a9d.out.rows",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$[0].ID"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{f7ecfe1c-34a2-4709-93a1-e261dc8171cf}}}",
+                                                "assertion": "equal",
+                                                "expected": "Jane Roe"
+                                            },
+                                            {
+                                                "field": "{{{68320bdb-9156-4c1c-a812-cb5b46e5361e}}}",
+                                                "assertion": "equal",
+                                                "expected": "2"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "5cf8316b-e62b-4ae5-a15a-fd053e6a8f03": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 1104,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "ca54c317-0947-4cea-8a61-06b6d473e001": [
+                        "out"
+                    ],
+                    "1c679774-e25b-4c2a-b4aa-a584eebbb121": [
+                        "out"
+                    ],
+                    "92f18c64-e673-481b-86bf-3e52af2e8561": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 180
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "0d90c38e-6cfd-4dde-a5b1-c8e15c6dc8dd": {
+            "type": "appmixer.utils.files.RemoveFile",
+            "x": 1312,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "5cf8316b-e62b-4ae5-a15a-fd053e6a8f03": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "5cf8316b-e62b-4ae5-a15a-fd053e6a8f03": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "fileId": {
+                                        "632ba47e-5d45-40ca-a841-f838558fc797": {
+                                            "variable": "$.5ffbc9ad-28e1-41f9-ae43-c91053e19dbc.fileId.fileId",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "fileId": "{{{632ba47e-5d45-40ca-a841-f838558fc797}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "1ea5412e-47a2-4959-8025-cb52d54e5f99": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1520,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "0d90c38e-6cfd-4dde-a5b1-c8e15c6dc8dd": [
+                        "deleted"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "successStoreId": "64f6f1f9193228000754082f",
+                    "failedStoreId": "64f6f1f0193228000754082e"
+                },
+                "transform": {
+                    "in": {
+                        "0d90c38e-6cfd-4dde-a5b1-c8e15c6dc8dd": {
+                            "deleted": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "dcc9e1d3-7048-451f-be38-059b9509819c": {
+                                            "variable": "$.5cf8316b-e62b-4ae5-a15a-fd053e6a8f03.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E utils.csv - semicolon CSV headers (csv-parse)",
+                                    "result": "{{{dcc9e1d3-7048-451f-be38-059b9509819c}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        }
+    }
+}
