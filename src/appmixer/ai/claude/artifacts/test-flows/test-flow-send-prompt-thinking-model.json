@@ -1,0 +1,200 @@
+{
+    "name": "E2E Claude - Send Prompt with a thinking model",
+    "description": "Send Prompt with claude-sonnet-5-5 (a model with extended thinking) returns the text of the answer, not an empty string (issue #3021).",
+    "flow": {
+        "a2310c7e-378b-48eb-b946-1c5a6eaa3ab8": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 144,
+            "source": {},
+            "version": "1.0.0",
+            "config": {},
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "49507a72-5035-4cf0-b7e9-1f28ebc69934": {
+            "type": "appmixer.ai.claude.SendPrompt",
+            "x": 272,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "a2310c7e-378b-48eb-b946-1c5a6eaa3ab8": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "a2310c7e-378b-48eb-b946-1c5a6eaa3ab8": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "prompt": {},
+                                    "system": {},
+                                    "model": {},
+                                    "max_tokens": {}
+                                },
+                                "lambda": {
+                                    "prompt": "What is the capital of France? Reply with the city name only, in upper case.",
+                                    "system": "You are a test assistant. Answer as briefly as possible.",
+                                    "model": "claude-sonnet-5-5",
+                                    "max_tokens": 4096
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "668fe2db-5e2d-44ce-b0e5-ec9d3e7f6cfd": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 480,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "49507a72-5035-4cf0-b7e9-1f28ebc69934": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "49507a72-5035-4cf0-b7e9-1f28ebc69934": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "1eec1618-1199-43d8-b96f-0c4f7d907a9e": {
+                                            "variable": "$.49507a72-5035-4cf0-b7e9-1f28ebc69934.out.answer",
+                                            "functions": []
+                                        },
+                                        "15dc2913-9286-4022-b66d-1ad23b19e498": {
+                                            "variable": "$.49507a72-5035-4cf0-b7e9-1f28ebc69934.out.stop_reason",
+                                            "functions": []
+                                        },
+                                        "58bec7ac-b731-4d20-91b2-6bbad893cdc7": {
+                                            "variable": "$.49507a72-5035-4cf0-b7e9-1f28ebc69934.out.model",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{1eec1618-1199-43d8-b96f-0c4f7d907a9e}}}",
+                                                "assertion": "regex",
+                                                "regex": "PARIS"
+                                            },
+                                            {
+                                                "field": "{{{15dc2913-9286-4022-b66d-1ad23b19e498}}}",
+                                                "assertion": "equal",
+                                                "expected": "end_turn"
+                                            },
+                                            {
+                                                "field": "{{{58bec7ac-b731-4d20-91b2-6bbad893cdc7}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "342d53da-3b32-4b03-8987-da4d7e760e27": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 688,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "668fe2db-5e2d-44ce-b0e5-ec9d3e7f6cfd": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 180
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "49f01568-2e35-4aef-8e8f-4b9976ffa106": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 896,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "342d53da-3b32-4b03-8987-da4d7e760e27": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "successStoreId": "64f6f1f9193228000754082f",
+                    "failedStoreId": "64f6f1f0193228000754082e"
+                },
+                "transform": {
+                    "in": {
+                        "342d53da-3b32-4b03-8987-da4d7e760e27": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "0caab145-03fe-47e3-b7d4-d48b0033d153": {
+                                            "variable": "$.342d53da-3b32-4b03-8987-da4d7e760e27.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E Claude - Send Prompt with a thinking model",
+                                    "result": "{{{0caab145-03fe-47e3-b7d4-d48b0033d153}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        }
+    },
+    "notes": {
+        "42cd0c08-4c3f-408d-945d-a671ad148f38": {
+            "x": 64,
+            "y": -96,
+            "width": 672,
+            "height": 192,
+            "content": "## Test data assumption\n\nThe Claude account must have access to `claude-sonnet-5-5`, a model with extended thinking. Its response starts with a `thinking` block; before ai.claude 1.2.2 Send Prompt returned an empty Answer for it (issue #3021). Keep Max Tokens high (4096) so thinking cannot use the whole budget."
+        }
+    }
+}
