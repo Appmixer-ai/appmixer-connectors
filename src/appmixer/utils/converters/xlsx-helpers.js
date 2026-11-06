@@ -1,10 +1,21 @@
-const xlsx = require('xlsx');
+'use strict';
 const path = require('path');
+const { pipeline } = require('node:stream/promises');
+const { Writable } = require('node:stream');
+const { readSheet, InvalidSpreadsheetError } = require('read-excel-file/node');
+const writeExcelFile = require('write-excel-file/node');
+const { parse: parseHtml } = require('node-html-parser');
+const { stringify: stringifyCsv } = require('csv-stringify/sync');
+const { getCSVReadStream, castValue } = require('./csvTransforms');
 
 const ZIP_LOCAL_FILE_HEADER_SIGNATURE = 0x04034b50;
 const ZIP_END_OF_CENTRAL_DIRECTORY_SIGNATURE = 0x06054b50;
 const ZIP_END_OF_CENTRAL_DIRECTORY_MIN_LENGTH = 22;
 const ZIP_MAX_COMMENT_LENGTH = 0xFFFF;
+
+// Every converter turns its input into this table shape; every output format is rendered from it.
+// `header` holds the column titles, `rows` the data rows with the same length as `header`.
+// Cell values are strings, numbers, booleans, Date objects or null (empty cell).
 
 function createSpreadsheetValidationError(context, message) {
 
@@ -45,106 +56,249 @@ function assertValidZipArchive(buffer, context) {
     }
 }
 
-module.exports.JSON2Workbook = async function(readStream) {
+function readStreamToBuffer(readStream) {
 
     return new Promise((resolve, reject) => {
         const buffers = [];
-        readStream.on('data', (chunk) => {
-            buffers.push(chunk);
-        }).on('error', err => {
-            reject(err);
-        }).on('end', () => {
-            try {
-                const buffer = Buffer.concat(buffers);
-                const json = JSON.parse(buffer.toString());
-                const workbook = xlsx.utils.book_new();
-                const worksheet = xlsx.utils.json_to_sheet(json);
-                xlsx.utils.book_append_sheet(workbook, worksheet, 'Sheet1');
-                resolve(workbook);
-            } catch (err) {
-                reject(err);
+        readStream
+            .on('data', chunk => buffers.push(chunk))
+            .on('error', reject)
+            .on('end', () => resolve(Buffer.concat(buffers)));
+    });
+}
+
+function isEmptyCell(value) {
+
+    return value === null || value === undefined || value === '';
+}
+
+/**
+ * Column titles for a sheet whose first row is the header. Blank or duplicate titles get
+ * `__EMPTY`, `__EMPTY_1`, ... so that every column keeps a distinct key.
+ */
+function normalizeHeader(cells) {
+
+    const seen = new Set();
+    let emptyIndex = 0;
+    return cells.map(cell => {
+        let title = isEmptyCell(cell) ? '' : String(cell).trim();
+        if (!title || seen.has(title)) {
+            title = emptyIndex === 0 ? '__EMPTY' : `__EMPTY_${emptyIndex}`;
+            emptyIndex++;
+        }
+        seen.add(title);
+        return title;
+    });
+}
+
+function objectsToTable(objects) {
+
+    const header = [];
+    const known = new Set();
+    objects.forEach(object => {
+        Object.keys(object || {}).forEach(key => {
+            if (!known.has(key)) {
+                known.add(key);
+                header.push(key);
             }
         });
     });
+    const rows = objects.map(object => header.map(key => {
+        const value = object?.[key];
+        if (value !== null && typeof value === 'object' && !(value instanceof Date)) {
+            return JSON.stringify(value);
+        }
+        return value === undefined ? null : value;
+    }));
+    return { header, rows };
+}
+
+function tableToObjects({ header, rows }) {
+
+    return rows.map(row => {
+        const object = {};
+        header.forEach((key, index) => {
+            const value = row[index];
+            if (!isEmptyCell(value)) {
+                object[key] = value;
+            }
+        });
+        return object;
+    });
+}
+
+function isBlankRow(row) {
+
+    return row.every(isEmptyCell);
+}
+
+/**
+ * Turn the first row of a sheet into the header and drop trailing blank rows.
+ */
+function sheetRowsToTable(sheetRows) {
+
+    const rows = sheetRows.slice();
+    while (rows.length && isBlankRow(rows[rows.length - 1])) {
+        rows.pop();
+    }
+    if (!rows.length) {
+        return { header: [], rows: [] };
+    }
+    const header = normalizeHeader(rows[0]);
+    const data = rows.slice(1).map(row => header.map((title, index) => {
+        const value = row[index];
+        return isEmptyCell(value) ? null : value;
+    }));
+    return { header, rows: data };
+}
+
+function textCellValue(value) {
+
+    if (isEmptyCell(value)) return '';
+    if (value instanceof Date) return value.toISOString();
+    return String(value);
+}
+
+function escapeHtml(text) {
+
+    return text
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+}
+
+// ---------------------------------------------------------------------------------------------------------------
+// Readers: (readStream, context) -> table
+
+module.exports.JSON2Workbook = async function(readStream, context) {
+
+    const buffer = await readStreamToBuffer(readStream);
+    let json;
+    try {
+        json = JSON.parse(buffer.toString());
+    } catch (err) {
+        throw createSpreadsheetValidationError(context, `Invalid JSON file: ${err.message}`);
+    }
+    if (!Array.isArray(json)) {
+        throw createSpreadsheetValidationError(context, 'Invalid JSON file: expected an array of objects, one object per row.');
+    }
+    return objectsToTable(json);
 };
 
 module.exports.CSV2Workbook = async function(readStream) {
 
-    return new Promise((resolve, reject) => {
-        const buffers = [];
-        readStream.on('data', (chunk) => {
-            buffers.push(chunk);
-        }).on('error', err => {
-            reject(err);
-        }).on('end', () => {
-            try {
-                // Is there BOM at the beginning of the file?
-                const isBom = buffers[0].readUInt8(0) === 0xEF
-                    && buffers[0].readUInt8(1) === 0xBB
-                    && buffers[0].readUInt8(2) === 0xBF;
-
-                if (!isBom) {
-                    // If there is no BOM, we need to add it. See #1717.
-                    const bom = Buffer.from([0xEF, 0xBB, 0xBF]);
-                    buffers[0] = Buffer.concat([bom, buffers[0]]);
-                }
-                const buffer = Buffer.concat(buffers);
-                const workbook = xlsx.read(buffer, { type: 'buffer' });
-                resolve(workbook);
-            } catch (err) {
-                reject(err);
+    const records = [];
+    await pipeline(
+        readStream,
+        getCSVReadStream(),
+        new Writable({
+            objectMode: true,
+            write(record, encoding, callback) {
+                records.push(record);
+                callback();
             }
-        });
-    });
+        })
+    );
+    return objectsToTable(records);
 };
 
-module.exports.HTML2Workbook = async function(readStream) {
+module.exports.HTML2Workbook = async function(readStream, context) {
 
-    return new Promise((resolve, reject) => {
-        const buffers = [];
-        readStream.on('data', (chunk) => {
-            buffers.push(chunk);
-        }).on('error', err => {
-            reject(err);
-        }).on('end', () => {
-            try {
-                const buffer = Buffer.concat(buffers);
-                const workbook = xlsx.read(buffer);
-                resolve(workbook);
-            } catch (err) {
-                reject(err);
-            }
-        });
+    const buffer = await readStreamToBuffer(readStream);
+    const root = parseHtml(buffer.toString());
+    const table = root.querySelector('table');
+    if (!table) {
+        throw createSpreadsheetValidationError(context, 'Invalid HTML file: no <table> element found.');
+    }
+    const sheetRows = table.querySelectorAll('tr').map(tr => {
+        return tr.querySelectorAll('th, td').map(cell => castValue(cell.text.trim()));
     });
+    return sheetRowsToTable(sheetRows);
 };
 
 module.exports.XLSX2Workbook = async function(readStream, context) {
 
-    return new Promise((resolve, reject) => {
-        const buffers = [];
-        readStream.on('data', (chunk) => {
-            buffers.push(chunk);
-        }).on('error', err => {
-            reject(err);
-        }).on('end', () => {
-            try {
-                const buffer = Buffer.concat(buffers);
-                assertValidZipArchive(buffer, context);
-                const workbook = xlsx.read(buffer, { type: 'buffer' });
-                resolve(workbook);
-            } catch (err) {
-                reject(err);
-            }
-        });
-    });
+    const buffer = await readStreamToBuffer(readStream);
+    assertValidZipArchive(buffer, context);
+    let sheetRows;
+    try {
+        // The first sheet, as a 2D array of typed cells (string, number, boolean, Date, null).
+        sheetRows = await readSheet(buffer);
+    } catch (err) {
+        if (err instanceof InvalidSpreadsheetError || err?.name === 'InvalidSpreadsheetError') {
+            throw createSpreadsheetValidationError(context, `Invalid spreadsheet file: ${err.message}`);
+        }
+        throw err;
+    }
+    return sheetRowsToTable(sheetRows);
 };
 
+// ---------------------------------------------------------------------------------------------------------------
+// Writers: table -> Buffer
+
+function xlsxCell(value) {
+
+    if (isEmptyCell(value)) return null;
+    if (typeof value === 'number') return { value, type: Number };
+    if (typeof value === 'boolean') return { value, type: Boolean };
+    if (value instanceof Date) return { value, type: Date, format: 'yyyy-mm-dd hh:mm:ss' };
+    return { value: String(value), type: String };
+}
+
+async function writeXlsx({ header, rows }) {
+
+    const sheetData = [
+        header.map(title => ({ value: title, type: String })),
+        ...rows.map(row => row.map(xlsxCell))
+    ];
+    return writeExcelFile(sheetData).toBuffer();
+}
+
+function writeCsv({ header, rows }) {
+
+    const csv = stringifyCsv([header, ...rows], {
+        cast: {
+            boolean: value => String(value),
+            date: value => value.toISOString()
+        }
+    });
+    // UTF-8 BOM so that Excel opens the file with the right encoding.
+    return Buffer.from('﻿' + csv, 'utf8');
+}
+
+function writeHtml({ header, rows }) {
+
+    const headerHtml = `<tr>${header.map(title => `<th>${escapeHtml(title)}</th>`).join('')}</tr>`;
+    const rowsHtml = rows.map(row => {
+        return `<tr>${row.map(value => `<td>${escapeHtml(textCellValue(value))}</td>`).join('')}</tr>`;
+    }).join('');
+    const html = '<html><head><meta charset="utf-8"/><title>Table Export</title></head>'
+        + `<body><table>${headerHtml}${rowsHtml}</table></body></html>`;
+    return Buffer.from(html, 'utf8');
+}
+
+async function writeTable(table, bookType) {
+
+    switch (bookType) {
+        case 'xlsx': return writeXlsx(table);
+        case 'csv': return writeCsv(table);
+        case 'html': return writeHtml(table);
+        default: throw new Error(`Unsupported output format: ${bookType}`);
+    }
+}
+
+/**
+ * Convert the source file with `converterFunction` (one of the *2Workbook readers) and save it
+ * as `bookType` ('xlsx', 'csv' or 'html') under the source file name with the new extension.
+ * @return {Promise<{fileId: string, fileName: string}>}
+ */
 module.exports.convertFile = async function(context, sourceFileId, converterFunction, bookType, mimeType) {
 
     const readStream = await context.getFileReadStream(sourceFileId);
     const fileInfo = await context.getFileInfo(sourceFileId);
-    const workbook = await converterFunction(readStream, context);
-    const outputBuffer = xlsx.write(workbook, { type: 'buffer', bookType: bookType });
+    const table = await converterFunction(readStream, context);
+    const outputBuffer = await writeTable(table, bookType);
     const newFileName = path.parse(fileInfo.filename).name + '.' + bookType;
     const savedFile = await context.saveFile(newFileName, mimeType, outputBuffer);
     return {
@@ -154,22 +308,18 @@ module.exports.convertFile = async function(context, sourceFileId, converterFunc
 };
 
 /**
- * @deprecated use the csvToJson() function instead
- * @param context
- * @param sourceFileId
- * @param converterFunction
- * @returns {Promise<{fileName: string, fileId}>}
+ * Convert the source file with `converterFunction` and save it as JSON: an array with one object
+ * per row, keyed by the column titles; empty cells are left out.
+ * @return {Promise<{fileId: string, fileName: string}>}
  */
-// Since SheetJS does not provide a "json" bookType, we need to have a special case for JSON export using the sheet_to_json() utility.
 module.exports.convertFile2JSON = async function(context, sourceFileId, converterFunction) {
 
     const readStream = await context.getFileReadStream(sourceFileId);
     const fileInfo = await context.getFileInfo(sourceFileId);
-    const workbook = await converterFunction(readStream, context);
-    const firstWorksheet = workbook.Sheets[workbook.SheetNames[0]];
-    const json = xlsx.utils.sheet_to_json(firstWorksheet);
+    const table = await converterFunction(readStream, context);
+    const json = tableToObjects(table);
     const newFileName = path.parse(fileInfo.filename).name + '.json';
-    const savedFile = await context.saveFile(newFileName, 'application/json', JSON.stringify(json, '\t', 4));
+    const savedFile = await context.saveFile(newFileName, 'application/json', JSON.stringify(json, null, 4));
     return {
         fileId: savedFile.fileId,
         fileName: newFileName
