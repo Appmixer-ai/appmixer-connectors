@@ -49,10 +49,28 @@ function assertValidZipArchive(buffer, context) {
 
     const centralDirectorySize = buffer.readUInt32LE(endOfCentralDirectoryOffset + 12);
     const centralDirectoryOffset = buffer.readUInt32LE(endOfCentralDirectoryOffset + 16);
+    if (centralDirectorySize === 0xFFFFFFFF || centralDirectoryOffset === 0xFFFFFFFF) {
+        // ZIP64 archive: the real values live in the ZIP64 end-of-central-directory record.
+        // The spreadsheet reader validates those itself.
+        return;
+    }
     const centralDirectoryEnd = centralDirectoryOffset + centralDirectorySize;
 
     if (centralDirectoryEnd > endOfCentralDirectoryOffset) {
         throw createSpreadsheetValidationError(context, 'Invalid spreadsheet file: truncated ZIP archive.');
+    }
+}
+
+// The readers need the whole file in memory (a workbook is a ZIP archive), so cap the input size.
+// Override with the CONVERTERS_MAX_FILE_SIZE config value (bytes).
+const DEFAULT_MAX_FILE_SIZE = 50 * 1024 * 1024;
+
+function assertFileSize(context, fileInfo) {
+
+    const limit = Number(context.config?.CONVERTERS_MAX_FILE_SIZE) || DEFAULT_MAX_FILE_SIZE;
+    if (fileInfo.length > limit) {
+        throw createSpreadsheetValidationError(context,
+            `File is too large (${fileInfo.length} bytes). Max file size is ${Math.round(limit / 1024 / 1024)} MB.`);
     }
 }
 
@@ -269,7 +287,8 @@ function writeCsv({ header, rows }) {
 
 function writeHtml({ header, rows }) {
 
-    const headerHtml = `<tr>${header.map(title => `<th>${escapeHtml(title)}</th>`).join('')}</tr>`;
+    // Same structure as the SheetJS export: every cell, header included, is a <td>, first row = header.
+    const headerHtml = `<tr>${header.map(title => `<td>${escapeHtml(title)}</td>`).join('')}</tr>`;
     const rowsHtml = rows.map(row => {
         return `<tr>${row.map(value => `<td>${escapeHtml(textCellValue(value))}</td>`).join('')}</tr>`;
     }).join('');
@@ -295,8 +314,9 @@ async function writeTable(table, bookType) {
  */
 module.exports.convertFile = async function(context, sourceFileId, converterFunction, bookType, mimeType) {
 
-    const readStream = await context.getFileReadStream(sourceFileId);
     const fileInfo = await context.getFileInfo(sourceFileId);
+    assertFileSize(context, fileInfo);
+    const readStream = await context.getFileReadStream(sourceFileId);
     const table = await converterFunction(readStream, context);
     const outputBuffer = await writeTable(table, bookType);
     const newFileName = path.parse(fileInfo.filename).name + '.' + bookType;
@@ -314,8 +334,9 @@ module.exports.convertFile = async function(context, sourceFileId, converterFunc
  */
 module.exports.convertFile2JSON = async function(context, sourceFileId, converterFunction) {
 
-    const readStream = await context.getFileReadStream(sourceFileId);
     const fileInfo = await context.getFileInfo(sourceFileId);
+    assertFileSize(context, fileInfo);
+    const readStream = await context.getFileReadStream(sourceFileId);
     const table = await converterFunction(readStream, context);
     const json = tableToObjects(table);
     const newFileName = path.parse(fileInfo.filename).name + '.json';

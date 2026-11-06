@@ -1,6 +1,6 @@
 {
     "name": "appmixer.utils.converters",
-    "version": "1.4.5",
+    "version": "1.5.0",
     "changelog": {
         "1.1.0": [
             "FileId inputs changed from 'text' to 'filepicker'. Requires Appmixer 4.4.4 or higher."
@@ -33,9 +33,10 @@
         "1.4.4": [
             "Security: upgraded tar to 7.5.22 (path traversal, symlink poisoning and hardlink advisories), and moved archiver's transitive minimatch (3.1.5, 5.1.9) and brace-expansion (1.1.21, 2.1.7) to patched versions (ReDoS)."
         ],
-        "1.4.5": [
+        "1.5.0": [
             "Security: moved minimatch to 11.0.1 (DoS via globparts amplification, GHSA-g3hv-75wg-m249). Upgraded archiver to 7.0.1 and unzipper to 0.12.5 so that no dependency still needs glob 7 (incompatible with minimatch 11); archiver-utils glob pinned to 14.0.2.",
-            "Replaced SheetJS (xlsx) with read-excel-file and write-excel-file for XLSX, node-html-parser for HTML tables and csv-stringify for CSV output. The vendored xlsx tarball is gone: the component uploader stores files as text, so it never installed. Clear errors for a JSON file that is not an array, an HTML file without a table and an invalid workbook. Output HTML tables now use <th> for the header row and escape cell text.",
+            "Replaced SheetJS (xlsx) with read-excel-file and write-excel-file for XLSX, node-html-parser for HTML tables and csv-stringify for CSV output in CSV2XLSX, JSON2XLSX, HTML2XLSX, HTML2CSV, HTML2JSON, XLSX2CSV, XLSX2JSON and XLSX2HTML. The vendored xlsx tarball is gone: the component uploader stores files as text, so it never installed. CSV2HTML, CSV2JSON, JSON2CSV and JSON2HTML are unchanged.",
+            "Output differences of the eight components above: XLSX2HTML and HTML2XLSX-produced HTML tables keep the same structure (every cell is a <td>, first row is the header, text is escaped) but carry no SheetJS data-t/data-v/id attributes. XLSX2CSV and HTML2CSV still start with a UTF-8 BOM. Values are typed as before (numeric and boolean text becomes numbers and booleans, blank header cells become __EMPTY, only the first sheet is read); dates read from a workbook are written as ISO 8601 strings. A JSON file that is not an array, an HTML file without a table and an invalid workbook fail with a clear error instead of a library crash. Input files are limited to 50 MB (CONVERTERS_MAX_FILE_SIZE in the module config).",
             "E2E test flows for all 15 converters."
         ]
     }
