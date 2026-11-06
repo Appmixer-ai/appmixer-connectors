@@ -1,0 +1,901 @@
+{
+    "name": "E2E Utils Converters - Archive ZIP and TAR, append to existing archive",
+    "description": "Saves two text files, zips the first one with Archive, appends the second one to that ZIP (Archive File ID set), then does the same with a TAR archive. Appending re-reads the existing archive (unzipper / tar parsers) and replaces it in place, so the file ID must stay the same.",
+    "flow": {
+        "071259f0-1ae3-41df-ba2d-43e221af516d": {
+            "type": "appmixer.utils.controls.OnStart",
+            "label": "On Start",
+            "x": 64,
+            "y": 16,
+            "source": {},
+            "config": {},
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "e0a739de-7c15-4d4a-a561-7e7e89b5753f": {
+            "type": "appmixer.utils.files.SaveFile",
+            "label": "Save file A",
+            "x": 272,
+            "y": 16,
+            "source": {
+                "in": {
+                    "071259f0-1ae3-41df-ba2d-43e221af516d": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "071259f0-1ae3-41df-ba2d-43e221af516d": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "filename": {},
+                                    "mimetype": {},
+                                    "content": {},
+                                    "contentEncoding": {}
+                                },
+                                "lambda": {
+                                    "filename": "e2e-archive-a.txt",
+                                    "mimetype": "text/plain",
+                                    "content": "Appmixer E2E archive fixture A.",
+                                    "contentEncoding": "utf8"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "f2d940c8-b757-47fb-b20a-3afefbf9ffc3": {
+            "type": "appmixer.utils.files.SaveFile",
+            "label": "Save file B",
+            "x": 480,
+            "y": 16,
+            "source": {
+                "in": {
+                    "e0a739de-7c15-4d4a-a561-7e7e89b5753f": [
+                        "file"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "e0a739de-7c15-4d4a-a561-7e7e89b5753f": {
+                            "file": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "filename": {},
+                                    "mimetype": {},
+                                    "content": {},
+                                    "contentEncoding": {}
+                                },
+                                "lambda": {
+                                    "filename": "e2e-archive-b.txt",
+                                    "mimetype": "text/plain",
+                                    "content": "Appmixer E2E archive fixture B.",
+                                    "contentEncoding": "utf8"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "794e0313-cff8-4fbd-b127-6611273f3464": {
+            "type": "appmixer.utils.converters.Archive",
+            "label": "Archive ZIP",
+            "x": 688,
+            "y": 144,
+            "source": {
+                "in": {
+                    "f2d940c8-b757-47fb-b20a-3afefbf9ffc3": [
+                        "file"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "f2d940c8-b757-47fb-b20a-3afefbf9ffc3": {
+                            "file": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "outputFormat": {},
+                                    "fileName": {},
+                                    "files": {
+                                        "80aecbf1-b484-4785-bc78-b90d0b85e6c0": {
+                                            "variable": "$.e0a739de-7c15-4d4a-a561-7e7e89b5753f.file.fileId",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "outputFormat": "zip",
+                                    "fileName": "e2e-converters.zip",
+                                    "files": {
+                                        "AND": [
+                                            {
+                                                "fileId": "{{{80aecbf1-b484-4785-bc78-b90d0b85e6c0}}}"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "0f7951b2-d5db-4910-96c5-4bb47ef10e34": {
+            "type": "appmixer.utils.test.Assert",
+            "label": "Assert ZIP created",
+            "x": 896,
+            "y": 144,
+            "source": {
+                "in": {
+                    "794e0313-cff8-4fbd-b127-6611273f3464": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "794e0313-cff8-4fbd-b127-6611273f3464": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "167f2f3b-5a95-461b-badc-07b6663b3858": {
+                                            "variable": "$.794e0313-cff8-4fbd-b127-6611273f3464.out.fileId",
+                                            "functions": []
+                                        },
+                                        "2e189c0d-e2c1-4b78-a94e-ba474e0c0139": {
+                                            "variable": "$.794e0313-cff8-4fbd-b127-6611273f3464.out.fileName",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{167f2f3b-5a95-461b-badc-07b6663b3858}}}",
+                                                "assertion": "notEmpty"
+                                            },
+                                            {
+                                                "field": "{{{2e189c0d-e2c1-4b78-a94e-ba474e0c0139}}}",
+                                                "assertion": "equal",
+                                                "expected": "e2e-converters.zip"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "aba8a52b-1747-4cdc-adb3-0df873f60888": {
+            "type": "appmixer.utils.converters.Archive",
+            "label": "Archive ZIP append",
+            "x": 896,
+            "y": 272,
+            "source": {
+                "in": {
+                    "794e0313-cff8-4fbd-b127-6611273f3464": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "794e0313-cff8-4fbd-b127-6611273f3464": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "outputFormat": {},
+                                    "fileName": {},
+                                    "archiveFileID": {
+                                        "af58afb5-e322-4998-80fc-d0f0e081ce0d": {
+                                            "variable": "$.794e0313-cff8-4fbd-b127-6611273f3464.out.fileId",
+                                            "functions": []
+                                        }
+                                    },
+                                    "files": {
+                                        "47e3d695-b05d-4c4d-aaa9-9794faf846ac": {
+                                            "variable": "$.f2d940c8-b757-47fb-b20a-3afefbf9ffc3.file.fileId",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "outputFormat": "zip",
+                                    "fileName": "e2e-converters.zip",
+                                    "archiveFileID": "{{{af58afb5-e322-4998-80fc-d0f0e081ce0d}}}",
+                                    "files": {
+                                        "AND": [
+                                            {
+                                                "fileId": "{{{47e3d695-b05d-4c4d-aaa9-9794faf846ac}}}"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "a2f7650b-f6c2-49cf-8677-36f1a5462e0c": {
+            "type": "appmixer.utils.files.LoadFile",
+            "label": "Load appended ZIP",
+            "x": 1104,
+            "y": 272,
+            "source": {
+                "in": {
+                    "aba8a52b-1747-4cdc-adb3-0df873f60888": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "aba8a52b-1747-4cdc-adb3-0df873f60888": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "fileId": {
+                                        "ac9640fc-ea82-482b-85a1-490213386439": {
+                                            "variable": "$.aba8a52b-1747-4cdc-adb3-0df873f60888.out.fileId",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "fileId": "{{{ac9640fc-ea82-482b-85a1-490213386439}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "777f51e6-035e-4752-8e02-e01702d1f51c": {
+            "type": "appmixer.utils.test.Assert",
+            "label": "Assert ZIP appended in place",
+            "x": 1312,
+            "y": 272,
+            "source": {
+                "in": {
+                    "a2f7650b-f6c2-49cf-8677-36f1a5462e0c": [
+                        "content"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "a2f7650b-f6c2-49cf-8677-36f1a5462e0c": {
+                            "content": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "38e03dd8-ec90-4c9b-bbb0-97398b67eb6e": {
+                                            "variable": "$.aba8a52b-1747-4cdc-adb3-0df873f60888.out.fileId",
+                                            "functions": []
+                                        },
+                                        "09764bd0-842b-4ce7-9a6e-873ae655b03e": {
+                                            "variable": "$.794e0313-cff8-4fbd-b127-6611273f3464.out.fileId",
+                                            "functions": []
+                                        },
+                                        "dd789c08-8a6f-42ee-92c7-d64a56bb7c6d": {
+                                            "variable": "$.aba8a52b-1747-4cdc-adb3-0df873f60888.out.fileName",
+                                            "functions": []
+                                        },
+                                        "ca47e1f5-5fc4-4032-8ebd-02f86e60881a": {
+                                            "variable": "$.a2f7650b-f6c2-49cf-8677-36f1a5462e0c.content.content",
+                                            "functions": []
+                                        },
+                                        "0c824e3c-1990-4dd4-85f1-d36f8dc76c8e": {
+                                            "variable": "$.a2f7650b-f6c2-49cf-8677-36f1a5462e0c.content.content",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{38e03dd8-ec90-4c9b-bbb0-97398b67eb6e}}}",
+                                                "assertion": "equal",
+                                                "expected": "{{{09764bd0-842b-4ce7-9a6e-873ae655b03e}}}"
+                                            },
+                                            {
+                                                "field": "{{{dd789c08-8a6f-42ee-92c7-d64a56bb7c6d}}}",
+                                                "assertion": "equal",
+                                                "expected": "e2e-converters.zip"
+                                            },
+                                            {
+                                                "field": "{{{ca47e1f5-5fc4-4032-8ebd-02f86e60881a}}}",
+                                                "assertion": "regex",
+                                                "regex": "e2e-archive-a\\.txt"
+                                            },
+                                            {
+                                                "field": "{{{0c824e3c-1990-4dd4-85f1-d36f8dc76c8e}}}",
+                                                "assertion": "regex",
+                                                "regex": "e2e-archive-b\\.txt"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "89aa1156-2fe8-4654-ae4e-aea1deb48e99": {
+            "type": "appmixer.utils.converters.Archive",
+            "label": "Archive TAR",
+            "x": 1312,
+            "y": 400,
+            "source": {
+                "in": {
+                    "a2f7650b-f6c2-49cf-8677-36f1a5462e0c": [
+                        "content"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "a2f7650b-f6c2-49cf-8677-36f1a5462e0c": {
+                            "content": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "outputFormat": {},
+                                    "fileName": {},
+                                    "files": {
+                                        "da6941db-f4df-4128-8c77-96ce3bb7bb85": {
+                                            "variable": "$.e0a739de-7c15-4d4a-a561-7e7e89b5753f.file.fileId",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "outputFormat": "tar",
+                                    "fileName": "e2e-converters.tar",
+                                    "files": {
+                                        "AND": [
+                                            {
+                                                "fileId": "{{{da6941db-f4df-4128-8c77-96ce3bb7bb85}}}"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "3e8cb5ab-4c64-42e0-a1c4-b7dc48274b78": {
+            "type": "appmixer.utils.test.Assert",
+            "label": "Assert TAR created",
+            "x": 1520,
+            "y": 400,
+            "source": {
+                "in": {
+                    "89aa1156-2fe8-4654-ae4e-aea1deb48e99": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "89aa1156-2fe8-4654-ae4e-aea1deb48e99": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "62602d94-e1c2-43a6-a464-7685aae462a5": {
+                                            "variable": "$.89aa1156-2fe8-4654-ae4e-aea1deb48e99.out.fileId",
+                                            "functions": []
+                                        },
+                                        "f3eb8766-a64c-4219-8042-653fde74cdd1": {
+                                            "variable": "$.89aa1156-2fe8-4654-ae4e-aea1deb48e99.out.fileName",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{62602d94-e1c2-43a6-a464-7685aae462a5}}}",
+                                                "assertion": "notEmpty"
+                                            },
+                                            {
+                                                "field": "{{{f3eb8766-a64c-4219-8042-653fde74cdd1}}}",
+                                                "assertion": "equal",
+                                                "expected": "e2e-converters.tar"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "cbc32920-ec38-4587-9f08-6b40a7466ea4": {
+            "type": "appmixer.utils.converters.Archive",
+            "label": "Archive TAR append",
+            "x": 1520,
+            "y": 528,
+            "source": {
+                "in": {
+                    "89aa1156-2fe8-4654-ae4e-aea1deb48e99": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "89aa1156-2fe8-4654-ae4e-aea1deb48e99": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "outputFormat": {},
+                                    "fileName": {},
+                                    "archiveFileID": {
+                                        "8fdaf903-6290-4d2c-86df-7821715e137b": {
+                                            "variable": "$.89aa1156-2fe8-4654-ae4e-aea1deb48e99.out.fileId",
+                                            "functions": []
+                                        }
+                                    },
+                                    "files": {
+                                        "e98f71b2-3d36-4ad2-b425-c47d18ec6771": {
+                                            "variable": "$.f2d940c8-b757-47fb-b20a-3afefbf9ffc3.file.fileId",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "outputFormat": "tar",
+                                    "fileName": "e2e-converters.tar",
+                                    "archiveFileID": "{{{8fdaf903-6290-4d2c-86df-7821715e137b}}}",
+                                    "files": {
+                                        "AND": [
+                                            {
+                                                "fileId": "{{{e98f71b2-3d36-4ad2-b425-c47d18ec6771}}}"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "58f7538d-89a3-41a7-8892-5dede18b5629": {
+            "type": "appmixer.utils.files.LoadFile",
+            "label": "Load appended TAR",
+            "x": 1728,
+            "y": 528,
+            "source": {
+                "in": {
+                    "cbc32920-ec38-4587-9f08-6b40a7466ea4": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "cbc32920-ec38-4587-9f08-6b40a7466ea4": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "fileId": {
+                                        "6117317a-9635-4ea4-bd92-139a55bbbbdd": {
+                                            "variable": "$.cbc32920-ec38-4587-9f08-6b40a7466ea4.out.fileId",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "fileId": "{{{6117317a-9635-4ea4-bd92-139a55bbbbdd}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "524f6b6e-c57e-4558-b0c2-9315b51c644c": {
+            "type": "appmixer.utils.test.Assert",
+            "label": "Assert TAR appended in place",
+            "x": 1936,
+            "y": 528,
+            "source": {
+                "in": {
+                    "58f7538d-89a3-41a7-8892-5dede18b5629": [
+                        "content"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "58f7538d-89a3-41a7-8892-5dede18b5629": {
+                            "content": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "374e21fa-ca4e-4bb1-bba4-fbd6b9e9920e": {
+                                            "variable": "$.cbc32920-ec38-4587-9f08-6b40a7466ea4.out.fileId",
+                                            "functions": []
+                                        },
+                                        "c635905f-ff6a-49e2-9514-8201e338aa6c": {
+                                            "variable": "$.89aa1156-2fe8-4654-ae4e-aea1deb48e99.out.fileId",
+                                            "functions": []
+                                        },
+                                        "255e7be6-9e8f-4020-b688-7560b15f79e6": {
+                                            "variable": "$.cbc32920-ec38-4587-9f08-6b40a7466ea4.out.fileName",
+                                            "functions": []
+                                        },
+                                        "f7e5e4e4-4f21-4d93-b612-ff3d4593355b": {
+                                            "variable": "$.58f7538d-89a3-41a7-8892-5dede18b5629.content.content",
+                                            "functions": []
+                                        },
+                                        "14927a3e-ef54-4191-8234-f36817bf8b7c": {
+                                            "variable": "$.58f7538d-89a3-41a7-8892-5dede18b5629.content.content",
+                                            "functions": []
+                                        },
+                                        "b9649967-9558-4b7c-8da0-9047510859db": {
+                                            "variable": "$.58f7538d-89a3-41a7-8892-5dede18b5629.content.content",
+                                            "functions": []
+                                        },
+                                        "1331e84b-1497-44ab-a5f7-cfcc5d1bd34f": {
+                                            "variable": "$.58f7538d-89a3-41a7-8892-5dede18b5629.content.content",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{374e21fa-ca4e-4bb1-bba4-fbd6b9e9920e}}}",
+                                                "assertion": "equal",
+                                                "expected": "{{{c635905f-ff6a-49e2-9514-8201e338aa6c}}}"
+                                            },
+                                            {
+                                                "field": "{{{255e7be6-9e8f-4020-b688-7560b15f79e6}}}",
+                                                "assertion": "equal",
+                                                "expected": "e2e-converters.tar"
+                                            },
+                                            {
+                                                "field": "{{{f7e5e4e4-4f21-4d93-b612-ff3d4593355b}}}",
+                                                "assertion": "regex",
+                                                "regex": "e2e-archive-a\\.txt"
+                                            },
+                                            {
+                                                "field": "{{{14927a3e-ef54-4191-8234-f36817bf8b7c}}}",
+                                                "assertion": "regex",
+                                                "regex": "e2e-archive-b\\.txt"
+                                            },
+                                            {
+                                                "field": "{{{b9649967-9558-4b7c-8da0-9047510859db}}}",
+                                                "assertion": "regex",
+                                                "regex": "Appmixer E2E archive fixture A\\."
+                                            },
+                                            {
+                                                "field": "{{{1331e84b-1497-44ab-a5f7-cfcc5d1bd34f}}}",
+                                                "assertion": "regex",
+                                                "regex": "Appmixer E2E archive fixture B\\."
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "6b62fd8b-f74e-4085-a61c-16eb8716cf2b": {
+            "type": "appmixer.utils.test.AfterAll",
+            "label": "After All",
+            "x": 2144,
+            "y": 528,
+            "source": {
+                "in": {
+                    "0f7951b2-d5db-4910-96c5-4bb47ef10e34": [
+                        "out"
+                    ],
+                    "777f51e6-035e-4752-8e02-e01702d1f51c": [
+                        "out"
+                    ],
+                    "3e8cb5ab-4c64-42e0-a1c4-b7dc48274b78": [
+                        "out"
+                    ],
+                    "524f6b6e-c57e-4558-b0c2-9315b51c644c": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 180
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "8952ff7a-339e-4152-a43e-16dd4614c954": {
+            "type": "appmixer.utils.files.RemoveFile",
+            "label": "Remove file A",
+            "x": 2352,
+            "y": 528,
+            "source": {
+                "in": {
+                    "6b62fd8b-f74e-4085-a61c-16eb8716cf2b": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "6b62fd8b-f74e-4085-a61c-16eb8716cf2b": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "fileId": {
+                                        "5ae5851f-c9ef-47d9-8ad4-4465699d2748": {
+                                            "variable": "$.e0a739de-7c15-4d4a-a561-7e7e89b5753f.file.fileId",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "fileId": "{{{5ae5851f-c9ef-47d9-8ad4-4465699d2748}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "7824e462-9e6a-4742-9114-a4facbf0a2ba": {
+            "type": "appmixer.utils.files.RemoveFile",
+            "label": "Remove file B",
+            "x": 2560,
+            "y": 528,
+            "source": {
+                "in": {
+                    "8952ff7a-339e-4152-a43e-16dd4614c954": [
+                        "deleted"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "8952ff7a-339e-4152-a43e-16dd4614c954": {
+                            "deleted": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "fileId": {
+                                        "cc7e583a-e6a0-430c-b613-b0b4f4ca1006": {
+                                            "variable": "$.f2d940c8-b757-47fb-b20a-3afefbf9ffc3.file.fileId",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "fileId": "{{{cc7e583a-e6a0-430c-b613-b0b4f4ca1006}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "b79a7815-0ab5-435f-a66f-42625227b5e9": {
+            "type": "appmixer.utils.files.RemoveFile",
+            "label": "Remove ZIP",
+            "x": 2768,
+            "y": 528,
+            "source": {
+                "in": {
+                    "7824e462-9e6a-4742-9114-a4facbf0a2ba": [
+                        "deleted"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "7824e462-9e6a-4742-9114-a4facbf0a2ba": {
+                            "deleted": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "fileId": {
+                                        "50b8e58a-94a5-4f8b-bf10-ecfc9d6328c1": {
+                                            "variable": "$.794e0313-cff8-4fbd-b127-6611273f3464.out.fileId",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "fileId": "{{{50b8e58a-94a5-4f8b-bf10-ecfc9d6328c1}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "b784367a-96b9-4b34-b917-81a39bde76d2": {
+            "type": "appmixer.utils.files.RemoveFile",
+            "label": "Remove TAR",
+            "x": 2976,
+            "y": 528,
+            "source": {
+                "in": {
+                    "b79a7815-0ab5-435f-a66f-42625227b5e9": [
+                        "deleted"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "b79a7815-0ab5-435f-a66f-42625227b5e9": {
+                            "deleted": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "fileId": {
+                                        "3720d2be-d7f1-4f62-8235-0c198c9f7204": {
+                                            "variable": "$.89aa1156-2fe8-4654-ae4e-aea1deb48e99.out.fileId",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "fileId": "{{{3720d2be-d7f1-4f62-8235-0c198c9f7204}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "43267cd9-8088-430a-84ff-5dab2795b63a": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "label": "Process E2E Results",
+            "x": 3184,
+            "y": 528,
+            "source": {
+                "in": {
+                    "b784367a-96b9-4b34-b917-81a39bde76d2": [
+                        "deleted"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {},
+                "transform": {
+                    "in": {
+                        "b784367a-96b9-4b34-b917-81a39bde76d2": {
+                            "deleted": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "dad2f38b-c562-48bf-ae16-4585fa92ee01": {
+                                            "variable": "$.6b62fd8b-f74e-4085-a61c-16eb8716cf2b.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E Utils Converters - Archive ZIP and TAR, append to existing archive",
+                                    "result": "{{{dad2f38b-c562-48bf-ae16-4585fa92ee01}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        }
+    }
+}
