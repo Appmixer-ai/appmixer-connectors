@@ -1,0 +1,149 @@
+{
+    "name": "E2E XML - Validate invalid XML",
+    "description": "ValidateXml on a document with a mismatched closing tag must report isValid=false. The error details (err.code, err.msg, err.line) are declared as dotted option values; the CLI validator's static-outport-deep-path rule does not understand dotted option values yet, so this flow asserts only isValid.",
+    "flow": {
+        "5d753525-9867-41f9-a212-14b940f2c18d": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16,
+            "source": {},
+            "version": "1.0.0",
+            "config": {},
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "54a34556-90d9-4e49-9344-fa54d89cb0b4": {
+            "type": "appmixer.utils.xml.ValidateXml",
+            "label": "ValidateXml (mismatched closing tag)",
+            "x": 272,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "5d753525-9867-41f9-a212-14b940f2c18d": ["out"]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "5d753525-9867-41f9-a212-14b940f2c18d": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "xml": {},
+                                    "allowBooleanAttributes": {}
+                                },
+                                "lambda": {
+                                    "xml": "<note><to>Jane Doe</note>",
+                                    "allowBooleanAttributes": false
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "f6ec19ab-8cd9-4d4a-acc9-21ef275f06e3": {
+            "type": "appmixer.utils.test.Assert",
+            "label": "Assert ValidateXml reports the error",
+            "x": 480,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "54a34556-90d9-4e49-9344-fa54d89cb0b4": ["out"]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "54a34556-90d9-4e49-9344-fa54d89cb0b4": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "5f983248-380a-4a6d-bd8d-1af391109673": {
+                                            "variable": "$.54a34556-90d9-4e49-9344-fa54d89cb0b4.out.isValid",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{5f983248-380a-4a6d-bd8d-1af391109673}}}",
+                                                "assertion": "equal",
+                                                "expected": "false"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "8cb901dd-d784-42e1-a903-634ff7a91260": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 688,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "f6ec19ab-8cd9-4d4a-acc9-21ef275f06e3": ["out"]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 120
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "566acc09-1d2f-4dcc-ade5-878a7c22eb53": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 896,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "8cb901dd-d784-42e1-a903-634ff7a91260": ["out"]
+                }
+            },
+            "config": {
+                "properties": {
+                    "successStoreId": "64f6f1f9193228000754082f",
+                    "failedStoreId": "64f6f1f0193228000754082e"
+                },
+                "transform": {
+                    "in": {
+                        "8cb901dd-d784-42e1-a903-634ff7a91260": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "91eea30e-dd6b-472d-8ad6-bd8239ebea6d": {
+                                            "variable": "$.8cb901dd-d784-42e1-a903-634ff7a91260.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E XML - Validate invalid XML",
+                                    "result": "{{{91eea30e-dd6b-472d-8ad6-bd8239ebea6d}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        }
+    }
+}

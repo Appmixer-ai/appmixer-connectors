@@ -1,0 +1,285 @@
+{
+    "name": "E2E YouTube - New Video trigger (self-provoked)",
+    "description": "NewVideo listens for PubSubHubbub notifications. The flow provokes one itself: utils.http.Post sends a synthetic Atom feed entry to the connector's own callback route (the one the trigger registers at the hub), the plugin parses it with fast-xml-parser and triggers the component. Needs no YouTube account.",
+    "notes": {
+        "de630fca-c554-41a3-ba28-8ddcd175d5fe": {
+            "x": 64,
+            "y": 272,
+            "width": 832,
+            "height": 208,
+            "content": "## ⚠️ Self-provoked trigger\n\n`NewVideo.start()` still subscribes the real channel at `pubsubhubbub.appspot.com`, but a real upload is not what this flow waits for. The `Post` component builds the plugin callback URL from its own webhook URL (`g_webhookUrl` → `/plugins/appmixer/google/youtube/trigger/<flowId>/component/<triggerId>`) and POSTs a synthetic Atom entry with `yt:videoId` = `e2eVideo0001`. The route in `routes.js` parses the XML and calls `triggerComponent`, so the whole production receive path runs.\n\nThe `Condition` drops any real notification for the channel that may arrive during the run, so only the synthetic entry reaches the `Assert`."
+        }
+    },
+    "flow": {
+        "9002e507-91d8-4401-8190-6cd8792d03b6": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16,
+            "source": {},
+            "version": "1.0.0",
+            "config": {},
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "95a7b015-16d3-4ef1-b99f-9e8f2c7d0518": {
+            "type": "appmixer.utils.http.Post",
+            "label": "Post synthetic Atom entry to the trigger callback",
+            "x": 272,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "9002e507-91d8-4401-8190-6cd8792d03b6": ["out"]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "9002e507-91d8-4401-8190-6cd8792d03b6": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "url": {
+                                        "40dc252d-3ac6-4f85-a5d0-4d9edfd79086": {
+                                            "functions": [
+                                                { "name": "g_webhookUrl" },
+                                                { "name": "g_replace", "params": [{ "value": "/flows/" }, { "value": "/plugins/appmixer/google/youtube/trigger/" }] },
+                                                { "name": "g_replace", "params": [{ "value": "/components/95a7b015-16d3-4ef1-b99f-9e8f2c7d0518" }, { "value": "/component/fd454672-8e6c-40e3-8227-a389a76ccda0" }] }
+                                            ]
+                                        }
+                                    },
+                                    "headers": {},
+                                    "bodyType": {},
+                                    "body": {}
+                                },
+                                "lambda": {
+                                    "url": "{{{40dc252d-3ac6-4f85-a5d0-4d9edfd79086}}}",
+                                    "headers": "{\"Content-Type\": \"application/atom+xml\"}",
+                                    "bodyType": "raw",
+                                    "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><feed xmlns:yt=\"http://www.youtube.com/xml/schemas/2015\" xmlns=\"http://www.w3.org/2005/Atom\"><link rel=\"hub\" href=\"https://pubsubhubbub.appspot.com\"/><link rel=\"self\" href=\"https://www.youtube.com/xml/feeds/videos.xml?channel_id=UC_x5XG1OV2P6uZZ5FSM9Ttw\"/><title>YouTube video feed</title><updated>2026-11-06T10:00:05+00:00</updated><entry><id>yt:video:e2eVideo0001</id><yt:videoId>e2eVideo0001</yt:videoId><yt:channelId>UC_x5XG1OV2P6uZZ5FSM9Ttw</yt:channelId><title>E2E synthetic video</title><link rel=\"alternate\" href=\"https://www.youtube.com/watch?v=e2eVideo0001\"/><author><name>E2E Channel</name><uri>https://www.youtube.com/channel/UC_x5XG1OV2P6uZZ5FSM9Ttw</uri></author><published>2026-11-06T10:00:00+00:00</published><updated>2026-11-06T10:00:05+00:00</updated></entry></feed>"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "fd454672-8e6c-40e3-8227-a389a76ccda0": {
+            "type": "appmixer.google.youtube.NewVideo",
+            "label": "NewVideo (Google for Developers channel)",
+            "x": 64,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {},
+            "config": {
+                "properties": {
+                    "channelId": "UC_x5XG1OV2P6uZZ5FSM9Ttw"
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "c56a304b-a6e5-4a61-a88c-6892b623c20c": {
+            "type": "appmixer.utils.controls.Condition",
+            "label": "Condition (only the synthetic entry)",
+            "x": 272,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "fd454672-8e6c-40e3-8227-a389a76ccda0": ["out"]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "fd454672-8e6c-40e3-8227-a389a76ccda0": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "7b1530a3-8a06-415b-8510-92210b52ad88": {
+                                            "variable": "$.fd454672-8e6c-40e3-8227-a389a76ccda0.out.videoId",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "OR": [
+                                                    {
+                                                        "input": "{{{7b1530a3-8a06-415b-8510-92210b52ad88}}}",
+                                                        "operator": "=",
+                                                        "value": "e2eVideo0001"
+                                                    }
+                                                ]
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "d55d5f9d-8089-49b2-ae94-06a4b50800a1": {
+            "type": "appmixer.utils.test.Assert",
+            "label": "Assert NewVideo output",
+            "x": 480,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "c56a304b-a6e5-4a61-a88c-6892b623c20c": ["true"]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "c56a304b-a6e5-4a61-a88c-6892b623c20c": {
+                            "true": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "59a67d4e-8eaf-4db4-93d6-e41cb763708f": {
+                                            "variable": "$.fd454672-8e6c-40e3-8227-a389a76ccda0.out.videoId",
+                                            "functions": []
+                                        },
+                                        "288d31c6-0f64-4a9d-b7e6-4fd00ba36b52": {
+                                            "variable": "$.fd454672-8e6c-40e3-8227-a389a76ccda0.out.title",
+                                            "functions": []
+                                        },
+                                        "296086c3-ea8e-4064-a821-bc23872c72d4": {
+                                            "variable": "$.fd454672-8e6c-40e3-8227-a389a76ccda0.out.channelId",
+                                            "functions": []
+                                        },
+                                        "2018cb18-d40e-462a-9570-166635bac9a6": {
+                                            "variable": "$.fd454672-8e6c-40e3-8227-a389a76ccda0.out.channelTitle",
+                                            "functions": []
+                                        },
+                                        "978aeebe-6ec0-4592-be0d-d2589cf7f2e4": {
+                                            "variable": "$.fd454672-8e6c-40e3-8227-a389a76ccda0.out.channelUrl",
+                                            "functions": []
+                                        },
+                                        "7238c9c0-e405-4aa3-ad82-8734ff305058": {
+                                            "variable": "$.fd454672-8e6c-40e3-8227-a389a76ccda0.out.videoUrl",
+                                            "functions": []
+                                        },
+                                        "209fac68-8632-42f5-ba98-212438894d62": {
+                                            "variable": "$.fd454672-8e6c-40e3-8227-a389a76ccda0.out.publishDate",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{59a67d4e-8eaf-4db4-93d6-e41cb763708f}}}",
+                                                "assertion": "equal",
+                                                "expected": "e2eVideo0001"
+                                            },
+                                            {
+                                                "field": "{{{288d31c6-0f64-4a9d-b7e6-4fd00ba36b52}}}",
+                                                "assertion": "equal",
+                                                "expected": "E2E synthetic video"
+                                            },
+                                            {
+                                                "field": "{{{296086c3-ea8e-4064-a821-bc23872c72d4}}}",
+                                                "assertion": "equal",
+                                                "expected": "UC_x5XG1OV2P6uZZ5FSM9Ttw"
+                                            },
+                                            {
+                                                "field": "{{{2018cb18-d40e-462a-9570-166635bac9a6}}}",
+                                                "assertion": "equal",
+                                                "expected": "E2E Channel"
+                                            },
+                                            {
+                                                "field": "{{{978aeebe-6ec0-4592-be0d-d2589cf7f2e4}}}",
+                                                "assertion": "equal",
+                                                "expected": "https://www.youtube.com/channel/UC_x5XG1OV2P6uZZ5FSM9Ttw"
+                                            },
+                                            {
+                                                "field": "{{{7238c9c0-e405-4aa3-ad82-8734ff305058}}}",
+                                                "assertion": "equal",
+                                                "expected": "https://www.youtube.com/watch?v=e2eVideo0001"
+                                            },
+                                            {
+                                                "field": "{{{209fac68-8632-42f5-ba98-212438894d62}}}",
+                                                "assertion": "equal",
+                                                "expected": "2026-11-06T10:00:00+00:00"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "e9821c41-5565-473b-8436-3d5a81428851": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 688,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "d55d5f9d-8089-49b2-ae94-06a4b50800a1": ["out"]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 180
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "0517def1-d3df-48e0-b353-9bc36ad52e5a": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 896,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "e9821c41-5565-473b-8436-3d5a81428851": ["out"]
+                }
+            },
+            "config": {
+                "properties": {
+                    "successStoreId": "64f6f1f9193228000754082f",
+                    "failedStoreId": "64f6f1f0193228000754082e"
+                },
+                "transform": {
+                    "in": {
+                        "e9821c41-5565-473b-8436-3d5a81428851": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "f1fbdc73-0250-46bc-87c6-b2345a5de23f": {
+                                            "variable": "$.e9821c41-5565-473b-8436-3d5a81428851.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E YouTube - New Video trigger (self-provoked)",
+                                    "result": "{{{f1fbdc73-0250-46bc-87c6-b2345a5de23f}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        }
+    }
+}

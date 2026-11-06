@@ -1,0 +1,401 @@
+{
+    "name": "E2E YouTube - Find and Get Videos",
+    "description": "FindVideos searches a public channel, GetVideos loads the first hit by id, MakeApiCall reads the same video through the raw Data API. Needs a Google account consented with the youtube.readonly and youtube.force-ssl scopes.",
+    "notes": {
+        "a5be5308-1ac6-4637-852b-eef6f63ce801": {
+            "x": 64,
+            "y": 400,
+            "width": 704,
+            "height": 160,
+            "content": "## ⚠️ Account scopes\n\nThe three components use the `appmixer:google` service with YouTube scopes (`youtube.readonly`, `youtube.force-ssl`). A Google account consented only for Drive/Docs fails at flow start with `Access token not found` — connect the account from one of these components so the consent includes the YouTube scopes. The channel `UC_x5XG1OV2P6uZZ5FSM9Ttw` (Google for Developers) is public, so no tenant data is needed."
+        }
+    },
+    "flow": {
+        "6514d075-6386-4482-9f81-99b7ab267ccf": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16,
+            "source": {},
+            "version": "1.0.0",
+            "config": {},
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "da5c12fe-6d35-47f1-980b-d567a904e92b": {
+            "type": "appmixer.google.youtube.FindVideos",
+            "label": "FindVideos (Google for Developers, keynote)",
+            "x": 272,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "6514d075-6386-4482-9f81-99b7ab267ccf": ["out"]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "6514d075-6386-4482-9f81-99b7ab267ccf": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "channelId": {},
+                                    "searchTerm": {},
+                                    "safeSearch": {},
+                                    "videoEmbeddable": {},
+                                    "outputType": {},
+                                    "limit": {}
+                                },
+                                "lambda": {
+                                    "channelId": "UC_x5XG1OV2P6uZZ5FSM9Ttw",
+                                    "searchTerm": "Google I/O keynote",
+                                    "safeSearch": "moderate",
+                                    "videoEmbeddable": "any",
+                                    "outputType": "items",
+                                    "limit": 5
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "83b25b34-d54f-498a-89d6-833c433e6549": {
+            "type": "appmixer.utils.test.Assert",
+            "label": "Assert FindVideos",
+            "x": 480,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "da5c12fe-6d35-47f1-980b-d567a904e92b": ["out"]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "da5c12fe-6d35-47f1-980b-d567a904e92b": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "ff783eec-2a77-4ce4-9cf0-cf0e23699690": {
+                                            "variable": "$.da5c12fe-6d35-47f1-980b-d567a904e92b.out.items",
+                                            "functions": [
+                                                { "name": "g_jsonPath", "params": [{ "value": "$[0].videoId" }] }
+                                            ]
+                                        },
+                                        "e60ef912-fe1c-4eee-a0c2-262fa6260b41": {
+                                            "variable": "$.da5c12fe-6d35-47f1-980b-d567a904e92b.out.items",
+                                            "functions": [
+                                                { "name": "g_jsonPath", "params": [{ "value": "$[0].channelId" }] }
+                                            ]
+                                        },
+                                        "f9bad9cc-2cf9-46fb-ab79-eb0a9bde6cfd": {
+                                            "variable": "$.da5c12fe-6d35-47f1-980b-d567a904e92b.out.items",
+                                            "functions": [
+                                                { "name": "g_jsonPath", "params": [{ "value": "$[0].title" }] }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{ff783eec-2a77-4ce4-9cf0-cf0e23699690}}}",
+                                                "assertion": "notEmpty"
+                                            },
+                                            {
+                                                "field": "{{{e60ef912-fe1c-4eee-a0c2-262fa6260b41}}}",
+                                                "assertion": "equal",
+                                                "expected": "UC_x5XG1OV2P6uZZ5FSM9Ttw"
+                                            },
+                                            {
+                                                "field": "{{{f9bad9cc-2cf9-46fb-ab79-eb0a9bde6cfd}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "64289d44-6bd5-458f-8530-230c6d6816f5": {
+            "type": "appmixer.google.youtube.GetVideos",
+            "label": "GetVideos (first hit)",
+            "x": 480,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "da5c12fe-6d35-47f1-980b-d567a904e92b": ["out"]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "da5c12fe-6d35-47f1-980b-d567a904e92b": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "videoIds": {},
+                                    "outputType": {}
+                                },
+                                "lambda": {
+                                    "videoIds": "M7lc1UVf-VE",
+                                    "outputType": "items"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "cafd0ae1-69ac-4887-b7d7-0be5f1e823d6": {
+            "type": "appmixer.utils.test.Assert",
+            "label": "Assert GetVideos",
+            "x": 688,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "64289d44-6bd5-458f-8530-230c6d6816f5": ["out"]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "64289d44-6bd5-458f-8530-230c6d6816f5": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "9b0e0466-6cd4-4d6e-9dfc-2cf602153530": {
+                                            "variable": "$.64289d44-6bd5-458f-8530-230c6d6816f5.out.items",
+                                            "functions": [
+                                                { "name": "g_jsonPath", "params": [{ "value": "$[0].videoId" }] }
+                                            ]
+                                        },
+                                        "1ebf8203-7c16-437f-97d0-fcecffdb23a1": {
+                                            "variable": "$.64289d44-6bd5-458f-8530-230c6d6816f5.out.items",
+                                            "functions": [
+                                                { "name": "g_jsonPath", "params": [{ "value": "$[0].channelId" }] }
+                                            ]
+                                        },
+                                        "8cae8a28-1d7b-4e28-8443-91a361a5006f": {
+                                            "variable": "$.64289d44-6bd5-458f-8530-230c6d6816f5.out.items",
+                                            "functions": [
+                                                { "name": "g_jsonPath", "params": [{ "value": "$[0].duration" }] }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{9b0e0466-6cd4-4d6e-9dfc-2cf602153530}}}",
+                                                "assertion": "equal",
+                                                "expected": "M7lc1UVf-VE"
+                                            },
+                                            {
+                                                "field": "{{{1ebf8203-7c16-437f-97d0-fcecffdb23a1}}}",
+                                                "assertion": "equal",
+                                                "expected": "UC_x5XG1OV2P6uZZ5FSM9Ttw"
+                                            },
+                                            {
+                                                "field": "{{{8cae8a28-1d7b-4e28-8443-91a361a5006f}}}",
+                                                "assertion": "regex",
+                                                "regex": "^PT"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "25f1c75f-6cd0-4b50-8c1d-d93351a01b2c": {
+            "type": "appmixer.google.youtube.MakeApiCall",
+            "label": "MakeApiCall GET /videos (same id)",
+            "x": 688,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "64289d44-6bd5-458f-8530-230c6d6816f5": ["out"]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "64289d44-6bd5-458f-8530-230c6d6816f5": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "url": {},
+                                    "method": {},
+                                    "parameters": {
+                                        "2b25c89c-480d-4ca1-b376-b6eb953696e8": {
+                                            "variable": "$.64289d44-6bd5-458f-8530-230c6d6816f5.out.items",
+                                            "functions": [
+                                                { "name": "g_jsonPath", "params": [{ "value": "$[0].videoId" }] }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "url": "/videos",
+                                    "method": "GET",
+                                    "parameters": "{\"part\": \"snippet\", \"id\": \"{{{2b25c89c-480d-4ca1-b376-b6eb953696e8}}}\"}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "c799a4c0-64ff-4d9c-a5ca-d60885d0e876": {
+            "type": "appmixer.utils.test.Assert",
+            "label": "Assert MakeApiCall",
+            "x": 896,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "25f1c75f-6cd0-4b50-8c1d-d93351a01b2c": ["out"]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "25f1c75f-6cd0-4b50-8c1d-d93351a01b2c": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "87147d10-1f88-448b-b60c-5ea44d233fe3": {
+                                            "variable": "$.25f1c75f-6cd0-4b50-8c1d-d93351a01b2c.out.status",
+                                            "functions": []
+                                        },
+                                        "691847ac-914e-47dd-a754-c3be925fbdf3": {
+                                            "variable": "$.25f1c75f-6cd0-4b50-8c1d-d93351a01b2c.out.body",
+                                            "functions": [
+                                                { "name": "g_jsonPath", "params": [{ "value": "$.items[0].id" }] }
+                                            ]
+                                        },
+                                        "98e20510-a76a-4649-a3e9-1513195cbdb5": {
+                                            "variable": "$.64289d44-6bd5-458f-8530-230c6d6816f5.out.items",
+                                            "functions": [
+                                                { "name": "g_jsonPath", "params": [{ "value": "$[0].videoId" }] }
+                                            ]
+                                        },
+                                        "c744cbe2-086e-47e7-ae6b-7d9a800b0cbb": {
+                                            "variable": "$.25f1c75f-6cd0-4b50-8c1d-d93351a01b2c.out.body",
+                                            "functions": [
+                                                { "name": "g_jsonPath", "params": [{ "value": "$.items[0].snippet.channelId" }] }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{87147d10-1f88-448b-b60c-5ea44d233fe3}}}",
+                                                "assertion": "equal",
+                                                "expected": "200"
+                                            },
+                                            {
+                                                "field": "{{{691847ac-914e-47dd-a754-c3be925fbdf3}}}",
+                                                "assertion": "equal",
+                                                "expected": "{{{98e20510-a76a-4649-a3e9-1513195cbdb5}}}"
+                                            },
+                                            {
+                                                "field": "{{{c744cbe2-086e-47e7-ae6b-7d9a800b0cbb}}}",
+                                                "assertion": "equal",
+                                                "expected": "UC_x5XG1OV2P6uZZ5FSM9Ttw"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "0bf63d96-bb40-49a3-bf6e-37bf2a2ab0cf": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 1104,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "83b25b34-d54f-498a-89d6-833c433e6549": ["out"],
+                    "cafd0ae1-69ac-4887-b7d7-0be5f1e823d6": ["out"],
+                    "c799a4c0-64ff-4d9c-a5ca-d60885d0e876": ["out"]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 120
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "effe43e0-9b95-4b64-90d3-552c297a2770": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1312,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "0bf63d96-bb40-49a3-bf6e-37bf2a2ab0cf": ["out"]
+                }
+            },
+            "config": {
+                "properties": {
+                    "successStoreId": "64f6f1f9193228000754082f",
+                    "failedStoreId": "64f6f1f0193228000754082e"
+                },
+                "transform": {
+                    "in": {
+                        "0bf63d96-bb40-49a3-bf6e-37bf2a2ab0cf": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "30b64508-d2f9-4270-9bf0-644a18e781bd": {
+                                            "variable": "$.0bf63d96-bb40-49a3-bf6e-37bf2a2ab0cf.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E YouTube - Find and Get Videos",
+                                    "result": "{{{30b64508-d2f9-4270-9bf0-644a18e781bd}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        }
+    }
+}
