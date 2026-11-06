@@ -317,13 +317,11 @@ describe('NewCustomer component', function() {
 
         // QuickBooks responses
         // Expecting 3 calls to QuickBooks with 40, 40 and 20 IDs
+        const allEntities = events.eventNotifications[0].dataChangeEvent.entities;
         context.httpRequest = sinon.stub()
-            .onCall(0).resolves(
-                { QueryResponse: { Customer: events.eventNotifications[0].dataChangeEvent.entities.slice(0, 40) } })
-            .onCall(1).resolves(
-                { QueryResponse: { Customer: events.eventNotifications[0].dataChangeEvent.entities.slice(40, 80) } })
-            .onCall(2).resolves(
-                { QueryResponse: { Customer: events.eventNotifications[0].dataChangeEvent.entities.slice(80) } });
+            .onCall(0).resolves({ data: { QueryResponse: { Customer: allEntities.slice(0, 40) } } })
+            .onCall(1).resolves({ data: { QueryResponse: { Customer: allEntities.slice(40, 80) } } })
+            .onCall(2).resolves({ data: { QueryResponse: { Customer: allEntities.slice(80) } } });
 
         const payload = events.eventNotifications[0].dataChangeEvent.entities.map(e => e.id);
         context.messages = { webhook: { content: { data: payload } } };
