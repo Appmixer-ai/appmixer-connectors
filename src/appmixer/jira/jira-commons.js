@@ -1,7 +1,5 @@
 'use strict';
 
-const request = require('request-promise');
-
 const EventType = {
     issueCreated: 'jira:issue_created',
     issueUpdated: 'jira:issue_updated',
@@ -13,51 +11,64 @@ const EventType = {
 
 module.exports = {
 
-    request(endpoint, method, credentials, qs, body) {
+    async request(endpoint, method, context, params, data) {
 
-        return request({
-            method,
-            url: endpoint,
-            auth: { bearer: credentials.accessToken },
-            qs,
-            json: true,
-            body,
-            headers: {
-                'Accept': 'application/json',
-                'Content-Type': 'application/json'
+        try {
+            const response = await context.httpRequest({
+                method,
+                url: endpoint,
+                params,
+                data,
+                headers: {
+                    'Authorization': `Bearer ${context.auth.accessToken}`,
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                }
+            });
+            return response.data;
+        } catch (err) {
+            if (!err.response) {
+                throw err;
             }
-        });
+            // Keep the error shape callers relied on with request-promise:
+            // `statusCode` and the Jira response body in the message.
+            const { status, data: body } = err.response;
+            const error = new Error(`${status} - ${typeof body === 'string' ? body : JSON.stringify(body)}`);
+            error.statusCode = status;
+            error.error = body;
+            throw error;
+        }
     },
 
-    post(endpoint, credentials, body) {
+    post(endpoint, context, body) {
 
-        return this.request(endpoint, 'POST', credentials, undefined, body);
+        return this.request(endpoint, 'POST', context, undefined, body);
     },
 
-    put(endpoint, credentials, body) {
+    put(endpoint, context, body) {
 
-        return this.request(endpoint, 'PUT', credentials, undefined, body);
+        return this.request(endpoint, 'PUT', context, undefined, body);
     },
 
-    get(endpoint, credentials, qs) {
+    get(endpoint, context, params) {
 
-        return this.request(endpoint, 'GET', credentials, qs);
+        return this.request(endpoint, 'GET', context, params);
     },
 
-    delete(endpoint, credentials, body) {
+    delete(endpoint, context, body) {
 
-        return this.request(endpoint, 'DELETE', credentials, undefined, body);
+        return this.request(endpoint, 'DELETE', context, undefined, body);
     },
 
-    async getAPINoPagination({ endpoint, credentials, key, params = {} }) {
-        const currentPage = await this.get(endpoint, credentials, params);
+    async getAPINoPagination({ endpoint, context, key, params = {} }) {
+        const currentPage = await this.get(endpoint, context, params);
 
         return currentPage[key];
     },
 
-    async pager({ endpoint, credentials, key, params = {} }) {
+    async pager({ endpoint, context, key, params = {} }) {
 
-        const currentPage = await this.get(endpoint, credentials, params);
+        const currentPage = await this.get(endpoint, context, params);
         if (
             currentPage[key].length === 0 ||
             currentPage[key].length < (params.maxResults || 500)
@@ -68,7 +79,7 @@ module.exports = {
         params = Object.assign({}, params, { startAt: (params.startAt || 0) + params.maxResults });
         const nextPage = await this.pager({
             endpoint,
-            credentials,
+            context,
             key,
             params
         });
@@ -96,13 +107,13 @@ module.exports = {
     // `created/updated > now` baseline that suppresses output on a fresh flow.
     async fetchLatestIssue(context, { project, orderBy = 'created' } = {}) {
 
-        const { profileInfo: { apiUrl }, auth } = context;
+        const { profileInfo: { apiUrl } } = context;
         let jql = project ? `project = "${project}" ` : '';
         jql += `ORDER BY ${orderBy} DESC`;
 
         const issues = await this.getAPINoPagination({
             endpoint: `${apiUrl}search/jql`,
-            credentials: auth,
+            context,
             key: 'issues',
             params: { maxResults: 1, jql, fields: '*navigable' }
         });
@@ -112,10 +123,10 @@ module.exports = {
     // Fetch one project via the same project/search request the project triggers use.
     async fetchLatestProject(context) {
 
-        const { profileInfo: { apiUrl }, auth } = context;
+        const { profileInfo: { apiUrl } } = context;
         const projects = await this.pager({
             endpoint: `${apiUrl}project/search`,
-            credentials: auth,
+            context,
             key: 'values',
             params: { maxResults: 100 }
         });
