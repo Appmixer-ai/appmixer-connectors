@@ -3,6 +3,7 @@
 const pathModule = require('path');
 
 const API_BASE_URL = 'https://api.cloro.dev';
+const REQUEST_TIMEOUT_MS = 120000;
 const DEFAULT_PREFIX = 'cloro-objects-export';
 // Bing AI Mode takes the prompt in a query string and accepts at most 3,500
 // characters after URL encoding, with a space counted as "+".
@@ -75,7 +76,10 @@ module.exports = {
             url: API_BASE_URL + path,
             headers: {
                 'Authorization': `Bearer ${context.auth.apiKey}`
-            }
+            },
+            // A sync AI answer can take more than 40 s (Gemini median 33 s), so do not
+            // depend on the HTTP client's default timeout.
+            timeout: REQUEST_TIMEOUT_MS
         };
 
         if (data) {

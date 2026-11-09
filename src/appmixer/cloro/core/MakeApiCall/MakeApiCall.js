@@ -3,7 +3,7 @@
 const lib = require('../../lib');
 
 // Convert Appmixer key-value inspector rows into a plain object.
-function kvToObject(value) {
+function kvToObject(context, value) {
     // The Designer's key-value field sends its rows as a JSON object string
     // ('{"Accept":"application/json"}'); a plain object and an array of
     // {key, value} rows are accepted too.
@@ -13,7 +13,8 @@ function kvToObject(value) {
         try {
             input = JSON.parse(input);
         } catch (e) {
-            throw new Error('Request Headers and Query Parameters must be a JSON object of key-value pairs.');
+            // An input error fails the same way on every retry, so cancel instead.
+            throw new context.CancelError('Request Headers and Query Parameters must be a JSON object of key-value pairs.');
         }
     }
     if (!input || typeof input !== 'object') return {};
@@ -46,16 +47,21 @@ module.exports = {
         // a third-party host would leak the account's secret to that host.
         const targetUrl = lib.resolveApiUrl(context, url);
 
+        // Drop any user-supplied Authorization header, whatever its case, so only
+        // the cloro key is sent.
+        const userHeaders = Object.fromEntries(
+            Object.entries(kvToObject(context, headers)).filter(([key]) => !/^authorization$/i.test(key))
+        );
         const requestOptions = {
             method,
             url: targetUrl,
             headers: {
-                ...kvToObject(headers),
+                ...userHeaders,
                 'Authorization': `Bearer ${context.auth.apiKey}`
             }
         };
 
-        const params = kvToObject(parameters);
+        const params = kvToObject(context, parameters);
         if (Object.keys(params).length > 0) {
             requestOptions.params = params;
         }

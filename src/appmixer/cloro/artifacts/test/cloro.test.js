@@ -154,6 +154,7 @@ describe('cloro connector', function() {
             await getAIAnswer.receive(context);
 
             assert.strictEqual(request.url, `https://api.cloro.dev${path}`);
+            assert.strictEqual(request.timeout, 120000);
             assert.deepStrictEqual(request.data, {
                 prompt: 'What is a search engine results page?',
                 country: 'US',
@@ -238,5 +239,31 @@ describe('cloro connector', function() {
         assert.strictEqual(request.url, 'https://api.cloro.dev/v1/countries');
         assert.strictEqual(request.headers.Authorization, 'Bearer test-api-key-material');
         assert.strictEqual(context.output.data.statusCode, 200);
+    });
+
+    it('drops a user Authorization header whatever its case', async function() {
+
+        let request;
+        const headers = JSON.stringify({ authorization: 'Bearer other', AUTHORIZATION: 'x', Accept: 'application/json' });
+        const context = contextFor({ url: '/v1/countries', method: 'GET', headers }, async (value) => {
+            request = value;
+            return { status: 200, headers: {}, data: [] };
+        });
+
+        await makeApiCall.receive(context);
+
+        assert.deepStrictEqual(request.headers, {
+            Accept: 'application/json',
+            Authorization: 'Bearer test-api-key-material'
+        });
+    });
+
+    it('cancels, without a retry, when the headers are not a JSON object', async function() {
+
+        const context = contextFor({ url: '/v1/countries', method: 'GET', headers: '{not json' }, async () => {
+            throw new Error('must not be called');
+        });
+
+        await assert.rejects(makeApiCall.receive(context), CancelError);
     });
 });
