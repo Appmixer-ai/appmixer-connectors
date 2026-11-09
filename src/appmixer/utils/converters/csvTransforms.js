@@ -3,19 +3,26 @@ const { Transform } = require('stream');
 
 const PARSE_FLOAT_TEST = /^[-+]?\d+(?:\.\d*)?(?:[eE]\+\d+)?$|^(?:\d+)?\.\d+(?:e+\d+)?$|^[-+]?Infinity$|^[-+]?NaN$/;
 
+/**
+ * Turn a text cell into a boolean or a number when it reads as one; otherwise keep the text.
+ * Shared by the CSV parser and the HTML table reader so both produce the same JSON types.
+ */
+function castValue(value) {
+    const str = value?.toLowerCase();
+    if (str === 'true') return true;
+    if (str === 'false') return false;
+    if (PARSE_FLOAT_TEST.test(value)) {
+        return parseFloat(value);
+    }
+    return value;
+}
+
 module.exports = {
+    castValue,
     getCSVReadStream: function() {
         return parse({
             bom: true,
-            cast: function(value) {
-                const str = value?.toLowerCase();
-                if (str === 'true') return true;
-                if (str === 'false') return false;
-                if (PARSE_FLOAT_TEST.test(value)) {
-                    return parseFloat(value);
-                }
-                return value;
-            },
+            cast: castValue,
             trim: true,
             relax_column_count: true,
             cast_date: true,

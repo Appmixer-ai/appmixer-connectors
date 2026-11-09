@@ -10,6 +10,11 @@ module.exports = {
     async receive(context) {
 
         const { fileId, outputTextContent } = context.messages.in.content;
+
+        if (!fileId) {
+            throw new context.CancelError('File ID is required!');
+        }
+
         const fileInfo = await context.getFileInfo(fileId);
         if (fileInfo.length > MAX_PDF_FILE_SIZE) {
             throw new context.CancelError(`PDF file is too large. Max file size is ${MAX_PDF_FILE_SIZE / 1024 / 1024}MB.`);
