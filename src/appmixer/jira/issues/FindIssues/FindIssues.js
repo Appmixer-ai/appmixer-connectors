@@ -11,7 +11,7 @@ module.exports = {
 
     async receive(context) {
 
-        const { profileInfo: { apiUrl }, auth } = context;
+        const { profileInfo: { apiUrl } } = context;
         const {
             query,
             maxResults = 50,
@@ -53,7 +53,7 @@ module.exports = {
         }
 
         // Execute the search
-        const found = await commons.get(`${apiUrl}search/jql`, auth, params);
+        const found = await commons.get(`${apiUrl}search/jql`, context, params);
 
         const issues = found?.issues || [];
 

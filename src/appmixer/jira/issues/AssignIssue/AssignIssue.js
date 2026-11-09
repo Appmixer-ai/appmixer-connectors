@@ -6,7 +6,7 @@ module.exports = {
 
     async receive(context) {
 
-        const { profileInfo: { apiUrl }, auth } = context;
+        const { profileInfo: { apiUrl } } = context;
         const { id, accountId } = context.messages.in.content;
 
         if (!id) {
@@ -18,7 +18,7 @@ module.exports = {
 
         await commons.put(
             `${apiUrl}issue/${id}/assignee`,
-            auth,
+            context,
             { accountId }
         );
         return context.sendJson({ id, accountId }, 'issue');
