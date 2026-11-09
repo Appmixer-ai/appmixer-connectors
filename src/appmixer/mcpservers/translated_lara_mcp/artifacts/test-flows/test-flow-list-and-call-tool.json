@@ -1,0 +1,150 @@
+{
+    "name": "E2E Lara Translate MCP - List and Call Tool",
+    "description": "Runs @translated/lara-mcp 2.1.3: ListTools returns all 22 tools, CallTool translate turns 'Hello world' into Czech and the Output carries the translated blocks.",
+    "flow": {
+        "d9a0de70-f578-4c29-bfea-aff5a2eef66d": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64, "y": 16, "source": {}, "version": "1.0.0", "config": {},
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "eabd45ab-344c-429d-b1f1-9ede91f65d20": {
+            "type": "appmixer.mcpservers.translated_lara_mcp.ListTools",
+            "x": 272, "y": 16, "version": "1.0.0",
+            "source": { "in": { "d9a0de70-f578-4c29-bfea-aff5a2eef66d": ["out"] } },
+            "config": {
+                "transform": { "in": { "d9a0de70-f578-4c29-bfea-aff5a2eef66d": { "out": { "type": "json2new", "modifiers": {}, "lambda": {} } } } }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "e73aee5b-9fd0-4826-b313-5fea2ad88117": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 480, "y": 16, "version": "1.0.0",
+            "source": { "in": { "eabd45ab-344c-429d-b1f1-9ede91f65d20": ["out"] } },
+            "config": {
+                "transform": {
+                    "in": {
+                        "eabd45ab-344c-429d-b1f1-9ede91f65d20": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "47949440-64ab-4920-b440-71fb483450cc": {
+                                            "variable": "$.eabd45ab-344c-429d-b1f1-9ede91f65d20.out.tools",
+                                            "functions": [{ "name": "g_length" }]
+                                        },
+                                        "44f62054-e0a1-44de-97b4-09b4d52f53ad": {
+                                            "variable": "$.eabd45ab-344c-429d-b1f1-9ede91f65d20.out.tools",
+                                            "functions": [{ "name": "g_jsonPath", "params": [{ "value": "$[0].name" }] }]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            { "field": "{{{47949440-64ab-4920-b440-71fb483450cc}}}", "assertion": "equal", "expected": "22" },
+                                            { "field": "{{{44f62054-e0a1-44de-97b4-09b4d52f53ad}}}", "assertion": "equal", "expected": "translate" }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "41c2e26a-b9b8-4a68-9989-241da96aaa59": {
+            "type": "appmixer.mcpservers.translated_lara_mcp.CallTool",
+            "x": 688, "y": 144, "version": "1.0.0",
+            "source": { "in": { "e73aee5b-9fd0-4826-b313-5fea2ad88117": ["out"] } },
+            "config": {
+                "properties": { "tool": "translate" },
+                "transform": {
+                    "in": {
+                        "e73aee5b-9fd0-4826-b313-5fea2ad88117": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": { "text": {}, "source": {}, "target": {} },
+                                "lambda": {
+                                    "text": [{ "text": "Hello world", "translatable": true }],
+                                    "source": "en-US",
+                                    "target": "cs-CZ"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "4ca23df5-ac65-4c56-84e9-6c30e892c0de": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 896, "y": 144, "version": "1.0.0",
+            "source": { "in": { "41c2e26a-b9b8-4a68-9989-241da96aaa59": ["out"] } },
+            "config": {
+                "transform": {
+                    "in": {
+                        "41c2e26a-b9b8-4a68-9989-241da96aaa59": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "0d45fba1-b472-471d-a790-8d98b7ddecb3": {
+                                            "variable": "$.41c2e26a-b9b8-4a68-9989-241da96aaa59.out.output",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            { "field": "{{{0d45fba1-b472-471d-a790-8d98b7ddecb3}}}", "assertion": "regex", "regex": "\"items\": \\[[\\s\\S]*\"text\": \"Ahoj" }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "a44fa943-ac68-4cd7-827c-393bf6800189": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 1104, "y": 144, "version": "1.0.0",
+            "source": { "in": { "e73aee5b-9fd0-4826-b313-5fea2ad88117": ["out"], "4ca23df5-ac65-4c56-84e9-6c30e892c0de": ["out"] } },
+            "config": { "properties": { "timeout": 180 } },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "6e4a2fb1-2b95-4a21-9c06-d97c969945ce": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1312, "y": 144, "version": "1.0.0",
+            "source": { "in": { "a44fa943-ac68-4cd7-827c-393bf6800189": ["out"] } },
+            "config": {
+                "properties": { "successStoreId": "64f6f1f9193228000754082f", "failedStoreId": "64f6f1f0193228000754082e" },
+                "transform": {
+                    "in": {
+                        "a44fa943-ac68-4cd7-827c-393bf6800189": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "d58c56d9-0edc-4db9-971c-0e23fc5c709a": { "variable": "$.a44fa943-ac68-4cd7-827c-393bf6800189.out", "functions": [] }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E Lara Translate MCP - List and Call Tool",
+                                    "result": "{{{d58c56d9-0edc-4db9-971c-0e23fc5c709a}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        }
+    }
+}

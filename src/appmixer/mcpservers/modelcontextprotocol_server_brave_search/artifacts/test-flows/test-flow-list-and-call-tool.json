@@ -1,0 +1,227 @@
+{
+    "name": "E2E Brave Search MCP - List and Call Tool",
+    "description": "Spawns the bundled server.js: ListTools returns both tools, CallTool brave_web_search returns a real result.",
+    "flow": {
+        "806a1151-ac52-49af-85b7-cdac7dda1b3c": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16,
+            "source": {},
+            "version": "1.0.0",
+            "config": {},
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "fa6c7f50-97fd-4a0e-98bd-2d6a5a82e6bc": {
+            "type": "appmixer.mcpservers.modelcontextprotocol_server_brave_search.ListTools",
+            "x": 272,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "806a1151-ac52-49af-85b7-cdac7dda1b3c": ["out"]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "806a1151-ac52-49af-85b7-cdac7dda1b3c": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {},
+                                "lambda": {}
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "d8c1c342-e699-4943-b314-9a6c6c1a5aa9": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 480,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "fa6c7f50-97fd-4a0e-98bd-2d6a5a82e6bc": ["out"]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "fa6c7f50-97fd-4a0e-98bd-2d6a5a82e6bc": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "0ea6faf7-b247-481e-bb75-2dad4db4fbe4": {
+                                            "variable": "$.fa6c7f50-97fd-4a0e-98bd-2d6a5a82e6bc.out.tools",
+                                            "functions": [{ "name": "g_length" }]
+                                        },
+                                        "88bac58a-5393-4fe9-88c1-ab47400333eb": {
+                                            "variable": "$.fa6c7f50-97fd-4a0e-98bd-2d6a5a82e6bc.out.tools",
+                                            "functions": [{ "name": "g_jsonPath", "params": [{ "value": "$[0].name" }] }]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{0ea6faf7-b247-481e-bb75-2dad4db4fbe4}}}",
+                                                "assertion": "equal",
+                                                "expected": "2"
+                                            },
+                                            {
+                                                "field": "{{{88bac58a-5393-4fe9-88c1-ab47400333eb}}}",
+                                                "assertion": "equal",
+                                                "expected": "brave_web_search"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "815f6a1f-ce6d-4853-898d-ce158b2ff50f": {
+            "type": "appmixer.mcpservers.modelcontextprotocol_server_brave_search.CallTool",
+            "x": 688,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "d8c1c342-e699-4943-b314-9a6c6c1a5aa9": ["out"]
+                }
+            },
+            "config": {
+                "properties": {
+                    "tool": "brave_web_search"
+                },
+                "transform": {
+                    "in": {
+                        "d8c1c342-e699-4943-b314-9a6c6c1a5aa9": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "query": {},
+                                    "count": {}
+                                },
+                                "lambda": {
+                                    "query": "Appmixer workflow automation",
+                                    "count": 1
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "e9eaf2ca-d6e1-4467-a6fe-9e7c92fa45a4": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 896,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "815f6a1f-ce6d-4853-898d-ce158b2ff50f": ["out"]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "815f6a1f-ce6d-4853-898d-ce158b2ff50f": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "2f56143e-b16f-4037-8866-207a278d3b09": {
+                                            "variable": "$.815f6a1f-ce6d-4853-898d-ce158b2ff50f.out.output",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{2f56143e-b16f-4037-8866-207a278d3b09}}}",
+                                                "assertion": "regex",
+                                                "regex": "^Title: [\\s\\S]*URL: https?://"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "1f1a364b-a6ab-4854-ae53-1e9f6e506254": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 1104,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "d8c1c342-e699-4943-b314-9a6c6c1a5aa9": ["out"],
+                    "e9eaf2ca-d6e1-4467-a6fe-9e7c92fa45a4": ["out"]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 180
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "5b601827-d388-4ad2-8425-1722aaf42e76": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1312,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "1f1a364b-a6ab-4854-ae53-1e9f6e506254": ["out"]
+                }
+            },
+            "config": {
+                "properties": {
+                    "successStoreId": "64f6f1f9193228000754082f",
+                    "failedStoreId": "64f6f1f0193228000754082e"
+                },
+                "transform": {
+                    "in": {
+                        "1f1a364b-a6ab-4854-ae53-1e9f6e506254": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "202ca02d-94a3-40c7-81e3-56f3f4a9cb44": {
+                                            "variable": "$.1f1a364b-a6ab-4854-ae53-1e9f6e506254.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E Brave Search MCP - List and Call Tool",
+                                    "result": "{{{202ca02d-94a3-40c7-81e3-56f3f4a9cb44}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        }
+    }
+}

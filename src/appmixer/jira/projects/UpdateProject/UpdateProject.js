@@ -4,7 +4,7 @@ const commons = require('../../jira-commons');
 module.exports = {
     async receive(context) {
 
-        const { profileInfo: { apiUrl }, auth } = context;
+        const { profileInfo: { apiUrl } } = context;
         const project = context.messages.in.content;
         const id = project.id;
         delete project.id;
@@ -14,7 +14,7 @@ module.exports = {
         }
 
         try {
-            const result = await commons.put(`${apiUrl}project/${id}`, auth, project);
+            const result = await commons.put(`${apiUrl}project/${id}`, context, project);
             return context.sendJson(result, 'project');
         } catch (err) {
             const freePlanUpdateError = 'Changing permission schemes is not allowed on the Jira Software or Work Management Free plans.';
@@ -25,7 +25,7 @@ module.exports = {
             if (err.statusCode === 403 && err.message.includes(forbiddenUpdateError)) {
                 const result = await commons.get(
                     `${apiUrl}project/${id}`,
-                    auth
+                    context
                 );
                 return context.sendJson(result, 'project');
             }

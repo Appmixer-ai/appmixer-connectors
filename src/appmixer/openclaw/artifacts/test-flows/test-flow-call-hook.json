@@ -1,0 +1,360 @@
+{
+    "name": "E2E OpenClaw - Call Hook",
+    "description": "Call Hook against the appmixer-echo test hook: asserts Out, Progress and Done and the echoed correlation ID.",
+    "flow": {
+        "7fa68c09-7021-418a-b6b3-abf5b87886a1": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {},
+            "config": {},
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "1df3e830-4702-4389-9801-912736e2f254": {
+            "type": "appmixer.openclaw.core.CallHook",
+            "x": 272,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "7fa68c09-7021-418a-b6b3-abf5b87886a1": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "7fa68c09-7021-418a-b6b3-abf5b87886a1": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "hook": {},
+                                    "payload": {},
+                                    "correlationId": {}
+                                },
+                                "lambda": {
+                                    "hook": "appmixer-echo",
+                                    "payload": "{\"issue\":42,\"text\":\"hello from Appmixer\"}",
+                                    "correlationId": "e2e-openclaw-42"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "5cadc4c7-175e-48c3-8f9d-8dc498671973": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 480,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "1df3e830-4702-4389-9801-912736e2f254": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "1df3e830-4702-4389-9801-912736e2f254": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "4af2c0bc-34ae-42b2-aae6-be695abd8381": {
+                                            "variable": "$.1df3e830-4702-4389-9801-912736e2f254.out.jobId",
+                                            "functions": []
+                                        },
+                                        "00e29b5d-eafa-42e7-badf-9ddc2afb8a45": {
+                                            "variable": "$.1df3e830-4702-4389-9801-912736e2f254.out.hook",
+                                            "functions": []
+                                        },
+                                        "e9106de7-ac0f-4a3e-8468-51c46356e02d": {
+                                            "variable": "$.1df3e830-4702-4389-9801-912736e2f254.out.correlationId",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{4af2c0bc-34ae-42b2-aae6-be695abd8381}}}",
+                                                "assertion": "notEmpty"
+                                            },
+                                            {
+                                                "field": "{{{00e29b5d-eafa-42e7-badf-9ddc2afb8a45}}}",
+                                                "assertion": "equal",
+                                                "expected": "appmixer-echo"
+                                            },
+                                            {
+                                                "field": "{{{e9106de7-ac0f-4a3e-8468-51c46356e02d}}}",
+                                                "assertion": "equal",
+                                                "expected": "e2e-openclaw-42"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "eccff431-27c2-4f56-b165-6644e9625995": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 480,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "1df3e830-4702-4389-9801-912736e2f254": [
+                        "progress"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "1df3e830-4702-4389-9801-912736e2f254": {
+                            "progress": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "882cb4bc-5706-486a-b0b1-2807fcf5dc76": {
+                                            "variable": "$.1df3e830-4702-4389-9801-912736e2f254.progress.correlationId",
+                                            "functions": []
+                                        },
+                                        "04e4f154-543c-4245-9a2c-9197c40ce838": {
+                                            "variable": "$.1df3e830-4702-4389-9801-912736e2f254.progress.result",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$.step"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{882cb4bc-5706-486a-b0b1-2807fcf5dc76}}}",
+                                                "assertion": "equal",
+                                                "expected": "e2e-openclaw-42"
+                                            },
+                                            {
+                                                "field": "{{{04e4f154-543c-4245-9a2c-9197c40ce838}}}",
+                                                "assertion": "equal",
+                                                "expected": "received"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "910e6715-9bd1-470f-bce3-874c5b314881": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 480,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "1df3e830-4702-4389-9801-912736e2f254": [
+                        "done"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "1df3e830-4702-4389-9801-912736e2f254": {
+                            "done": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "c5f26ce9-6b0e-43ba-b401-0a09fb0d693e": {
+                                            "variable": "$.1df3e830-4702-4389-9801-912736e2f254.done.correlationId",
+                                            "functions": []
+                                        },
+                                        "aa8c348b-2dab-4b83-8685-6f5e5a728cb2": {
+                                            "variable": "$.1df3e830-4702-4389-9801-912736e2f254.done.jobId",
+                                            "functions": []
+                                        },
+                                        "08adea93-a479-44ec-947c-112e9311c5a6": {
+                                            "variable": "$.1df3e830-4702-4389-9801-912736e2f254.done.result",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$.status"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        },
+                                        "46bc76cf-6a31-4232-9135-0d8e58068119": {
+                                            "variable": "$.1df3e830-4702-4389-9801-912736e2f254.done.result",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$.received.text"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{c5f26ce9-6b0e-43ba-b401-0a09fb0d693e}}}",
+                                                "assertion": "equal",
+                                                "expected": "e2e-openclaw-42"
+                                            },
+                                            {
+                                                "field": "{{{aa8c348b-2dab-4b83-8685-6f5e5a728cb2}}}",
+                                                "assertion": "notEmpty"
+                                            },
+                                            {
+                                                "field": "{{{08adea93-a479-44ec-947c-112e9311c5a6}}}",
+                                                "assertion": "equal",
+                                                "expected": "passed"
+                                            },
+                                            {
+                                                "field": "{{{46bc76cf-6a31-4232-9135-0d8e58068119}}}",
+                                                "assertion": "equal",
+                                                "expected": "hello from Appmixer"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "6447153a-c78f-4d80-a0b3-bd42eb344721": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 688,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "5cadc4c7-175e-48c3-8f9d-8dc498671973": [
+                        "out"
+                    ],
+                    "eccff431-27c2-4f56-b165-6644e9625995": [
+                        "out"
+                    ],
+                    "910e6715-9bd1-470f-bce3-874c5b314881": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 180
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "aba2ada7-67e6-48e0-9b5e-bbf15959ebaa": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 896,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "6447153a-c78f-4d80-a0b3-bd42eb344721": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "successStoreId": "64f6f1f9193228000754082f",
+                    "failedStoreId": "64f6f1f0193228000754082e"
+                },
+                "transform": {
+                    "in": {
+                        "6447153a-c78f-4d80-a0b3-bd42eb344721": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "20f3a8ef-89bd-404d-8ec7-01bdaa1d767a": {
+                                            "variable": "$.6447153a-c78f-4d80-a0b3-bd42eb344721.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E OpenClaw - Call Hook",
+                                    "result": "{{{20f3a8ef-89bd-404d-8ec7-01bdaa1d767a}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        }
+    },
+    "notes": {
+        "79ec9fa8-ee2e-4b3e-b68d-40be1b59933d": {
+            "x": 64,
+            "y": 448,
+            "width": 672,
+            "height": 200,
+            "content": "## Test hook\n\nCalls `appmixer-echo` on the OpenClaw gateway of the account. That hook runs no agent: its transform posts a progress update (`\"final\": false`) and then the received payload (`\"status\": \"passed\"`) to the Call Hook callback URL, so Out, Progress and Done all fire within seconds.\n\nOn another gateway, deploy `.github/openclaw/appmixer-echo/` of Appmixer-ai/appmixer-components (transform + mapping + proxy location) first."
+        }
+    }
+}

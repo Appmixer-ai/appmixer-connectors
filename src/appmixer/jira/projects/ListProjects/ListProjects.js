@@ -8,11 +8,11 @@ module.exports = {
 
     async receive(context) {
 
-        const { profileInfo: { apiUrl }, auth } = context;
+        const { profileInfo: { apiUrl } } = context;
 
         const projects = await commons.pager({
             endpoint: `${apiUrl}project/search`,
-            credentials: auth,
+            context,
             key: 'values',
             params: { maxResults: 100 }
         });

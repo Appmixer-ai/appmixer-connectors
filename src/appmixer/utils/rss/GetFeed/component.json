@@ -8,7 +8,10 @@
             "schema": {
                 "type": "object",
                 "properties": {
-                    "url": { "type": "string", "format": "uri" }
+                    "url": { "type": "string", "format": "uri" },
+                    "maxAgeHours": { "type": "number", "exclusiveMinimum": 0 },
+                    "maxItems": { "type": "integer", "minimum": 1 },
+                    "includeContent": { "type": "boolean" }
                 },
                 "required": [ "url" ]
             },
@@ -19,6 +22,25 @@
                         "label": "URL",
                         "index": 1,
                         "tooltip": "A URL to a RSS feed. Example <code>https://www.nasa.gov/rss/dyn/breaking_news.rss</code>."
+                    },
+                    "maxAgeHours": {
+                        "type": "number",
+                        "label": "Max Age (hours)",
+                        "index": 2,
+                        "tooltip": "Only return items published within this many hours. Items without a publication date are left out. Leave empty to return all items."
+                    },
+                    "maxItems": {
+                        "type": "number",
+                        "label": "Max Items",
+                        "index": 3,
+                        "tooltip": "Maximum number of items to return, in feed order (usually newest first). Leave empty for no limit."
+                    },
+                    "includeContent": {
+                        "type": "toggle",
+                        "label": "Include Full Content",
+                        "index": 4,
+                        "defaultValue": true,
+                        "tooltip": "Turn off to drop the full article body (<code>content</code>, <code>content:encoded</code>, <code>summary</code>) and shorten <code>contentSnippet</code> to 500 characters. Use it for feeds that publish whole articles, whose output can otherwise exceed the message size limit."
                     }
                 }
             }
