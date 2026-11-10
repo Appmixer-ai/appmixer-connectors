@@ -1,0 +1,247 @@
+{
+    "name": "E2E Asin",
+    "flow": {
+        "2f1c41ae-2091-4dc1-bf48-2a57cb9962bb": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 320,
+            "source": {},
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "ad333b1e-81da-4f60-a890-1b74cafd0534": {
+            "type": "appmixer.asin.core.SearchAmazon",
+            "x": 400,
+            "y": 0,
+            "source": {
+                "in": {
+                    "2f1c41ae-2091-4dc1-bf48-2a57cb9962bb": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "2f1c41ae-2091-4dc1-bf48-2a57cb9962bb": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "query": {},
+                                    "marketplace": {},
+                                    "outputType": {}
+                                },
+                                "lambda": {
+                                    "query": "kindle",
+                                    "marketplace": "com",
+                                    "outputType": "first"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "ce3f0010-11fe-4547-bea7-630f771acaf5": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 700,
+            "y": 0,
+            "source": {
+                "in": {
+                    "ad333b1e-81da-4f60-a890-1b74cafd0534": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "ad333b1e-81da-4f60-a890-1b74cafd0534": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "af897dce-33c2-490a-ae5a-93b51e90ddf2": {
+                                            "variable": "$.ad333b1e-81da-4f60-a890-1b74cafd0534.out.asin",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{af897dce-33c2-490a-ae5a-93b51e90ddf2}}}",
+                                                "assertion": "regex",
+                                                "regex": "^[A-Z0-9]{10}$"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "a1b0b5c3-df50-48f4-b769-3847760eeeb9": {
+            "type": "appmixer.asin.core.GetAccount",
+            "x": 400,
+            "y": 160,
+            "source": {
+                "in": {
+                    "2f1c41ae-2091-4dc1-bf48-2a57cb9962bb": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "2f1c41ae-2091-4dc1-bf48-2a57cb9962bb": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {},
+                                "lambda": {}
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "b6e9f3de-0570-4ceb-8814-c0aab581a3ea": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 700,
+            "y": 160,
+            "source": {
+                "in": {
+                    "a1b0b5c3-df50-48f4-b769-3847760eeeb9": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "a1b0b5c3-df50-48f4-b769-3847760eeeb9": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "dd2363a0-45a6-4535-ae3a-e7a9ae38f36f": {
+                                            "variable": "$.a1b0b5c3-df50-48f4-b769-3847760eeeb9.out.plan_name",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{dd2363a0-45a6-4535-ae3a-e7a9ae38f36f}}}",
+                                                "assertion": "regex",
+                                                "regex": "."
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "d9243969-6612-4bf0-bf1f-9485ef6257d7": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 1000,
+            "y": 0,
+            "source": {
+                "in": {
+                    "ce3f0010-11fe-4547-bea7-630f771acaf5": [
+                        "out"
+                    ],
+                    "b6e9f3de-0570-4ceb-8814-c0aab581a3ea": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "properties": {
+                    "timeout": 180
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "016c4022-303e-445a-bf1b-205cade3b2db": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1300,
+            "y": 0,
+            "source": {
+                "in": {
+                    "d9243969-6612-4bf0-bf1f-9485ef6257d7": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.1",
+            "config": {
+                "properties": {},
+                "transform": {
+                    "in": {
+                        "d9243969-6612-4bf0-bf1f-9485ef6257d7": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "d3753cc9-ccf2-4a16-afea-46dea9137e00": {
+                                            "variable": "$.d9243969-6612-4bf0-bf1f-9485ef6257d7.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E asin",
+                                    "result": "{{{d3753cc9-ccf2-4a16-afea-46dea9137e00}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        }
+    }
+}
