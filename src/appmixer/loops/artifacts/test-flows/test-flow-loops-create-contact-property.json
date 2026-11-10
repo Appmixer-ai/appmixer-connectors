@@ -1,0 +1,245 @@
+{
+    "name": "E2E Loops - create contact property",
+    "description": "Creates a custom contact property with a unique name and finds it in the list of custom properties.",
+    "flow": {
+        "c45b5042-3760-4e52-85d1-3361272f0505": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16,
+            "source": {},
+            "version": "1.0.0",
+            "config": {},
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "eea37196-b213-419c-ae67-b94aa56ac29a": {
+            "type": "appmixer.loops.core.CreateContactProperty",
+            "x": 272,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "c45b5042-3760-4e52-85d1-3361272f0505": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "c45b5042-3760-4e52-85d1-3361272f0505": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "name": {
+                                        "2d6335e9-3bd0-47ba-b9a5-c68b6b80e984": {
+                                            "functions": [
+                                                {
+                                                    "name": "g_timestamp"
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "type": {}
+                                },
+                                "lambda": {
+                                    "name": "e2eLoops{{{2d6335e9-3bd0-47ba-b9a5-c68b6b80e984}}}",
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "5aabea03-f0db-451a-9c8d-49cedabd2d96": {
+            "type": "appmixer.loops.core.ListContactProperties",
+            "x": 480,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "eea37196-b213-419c-ae67-b94aa56ac29a": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "eea37196-b213-419c-ae67-b94aa56ac29a": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "list": {},
+                                    "outputType": {}
+                                },
+                                "lambda": {
+                                    "list": "custom",
+                                    "outputType": "array"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "b9dac2aa-1a37-4520-bd8d-82a0c296cd79": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 688,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "5aabea03-f0db-451a-9c8d-49cedabd2d96": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "5aabea03-f0db-451a-9c8d-49cedabd2d96": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "1f7121e5-f2f2-4159-95b1-fe4201e327b1": {
+                                            "variable": "$.eea37196-b213-419c-ae67-b94aa56ac29a.out.key",
+                                            "functions": []
+                                        },
+                                        "3e44e052-e985-4c0f-9285-d98a98098e54": {
+                                            "variable": "$.eea37196-b213-419c-ae67-b94aa56ac29a.out.type",
+                                            "functions": []
+                                        },
+                                        "d3cf3be8-e38f-4d49-9225-f5f853db6907": {
+                                            "variable": "$.5aabea03-f0db-451a-9c8d-49cedabd2d96.out.result",
+                                            "functions": [
+                                                {
+                                                    "name": "g_stringify"
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{1f7121e5-f2f2-4159-95b1-fe4201e327b1}}}",
+                                                "assertion": "regex",
+                                                "regex": "^e2eLoops[0-9]+$"
+                                            },
+                                            {
+                                                "field": "{{{3e44e052-e985-4c0f-9285-d98a98098e54}}}",
+                                                "assertion": "equal",
+                                                "expected": "string"
+                                            },
+                                            {
+                                                "field": "{{{d3cf3be8-e38f-4d49-9225-f5f853db6907}}}",
+                                                "assertion": "regex",
+                                                "regex": "e2eLoops[0-9]+"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "7ac18912-5ee3-4104-afc3-b83b8de8b508": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 896,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "b9dac2aa-1a37-4520-bd8d-82a0c296cd79": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 180
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "aedb1c64-a57b-45a6-bca5-0e34b0a9b9e3": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1104,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "7ac18912-5ee3-4104-afc3-b83b8de8b508": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "7ac18912-5ee3-4104-afc3-b83b8de8b508": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "fbb0f827-29bd-4b10-b8b9-6136f3ca5d47": {
+                                            "variable": "$.7ac18912-5ee3-4104-afc3-b83b8de8b508.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E Loops - create contact property",
+                                    "result": "{{{fbb0f827-29bd-4b10-b8b9-6136f3ca5d47}}}"
+                                }
+                            }
+                        }
+                    }
+                },
+                "properties": {
+                    "successStoreId": "64f6f1f9193228000754082f",
+                    "failedStoreId": "64f6f1f0193228000754082e"
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        }
+    },
+    "notes": {
+        "88236417-6a3b-459e-9da0-1552a7d7798d": {
+            "x": 64,
+            "y": 320,
+            "width": 672,
+            "height": 200,
+            "content": "## ⚠️ Test data assumption\n\nThe Loops API cannot delete contact properties, so every run leaves one custom property named `e2eLoops<timestamp>` in the account. Delete them from time to time in Loops under **Audience → Contact properties**."
+        }
+    }
+}

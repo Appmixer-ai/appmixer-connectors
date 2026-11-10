@@ -1,0 +1,272 @@
+{
+    "name": "E2E Loops - account lists",
+    "description": "Lists mailing lists, contact properties and transactional emails of the connected account.",
+    "flow": {
+        "0986b44d-c577-4be4-a1d6-4dbd7b0c5846": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16,
+            "source": {},
+            "version": "1.0.0",
+            "config": {},
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "b91f9633-4962-4583-bb24-d8a78383efe6": {
+            "type": "appmixer.loops.core.ListMailingLists",
+            "x": 272,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "0986b44d-c577-4be4-a1d6-4dbd7b0c5846": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "0986b44d-c577-4be4-a1d6-4dbd7b0c5846": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "outputType": {}
+                                },
+                                "lambda": {
+                                    "outputType": "array"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "5830e3f9-7130-4e42-895f-e98c94410802": {
+            "type": "appmixer.loops.core.ListContactProperties",
+            "x": 480,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "b91f9633-4962-4583-bb24-d8a78383efe6": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "b91f9633-4962-4583-bb24-d8a78383efe6": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "list": {},
+                                    "outputType": {}
+                                },
+                                "lambda": {
+                                    "list": "all",
+                                    "outputType": "first"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "8999ee60-975d-4636-a836-7daefe23e843": {
+            "type": "appmixer.loops.core.ListTransactionalEmails",
+            "x": 688,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "5830e3f9-7130-4e42-895f-e98c94410802": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "5830e3f9-7130-4e42-895f-e98c94410802": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "outputType": {}
+                                },
+                                "lambda": {
+                                    "outputType": "array"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "b0cb3352-f319-4c23-ad50-9903ed0fa5ef": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 896,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "8999ee60-975d-4636-a836-7daefe23e843": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "8999ee60-975d-4636-a836-7daefe23e843": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "72d062ec-7606-49e4-825b-6045c8ebf051": {
+                                            "variable": "$.b91f9633-4962-4583-bb24-d8a78383efe6.out.result",
+                                            "functions": [
+                                                {
+                                                    "name": "g_length"
+                                                }
+                                            ]
+                                        },
+                                        "3bab382d-17b0-491a-97a6-6dd8ee48b425": {
+                                            "variable": "$.5830e3f9-7130-4e42-895f-e98c94410802.out.key",
+                                            "functions": []
+                                        },
+                                        "f13385e4-18db-47fc-8438-69eb552d3654": {
+                                            "variable": "$.5830e3f9-7130-4e42-895f-e98c94410802.out.type",
+                                            "functions": []
+                                        },
+                                        "72bcbf0c-25bc-4324-9098-97c0f54bd4fe": {
+                                            "variable": "$.8999ee60-975d-4636-a836-7daefe23e843.out.result",
+                                            "functions": [
+                                                {
+                                                    "name": "g_length"
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{72d062ec-7606-49e4-825b-6045c8ebf051}}}",
+                                                "assertion": "regex",
+                                                "regex": "^[0-9]+$"
+                                            },
+                                            {
+                                                "field": "{{{3bab382d-17b0-491a-97a6-6dd8ee48b425}}}",
+                                                "assertion": "notEmpty"
+                                            },
+                                            {
+                                                "field": "{{{f13385e4-18db-47fc-8438-69eb552d3654}}}",
+                                                "assertion": "regex",
+                                                "regex": "^(string|number|boolean|date)$"
+                                            },
+                                            {
+                                                "field": "{{{72bcbf0c-25bc-4324-9098-97c0f54bd4fe}}}",
+                                                "assertion": "regex",
+                                                "regex": "^[0-9]+$"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "3923f970-9c77-4b15-bbb0-212bb3ca2f1d": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 1104,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "b0cb3352-f319-4c23-ad50-9903ed0fa5ef": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 180
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "232595f3-72ca-4815-b307-23c0f8be4ffa": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1312,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "3923f970-9c77-4b15-bbb0-212bb3ca2f1d": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "3923f970-9c77-4b15-bbb0-212bb3ca2f1d": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "8ec12ca4-3c7a-455c-90b8-5961425943e1": {
+                                            "variable": "$.3923f970-9c77-4b15-bbb0-212bb3ca2f1d.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E Loops - account lists",
+                                    "result": "{{{8ec12ca4-3c7a-455c-90b8-5961425943e1}}}"
+                                }
+                            }
+                        }
+                    }
+                },
+                "properties": {
+                    "successStoreId": "64f6f1f9193228000754082f",
+                    "failedStoreId": "64f6f1f0193228000754082e"
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        }
+    }
+}
