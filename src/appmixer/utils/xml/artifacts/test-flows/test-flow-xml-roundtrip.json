@@ -1,0 +1,470 @@
+{
+    "name": "E2E XML - JSON to XML roundtrip",
+    "description": "Builds XML from JSON (attributes + repeated tags), validates it, parses it back to JSON and extracts a node with XPath. Covers JsonToXml, ValidateXml, XmlToJson and XPath.",
+    "flow": {
+        "5aa93b19-8411-4c16-bf55-31ed2ead149d": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16,
+            "source": {},
+            "version": "1.0.0",
+            "config": {},
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "940ab53c-2629-4339-839a-fa9cbe9142f1": {
+            "type": "appmixer.utils.xml.JsonToXml",
+            "label": "JsonToXml (attributes + repeated tags)",
+            "x": 272,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "5aa93b19-8411-4c16-bf55-31ed2ead149d": ["out"]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "5aa93b19-8411-4c16-bf55-31ed2ead149d": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "json": {},
+                                    "attributeNamePrefix": {},
+                                    "format": {},
+                                    "ignoreAttributes": {},
+                                    "preserveOrder": {},
+                                    "processEntities": {},
+                                    "suppressBooleanAttributes": {},
+                                    "suppressEmptyNode": {},
+                                    "suppressUnpairedNode": {}
+                                },
+                                "lambda": {
+                                    "json": "{\"note\":{\"@id\":\"42\",\"to\":\"Jane Doe\",\"body\":\"Meeting at 10am\",\"tags\":{\"tag\":[\"work\",\"urgent\"]}}}",
+                                    "attributeNamePrefix": "@",
+                                    "format": false,
+                                    "ignoreAttributes": false,
+                                    "preserveOrder": false,
+                                    "processEntities": false,
+                                    "suppressBooleanAttributes": false,
+                                    "suppressEmptyNode": false,
+                                    "suppressUnpairedNode": false
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "5f8293c6-f6c6-4579-a955-68e7aca603dd": {
+            "type": "appmixer.utils.test.Assert",
+            "label": "Assert JsonToXml",
+            "x": 480,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "940ab53c-2629-4339-839a-fa9cbe9142f1": ["out"]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "940ab53c-2629-4339-839a-fa9cbe9142f1": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "a8b5c223-bcee-4abc-a0c8-bcc8a9792db7": {
+                                            "variable": "$.940ab53c-2629-4339-839a-fa9cbe9142f1.out.xml",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{a8b5c223-bcee-4abc-a0c8-bcc8a9792db7}}}",
+                                                "assertion": "equal",
+                                                "expected": "<note id=\"42\"><to>Jane Doe</to><body>Meeting at 10am</body><tags><tag>work</tag><tag>urgent</tag></tags></note>"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "3a803163-eb28-4b0d-b4b1-a2dc91aacbce": {
+            "type": "appmixer.utils.xml.ValidateXml",
+            "label": "ValidateXml (built XML)",
+            "x": 480,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "940ab53c-2629-4339-839a-fa9cbe9142f1": ["out"]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "940ab53c-2629-4339-839a-fa9cbe9142f1": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "xml": {
+                                        "ceda222a-a9a9-46c2-99ce-a44fb6f5d5f6": {
+                                            "variable": "$.940ab53c-2629-4339-839a-fa9cbe9142f1.out.xml",
+                                            "functions": []
+                                        }
+                                    },
+                                    "allowBooleanAttributes": {}
+                                },
+                                "lambda": {
+                                    "xml": "{{{ceda222a-a9a9-46c2-99ce-a44fb6f5d5f6}}}",
+                                    "allowBooleanAttributes": false
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "a94ab4b9-ff05-4ada-9085-73eacd901953": {
+            "type": "appmixer.utils.test.Assert",
+            "label": "Assert ValidateXml",
+            "x": 688,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "3a803163-eb28-4b0d-b4b1-a2dc91aacbce": ["out"]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "3a803163-eb28-4b0d-b4b1-a2dc91aacbce": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "a3bb3376-47c1-4079-91b7-7deb1b7c0440": {
+                                            "variable": "$.3a803163-eb28-4b0d-b4b1-a2dc91aacbce.out.isValid",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{a3bb3376-47c1-4079-91b7-7deb1b7c0440}}}",
+                                                "assertion": "equal",
+                                                "expected": "true"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "91001734-1e5a-46a3-92e8-5badc09201ab": {
+            "type": "appmixer.utils.xml.XmlToJson",
+            "label": "XmlToJson (built XML)",
+            "x": 688,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "3a803163-eb28-4b0d-b4b1-a2dc91aacbce": ["out"]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "3a803163-eb28-4b0d-b4b1-a2dc91aacbce": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "xml": {
+                                        "7d87e6ea-7bd7-44d8-85ad-797a19ec633a": {
+                                            "variable": "$.940ab53c-2629-4339-839a-fa9cbe9142f1.out.xml",
+                                            "functions": []
+                                        }
+                                    },
+                                    "attributeNamePrefix": {},
+                                    "alwaysArray": {},
+                                    "allowBooleanAttributes": {},
+                                    "alwaysCreateTextNode": {},
+                                    "ignoreAttributes": {},
+                                    "ignoreDeclaration": {},
+                                    "ignorePiTags": {},
+                                    "numberParseLeadingZeros": {},
+                                    "numberParseHex": {},
+                                    "parseAttributeValue": {},
+                                    "parseTagValue": {},
+                                    "preserveOrder": {},
+                                    "processEntities": {},
+                                    "removeNSPrefix": {},
+                                    "trimValues": {}
+                                },
+                                "lambda": {
+                                    "xml": "{{{7d87e6ea-7bd7-44d8-85ad-797a19ec633a}}}",
+                                    "attributeNamePrefix": "@",
+                                    "alwaysArray": "note.tags.tag",
+                                    "allowBooleanAttributes": false,
+                                    "alwaysCreateTextNode": false,
+                                    "ignoreAttributes": false,
+                                    "ignoreDeclaration": false,
+                                    "ignorePiTags": true,
+                                    "numberParseLeadingZeros": true,
+                                    "numberParseHex": true,
+                                    "parseAttributeValue": true,
+                                    "parseTagValue": true,
+                                    "preserveOrder": false,
+                                    "processEntities": true,
+                                    "removeNSPrefix": false,
+                                    "trimValues": true
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "a4c06eca-8d0e-48d4-a44f-6e30d6bef897": {
+            "type": "appmixer.utils.test.Assert",
+            "label": "Assert XmlToJson",
+            "x": 896,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "91001734-1e5a-46a3-92e8-5badc09201ab": ["out"]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "91001734-1e5a-46a3-92e8-5badc09201ab": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "320fa5c4-5ab7-45d2-9a8d-071057aea26e": {
+                                            "variable": "$.91001734-1e5a-46a3-92e8-5badc09201ab.out.json",
+                                            "functions": [
+                                                { "name": "g_jsonPath", "params": [{ "value": "$.note.to" }] }
+                                            ]
+                                        },
+                                        "4041caf6-e797-462f-8253-0d809926b4d6": {
+                                            "variable": "$.91001734-1e5a-46a3-92e8-5badc09201ab.out.json",
+                                            "functions": [
+                                                { "name": "g_jsonPath", "params": [{ "value": "$.note['@id']" }] }
+                                            ]
+                                        },
+                                        "d1484971-d1d3-4824-ba08-bbdc0e3e465e": {
+                                            "variable": "$.91001734-1e5a-46a3-92e8-5badc09201ab.out.json",
+                                            "functions": [
+                                                { "name": "g_jsonPath", "params": [{ "value": "$.note.tags.tag[1]" }] }
+                                            ]
+                                        },
+                                        "b29091b2-bbed-4e9a-81de-34b20c72bc53": {
+                                            "variable": "$.91001734-1e5a-46a3-92e8-5badc09201ab.out.json",
+                                            "functions": [
+                                                { "name": "g_jsonPath", "params": [{ "value": "$.note.tags.tag" }] },
+                                                { "name": "g_length" }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{320fa5c4-5ab7-45d2-9a8d-071057aea26e}}}",
+                                                "assertion": "equal",
+                                                "expected": "Jane Doe"
+                                            },
+                                            {
+                                                "field": "{{{4041caf6-e797-462f-8253-0d809926b4d6}}}",
+                                                "assertion": "equal",
+                                                "expected": "42"
+                                            },
+                                            {
+                                                "field": "{{{d1484971-d1d3-4824-ba08-bbdc0e3e465e}}}",
+                                                "assertion": "equal",
+                                                "expected": "urgent"
+                                            },
+                                            {
+                                                "field": "{{{b29091b2-bbed-4e9a-81de-34b20c72bc53}}}",
+                                                "assertion": "equal",
+                                                "expected": "2"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "8ed41d62-90a7-4346-8a29-5328dfb6e716": {
+            "type": "appmixer.utils.xml.XPath",
+            "label": "XPath //to",
+            "x": 896,
+            "y": 400,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "91001734-1e5a-46a3-92e8-5badc09201ab": ["out"]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "91001734-1e5a-46a3-92e8-5badc09201ab": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "xml": {
+                                        "dc613ff7-b830-40f3-b874-273a78168825": {
+                                            "variable": "$.940ab53c-2629-4339-839a-fa9cbe9142f1.out.xml",
+                                            "functions": []
+                                        }
+                                    },
+                                    "xpath": {}
+                                },
+                                "lambda": {
+                                    "xml": "{{{dc613ff7-b830-40f3-b874-273a78168825}}}",
+                                    "xpath": "//to"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "0812a69c-217d-4f0f-9f71-e7a01522d82d": {
+            "type": "appmixer.utils.test.Assert",
+            "label": "Assert XPath",
+            "x": 1104,
+            "y": 400,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "8ed41d62-90a7-4346-8a29-5328dfb6e716": ["out"]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "8ed41d62-90a7-4346-8a29-5328dfb6e716": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "2ac3936b-5001-41e8-b02f-6e85a1a9c4e1": {
+                                            "variable": "$.8ed41d62-90a7-4346-8a29-5328dfb6e716.out.result",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{2ac3936b-5001-41e8-b02f-6e85a1a9c4e1}}}",
+                                                "assertion": "equal",
+                                                "expected": "<to>Jane Doe</to>"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "f6e6fdbc-83f9-417d-801f-b9e9fb38f417": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 1312,
+            "y": 400,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "5f8293c6-f6c6-4579-a955-68e7aca603dd": ["out"],
+                    "a94ab4b9-ff05-4ada-9085-73eacd901953": ["out"],
+                    "a4c06eca-8d0e-48d4-a44f-6e30d6bef897": ["out"],
+                    "0812a69c-217d-4f0f-9f71-e7a01522d82d": ["out"]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 120
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "5470a162-433e-4fcf-8eeb-6625d3438de1": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1520,
+            "y": 400,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "f6e6fdbc-83f9-417d-801f-b9e9fb38f417": ["out"]
+                }
+            },
+            "config": {
+                "properties": {
+                    "successStoreId": "64f6f1f9193228000754082f",
+                    "failedStoreId": "64f6f1f0193228000754082e"
+                },
+                "transform": {
+                    "in": {
+                        "f6e6fdbc-83f9-417d-801f-b9e9fb38f417": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "e6ce9856-0e56-4548-a205-d5dcda12a54c": {
+                                            "variable": "$.f6e6fdbc-83f9-417d-801f-b9e9fb38f417.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E XML - JSON to XML roundtrip",
+                                    "result": "{{{e6ce9856-0e56-4548-a205-d5dcda12a54c}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        }
+    }
+}

@@ -9,7 +9,7 @@ module.exports = {
 
     async tick(context) {
 
-        const { profileInfo: { apiUrl }, auth } = context;
+        const { profileInfo: { apiUrl } } = context;
         const { project } = context.properties;
 
         let { createdTime } = await context.loadState();
@@ -34,7 +34,7 @@ module.exports = {
 
         const issues = await commons.getAPINoPagination({
             endpoint: `${apiUrl}search/jql`,
-            credentials: auth,
+            context,
             key: 'issues',
             params
         });

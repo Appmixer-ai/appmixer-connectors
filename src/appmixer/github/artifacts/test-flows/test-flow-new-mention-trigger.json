@@ -10,6 +10,7 @@
             },
             "config": {
                 "properties": {
+                    "account": "6a9fbfbab862868cdf228321",
                     "repositories": "apx-vero/appmixer-test"
                 }
             },
@@ -149,6 +150,9 @@
                             }
                         }
                     }
+                },
+                "properties": {
+                    "account": "6a9fbfbab862868cdf228321"
                 }
             },
             "x": 832,
@@ -258,6 +262,7 @@
             },
             "config": {
                 "properties": {
+                    "account": "6a9fbfbab862868cdf228321",
                     "repositoryId": "apx-vero/appmixer-test"
                 },
                 "transform": {
@@ -271,7 +276,7 @@
                                 },
                                 "lambda": {
                                     "title": "E2E NewMention probe",
-                                    "body": "Opened by the Appmixer end-to-end test flow. GitHub never notifies an account about its own mentions, so a SECOND account has to comment `@apx-vero` on this issue while the flow runs; the flow closes it afterwards."
+                                    "body": "Opened by the Appmixer end-to-end test flow. GitHub never notifies an account about its own mentions, so the flow comments `@apx-vero` here from a second account (vtalas) and closes the issue afterwards."
                                 }
                             }
                         }
@@ -279,6 +284,53 @@
                 }
             },
             "x": 624,
+            "y": 256
+        },
+        "b7c2e0d4-5a1f-4c3e-9b8a-2f6d1e0c9a71": {
+            "type": "appmixer.github.list.MakeApiCall",
+            "version": "1.0.0",
+            "label": "Mention @apx-vero (as vtalas)",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "source": {
+                "in": {
+                    "071a8589-3bff-522f-ae08-760acf3fa6f5": [
+                        "newIssue"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "account": "6a9fda43b862868cdf229abe"
+                },
+                "transform": {
+                    "in": {
+                        "071a8589-3bff-522f-ae08-760acf3fa6f5": {
+                            "newIssue": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "url": {
+                                        "e3a9c1f2-7b4d-4e8a-a6c5-0d2f9b1e8c34": {
+                                            "variable": "$.071a8589-3bff-522f-ae08-760acf3fa6f5.newIssue.url",
+                                            "functions": []
+                                        }
+                                    },
+                                    "method": {},
+                                    "body": {}
+                                },
+                                "lambda": {
+                                    "url": "{{{e3a9c1f2-7b4d-4e8a-a6c5-0d2f9b1e8c34}}}/comments",
+                                    "method": "POST",
+                                    "body": "{\"body\": \"@apx-vero E2E NewMention probe: this comment comes from a second account so that GitHub notifies apx-vero.\"}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "x": 832,
             "y": 256
         }
     }

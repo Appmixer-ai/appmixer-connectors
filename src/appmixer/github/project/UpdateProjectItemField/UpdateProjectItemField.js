@@ -41,6 +41,15 @@ const mutation = `
     }
 `;
 
+// Idempotent: for content already in the project GitHub returns the existing item.
+const addItemMutation = `
+    mutation($projectId: ID!, $contentId: ID!) {
+        addProjectV2ItemById(input: { projectId: $projectId, contentId: $contentId }) {
+            item { id }
+        }
+    }
+`;
+
 const readBackQuery = `
     query($itemId: ID!) {
         node(id: $itemId) {
@@ -113,13 +122,14 @@ module.exports = {
 
     async receive(context) {
 
-        const { projectId, itemId, fieldId, valueType = 'single_select', value } = context.messages.in.content;
+        const { projectId, contentId, fieldId, valueType = 'single_select', value } = context.messages.in.content;
+        let { itemId } = context.messages.in.content;
 
         if (!projectId) {
             throw new context.CancelError('Project ID is required!');
         }
-        if (!itemId) {
-            throw new context.CancelError('Item ID is required!');
+        if (!itemId && !contentId) {
+            throw new context.CancelError('Item ID or Content ID is required!');
         }
         if (!fieldId) {
             throw new context.CancelError('Field ID is required!');
@@ -190,6 +200,15 @@ module.exports = {
 
         } else {
             throw new context.CancelError(`Unsupported value type '${valueType}'.`);
+        }
+
+        if (!itemId) {
+            // An issue or pull request instead of a card: put it on the board (or find its card).
+            const added = await lib.graphqlRequest(context, addItemMutation, { projectId, contentId });
+            itemId = added?.addProjectV2ItemById?.item?.id;
+            if (!itemId) {
+                throw new context.CancelError(`Content '${contentId}' could not be added to project '${projectId}'.`);
+            }
         }
 
         let actual;

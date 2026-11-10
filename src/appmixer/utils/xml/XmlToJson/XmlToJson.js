@@ -42,12 +42,15 @@ module.exports = {
             ignoreDeclaration,
             ignorePiTags,
             isArray: (name, jpath, isLeafNode, isAttribute) => {
-                return alwaysArray?.split(',').indexOf(jpath) !== -1;
+                // Only the listed paths become arrays. Without the guard an unset input made EVERY
+                // tag an array (`undefined !== -1`).
+                return (alwaysArray || '').split(',').map(path => path.trim()).includes(jpath);
             },
             numberParseOptions: {
                 leadingZeros: numberParseLeadingZeros,
                 hex: numberParseHex,
-                skipLike: new RegExp(numberParseSkipLike)
+                // `new RegExp(undefined)` matches everything and would skip parsing every number.
+                skipLike: numberParseSkipLike ? new RegExp(numberParseSkipLike) : undefined
             },
             parseAttributeValue,
             parseTagValue,

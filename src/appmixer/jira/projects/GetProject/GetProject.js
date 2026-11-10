@@ -8,7 +8,7 @@ module.exports = {
 
     async receive(context) {
 
-        const { profileInfo: { apiUrl }, auth } = context;
+        const { profileInfo: { apiUrl } } = context;
         const { id } = context.messages.in.content;
 
         if (!id) {
@@ -17,7 +17,7 @@ module.exports = {
 
         const project = await commons.get(
             `${apiUrl}project/${id}`,
-            auth
+            context
         );
         return context.sendJson(project, 'project');
     }

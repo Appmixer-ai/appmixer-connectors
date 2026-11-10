@@ -1,5 +1,21 @@
 /* eslint-disable camelcase */
 
+/**
+ * Joins the text blocks of a Messages API response in order. A response of a model with
+ * extended thinking starts with a `thinking` block, and a response may hold more than
+ * one text block (for example around citations), so the first block is not the answer.
+ * @param {Object} data Messages API response body.
+ * @returns {string}
+ */
+function getAnswer(data) {
+
+    const content = Array.isArray(data?.content) ? data.content : [];
+    return content
+        .filter(block => block?.type === 'text' && typeof block.text === 'string')
+        .map(block => block.text)
+        .join('');
+}
+
 module.exports = {
     async receive(context) {
 
@@ -32,7 +48,17 @@ module.exports = {
             }
         });
 
-        let answer = data?.content[0].text ?? '';
+        const answer = getAnswer(data);
+
+        if (!answer && data?.stop_reason === 'max_tokens') {
+            // The model spent the whole budget (typically on extended thinking) before it wrote any text.
+            // Sending an empty answer would let the flow continue as if Claude had answered.
+            throw new context.CancelError(
+                `Claude used all ${max_tokens} Max Tokens before it wrote an answer (stop_reason: max_tokens` +
+                `${data?.usage?.output_tokens !== undefined ? `, output tokens: ${data.usage.output_tokens}` : ''}). ` +
+                'Models with extended thinking spend output tokens on thinking first. Increase Max Tokens.'
+            );
+        }
 
         return context.sendJson({
             answer,
