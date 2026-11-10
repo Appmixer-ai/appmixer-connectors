@@ -1,5 +1,7 @@
 'use strict';
 
+const lib = require('../lib');
+
 function kvToObj(value) {
     // The Designer's key-value field sends its rows as a JSON object string
     // ('{"Accept":"application/json"}'); a plain object and an array of
@@ -39,7 +41,7 @@ module.exports = {
         const extraHeaders = kvToObj(headersKV);
         const queryParams = kvToObj(parametersKV);
 
-        const baseUrl = 'https://api.openai.com/v1';
+        const baseUrl = lib.baseUrl(context);
         const targetUrl = url.startsWith('http://') || url.startsWith('https://')
             ? url
             : `${baseUrl}${url.startsWith('/') ? url : '/' + url}`;
