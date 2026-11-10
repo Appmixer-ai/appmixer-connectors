@@ -53,4 +53,15 @@ describe('CreateBill', function() {
         assert.deepEqual(data.SalesTermRef, { value: '3' });
         assert.deepEqual(data.DepartmentRef, { value: '2' });
     });
+
+    it('fails with a CancelError naming the missing required input', async function() {
+
+        context.messages.in.content = { minorVersion: '75', lineItemsJSON: LINE };
+        await assert.rejects(() => action.receive(context), /Vendor ID is required/);
+
+        context.messages.in.content = { vendorId: '56', minorVersion: '75' };
+        await assert.rejects(() => action.receive(context), /Line Items JSON is required/);
+
+        assert.equal(context.httpRequest.callCount, 0);
+    });
 });

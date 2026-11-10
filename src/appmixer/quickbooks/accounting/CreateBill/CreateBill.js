@@ -16,6 +16,13 @@ module.exports = {
             ...optionalInputs
         } = context.messages.in.content;
 
+        if (!isSet(vendorId)) {
+            throw new context.CancelError('Vendor ID is required!');
+        }
+        if (!isSet(lineItemsJSON)) {
+            throw new context.CancelError('Line Items JSON is required!');
+        }
+
         // Log warning for deprecated minor versions
         await logDeprecatedMinorVersion(context, minorVersion);
 
