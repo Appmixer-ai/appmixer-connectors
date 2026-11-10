@@ -30,4 +30,22 @@ module.exports = async (context) => {
             await context.log('error', `[UTILS.SUBFLOWS] Error occurred during cleanup job: ${error.message}.`);
         }
     });
+
+    // Remove expired CallFlow calls (correlationId -> caller webhook URL), see routes.js /trigger.
+    await context.scheduleJob('cleanupCallsJob', config.cleanupCalls.schedule, async () => {
+
+        try {
+            const lock = await context.job.lock('utils-subflows-cleanup-calls');
+            try {
+                const CallModel = require('./CallModel')(context);
+                await CallModel.deleteMany({ expiresAt: { $lt: new Date() } });
+            } finally {
+                lock.unlock();
+            }
+        } catch (error) {
+            if (error.message !== 'locked') {
+                await context.log('error', `[UTILS.SUBFLOWS] Error occurred during calls cleanup job: ${error.message}.`);
+            }
+        }
+    });
 };
