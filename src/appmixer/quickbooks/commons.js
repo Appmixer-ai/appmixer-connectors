@@ -163,13 +163,15 @@ module.exports = {
             try {
                 const { data } = await module.exports.makeRequest({ context, options });
 
-                if (!Array.isArray(data.CDCResponse) || !Array.isArray(data.CDCResponse[0].QueryResponse)) {
+                if (!Array.isArray(data.CDCResponse) || !Array.isArray(data.CDCResponse[0]?.QueryResponse)) {
                     await context.log({ step: 'Invalid response from QuickBooks API', data });
                     throw new context.CancelError('Invalid response from QuickBooks API');
                 }
 
-                if (data.CDCResponse[0].QueryResponse[0][entityName]) {
-                    for (const entity of data.CDCResponse[0].QueryResponse[0][entityName]) {
+                // An empty CDC result can come back as `"QueryResponse": []` or `[{}]`.
+                const entities = data.CDCResponse[0].QueryResponse[0]?.[entityName];
+                if (Array.isArray(entities)) {
+                    for (const entity of entities) {
                         // Compare MetaData.CreateTime with MetaData.LastUpdatedTime to determine if the entity is new or updated
                         const isNew = entity?.MetaData?.CreateTime === entity?.MetaData?.LastUpdatedTime;
                         if (isNew && changeType === 'new') {
@@ -223,9 +225,16 @@ module.exports = {
                     path: `v3/company/${context.profileInfo.companyId}/query?query=${encodeURIComponent(query)}`,
                     method: 'GET'
                 };
-                const chunkRecords = await module.exports.makeRequest({ context, options });
+                const { data } = await module.exports.makeRequest({ context, options });
+                // QuickBooks answers a query that matches nothing (e.g. the record was deleted
+                // between the notification and this query) with an empty QueryResponse.
+                const records = (data && data.QueryResponse && data.QueryResponse[entity]) || [];
+                if (!records.length) {
+                    await context.log({ step: 'No records found for webhook IDs', entity, ids: chunk });
+                    continue;
+                }
                 // Send the data out. Await it so that we don't get ContextNotFoundError.
-                await context.sendArray(chunkRecords?.data?.QueryResponse[entity], 'out');
+                await context.sendArray(records, 'out');
             }
         } finally {
             if (lock) {
