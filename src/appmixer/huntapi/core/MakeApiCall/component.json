@@ -1,0 +1,144 @@
+{
+    "name": "appmixer.huntapi.core.MakeApiCall",
+    "label": "Make API Call",
+    "description": "Perform an arbitrary authorized API call to HuntAPI. Provide a path (or full URL), method, headers, query parameters and body. The x-api-key header is added automatically.",
+    "author": "HuntAPI <josselin@huntapi.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:huntapi"
+    },
+    "quota": {
+        "manager": "appmixer:huntapi",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "url": {
+                        "type": "string"
+                    },
+                    "method": {
+                        "type": "string",
+                        "enum": [
+                            "GET",
+                            "POST",
+                            "PUT",
+                            "PATCH",
+                            "DELETE"
+                        ]
+                    },
+                    "headers": {
+                        "type": "string"
+                    },
+                    "parameters": {
+                        "type": "string"
+                    },
+                    "body": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "url",
+                    "method"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "url": {
+                        "type": "text",
+                        "index": 1,
+                        "label": "API Endpoint Path",
+                        "tooltip": "A path relative to <code>https://api.huntapi.com</code>, for example <code>/v1/usage</code>. A full URL is accepted only when it points at <code>https://api.huntapi.com</code>; any other host is rejected so your API key is never sent elsewhere."
+                    },
+                    "method": {
+                        "type": "select",
+                        "index": 2,
+                        "label": "HTTP Method",
+                        "defaultValue": "GET",
+                        "tooltip": "The HTTP method for the API call.",
+                        "options": [
+                            {
+                                "label": "GET",
+                                "value": "GET"
+                            },
+                            {
+                                "label": "POST",
+                                "value": "POST"
+                            },
+                            {
+                                "label": "PUT",
+                                "value": "PUT"
+                            },
+                            {
+                                "label": "PATCH",
+                                "value": "PATCH"
+                            },
+                            {
+                                "label": "DELETE",
+                                "value": "DELETE"
+                            }
+                        ]
+                    },
+                    "parameters": {
+                        "type": "key-value",
+                        "keyLabel": "Key",
+                        "valueLabel": "Value",
+                        "addLabel": "Add item",
+                        "removeLabel": "Remove item",
+                        "index": 3,
+                        "label": "Query Parameters",
+                        "tooltip": "Optional query parameters."
+                    },
+                    "body": {
+                        "type": "textarea",
+                        "index": 4,
+                        "label": "Request Body",
+                        "tooltip": "Optional JSON request body."
+                    },
+                    "headers": {
+                        "type": "key-value",
+                        "keyLabel": "Key",
+                        "valueLabel": "Value",
+                        "addLabel": "Add item",
+                        "removeLabel": "Remove item",
+                        "index": 5,
+                        "label": "Request Headers",
+                        "tooltip": "Optional additional headers. The x-api-key header is set automatically."
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "statusCode": {
+                        "type": "integer",
+                        "title": "Status Code",
+                        "example": 200
+                    },
+                    "headers": {
+                        "type": "object",
+                        "title": "Response Headers",
+                        "properties": {}
+                    },
+                    "body": {
+                        "type": "object",
+                        "title": "Response Body",
+                        "properties": {}
+                    }
+                }
+            }
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PCEtLSBPZmZpY2lhbCB2ZW5kb3IgaWNvbjogaHR0cHM6Ly9hcHAuaHVudGFwaS5jb20vYnJhbmQtYXNzZXRzL2h1bnRhcGkvbG9nby5zdmcgKHRoZSBtYXJrIG9mIHRoZSBsb2dvLCB3aXRob3V0IHRoZSB3b3JkbWFyaykgOyByZXRyaWV2ZWQgMjAyNi0xMS0wOSAtLT4KPHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9Ii0wLjMgMS43IDIwLjYgMjAuNiIgZmlsbD0ibm9uZSIgcm9sZT0iaW1nIiBhcmlhLWxhYmVsPSJodW50YXBpIj4KPGcgY2xpcC1wYXRoPSJ1cmwoI2NsaXAwXzc4XzE3OTUpIj4KPHBhdGggZD0iTTEyLjU0NDMgMi41MjY5M0wxMC41Nzc4IDJMOC45MjA2MiA4LjE4NDhMNy40MjQ0NyAyLjYwMTEyTDUuNDU3OTIgMy4xMjgwNUw3LjA3NDQyIDkuMTYwOEwzLjA0ODA5IDUuMTM0NUwxLjYwODQ5IDYuNTc0MDlMNi4wMjQ4NyAxMC45OTA1TDAuNTI0OTc3IDkuNTE2OEwtMC4wMDE5NTMxMiAxMS40ODMzTDYuMDA3MzcgMTMuMDkzNUM1LjkzODU3IDEyLjc5NjggNS45MDIxNyAxMi40ODc2IDUuOTAyMTcgMTIuMTY5OUM1LjkwMjE3IDkuOTIxMDUgNy43MjUxNyA4LjA5ODA1IDkuOTczOTggOC4wOTgwNUMxMi4yMjI4IDguMDk4MDUgMTQuMDQ1OCA5LjkyMTA1IDE0LjA0NTggMTIuMTY5OUMxNC4wNDU4IDEyLjQ4NTUgMTQuMDA5OCAxMi43OTI4IDEzLjk0MTkgMTMuMDg3OEwxOS40MDMyIDE0LjU1MTJMMTkuOTMwMSAxMi41ODQ3TDEzLjg5NjkgMTAuOTY4MUwxOS4zOTcyIDkuNDk0MjVMMTguODcwMiA3LjUyNzc1TDEyLjgzNzMgOS4xNDQyNUwxNi44NjM2IDUuMTE3OTdMMTUuNDI0IDMuNjc4MzdMMTEuMDY4OSA4LjAzMzVMMTIuNTQ0MyAyLjUyNjkzWiIgZmlsbD0iIzZCQjY2NiIvPgo8cGF0aCBkPSJNMTMuOTM2MSAxMy4xMTA3QzEzLjc2NzUgMTMuODIzNSAxMy40MTE2IDE0LjQ2MzkgMTIuOTIzMiAxNC45NzY5TDE2Ljg3OTcgMTguOTMzNUwxOC4zMTkzIDE3LjQ5MzlMMTMuOTM2MSAxMy4xMTA3WiIgZmlsbD0iIzZCQjY2NiIvPgo8cGF0aCBkPSJNMTIuODgzMiAxNS4wMTgzQzEyLjM4ODkgMTUuNTIzMSAxMS43NjQzIDE1Ljg5OTkgMTEuMDYzOCAxNi4wOTRMMTIuNTAzNSAyMS40NjdMMTQuNDcgMjAuOTQwMUwxMi44ODMyIDE1LjAxODNaIiBmaWxsPSIjNkJCNjY2Ii8+CjxwYXRoIGQ9Ik0xMC45OTAzIDE2LjExMzdDMTAuNjY1MyAxNi4xOTcyIDEwLjMyNDcgMTYuMjQxNiA5Ljk3MzYzIDE2LjI0MTZDOS41OTc1MyAxNi4yNDE2IDkuMjMzMzMgMTYuMTkwNiA4Ljg4NzU4IDE2LjA5NTJMNy40NDY1OCAyMS40NzMxTDkuNDEzMDggMjJMMTAuOTkwMyAxNi4xMTM3WiIgZmlsbD0iIzZCQjY2NiIvPgo8cGF0aCBkPSJNOC44MTgwNSAxNi4wNzU0QzguMTI4MjUgMTUuODcxNiA3LjUxNDcgMTUuNDkgNy4wMzA1IDE0Ljk4MzdMMy4wNjQyNSAxOC45NUw0LjUwMzg1IDIwLjM4OTZMOC44MTgwNSAxNi4wNzU0WiIgZmlsbD0iIzZCQjY2NiIvPgo8cGF0aCBkPSJNNi45OTc4MSAxNC45NDg2QzYuNTIxOTEgMTQuNDM5MSA2LjE3NTI2IDEzLjgwNzMgNi4wMTAyNiAxMy4xMDU1TDAuNTMxMDY4IDE0LjU3MzdMMS4wNTc5OSAxNi41NDAyTDYuOTk3ODEgMTQuOTQ4NloiIGZpbGw9IiM2QkI2NjYiLz4KPC9nPgo8ZGVmcz4KPGNsaXBQYXRoIGlkPSJjbGlwMF83OF8xNzk1Ij4KPHJlY3Qgd2lkdGg9IjIwIiBoZWlnaHQ9IjI0IiBmaWxsPSJ3aGl0ZSIvPgo8L2NsaXBQYXRoPgo8L2RlZnM+Cjwvc3ZnPgo="
+}
