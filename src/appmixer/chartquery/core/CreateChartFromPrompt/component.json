@@ -1,0 +1,78 @@
+{
+    "name": "appmixer.chartquery.core.CreateChartFromPrompt",
+    "label": "Create Chart From Prompt",
+    "description": "Describe a chart in plain English, optionally with raw data as CSV or JSON. ChartQuery builds the chart and returns a public link to the image.",
+    "author": "ChartQuery <josselin@chartquery.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:chartquery"
+    },
+    "quota": {
+        "manager": "appmixer:chartquery",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "prompt": {
+                        "type": "string"
+                    },
+                    "rawData": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "prompt"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "prompt": {
+                        "type": "textarea",
+                        "index": 1,
+                        "label": "Prompt",
+                        "tooltip": "What to chart: type, data, labels and title (at most 1000 characters)."
+                    },
+                    "rawData": {
+                        "type": "textarea",
+                        "index": 2,
+                        "label": "Raw Data",
+                        "tooltip": "Optional data as CSV or JSON."
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "title": "ID",
+                        "example": "cq-aa8b0e73"
+                    },
+                    "render_url": {
+                        "type": "string",
+                        "title": "Image URL",
+                        "example": "https://api.chartquery.com/v1/chart/render/cq-aa8b0e73"
+                    },
+                    "view_url": {
+                        "type": "string",
+                        "title": "View URL",
+                        "example": "https://api.chartquery.com/v1/chart/view/cq-aa8b0e73"
+                    }
+                }
+            }
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTAwIiBoZWlnaHQ9IjUwMCIgdmlld0JveD0iMCAwIDUwMCA1MDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHg9IjEiIHk9IjEiIHdpZHRoPSI0OTgiIGhlaWdodD0iNDk4IiByeD0iNDIiIGZpbGw9IndoaXRlIi8+CjxyZWN0IHg9IjEiIHk9IjEiIHdpZHRoPSI0OTgiIGhlaWdodD0iNDk4IiByeD0iNDIiIHN0cm9rZT0idXJsKCNwYWludDBfbGluZWFyXzY2MV8xMTYzKSIgc3Ryb2tlLXdpZHRoPSIyIi8+CjxnIGZpbHRlcj0idXJsKCNmaWx0ZXIwX2RfNjYxXzExNjMpIj4KPHBhdGggZD0iTTE1MS41IDIxMy4wNjJIMjAwLjc1VjM0OC41SDE1MS41VjIxMy4wNjJaTTI5OS4yNSAyNjIuMzEySDM0OC41VjM0OC41SDI5OS4yNVYyNjIuMzEyWk0yMjUuMzc1IDE1MS41SDI3NC42MjVWMzQ4LjVIMjI1LjM3NVYxNTEuNVoiIGZpbGw9ImJsYWNrIi8+CjwvZz4KPGRlZnM+CjxmaWx0ZXIgaWQ9ImZpbHRlcjBfZF82NjFfMTE2MyIgeD0iMTIyIiB5PSIxMjQuMjUiIHdpZHRoPSIyNTYiIGhlaWdodD0iMjU2IiBmaWx0ZXJVbml0cz0idXNlclNwYWNlT25Vc2UiIGNvbG9yLWludGVycG9sYXRpb24tZmlsdGVycz0ic1JHQiI+CjxmZUZsb29kIGZsb29kLW9wYWNpdHk9IjAiIHJlc3VsdD0iQmFja2dyb3VuZEltYWdlRml4Ii8+CjxmZUNvbG9yTWF0cml4IGluPSJTb3VyY2VBbHBoYSIgdHlwZT0ibWF0cml4IiB2YWx1ZXM9IjAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDEyNyAwIiByZXN1bHQ9ImhhcmRBbHBoYSIvPgo8ZmVNb3JwaG9sb2d5IHJhZGl1cz0iMS41IiBvcGVyYXRvcj0iZXJvZGUiIGluPSJTb3VyY2VBbHBoYSIgcmVzdWx0PSJlZmZlY3QxX2Ryb3BTaGFkb3dfNjYxXzExNjMiLz4KPGZlT2Zmc2V0IGR5PSIyLjI1Ii8+CjxmZUdhdXNzaWFuQmx1ciBzdGREZXZpYXRpb249IjIuMjUiLz4KPGZlQ29tcG9zaXRlIGluMj0iaGFyZEFscGhhIiBvcGVyYXRvcj0ib3V0Ii8+CjxmZUNvbG9yTWF0cml4IHR5cGU9Im1hdHJpeCIgdmFsdWVzPSIwIDAgMCAwIDAuMTQxMTc2IDAgMCAwIDAgMC4xNDExNzYgMCAwIDAgMCAwLjE0MTE3NiAwIDAgMCAwLjEgMCIvPgo8ZmVCbGVuZCBtb2RlPSJub3JtYWwiIGluMj0iQmFja2dyb3VuZEltYWdlRml4IiByZXN1bHQ9ImVmZmVjdDFfZHJvcFNoYWRvd182NjFfMTE2MyIvPgo8ZmVCbGVuZCBtb2RlPSJub3JtYWwiIGluPSJTb3VyY2VHcmFwaGljIiBpbjI9ImVmZmVjdDFfZHJvcFNoYWRvd182NjFfMTE2MyIgcmVzdWx0PSJzaGFwZSIvPgo8L2ZpbHRlcj4KPGxpbmVhckdyYWRpZW50IGlkPSJwYWludDBfbGluZWFyXzY2MV8xMTYzIiB4MT0iMjUwIiB5MT0iMCIgeDI9IjI1MCIgeTI9IjUwMCIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiPgo8c3RvcCBzdG9wLWNvbG9yPSJ3aGl0ZSIgc3RvcC1vcGFjaXR5PSIwLjEyIi8+CjxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0id2hpdGUiIHN0b3Atb3BhY2l0eT0iMCIvPgo8L2xpbmVhckdyYWRpZW50Pgo8L2RlZnM+Cjwvc3ZnPgo="
+}
