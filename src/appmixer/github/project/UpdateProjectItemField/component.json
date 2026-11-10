@@ -3,7 +3,7 @@
     "label": "Update Project Item Field",
     "description": "Set a single-select, number, text, date or iteration field on a Projects (v2) card. Single-select values are given by option name and resolved to the option ID.",
     "author": "Appmixer <info@appmixer.com>",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "auth": {
         "service": "appmixer:github",
         "scope": [
@@ -30,12 +30,21 @@
                     "itemId": {
                         "type": "string"
                     },
+                    "contentId": {
+                        "type": "string"
+                    },
                     "fieldId": {
                         "type": "string"
                     },
                     "valueType": {
                         "type": "string",
-                        "enum": ["single_select", "text", "number", "date", "iteration"]
+                        "enum": [
+                            "single_select",
+                            "text",
+                            "number",
+                            "date",
+                            "iteration"
+                        ]
                     },
                     "value": {
                         "type": "string"
@@ -43,7 +52,6 @@
                 },
                 "required": [
                     "projectId",
-                    "itemId",
                     "fieldId",
                     "value"
                 ]
@@ -58,15 +66,21 @@
                     },
                     "itemId": {
                         "type": "text",
-                        "tooltip": "The node ID of the project item (card) to update, for example 'PVTI_lADOAA12oc4AGXUuzgbi8fA'.",
+                        "tooltip": "The node ID of the project item (card) to update, for example 'PVTI_lADOAA12oc4AGXUuzgbi8fA'. Leave empty and set Content ID to work with an issue or pull request instead.",
                         "label": "Item ID",
                         "index": 2
+                    },
+                    "contentId": {
+                        "type": "text",
+                        "tooltip": "Used when Item ID is empty: the node ID of an issue or pull request, for example 'I_kwDOAA12oc6abcde'. It is added to the project if it is not there yet (an existing card is reused), then its field is set.",
+                        "label": "Content ID",
+                        "index": 3
                     },
                     "fieldId": {
                         "type": "text",
                         "tooltip": "The node ID of the field to set. Pick one of the project's fields or type the ID manually.",
                         "label": "Field ID",
-                        "index": 3,
+                        "index": 4,
                         "source": {
                             "url": "/component/appmixer/github/project/GetProjectFields?outPort=out",
                             "data": {
@@ -82,7 +96,7 @@
                         "type": "select",
                         "tooltip": "The data type of the field being written. This decides how the value is interpreted.",
                         "label": "Value Type",
-                        "index": 4,
+                        "index": 5,
                         "defaultValue": "single_select",
                         "options": [
                             {
@@ -111,7 +125,7 @@
                         "type": "text",
                         "tooltip": "The value to write. For single select and iteration fields give the option name (for example 'In Progress'); an option ID is accepted too. Dates accept any parseable date and are truncated to YYYY-MM-DD.",
                         "label": "Value",
-                        "index": 5
+                        "index": 6
                     }
                 }
             }

@@ -10,6 +10,15 @@ module.exports = {
     async receive(context) {
 
         const { outputFormat, fileName, archiveFileID, files } = context.messages.in.content;
+
+        if (!outputFormat) {
+            throw new context.CancelError('Output Format is required!');
+        }
+
+        if (!fileName) {
+            throw new context.CancelError('File Name is required!');
+        }
+
         const archive = archiver(outputFormat);
         archive.on('error', (err) => {
             throw err;

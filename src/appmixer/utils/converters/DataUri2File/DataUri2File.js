@@ -9,6 +9,11 @@ module.exports = {
     async receive(context) {
 
         const { dataUri } = context.messages.in.content;
+
+        if (!dataUri) {
+            throw new context.CancelError('Data URI is required!');
+        }
+
         let { fileName = 'result' } = context.messages.in.content;
 
         const parsed = parseDataUrl(dataUri);

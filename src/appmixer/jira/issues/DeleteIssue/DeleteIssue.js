@@ -6,7 +6,7 @@ module.exports = {
 
     async receive(context) {
 
-        const { profileInfo: { apiUrl }, auth } = context;
+        const { profileInfo: { apiUrl } } = context;
         const { id } = context.messages.in.content;
 
         if (!id) {
@@ -15,7 +15,7 @@ module.exports = {
 
         await commons.delete(
             `${apiUrl}issue/${id}`,
-            auth
+            context
         );
         return context.sendJson({}, 'out');
     }

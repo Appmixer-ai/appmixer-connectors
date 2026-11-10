@@ -49,14 +49,14 @@ module.exports = {
 
     async receive(context) {
 
-        const { profileInfo: { apiUrl }, auth } = context;
+        const { profileInfo: { apiUrl } } = context;
 
         let { project, issueType } = context.messages.in.content;
 
         if (!project) {
             const projects = await commons.pager({
                 endpoint: `${apiUrl}project/search`,
-                credentials: auth,
+                context,
                 key: 'values',
                 params: { maxResults: 100 }
             });
@@ -67,7 +67,7 @@ module.exports = {
         if (!issueType) {
             const issueTypes = await commons.pager({
                 endpoint: `${apiUrl}issue/createmeta/${project}/issuetypes`,
-                credentials: auth,
+                context,
                 key: 'issueTypes',
                 params: { maxResults: 100 }
             });
@@ -77,7 +77,7 @@ module.exports = {
 
         const fields = await commons.pager({
             endpoint: `${apiUrl}issue/createmeta/${project}/issuetypes/${issueType}`,
-            credentials: auth,
+            context,
             key: 'fields',
             params: { maxResults: 100 }
         });

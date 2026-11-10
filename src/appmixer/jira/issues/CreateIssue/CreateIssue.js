@@ -75,7 +75,7 @@ function buildIssue(issueInfo) {
 module.exports = {
     async receive(context) {
 
-        const { profileInfo: { apiUrl }, auth } = context;
+        const { profileInfo: { apiUrl } } = context;
         const { project, issueType } = context.properties;
 
         const issue = context.messages.in.content;
@@ -87,7 +87,7 @@ module.exports = {
             try {
                 const fields = await commons.pager({
                     endpoint: `${apiUrl}issue/createmeta/${project}/issuetypes/${issueType}`,
-                    credentials: auth,
+                    context,
                     key: 'fields',
                     params: { maxResults: 100 }
                 });
@@ -103,7 +103,7 @@ module.exports = {
             }
         }
 
-        const result = await commons.post(`${apiUrl}issue`, auth, buildIssue(issue));
+        const result = await commons.post(`${apiUrl}issue`, context, buildIssue(issue));
         return context.sendJson(result, 'out');
     }
 };

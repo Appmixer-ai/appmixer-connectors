@@ -1,6 +1,6 @@
 {
     "name": "appmixer.utils.converters",
-    "version": "1.4.4",
+    "version": "2.0.0",
     "changelog": {
         "1.1.0": [
             "FileId inputs changed from 'text' to 'filepicker'. Requires Appmixer 4.4.4 or higher."
@@ -32,6 +32,13 @@
         ],
         "1.4.4": [
             "Security: upgraded tar to 7.5.22 (path traversal, symlink poisoning and hardlink advisories), and moved archiver's transitive minimatch (3.1.5, 5.1.9) and brace-expansion (1.1.21, 2.1.7) to patched versions (ReDoS)."
+        ],
+        "2.0.0": [
+            "BREAKING: CSV2XLSX, JSON2XLSX, HTML2XLSX, HTML2CSV, HTML2JSON, XLSX2CSV, XLSX2JSON and XLSX2HTML no longer use SheetJS (xlsx); they use read-excel-file and write-excel-file for XLSX, node-html-parser for HTML tables and csv-stringify for CSV output. SheetJS has no fixed release on npm and the vendored tarball never installed (the component uploader stores files as text). CSV2HTML, CSV2JSON, JSON2CSV and JSON2HTML are unchanged.",
+            "BREAKING output differences of those eight components: date cells read from a workbook are written as ISO 8601 strings (XLSX2JSON, XLSX2CSV, XLSX2HTML) instead of Excel serial numbers; XLSX2HTML tables keep the same structure (every cell is a <td>, first row is the header, text is escaped) but carry no data-t/data-v/id attributes; a JSON file that is not an array, an HTML file without a table and an invalid workbook fail with a clear error instead of a library crash; input files are limited to 50 MB (CONVERTERS_MAX_FILE_SIZE in the module config). Unchanged: UTF-8 BOM at the start of CSV output, numeric and boolean text becomes numbers and booleans, only the first sheet is read, blank header cells become __EMPTY, __EMPTY_1…, repeated header titles get a suffix (name, name_1, name_2), cells to the right of the header become __EMPTY… columns.",
+            "Security: moved minimatch to 11.0.1 (DoS via globparts amplification, GHSA-g3hv-75wg-m249). Upgraded archiver to 7.0.1 and unzipper to 0.12.5 so that no dependency still needs glob 7 (incompatible with minimatch 11); archiver-utils glob pinned to 14.0.2.",
+            "Every converter validates its required inputs (File ID, Data URI, Output Format, File Name) and fails with a clear error when one is missing.",
+            "E2E test flows for all 15 converters and a unit test of the XLSX, HTML and CSV round trips."
         ]
     }
 }

@@ -7,6 +7,22 @@ const pidusage = require('pidusage');
 const SERVER_SCRIPT_PATH = __dirname + '/server.js';
 const SERVER_SCRIPT_ARGS = '';
 
+/**
+ * Copy of the stdio transport params that is safe for the flow log (DEBUG mode):
+ * env values (the account's credentials) are masked and args are logged as the
+ * unresolved {VAR} templates, so no secret ends up in the logs.
+ * @param {object} params StdioClientTransport params
+ * @returns {object}
+ */
+const paramsForLog = (params) => ({
+    command: params.command,
+    args: [SERVER_SCRIPT_PATH].concat(SERVER_SCRIPT_ARGS ? SERVER_SCRIPT_ARGS.split(' ') : []),
+    env: Object.keys(params.env || {}).reduce((masked, key) => {
+        masked[key] = '***';
+        return masked;
+    }, {})
+});
+
 module.exports = {
 
     /**
@@ -47,7 +63,7 @@ module.exports = {
 
         let startTime;
         if (context.config.DEBUG === 'true') {
-            await context.log({ step: 'connecting-mcp-client', params, clientName });
+            await context.log({ step: 'connecting-mcp-client', params: paramsForLog(params), clientName });
             startTime = new Date;
         }
         const transport = new StdioClientTransport(params);
@@ -61,7 +77,7 @@ module.exports = {
                 /* eslint-enable no-underscore-dangle */
                 const time = (new Date) - startTime;
                 const processUsage = JSON.stringify(await pidusage(childProcess.pid));
-                await context.log({ step: 'connected-mcp-client', params, clientName, time, processUsage });
+                await context.log({ step: 'connected-mcp-client', params: paramsForLog(params), clientName, time, processUsage });
                 await context.log({ step: 'calling-mcp-client', method, args, clientName });
             }
 

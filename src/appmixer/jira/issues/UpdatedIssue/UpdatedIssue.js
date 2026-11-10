@@ -9,7 +9,7 @@ module.exports = {
 
     async tick(context) {
 
-        const { profileInfo: { apiUrl }, auth } = context;
+        const { profileInfo: { apiUrl } } = context;
         const { project } = context.properties;
 
         let { updatedTime } = await context.loadState();
@@ -34,7 +34,7 @@ module.exports = {
 
         const issues = await commons.getAPINoPagination({
             endpoint: `${apiUrl}search/jql`,
-            credentials: auth,
+            context,
             key: 'issues',
             params
         });
@@ -58,7 +58,7 @@ module.exports = {
 
     async test(context) {
 
-        const { profileInfo: { apiUrl }, auth } = context;
+        const { profileInfo: { apiUrl } } = context;
         const { project } = context.properties;
 
         // Newest updated issues first (no `updated > now` baseline), via the same
@@ -68,7 +68,7 @@ module.exports = {
 
         const issues = await commons.getAPINoPagination({
             endpoint: `${apiUrl}search/jql`,
-            credentials: auth,
+            context,
             key: 'issues',
             params: { maxResults: 100, jql, fields: '*navigable' }
         });

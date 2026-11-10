@@ -56,6 +56,33 @@ newest card of the board; it can be any member of the organization.
 The event does not carry the repository, so consumers resolve `Content Node ID` through
 `project/GetNodeById`.
 
+## Dependabot alerts (`security/OnDependabotAlert`)
+
+The trigger consumes `dependabot_alert` deliveries of the **same** organization webhook and
+endpoint: on the webhook, also tick **Dependabot alerts** under *Let me select individual events*.
+Nothing else changes (same URL, same `webhookSecret`, same Auth Hub rule as above).
+
+The plugin routes a delivery to the triggers whose organization matches and, where they set them,
+repository (`name` or `owner/name`), action (default: created, reintroduced, reopened,
+auto_reopened), severity and dependency scope (`runtime` = shipped dependencies,
+`development` = devDependencies).
+
+Alerts of private repositories are sensitive, so when a trigger starts, the plugin checks with the
+trigger account's token that the account can read them on GitHub: with `Repository` set, that
+repository's alerts; without it, the organization-wide alerts, which only organization owners and
+security managers can read (a plain member has to set `Repository`). The token is not stored with
+the listener. The account needs the `repo` scope; Flow Test Mode reads the newest alert of the
+chosen repository.
+
+Simulate a delivery (signed with the configured `webhookSecret`):
+
+```bash
+body='{"action":"created","alert":{"number":1,"state":"open","dependency":{"package":{"ecosystem":"npm","name":"minimatch"},"manifest_path":"src/appmixer/x/package-lock.json","scope":"runtime"},"security_advisory":{"ghsa_id":"GHSA-xxxx-xxxx-xxxx","severity":"high","summary":"test"}},"repository":{"name":"appmixer-connectors","full_name":"Appmixer-ai/appmixer-connectors"},"organization":{"login":"Appmixer-ai"}}'
+sig="sha256=$(printf '%s' "$body" | openssl dgst -sha256 -hmac "$WEBHOOK_SECRET" | sed 's/^.* //')"
+curl -X POST "$API_BASE/plugins/appmixer/github/events" -H 'Content-Type: application/json' \
+    -H 'X-GitHub-Event: dependabot_alert' -H "X-Hub-Signature-256: $sig" -d "$body"
+```
+
 For loop detection, note the login Appmixer writes with: with OAuth/PAT that is the
 owner of the connected account (so a human's `sender.login` on board events is
 indistinguishable from Appmixer's own writes); with a GitHub App it is the

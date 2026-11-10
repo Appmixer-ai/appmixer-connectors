@@ -1,0 +1,155 @@
+{
+    "name": "appmixer.cloro.core.GetAIAnswer",
+    "label": "Get AI Answer",
+    "description": "Send a prompt to Google AI Mode, Bing AI Mode, ChatGPT or Gemini through cloro and get the answer with the sources it cites.",
+    "author": "cloro <info@cloro.dev>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:cloro"
+    },
+    "quota": {
+        "manager": "appmixer:cloro",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "engine": {
+                        "type": "string",
+                        "enum": [
+                            "aimode",
+                            "bing_aimode",
+                            "chatgpt",
+                            "gemini"
+                        ]
+                    },
+                    "prompt": {
+                        "type": "string"
+                    },
+                    "country": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "prompt"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "engine": {
+                        "type": "select",
+                        "index": 1,
+                        "label": "Engine",
+                        "defaultValue": "aimode",
+                        "tooltip": "The AI answer engine to ask.",
+                        "options": [
+                            {
+                                "label": "Google AI Mode",
+                                "value": "aimode"
+                            },
+                            {
+                                "label": "Bing AI Mode",
+                                "value": "bing_aimode"
+                            },
+                            {
+                                "label": "ChatGPT",
+                                "value": "chatgpt"
+                            },
+                            {
+                                "label": "Gemini",
+                                "value": "gemini"
+                            }
+                        ]
+                    },
+                    "prompt": {
+                        "type": "textarea",
+                        "index": 2,
+                        "label": "Prompt",
+                        "tooltip": "The prompt to send. Bing AI Mode accepts at most 3,500 characters after URL encoding."
+                    },
+                    "country": {
+                        "type": "text",
+                        "index": 3,
+                        "label": "Country",
+                        "defaultValue": "US",
+                        "tooltip": "2-letter ISO 3166-1 country code for the location of the request, for example <code>US</code> or <code>DE</code>."
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "engine": {
+                        "type": "string",
+                        "title": "Engine",
+                        "example": "aimode"
+                    },
+                    "prompt": {
+                        "type": "string",
+                        "title": "Prompt",
+                        "example": "What is a search engine results page?"
+                    },
+                    "text": {
+                        "type": "string",
+                        "title": "Answer Text",
+                        "example": "A search engine results page is the page a search engine shows for a query ..."
+                    },
+                    "markdown": {
+                        "type": "string",
+                        "title": "Answer Markdown",
+                        "example": "A **search engine results page** is the page a search engine shows ..."
+                    },
+                    "sources": {
+                        "type": "array",
+                        "title": "Sources",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "position": {
+                                    "type": "integer",
+                                    "title": "Position",
+                                    "example": 1
+                                },
+                                "label": {
+                                    "type": "string",
+                                    "title": "Label",
+                                    "example": "Example Domain"
+                                },
+                                "url": {
+                                    "type": "string",
+                                    "title": "URL",
+                                    "example": "https://example.com/"
+                                },
+                                "description": {
+                                    "type": "string",
+                                    "title": "Description",
+                                    "example": "This domain is for use in documentation examples."
+                                }
+                            }
+                        },
+                        "example": [
+                            {
+                                "position": 1,
+                                "label": "Example Domain",
+                                "url": "https://example.com/",
+                                "description": "This domain is for use in documentation examples."
+                            }
+                        ]
+                    }
+                }
+            }
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyB2ZXJzaW9uPSIxLjIiIGJhc2VQcm9maWxlPSJ0aW55LXBzIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIj4KPHRpdGxlPmNsb3JvPC90aXRsZT4KPHJlY3Qgd2lkdGg9IjUxMiIgaGVpZ2h0PSI1MTIiIGZpbGw9IiMwMDAwMDAiLz4KPGcgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMTUuMzYwMCAxNS4zNjAwKSBzY2FsZSgwLjQ3MDAwMCkiIGZpbGw9IiNmZmZmZmYiPgo8cGF0aCBkPSJNNTA4LjMxNSAxMDMuNzRjMy42OC4wMSA3LjM2IDAgMTEuMDQtLjAxIDMzLjk3LS4wMyAzMy45Ny0uMDMgNDguOTYgNC42NSA3Ljk0IDIuMjggMTUuODkgMy44NyAyNC4wNCA1LjE5IDUuMDUuODUgOS43NSAyLjAxIDE0LjU4IDMuNzIgMi45NSAxLjAyIDUuOTcgMS43NiA5IDIuNTIgOC4xNCAyLjExIDE2LjA2IDQuNzcgMjQuMDEgNy40OSAyLjg4Ljk4IDUuNzggMS45IDguNjggMi44MyAzLjkzIDEuMzEgNy41NiAyLjgyIDExLjIxIDQuNzUgMi42OCAxLjM5IDUuNDIgMi42MiA4LjE2IDMuODcgMi4zNCAxLjA4IDQuNjcgMi4xNyA3IDMuMjUuNjUuMjkgMS4yOS41OSAxLjk1Ljg5IDE0Ljc5IDYuODQgMzMuMTkgMTcuMTYgMzkuODQgMzIuOTggMS44MiA2IDIuMDMgMTIuNjQtLjkxIDE4LjMtNS4xNSA3LjI1LTExLjk5IDEyLjgtMTkuODggMTYuODMtLjY0LjM4LTEuMjkuNzUtMS45NSAxLjE0LTE3LjU5IDkuNzQtMzkuOTUgMTMuNzktNTkuNzIgOS41OS0zLjUyLTEuMS02LjItMi43Ni05LjMzLTQuNzMtMS41Mi0uNjYtMy4wNS0xLjI5LTQuNi0xLjg5LS44OS0uMzQtMS43Ny0uNjktMi42OC0xLjA1LS45LS4zNS0xLjc5LS43LTIuNzItMS4wNi0xLjYtLjY1LTMuMjEtMS4zMS00LjgyLTEuOTYtMTUuMS02LjE1LTMwLjIxLTExLjU4LTQ2LjE4LTE1LjA0LS43NC0uMTYtMS40OS0uMzMtMi4yNi0uNS04LjM0LTEuNjktMTYuNzYtMi4zLTI1LjI0LTIuOTMtMi41My0uMTktNS4wNi0uNC03LjU5LS42LTE2LjQ2LTEuMjktMzIuNTktMS4yNS00OS4wNC4yLTIuMzMuMjEtNC42NS40LTYuOTguNTktMjAuNjkgMS43NC0yMC42OSAxLjc0LTI5LjY4IDUuNC0yLjc2IDEuMDUtNS41NiAxLjg3LTguMzkgMi43Mi02Ljc1IDIuMDQtMTMuMjggNC40OS0xOS44MiA3LjEyLTEuMDkuNDQtMi4xOC44Ny0zLjMgMS4zMi04IDMuMjctOCAzLjI3LTExLjI3IDUuMjItMi4yNSAxLjM2LTQuMzMgMi4yNi02LjggMy4xNS02LjU4IDIuNTYtMTIuNjcgNS45NS0xOC44NSA5LjM0LTEuNTguODYtMy4xNyAxLjcyLTQuNzYgMi41OC0xMS41MiA2LjItMjIuNTQgMTIuOTUtMzMuMzcgMjAuMjgtMi4wNyAxLjQtNC4xNyAyLjc1LTYuMjcgNC4xMS0xOC43OCAxMi41Ni0zNi4zMSAyOC01MC44NiA0NS4yNy0xLjY2IDEuOS0zLjQ0IDMuNjEtNS4yNyA1LjM2LTExLjg0IDExLjY4LTIxLjU2IDI2LjI3LTMwLjI1IDQwLjM3LS40Ny43OC0uOTUgMS41NS0xLjQ1IDIuMzUtMTMuMzcgMjEuOTctMTMuMzcgMjEuOTctMTcuNTUgMzIuNjUtLjIxLjU1LS4yMS41NS0xLjMyIDMuMzItNC40MyAxMS4zOC04LjE2IDIyLjk5LTExLjY4IDM0LjY4LS4yNC43OC0uNDggMS41NS0uNzMgMi4zNi0xNi4zNCA1My40My0xMi4xOCAxMjIuODMgNC43MyAxNzUuNjQuMTcuNTMuMTcuNTMgMSAzLjIyLjI5Ljk0LjU4IDEuODguODggMi44NCAxLjE2IDMuNzYgMi4zIDcuNTIgMy4zOSAxMS4zLjIxLjc1LjQzIDEuNS42NSAyLjI3LjQyIDEuNDYuODQgMi45MSAxLjI1IDQuMzcgMS4zIDQuNTIgMi45MiA4LjcxIDQuODMgMTNsMi4xMyA1LjdjMS44NCA0LjgyIDMuODYgOS41NiA1Ljg3IDE0LjMuMzIuNzUuNjQgMS41Ljk3IDIuMjggNC44MSAxMS4wOSAxMC4yNiAyMS42OSAxNy4wMyAzMS43Mi40MS42MS44MiAxLjIxIDEuMjQgMS44NCAyLjc2IDQuMDkgNS41NiA4LjE2IDguMzkgMTIuMi45IDEuMjggMS43OSAyLjU2IDIuNjcgMy44NSAxLjE4IDEuNzEgMi4zNyAzLjQxIDMuNTggNS4xMS4zNC40OS4zNC40OSAyLjA1IDIuOTQgMi4wNyAyLjA2IDIuMDcgMi4wNiA0LjY4IDIuNTEgMy42LS42OCA1LTIuNzUgNy4zOS01LjQ1IDUtNSA1LTUgNy4zMS03LjI1IDIuOTEtMi45NyA1LjU4LTYuMDcgOC4yNi05LjI1YTQ1MSA0NTEgMCAwIDEgMTQuMjYtMTZjMy4zOC0zLjYxIDYuNjMtNy4zIDkuNzctMTEuMTEgMS40LTEuMzkgMS40LTEuMzkgNC40LTIuMzkuNzEtMS4zMSAxLjM3LTIuNjUgMi00IDEuMzctMS42MiAxLjM3LTEuNjIgMi45NS0zLjIxLjYtLjYgMS4xOS0xLjIgMS44LTEuODIuNjQtLjYzIDEuMjgtMS4yNyAxLjk0LTEuOTJsMi0yIDQuMTctNC4xN2MyLjE0LTIuMTMgNC4yNy00LjI3IDYuNC02LjQxIDEuMzUtMS4zNSAyLjctMi43IDQuMDYtNC4wNS42NC0uNjQgMS4yOC0xLjI4IDEuOTQtMS45NSA0LjUxLTQuNDcgNC41MS00LjQ3IDYuNzQtNC40Ny4xMi0uMjguMTItLjI4LjY5LTEuNjkgMy4yMy01LjY5IDkuMTItOS44NSAxMy45NC0xNC4xNSAxLjg2LTEuNjkgMy42NC0zLjQxIDUuMzctNS4yMiAyLTEuOTQgMi0xLjk0IDQtMS45NC4yNi0uNTkuNTEtMS4xOC43Ny0xLjc5IDEuMzctMi40NSAyLjc4LTMuNzkgNC45Mi01LjU4LjM2LS4zMS4zNi0uMzEgMi4xNi0xLjgzLjcxLS42IDEuNDItMS4xOSAyLjE1LTEuOCAzLjI0LTIuNzMgNi40NC01LjQ0IDkuNDQtOC40NCAyLjEzLTIuMTIgNC4yOS00LjA5IDYuNTYtNi4wNiAzLjg3LTMuMzYgNy40Ny02LjkxIDExLjAzLTEwLjYgMTAuMTgtMTAuNDEgMTguMjEtMTUuNjEgMzMuMjItMTYuMzQgMTEuMDYuNSAxOC41MiA3Ljc3IDI1Ljc1IDE1LjQ0IDMuMiA0Ljc2IDIuNDcgMTAuNSAyIDE2LTEuMTIgMy4xOS0xLjEyIDMuMTktMyA2LS4xNy4zLS4xNy4zLTEuMDcgMS44My03Ljc5IDEyLjY2LTE4Ljc5IDIzLjIyLTI5LjI0IDMzLjY3bC0yLjgyIDIuODJjLTMuNzkgMy43Ny03LjU4IDcuNDktMTEuNjUgMTAuOTUtNi40OCA1LjU3LTEyLjM4IDExLjc5LTE4LjQgMTcuODYtMS4yNyAxLjI3LTIuNTQgMi41NS0zLjgxIDMuODJxLTMuNTEgMy41MS02Ljk5IDcuMDJjLTIuNjcgMi42OC01LjM0IDUuMzYtOC4wMiA4LjAzLS43Ni43Ny0xLjUzIDEuNTMtMi4zMSAyLjMyLTIuOCAyLjgtNS42MSA1LjU5LTguNDEgOC4zOGwtOS4yMiA5LjE5Yy0xLjYyIDEuNjEtMy4yMyAzLjIyLTQuODUgNC44My0yLjM1IDIuMzQtNC43IDQuNjgtNy4wNCA3LjAyLS43Mi43MS0xLjQzIDEuNDItMi4xNiAyLjE1LTQgMy45OS03LjgyIDguMDgtMTEuNSAxMi4zNy0yLjEyIDIuNDYtNC4zMSA0Ljg1LTYuNTEgNy4yNC0yLjg0IDMuMTEtNS42NCA2LjIzLTguMzcgOS40NC0zLjE3IDMuNjQtNi41MyA3LjA4LTkuOTQgMTAuNS0uNTMuNTMtMS4wNSAxLjA2LTEuNiAxLjYxLTMuODQgMy44My0zLjg0IDMuODMtNi4wOSA0Ljk1LjYyIDUuODEgMy42NiA3Ljg3IDcuOTIgMTEuNTQgNC40NSAzLjU1IDkuMDcgNi44NCAxMy43NCAxMC4xIDMuNTMgMi40NyA2LjkyIDUuMSAxMC4yOCA3Ljc5IDEyLjQgOS40NCAyNy4yIDE3LjIyIDQyLjAzIDIxLjg5IDIuMDMuNjggMi4wMy42OCA1LjI4IDIuMTIgMTMuOTkgNi4wOCAyOS41MSA4LjU3IDQ0LjQgMTEuNDcuMzQuMDcuMzQuMDcgMi4wNi40MSAxLjc4LjM0IDMuNTYuNjcgNS4zMyAxIDIuOTYuNjggMi45Ni42OCA1LjMxIDEuNjggOC43IDMuMjcgMTkuNDcgMi4xNSAyOC42MiAyLjEzIDEuMzIgMCAyLjYzLjAxIDMuOTkuMDEgMi43NyAwIDUuNTUgMCA4LjMzLS4wMWgxMC40YzEzLjg0LjAyIDI3LjY4LS4wNyA0MS41MS0uNDYgMS4xLS4wMiAyLjItLjA1IDMuMzMtLjA3IDEwLjk3LS4zNyAyMS4yOC0yLjkgMzEuODEtNS44NXEzLjU4NS0xLjAwNSA3LjItMS44OWM3LjA3LTEuNzcgMTMuOC0zLjkxIDIwLjQ2LTYuODYuNzUtLjMzIDEuNDktLjY2IDIuMjYtMSAxLjUtLjY3IDMtMS4zNCA0LjUtMi4wMiAyLjE4LS45NSA0LjM5LTEuNzggNi42Mi0yLjYgMTMuMDItNS4xMyAyNi40OS0xMi4zOCAzOC4wNi0yMC4yNS4zNy0uMjYuMzctLjI2IDIuMjUtMS41My4zOC0uMjcuMzgtLjI3IDIuMzEtMS42LjgyLS41NiAxLjY0LTEuMTIgMi40OC0xLjY5IDQuOTItMy40IDkuNjktNi45NCAxNC4zOS0xMC42NCAxLjk0LTEuNTIgMy45MS0zLjAxIDUuODgtNC40OCAzLjY2LTIuNzQgNy4zMS01LjQ5IDEwLjk0LTguMjUuNTUtLjQxIDEuMS0uODIgMS42Ni0xLjI1IDMuNS0yLjY3IDYuNTYtNS41NiA5LjY1LTguNjkgMS44My0xLjgyIDMuNjctMy42NCA1LjUtNS40NiAxLjU4LTEuNTcgMy4xNy0zLjE1IDQuNzUtNC43MyAxLjA4LTEuMDggMi4xNi0yLjE1IDMuMjUtMy4yMyA2LjA2LTYuMDEgMTItMTIuMDUgMTcuNS0xOC41OC45My0xLjA3IDEuODUtMi4xNCAyLjc4LTMuMiA2LjA0LTcuMDYgMTEuNzQtMTQuMyAxNy4yMi0yMS44LjY5LS45MyAxLjM4LTEuODUgMi4wOS0yLjgxIDQuMDQtNS40NiA3LjgtMTEuMDIgMTEuNC0xNi43OCAxLjE0LTEuODEgMi4zNC0zLjU5IDMuNTgtNS4zNSA0LjM5LTYuOTUgNy43NS0xNC40OSAxMC45My0yMi4wNi40Ni0xLjA5LjkyLTIuMTggMS40LTMuMyA0LjEzLTEwLjA2IDcuNTQtMjAuMjYgMTAuNi0zMC43LjMtMSAuNi0yLjAxLjktMy4wNSAzLjU5LTEyLjM2IDYuNzMtMjQuNTUgOC4yMi0zNy4zNi40OS00LjIzIDEuMTktNy42NSAyLjg4LTExLjU5IDIuNDctMTIuNTYgMi4xNy0yNS43NCAyLjE3LTM4LjUuMDEtMS41Mi4wMS0zLjA1LjAxLTQuNTguMDEtMy4xOC4wMS02LjM1LjAxLTkuNTMgMC00LjAxLjAxLTguMDMuMDMtMTIuMDUuMDEtMy4xNS4wMS02LjMuMDEtOS40NCAwLTEuNDguMDEtMi45Ni4wMi00LjQ0LjAzLTcuODgtLjIyLTE1LjY2LTEuMDctMjMuNS0uMDctLjY4LS4xNC0xLjM2LS4yMS0yLjA2LS42MS01LjA0LTIuMDktOS4yMi0zLjk3LTEzLjktLjUzLTIuMzQtLjUzLTIuMzQtLjc3LTQuMjMtLjA1LS4zNS0uMDUtLjM1LS4zLTIuMTYtLjEtLjc0LS4yLTEuNDctLjMtMi4yMy0xLjI1LTguMjUtMy42LTE1LjYtNi42My0yMy4zOC0uNTEtMS40NS0xLjAxLTIuOTEtMS41MS00LjM2LS4yNi0uNzUtLjUyLTEuNS0uNzgtMi4yNy0uNDktMS40NS0uOTktMi44OS0xLjQ3LTQuMzMtMS43LTQuOS0zLjgyLTkuNDUtNi4yNC0xNC4wNC0uMjItLjQ0LS4yMi0uNDQtMS4zOC0yLjY5LTguNzctMTYuMzgtMTkuMzktMzEuMDYtMzIuMDgtNDQuNTktMi4xNC0yLjMtNC4yLTQuNjQtNi4yMi03LjAzLTIuOC0zLjIzLTUuODMtNS45NS05LjA4LTguNzEtMy4yLTIuODMtNi4xNi01Ljg4LTkuMTUtOC45Mi0yLjcyLTIuNzUtNS41LTUuMzMtOC40Ni03LjgxLTQuNTYtMy45NC04LjIyLTcuNS05LjEzLTEzLjYyIDIuMS0xNS4yIDExLjgxLTI5LjU2IDIyLjc4LTM5LjkzIDIuNTQtMi41IDQuNzgtNS4yNSA3LjA1LTggMS42Ny0xLjcgMS42Ny0xLjcgMy43Ni0yLjY4IDIuNDQtMS4zIDIuNzMtMi41NiAzLjkxLTUuMDIgMy43My0zLjY2IDcuNTEtNi41MiAxMi41LTguMTIgMTcuNTUuNjIgMzIuNjIgMTcuNCA0My45MyAyOS4zOCA0LjAzIDQuNDUgNy42NiA5LjIyIDExLjI3IDE0LjAxIDEuMjkgMS43MSAyLjYgMy40IDMuOTMgNS4wOCA1LjQ4IDYuOTkgMTAuNTggMTQuMTcgMTUuMzcgMjEuNjUuNjYgMSAxLjMyIDIuMDEgMiAzLjA0IDQuMiA2LjU5IDcuNjkgMTMuMjYgMTAuOTIgMjAuMzYgMi43NiA2LjAyIDUuODEgMTEuODUgOS4wMyAxNy42MyAyLjMgNC4yMSAzLjkxIDguMzYgNS4zNCAxMi45My45IDIuNTggMi4yNSA0Ljc0IDMuNzEgNy4wNC42NCAxLjUyIDEuMjIgMy4wNyAxLjc1IDQuNjMgMS4yOCAzLjYzIDIuNTggNy4yNSAzLjkzIDEwLjg2IDMuMDcgOC4yMiA2LjA0IDE2LjQxIDguNSAyNC44NS44MiAyLjY2LjgyIDIuNjYgMS44MSA0Ljk5IDEuMzcgMy42MSAyLjE1IDcuMjcgMi45NSAxMS4wNS4xOC44LjM1IDEuNjEuNTMgMi40NC4zNSAxLjYzLjcgMy4yNyAxLjA1IDQuOTEuNDEgMS45My44NCAzLjg1IDEuMjcgNS43NyAxLjg3IDguNjcgMy4xMiAxNy40MSA0LjM0IDI2LjE5LjA4LjYxLjA4LjYxLjUyIDMuNzEgMS41NSAxMS40MyAyLjUxIDIyLjczIDIuNTIgMzQuMjcuMDEgMS4wOC4wMSAyLjE1LjAxIDMuMjcuMDEgMi4yNy4wMSA0LjU0LjAxIDYuODEgMCAzLjM4LjAyIDYuNzcuMDQgMTAuMTYuMDUgMjAuOC0xLjQ2IDQxLjM2LTQuMjkgNjEuOTYtLjMyIDIuMjktLjYxIDQuNTktLjkgNi44OC0xLjI5IDkuNjktMy4zNiAxOC44NS02LjA0IDI4LjI1LS40OCAyLS45NyA0LTEuNDMgNi0zLjE2IDEyLjY4LTcuOTUgMjQuNzktMTIuNzQgMzYuOTItMS4xNyAyLjk2LTIuMzEgNS45Mi0zLjQ1IDguODktLjIuNTEtLjIuNTEtMS4xOSAzLjEtLjgzIDIuMTYtMS42NSA0LjMzLTIuNDYgNi41LS4yMS41Ni0uMjEuNTYtMS4yOSAzLjQtLjM3IDEtLjc0IDItMS4xMyAzLjAyLTEuNTggMy44My0zLjQyIDcuNDgtNS4zMSAxMS4xNy0uNjQgMS4zLTEuMjggMi42LTEuOTMgMy45LTMuNDMgNi45MS02LjkgMTMuNzktMTAuNjUgMjAuNTQtLjk1IDEuNzItMS44OCAzLjQ1LTIuOCA1LjE5LTcuNTMgMTQuMTgtMTYuNzMgMjcuMjctMjYuNjUgMzkuODctMS41IDEuOTEtMi45OCAzLjgzLTQuNDYgNS43NS01LjM4IDYuOTgtMTAuOTYgMTMuNjItMTcgMjAuMDMtMS44MyAxLjk5LTMuNTIgMy45Ni01LjIgNi4wNi0uNzYuODgtMS41MiAxLjc2LTIuMzEgMi42NmgtMmMtLjIzLjU3LS40NyAxLjE0LS43MSAxLjczLTQuMjcgNy41NC0xMy40NSAxMy4xLTIwLjI5IDE4LjI3LTEuNjkgMS4yOC0zLjM3IDIuNTctNS4wNiAzLjg1LTEuMTQuODctMi4yOCAxLjc0LTMuNDIgMi42LTMuMDcgMi4zNC01LjgxIDQuOC04LjUyIDcuNTUtNi42OSA1Ljc4LTEzLjY2IDExLjA2LTIxIDE2LS45NS42NS0xLjkxIDEuMy0yLjkgMS45Ny05LjUgNi4zNy0xOS4wMiAxMi42MS0yOS4xIDE4LjAzLTEuNjguOTItMy4zNyAxLjgzLTUuMDYgMi43NS0uOTIuNS0xLjgzIDEtMi43OCAxLjUxLTMuMDUgMS42OC02LjA5IDMuNC05LjEyIDUuMTItNi42IDMuNzMtMTMuMTkgNy4zNi0yMC4wNCAxMC42Mi0uNy4zNC0xLjQuNjctMi4xMiAxLjAyLTcuOTIgMy43OC0xNS44NCA3LjU2LTIzLjg4IDExLjA4LTEuOTEuODYtMy43NyAxLjgtNS42MiAyLjc4LTYuMjYgMy4xNi0xMi44NCA1LjYxLTE5LjM4IDguMTItMS4xNi40NS0yLjMyLjktMy41MSAxLjM2LTguNyAzLjIzLTE3LjQ3IDUuNTQtMjYuNDkgNy42NC0uODUuMjItMS43LjQzLTIuNTkuNjYtMTIuNDUgMy4wNi0yNS42NSAyLjYzLTM4LjQxIDIuOS0uOTQuMDItMS44OC4wNC0yLjg1LjA3LTI0LjM0LjUzLTQ4LjY4LjY4LTczLjAyIDAtLjYxLS4wMi0uNjEtLjAyLTMuNzEtLjEtMTEuMDUtLjM3LTIxLjg5LTEuNjYtMzIuNi00LjQ3LTEuMjMtLjMyLTIuNDctLjYzLTMuNzMtLjk2LS4zMy0uMDktLjMzLS4wOS0xLjk3LS41My0xLjQ5LS40LTIuOTktLjc5LTQuNDktMS4xOC03LjYxLTEuOTktMTUuMDQtNC40Ny0yMi40Ny03LjA0LTIuMDgtLjcyLTQuMTctMS40My02LjI2LTIuMTUtMTAuOTQtMy43NS0yMS42Mi03Ljg2LTMxLjktMTMuMi0uNDYtLjIzLS40Ni0uMjMtMi44MS0xLjM3LTQuNzgtMi40NC05LjQ4LTUuMDQtMTQuMTktNy42My0uNzctLjQyLTEuNTUtLjg1LTIuMzUtMS4yOS03Ljg4LTQuMzItMTUuNTQtOC45MS0yMi45Ny0xMy45Ni0yLjEyLTEuMzgtNC4yNS0yLjcyLTYuNDEtNC4wMy03LjI5LTQuNDQtMTQuMTItOC45Ni0yMC42NC0xNC41Mi0yLjczLTIuMjktNS41Ni00LjQtOC40NC02LjUxLTcuMDItNS4yMy0xMy42My0xMC44OS0yMC4xOS0xNi42OS0uNTEtLjQ1LTEuMDItLjktMS41NC0xLjM3LTEyLjM5LTExLjAxLTI0LjI0LTIyLjU1LTM0LjQ2LTM1LjYzLS45Mi0xLjE0LTEuODUtMi4yOC0yLjc4LTMuNDEtNy4wNi04LjY0LTEzLjU4LTE3LjU2LTE5LjkzLTI2LjczLTEuNy0yLjQ2LTMuNDMtNC45MS01LjE2LTcuMzYtMi4xNC0zLjA3LTQuMjctNi4xNS02LjM4LTkuMjUtLjQ1LS42Ny0uOTEtMS4zNS0xLjM5LTIuMDUtMS4zNi0yLjItMS4zNi0yLjItMi43OS01LjA3LTEuNjMtMy4yNy0zLjQ5LTYuMjktNS40NC05LjM4LTMuNC01LjQ0LTYuMzUtMTAuOTctOS4xMy0xNi43NS0xLjE0LTIuMjctMi4yOS00LjU0LTMuNDMtNi44MS0zLjM0LTYuNjYtNi40OS0xMy40LTkuNTctMjAuMTktLjMzLS43My0uNjctMS40Ni0xLjAxLTIuMjEtOS41OS0yMS4xOC05LjU5LTIxLjE4LTEyLjI4LTMxLjUyLS43MS0yLjI3LS43MS0yLjI3LTIuMTYtNS41LTIuMDgtNC43NC0yLjkzLTkuNjktMy45Mi0xNC43NS0uODktNC4yOS0yLjA0LTguMjUtMy42My0xMi4zNC0yLjU1LTYuNzktMy40My0xMy42Ni00LjQyLTIwLjgxLS43My00LjkzLTEuNjEtOS4yNy0zLjY0LTEzLjg0LTIuNDYtNS43Mi0yLjY3LTExLjI0LTIuOTQtMTcuNC0uNDctNy44Ni0uOTctMTQuODItNC4wOS0yMi4xLTIuMzItNi40OC0yLjA2LTEzLjYxLTIuMDctMjAuNDEtLjAxLS40Ni0uMDEtLjQ2LS4wMS0yLjgyLS4wMS0xLjk2LS4wMS0zLjkyLS4wMS01Ljg4IDAtMi45NS0uMDItNS45LS4wNC04Ljg1LS4wNC0xMi44My40MS0yNS4xMSAzLjc5LTM3LjU4IDIuMTYtOC4wOSAyLjE3LTE2LjM1IDIuNDMtMjQuNjguMzktOC4wOSAxLjkxLTE0LjY0IDQuODUtMjIuMTcgMS40OS00LjA0IDIuMDEtNy44MiAyLjQtMTIuMDggMS4xNS05LjM2IDMuNTYtMTguMjggNi4xOS0yNy4zMS4yLS42Ny4zOS0xLjM1LjU5LTIuMDQgMS44OC02LjUxIDMuNzYtMTIuODYgNy4wMS0xOC44NSAxLjkxLTMuNjggMy4yOC03LjYxIDQuNzgtMTEuNDggMy4yOS04LjQgNi45NC0xNi40MiAxMS4xOC0yNC4zOC40NS0uODQuODktMS42OCAxLjM0LTIuNTQgMi45LTUuMzggNi4yMy0xMC40MSA5LjY2LTE1LjQ2LjkyLTEuMzkgMS44NC0yLjc5IDIuNzUtNC4xOSAzLjg4LTUuOCA3Ljk2LTExLjQ2IDEyLjA0LTE3LjEyIDEuMDktMS41MiAyLjE3LTMuMDUgMy4yNS00LjU4IDEyLjIyLTE3LjE4IDI2Ljk5LTMyLjMyIDQxLjg2LTQ3LjE5IDIuMTEtMi4xMSA0LjItNC4yMiA2LjMtNi4zNCA3LjI5LTcuMzIgMTQuNjMtMTQuMjMgMjIuOC0yMC41OCAxLjc4LTEuNDMgMy41NS0yLjg3IDUuMzItNC4zMSAzLjQ0LTIuNzkgNi45OC01LjI2IDEwLjY4LTcuNjkgMS4xOS0uNzkgMi4zNy0xLjU4IDMuNTYtMi4zN2wxOC40Mi0xMi4yOGMxLjM3LS45MSAyLjc0LTEuODQgNC4xMS0yLjc2IDUuOTEtNCAxMS45NS03Ljc3IDE4LjA1LTExLjQ2IDEuMjgtLjc4IDIuNTYtMS41NSAzLjg0LTIuMzNhMjc0IDI3NCAwIDAgMSAzMi4wMi0xNi44bDIuMTYtLjk2YzMuNDQtMS41MiA2Ljg4LTMuMDIgMTAuMzQtNC41MiAyLjcyLTEuMTggNS40My0yLjQgOC4xMy0zLjY0IDUuMzUtMi4zOSAxMC44OC00LjI3IDE2LjQxLTYuMTkgMi4wMy0uNzEgNC4wNi0xLjQ0IDYuMDgtMi4xNyAxOC4wOS02LjQ5IDM2LjEyLTExLjM3IDU0Ljg4LTE1LjUyLjY5LS4xNiAxLjM4LS4zMiAyLjA5LS40OSAxNi41My0zLjgyIDMzLjM0LTMuODMgNTAuMjMtMy43NyBNNjg4IDMyNWMyLjUgMS41NiAyLjUgMS41NiA1IDQgLjMzLjI3LjMzLjI3IDEuOTggMS42MSA1LjIxIDQuMjcgOC40IDcuODEgOS41OSAxNC42OS4zMyAxMC4zMy0yLjMzIDE2Ljk3LTcuNDUgMjUuNzVhMTc2IDE3NiAwIDAgMC0zLjEyIDUuNzJjLTMuNTUgNi42OC03LjUxIDEyLjM2LTEyLjc1IDE3Ljg0LTIuMjMgMi4zNi00LjE5IDQuODItNi4xOSA3LjM5LTQuMzkgNS40Mi05LjIxIDEwLjM3LTE0LjEyIDE1LjMxbC0yLjI5IDIuMzJjLTQuNjEgNC41OC05LjMzIDguNjQtMTQuNjUgMTIuMzctLjg0LjU5LTEuNjggMS4xOC0yLjU0IDEuNzktMTEuNTUgNy43My0xMS41NSA3LjczLTE4LjQ2IDcuMjEtNC4xOS0xLjYzLTguMDYtMy44My0xMi02bC0yLjQ1LTEuMjdjLTMuOS0yLjE2LTYuNjgtNC4xMy04LjE0LTguNi0yLjEyLTExLjA0LjY1LTE4LjY2IDYuNzQtMjcuODcgNC40OS02LjYyIDkuMzItMTIuOTkgMTQuMjgtMTkuMjYgMS41My0xLjk1IDIuOTktMy45MyA0LjQ1LTUuOTQgNi4xOS04LjIzIDEzLjQ1LTE1LjUgMjAuNjgtMjIuODEuNzEtLjcyIDEuNDItMS40NCAyLjE1LTIuMTkgNC40OC00LjQ5IDkuMTMtOC4zOCAxNC4yOS0xMi4wNiAxLjEzLS44NSAyLjI1LTEuNzEgMy4zOC0yLjU2IDYuNzMtNC43MyAxMy4yMS04LjcyIDIxLjYyLTcuNDRNNTc4LjMxMyA0NDQuODEzYy44OS43MiAxLjc3IDEuNDQgMi42OSAyLjE5LjgyLjU1IDEuNjUgMS4xMSAyLjUgMS42OSA0Ljk1IDQuNTggOC44MSA5LjQ0IDkuMzEgMTYuMzctLjkgMTUuMjUtMTEuNzMgMjguODUtMjEuNjIgMzkuNTYtMS45NyAyLjEzLTMuODcgNC4zLTUuNzYgNi41LTUuMzMgNi4xMS0xMS4wOSAxMS42OS0xNy4yNCAxNi45Ni0yLjU4IDIuMjUtNS4wNiA0LjU5LTcuNTcgNi45Mi00LjI3IDMuOTEtOC42NyA3LjMxLTEzLjQ4IDEwLjUzLTIuMTQgMS40Ny0yLjE0IDEuNDctNC44MyAzLjc4LTUuMyAzLjg3LTExLjkzIDQuNTYtMTguMzEgMy42OS03Ljc2LTIuNDUtMTUuODctOS4wNi0yMC0xNi0xLjQ2LTUuNjgtMS4yOS0xMC41NiAxLTE2IDIuMTgtMy40NSA0LjU5LTYuNzEgNy0xMCAxLjAzLTEuNTIgMi4wNS0zLjA0IDMuMDYtNC41Ny40OS0uNzMuOTctMS40NiAxLjQ3LTIuMjEuOTktMS41IDEuOTgtMyAyLjk2LTQuNSAxNS4wMy0yMi44IDM2LjA2LTQ2LjkxIDYyLjAxLTU3LjEgNi4wNy0xLjA4IDExLjM1LS43OSAxNi44MSAyLjE5Ii8+CjwvZz4KPC9zdmc+Cg=="
+}
