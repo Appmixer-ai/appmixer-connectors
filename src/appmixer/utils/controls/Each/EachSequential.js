@@ -1,6 +1,7 @@
 'use strict';
 
 const { randomUUID } = require('crypto');
+const continuityScope = require('./continuityScope');
 
 // Everything related to the Each "sequential" mode lives here. A plain Each emits all items in one
 // tight loop, so when the loop body has a variable latency the items overtake each other and leave
@@ -13,6 +14,8 @@ const { randomUUID } = require('crypto');
 // which wakes this component up on its webhook port to emit the next item. The engine restores the
 // scope of the message that started the loop for that webhook delivery (see getWebhookQuery), so
 // every item continues the original branch and upstream variables stay resolvable in the loop body.
+// That scope is the continuity scope the engine stores for the `in` message; handleStart keeps it for
+// as long as the loop can run, instead of the engine default of 100 days (see continuityScope.js).
 //
 // Everything is kept in engine-provided state, no plugin is involved:
 //   - component state `<id>`        the loop cursor: the item in flight, its timeout, loop metadata
@@ -140,6 +143,8 @@ async function handleStart(context, { list, correlationId, count, delay, itemTim
     const itemTimeout = parseItemTimeout(context, rawItemTimeout);
 
     if (count === 0) {
+        // Nothing to wait for.
+        await continuityScope.release(context);
         return context.sendJson({ count, correlationId, result: [] }, 'done');
     }
 
@@ -152,6 +157,10 @@ async function handleStart(context, { list, correlationId, count, delay, itemTim
             // timeout chain drives it from here; starting over would re-send every item.
             return;
         }
+
+        // Every item is acknowledged or given up on within the item timeout (plus the delay before it),
+        // so this bounds the whole loop.
+        await continuityScope.keepForLoop(context, { count, itemTimeout, delay });
 
         await context.stateSet(itemsKey(id), list);
         // ContinueEach only knows the loop id (the Correlation ID mapped to it), so this is how it
