@@ -1,0 +1,144 @@
+{
+    "name": "appmixer.autom.core.MakeApiCall",
+    "label": "Make API Call",
+    "description": "Perform an arbitrary authorized API call to Autom. Provide a path (or full URL), method, headers, query parameters and body. The x-api-key header is added automatically.",
+    "author": "Autom <josselin@autom.dev>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:autom"
+    },
+    "quota": {
+        "manager": "appmixer:autom",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "url": {
+                        "type": "string"
+                    },
+                    "method": {
+                        "type": "string",
+                        "enum": [
+                            "GET",
+                            "POST",
+                            "PUT",
+                            "PATCH",
+                            "DELETE"
+                        ]
+                    },
+                    "headers": {
+                        "type": "string"
+                    },
+                    "parameters": {
+                        "type": "string"
+                    },
+                    "body": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "url",
+                    "method"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "url": {
+                        "type": "text",
+                        "index": 1,
+                        "label": "API Endpoint Path",
+                        "tooltip": "A path relative to <code>https://api.autom.dev</code>, for example <code>/v1/usage</code>. A full URL is accepted only when it points at <code>https://api.autom.dev</code>; any other host is rejected so your API key is never sent elsewhere."
+                    },
+                    "method": {
+                        "type": "select",
+                        "index": 2,
+                        "label": "HTTP Method",
+                        "defaultValue": "GET",
+                        "tooltip": "The HTTP method for the API call.",
+                        "options": [
+                            {
+                                "label": "GET",
+                                "value": "GET"
+                            },
+                            {
+                                "label": "POST",
+                                "value": "POST"
+                            },
+                            {
+                                "label": "PUT",
+                                "value": "PUT"
+                            },
+                            {
+                                "label": "PATCH",
+                                "value": "PATCH"
+                            },
+                            {
+                                "label": "DELETE",
+                                "value": "DELETE"
+                            }
+                        ]
+                    },
+                    "parameters": {
+                        "type": "key-value",
+                        "keyLabel": "Key",
+                        "valueLabel": "Value",
+                        "addLabel": "Add item",
+                        "removeLabel": "Remove item",
+                        "index": 3,
+                        "label": "Query Parameters",
+                        "tooltip": "Optional query parameters."
+                    },
+                    "body": {
+                        "type": "textarea",
+                        "index": 4,
+                        "label": "Request Body",
+                        "tooltip": "Optional JSON request body."
+                    },
+                    "headers": {
+                        "type": "key-value",
+                        "keyLabel": "Key",
+                        "valueLabel": "Value",
+                        "addLabel": "Add item",
+                        "removeLabel": "Remove item",
+                        "index": 5,
+                        "label": "Request Headers",
+                        "tooltip": "Optional additional headers. The x-api-key header is set automatically."
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "statusCode": {
+                        "type": "integer",
+                        "title": "Status Code",
+                        "example": 200
+                    },
+                    "headers": {
+                        "type": "object",
+                        "title": "Response Headers",
+                        "properties": {}
+                    },
+                    "body": {
+                        "type": "object",
+                        "title": "Response Body",
+                        "properties": {}
+                    }
+                }
+            }
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PCEtLSBPZmZpY2lhbCB2ZW5kb3IgaWNvbjogaHR0cHM6Ly9hcHAuYXV0b20uZGV2L2JyYW5kLWFzc2V0cy9hdXRvbS9sb2dvLnN2ZyAodGhlIG1hcmsgb2YgdGhlIGxvZ28sIHdpdGhvdXQgdGhlIHdvcmRtYXJrKSA7IHJldHJpZXZlZCAyMDI2LTExLTA5IC0tPgo8c3ZnIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgdmlld0JveD0iLTEgMSAyMiAyMiIgZmlsbD0ibm9uZSIgcm9sZT0iaW1nIiBhcmlhLWxhYmVsPSJhdXRvbSI+CjxwYXRoIGQ9Ik0xMCAyVjguMTgwMkMxMCA5LjU0MzQ5IDguMzI4NDcgMTAuMTk5OSA3LjQwMDgxIDkuMjAwODdMMy41IDVNMjAgMTJIMTMuODE5OEMxMi40NTY1IDEyIDExLjgwMDEgMTAuMzI4NSAxMi43OTkxIDkuNDAwODFMMTcgNS41TTEwIDIyVjE1LjgxOThDMTAgMTQuNDU2NSAxMS42NzE1IDEzLjgwMDEgMTIuNTk5MiAxNC43OTkxTDE2LjUgMTlNMCAxMkw2LjE4MDIgMTJDNy41NDM0OSAxMiA4LjE5OTg5IDEzLjY3MTUgNy4yMDA4NyAxNC41OTkyTDMgMTguNSIgc3Ryb2tlPSIjMjU2M0VCIiBzdHJva2Utd2lkdGg9IjEuNzUiLz4KPC9zdmc+Cg=="
+}
