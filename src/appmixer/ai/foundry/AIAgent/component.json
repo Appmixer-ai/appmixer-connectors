@@ -1,0 +1,245 @@
+{
+    "name": "appmixer.ai.foundry.AIAgent",
+    "label": "AI Agent",
+    "author": "Appmixer <info@appmixer.com>",
+    "description": "Build an AI agent responding with contextual answers or performing contextual actions. Connect a component to the 'tools' output port to let the agent call it as a tool, and mark the fields the model should fill with the 'Model Defined Parameter' variable; components connected behind it run as further steps of the same tool. For a tool with its own description and logic (branches, loops), connect a 'Tool Start' to the 'tools' port and end every branch with 'Tool Output'. An MCP server on the 'tools' port gives the agent all of its tools.",
+    "auth": {
+        "service": "appmixer:ai:foundry"
+    },
+    "version": "1.0.0",
+    "properties": {
+        "schema": {
+            "type": "object",
+            "properties": {
+                "stream": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "inspector": {
+            "inputs": {
+                "stream": {
+                    "type": "toggle",
+                    "label": "Stream Responses",
+                    "defaultValue": false,
+                    "index": 1,
+                    "tooltip": "Stream partial responses as they arrive from the model. Note that this only has an effect on the built-in chat utility. Responses are still sent as a complete answer to the output of the agent. Also note that for streaming to work, the 'Thread ID' configuration of the Agent must be set to the 'Thread ID' output of the 'Chat Trigger' component."
+                }
+            }
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "model": {
+                        "type": "string"
+                    },
+                    "instructions": {
+                        "type": "string",
+                        "maxLength": 256000
+                    },
+                    "prompt": {
+                        "type": "string"
+                    },
+                    "threadId": {
+                        "type": "string"
+                    },
+                    "storeId": {
+                        "type": "string"
+                    },
+                    "fileId": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "model",
+                    "prompt"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "model": {
+                        "type": "text",
+                        "index": 1,
+                        "label": "Deployment",
+                        "tooltip": "Name of the model deployment in your Azure AI Foundry resource (Deployments in the Foundry portal), e.g. <code>gpt-4o-prod</code>. The list offers the models known to the resource; when your deployment name differs from the model name, type the deployment name.",
+                        "source": {
+                            "url": "/component/appmixer/ai/foundry/ListModels?outPort=out",
+                            "data": {
+                                "properties": {
+                                    "isSource": true
+                                },
+                                "transform": "./ListModels#toSelectOptions"
+                            }
+                        }
+                    },
+                    "instructions": {
+                        "type": "textarea",
+                        "label": "Instructions",
+                        "index": 2,
+                        "tooltip": "The system instructions that the assistant uses. The maximum length is 256,000 characters. For example 'You are a personal math tutor.'."
+                    },
+                    "prompt": {
+                        "label": "Prompt",
+                        "type": "textarea",
+                        "index": 3
+                    },
+                    "threadId": {
+                        "label": "Thread ID",
+                        "type": "text",
+                        "index": 4,
+                        "tooltip": "By setting a thread ID you can keep the context of the conversation. If you do not set a thread ID, the AI Agent will not use memory and will not keep the context of the conversation. This is useful e.g. if you want to use the AI Agent as a simple question and answer tool."
+                    },
+                    "fileId": {
+                        "label": "File ID",
+                        "type": "filepicker",
+                        "index": 5,
+                        "tooltip": "Optionally, you can select a file to be used as additional context for the AI Agent. File types PNG, JPEG, GIF, WEBP and PDF have a direct model support. Other file types will be parsed as text and sent as a regular prompt. This is useful for CSV, JSON, .js, .py or other textual content. You can either upload a file directly or map a file from a previous connected component."
+                    },
+                    "storeId": {
+                        "label": "Memory Data Store",
+                        "type": "text",
+                        "index": 6,
+                        "source": {
+                            "url": "/component/appmixer/utils/storage/ListStores?outPort=out",
+                            "data": {
+                                "transform": "./ListStores#toSelectArray"
+                            }
+                        },
+                        "tooltip": "Select a data store to be used for storing the conversation context. This is useful if you want to preserve the context across different executions. Additionally, by saving the history to a data store, you can create other flows that export the history to your custom databases or external tools. Explore the Storage utilities to learn more about how to use the data store in your flows."
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "options": [
+                {
+                    "label": "Answer",
+                    "value": "answer",
+                    "schema": {
+                        "type": "string",
+                        "example": "The capital of France is Paris."
+                    }
+                },
+                {
+                    "label": "Prompt",
+                    "value": "prompt",
+                    "schema": {
+                        "type": "string",
+                        "example": "What is the capital of France?"
+                    }
+                },
+                {
+                    "label": "Time (ms)",
+                    "value": "time",
+                    "schema": {
+                        "type": "integer",
+                        "example": 1834
+                    }
+                },
+                {
+                    "label": "Usage",
+                    "value": "usage",
+                    "schema": {
+                        "type": "object",
+                        "properties": {
+                            "prompt_tokens": {
+                                "type": "integer",
+                                "title": "Prompt Tokens",
+                                "example": 42
+                            },
+                            "completion_tokens": {
+                                "type": "integer",
+                                "title": "Completion Tokens",
+                                "example": 18
+                            },
+                            "total_tokens": {
+                                "type": "integer",
+                                "title": "Total Tokens",
+                                "example": 60
+                            },
+                            "prompt_tokens_details": {
+                                "type": "object",
+                                "title": "Prompt Tokens Details",
+                                "properties": {
+                                    "cached_tokens": {
+                                        "type": "integer",
+                                        "title": "Cached Tokens",
+                                        "example": 0
+                                    },
+                                    "audio_tokens": {
+                                        "type": "integer",
+                                        "title": "Audio Tokens",
+                                        "example": 0
+                                    }
+                                }
+                            },
+                            "completion_tokens_details": {
+                                "type": "object",
+                                "title": "Completion Tokens Details",
+                                "properties": {
+                                    "reasoning_tokens": {
+                                        "type": "integer",
+                                        "title": "Reasoning Tokens",
+                                        "example": 0
+                                    },
+                                    "audio_tokens": {
+                                        "type": "integer",
+                                        "title": "Audio Tokens",
+                                        "example": 0
+                                    },
+                                    "accepted_prediction_tokens": {
+                                        "type": "integer",
+                                        "title": "Accepted Prediction Tokens",
+                                        "example": 0
+                                    },
+                                    "rejected_prediction_tokens": {
+                                        "type": "integer",
+                                        "title": "Rejected Prediction Tokens",
+                                        "example": 0
+                                    }
+                                }
+                            }
+                        },
+                        "example": {
+                            "prompt_tokens": 42,
+                            "completion_tokens": 18,
+                            "total_tokens": 60
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "tools",
+            "options": [
+                {
+                    "label": "Prompt",
+                    "value": "prompt",
+                    "schema": {
+                        "type": "string",
+                        "example": "What is the capital of France?"
+                    }
+                },
+                {
+                    "label": "Model Defined Parameter",
+                    "value": "modelDefinedParameter",
+                    "schema": {
+                        "type": "string",
+                        "example": "Paris"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "mcp"
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyBpZD0idXVpZC02YjgzODBjMy0wZWU1LTRjNDQtOTJhMi1mMTg1YzgyZGI2YmEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgd2lkdGg9IjEyOCIgaGVpZ2h0PSIxMjgiIHZpZXdCb3g9IjAgMCAxOCAxOCI+PGRlZnM+PGxpbmVhckdyYWRpZW50IGlkPSJ1dWlkLTA1ODc2YzcyLThmMjYtNDBkYS05OTZlLWE0ODgxNzJlYzA3MiIgeDE9Ii02MDMuNTYzIiB5MT0iLTIxOC4zNzgiIHgyPSItNjA2LjYiIHkyPSItMjA2LjIyIiBncmFkaWVudFRyYW5zZm9ybT0idHJhbnNsYXRlKDYxNy4xMjYgLTIwNS43NTgpIHNjYWxlKDEgLTEpIiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjNzEyNTc1IiAvPjxzdG9wIG9mZnNldD0iLjA5IiBzdG9wLWNvbG9yPSIjOWEyODg0IiAvPjxzdG9wIG9mZnNldD0iLjE4IiBzdG9wLWNvbG9yPSIjYmYyYzkyIiAvPjxzdG9wIG9mZnNldD0iLjI3IiBzdG9wLWNvbG9yPSIjZGEyZTljIiAvPjxzdG9wIG9mZnNldD0iLjM0IiBzdG9wLWNvbG9yPSIjZWIzMGEyIiAvPjxzdG9wIG9mZnNldD0iLjQiIHN0b3AtY29sb3I9IiNmMTMxYTUiIC8+PHN0b3Agb2Zmc2V0PSIuNSIgc3RvcC1jb2xvcj0iI2VjMzBhMyIgLz48c3RvcCBvZmZzZXQ9Ii42MSIgc3RvcC1jb2xvcj0iI2RmMmY5ZSIgLz48c3RvcCBvZmZzZXQ9Ii43MiIgc3RvcC1jb2xvcj0iI2M5MmQ5NiIgLz48c3RvcCBvZmZzZXQ9Ii44MyIgc3RvcC1jb2xvcj0iI2FhMmE4YSIgLz48c3RvcCBvZmZzZXQ9Ii45NSIgc3RvcC1jb2xvcj0iIzgzMjY3YyIgLz48c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiM3MTI1NzUiIC8+PC9saW5lYXJHcmFkaWVudD48bGluZWFyR3JhZGllbnQgaWQ9InV1aWQtYzRhMmY2MjctZDczMC00NDdlLTkxNTItNjIwMDljNjRjMzYxIiB4MT0iLTYwMi40MTIiIHkxPSItMjA2LjAyNSIgeDI9Ii02MDIuNDEyIiB5Mj0iLTIyMy4xNzUiIGdyYWRpZW50VHJhbnNmb3JtPSJ0cmFuc2xhdGUoNjE3LjEyNiAtMjA1Ljc1OCkgc2NhbGUoMSAtMSkiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIj48c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiNkYTdlZDAiIC8+PHN0b3Agb2Zmc2V0PSIuMDgiIHN0b3AtY29sb3I9IiNiMTdiZDUiIC8+PHN0b3Agb2Zmc2V0PSIuMTkiIHN0b3AtY29sb3I9IiM4Nzc4ZGIiIC8+PHN0b3Agb2Zmc2V0PSIuMyIgc3RvcC1jb2xvcj0iIzYyNzZlMSIgLz48c3RvcCBvZmZzZXQ9Ii40MSIgc3RvcC1jb2xvcj0iIzQ1NzRlNSIgLz48c3RvcCBvZmZzZXQ9Ii41NCIgc3RvcC1jb2xvcj0iIzJlNzJlOCIgLz48c3RvcCBvZmZzZXQ9Ii42NyIgc3RvcC1jb2xvcj0iIzFkNzFlYiIgLz48c3RvcCBvZmZzZXQ9Ii44MSIgc3RvcC1jb2xvcj0iIzE0NzFlYyIgLz48c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiMxMTcxZWQiIC8+PC9saW5lYXJHcmFkaWVudD48bGluZWFyR3JhZGllbnQgaWQ9InV1aWQtNWE0Y2YyMTUtNDkzMi00ZjEyLThhZjEtMWI2ODMzZGYyNTljIiB4MT0iLTYwMy40MzgiIHkxPSItMjA2LjQxNCIgeDI9Ii02MTQuODA3IiB5Mj0iLTIyNC42NDQiIGdyYWRpZW50VHJhbnNmb3JtPSJ0cmFuc2xhdGUoNjE3LjEyNiAtMjA1Ljc1OCkgc2NhbGUoMSAtMSkiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIj48c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiNkYTdlZDAiIC8+PHN0b3Agb2Zmc2V0PSIuMDUiIHN0b3AtY29sb3I9IiNiNzdiZDQiIC8+PHN0b3Agb2Zmc2V0PSIuMTEiIHN0b3AtY29sb3I9IiM5MDc5ZGEiIC8+PHN0b3Agb2Zmc2V0PSIuMTgiIHN0b3AtY29sb3I9IiM2ZTc3ZGYiIC8+PHN0b3Agb2Zmc2V0PSIuMjUiIHN0b3AtY29sb3I9IiM1MTc1ZTMiIC8+PHN0b3Agb2Zmc2V0PSIuMzMiIHN0b3AtY29sb3I9IiMzOTczZTciIC8+PHN0b3Agb2Zmc2V0PSIuNDIiIHN0b3AtY29sb3I9IiMyNzcyZTkiIC8+PHN0b3Agb2Zmc2V0PSIuNTQiIHN0b3AtY29sb3I9IiMxYTcxZWIiIC8+PHN0b3Agb2Zmc2V0PSIuNjgiIHN0b3AtY29sb3I9IiMxMzcxZWMiIC8+PHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjMTE3MWVkIiAvPjwvbGluZWFyR3JhZGllbnQ+PC9kZWZzPjxwYXRoIGQ9Im0xMi4wNjEuMDEyYy41MzQsMCwxLjAwOC40MDEsMS4xNzguOTg0czEuMTY2LDQuMTksMS4xNjYsNC4xOXY3LjE2NmgtMy42MDdsLjA3My0xMi4zNTJoMS4xOXYuMDEyWiIgZmlsbD0idXJsKCN1dWlkLTA1ODc2YzcyLThmMjYtNDBkYS05OTZlLWE0ODgxNzJlYzA3MikiIGZpbGwtcnVsZT0iZXZlbm9kZCIgc3Ryb2tlLXdpZHRoPSIwIiAvPjxwYXRoIGQ9Im0xNy4zNTYsNS42MTFjMC0uMjU1LS4yMDYtLjQ0OS0uNDQ5LS40NDloLTIuMTI2Yy0xLjQ5NCwwLTIuNzA5LDEuMjE1LTIuNzA5LDIuNzA5djQuNDk0aDIuNTc1YzEuNDk0LDAsMi43MDktMS4yMTUsMi43MDktMi43MDl2LTQuMDQ1WiIgZmlsbD0idXJsKCN1dWlkLWM0YTJmNjI3LWQ3MzAtNDQ3ZS05MTUyLTYyMDA5YzY0YzM2MSkiIHN0cm9rZS13aWR0aD0iMCIgLz48cGF0aCBkPSJtMTIuMDYxLjAxMmMtLjQxMywwLS43NDEuMzI4LS43NDEuNzQxbC0uMDczLDEzLjY0YzAsMS45OTItMS42MTUsMy42MDctMy42MDcsMy42MDdIMS4wOTNjLS4zMTYsMC0uNTIyLS4zMDQtLjQyNS0uNTk1TDUuOTE1LDIuNDI5QzYuNDI1Ljk4NCw3Ljc4NS4wMTIsOS4zMTYuMDEyaDIuNzU3LS4wMTJaIiBmaWxsPSJ1cmwoI3V1aWQtNWE0Y2YyMTUtNDkzMi00ZjEyLThhZjEtMWI2ODMzZGYyNTljKSIgZmlsbC1ydWxlPSJldmVub2RkIiBzdHJva2Utd2lkdGg9IjAiIC8+PC9zdmc+"
+}
