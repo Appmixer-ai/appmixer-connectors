@@ -1,0 +1,853 @@
+{
+    "name": "E2E Utils Converters - CSV to JSON, HTML and XLSX",
+    "description": "Saves a small CSV file, converts it with CSV2JSON, CSV2HTML and CSV2XLSX, reads every output back with Load File and checks the converted rows. The XLSX output is converted back with XLSX2CSV to prove the workbook is readable.",
+    "flow": {
+        "2b8dfce5-a623-4c21-bb16-717f9f55da39": {
+            "type": "appmixer.utils.controls.OnStart",
+            "label": "On Start",
+            "x": 64,
+            "y": 16,
+            "source": {},
+            "config": {},
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "acb1596a-5ab0-4c89-95e1-3fcfb525d760": {
+            "type": "appmixer.utils.files.SaveFile",
+            "label": "Save CSV fixture",
+            "x": 272,
+            "y": 16,
+            "source": {
+                "in": {
+                    "2b8dfce5-a623-4c21-bb16-717f9f55da39": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "2b8dfce5-a623-4c21-bb16-717f9f55da39": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "filename": {},
+                                    "mimetype": {},
+                                    "content": {},
+                                    "contentEncoding": {}
+                                },
+                                "lambda": {
+                                    "filename": "e2e-converters.csv",
+                                    "mimetype": "text/csv",
+                                    "content": "name,city,age,active,joined\nAlice,Prague,30,true,2024-03-15\nBob,Brno,25,false,2023-11-02\n",
+                                    "contentEncoding": "utf8"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "de898125-b31f-4ebd-93ec-12aab4d36805": {
+            "type": "appmixer.utils.converters.CSV2JSON",
+            "label": "CSV2JSON",
+            "x": 480,
+            "y": 144,
+            "source": {
+                "in": {
+                    "acb1596a-5ab0-4c89-95e1-3fcfb525d760": [
+                        "file"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "acb1596a-5ab0-4c89-95e1-3fcfb525d760": {
+                            "file": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "fileId": {
+                                        "597a8aaa-15f7-4be1-8a81-70dffb9481a4": {
+                                            "variable": "$.acb1596a-5ab0-4c89-95e1-3fcfb525d760.file.fileId",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "fileId": "{{{597a8aaa-15f7-4be1-8a81-70dffb9481a4}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "a7cdf55a-0910-4333-af4b-1b58b7290391": {
+            "type": "appmixer.utils.files.LoadFile",
+            "label": "Load CSV2JSON output",
+            "x": 688,
+            "y": 144,
+            "source": {
+                "in": {
+                    "de898125-b31f-4ebd-93ec-12aab4d36805": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "de898125-b31f-4ebd-93ec-12aab4d36805": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "fileId": {
+                                        "7e06403f-3fe6-4201-a8d5-71033572f5c4": {
+                                            "variable": "$.de898125-b31f-4ebd-93ec-12aab4d36805.out.fileId",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "fileId": "{{{7e06403f-3fe6-4201-a8d5-71033572f5c4}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "3a1bec87-4a9d-482d-b47d-654b04ebe78b": {
+            "type": "appmixer.utils.test.Assert",
+            "label": "Assert CSV2JSON",
+            "x": 896,
+            "y": 144,
+            "source": {
+                "in": {
+                    "a7cdf55a-0910-4333-af4b-1b58b7290391": [
+                        "content"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "a7cdf55a-0910-4333-af4b-1b58b7290391": {
+                            "content": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "8c577039-fec2-4190-be4a-01b8fec89933": {
+                                            "variable": "$.de898125-b31f-4ebd-93ec-12aab4d36805.out.fileId",
+                                            "functions": []
+                                        },
+                                        "5fca47c8-b02f-40b4-b0c2-0a581ee8f8ce": {
+                                            "variable": "$.de898125-b31f-4ebd-93ec-12aab4d36805.out.fileName",
+                                            "functions": []
+                                        },
+                                        "776f57e1-d988-47df-87ee-6c2f9f3e2241": {
+                                            "variable": "$.a7cdf55a-0910-4333-af4b-1b58b7290391.content.content",
+                                            "functions": []
+                                        },
+                                        "4f0b9152-547e-4607-8143-0aeb5426c268": {
+                                            "variable": "$.a7cdf55a-0910-4333-af4b-1b58b7290391.content.content",
+                                            "functions": []
+                                        },
+                                        "3e8240d6-dfac-44c8-8654-93a0b0458da9": {
+                                            "variable": "$.a7cdf55a-0910-4333-af4b-1b58b7290391.content.content",
+                                            "functions": []
+                                        },
+                                        "27ac8135-8d9b-40ee-b3c1-536ea4ce9d77": {
+                                            "variable": "$.a7cdf55a-0910-4333-af4b-1b58b7290391.content.content",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{8c577039-fec2-4190-be4a-01b8fec89933}}}",
+                                                "assertion": "notEmpty"
+                                            },
+                                            {
+                                                "field": "{{{5fca47c8-b02f-40b4-b0c2-0a581ee8f8ce}}}",
+                                                "assertion": "equal",
+                                                "expected": "e2e-converters.json"
+                                            },
+                                            {
+                                                "field": "{{{776f57e1-d988-47df-87ee-6c2f9f3e2241}}}",
+                                                "assertion": "regex",
+                                                "regex": "\"city\": \"Prague\""
+                                            },
+                                            {
+                                                "field": "{{{4f0b9152-547e-4607-8143-0aeb5426c268}}}",
+                                                "assertion": "regex",
+                                                "regex": "\"age\": 30"
+                                            },
+                                            {
+                                                "field": "{{{3e8240d6-dfac-44c8-8654-93a0b0458da9}}}",
+                                                "assertion": "regex",
+                                                "regex": "\"active\": true"
+                                            },
+                                            {
+                                                "field": "{{{27ac8135-8d9b-40ee-b3c1-536ea4ce9d77}}}",
+                                                "assertion": "regex",
+                                                "regex": "\"joined\": \"2024-03-15\""
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "00885c32-5d2f-43d5-820b-7b7c4e3d7e5f": {
+            "type": "appmixer.utils.converters.CSV2HTML",
+            "label": "CSV2HTML",
+            "x": 896,
+            "y": 272,
+            "source": {
+                "in": {
+                    "3a1bec87-4a9d-482d-b47d-654b04ebe78b": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "3a1bec87-4a9d-482d-b47d-654b04ebe78b": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "fileId": {
+                                        "5813a96b-e191-4ef7-9d6f-5003a06e961d": {
+                                            "variable": "$.acb1596a-5ab0-4c89-95e1-3fcfb525d760.file.fileId",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "fileId": "{{{5813a96b-e191-4ef7-9d6f-5003a06e961d}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "f6817940-281b-4094-90ee-bb9fe7d8af21": {
+            "type": "appmixer.utils.files.LoadFile",
+            "label": "Load CSV2HTML output",
+            "x": 1104,
+            "y": 272,
+            "source": {
+                "in": {
+                    "00885c32-5d2f-43d5-820b-7b7c4e3d7e5f": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "00885c32-5d2f-43d5-820b-7b7c4e3d7e5f": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "fileId": {
+                                        "719f22ef-d080-4f73-bd76-daa1f81b5805": {
+                                            "variable": "$.00885c32-5d2f-43d5-820b-7b7c4e3d7e5f.out.fileId",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "fileId": "{{{719f22ef-d080-4f73-bd76-daa1f81b5805}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "d17cc49c-dfcf-4242-9231-f4372cdbef7c": {
+            "type": "appmixer.utils.test.Assert",
+            "label": "Assert CSV2HTML",
+            "x": 1312,
+            "y": 272,
+            "source": {
+                "in": {
+                    "f6817940-281b-4094-90ee-bb9fe7d8af21": [
+                        "content"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "f6817940-281b-4094-90ee-bb9fe7d8af21": {
+                            "content": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "7f277913-7f07-4917-8347-8653f8927a72": {
+                                            "variable": "$.00885c32-5d2f-43d5-820b-7b7c4e3d7e5f.out.fileId",
+                                            "functions": []
+                                        },
+                                        "37e0f1d7-36cc-48c3-97ae-445ad54fc410": {
+                                            "variable": "$.00885c32-5d2f-43d5-820b-7b7c4e3d7e5f.out.fileName",
+                                            "functions": []
+                                        },
+                                        "9c14d950-0a48-4372-ad6e-6a2c6d6376ac": {
+                                            "variable": "$.f6817940-281b-4094-90ee-bb9fe7d8af21.content.content",
+                                            "functions": []
+                                        },
+                                        "f334a455-2d32-438a-8de7-ce0caedf0c6f": {
+                                            "variable": "$.f6817940-281b-4094-90ee-bb9fe7d8af21.content.content",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{7f277913-7f07-4917-8347-8653f8927a72}}}",
+                                                "assertion": "notEmpty"
+                                            },
+                                            {
+                                                "field": "{{{37e0f1d7-36cc-48c3-97ae-445ad54fc410}}}",
+                                                "assertion": "equal",
+                                                "expected": "e2e-converters.html"
+                                            },
+                                            {
+                                                "field": "{{{9c14d950-0a48-4372-ad6e-6a2c6d6376ac}}}",
+                                                "assertion": "regex",
+                                                "regex": "<th>city</th>"
+                                            },
+                                            {
+                                                "field": "{{{f334a455-2d32-438a-8de7-ce0caedf0c6f}}}",
+                                                "assertion": "regex",
+                                                "regex": "<td>Alice</td>"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "893f29b2-1df8-4acf-82d5-100fceb0d6de": {
+            "type": "appmixer.utils.converters.CSV2XLSX",
+            "label": "CSV2XLSX",
+            "x": 1312,
+            "y": 400,
+            "source": {
+                "in": {
+                    "d17cc49c-dfcf-4242-9231-f4372cdbef7c": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "d17cc49c-dfcf-4242-9231-f4372cdbef7c": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "fileId": {
+                                        "919a7456-c969-43bb-9e0e-b212987a7ea3": {
+                                            "variable": "$.acb1596a-5ab0-4c89-95e1-3fcfb525d760.file.fileId",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "fileId": "{{{919a7456-c969-43bb-9e0e-b212987a7ea3}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "e1b3925a-a7bd-45df-b93b-b75b58923ea1": {
+            "type": "appmixer.utils.converters.XLSX2CSV",
+            "label": "XLSX2CSV",
+            "x": 1520,
+            "y": 400,
+            "source": {
+                "in": {
+                    "893f29b2-1df8-4acf-82d5-100fceb0d6de": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "893f29b2-1df8-4acf-82d5-100fceb0d6de": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "fileId": {
+                                        "3ef29384-132a-4bcf-afb2-a625b9811e68": {
+                                            "variable": "$.893f29b2-1df8-4acf-82d5-100fceb0d6de.out.fileId",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "fileId": "{{{3ef29384-132a-4bcf-afb2-a625b9811e68}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "0268c098-60c6-4b24-83d4-7d7a6e7c1705": {
+            "type": "appmixer.utils.files.LoadFile",
+            "label": "Load XLSX2CSV output",
+            "x": 1728,
+            "y": 400,
+            "source": {
+                "in": {
+                    "e1b3925a-a7bd-45df-b93b-b75b58923ea1": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "e1b3925a-a7bd-45df-b93b-b75b58923ea1": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "fileId": {
+                                        "6c46c66e-6ccc-4a9f-b54b-390a2a0654b4": {
+                                            "variable": "$.e1b3925a-a7bd-45df-b93b-b75b58923ea1.out.fileId",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "fileId": "{{{6c46c66e-6ccc-4a9f-b54b-390a2a0654b4}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "efb2fc90-ffcb-4719-b669-c2ba1f76cef1": {
+            "type": "appmixer.utils.test.Assert",
+            "label": "Assert XLSX2CSV",
+            "x": 1936,
+            "y": 400,
+            "source": {
+                "in": {
+                    "0268c098-60c6-4b24-83d4-7d7a6e7c1705": [
+                        "content"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "0268c098-60c6-4b24-83d4-7d7a6e7c1705": {
+                            "content": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "758fc1d6-439e-4c05-b901-cefa74ed5d22": {
+                                            "variable": "$.e1b3925a-a7bd-45df-b93b-b75b58923ea1.out.fileId",
+                                            "functions": []
+                                        },
+                                        "980361cf-b37e-4f12-809c-4c4ac38fc15c": {
+                                            "variable": "$.893f29b2-1df8-4acf-82d5-100fceb0d6de.out.fileName",
+                                            "functions": []
+                                        },
+                                        "ed2f3629-0c4a-4c2d-b5f9-363fbfc84b12": {
+                                            "variable": "$.e1b3925a-a7bd-45df-b93b-b75b58923ea1.out.fileName",
+                                            "functions": []
+                                        },
+                                        "6e70a070-0e75-4e41-8f9c-d5a6ae1466f4": {
+                                            "variable": "$.0268c098-60c6-4b24-83d4-7d7a6e7c1705.content.content",
+                                            "functions": []
+                                        },
+                                        "3a7bf311-f4da-43c0-9f55-8f593c9bf104": {
+                                            "variable": "$.0268c098-60c6-4b24-83d4-7d7a6e7c1705.content.content",
+                                            "functions": []
+                                        },
+                                        "f510606c-b4b3-409f-a81e-628b1aa25aeb": {
+                                            "variable": "$.0268c098-60c6-4b24-83d4-7d7a6e7c1705.content.content",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{758fc1d6-439e-4c05-b901-cefa74ed5d22}}}",
+                                                "assertion": "notEmpty"
+                                            },
+                                            {
+                                                "field": "{{{980361cf-b37e-4f12-809c-4c4ac38fc15c}}}",
+                                                "assertion": "equal",
+                                                "expected": "e2e-converters.xlsx"
+                                            },
+                                            {
+                                                "field": "{{{ed2f3629-0c4a-4c2d-b5f9-363fbfc84b12}}}",
+                                                "assertion": "equal",
+                                                "expected": "e2e-converters.csv"
+                                            },
+                                            {
+                                                "field": "{{{6e70a070-0e75-4e41-8f9c-d5a6ae1466f4}}}",
+                                                "assertion": "regex",
+                                                "regex": "name,city,age,active,joined"
+                                            },
+                                            {
+                                                "field": "{{{3a7bf311-f4da-43c0-9f55-8f593c9bf104}}}",
+                                                "assertion": "regex",
+                                                "regex": "Alice,Prague,30,true,2024-03-15"
+                                            },
+                                            {
+                                                "field": "{{{f510606c-b4b3-409f-a81e-628b1aa25aeb}}}",
+                                                "assertion": "regex",
+                                                "regex": "Bob,Brno,25,false,2023-11-02"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "60f00021-2ec0-4c2f-9294-f3325f25cd76": {
+            "type": "appmixer.utils.test.AfterAll",
+            "label": "After All",
+            "x": 2144,
+            "y": 400,
+            "source": {
+                "in": {
+                    "3a1bec87-4a9d-482d-b47d-654b04ebe78b": [
+                        "out"
+                    ],
+                    "d17cc49c-dfcf-4242-9231-f4372cdbef7c": [
+                        "out"
+                    ],
+                    "efb2fc90-ffcb-4719-b669-c2ba1f76cef1": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 180
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "616d814a-0231-4ab5-ab41-40c3d413b9e6": {
+            "type": "appmixer.utils.files.RemoveFile",
+            "label": "Remove CSV fixture",
+            "x": 2352,
+            "y": 400,
+            "source": {
+                "in": {
+                    "60f00021-2ec0-4c2f-9294-f3325f25cd76": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "60f00021-2ec0-4c2f-9294-f3325f25cd76": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "fileId": {
+                                        "fc427611-0ac2-4014-a541-873f609020ac": {
+                                            "variable": "$.acb1596a-5ab0-4c89-95e1-3fcfb525d760.file.fileId",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "fileId": "{{{fc427611-0ac2-4014-a541-873f609020ac}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "f4e7fb83-069c-4c0b-a257-f5a502356b20": {
+            "type": "appmixer.utils.files.RemoveFile",
+            "label": "Remove JSON output",
+            "x": 2560,
+            "y": 400,
+            "source": {
+                "in": {
+                    "616d814a-0231-4ab5-ab41-40c3d413b9e6": [
+                        "deleted"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "616d814a-0231-4ab5-ab41-40c3d413b9e6": {
+                            "deleted": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "fileId": {
+                                        "b8a824ff-7200-4d1a-bba2-0ee92d440820": {
+                                            "variable": "$.de898125-b31f-4ebd-93ec-12aab4d36805.out.fileId",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "fileId": "{{{b8a824ff-7200-4d1a-bba2-0ee92d440820}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "b30bdde0-4ad5-4bdb-89c2-e954a3c6a1cd": {
+            "type": "appmixer.utils.files.RemoveFile",
+            "label": "Remove HTML output",
+            "x": 2768,
+            "y": 400,
+            "source": {
+                "in": {
+                    "f4e7fb83-069c-4c0b-a257-f5a502356b20": [
+                        "deleted"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "f4e7fb83-069c-4c0b-a257-f5a502356b20": {
+                            "deleted": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "fileId": {
+                                        "0efe7443-b9c9-4095-8e63-256c85aa30c7": {
+                                            "variable": "$.00885c32-5d2f-43d5-820b-7b7c4e3d7e5f.out.fileId",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "fileId": "{{{0efe7443-b9c9-4095-8e63-256c85aa30c7}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "7c45e3e7-fe32-4ff4-8478-a019045c6fbc": {
+            "type": "appmixer.utils.files.RemoveFile",
+            "label": "Remove XLSX output",
+            "x": 2976,
+            "y": 400,
+            "source": {
+                "in": {
+                    "b30bdde0-4ad5-4bdb-89c2-e954a3c6a1cd": [
+                        "deleted"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "b30bdde0-4ad5-4bdb-89c2-e954a3c6a1cd": {
+                            "deleted": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "fileId": {
+                                        "174402a0-ae95-451c-a50c-0ed51451664e": {
+                                            "variable": "$.893f29b2-1df8-4acf-82d5-100fceb0d6de.out.fileId",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "fileId": "{{{174402a0-ae95-451c-a50c-0ed51451664e}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "4a6330b9-8429-419b-adc8-02bc5015781c": {
+            "type": "appmixer.utils.files.RemoveFile",
+            "label": "Remove round-trip CSV",
+            "x": 3184,
+            "y": 400,
+            "source": {
+                "in": {
+                    "7c45e3e7-fe32-4ff4-8478-a019045c6fbc": [
+                        "deleted"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "7c45e3e7-fe32-4ff4-8478-a019045c6fbc": {
+                            "deleted": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "fileId": {
+                                        "b9f538d0-0c00-472f-b672-5c47539042b6": {
+                                            "variable": "$.e1b3925a-a7bd-45df-b93b-b75b58923ea1.out.fileId",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "fileId": "{{{b9f538d0-0c00-472f-b672-5c47539042b6}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "86ba178b-5f1d-42f0-b722-2f5d2864b66e": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "label": "Process E2E Results",
+            "x": 3392,
+            "y": 400,
+            "source": {
+                "in": {
+                    "4a6330b9-8429-419b-adc8-02bc5015781c": [
+                        "deleted"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {},
+                "transform": {
+                    "in": {
+                        "4a6330b9-8429-419b-adc8-02bc5015781c": {
+                            "deleted": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "ff351190-217a-4141-9a80-0bb781f56fb1": {
+                                            "variable": "$.60f00021-2ec0-4c2f-9294-f3325f25cd76.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E Utils Converters - CSV to JSON, HTML and XLSX",
+                                    "result": "{{{ff351190-217a-4141-9a80-0bb781f56fb1}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        }
+    }
+}

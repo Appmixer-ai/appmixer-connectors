@@ -6,7 +6,7 @@ module.exports = {
 
     async receive(context) {
 
-        const { profileInfo: { apiUrl }, auth } = context;
+        const { profileInfo: { apiUrl } } = context;
         let { type, endpoint } = context.messages.in.content;
 
         if (type === 'assignee') {
@@ -21,7 +21,7 @@ module.exports = {
         // Fix labels endpoint. The one provided by Get create issue metadata is not working.
         if (endpoint.includes('rest/api/1.0/labels/suggest')) {
             endpoint = `${apiUrl}label`;
-            const response = await commons.get(endpoint, auth);
+            const response = await commons.get(endpoint, context);
 
             return context.sendJson(response?.values, 'out');
         }
@@ -30,12 +30,12 @@ module.exports = {
         if (endpoint.includes('rest/api/3/user/recommend?context=Reporter')) {
             // https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-users/#api-rest-api-3-users-get
             endpoint = `${apiUrl}users`;
-            const response = await commons.get(endpoint, auth);
+            const response = await commons.get(endpoint, context);
             const filteredReporters = response.filter(user => user.active && user.accountType === 'atlassian');
             return context.sendJson(filteredReporters, 'out');
         }
 
-        const response = await commons.get(endpoint, auth);
+        const response = await commons.get(endpoint, context);
         return context.sendJson(response, 'out');
     },
 

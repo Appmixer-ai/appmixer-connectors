@@ -40,7 +40,7 @@ module.exports = {
 
     async receive(context) {
 
-        const { profileInfo, auth } = context;
+        const { profileInfo } = context;
         const { id, outputType, name } = context.messages.in.content;
 
         if (context.properties.generateOutputPortOptions) {
@@ -55,7 +55,7 @@ module.exports = {
         }
 
         try {
-            const results = (await commons.get(`${profileInfo.apiUrl}issue/${id}/transitions`, auth));
+            const results = (await commons.get(`${profileInfo.apiUrl}issue/${id}/transitions`, context));
 
             let records = results.transitions;
             if (name) {
