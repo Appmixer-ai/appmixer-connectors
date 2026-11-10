@@ -1,0 +1,144 @@
+{
+    "name": "appmixer.capturekit.core.MakeApiCall",
+    "label": "Make API Call",
+    "description": "Perform an arbitrary authorized API call to CaptureKit. Provide a path (or full URL), method, headers, query parameters and body. The x-api-key header is added automatically.",
+    "author": "CaptureKit <josselin@capturekit.dev>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:capturekit"
+    },
+    "quota": {
+        "manager": "appmixer:capturekit",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "url": {
+                        "type": "string"
+                    },
+                    "method": {
+                        "type": "string",
+                        "enum": [
+                            "GET",
+                            "POST",
+                            "PUT",
+                            "PATCH",
+                            "DELETE"
+                        ]
+                    },
+                    "headers": {
+                        "type": "string"
+                    },
+                    "parameters": {
+                        "type": "string"
+                    },
+                    "body": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "url",
+                    "method"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "url": {
+                        "type": "text",
+                        "index": 1,
+                        "label": "API Endpoint Path",
+                        "tooltip": "A path relative to <code>https://api.capturekit.dev</code>, for example <code>/v1/usage</code>. A full URL is accepted only when it points at <code>https://api.capturekit.dev</code>; any other host is rejected so your API key is never sent elsewhere."
+                    },
+                    "method": {
+                        "type": "select",
+                        "index": 2,
+                        "label": "HTTP Method",
+                        "defaultValue": "GET",
+                        "tooltip": "The HTTP method for the API call.",
+                        "options": [
+                            {
+                                "label": "GET",
+                                "value": "GET"
+                            },
+                            {
+                                "label": "POST",
+                                "value": "POST"
+                            },
+                            {
+                                "label": "PUT",
+                                "value": "PUT"
+                            },
+                            {
+                                "label": "PATCH",
+                                "value": "PATCH"
+                            },
+                            {
+                                "label": "DELETE",
+                                "value": "DELETE"
+                            }
+                        ]
+                    },
+                    "parameters": {
+                        "type": "key-value",
+                        "keyLabel": "Key",
+                        "valueLabel": "Value",
+                        "addLabel": "Add item",
+                        "removeLabel": "Remove item",
+                        "index": 3,
+                        "label": "Query Parameters",
+                        "tooltip": "Optional query parameters."
+                    },
+                    "body": {
+                        "type": "textarea",
+                        "index": 4,
+                        "label": "Request Body",
+                        "tooltip": "Optional JSON request body."
+                    },
+                    "headers": {
+                        "type": "key-value",
+                        "keyLabel": "Key",
+                        "valueLabel": "Value",
+                        "addLabel": "Add item",
+                        "removeLabel": "Remove item",
+                        "index": 5,
+                        "label": "Request Headers",
+                        "tooltip": "Optional additional headers. The x-api-key header is set automatically."
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "statusCode": {
+                        "type": "integer",
+                        "title": "Status Code",
+                        "example": 200
+                    },
+                    "headers": {
+                        "type": "object",
+                        "title": "Response Headers",
+                        "properties": {}
+                    },
+                    "body": {
+                        "type": "object",
+                        "title": "Response Body",
+                        "properties": {}
+                    }
+                }
+            }
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PCEtLSBPZmZpY2lhbCB2ZW5kb3IgaWNvbjogaHR0cHM6Ly9hcHAuY2FwdHVyZWtpdC5kZXYvYnJhbmQtYXNzZXRzL2NhcHR1cmVraXQvbG9nby5zdmcgKHRoZSBtYXJrIG9mIHRoZSBsb2dvLCB3aXRob3V0IHRoZSB3b3JkbWFyaykgOyByZXRyaWV2ZWQgMjAyNi0xMS0wOSAtLT4KPHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9Ii0wLjMgMS4yIDIwLjYgMjAuNiIgZmlsbD0ibm9uZSIgcm9sZT0iaW1nIiBhcmlhLWxhYmVsPSJjYXB0dXJla2l0Ij4KPHBhdGggZD0iTTEwLjAwMSAxNS4xMTIzQzEzLjUyOTMgMTUuMTEyMyAxNi4zODk2IDE3Ljk3MjcgMTYuMzg5NiAyMS41MDFIMTQuMTM5NkMxNC4xMzk2IDE5LjIxNTUgMTIuMjg2NyAxNy4zNjIzIDEwLjAwMSAxNy4zNjIzQzcuNzE1MiAxNy4zNjIzIDUuODYyMyAxOS4yMTU0IDUuODYyMyAyMS41MDFIMy42MTIzQzMuNjEyMyAxNy45NzI3IDYuNDcyNjYgMTUuMTEyMyAxMC4wMDEgMTUuMTEyM1pNMCA1LjExMTMzQzMuNTI4MjMgNS4xMTEzMyA2LjM4ODUzIDcuOTcxODQgNi4zODg2NyAxMS41QzYuMzg4NTMgMTUuMDI4MiAzLjUyODIzIDE3Ljg4NzcgMCAxNy44ODc3VjE1LjYzNzdDMi4yODU2OSAxNS42Mzc3IDQuMTM4NTMgMTMuNzg1NCA0LjEzODY3IDExLjVDNC4xMzg1MyA5LjIxNDU5IDIuMjg1NjkgNy4zNjEzMyAwIDcuMzYxMzNWNS4xMTEzM1pNMjAuMDAyIDcuMzYxMzNDMTcuNzE2MyA3LjM2MTMzIDE1Ljg2MzQgOS4yMTQ1OSAxNS44NjMzIDExLjVDMTUuODYzNCAxMy43ODU0IDE3LjcxNjMgMTUuNjM3NyAyMC4wMDIgMTUuNjM3N1YxNy44ODc3QzE2LjQ3MzcgMTcuODg3NyAxMy42MTM0IDE1LjAyODIgMTMuNjEzMyAxMS41QzEzLjYxMzQgNy45NzE4NCAxNi40NzM3IDUuMTExMzMgMjAuMDAyIDUuMTExMzNWNy4zNjEzM1pNNS44NjIzIDEuNDk5MDJDNS44NjIzIDMuNzg0NTYgNy43MTUyIDUuNjM3NyAxMC4wMDEgNS42Mzc3QzEyLjI4NjcgNS42Mzc2OCAxNC4xMzk2IDMuNzg0NTUgMTQuMTM5NiAxLjQ5OTAySDE2LjM4OTZDMTYuMzg5NiA1LjAyNzI5IDEzLjUyOTMgNy44ODc2OCAxMC4wMDEgNy44ODc3QzYuNDcyNjYgNy44ODc3IDMuNjEyMyA1LjAyNzMgMy42MTIzIDEuNDk5MDJINS44NjIzWiIgZmlsbD0iIzc2MjZGRiIvPgo8L3N2Zz4K"
+}
