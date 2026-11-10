@@ -7,39 +7,92 @@ const lib = require('../../lib');
 // one component has one webhook URL for all its calls, and a callback can arrive before a
 // state write after the submit would have committed.
 const ECHO_PARAM = 'echo';
+// The echo is signed: an HMAC-SHA256 over the exact echo string with a per-component secret,
+// so a caller who did not get the URL from this component cannot invent a job ID, hook or
+// correlation ID and make Done or Progress fire.
+const SIGNATURE_PARAM = 'sig';
+const SECRET_KEY = 'callbackSecret';
 
-function buildCallbackUrl(context, echo) {
+function sign(secret, value) {
+
+    return crypto.createHmac('sha256', secret).update(value).digest('hex');
+}
+
+/**
+ * The component's callback secret, created once (in start(), or on the first call of a
+ * component started before the secret existed) and kept in component state.
+ */
+async function getSecret(context) {
+
+    const existing = await context.stateGet(SECRET_KEY);
+    if (existing) return existing;
+
+    let lock;
+    try {
+        lock = await context.lock(`openclaw-callhook-secret-${context.componentId}`);
+        const current = await context.stateGet(SECRET_KEY);
+        if (current) return current;
+        const secret = crypto.randomBytes(32).toString('hex');
+        await context.stateSet(SECRET_KEY, secret);
+        return secret;
+    } finally {
+        if (lock) await lock.unlock();
+    }
+}
+
+function buildCallbackUrl(context, echo, secret) {
 
     const base = context.getWebhookUrl();
     const separator = base.indexOf('?') === -1 ? '?' : '&';
-    return `${base}${separator}${ECHO_PARAM}=${encodeURIComponent(JSON.stringify(echo))}`;
+    const raw = JSON.stringify(echo);
+    return `${base}${separator}${ECHO_PARAM}=${encodeURIComponent(raw)}&${SIGNATURE_PARAM}=${sign(secret, raw)}`;
 }
 
-function readEcho(context) {
+function signatureMatches(secret, raw, signature) {
 
-    const raw = ((context.messages.webhook.content || {}).query || {})[ECHO_PARAM];
-    if (!raw) return {};
+    if (typeof signature !== 'string' || !/^[0-9a-f]{64}$/.test(signature)) return false;
+    const expected = Buffer.from(sign(secret, raw), 'hex');
+    const actual = Buffer.from(signature, 'hex');
+    return expected.length === actual.length && crypto.timingSafeEqual(expected, actual);
+}
+
+/**
+ * The echo of a callback, or null when it is missing, malformed or not signed by this component.
+ */
+function readEcho(context, secret) {
+
+    const query = (context.messages.webhook.content || {}).query || {};
+    const raw = query[ECHO_PARAM];
+    if (!secret || typeof raw !== 'string' || !raw) return null;
+    if (!signatureMatches(secret, raw, query[SIGNATURE_PARAM])) return null;
     try {
         const parsed = JSON.parse(raw);
-        return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {};
+        return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : null;
     } catch (error) {
-        return {};
+        return null;
     }
 }
 
 module.exports = {
+
+    async start(context) {
+
+        await getSecret(context);
+    },
 
     async receive(context) {
 
         // ── the gateway side reporting back ────────────────────────────
         if (context.messages.webhook) {
 
-            const echo = readEcho(context);
-            // Anything can POST to the webhook URL; only a call made with the URL this
-            // component handed out carries a job ID.
-            if (!echo.jobId) {
-                await context.log({ step: 'ignored-callback', reason: 'no job ID in the callback URL' });
-                return context.response({ ok: false, error: 'unknown job' }, 400);
+            // Anything can POST to the webhook URL; only the URL this component handed out
+            // carries an echo with a valid signature. Read the secret without creating one: if
+            // there is none, no URL was ever handed out.
+            const secret = await context.stateGet(SECRET_KEY);
+            const echo = readEcho(context, secret);
+            if (!echo || !echo.jobId) {
+                await context.log({ step: 'ignored-callback', reason: 'missing or invalid signature of the callback URL' });
+                return context.response({ ok: false, error: 'unknown job' }, 403);
             }
 
             const body = (context.messages.webhook.content || {}).data;
@@ -77,11 +130,12 @@ module.exports = {
             throw new context.CancelError('Payload must not contain callbackUrl: Call Hook sets it to its own URL.');
         }
 
+        const secret = await getSecret(context);
         const echo = { jobId: crypto.randomUUID(), hook: name, correlationId: correlationId ? String(correlationId) : '' };
         const { status, data: response } = await lib.postHook(
             context,
             `/${name}`,
-            { ...data, callbackUrl: buildCallbackUrl(context, echo) },
+            { ...data, callbackUrl: buildCallbackUrl(context, echo, secret) },
             { idempotencyKey }
         );
 
