@@ -1,0 +1,93 @@
+{
+    "name": "appmixer.piloterr.core.GetWebsiteHtml",
+    "label": "Get Website HTML",
+    "description": "Fetch the HTML of a public web page with Piloterr. Choose the crawler (plain HTTP), rendering (headless browser for JavaScript pages) or web unlocker (anti-bot protection) engine.",
+    "author": "Piloterr <josselin.liebe@piloterr.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:piloterr"
+    },
+    "quota": {
+        "manager": "appmixer:piloterr",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "url": {
+                        "type": "string"
+                    },
+                    "engine": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "url"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "url": {
+                        "type": "text",
+                        "index": 1,
+                        "label": "URL",
+                        "tooltip": "Public URL of the page, starting with <code>http://</code> or <code>https://</code>."
+                    },
+                    "engine": {
+                        "type": "select",
+                        "index": 2,
+                        "label": "Engine",
+                        "tooltip": "<code>crawler</code> is the cheapest; <code>rendering</code> runs a headless browser; <code>webunlocker</code> gets past anti-bot protection.",
+                        "defaultValue": "crawler",
+                        "options": [
+                            {
+                                "label": "Crawler",
+                                "value": "crawler"
+                            },
+                            {
+                                "label": "Rendering",
+                                "value": "rendering"
+                            },
+                            {
+                                "label": "Web Unlocker",
+                                "value": "webunlocker"
+                            }
+                        ]
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "url": {
+                        "type": "string",
+                        "title": "URL",
+                        "example": "https://example.com"
+                    },
+                    "engine": {
+                        "type": "string",
+                        "title": "Engine",
+                        "example": "crawler"
+                    },
+                    "html": {
+                        "type": "string",
+                        "title": "HTML",
+                        "example": "<!doctype html><html>...</html>"
+                    }
+                }
+            }
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PCEtLSBPZmZpY2lhbCB2ZW5kb3IgaWNvbjogaHR0cHM6Ly9hcHAucGlsb3RlcnIuY29tL2JyYW5kLWFzc2V0cy9waWxvdGVyci9sb2dvLnN2ZyAodGhlIG1hcmsgb2YgdGhlIGxvZ28sIHdpdGhvdXQgdGhlIHdvcmRtYXJrKSA7IHJldHJpZXZlZCAyMDI2LTExLTA5IC0tPgo8c3ZnIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgdmlld0JveD0iLTAuMyAxLjIgMjAgMjAiIGZpbGw9Im5vbmUiIHJvbGU9ImltZyIgYXJpYS1sYWJlbD0icGlsb3RlcnIiPgo8cGF0aCBkPSJNOS42ODE2NCAxLjgyNzE1QzE1LjAxNjEgMS44MjcxNSAxOS4zNjMzIDYuMTU3MDQgMTkuMzYzMyAxMS41MDg4QzE5LjM2MzMgMTYuODYwNSAxNS4wNTA4IDIxLjE3MjkgOS42ODE2NCAyMS4xNzI5QzQuMzEyNTcgMjEuMTcyOCAwIDE2Ljg0MzMgMCAxMS41MDg4QzcuNzMyMjZlLTA3IDEwLjIyNzIgMC4yNTk0MDUgOS4wMTQ2OCAwLjY5MjM4MyA3LjkwNjI1QzEuMjExOTcgOC40OTUxMSAxLjg3MDc1IDguOTQ1MDMgMi42MzI4MSA5LjE4NzVDMi40MDc2NiA5LjkxNDkzIDIuMjY4NTYgMTAuNjk0OCAyLjI2ODU1IDExLjUwODhDMi4yNjg1NSAxNS42MTM0IDUuNTc2NzYgMTguOTA0MiA5LjY2NDA2IDE4LjkwNDNDMTMuNzUxNSAxOC45MDQzIDE3LjA1OTYgMTUuNTc4OSAxNy4wNTk2IDExLjUwODhDMTcuMDU5NiA3LjQzODY5IDEzLjczNDEgNC4xMTMyOCA5LjY2NDA2IDQuMTEzMjhDOS4zMzUxIDQuMTEzMyA5LjA0MDQ1IDQuMTQ3OTggOC43NDYwOSA0LjE4MjYyQzguNjQyMTggMy4zNjg2OCA4LjM0ODQxIDIuNjQxMDQgNy44ODA4NiAyLjAxNzU4QzguNDUyMTggMS45MTM3MyA5LjA0MDgyIDEuODQ0NzUgOS42NjQwNiAxLjg0NDczTDkuNjgxNjQgMS44MjcxNVpNOS42NjQwNiA2LjM4MTg0QzEyLjQ2OTggNi4zODE4NCAxNC43NzM0IDguNjg1OTQgMTQuNzczNCAxMS41MjY0QzE0Ljc3MzMgMTQuMzY2NiAxMi41MDQ0IDE2LjY1MjMgOS42NjQwNiAxNi42NTIzQzYuODIzOSAxNi42NTIxIDQuNTIwNjQgMTQuMzY2NSA0LjUyMDUxIDExLjUyNjRDNC41MjA1MSAxMC45NzIxIDQuNTkwMjEgMTAuNDY5MyA0Ljc0NjA5IDkuOTg0MzhDNC43NjM0MyA5LjkxNTQxIDQuNzk3MTYgOS44ODA1NyA0LjgxNDQ1IDkuODExNTJDNC44NjY0IDkuNjU1NjcgNC45MTkwMiA5LjQ5OTg3IDQuOTg4MjggOS4zNjEzM0g1LjAyMjQ2QzYuNTgxMjEgOS4wNDk1OCA3Ljg2MzI4IDcuOTc1MzUgOC40NTIxNSA2LjUyMDUxQzguNjQyNjIgNi40ODU4OCA4LjgzMzIyIDYuNDUxNjMgOS4wNDEwMiA2LjQxNjk5QzkuMjMxNDEgNi4zODIzOSA5LjQzOTA3IDYuMzgxODQgOS42NjQwNiA2LjM4MTg0Wk00LjEyMjA3IDIuMDE3NThDNS42NDYxNSAyLjAxNzYyIDYuODc1OTggMy4yNjQ3MSA2Ljg3NTk4IDQuNzcxNDhDNi44NzU5NyA2LjI3ODI2IDUuNjQ2MTUgNy41MDc3NyA0LjEyMjA3IDcuNTA3ODFDMi42MTUyNyA3LjUwNzgxIDEuMzg1NzUgNi4yOTU2IDEuMzg1NzQgNC43NzE0OEMxLjM4NTc0IDMuMjQ3MzYgMi41OTc5NSAyLjAxNzU4IDQuMTIyMDcgMi4wMTc1OFoiIGZpbGw9IiM0RjQ2RTUiLz4KPC9zdmc+Cg=="
+}
