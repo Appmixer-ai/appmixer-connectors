@@ -85,7 +85,9 @@ async function buildUserContent(context, prompt, fileId) {
  *
  * Non-streaming mode: uses generateText with onStepFinish callbacks.
  *
- * Returns { messages, answer }.
+ * Returns { messages, answer }, where messages are the messages of this turn - the user
+ * message followed by the assistant and tool messages the model produced - to be appended
+ * to the thread memory.
  */
 // langfuse is optionally passed in from the caller when it already owns the trace.
 // When provided the agent span already exists as the active context — just run().
@@ -123,11 +125,16 @@ async function agent(context, instructions, prompt, fileId, componentToolsDef, m
     } : { isEnabled: false };
 
     const userContent = await buildUserContent(context, prompt, fileId);
+    const userMessage = { role: 'user', content: userContent };
     const inputMessages = [
-        ...(memory.summary ? [{ role: 'system', content: 'Conversation summary so far:\n' + memory.summary }] : []),
         ...(memory.messages || []),
-        { role: 'user', content: userContent }
+        userMessage
     ];
+
+    // The summary of the older conversation is part of the system prompt rather than a system
+    // message in the list: not every provider accepts system messages among the others.
+    const system = (instructions || 'You are a helpful assistant.')
+        + (memory.summary ? `\n\n## Summary of the earlier conversation\n\n${memory.summary}` : '');
 
     await context.log({ step: 'agent-start', isStream, maxSteps });
 
@@ -148,7 +155,7 @@ async function agent(context, instructions, prompt, fileId, componentToolsDef, m
 
         const sharedOptions = {
             model,
-            system: instructions || 'You are a helpful assistant.',
+            system,
             messages: inputMessages,
             ...(vercelTools ? { tools: vercelTools, maxSteps } : {}),
             experimental_telemetry: sdkTelemetry
@@ -180,7 +187,7 @@ async function agent(context, instructions, prompt, fileId, componentToolsDef, m
         await run();
     }
 
-    return { messages: responseMessages, answer: finalText };
+    return { messages: [userMessage, ...(responseMessages || [])], answer: finalText };
 }
 
 // ─── Streaming execution ──────────────────────────────────────────────────────

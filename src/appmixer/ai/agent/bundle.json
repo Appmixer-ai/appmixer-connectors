@@ -1,8 +1,17 @@
 {
     "name": "appmixer.ai.agent",
     "engine": ">=6.4",
-    "version": "1.6.0",
+    "version": "1.7.0",
     "changelog": {
+        "1.7.0": [
+            "Memory: the user's messages are now stored in the thread memory (previously only the assistant and tool messages were).",
+            "Memory: the history is split on turn boundaries, so a tool call is never separated from its result.",
+            "Memory: once over the token budget, the history is compacted to half of it (MEMORY_COMPACTION_TARGET_RATIO) instead of summarizing on every following turn. The summary counts against the budget.",
+            "Memory: turns of one thread are processed one at a time, the answer is sent before the memory is saved, and a failed summarization or save no longer fails the message.",
+            "Memory: attached images and files are stored as placeholders and oversized tool results are truncated (MEMORY_MAX_CONTENT_CHARS).",
+            "Memory: the summary is passed in the system prompt, has a structured format and a length target (MEMORY_SUMMARY_TARGET_WORDS) and is traced in Langfuse. It always uses the model selected on the agent.",
+            "Memory: the raw message history is written only when a data store is selected."
+        ],
         "1.6.0": [
             "Knowledgebase: use the knowledgebase API built into Appmixer (the knowledgebase system plugin, /system-plugins/knowledgebases) instead of the external proof-of-concept service. The knowledgebaseApi service configuration is no longer used."
         ],

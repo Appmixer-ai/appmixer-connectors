@@ -113,6 +113,136 @@ function getKbFileIds(context) {
         .filter(Boolean);
 }
 
+async function processMessage(context) {
+
+    await lib.publishChatProgressEvent(context, 'start', 'Thinking...');
+
+    const receiveStart = Date.now();
+    const { prompt, storeId, threadId, fileId } = context.messages.in.content;
+
+    const componentToolsDef = await componentTool.buildComponentToolDefs(context);
+
+    let memoryData = {};
+    if (threadId) {
+        memoryData = await memory.loadMemory(context, storeId, threadId);
+    }
+
+    let instructions = context.properties.instructions || 'You are a helpful assistant.';
+    const knowledgebaseId = getKbFileIds(context).length > 0
+        ? await context.stateGet(KNOWLEDGEBASE_STATE_KEY)
+        : null;
+
+    // Create the tracer once for the entire turn. The retrieval span, all agent/generation/tool
+    // spans and the memory summarization span share this provider and therefore the same trace.
+    const { provider: telemetryProvider, tracer: otelTracer, otelApi } = tracerModule.createLangfuseTracer(context);
+    const langfuse = { provider: telemetryProvider, tracer: otelTracer, otelApi };
+
+    let response;
+
+    // Core logic extracted so it can run inside or outside the agent span context.
+    const runTurn = async () => {
+        if (knowledgebaseId) {
+            const chunks = await retrieveChunks(context, knowledgebaseId, prompt, langfuse);
+            if (chunks.length > 0) {
+                const contextBlock = chunks
+                    .map(c => `[Source: ${c.doc}]\n${c.text}`)
+                    .join('\n\n---\n\n');
+                instructions += `\n\n## Knowledgebase\n\n
+                    Answer using the retrieved context below.
+                    If the answer is not in the context, say so.
+                    If the answer is in the context,
+                    do not mention that you used the knowledgebase as a context,
+                    just answer directly with the information provided.\n\n
+                    ${contextBlock}`;
+            }
+        }
+
+        const agentTimeStart = Date.now();
+        response = await agentModule.agent(
+            context, instructions, prompt, fileId, componentToolsDef, memoryData, langfuse
+        );
+        await context.log({ step: 'agent-response', latency: Date.now() - agentTimeStart });
+
+        // The answer goes out before the memory is saved: saving may summarize the history,
+        // which is another model call the user should not wait for.
+        await context.sendJson({
+            answer: response.answer,
+            prompt,
+            usage: await context.stateGet('usage'),
+            time: Date.now() - receiveStart
+        }, 'out');
+
+        if (threadId) {
+            // The answer is already sent, so a failure here must not fail (and re-run) the
+            // message; this turn is then missing from the memory.
+            try {
+                const newMessages = response.messages;
+                await memory.appendMessages(context, storeId, threadId, newMessages);
+                await memory.saveMemory(context, storeId, threadId, {
+                    summary: memoryData.summary,
+                    messages: (memoryData.messages || []).concat(newMessages)
+                }, { langfuse });
+            } catch (err) {
+                await context.log({ step: 'memory-save-error', threadId, error: err.message });
+            }
+        }
+    };
+
+    if (telemetryProvider && otelTracer && otelApi) {
+        // Create the top-level agent span here so that the retrieval span (created inside
+        // retrieveChunks) and all generation/tool spans (created inside agent.js) are
+        // all children of the same root span and therefore part of the same trace.
+        const { context: otelCtx, trace, SpanStatusCode } = otelApi;
+
+        const agentSpan = otelTracer.startSpan('Appmixer AI Agent', {
+            attributes: {
+                'gen_ai.operation.name': 'invoke_agent',
+                'langfuse.observation.type': 'agent',
+                'langfuse.trace.name': 'Appmixer AI Agent',
+                'langfuse.observation.input': JSON.stringify({ prompt }),
+                'input.value': JSON.stringify({ prompt }),
+                'input.mime_type': 'application/json',
+                ...(threadId ? { 'langfuse.session.id': threadId } : {}),
+                'appmixer.flow.id': context.flowId,
+                'appmixer.component.id': context.componentId,
+                'appmixer.correlation.id': context.messages?.in?.correlationId || ''
+            }
+        });
+
+        await otelCtx.with(trace.setSpan(otelCtx.active(), agentSpan), async () => {
+            try {
+                await runTurn();
+                const usage = await context.stateGet('usage');
+                if (usage) {
+                    agentSpan.setAttributes({
+                        'gen_ai.usage.input_tokens': usage.prompt_tokens || 0,
+                        'gen_ai.usage.output_tokens': usage.completion_tokens || 0,
+                        'gen_ai.request.model': context.properties.model || '',
+                        'langfuse.observation.usage_details': JSON.stringify({
+                            input: usage.prompt_tokens || 0,
+                            output: usage.completion_tokens || 0
+                        })
+                    });
+                }
+                agentSpan.setAttributes({
+                    'langfuse.observation.output': response?.answer || '',
+                    'output.value': response?.answer || '',
+                    'output.mime_type': 'application/json'
+                });
+            } catch (err) {
+                agentSpan.recordException(err);
+                agentSpan.setStatus({ code: SpanStatusCode.ERROR, message: err.message });
+                throw err;
+            } finally {
+                agentSpan.end();
+                await telemetryProvider.forceFlush();
+            }
+        });
+    } else {
+        await runTurn();
+    }
+}
+
 module.exports = {
 
     stop: async function(context) {
@@ -180,125 +310,22 @@ module.exports = {
 
     receive: async function(context) {
 
-        await lib.publishChatProgressEvent(context, 'start', 'Thinking...');
-
-        const receiveStart = Date.now();
-        const { prompt, storeId, threadId, fileId } = context.messages.in.content;
+        const { prompt, storeId, threadId } = context.messages.in.content;
 
         if (!prompt) {
             throw new context.CancelError('Prompt is required');
         }
 
-        const componentToolsDef = await componentTool.buildComponentToolDefs(context);
-
-        let memoryData = {};
-        if (threadId) {
-            memoryData = await memory.loadMemory(context, storeId, threadId);
+        if (!threadId) {
+            return processMessage(context);
         }
 
-        let instructions = context.properties.instructions || 'You are a helpful assistant.';
-        const knowledgebaseId = getKbFileIds(context).length > 0
-            ? await context.stateGet(KNOWLEDGEBASE_STATE_KEY)
-            : null;
-
-        // Create the tracer once for the entire turn. Both the retrieval span and all
-        // agent/generation/tool spans will share this provider and therefore the same trace.
-        const { provider: telemetryProvider, tracer: otelTracer, otelApi } = tracerModule.createLangfuseTracer(context);
-        const langfuse = { provider: telemetryProvider, tracer: otelTracer, otelApi };
-
-        let response;
-
-        // Core logic extracted so it can run inside or outside the agent span context.
-        const runTurn = async () => {
-            if (knowledgebaseId) {
-                const chunks = await retrieveChunks(context, knowledgebaseId, prompt, langfuse);
-                if (chunks.length > 0) {
-                    const contextBlock = chunks
-                        .map(c => `[Source: ${c.doc}]\n${c.text}`)
-                        .join('\n\n---\n\n');
-                    instructions += `\n\n## Knowledgebase\n\n
-                    Answer using the retrieved context below.
-                    If the answer is not in the context, say so.
-                    If the answer is in the context,
-                    do not mention that you used the knowledgebase as a context,
-                    just answer directly with the information provided.\n\n
-                    ${contextBlock}`;
-                }
-            }
-
-            const agentTimeStart = Date.now();
-            response = await agentModule.agent(
-                context, instructions, prompt, fileId, componentToolsDef, memoryData, langfuse
-            );
-            await context.log({ step: 'agent-response', latency: Date.now() - agentTimeStart });
-        };
-
-        if (telemetryProvider && otelTracer && otelApi) {
-            // Create the top-level agent span here so that the retrieval span (created inside
-            // retrieveChunks) and all generation/tool spans (created inside agent.js) are
-            // all children of the same root span and therefore part of the same trace.
-            const { context: otelCtx, trace, SpanStatusCode } = otelApi;
-
-            const agentSpan = otelTracer.startSpan('Appmixer AI Agent', {
-                attributes: {
-                    'gen_ai.operation.name': 'invoke_agent',
-                    'langfuse.observation.type': 'agent',
-                    'langfuse.trace.name': 'Appmixer AI Agent',
-                    'langfuse.observation.input': JSON.stringify({ prompt }),
-                    'input.value': JSON.stringify({ prompt }),
-                    'input.mime_type': 'application/json',
-                    ...(threadId ? { 'langfuse.session.id': threadId } : {}),
-                    'appmixer.flow.id': context.flowId,
-                    'appmixer.component.id': context.componentId,
-                    'appmixer.correlation.id': context.messages?.in?.correlationId || ''
-                }
-            });
-
-            await otelCtx.with(trace.setSpan(otelCtx.active(), agentSpan), async () => {
-                try {
-                    await runTurn();
-                    const usage = await context.stateGet('usage');
-                    if (usage) {
-                        agentSpan.setAttributes({
-                            'gen_ai.usage.input_tokens': usage.prompt_tokens || 0,
-                            'gen_ai.usage.output_tokens': usage.completion_tokens || 0,
-                            'gen_ai.request.model': context.properties.model || '',
-                            'langfuse.observation.usage_details': JSON.stringify({
-                                input: usage.prompt_tokens || 0,
-                                output: usage.completion_tokens || 0
-                            })
-                        });
-                    }
-                    agentSpan.setAttributes({
-                        'langfuse.observation.output': response?.answer || '',
-                        'output.value': response?.answer || '',
-                        'output.mime_type': 'application/json'
-                    });
-                } catch (err) {
-                    agentSpan.recordException(err);
-                    agentSpan.setStatus({ code: SpanStatusCode.ERROR, message: err.message });
-                    throw err;
-                } finally {
-                    agentSpan.end();
-                    await telemetryProvider.forceFlush();
-                }
-            });
-        } else {
-            await runTurn();
+        // One turn of a thread at a time: memory is loaded, used and saved under the lock.
+        const lock = await memory.lockThread(context, storeId, threadId);
+        try {
+            return await processMessage(context);
+        } finally {
+            await lock.unlock();
         }
-
-        if (threadId) {
-            const newMessages = response.messages;
-            await memory.appendMessages(context, storeId, threadId, newMessages);
-            memoryData.messages = memoryData.messages.concat(newMessages);
-            await memory.saveMemory(context, storeId, threadId, memoryData);
-        }
-
-        return context.sendJson({
-            answer: response.answer,
-            prompt,
-            usage: await context.stateGet('usage'),
-            time: Date.now() - receiveStart
-        }, 'out');
     }
 };
