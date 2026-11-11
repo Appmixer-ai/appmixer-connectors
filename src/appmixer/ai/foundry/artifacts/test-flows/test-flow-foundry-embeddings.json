@@ -1,0 +1,231 @@
+{
+    "name": "E2E AI Foundry - Embeddings",
+    "type": "automation",
+    "flow": {
+        "60033faa-b59b-4bc3-907a-8c5cc58549d9": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 48,
+            "version": "1.0.0",
+            "source": {},
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {}
+        },
+        "afcac755-d900-4422-aa40-c502c78f12e8": {
+            "type": "appmixer.utils.controls.SetVariable",
+            "x": 272,
+            "y": 48,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "60033faa-b59b-4bc3-907a-8c5cc58549d9": [
+                        "out"
+                    ]
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "60033faa-b59b-4bc3-907a-8c5cc58549d9": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "variables": {}
+                                },
+                                "lambda": {
+                                    "variables": {
+                                        "ADD": [
+                                            {
+                                                "type": "text",
+                                                "name": "embeddingText",
+                                                "text": "Appmixer is an embedded integration platform. It lets product teams add native integrations to their SaaS application without building each connector from scratch. Flows are composed of components that pass messages to each other over typed ports."
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "ae9c3db8-d3ff-495f-9e0e-410778ebd2c3": {
+            "type": "appmixer.ai.foundry.GenerateEmbeddings",
+            "x": 480,
+            "y": 48,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "afcac755-d900-4422-aa40-c502c78f12e8": [
+                        "out"
+                    ]
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "afcac755-d900-4422-aa40-c502c78f12e8": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "text": {
+                                        "46136267-7e45-4a82-91a8-2a2441bdb8ed": {
+                                            "variable": "$.afcac755-d900-4422-aa40-c502c78f12e8.out.embeddingText",
+                                            "functions": []
+                                        }
+                                    },
+                                    "model": {},
+                                    "chunkSize": {},
+                                    "chunkOverlap": {}
+                                },
+                                "lambda": {
+                                    "text": "{{{46136267-7e45-4a82-91a8-2a2441bdb8ed}}}",
+                                    "model": "text-embedding-3-small",
+                                    "chunkSize": 100,
+                                    "chunkOverlap": 20
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "e747090f-08e6-4184-9941-bc9d03048200": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 896,
+            "y": 48,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "ae9c3db8-d3ff-495f-9e0e-410778ebd2c3": [
+                        "out"
+                    ]
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "ae9c3db8-d3ff-495f-9e0e-410778ebd2c3": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "e98dcfd9-68a4-446f-817f-5ce3915d0524": {
+                                            "variable": "$.ae9c3db8-d3ff-495f-9e0e-410778ebd2c3.out.embeddings",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$[0].text"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        },
+                                        "c19723c1-b274-4ee3-942a-9d2a0a3fcf24": {
+                                            "variable": "$.ae9c3db8-d3ff-495f-9e0e-410778ebd2c3.out.embeddings",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$[0].index"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        },
+                                        "57e03965-0a22-472a-98e6-59d44c5d9d0a": {
+                                            "variable": "$.ae9c3db8-d3ff-495f-9e0e-410778ebd2c3.out.firstVector",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{e98dcfd9-68a4-446f-817f-5ce3915d0524}}}",
+                                                "assertion": "notEmpty"
+                                            },
+                                            {
+                                                "field": "{{{c19723c1-b274-4ee3-942a-9d2a0a3fcf24}}}",
+                                                "assertion": "regex",
+                                                "regex": "^0$"
+                                            },
+                                            {
+                                                "field": "{{{57e03965-0a22-472a-98e6-59d44c5d9d0a}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "f29ffa54-7cbb-4af7-88e5-7c837d71f815": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 1104,
+            "y": 48,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "e747090f-08e6-4184-9941-bc9d03048200": [
+                        "out"
+                    ]
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "properties": {
+                    "timeout": 180
+                }
+            }
+        },
+        "f024c6ef-5530-4ffc-a449-60fe5ddf2f55": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1520,
+            "y": 48,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "f29ffa54-7cbb-4af7-88e5-7c837d71f815": [
+                        "out"
+                    ]
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "properties": {},
+                "transform": {
+                    "in": {}
+                }
+            }
+        }
+    }
+}

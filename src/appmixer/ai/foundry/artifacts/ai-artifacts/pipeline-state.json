@@ -1,0 +1,36 @@
+{
+    "connector": "foundry",
+    "vendor": "appmixer",
+    "module": "ai",
+    "connectorPath": "src/appmixer/ai/foundry",
+    "branch": "feat/ai-foundry",
+    "updatedAt": "2026-11-10",
+    "issue": "https://github.com/Appmixer-ai/appmixer-components/issues/2730",
+    "apiDocs": "https://learn.microsoft.com/en-us/azure/foundry/openai/api-version-lifecycle",
+    "openApiSpec": "https://github.com/Azure/azure-rest-api-specs/blob/main/specification/ai/data-plane/OpenAI.v1/azure-v1-v1-generated.json",
+    "baseUrl": "https://<resource>.openai.azure.com/openai/v1 (per account)",
+    "auth": {
+        "status": "pending",
+        "type": "apiKey (endpoint + API key)",
+        "notes": "No Foundry test resource in appmixer-test-credentials yet. Entra ID (service principal) is a planned follow-up."
+    },
+    "localTests": "pending-credentials",
+    "steps": {
+        "build": {
+            "status": "done",
+            "notes": "Derived from ai/openai 2.1.2: AIAgent (+ tool.js, toolChain.js, mcp.js), SendPrompt, TransformTextToJSON, GenerateEmbeddings, ListModels, MakeApiCall. Foundry specifics: per-account endpoint pinned to Azure hosts, api-key header, deployment name required (no gpt-4o default), max_completion_tokens, PDF sent inline as file_data (Azure files API has no 'user_data' purpose)."
+        },
+        "review": {
+            "status": "done",
+            "notes": "validate.js --connector ai/foundry: 0 failures, 1 warning (jsonSchema mapped into the TransformTextToJSON schema call; same as ai/openai, the value is needed). eslint clean. 57 unit tests pass."
+        },
+        "cli-tests": {
+            "status": "pending",
+            "notes": "Needs a Foundry resource with deployments gpt-4o-mini and text-embedding-3-small."
+        },
+        "e2e": {
+            "status": "generated",
+            "notes": "6 flows adapted from ai/openai in artifacts/test-flows; appmixer e2e validate passes. Not run - no account."
+        }
+    }
+}
