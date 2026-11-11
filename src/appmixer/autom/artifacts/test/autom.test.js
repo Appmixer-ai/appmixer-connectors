@@ -4,8 +4,8 @@ const assert = require('assert');
 
 const auth = require('../../auth');
 const lib = require('../../lib');
-const searchGoogle = require('../../core/SearchGoogle/SearchGoogle');
-const searchGoogleNews = require('../../core/SearchGoogleNews/SearchGoogleNews');
+const findGoogleResults = require('../../core/FindGoogleResults/FindGoogleResults');
+const findGoogleNews = require('../../core/FindGoogleNews/FindGoogleNews');
 const getUsage = require('../../core/GetUsage/GetUsage');
 const makeApiCall = require('../../core/MakeApiCall/MakeApiCall');
 
@@ -56,7 +56,7 @@ describe('Autom connector', () => {
             err.response = { status: 400, data: { error: 'Invalid query' } };
             throw err;
         });
-        await assert.rejects(() => searchGoogle.receive(ctx), /Autom: Invalid query/);
+        await assert.rejects(() => findGoogleResults.receive(ctx), /Autom: Invalid query/);
     });
 
     it('Search Google calls GET /v1/google/search with the key and sends the result', async () => {
@@ -65,7 +65,7 @@ describe('Autom connector', () => {
             calls.push(options);
             return { data: { organic_results: [{ position: 1, title: 'Example Domain', link: 'https://example.com/', domain: 'example.com', snippet: 's' }, { position: 2, title: 'No link', link: '' }] } };
         });
-        await searchGoogle.receive(ctx);
+        await findGoogleResults.receive(ctx);
         assert.equal(calls.length, 1);
         assert.equal(calls[0].method, 'GET');
         assert.equal(calls[0].url, 'https://api.autom.dev/v1/google/search');
@@ -77,11 +77,11 @@ describe('Autom connector', () => {
     });
     it('Search Google cancels without Query', async () => {
         const ctx = contextFor({ query: '', country: 'us', language: 'value', outputType: 'array' }, async () => { throw new Error('no request expected'); });
-        await assert.rejects(() => searchGoogle.receive(ctx), CancelError);
+        await assert.rejects(() => findGoogleResults.receive(ctx), CancelError);
     });
     it('Search Google sends notFound when there is no result', async () => {
         const ctx = contextFor({ query: 'test query', country: 'us', language: 'value', outputType: 'array' }, async () => ({ data: {} }));
-        await searchGoogle.receive(ctx);
+        await findGoogleResults.receive(ctx);
         assert.equal(ctx.output.port, 'notFound');
     });
     it('Search Google News calls GET /v1/google/news with the key and sends the result', async () => {
@@ -90,7 +90,7 @@ describe('Autom connector', () => {
             calls.push(options);
             return { data: { organic_results: [{ position: 1, title: 'Markets rally', link: 'https://news.example.com/a', source: 'Example News', date: '2 hours ago' }] } };
         });
-        await searchGoogleNews.receive(ctx);
+        await findGoogleNews.receive(ctx);
         assert.equal(calls.length, 1);
         assert.equal(calls[0].method, 'GET');
         assert.equal(calls[0].url, 'https://api.autom.dev/v1/google/news');
@@ -102,11 +102,11 @@ describe('Autom connector', () => {
     });
     it('Search Google News cancels without Query', async () => {
         const ctx = contextFor({ query: '', country: 'us', language: 'value', outputType: 'array' }, async () => { throw new Error('no request expected'); });
-        await assert.rejects(() => searchGoogleNews.receive(ctx), CancelError);
+        await assert.rejects(() => findGoogleNews.receive(ctx), CancelError);
     });
     it('Search Google News sends notFound when there is no result', async () => {
         const ctx = contextFor({ query: 'test query', country: 'us', language: 'value', outputType: 'array' }, async () => ({ data: {} }));
-        await searchGoogleNews.receive(ctx);
+        await findGoogleNews.receive(ctx);
         assert.equal(ctx.output.port, 'notFound');
     });
     it('Get Usage calls GET /v1/usage with the key and sends the result', async () => {
