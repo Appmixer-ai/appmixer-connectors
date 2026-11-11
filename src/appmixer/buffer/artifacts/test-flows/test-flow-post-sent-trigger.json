@@ -1,0 +1,348 @@
+{
+    "name": "E2E Buffer - post sent trigger",
+    "description": "Publishes a post right away (Share Now) and waits for the Post Sent trigger to emit it, then deletes it from Buffer.",
+    "flow": {
+        "8f5b946b-4e25-4935-b886-1e243139364d": {
+            "type": "appmixer.buffer.core.PostSent",
+            "x": 64,
+            "y": 400,
+            "source": {},
+            "version": "1.0.0",
+            "config": {
+                "properties": {
+                    "pollInterval": "5"
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "de0a5ed0-43eb-4eb1-8259-e9b5c5b10dfe": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 272,
+            "y": 400,
+            "source": {
+                "in": {
+                    "8f5b946b-4e25-4935-b886-1e243139364d": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "8f5b946b-4e25-4935-b886-1e243139364d": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "b2b65bc7-b29a-4059-ac1d-85821590d289": {
+                                            "variable": "$.8f5b946b-4e25-4935-b886-1e243139364d.out.id",
+                                            "functions": []
+                                        },
+                                        "90a00d75-5639-4962-b6dc-370008d0cb40": {
+                                            "variable": "$.8f5b946b-4e25-4935-b886-1e243139364d.out.text",
+                                            "functions": []
+                                        },
+                                        "896671fa-b78d-4de5-9ce4-d45e1d49f048": {
+                                            "variable": "$.8f5b946b-4e25-4935-b886-1e243139364d.out.status",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{b2b65bc7-b29a-4059-ac1d-85821590d289}}}",
+                                                "assertion": "notEmpty"
+                                            },
+                                            {
+                                                "field": "{{{90a00d75-5639-4962-b6dc-370008d0cb40}}}",
+                                                "assertion": "regex",
+                                                "regex": "^E2E Buffer published post "
+                                            },
+                                            {
+                                                "field": "{{{896671fa-b78d-4de5-9ce4-d45e1d49f048}}}",
+                                                "assertion": "equal",
+                                                "expected": "sent"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "5c1fc467-4f1e-4268-9a91-00e100e43296": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16,
+            "source": {},
+            "version": "1.0.0",
+            "config": {},
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "5b85008e-cf09-4a04-b4b9-6f17381fbbc2": {
+            "type": "appmixer.buffer.core.ListChannels",
+            "x": 272,
+            "y": 16,
+            "source": {
+                "in": {
+                    "5c1fc467-4f1e-4268-9a91-00e100e43296": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "5c1fc467-4f1e-4268-9a91-00e100e43296": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "outputType": {}
+                                },
+                                "lambda": {
+                                    "outputType": "first"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "6b78ce96-1787-43a1-98b5-8ee7427b47d9": {
+            "type": "appmixer.buffer.core.CreatePost",
+            "x": 480,
+            "y": 16,
+            "source": {
+                "in": {
+                    "5b85008e-cf09-4a04-b4b9-6f17381fbbc2": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "5b85008e-cf09-4a04-b4b9-6f17381fbbc2": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "channelId": {
+                                        "ee36cb03-04ca-437f-8d96-bc78e8b98e98": {
+                                            "variable": "$.5b85008e-cf09-4a04-b4b9-6f17381fbbc2.out.id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "text": {
+                                        "5c6e9b9c-848a-433b-ab81-e31ee00d4e04": {
+                                            "variable": "$.5c1fc467-4f1e-4268-9a91-00e100e43296.out.started",
+                                            "functions": []
+                                        }
+                                    },
+                                    "mode": {},
+                                    "schedulingType": {}
+                                },
+                                "lambda": {
+                                    "channelId": "{{{ee36cb03-04ca-437f-8d96-bc78e8b98e98}}}",
+                                    "text": "E2E Buffer published post {{{5c6e9b9c-848a-433b-ab81-e31ee00d4e04}}}",
+                                    "mode": "shareNow",
+                                    "schedulingType": "automatic"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "889240ba-b119-4c86-9f55-2ff4e8805fcc": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 688,
+            "y": 16,
+            "source": {
+                "in": {
+                    "6b78ce96-1787-43a1-98b5-8ee7427b47d9": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "6b78ce96-1787-43a1-98b5-8ee7427b47d9": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "aea8c9e5-792e-472d-ae4e-743a7724152d": {
+                                            "variable": "$.6b78ce96-1787-43a1-98b5-8ee7427b47d9.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{aea8c9e5-792e-472d-ae4e-743a7724152d}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "c769d27f-887a-4087-a61b-1d758443eaee": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 896,
+            "y": 400,
+            "source": {
+                "in": {
+                    "de0a5ed0-43eb-4eb1-8259-e9b5c5b10dfe": [
+                        "out"
+                    ],
+                    "889240ba-b119-4c86-9f55-2ff4e8805fcc": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "properties": {
+                    "timeout": 600
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "ea4fec3e-c2a4-474d-b3a0-a0a3868d0f87": {
+            "type": "appmixer.buffer.core.DeletePost",
+            "x": 1104,
+            "y": 400,
+            "source": {
+                "in": {
+                    "c769d27f-887a-4087-a61b-1d758443eaee": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "c769d27f-887a-4087-a61b-1d758443eaee": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "postId": {
+                                        "6bd36c77-19cb-4e02-b2bd-4566be31718b": {
+                                            "variable": "$.8f5b946b-4e25-4935-b886-1e243139364d.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "postId": "{{{6bd36c77-19cb-4e02-b2bd-4566be31718b}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "028e3ac8-da46-452c-9fcd-388bbd998c16": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1312,
+            "y": 400,
+            "source": {
+                "in": {
+                    "ea4fec3e-c2a4-474d-b3a0-a0a3868d0f87": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "properties": {
+                    "successStoreId": "64f6f1f9193228000754082f",
+                    "failedStoreId": "64f6f1f0193228000754082e"
+                },
+                "transform": {
+                    "in": {
+                        "ea4fec3e-c2a4-474d-b3a0-a0a3868d0f87": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "828dde81-8c52-4b53-b06f-1803fd4225f9": {
+                                            "variable": "$.c769d27f-887a-4087-a61b-1d758443eaee.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E Buffer - post sent trigger",
+                                    "result": "{{{828dde81-8c52-4b53-b06f-1803fd4225f9}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        }
+    },
+    "notes": {
+        "91f198b5-971d-41fd-b8aa-b1522e3f22de": {
+            "x": 64,
+            "y": 560,
+            "width": 672,
+            "height": 256,
+            "content": "## ⚠️ Publishes a real post\n\nThis flow **publishes** a post to the **first channel** of the connected Buffer account (Share Now). Connect a Buffer account whose first channel is a test social profile. Delete Post removes the post from Buffer only, not from the social network.\n\nThe trigger polls the first organization every 5 minutes, so the run takes up to ~7 minutes. Run it alone: another post published in the organization meanwhile fails the assertion."
+        }
+    }
+}

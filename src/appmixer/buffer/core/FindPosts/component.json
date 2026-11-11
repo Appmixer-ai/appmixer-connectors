@@ -1,0 +1,248 @@
+{
+    "name": "appmixer.buffer.core.FindPosts",
+    "label": "Find Posts",
+    "description": "Find posts of a Buffer organization by channel, status and date. Returns up to 100 posts.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:buffer"
+    },
+    "quota": {
+        "manager": "appmixer:buffer",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "organizationId": {
+                        "type": "string"
+                    },
+                    "channelId": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "type": "string"
+                    },
+                    "createdAfter": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "createdBefore": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "dueAfter": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "dueBefore": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "sortBy": {
+                        "type": "string",
+                        "enum": [
+                            "dueAt",
+                            "createdAt"
+                        ]
+                    },
+                    "sortDirection": {
+                        "type": "string",
+                        "enum": [
+                            "desc",
+                            "asc"
+                        ]
+                    },
+                    "outputType": {
+                        "type": "string",
+                        "default": "array"
+                    }
+                },
+                "required": [
+                    "organizationId"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "organizationId": {
+                        "type": "text",
+                        "index": 1,
+                        "label": "Organization",
+                        "tooltip": "Pick a Buffer organization, or type its Organization ID.",
+                        "source": {
+                            "url": "/component/appmixer/buffer/core/ListOrganizations?outPort=out",
+                            "data": {
+                                "properties": {
+                                    "isSource": true
+                                },
+                                "transform": "./ListOrganizations#toSelectArray"
+                            }
+                        }
+                    },
+                    "channelId": {
+                        "type": "text",
+                        "index": 2,
+                        "label": "Channel",
+                        "tooltip": "Only posts of this channel. Pick a channel, or type its Channel ID. Leave empty for all channels.",
+                        "source": {
+                            "url": "/component/appmixer/buffer/core/ListChannels?outPort=out",
+                            "data": {
+                                "messages": {
+                                    "in/organizationId": "inputs/in/organizationId"
+                                },
+                                "properties": {
+                                    "isSource": true
+                                },
+                                "transform": "./ListChannels#toSelectArray"
+                            }
+                        }
+                    },
+                    "status": {
+                        "type": "select",
+                        "index": 3,
+                        "label": "Status",
+                        "tooltip": "Only posts with this status.",
+                        "options": [
+                            {
+                                "label": "All",
+                                "value": ""
+                            },
+                            {
+                                "label": "Draft",
+                                "value": "draft"
+                            },
+                            {
+                                "label": "Needs Approval",
+                                "value": "needs_approval"
+                            },
+                            {
+                                "label": "Scheduled",
+                                "value": "scheduled"
+                            },
+                            {
+                                "label": "Sending",
+                                "value": "sending"
+                            },
+                            {
+                                "label": "Sent",
+                                "value": "sent"
+                            },
+                            {
+                                "label": "Error",
+                                "value": "error"
+                            }
+                        ]
+                    },
+                    "createdAfter": {
+                        "type": "date-time",
+                        "index": 4,
+                        "label": "Created After",
+                        "tooltip": "Only posts created at or after this time."
+                    },
+                    "createdBefore": {
+                        "type": "date-time",
+                        "index": 5,
+                        "label": "Created Before",
+                        "tooltip": "Only posts created at or before this time."
+                    },
+                    "dueAfter": {
+                        "type": "date-time",
+                        "index": 6,
+                        "label": "Due After",
+                        "tooltip": "Only posts scheduled at or after this time."
+                    },
+                    "dueBefore": {
+                        "type": "date-time",
+                        "index": 7,
+                        "label": "Due Before",
+                        "tooltip": "Only posts scheduled at or before this time."
+                    },
+                    "sortBy": {
+                        "type": "select",
+                        "index": 8,
+                        "label": "Sort By",
+                        "defaultValue": "dueAt",
+                        "options": [
+                            {
+                                "label": "Due At",
+                                "value": "dueAt"
+                            },
+                            {
+                                "label": "Created At",
+                                "value": "createdAt"
+                            }
+                        ]
+                    },
+                    "sortDirection": {
+                        "type": "select",
+                        "index": 9,
+                        "label": "Sort Direction",
+                        "defaultValue": "desc",
+                        "options": [
+                            {
+                                "label": "Descending",
+                                "value": "desc"
+                            },
+                            {
+                                "label": "Ascending",
+                                "value": "asc"
+                            }
+                        ]
+                    },
+                    "outputType": {
+                        "type": "select",
+                        "label": "Output Type",
+                        "index": 10,
+                        "defaultValue": "array",
+                        "tooltip": "Choose whether you want to receive the result set as one complete list, or first item only or one item at a time or stream the items to a file.",
+                        "options": [
+                            {
+                                "label": "First Item Only",
+                                "value": "first"
+                            },
+                            {
+                                "label": "All items at once",
+                                "value": "array"
+                            },
+                            {
+                                "label": "One item at a time",
+                                "value": "object"
+                            },
+                            {
+                                "label": "Store to CSV file",
+                                "value": "file"
+                            }
+                        ]
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "source": {
+                "url": "/component/appmixer/buffer/core/FindPosts?outPort=out&ignoreAuth=true",
+                "data": {
+                    "properties": {
+                        "generateOutputPortOptions": true
+                    },
+                    "messages": {
+                        "in/organizationId": "dummy",
+                        "in/outputType": "inputs/in/outputType"
+                    }
+                }
+            }
+        },
+        {
+            "name": "notFound"
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZmlsbD0iIzIzMUYyMCIgZD0iTTEuMzcxIDUuNDc2TDExLjk0MyAwbDEwLjY4NiA1LjQ3Ni0xMC42ODYgNS40OTV6bTMuMzYgNC44MWw3LjIxMiAzLjU0NyA3LjI4OC0zLjU0NyAzLjM5OCAxLjY1NS0xMC42ODYgNS4yMDJMMS4zNzEgMTEuOTR6bTAgNi4xNzFsNy4yMTIgMy45MTEgNy4yODgtMy45MSAzLjM5OCAxLjgxNUwxMS45NDMgMjQgMS4zNzEgMTguMjczeiIvPjwvc3ZnPg=="
+}
