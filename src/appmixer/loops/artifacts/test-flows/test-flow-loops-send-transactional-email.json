@@ -1,0 +1,228 @@
+{
+    "name": "E2E Loops - send transactional email",
+    "description": "Sends the most recent transactional email of the account to an @example.com address (accepted by Loops, never delivered).",
+    "flow": {
+        "4290d43c-2606-409a-96cd-f2511215d121": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16,
+            "source": {},
+            "version": "1.0.0",
+            "config": {},
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "7a844098-70bc-4408-aca1-9201beba8a5d": {
+            "type": "appmixer.loops.core.ListTransactionalEmails",
+            "x": 272,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "4290d43c-2606-409a-96cd-f2511215d121": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "4290d43c-2606-409a-96cd-f2511215d121": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "outputType": {}
+                                },
+                                "lambda": {
+                                    "outputType": "first"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "20b50074-7398-44fa-afc3-903b1eb1c741": {
+            "type": "appmixer.loops.core.SendTransactionalEmail",
+            "x": 480,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "7a844098-70bc-4408-aca1-9201beba8a5d": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "7a844098-70bc-4408-aca1-9201beba8a5d": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "transactionalId": {
+                                        "9ba9c8df-a649-456d-8aa0-dc0f972c7bf6": {
+                                            "variable": "$.7a844098-70bc-4408-aca1-9201beba8a5d.out.id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "email": {},
+                                    "addToAudience": {}
+                                },
+                                "lambda": {
+                                    "transactionalId": "{{{9ba9c8df-a649-456d-8aa0-dc0f972c7bf6}}}",
+                                    "email": "e2e-loops-transactional@example.com",
+                                    "addToAudience": false
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "f1c9a3e1-636f-4dfa-89b8-302928701265": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 688,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "20b50074-7398-44fa-afc3-903b1eb1c741": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "20b50074-7398-44fa-afc3-903b1eb1c741": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "cc90c4d6-2322-41a6-8fd2-18a116db24f8": {
+                                            "variable": "$.20b50074-7398-44fa-afc3-903b1eb1c741.out.success",
+                                            "functions": []
+                                        },
+                                        "c92089c1-1dbd-4494-985b-78232a14c442": {
+                                            "variable": "$.20b50074-7398-44fa-afc3-903b1eb1c741.out.transactionalId",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{cc90c4d6-2322-41a6-8fd2-18a116db24f8}}}",
+                                                "assertion": "equal",
+                                                "expected": "true"
+                                            },
+                                            {
+                                                "field": "{{{c92089c1-1dbd-4494-985b-78232a14c442}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "8485a597-ec9a-4aed-9339-c88185244890": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 896,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "f1c9a3e1-636f-4dfa-89b8-302928701265": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 180
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "676721d7-31a2-4401-94df-1145636a4c05": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1104,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "8485a597-ec9a-4aed-9339-c88185244890": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "8485a597-ec9a-4aed-9339-c88185244890": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "e7542945-1c9e-44fa-8f66-f3ba570a7f71": {
+                                            "variable": "$.8485a597-ec9a-4aed-9339-c88185244890.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E Loops - send transactional email",
+                                    "result": "{{{e7542945-1c9e-44fa-8f66-f3ba570a7f71}}}"
+                                }
+                            }
+                        }
+                    }
+                },
+                "properties": {
+                    "successStoreId": "64f6f1f9193228000754082f",
+                    "failedStoreId": "64f6f1f0193228000754082e"
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        }
+    },
+    "notes": {
+        "d8cc2c3f-932c-4239-9ac9-5dc6500295b1": {
+            "x": 64,
+            "y": 320,
+            "width": 672,
+            "height": 224,
+            "content": "## ⚠️ Test data assumption\n\nThe account must have at least one transactional email, and the **most recently created** one must be **published** and must not require data variables. Create one in Loops under **Transactional**, publish it, and keep it the newest. Mail to `@example.com` is accepted by Loops but never delivered."
+        }
+    }
+}
