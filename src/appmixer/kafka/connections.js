@@ -1,7 +1,6 @@
 'use strict';
 
 const { Kafka, logLevel, CompressionTypes, CompressionCodecs } = require('kafkajs');
-const tmp = require('tmp');
 const RegexParser = require('regex-parser');
 const SnappyCodec = require('kafkajs-snappy');
 CompressionCodecs[CompressionTypes.Snappy] = SnappyCodec;
@@ -20,8 +19,6 @@ if (process.KAFKA_CONNECTOR_OPEN_CONNECTIONS) {
 
 const initClient = async (context, auth, connectionId) => {
 
-    let tmpDir;
-    let tmpFile;
     const {
         clientId,
         brokers,
@@ -81,47 +78,19 @@ const initClient = async (context, auth, connectionId) => {
             rejectUnauthorized: sslRejectUnauthorized === 'true'
         };
     }
+    // kafkajs passes `ssl` to Node's tls.connect(), which accepts PEM strings for `ca`, `key` and `cert`.
+    // No temp files are needed.
     if (auth.tlsCA) {
-        try {
-            tmpDir = tmp.dirSync();
-            tmpFile = `${tmpDir.name}/ca.pem`;
-            fs.writeFileSync(tmpFile, auth.tlsCA);
-            config.ssl.ca = [auth.tlsCA];
-        } catch (err) {
-            if (connectionId) {
-                await context.service.stateUnset(connectionId);
-            }
-            throw new Error(`Failed to create CA certificate: ${err.message}`);
-        }
+        config.ssl.ca = [auth.tlsCA];
     }
     if (auth.tlsKey) {
-        try {
-            tmpDir = tmp.dirSync();
-            tmpFile = `${tmpDir.name}/key.pem`;
-            fs.writeFileSync(tmpFile, auth.tlsKey);
-            config.ssl.key = fs.readFileSync(tmpFile, 'utf-8');
-        } catch (err) {
-            if (connectionId) {
-                await context.service.stateUnset(connectionId);
-            }
-            throw new Error(`Failed to create Access Key: ${err.message}`);
-        }
+        config.ssl.key = auth.tlsKey;
     }
     if (auth.tlsPassphrase) {
         config.ssl.passphrase = auth.tlsPassphrase;
     }
     if (auth.tlsCert) {
-        try {
-            tmpDir = tmp.dirSync();
-            tmpFile = `${tmpDir.name}/cert.pem`;
-            fs.writeFileSync(tmpFile, auth.tlsCert);
-            config.ssl.cert = fs.readFileSync(tmpFile, 'utf-8');
-        } catch (err) {
-            if (connectionId) {
-                await context.service.stateUnset(connectionId);
-            }
-            throw new Error(`Failed to create Access Certificate: ${err.message}`);
-        }
+        config.ssl.cert = auth.tlsCert;
     }
     // If any SASL options are provided, ignore the SSL certificate options. Keep `rejectUnauthorized` if provided.
     if (saslMechanism) {
