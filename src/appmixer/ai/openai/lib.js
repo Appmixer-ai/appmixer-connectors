@@ -4,8 +4,7 @@ module.exports = {
 
     request: async function(context, method, endpoint, data, options = {}, extraHeaders = {}) {
 
-        const baseUrl = context.config.llmBaseUrl || 'https://api.openai.com/v1';
-        const url = baseUrl + endpoint;
+        const url = module.exports.baseUrl(context) + endpoint;
         const headers = {
             'Authorization': `Bearer ${context.apiKey || context.auth.apiKey}`,
             'Content-Type': 'application/json',
@@ -27,6 +26,12 @@ module.exports = {
         }
     },
 
+    // The configured base URL without a trailing slash, so that endpoints ('/models') append cleanly.
+    baseUrl: function(context) {
+
+        return (context.config.llmBaseUrl || 'https://api.openai.com/v1').replace(/\/+$/, '');
+    },
+
     sdk: function(context) {
 
         const apiKey = context.apiKey || context.auth.apiKey;
@@ -34,7 +39,8 @@ module.exports = {
         if (context.config.llmBaseUrl) {
             // Allow for re-using the OpenAI connector with different OpenAI compatible LLMs.
             // For example, for OpenRouter, set 'https://openrouter.ai/api/v1'.
-            opt.baseUrl = context.config.llmBaseUrl;
+            // The SDK option is 'baseURL'; any other spelling is silently ignored.
+            opt.baseURL = module.exports.baseUrl(context);
         }
         if (context.config.llmDefaultHeaders) {
             // For example, for OpenRouter, set:
