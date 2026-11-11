@@ -1,11 +1,17 @@
 'use strict';
 
+const crypto = require('crypto');
 const baseX = require('base-x').default;
 const BASE62_ALPHABET = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
 const base62 = baseX(BASE62_ALPHABET);
-const { CallbackError, resolveCallerWebhook } = require('./callerWebhook');
+const { CallbackError, resolveCallerWebhook, verifyCallerWebhook } = require('./callerWebhook');
+
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 module.exports = (context) => {
+
+    const config = require('./config')(context);
+    const CallModel = require('./CallModel')(context);
 
     // Input definition (OnFlowCall).
 
@@ -95,18 +101,31 @@ module.exports = (context) => {
                     payload
                 } = req.payload;
 
-                // Generate a correlationId to be able to track the message and be able
-                // to call back the CallFlow component later in the callback (i.e. when FlowCallOutput is done).
-                // Note that we use base62 since base64 is not URL safe. The base62 encoded string contains
-                // the webhook URL of the callee.
-                const correlationId = base62.encode(Buffer.from(callerWebhookUrl));
-
-                await context.triggerComponent(
+                // The correlationId lets FlowCallOutput call back this CallFlow component (see /callback).
+                // It is a UUID: the engine keeps it on every message of the called flow and AMQP limits
+                // a correlationId to 255 characters. The caller's webhook URL stays on the server.
+                const correlationId = crypto.randomUUID();
+                const now = new Date();
+                await new CallModel().populate({
+                    id: correlationId,
+                    callerWebhookUrl,
                     calleeFlowId,
                     calleeComponentId,
-                    payload,
-                    { enqueueOnly: 'true', correlationId }
-                );
+                    createdAt: now,
+                    expiresAt: new Date(now.getTime() + config.callTTL * 1000)
+                }).save();
+
+                try {
+                    await context.triggerComponent(
+                        calleeFlowId,
+                        calleeComponentId,
+                        payload,
+                        { enqueueOnly: 'true', correlationId }
+                    );
+                } catch (err) {
+                    await CallModel.deleteMany({ id: correlationId });
+                    throw err;
+                }
 
                 return {
                     correlationId
@@ -116,9 +135,10 @@ module.exports = (context) => {
     });
 
     // Send flow output back to the caller. This is called by FlowCallOutput (context.callAppmixer
-    // sends the user token), so the route is not public. The correlation ID is the base62 encoded
-    // webhook URL of the CallFlow component; the engine POSTs to it, so it is accepted only when it
-    // is the webhook of a CallFlow component of this instance in a flow owned by the caller.
+    // sends the user token), so the route is not public. The correlation ID is a UUID mapped to the
+    // webhook URL of the CallFlow component by /trigger (or, from subflows <= 1.2.x, the base62 encoded
+    // URL itself). The engine POSTs to that URL, so it is accepted only when it is the webhook of a
+    // CallFlow component of this instance in a flow owned by the caller.
 
     context.http.router.register({
         method: 'POST',
@@ -133,7 +153,19 @@ module.exports = (context) => {
 
                 let callerWebhookUrl;
                 try {
-                    callerWebhookUrl = await resolveCallerWebhook(context, req, correlationId, base62.decode);
+                    if (typeof correlationId === 'string' && UUID_REGEX.test(correlationId)) {
+                        // The caller is looked up on the server, never taken from the request. It is
+                        // verified like a legacy one: /trigger is reachable without a token, so the stored
+                        // URL is not trusted either.
+                        const call = await CallModel.findOne({ id: correlationId });
+                        if (!call || !call.expiresAt || new Date(call.expiresAt) <= new Date()) {
+                            throw new CallbackError('Unknown or expired correlationId.', 404);
+                        }
+                        callerWebhookUrl = await verifyCallerWebhook(context, req, call.callerWebhookUrl);
+                    } else {
+                        // Legacy base62 correlation ID of a call started before the upgrade.
+                        callerWebhookUrl = await resolveCallerWebhook(context, req, correlationId, base62.decode);
+                    }
                 } catch (err) {
                     if (err instanceof CallbackError) {
                         context.log('error', `[UTILS.SUBFLOWS] Callback rejected: ${err.message}`);
@@ -142,6 +174,7 @@ module.exports = (context) => {
                     throw err;
                 }
 
+                // The record is kept until it expires: a called flow may reach FlowCallOutput more than once.
                 await context.httpRequest({
                     method: 'POST',
                     url: callerWebhookUrl,

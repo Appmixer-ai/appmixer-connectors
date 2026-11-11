@@ -21,13 +21,23 @@ function createContext({ flow, userId = 'user-1', appmixerApiUrl = API_URL } = {
         userId: 'user-1',
         flow: { 'call-1': { type: 'appmixer.utils.subflows.CallFlow' } }
     } : flow);
+    // In-memory stand-in for context.db.Model (CallModel, the correlationId -> caller URL records).
+    const calls = new Map();
+    class Model {
+        static createSettersAndGetters() {}
+        populate(data) { Object.assign(this, data); return this; }
+        async save() { calls.set(this.id, { ...this }); return this; }
+        static async findOne(query) { const r = calls.get(query.id); return r ? Object.assign(new this(), r) : null; }
+        static async deleteMany(query) { calls.delete(query.id); }
+    }
     const context = {
         appmixerApiUrl,
+        config: {},
         log: sinon.stub(),
         httpRequest: sinon.stub().resolves({ data: {} }),
         triggerComponent: sinon.stub().resolves(),
         service: { stateSet: sinon.stub(), stateGet: sinon.stub() },
-        db: { coreCollection: sinon.stub().returns({ findOne }) },
+        db: { coreCollection: sinon.stub().returns({ findOne }), Model },
         http: {
             auth: { getUser: sinon.stub().resolves({ getId: () => userId }) },
             router: { register: route => { routes[`${route.method} ${route.path}`] = route; } }

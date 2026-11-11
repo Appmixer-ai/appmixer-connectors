@@ -79,21 +79,14 @@ function parseCallerWebhookUrl(context, callerWebhookUrl) {
 }
 
 /**
- * Resolve the correlation ID of a subflow call to the webhook URL of the calling CallFlow
- * component. Throws CallbackError when the target is not a CallFlow component of a flow
- * owned by the authenticated user.
+ * Check that a caller webhook URL is the webhook of a CallFlow component of this instance in a
+ * flow owned by the authenticated user, and return it rebuilt from the instance base URL.
+ * Throws CallbackError otherwise.
  */
-async function resolveCallerWebhook(context, req, correlationId, decode) {
+async function verifyCallerWebhook(context, req, callerWebhookUrl) {
 
-    if (!correlationId || typeof correlationId !== 'string') {
-        throw new CallbackError('Missing correlationId.', 400);
-    }
-
-    let callerWebhookUrl;
-    try {
-        callerWebhookUrl = Buffer.from(decode(correlationId)).toString('utf8');
-    } catch (err) {
-        throw new CallbackError('Invalid correlationId.', 400);
+    if (!callerWebhookUrl || typeof callerWebhookUrl !== 'string') {
+        throw new CallbackError('Invalid caller webhook URL.', 400);
     }
 
     const target = parseCallerWebhookUrl(context, callerWebhookUrl);
@@ -122,9 +115,31 @@ async function resolveCallerWebhook(context, req, correlationId, decode) {
     return target.url;
 }
 
+/**
+ * Resolve a legacy correlation ID (subflows <= 1.2.x: the base62 encoded webhook URL of the
+ * calling CallFlow component) and verify it like any other caller webhook URL.
+ * @deprecated Remove once no call triggered by subflows <= 1.2.x can still be running.
+ */
+async function resolveCallerWebhook(context, req, correlationId, decode) {
+
+    if (!correlationId || typeof correlationId !== 'string') {
+        throw new CallbackError('Missing correlationId.', 400);
+    }
+
+    let callerWebhookUrl;
+    try {
+        callerWebhookUrl = Buffer.from(decode(correlationId)).toString('utf8');
+    } catch (err) {
+        throw new CallbackError('Invalid correlationId.', 400);
+    }
+
+    return verifyCallerWebhook(context, req, callerWebhookUrl);
+}
+
 module.exports = {
     CALL_FLOW_TYPE,
     CallbackError,
     parseCallerWebhookUrl,
+    verifyCallerWebhook,
     resolveCallerWebhook
 };
