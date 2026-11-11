@@ -126,8 +126,8 @@
                                 },
                                 "lambda": {
                                     "model": "mistral-small-latest",
-                                    "instructions": "You are a test agent. Look the weather up with the Weather tool, once per city the user asks about, and answer with exactly the texts the tool returned. Remember anything the user asks you to remember.",
-                                    "prompt": "What is the weather in Prague and in Brno? Also remember the code word ALBATROSS-42; do not repeat it now.",
+                                    "instructions": "You are a test agent. Look the weather up with the Weather tool, once per city the user asks about, and the air quality with the Air quality tool. Answer with exactly the texts the tools returned. Remember anything the user asks you to remember.",
+                                    "prompt": "What is the weather in Prague and in Brno, and what is the air quality? Also remember the code word ALBATROSS-42; do not repeat it now.",
                                     "threadId": "mistral-e2e-toolstart-memory",
                                     "storeId": "{{{4bf4b7b0-5d92-465a-98a2-56fcca7fe0d3}}}"
                                 }
@@ -433,6 +433,10 @@
                                         "21a1b42a-ff6b-4a11-bc4d-133ec58a7a5e": {
                                             "variable": "$.658f3e29-6c32-4c01-b18b-11a02a5348ec.out.usage.total_tokens",
                                             "functions": []
+                                        },
+                                        "b7c8d9e0-0002-4b22-8b22-b7c8d9e0f1a2": {
+                                            "variable": "$.658f3e29-6c32-4c01-b18b-11a02a5348ec.out.answer",
+                                            "functions": []
                                         }
                                     }
                                 },
@@ -448,6 +452,11 @@
                                                 "field": "{{{76328e8a-3dda-496f-afc9-c1b2cd6d33b5}}}",
                                                 "assertion": "regex",
                                                 "regex": "[Rr]ainy"
+                                            },
+                                            {
+                                                "field": "{{{b7c8d9e0-0002-4b22-8b22-b7c8d9e0f1a2}}}",
+                                                "assertion": "regex",
+                                                "regex": "AIR-QUALITY-GOOD-7781"
                                             },
                                             {
                                                 "field": "{{{21a1b42a-ff6b-4a11-bc4d-133ec58a7a5e}}}",
@@ -674,6 +683,40 @@
                 "autoRetry": false,
                 "onError": "stopFlow"
             }
+        },
+        "a1b2c3d4-0001-4a11-8a11-a1b2c3d4e5f6": {
+            "config": {
+                "transform": {
+                    "in": {
+                        "658f3e29-6c32-4c01-b18b-11a02a5348ec": {
+                            "tools": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "value": {}
+                                },
+                                "lambda": {
+                                    "value": "AIR-QUALITY-GOOD-7781"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "label": "Air quality",
+            "source": {
+                "in": {
+                    "658f3e29-6c32-4c01-b18b-11a02a5348ec": [
+                        "tools"
+                    ]
+                }
+            },
+            "type": "appmixer.utils.controls.MockValue",
+            "x": 688,
+            "y": 128
         }
     }
 }

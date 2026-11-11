@@ -14,6 +14,25 @@ describe('ai/openai lib', () => {
         });
     });
 
+    describe('sdk', () => {
+        it('points the SDK client at config.llmBaseUrl', () => {
+            const client = lib.sdk({ auth: { apiKey: 'k' }, config: { llmBaseUrl: 'https://res.openai.azure.com/openai/v1/' } });
+            assert.strictEqual(client.baseURL, 'https://res.openai.azure.com/openai/v1');
+        });
+
+        it('defaults to the OpenAI API', () => {
+            const client = lib.sdk({ auth: { apiKey: 'k' }, config: {} });
+            assert.strictEqual(client.baseURL, 'https://api.openai.com/v1');
+        });
+    });
+
+    describe('baseUrl', () => {
+        it('drops a trailing slash so that endpoints append cleanly', () => {
+            assert.strictEqual(lib.baseUrl({ config: { llmBaseUrl: 'https://res.openai.azure.com/openai/v1/' } }) + '/models',
+                'https://res.openai.azure.com/openai/v1/models');
+        });
+    });
+
     describe('request', () => {
         it('uses GET method and calls context.httpRequest.get', async () => {
             const calls = [];

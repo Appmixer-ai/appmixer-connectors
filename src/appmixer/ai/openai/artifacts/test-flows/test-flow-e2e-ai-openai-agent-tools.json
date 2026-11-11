@@ -13,7 +13,7 @@
         "0a5e1002-2222-4222-8222-222222222202": {
             "config": {
                 "properties": {
-                    "instructions": "You are a test agent. When asked about the service status, first call the status tool. Then look the secret code up with the secret code tool. Answer with the secret code followed by the word DONE and nothing else.",
+                    "instructions": "You are a test agent. When asked about the service status, first call the Service status tool. Then look the secret code up with the Secret code tool. Answer with the service status, then the secret code, then the word DONE and nothing else.",
                     "model": "gpt-4o-mini"
                 },
                 "transform": {
@@ -49,33 +49,16 @@
         },
         "0a5e1003-3333-4333-8333-333333333303": {
             "config": {
-                "properties": {
-                    "description": "Returns the current status of the test service."
-                }
-            },
-            "errorHandling": {
-                "autoRetry": false,
-                "onError": "stopFlow"
-            },
-            "source": {
-                "in": {
-                    "0a5e1002-2222-4222-8222-222222222202": [
-                        "tools"
-                    ]
-                }
-            },
-            "type": "appmixer.ai.agenttools.ToolStart",
-            "x": 400,
-            "y": 192
-        },
-        "0a5e1004-4444-4444-8444-444444444404": {
-            "config": {
                 "transform": {
                     "in": {
-                        "0a5e1003-3333-4333-8333-333333333303": {
-                            "out": {
-                                "lambda": {},
-                                "modifiers": {},
+                        "0a5e1002-2222-4222-8222-222222222202": {
+                            "tools": {
+                                "lambda": {
+                                    "value": "STATUS-GREEN-5512"
+                                },
+                                "modifiers": {
+                                    "value": {}
+                                },
                                 "type": "json2new"
                             }
                         }
@@ -86,15 +69,16 @@
                 "autoRetry": false,
                 "onError": "stopFlow"
             },
+            "label": "Service status",
             "source": {
                 "in": {
-                    "0a5e1003-3333-4333-8333-333333333303": [
-                        "out"
+                    "0a5e1002-2222-4222-8222-222222222202": [
+                        "tools"
                     ]
                 }
             },
-            "type": "appmixer.ai.agenttools.ToolOutput",
-            "x": 592,
+            "type": "appmixer.utils.controls.MockValue",
+            "x": 400,
             "y": 192
         },
         "0a5e1005-5555-4555-8555-555555555505": {
@@ -106,6 +90,11 @@
                                 "lambda": {
                                     "expression": {
                                         "AND": [
+                                            {
+                                                "assertion": "regex",
+                                                "field": "{{{a1000000-aaaa-4aaa-8aaa-a000000000a1}}}",
+                                                "regex": "STATUS-GREEN-5512"
+                                            },
                                             {
                                                 "assertion": "regex",
                                                 "field": "{{{a1000000-aaaa-4aaa-8aaa-a000000000a1}}}",
