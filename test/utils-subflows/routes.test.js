@@ -16,7 +16,7 @@ const CALLER_URL = `${API_URL}/flows/${FLOW_ID}/components/${COMPONENT_ID}` +
     '?correlationId=0f8e7d6c-5b4a-4392-8170-6f5e4d3c2b1a&correlationInPort=in' +
     '&messageId=1a2b3c4d-5e6f-4a8b-9c0d-1e2f3a4b5c6d&enqueueOnly=true';
 
-function createPluginContext(config = {}) {
+function createPluginContext(config = {}, { userId = 'user-1', appmixerApiUrl = API_URL } = {}) {
 
     const store = new Map();
 
@@ -44,10 +44,22 @@ function createPluginContext(config = {}) {
     const handlers = {};
     const context = {
         config,
-        appmixerApiUrl: API_URL,
-        db: { Model },
+        appmixerApiUrl,
+        log: () => {},
+        db: {
+            Model,
+            // The caller flow: FLOW_ID owned by user-1, COMPONENT_ID is a CallFlow.
+            coreCollection: () => ({
+                findOne: async ({ flowId }) => flowId === FLOW_ID ? {
+                    flowId: FLOW_ID,
+                    userId: 'user-1',
+                    flow: { [COMPONENT_ID]: { type: 'appmixer.utils.subflows.CallFlow' } }
+                } : null
+            })
+        },
         service: {},
         http: {
+            auth: { getUser: async () => ({ getId: () => userId }) },
             router: {
                 register: ({ method, path, options }) => {
                     handlers[`${method} ${path}`] = options.handler;
@@ -195,16 +207,45 @@ describe('utils.subflows routes', function() {
         ];
         for (const url of urls) {
             const response = await callback(base62.encode(Buffer.from(url)));
-            assert.strictEqual(response.statusCode, 404, url);
+            assert.ok([400, 404].includes(response.statusCode), `${url}: ${response.statusCode}`);
         }
         // Not base62 at all.
-        assert.strictEqual((await callback('not base62!')).statusCode, 404);
+        assert.strictEqual((await callback('not base62!')).statusCode, 400);
         assert.strictEqual(context.requests.length, 0);
     });
 
-    it('legacy correlationId is rejected when the tenant API URL is unknown', function() {
+    it('/callback rejects a legacy correlationId when the tenant API URL is unknown', async function() {
 
-        assert.strictEqual(routes.resolveLegacyCallerUrl(base62.encode(Buffer.from(CALLER_URL)), undefined), null);
-        assert.strictEqual(routes.resolveLegacyCallerUrl(base62.encode(Buffer.from(CALLER_URL)), API_URL), CALLER_URL);
+        const unknown = createPluginContext({}, { appmixerApiUrl: null });
+        const response = await unknown.handlers['POST /callback']({
+            payload: { correlationId: base62.encode(Buffer.from(CALLER_URL)), payload: [] }
+        }, h);
+        assert.strictEqual(response.statusCode, 500);
+        assert.strictEqual(unknown.context.requests.length, 0);
+    });
+
+    it('/callback does not trust a caller URL stored through /trigger (the route is public)', async function() {
+
+        const { correlationId } = await handlers['POST /trigger/{calleeFlowId}/{calleeComponentId}']({
+            params: { calleeFlowId: 'callee-flow', calleeComponentId: 'callee-component' },
+            payload: { callerWebhookUrl: 'http://169.254.169.254/latest/meta-data/', payload: {} }
+        });
+        const response = await callback(correlationId);
+        assert.strictEqual(response.statusCode, 400);
+        assert.strictEqual(context.requests.length, 0);
+    });
+
+    it('/callback rejects a UUID correlationId whose caller flow belongs to another user', async function() {
+
+        const other = createPluginContext({}, { userId: 'user-2' });
+        const { correlationId } = await other.handlers['POST /trigger/{calleeFlowId}/{calleeComponentId}']({
+            params: { calleeFlowId: 'callee-flow', calleeComponentId: 'callee-component' },
+            payload: { callerWebhookUrl: CALLER_URL, payload: {} }
+        });
+        const response = await other.handlers['POST /callback']({
+            payload: { correlationId, payload: [] }
+        }, h);
+        assert.strictEqual(response.statusCode, 403);
+        assert.strictEqual(other.context.requests.length, 0);
     });
 });

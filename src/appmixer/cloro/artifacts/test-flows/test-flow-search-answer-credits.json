@@ -1,0 +1,462 @@
+{
+    "name": "E2E cloro - Search, AI Answer and Credits",
+    "flow": {
+        "f8fb755e-9213-4151-9e2e-c2991c40df6d": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 320,
+            "source": {},
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "9553687e-d755-4316-a560-0d5201e97fed": {
+            "type": "appmixer.utils.controls.SetVariable",
+            "x": 272,
+            "y": 320,
+            "source": {
+                "in": {
+                    "f8fb755e-9213-4151-9e2e-c2991c40df6d": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "f8fb755e-9213-4151-9e2e-c2991c40df6d": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "variables": {}
+                                },
+                                "lambda": {
+                                    "variables": {
+                                        "ADD": [
+                                            {
+                                                "type": "text",
+                                                "name": "creditsPath",
+                                                "text": "/v1/credits"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "3f161c0a-1032-420a-bb12-e60fa1ccc303": {
+            "type": "appmixer.cloro.core.GetCredits",
+            "x": 480,
+            "y": 320,
+            "source": {
+                "in": {
+                    "9553687e-d755-4316-a560-0d5201e97fed": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "9553687e-d755-4316-a560-0d5201e97fed": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {},
+                                "lambda": {}
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "c2975bbd-0f58-4205-bcda-b665afbeed8b": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 688,
+            "y": 320,
+            "source": {
+                "in": {
+                    "3f161c0a-1032-420a-bb12-e60fa1ccc303": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "3f161c0a-1032-420a-bb12-e60fa1ccc303": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "a1b2c3d4-0001-4000-8000-000000000001": {
+                                            "variable": "$.3f161c0a-1032-420a-bb12-e60fa1ccc303.out.remaining",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{a1b2c3d4-0001-4000-8000-000000000001}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "d0a65019-21b5-42c4-a617-5c061b0c2a89": {
+            "type": "appmixer.cloro.core.FindGoogleResults",
+            "x": 688,
+            "y": 448,
+            "source": {
+                "in": {
+                    "9553687e-d755-4316-a560-0d5201e97fed": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "9553687e-d755-4316-a560-0d5201e97fed": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "query": {},
+                                    "country": {},
+                                    "outputType": {}
+                                },
+                                "lambda": {
+                                    "query": "search engine results page",
+                                    "country": "US",
+                                    "outputType": "first"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "bb0e092f-1949-4cce-9cbd-6b21d272439d": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 896,
+            "y": 448,
+            "source": {
+                "in": {
+                    "d0a65019-21b5-42c4-a617-5c061b0c2a89": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "d0a65019-21b5-42c4-a617-5c061b0c2a89": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "a1b2c3d4-0002-4000-8000-000000000002": {
+                                            "variable": "$.d0a65019-21b5-42c4-a617-5c061b0c2a89.out.link",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{a1b2c3d4-0002-4000-8000-000000000002}}}",
+                                                "assertion": "regex",
+                                                "regex": "^https?://"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "f36bba16-b560-44fd-a573-abf947e40bac": {
+            "type": "appmixer.cloro.core.GetAIAnswer",
+            "x": 896,
+            "y": 576,
+            "source": {
+                "in": {
+                    "d0a65019-21b5-42c4-a617-5c061b0c2a89": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "d0a65019-21b5-42c4-a617-5c061b0c2a89": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "engine": {},
+                                    "prompt": {},
+                                    "country": {}
+                                },
+                                "lambda": {
+                                    "engine": "aimode",
+                                    "prompt": "What is the capital city of Portugal?",
+                                    "country": "US"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "4d321387-0ca6-4bf0-a428-530d03d93ff0": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1104,
+            "y": 576,
+            "source": {
+                "in": {
+                    "f36bba16-b560-44fd-a573-abf947e40bac": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "f36bba16-b560-44fd-a573-abf947e40bac": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "a1b2c3d4-0003-4000-8000-000000000003": {
+                                            "variable": "$.f36bba16-b560-44fd-a573-abf947e40bac.out.text",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{a1b2c3d4-0003-4000-8000-000000000003}}}",
+                                                "assertion": "regex",
+                                                "regex": "Lisbon"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "bad013fb-4adf-4e72-b3a2-a5108a6e2161": {
+            "type": "appmixer.cloro.core.MakeApiCall",
+            "x": 1104,
+            "y": 704,
+            "source": {
+                "in": {
+                    "9553687e-d755-4316-a560-0d5201e97fed": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "9553687e-d755-4316-a560-0d5201e97fed": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "url": {},
+                                    "method": {}
+                                },
+                                "lambda": {
+                                    "url": "/v1/credits",
+                                    "method": "GET"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "db000542-1bb0-4ffd-8388-ad935a66db64": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1312,
+            "y": 704,
+            "source": {
+                "in": {
+                    "bad013fb-4adf-4e72-b3a2-a5108a6e2161": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "bad013fb-4adf-4e72-b3a2-a5108a6e2161": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "a1b2c3d4-0004-4000-8000-000000000004": {
+                                            "variable": "$.bad013fb-4adf-4e72-b3a2-a5108a6e2161.out.statusCode",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{a1b2c3d4-0004-4000-8000-000000000004}}}",
+                                                "assertion": "equal",
+                                                "expected": "200"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "74ea7730-039b-4495-8a24-d4d63fdb95a1": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 1520,
+            "y": 704,
+            "source": {
+                "in": {
+                    "c2975bbd-0f58-4205-bcda-b665afbeed8b": [
+                        "out"
+                    ],
+                    "bb0e092f-1949-4cce-9cbd-6b21d272439d": [
+                        "out"
+                    ],
+                    "4d321387-0ca6-4bf0-a428-530d03d93ff0": [
+                        "out"
+                    ],
+                    "db000542-1bb0-4ffd-8388-ad935a66db64": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "properties": {
+                    "timeout": 180
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "efb98879-b795-4740-90f9-5cdd8791d436": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1728,
+            "y": 704,
+            "source": {
+                "in": {
+                    "74ea7730-039b-4495-8a24-d4d63fdb95a1": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.1",
+            "config": {
+                "properties": {},
+                "transform": {
+                    "in": {
+                        "74ea7730-039b-4495-8a24-d4d63fdb95a1": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "a1b2c3d4-0005-4000-8000-000000000005": {
+                                            "variable": "$.74ea7730-039b-4495-8a24-d4d63fdb95a1.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E cloro - Search, AI Answer and Credits",
+                                    "result": "{{{a1b2c3d4-0005-4000-8000-000000000005}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        }
+    }
+}
