@@ -1,0 +1,204 @@
+{
+    "name": "E2E SearXNG MCP - List and Call Tool",
+    "description": "Spawns the bundled server.js: ListTools returns both tools, web_url_read reads example.com and refuses the cloud metadata address 169.254.169.254 (SSRF guard). SEARXNG_URL of the account can be any public URL, web_url_read does not use it.",
+    "flow": {
+        "d891eb5d-ab2a-4977-8cce-35a160611880": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64, "y": 16, "source": {}, "version": "1.0.0", "config": {},
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "1b678d92-28e9-468d-9a7a-03529bf06d1b": {
+            "type": "appmixer.mcpservers.mcp_searxng.ListTools",
+            "x": 272, "y": 16, "version": "1.0.0",
+            "source": { "in": { "d891eb5d-ab2a-4977-8cce-35a160611880": ["out"] } },
+            "config": {
+                "transform": { "in": { "d891eb5d-ab2a-4977-8cce-35a160611880": { "out": { "type": "json2new", "modifiers": {}, "lambda": {} } } } }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "784744ad-56eb-471a-8851-25e9035e2ece": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 480, "y": 16, "version": "1.0.0",
+            "source": { "in": { "1b678d92-28e9-468d-9a7a-03529bf06d1b": ["out"] } },
+            "config": {
+                "transform": {
+                    "in": {
+                        "1b678d92-28e9-468d-9a7a-03529bf06d1b": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "90140874-61b6-45ac-87fe-2b82b7c5ffd1": {
+                                            "variable": "$.1b678d92-28e9-468d-9a7a-03529bf06d1b.out.tools",
+                                            "functions": [{ "name": "g_length" }]
+                                        },
+                                        "42dca63a-508f-4550-bc6e-2f515babeefb": {
+                                            "variable": "$.1b678d92-28e9-468d-9a7a-03529bf06d1b.out.tools",
+                                            "functions": [{ "name": "g_jsonPath", "params": [{ "value": "$[0].name" }] }]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            { "field": "{{{90140874-61b6-45ac-87fe-2b82b7c5ffd1}}}", "assertion": "equal", "expected": "2" },
+                                            { "field": "{{{42dca63a-508f-4550-bc6e-2f515babeefb}}}", "assertion": "equal", "expected": "searxng_web_search" }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "de044630-958c-4f79-8b11-170f9d67582d": {
+            "type": "appmixer.mcpservers.mcp_searxng.CallTool",
+            "x": 688, "y": 144, "version": "1.0.0",
+            "source": { "in": { "784744ad-56eb-471a-8851-25e9035e2ece": ["out"] } },
+            "config": {
+                "properties": { "tool": "web_url_read" },
+                "transform": {
+                    "in": {
+                        "784744ad-56eb-471a-8851-25e9035e2ece": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": { "url": {} },
+                                "lambda": { "url": "https://example.com" }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "7fb9d904-6a1a-4155-b49d-f51a42fb9934": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 896, "y": 144, "version": "1.0.0",
+            "source": { "in": { "de044630-958c-4f79-8b11-170f9d67582d": ["out"] } },
+            "config": {
+                "transform": {
+                    "in": {
+                        "de044630-958c-4f79-8b11-170f9d67582d": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "d148549d-f4f6-4c7f-bf57-cc632e968576": {
+                                            "variable": "$.de044630-958c-4f79-8b11-170f9d67582d.out.output",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            { "field": "{{{d148549d-f4f6-4c7f-bf57-cc632e968576}}}", "assertion": "regex", "regex": "documentation examples" }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "4c3e7fd4-7df3-4573-9bfa-2c8479e2dd48": {
+            "type": "appmixer.mcpservers.mcp_searxng.CallTool",
+            "x": 1104, "y": 272, "version": "1.0.0",
+            "source": { "in": { "7fb9d904-6a1a-4155-b49d-f51a42fb9934": ["out"] } },
+            "config": {
+                "properties": { "tool": "web_url_read" },
+                "transform": {
+                    "in": {
+                        "7fb9d904-6a1a-4155-b49d-f51a42fb9934": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": { "url": {} },
+                                "lambda": { "url": "http://169.254.169.254/" }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "c573efb0-f03c-41b2-8d83-672281bd1d2c": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1312, "y": 272, "version": "1.0.0",
+            "source": { "in": { "4c3e7fd4-7df3-4573-9bfa-2c8479e2dd48": ["out"] } },
+            "config": {
+                "transform": {
+                    "in": {
+                        "4c3e7fd4-7df3-4573-9bfa-2c8479e2dd48": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "ac618888-0a96-4c1b-8e9f-05e598046440": {
+                                            "variable": "$.4c3e7fd4-7df3-4573-9bfa-2c8479e2dd48.out.output",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            { "field": "{{{ac618888-0a96-4c1b-8e9f-05e598046440}}}", "assertion": "regex", "regex": "^Error: Refusing to fetch 169\\.254\\.169\\.254" }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "504ffc92-7f3c-4597-91ff-dbd156d75fef": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 1520, "y": 272, "version": "1.0.0",
+            "source": {
+                "in": {
+                    "784744ad-56eb-471a-8851-25e9035e2ece": ["out"],
+                    "7fb9d904-6a1a-4155-b49d-f51a42fb9934": ["out"],
+                    "c573efb0-f03c-41b2-8d83-672281bd1d2c": ["out"]
+                }
+            },
+            "config": { "properties": { "timeout": 180 } },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "9a39927c-0b7b-4dc0-a6d7-2304ab7e7648": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1728, "y": 272, "version": "1.0.0",
+            "source": { "in": { "504ffc92-7f3c-4597-91ff-dbd156d75fef": ["out"] } },
+            "config": {
+                "properties": { "successStoreId": "64f6f1f9193228000754082f", "failedStoreId": "64f6f1f0193228000754082e" },
+                "transform": {
+                    "in": {
+                        "504ffc92-7f3c-4597-91ff-dbd156d75fef": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "c7e8f177-3e27-4711-aeb5-b3d27d076a1f": { "variable": "$.504ffc92-7f3c-4597-91ff-dbd156d75fef.out", "functions": [] }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E SearXNG MCP - List and Call Tool",
+                                    "result": "{{{c7e8f177-3e27-4711-aeb5-b3d27d076a1f}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        }
+    }
+}

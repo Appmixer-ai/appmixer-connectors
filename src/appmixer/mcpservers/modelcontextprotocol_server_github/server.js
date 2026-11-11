@@ -19,9 +19,9 @@ const {
     isGitHubError,
     SchemaValidationError,
     parse
-} = require('./server/common');
-const schemas = require('./server/schemas');
-const ops = require('./server/operations');
+} = require('./server-common');
+const schemas = require('./server-schemas');
+const ops = require('./server-operations');
 
 const server = new Server(
     { name: 'github-mcp-server', version: VERSION },

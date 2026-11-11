@@ -1,0 +1,146 @@
+{
+    "name": "E2E Google Maps MCP - List and Call Tool",
+    "description": "Spawns the bundled server.js: ListTools returns all 7 tools, CallTool maps_geocode resolves Prague.",
+    "flow": {
+        "8cb02a6a-f365-443f-bc59-b1c21365aff4": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64, "y": 16, "source": {}, "version": "1.0.0", "config": {},
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "c1b22a6e-0689-4848-bbc1-15feb2f46eaf": {
+            "type": "appmixer.mcpservers.modelcontextprotocol_server_google_maps.ListTools",
+            "x": 272, "y": 16, "version": "1.0.0",
+            "source": { "in": { "8cb02a6a-f365-443f-bc59-b1c21365aff4": ["out"] } },
+            "config": {
+                "transform": { "in": { "8cb02a6a-f365-443f-bc59-b1c21365aff4": { "out": { "type": "json2new", "modifiers": {}, "lambda": {} } } } }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "6405cf3e-f6f7-45ea-b02e-4d50ef08e2f8": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 480, "y": 16, "version": "1.0.0",
+            "source": { "in": { "c1b22a6e-0689-4848-bbc1-15feb2f46eaf": ["out"] } },
+            "config": {
+                "transform": {
+                    "in": {
+                        "c1b22a6e-0689-4848-bbc1-15feb2f46eaf": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "4a6ee9ca-3a1d-46a1-9639-17eeb4cd0e5e": {
+                                            "variable": "$.c1b22a6e-0689-4848-bbc1-15feb2f46eaf.out.tools",
+                                            "functions": [{ "name": "g_length" }]
+                                        },
+                                        "bea84da3-a58b-4df7-b784-2bf1611f6133": {
+                                            "variable": "$.c1b22a6e-0689-4848-bbc1-15feb2f46eaf.out.tools",
+                                            "functions": [{ "name": "g_jsonPath", "params": [{ "value": "$[0].name" }] }]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            { "field": "{{{4a6ee9ca-3a1d-46a1-9639-17eeb4cd0e5e}}}", "assertion": "equal", "expected": "7" },
+                                            { "field": "{{{bea84da3-a58b-4df7-b784-2bf1611f6133}}}", "assertion": "equal", "expected": "maps_geocode" }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "2d8dea78-3eaf-4338-b94f-1e162a57bf42": {
+            "type": "appmixer.mcpservers.modelcontextprotocol_server_google_maps.CallTool",
+            "x": 688, "y": 144, "version": "1.0.0",
+            "source": { "in": { "6405cf3e-f6f7-45ea-b02e-4d50ef08e2f8": ["out"] } },
+            "config": {
+                "properties": { "tool": "maps_geocode" },
+                "transform": {
+                    "in": {
+                        "6405cf3e-f6f7-45ea-b02e-4d50ef08e2f8": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": { "address": {} },
+                                "lambda": { "address": "Prague" }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "ff716a8a-6f88-40a9-8a21-216e0755021c": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 896, "y": 144, "version": "1.0.0",
+            "source": { "in": { "2d8dea78-3eaf-4338-b94f-1e162a57bf42": ["out"] } },
+            "config": {
+                "transform": {
+                    "in": {
+                        "2d8dea78-3eaf-4338-b94f-1e162a57bf42": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "2ed0a41a-f93b-4c90-81a4-edb820b80dec": {
+                                            "variable": "$.2d8dea78-3eaf-4338-b94f-1e162a57bf42.out.output",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            { "field": "{{{2ed0a41a-f93b-4c90-81a4-edb820b80dec}}}", "assertion": "regex", "regex": "\"formatted_address\": \"Prague, Czechia\"" }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "e65a10e4-04b9-499b-89c6-44f53a8b8ee3": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 1104, "y": 144, "version": "1.0.0",
+            "source": { "in": { "6405cf3e-f6f7-45ea-b02e-4d50ef08e2f8": ["out"], "ff716a8a-6f88-40a9-8a21-216e0755021c": ["out"] } },
+            "config": { "properties": { "timeout": 180 } },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "d659b35d-9b88-438d-9307-6b071e27c8ad": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1312, "y": 144, "version": "1.0.0",
+            "source": { "in": { "e65a10e4-04b9-499b-89c6-44f53a8b8ee3": ["out"] } },
+            "config": {
+                "properties": { "successStoreId": "64f6f1f9193228000754082f", "failedStoreId": "64f6f1f0193228000754082e" },
+                "transform": {
+                    "in": {
+                        "e65a10e4-04b9-499b-89c6-44f53a8b8ee3": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "d0353e1b-ce10-43b9-93a9-31f43d29bde3": { "variable": "$.e65a10e4-04b9-499b-89c6-44f53a8b8ee3.out", "functions": [] }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E Google Maps MCP - List and Call Tool",
+                                    "result": "{{{d0353e1b-ce10-43b9-93a9-31f43d29bde3}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        }
+    }
+}

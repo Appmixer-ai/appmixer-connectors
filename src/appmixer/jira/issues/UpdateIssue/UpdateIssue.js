@@ -76,7 +76,7 @@ function buildIssue(issueInfo) {
 module.exports = {
     async receive(context) {
 
-        const { profileInfo: { apiUrl }, auth } = context;
+        const { profileInfo: { apiUrl } } = context;
         const { project, issueType } = context.properties;
 
         const issue = context.messages.in.content;
@@ -95,7 +95,7 @@ module.exports = {
             try {
                 const { fields } = await commons.get(
                     `${apiUrl}issue/createmeta/${project}/issuetypes/${issueType}`,
-                    auth
+                    context
                 );
                 if (fields) {
                     const fieldMeta = fields.reduce((acc, field) => {
@@ -111,7 +111,7 @@ module.exports = {
 
         if (status) {
             await commons.post(
-                `${apiUrl}issue/${id}/transitions`, auth,
+                `${apiUrl}issue/${id}/transitions`, context,
                 {
                     transition: {
                         id: status
@@ -119,7 +119,7 @@ module.exports = {
                 });
         }
 
-        await commons.put(`${apiUrl}issue/${id}`, auth, buildIssue(issue));
+        await commons.put(`${apiUrl}issue/${id}`, context, buildIssue(issue));
         return context.sendJson({ id }, 'out');
     }
 };

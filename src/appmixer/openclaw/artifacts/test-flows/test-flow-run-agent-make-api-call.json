@@ -1,0 +1,287 @@
+{
+    "name": "E2E OpenClaw - Run Agent and Make API Call",
+    "description": "Make API Call to the echo hook (204 without a callback) and a short Run Agent turn.",
+    "flow": {
+        "f3ba6b8e-6b68-4236-b200-d162343c6498": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {},
+            "config": {},
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "d0d02449-7ced-4148-bcf4-17cc31345361": {
+            "type": "appmixer.openclaw.core.MakeApiCall",
+            "x": 272,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "f3ba6b8e-6b68-4236-b200-d162343c6498": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "f3ba6b8e-6b68-4236-b200-d162343c6498": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "url": {},
+                                    "method": {},
+                                    "body": {},
+                                    "headers": {}
+                                },
+                                "lambda": {
+                                    "url": "/hooks/appmixer-echo",
+                                    "method": "POST",
+                                    "body": "{\"check\": \"no callback\"}",
+                                    "headers": "{\"Idempotency-Key\":\"e2e-openclaw-make-api-call\"}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "9ad0ba17-0e55-4c80-bacc-5034fff8a8e9": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 480,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "d0d02449-7ced-4148-bcf4-17cc31345361": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "d0d02449-7ced-4148-bcf4-17cc31345361": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "fa59fb60-2df0-4d8f-a595-362e9d8757d0": {
+                                            "variable": "$.d0d02449-7ced-4148-bcf4-17cc31345361.out.statusCode",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{fa59fb60-2df0-4d8f-a595-362e9d8757d0}}}",
+                                                "assertion": "equal",
+                                                "expected": "204"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "0041115c-d9ce-4088-8f41-8fbc3b485713": {
+            "type": "appmixer.openclaw.core.RunAgent",
+            "x": 272,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "f3ba6b8e-6b68-4236-b200-d162343c6498": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "f3ba6b8e-6b68-4236-b200-d162343c6498": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "message": {},
+                                    "agentId": {},
+                                    "sessionKey": {},
+                                    "name": {},
+                                    "model": {},
+                                    "timeoutSeconds": {},
+                                    "announce": {}
+                                },
+                                "lambda": {
+                                    "message": "This is an automated connectivity check from Appmixer. Reply with the single word OK and do nothing else.",
+                                    "agentId": "maya",
+                                    "sessionKey": "hook:appmixer-e2e:openclaw-connector-check",
+                                    "name": "Appmixer OpenClaw connector check",
+                                    "model": "anthropic/claude-haiku-4-5-20251001",
+                                    "timeoutSeconds": 60,
+                                    "announce": false
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "7d3dc3ea-d68b-4192-86cc-6946d13340cb": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 480,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "0041115c-d9ce-4088-8f41-8fbc3b485713": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "0041115c-d9ce-4088-8f41-8fbc3b485713": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "cc0b6242-5446-4b84-ad33-66a3e4e32a87": {
+                                            "variable": "$.0041115c-d9ce-4088-8f41-8fbc3b485713.out.runId",
+                                            "functions": []
+                                        },
+                                        "ff203426-3c96-4272-9413-f86ef9ccd320": {
+                                            "variable": "$.0041115c-d9ce-4088-8f41-8fbc3b485713.out.sessionKey",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{cc0b6242-5446-4b84-ad33-66a3e4e32a87}}}",
+                                                "assertion": "notEmpty"
+                                            },
+                                            {
+                                                "field": "{{{ff203426-3c96-4272-9413-f86ef9ccd320}}}",
+                                                "assertion": "equal",
+                                                "expected": "hook:appmixer-e2e:openclaw-connector-check"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "dc021819-2578-4752-9f51-d647d65fa623": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 688,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "9ad0ba17-0e55-4c80-bacc-5034fff8a8e9": [
+                        "out"
+                    ],
+                    "7d3dc3ea-d68b-4192-86cc-6946d13340cb": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 180
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "0a56b25c-253e-4f17-b325-a7278756ac3c": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 896,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "dc021819-2578-4752-9f51-d647d65fa623": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "successStoreId": "64f6f1f9193228000754082f",
+                    "failedStoreId": "64f6f1f0193228000754082e"
+                },
+                "transform": {
+                    "in": {
+                        "dc021819-2578-4752-9f51-d647d65fa623": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "00a10126-eba3-4665-b55a-972e472d7107": {
+                                            "variable": "$.dc021819-2578-4752-9f51-d647d65fa623.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E OpenClaw - Run Agent and Make API Call",
+                                    "result": "{{{00a10126-eba3-4665-b55a-972e472d7107}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        }
+    },
+    "notes": {
+        "715c3a0f-671e-4a51-8eb2-1e94ef7640f4": {
+            "x": 64,
+            "y": 320,
+            "width": 672,
+            "height": 200,
+            "content": "## Gateway assumptions\n\n- Make API Call posts to `/hooks/appmixer-echo` without a callback URL: that hook then starts nothing and the gateway answers **204**.\n- Run Agent starts a real, short turn of agent **maya** on Haiku with no announcement, in the persistent session `hook:appmixer-e2e:openclaw-connector-check` (needs `hooks.allowRequestSessionKey` and the `hook:` prefix allowed): `maya` must be in `hooks.allowedAgentIds` and the Haiku model allowed by the gateway model policy."
+        }
+    }
+}

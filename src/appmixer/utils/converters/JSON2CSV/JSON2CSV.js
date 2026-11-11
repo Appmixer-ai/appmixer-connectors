@@ -8,6 +8,10 @@ module.exports = {
 
         const { fileId } = context.messages.in.content;
 
+        if (!fileId) {
+            throw new context.CancelError('File ID is required!');
+        }
+
         const fileInfo = await context.getFileInfo(fileId);
         const newFileName = path.parse(fileInfo.filename).name + '.csv';
         const savedFile = await converters.jsonToCsv(context, { sourceFileId: fileId, newFileName, jsonPath: '*' });

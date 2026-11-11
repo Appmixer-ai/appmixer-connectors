@@ -1,0 +1,373 @@
+{
+    "name": "appmixer.github.security.OnDependabotAlert",
+    "label": "On Dependabot Alert",
+    "description": "Triggers when Dependabot opens, reopens, fixes or dismisses a vulnerability alert in a repository of an organization (dependabot_alert). The deliveries arrive through the connector's webhook endpoint, which an organization owner points an organization webhook at once (see the connector README).",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "private": false,
+    "auth": {
+        "service": "appmixer:github",
+        "scope": [
+            "repo"
+        ]
+    },
+    "quota": {
+        "manager": "appmixer:github",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "properties": {
+        "schema": {
+            "type": "object",
+            "properties": {
+                "organization": {
+                    "type": "string"
+                },
+                "repository": {
+                    "type": "string"
+                },
+                "events": {
+                    "type": [
+                        "array",
+                        "string"
+                    ]
+                },
+                "severities": {
+                    "type": [
+                        "array",
+                        "string"
+                    ]
+                },
+                "scope": {
+                    "type": "string"
+                }
+            },
+            "required": [
+                "organization"
+            ]
+        },
+        "inspector": {
+            "inputs": {
+                "organization": {
+                    "type": "text",
+                    "group": "config",
+                    "label": "Organization",
+                    "index": 1,
+                    "tooltip": "Login of the organization that owns the repositories. Its organization webhook must point at the connector's events endpoint with the Dependabot alerts event selected (set up once by an organization owner, see the README)."
+                },
+                "repository": {
+                    "type": "text",
+                    "group": "config",
+                    "label": "Repository",
+                    "index": 2,
+                    "tooltip": "Optional. Emit only alerts of this repository, for example 'api-server' or 'acme/api-server'. Leave empty to watch every repository of the organization. Flow Test Mode needs it: the test reads the newest alert of this repository."
+                },
+                "events": {
+                    "type": "multiselect",
+                    "group": "config",
+                    "label": "Actions",
+                    "index": 3,
+                    "defaultValue": [
+                        "created",
+                        "reintroduced",
+                        "reopened",
+                        "auto_reopened"
+                    ],
+                    "options": [
+                        {
+                            "label": "Created",
+                            "value": "created"
+                        },
+                        {
+                            "label": "Reintroduced",
+                            "value": "reintroduced"
+                        },
+                        {
+                            "label": "Reopened",
+                            "value": "reopened"
+                        },
+                        {
+                            "label": "Auto Reopened",
+                            "value": "auto_reopened"
+                        },
+                        {
+                            "label": "Fixed",
+                            "value": "fixed"
+                        },
+                        {
+                            "label": "Dismissed",
+                            "value": "dismissed"
+                        },
+                        {
+                            "label": "Auto Dismissed",
+                            "value": "auto_dismissed"
+                        },
+                        {
+                            "label": "Assignees Changed",
+                            "value": "assignees_changed"
+                        }
+                    ],
+                    "tooltip": "Which dependabot_alert actions to emit. Defaults to the ones that mean an open vulnerability: Created, Reintroduced, Reopened and Auto Reopened."
+                },
+                "severities": {
+                    "type": "multiselect",
+                    "group": "config",
+                    "label": "Severities",
+                    "index": 4,
+                    "options": [
+                        {
+                            "label": "Critical",
+                            "value": "critical"
+                        },
+                        {
+                            "label": "High",
+                            "value": "high"
+                        },
+                        {
+                            "label": "Medium",
+                            "value": "medium"
+                        },
+                        {
+                            "label": "Low",
+                            "value": "low"
+                        }
+                    ],
+                    "tooltip": "Optional. Emit only alerts of these advisory severities. Leave empty for all."
+                },
+                "scope": {
+                    "type": "select",
+                    "group": "config",
+                    "label": "Dependency Scope",
+                    "index": 5,
+                    "defaultValue": "",
+                    "options": [
+                        {
+                            "label": "Any",
+                            "value": ""
+                        },
+                        {
+                            "label": "Runtime",
+                            "value": "runtime"
+                        },
+                        {
+                            "label": "Development",
+                            "value": "development"
+                        }
+                    ],
+                    "tooltip": "Optional. Runtime emits only dependencies that ship with the code; Development only dev tooling (devDependencies). Any emits both."
+                }
+            },
+            "groups": {
+                "config": {
+                    "label": "Configuration",
+                    "index": 1
+                }
+            }
+        }
+    },
+    "outPorts": [
+        {
+            "name": "out",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "action": {
+                        "type": "string",
+                        "title": "Action",
+                        "example": "created"
+                    },
+                    "alert": {
+                        "type": "object",
+                        "title": "Alert",
+                        "properties": {
+                            "number": {
+                                "type": "integer",
+                                "title": "Alert.Number",
+                                "example": 725
+                            },
+                            "state": {
+                                "type": "string",
+                                "title": "Alert.State",
+                                "example": "open"
+                            },
+                            "html_url": {
+                                "type": "string",
+                                "title": "Alert.URL",
+                                "example": "https://github.com/acme/api-server/security/dependabot/725"
+                            },
+                            "created_at": {
+                                "type": "string",
+                                "title": "Alert.Created At",
+                                "example": "2026-11-02T08:50:06Z"
+                            },
+                            "updated_at": {
+                                "type": "string",
+                                "title": "Alert.Updated At",
+                                "example": "2026-11-02T08:50:06Z"
+                            },
+                            "fixed_at": {
+                                "type": "string",
+                                "title": "Alert.Fixed At",
+                                "example": ""
+                            },
+                            "dismissed_at": {
+                                "type": "string",
+                                "title": "Alert.Dismissed At",
+                                "example": ""
+                            },
+                            "dismissed_reason": {
+                                "type": "string",
+                                "title": "Alert.Dismissed Reason",
+                                "example": ""
+                            }
+                        }
+                    },
+                    "dependency": {
+                        "type": "object",
+                        "title": "Dependency",
+                        "properties": {
+                            "ecosystem": {
+                                "type": "string",
+                                "title": "Dependency.Ecosystem",
+                                "example": "npm"
+                            },
+                            "package_name": {
+                                "type": "string",
+                                "title": "Dependency.Package Name",
+                                "example": "minimatch"
+                            },
+                            "manifest_path": {
+                                "type": "string",
+                                "title": "Dependency.Manifest Path",
+                                "example": "services/converters/package-lock.json"
+                            },
+                            "scope": {
+                                "type": "string",
+                                "title": "Dependency.Scope",
+                                "example": "runtime"
+                            },
+                            "relationship": {
+                                "type": "string",
+                                "title": "Dependency.Relationship",
+                                "example": "transitive"
+                            }
+                        }
+                    },
+                    "advisory": {
+                        "type": "object",
+                        "title": "Advisory",
+                        "properties": {
+                            "ghsa_id": {
+                                "type": "string",
+                                "title": "Advisory.GHSA ID",
+                                "example": "GHSA-g3hv-75wg-m249"
+                            },
+                            "cve_id": {
+                                "type": "string",
+                                "title": "Advisory.CVE ID",
+                                "example": "CVE-2026-118764"
+                            },
+                            "summary": {
+                                "type": "string",
+                                "title": "Advisory.Summary",
+                                "example": "minimatch has potential denial of service via globparts amplification"
+                            },
+                            "severity": {
+                                "type": "string",
+                                "title": "Advisory.Severity",
+                                "example": "medium"
+                            },
+                            "cvss_score": {
+                                "type": "number",
+                                "title": "Advisory.CVSS Score",
+                                "example": 6.9
+                            },
+                            "published_at": {
+                                "type": "string",
+                                "title": "Advisory.Published At",
+                                "example": "2026-10-30T23:09:55Z"
+                            },
+                            "html_url": {
+                                "type": "string",
+                                "title": "Advisory.URL",
+                                "example": "https://github.com/advisories/GHSA-g3hv-75wg-m249"
+                            }
+                        }
+                    },
+                    "vulnerability": {
+                        "type": "object",
+                        "title": "Vulnerability",
+                        "properties": {
+                            "vulnerable_version_range": {
+                                "type": "string",
+                                "title": "Vulnerability.Vulnerable Version Range",
+                                "example": "< 11.0.1"
+                            },
+                            "first_patched_version": {
+                                "type": "string",
+                                "title": "Vulnerability.First Patched Version",
+                                "example": "11.0.1"
+                            }
+                        }
+                    },
+                    "repository": {
+                        "type": "object",
+                        "title": "Repository",
+                        "properties": {
+                            "full_name": {
+                                "type": "string",
+                                "title": "Repository.Full Name",
+                                "example": "acme/api-server"
+                            },
+                            "name": {
+                                "type": "string",
+                                "title": "Repository.Name",
+                                "example": "api-server"
+                            },
+                            "html_url": {
+                                "type": "string",
+                                "title": "Repository.URL",
+                                "example": "https://github.com/acme/api-server"
+                            },
+                            "private": {
+                                "type": "boolean",
+                                "title": "Repository.Private",
+                                "example": false
+                            }
+                        }
+                    },
+                    "organization": {
+                        "type": "object",
+                        "title": "Organization",
+                        "properties": {
+                            "login": {
+                                "type": "string",
+                                "title": "Organization.Login",
+                                "example": "acme"
+                            }
+                        }
+                    },
+                    "sender": {
+                        "type": "object",
+                        "title": "Sender",
+                        "properties": {
+                            "login": {
+                                "type": "string",
+                                "title": "Sender.Login",
+                                "example": "dependabot[bot]"
+                            },
+                            "type": {
+                                "type": "string",
+                                "title": "Sender.Type",
+                                "example": "Bot"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4NCjwhLS0gR2VuZXJhdG9yOiBBZG9iZSBJbGx1c3RyYXRvciAyMi4xLjAsIFNWRyBFeHBvcnQgUGx1Zy1JbiAuIFNWRyBWZXJzaW9uOiA2LjAwIEJ1aWxkIDApICAtLT4NCjxzdmcgdmVyc2lvbj0iMS4yIiBiYXNlUHJvZmlsZT0idGlueSIgaWQ9IkxheWVyXzEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiDQoJIHg9IjBweCIgeT0iMHB4IiB2aWV3Qm94PSIwIDAgMjM1MCAyMzE0LjgiIHhtbDpzcGFjZT0icHJlc2VydmUiPg0KPHBhdGggZD0iTTExNzUsMEM1MjUuOCwwLDAsNTI1LjgsMCwxMTc1YzAsNTUyLjIsMzc4LjksMTAxMC41LDg5MC4xLDExMzkuN2MtNS45LTE0LjctOC44LTM1LjMtOC44LTU1Ljh2LTE5OS44SDczNC40DQoJYy03OS4zLDAtMTUyLjgtMzUuMi0xODUuMS05OS45Yy0zOC4yLTcwLjUtNDQuMS0xNzkuMi0xNDEtMjQ2LjhjLTI5LjQtMjMuNS01LjktNDcsMjYuNC00NC4xYzYxLjcsMTcuNiwxMTEuNiw1OC44LDE1OC42LDEyMC40DQoJYzQ3LDYxLjcsNjcuNiw3Ni40LDE1NS43LDc2LjRjNDEuMSwwLDEwNS43LTIuOSwxNjQuNS0xMS44YzMyLjMtODIuMyw4OC4xLTE1NS43LDE1NS43LTE5MC45Yy0zOTMuNi00Ny01ODEuNi0yNDAuOS01ODEuNi01MDUuMw0KCWMwLTExNC42LDQ5LjktMjIzLjMsMTMyLjItMzE3LjNjLTI2LjQtOTEuMS02MS43LTI3OS4xLDExLjgtMzUyLjVjMTc2LjMsMCwyODIsMTE0LjYsMzA4LjQsMTQzLjljODguMS0yOS40LDE4NS4xLTQ3LDI4NC45LTQ3DQoJYzEwMi44LDAsMTk2LjgsMTcuNiwyODQuOSw0N2MyNi40LTI5LjQsMTMyLjItMTQzLjksMzA4LjQtMTQzLjljNzAuNSw3MC41LDM4LjIsMjYxLjQsOC44LDM1Mi41YzgyLjMsOTEuMSwxMjkuMywyMDIuNywxMjkuMywzMTcuMw0KCWMwLDI2NC40LTE4NS4xLDQ1OC4zLTU3NS43LDQ5OS40YzEwOC43LDU1LjgsMTg1LjEsMjE0LjQsMTg1LjEsMzMxLjlWMjI1NmMwLDguOC0yLjksMTcuNi0yLjksMjYuNA0KCUMyMDIxLDIxMjMuOCwyMzUwLDE2ODkuMSwyMzUwLDExNzVDMjM1MCw1MjUuOCwxODI0LjIsMCwxMTc1LDBMMTE3NSwweiIvPg0KPC9zdmc+DQo="
+}

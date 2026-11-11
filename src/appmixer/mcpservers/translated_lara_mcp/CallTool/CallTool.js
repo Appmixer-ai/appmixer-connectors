@@ -20,6 +20,10 @@ module.exports = {
                 arguments: context.messages.in.content
             }]
         );
+        // lara-mcp 2.x puts a one-line summary in content[0] and the data in structuredContent.
+        if (result?.structuredContent) {
+            return context.sendJson({ output: JSON.stringify(result.structuredContent, null, 2) }, 'out');
+        }
         const output = typeof result?.content[0].text === 'string'
             ? result?.content[0].text
             : JSON.stringify(result?.content[0].text, null, 2);

@@ -1,0 +1,146 @@
+{
+    "name": "E2E CircleCI MCP - List and Call Tool",
+    "description": "Runs @circleci/mcp-server-circleci 0.20.0: ListTools returns all 13 tools, CallTool list_followed_projects reaches the CircleCI API with the account token (the E2E user follows no projects; an invalid token answers 'CircleCI API Error: 401' instead).",
+    "flow": {
+        "3654839a-53cd-4a6c-9596-c0bc50867d43": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64, "y": 16, "source": {}, "version": "1.0.0", "config": {},
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "b96bf869-d28d-42d9-a7fb-48b805283720": {
+            "type": "appmixer.mcpservers.circleci_mcp_server_circleci.ListTools",
+            "x": 272, "y": 16, "version": "1.0.0",
+            "source": { "in": { "3654839a-53cd-4a6c-9596-c0bc50867d43": ["out"] } },
+            "config": {
+                "transform": { "in": { "3654839a-53cd-4a6c-9596-c0bc50867d43": { "out": { "type": "json2new", "modifiers": {}, "lambda": {} } } } }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "9697c8e0-3678-4406-ae27-71475b49c67b": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 480, "y": 16, "version": "1.0.0",
+            "source": { "in": { "b96bf869-d28d-42d9-a7fb-48b805283720": ["out"] } },
+            "config": {
+                "transform": {
+                    "in": {
+                        "b96bf869-d28d-42d9-a7fb-48b805283720": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "796809cd-663d-4f1c-afcc-58b32d25364b": {
+                                            "variable": "$.b96bf869-d28d-42d9-a7fb-48b805283720.out.tools",
+                                            "functions": [{ "name": "g_length" }]
+                                        },
+                                        "58ba1535-826a-4cd0-934d-120b27eac77a": {
+                                            "variable": "$.b96bf869-d28d-42d9-a7fb-48b805283720.out.tools",
+                                            "functions": [{ "name": "g_jsonPath", "params": [{ "value": "$[0].name" }] }]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            { "field": "{{{796809cd-663d-4f1c-afcc-58b32d25364b}}}", "assertion": "equal", "expected": "13" },
+                                            { "field": "{{{58ba1535-826a-4cd0-934d-120b27eac77a}}}", "assertion": "equal", "expected": "get_build_failure_logs" }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "49a25257-df29-46d4-8987-1d40346cb4b7": {
+            "type": "appmixer.mcpservers.circleci_mcp_server_circleci.CallTool",
+            "x": 688, "y": 144, "version": "1.0.0",
+            "source": { "in": { "9697c8e0-3678-4406-ae27-71475b49c67b": ["out"] } },
+            "config": {
+                "properties": { "tool": "list_followed_projects" },
+                "transform": {
+                    "in": {
+                        "9697c8e0-3678-4406-ae27-71475b49c67b": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {},
+                                "lambda": {}
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "138d083c-2ce2-49b5-afa8-834368896109": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 896, "y": 144, "version": "1.0.0",
+            "source": { "in": { "49a25257-df29-46d4-8987-1d40346cb4b7": ["out"] } },
+            "config": {
+                "transform": {
+                    "in": {
+                        "49a25257-df29-46d4-8987-1d40346cb4b7": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "c800e8d5-a2df-4d66-95aa-1634890d585d": {
+                                            "variable": "$.49a25257-df29-46d4-8987-1d40346cb4b7.out.output",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            { "field": "{{{c800e8d5-a2df-4d66-95aa-1634890d585d}}}", "assertion": "equal", "expected": "No projects found. Please make sure you have access to projects and have followed them." }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "1d8437b7-c3d6-4690-82e9-af6265b3a32b": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 1104, "y": 144, "version": "1.0.0",
+            "source": { "in": { "9697c8e0-3678-4406-ae27-71475b49c67b": ["out"], "138d083c-2ce2-49b5-afa8-834368896109": ["out"] } },
+            "config": { "properties": { "timeout": 180 } },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "4974b1a8-619f-42d9-bc9d-a4a1acb4aa3e": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1312, "y": 144, "version": "1.0.0",
+            "source": { "in": { "1d8437b7-c3d6-4690-82e9-af6265b3a32b": ["out"] } },
+            "config": {
+                "properties": { "successStoreId": "64f6f1f9193228000754082f", "failedStoreId": "64f6f1f0193228000754082e" },
+                "transform": {
+                    "in": {
+                        "1d8437b7-c3d6-4690-82e9-af6265b3a32b": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "027f6101-8e36-4598-9aaf-a32ca58d6194": { "variable": "$.1d8437b7-c3d6-4690-82e9-af6265b3a32b.out", "functions": [] }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E CircleCI MCP - List and Call Tool",
+                                    "result": "{{{027f6101-8e36-4598-9aaf-a32ca58d6194}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        }
+    }
+}
