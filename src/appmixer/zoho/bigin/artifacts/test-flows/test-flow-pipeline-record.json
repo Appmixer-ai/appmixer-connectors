@@ -1,0 +1,496 @@
+{
+    "name": "E2E Bigin - pipeline record",
+    "description": "Bigin by Zoho CRM: create a company with Create Record, create a pipeline record for it, read it back and delete both.",
+    "flow": {
+        "790183df-d237-4418-b7db-b83294eae7c4": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {},
+            "config": {},
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "d2de6149-8585-4dd8-89ea-8c9534546cf8": {
+            "type": "appmixer.zoho.bigin.CreateRecord",
+            "x": 272,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "790183df-d237-4418-b7db-b83294eae7c4": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "790183df-d237-4418-b7db-b83294eae7c4": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "module": {},
+                                    "recordData": {
+                                        "2b503fc6-972d-4d30-a4b6-a0e84d9f78b1": {
+                                            "variable": "$.790183df-d237-4418-b7db-b83294eae7c4.out.started",
+                                            "functions": [
+                                                {
+                                                    "name": "g_replace",
+                                                    "params": [
+                                                        {
+                                                            "value": "[^0-9]"
+                                                        },
+                                                        {
+                                                            "value": ""
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "module": "Accounts",
+                                    "recordData": "{\"Account_Name\": \"Bigin E2E Company {{{2b503fc6-972d-4d30-a4b6-a0e84d9f78b1}}}\", \"Website\": \"www.example.com\"}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "dd274ba2-a602-40a4-bf78-447758c8d2cb": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 480,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "d2de6149-8585-4dd8-89ea-8c9534546cf8": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "d2de6149-8585-4dd8-89ea-8c9534546cf8": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "12a43d6b-d442-409f-99bc-60231442425f": {
+                                            "variable": "$.d2de6149-8585-4dd8-89ea-8c9534546cf8.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{12a43d6b-d442-409f-99bc-60231442425f}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "a013884a-f1b1-447d-b9cb-e1110cff1425": {
+            "type": "appmixer.zoho.bigin.CreatePipelineRecord",
+            "x": 480,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "d2de6149-8585-4dd8-89ea-8c9534546cf8": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "d2de6149-8585-4dd8-89ea-8c9534546cf8": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "subPipeline": {},
+                                    "stage": {},
+                                    "amount": {},
+                                    "description": {},
+                                    "dealName": {
+                                        "ed998c6e-62b2-4cbb-96a3-5eac06a40c26": {
+                                            "variable": "$.790183df-d237-4418-b7db-b83294eae7c4.out.started",
+                                            "functions": [
+                                                {
+                                                    "name": "g_replace",
+                                                    "params": [
+                                                        {
+                                                            "value": "[^0-9]"
+                                                        },
+                                                        {
+                                                            "value": ""
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "companyId": {
+                                        "c44fd1b6-73ef-4c2d-b159-106a4dc8b172": {
+                                            "variable": "$.d2de6149-8585-4dd8-89ea-8c9534546cf8.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "subPipeline": "Sales Pipeline Standard",
+                                    "stage": "Qualification",
+                                    "amount": 4000,
+                                    "description": "Created by E2E",
+                                    "dealName": "Bigin E2E Deal {{{ed998c6e-62b2-4cbb-96a3-5eac06a40c26}}}",
+                                    "companyId": "{{{c44fd1b6-73ef-4c2d-b159-106a4dc8b172}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "be891072-5473-4def-9785-e1728536f239": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 688,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "a013884a-f1b1-447d-b9cb-e1110cff1425": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "a013884a-f1b1-447d-b9cb-e1110cff1425": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "031e890f-63ea-4499-adab-bb8d366ea202": {
+                                            "variable": "$.a013884a-f1b1-447d-b9cb-e1110cff1425.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{031e890f-63ea-4499-adab-bb8d366ea202}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "1563bc9a-454d-4311-a562-1bca436c2e0e": {
+            "type": "appmixer.zoho.bigin.GetRecord",
+            "x": 688,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "a013884a-f1b1-447d-b9cb-e1110cff1425": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "a013884a-f1b1-447d-b9cb-e1110cff1425": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "module": {},
+                                    "recordId": {
+                                        "eaaf47a9-6b4b-404c-9c5c-8b4ccb7a0db2": {
+                                            "variable": "$.a013884a-f1b1-447d-b9cb-e1110cff1425.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "module": "Pipelines",
+                                    "recordId": "{{{eaaf47a9-6b4b-404c-9c5c-8b4ccb7a0db2}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "c74ade39-aeb1-42bd-a6be-145fd36abfa6": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 896,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "1563bc9a-454d-4311-a562-1bca436c2e0e": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "1563bc9a-454d-4311-a562-1bca436c2e0e": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "6ee03520-a59f-40e3-bb9f-e57660b2bf34": {
+                                            "variable": "$.1563bc9a-454d-4311-a562-1bca436c2e0e.out.Stage",
+                                            "functions": []
+                                        },
+                                        "9faf65a3-55f0-4581-be2d-7e361f0fc348": {
+                                            "variable": "$.1563bc9a-454d-4311-a562-1bca436c2e0e.out.Account_Name.id",
+                                            "functions": []
+                                        },
+                                        "bbe5a081-516d-47b8-b912-108625b97e2b": {
+                                            "variable": "$.d2de6149-8585-4dd8-89ea-8c9534546cf8.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{6ee03520-a59f-40e3-bb9f-e57660b2bf34}}}",
+                                                "assertion": "equal",
+                                                "expected": "Qualification"
+                                            },
+                                            {
+                                                "field": "{{{9faf65a3-55f0-4581-be2d-7e361f0fc348}}}",
+                                                "assertion": "equal",
+                                                "expected": "{{{bbe5a081-516d-47b8-b912-108625b97e2b}}}"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "40abe9b9-b0af-45e5-b587-47a6c327583c": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 1104,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "dd274ba2-a602-40a4-bf78-447758c8d2cb": [
+                        "out"
+                    ],
+                    "be891072-5473-4def-9785-e1728536f239": [
+                        "out"
+                    ],
+                    "c74ade39-aeb1-42bd-a6be-145fd36abfa6": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 180
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "f6fa5281-b585-458f-a5e1-c2d855f1aebb": {
+            "type": "appmixer.zoho.bigin.DeleteRecord",
+            "x": 1312,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "40abe9b9-b0af-45e5-b587-47a6c327583c": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "40abe9b9-b0af-45e5-b587-47a6c327583c": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "module": {},
+                                    "recordId": {
+                                        "f8352713-70d1-4aad-9b3e-eaa145b7fcf8": {
+                                            "variable": "$.a013884a-f1b1-447d-b9cb-e1110cff1425.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "module": "Pipelines",
+                                    "recordId": "{{{f8352713-70d1-4aad-9b3e-eaa145b7fcf8}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "56490fec-5e4f-40f4-8d75-fa80ee426311": {
+            "type": "appmixer.zoho.bigin.DeleteRecord",
+            "x": 1520,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "f6fa5281-b585-458f-a5e1-c2d855f1aebb": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "f6fa5281-b585-458f-a5e1-c2d855f1aebb": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "module": {},
+                                    "recordId": {
+                                        "968e7e81-68b9-4a8c-909f-199c02de9980": {
+                                            "variable": "$.d2de6149-8585-4dd8-89ea-8c9534546cf8.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "module": "Accounts",
+                                    "recordId": "{{{968e7e81-68b9-4a8c-909f-199c02de9980}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "50394f80-bdf6-44a7-8af4-1033d0b4e76e": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1728,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "56490fec-5e4f-40f4-8d75-fa80ee426311": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "successStoreId": "64f6f1f9193228000754082f",
+                    "failedStoreId": "64f6f1f0193228000754082e"
+                },
+                "transform": {
+                    "in": {
+                        "56490fec-5e4f-40f4-8d75-fa80ee426311": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "4b6562b7-488d-426b-8073-1e45e8c040a1": {
+                                            "variable": "$.40abe9b9-b0af-45e5-b587-47a6c327583c.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E Bigin - pipeline record",
+                                    "result": "{{{4b6562b7-488d-426b-8073-1e45e8c040a1}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        }
+    },
+    "notes": {
+        "11f89aac-0321-438b-b5f3-a62ae2cf86de": {
+            "x": 64,
+            "y": -272,
+            "width": 672,
+            "height": 224,
+            "content": "## ⚠️ Test data assumption\n\nCreate Pipeline Record uses the sub-pipeline **Sales Pipeline Standard** and its stage **Qualification**, the defaults of a new Bigin organization. If the organization renamed them, set Sub-Pipeline and Stage to an existing sub-pipeline and one of its stages (List Fields on the Pipelines module lists both picklists)."
+        }
+    }
+}
