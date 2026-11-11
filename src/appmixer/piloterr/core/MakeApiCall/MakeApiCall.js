@@ -48,7 +48,7 @@ module.exports = {
         const targetUrl = lib.resolveApiUrl(context, url);
 
         // Drop any user-supplied credential header, whatever its case, so only
-        // the cloro key is sent.
+        // the Piloterr key is sent.
         const userHeaders = Object.fromEntries(
             Object.entries(kvToObject(context, headers)).filter(([key]) => !/^(authorization|x-api-key)$/i.test(key))
         );

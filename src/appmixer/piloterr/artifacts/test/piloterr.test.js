@@ -73,6 +73,27 @@ describe('Piloterr connector', () => {
         assert.equal(ctx.output.port, 'out');
         assert.match(ctx.output.data.html, /<html/i);
     });
+    it('Get Website HTML saves the page as a file when asked', async () => {
+        const html = '<!doctype html><html><body><p>Hi</p></body></html>';
+        const ctx = contextFor({ url: 'https://example.com', engine: 'rendering', saveAsFile: true }, async () => ({ data: html }));
+        const saved = [];
+        ctx.saveFileStream = async (filename, buffer) => {
+            saved.push({ filename, buffer });
+            return { fileId: 'file-123' };
+        };
+        await getWebsiteHtml.receive(ctx);
+        assert.equal(saved.length, 1);
+        assert.match(saved[0].filename, /^piloterr-rendering-\d+\.html$/);
+        assert.equal(saved[0].buffer.toString('utf8'), html);
+        assert.equal(ctx.output.data.fileId, 'file-123');
+        assert.equal(ctx.output.data.fileSize, Buffer.byteLength(html));
+        assert.equal(ctx.output.data.html, undefined);
+    });
+    it('Get Website HTML rejects a response that is not the page HTML', async () => {
+        const ctx = contextFor({ url: 'https://example.com', engine: 'crawler' }, async () => ({ data: { status: 'pending' } }));
+        await assert.rejects(() => getWebsiteHtml.receive(ctx), /expected the page HTML/);
+        assert.equal(ctx.output.sent.length, 0);
+    });
     it('Get Website HTML cancels without URL', async () => {
         const ctx = contextFor({ url: '', engine: 'crawler' }, async () => { throw new Error('no request expected'); });
         await assert.rejects(() => getWebsiteHtml.receive(ctx), CancelError);
