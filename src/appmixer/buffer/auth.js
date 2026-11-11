@@ -36,17 +36,29 @@ const toExpDate = (expiresIn) => {
 
 const requestToken = async (context, params) => {
 
-    const { data } = await context.httpRequest({
-        method: 'POST',
-        url: TOKEN_URL,
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        data: new URLSearchParams({
-            client_id: context.clientId,
-            client_secret: context.clientSecret,
-            ...params
-        }).toString()
-    });
-    return data;
+    const body = new URLSearchParams({ client_id: context.clientId, ...params });
+    // Public Buffer clients have no secret and must not send one.
+    if (context.clientSecret) {
+        body.set('client_secret', context.clientSecret);
+    }
+
+    try {
+        const { data } = await context.httpRequest({
+            method: 'POST',
+            url: TOKEN_URL,
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            data: body.toString()
+        });
+        return data;
+    } catch (err) {
+        // Surface Buffer's OAuth error (e.g. invalid_grant, invalid_client) instead of a bare HTTP status.
+        const detail = err?.response?.data;
+        if (detail && (detail.error || detail.error_description)) {
+            const message = [detail.error, detail.error_description].filter(Boolean).join(': ');
+            throw new Error(`Buffer token request failed (${err.response.status}): ${message}`);
+        }
+        throw err;
+    }
 };
 
 module.exports = {
