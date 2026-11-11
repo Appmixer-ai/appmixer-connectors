@@ -32,10 +32,10 @@ Connector development in this repo is gated by a **pre-commit hook** that
 validates the files in your diff. One-time setup:
 
 ```sh
-npm install -g appmixer    # the CLI runs the validators
-                           # (until the next release ships `connector validate`,
-                           #  use the experimental tag: npm install -g appmixer@dev)
-npm run hooks:install      # git pre-commit -> validates your changes
+npm install -g appmixer@dev  # the CLI is the whole dev toolchain: validators,
+                             # unit-test runner and linter (the `dev` tag until
+                             # the next release ships `connector test` / `lint`)
+npm run hooks:install        # git pre-commit -> validates your changes
 ```
 
 From then on every commit checks your changed `bundle.json` / `component.json`
@@ -64,11 +64,20 @@ In the `test` directory, you can find the test files for the connectors. They ar
 
 ### Running the Tests
 ```sh
-# install dependencies once
-scripts/npm-install.sh
-# run the tests
+# install the connectors' own dependencies once
+node scripts/npm_install.js
+# run the tests (all, one connector, one file)
 npm run test-unit
+npm run test-unit -- slack
+npm run test-unit -- src/appmixer/slack/artifacts/test/lib.test.js
+# lint
+npm run lint
 ```
+
+The root `package.json` has no dependencies and there is no root lockfile: the
+test runner (mocha), the libraries the tests require (sinon, dotenv, axios,
+moment) and ESLint all come with the appmixer CLI. `npm run test-unit` is
+`appmixer connector test` and `npm run lint` is `appmixer connector lint`.
 
 ### Appmixer Stub
 In `test/utils.js` you can find a stub for the Appmixer API. It is supposed to emulate all the advanced features of the Appmixer engine like sending messages, doing HTTP requests, using cache, etc. It is not a complete implementation of the Appmixer API, but it is enough to test the connectors. You can use it to test your connectors without having to run the Appmixer engine.

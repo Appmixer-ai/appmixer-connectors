@@ -20,9 +20,17 @@ jobs:
       uses: actions/setup-node@v4
       with:
         node-version: 24.6.0
-        cache: 'npm'
-    - name: Install dependencies
-      run: npm ci
+    # The whole dev toolchain comes with the appmixer CLI: the connector source
+    # validators, the unit-test runner (mocha plus the libraries the tests
+    # require) and the linter. That is why the root package.json has no
+    # dependencies and there is no root lockfile to install from.
+    # This repo's dev tracks the CLI's dev branch, published to npm as the public
+    # `dev` dist-tag on every CLI dev push (appmixer-cli publish-dev workflow). A
+    # dist-tag needs no credentials, which matters here: PRs come from forks, and
+    # GitHub withholds Actions secrets from fork-triggered workflows — a
+    # token-based git install can never work in this job.
+    - name: Install appmixer CLI (dev dist-tag)
+      run: npm install -g appmixer@dev
     - name: Cache node_modules for connectors and examples
       uses: actions/cache@v4
       with:
@@ -32,18 +40,11 @@ jobs:
         key: ${{ runner.os }}-connector-npm-${{ hashFiles('src/appmixer/**/package.json', 'src/examples/**/package.json') }}
     - name: Install connector dependencies
       run: node ./scripts/npm_install.js
+    # `appmixer connector lint`
     - name: Run lint
       run: npm run lint
-    # The connector source validator suite lives in appmixer-cli (single source of
-    # truth) — this repo's dev tracks the CLI's dev branch, published to npm as
-    # the public `dev` dist-tag on every CLI dev push (appmixer-cli publish-dev
-    # workflow). A dist-tag needs no credentials, which matters here: PRs come
-    # from forks, and GitHub withholds Actions secrets from fork-triggered
-    # workflows — a token-based git install can never work in this job.
     # scripts/validate.js is a thin wrapper over `appmixer connector validate`;
     # only the two git-workflow rules stay local (scripts/validators, --rules-dir).
-    - name: Install appmixer CLI (dev dist-tag)
-      run: npm install -g appmixer@dev
     # Gate PRs on the files they actually change (strict) — a PR no longer fails for unrelated repo-wide debt.
     - name: Run validate (changed files, strict)
       run: node scripts/validate.js --changed --base origin/${{ github.base_ref }}
@@ -51,5 +52,6 @@ jobs:
     - name: Run validate (whole repo, ratcheted — informational)
       run: npm run validate
       continue-on-error: true
+    # `appmixer connector test`
     - name: Run unit tests
       run: npm run test-unit

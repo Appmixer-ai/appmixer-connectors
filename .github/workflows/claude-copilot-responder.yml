@@ -264,15 +264,16 @@ jobs:
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 24.6.0
-          cache: 'npm'
 
-      - name: Install dependencies
-        if: steps.pr.outputs.proceed == 'true'
-        run: npm ci
-
-      # scripts/validate.js is a thin wrapper over `appmixer connector validate`
-      # (same as nodejs.yml), so the CLI has to be present or Claude's validate
-      # step silently does nothing. The checkout's `origin` is the apx-vero
+      # The appmixer CLI is the whole dev toolchain (same as nodejs.yml): the
+      # root package.json has no dependencies and there is no root lockfile, so
+      # there is nothing to `npm ci`. scripts/validate.js is a thin wrapper over
+      # `appmixer connector validate` and lint is `appmixer connector lint`, so
+      # the CLI has to be present or Claude's validate and lint steps cannot
+      # run. Lint goes through the CLI directly, not `npm run lint`: this job
+      # checks out the PR head, and a branch cut before the toolchain moved
+      # still has the old script that needs a locally installed eslint.
+      # The checkout's `origin` is the apx-vero
       # fork, whose `dev` can lag; validate --changed needs the real base, so
       # fetch upstream's dev into a remote-tracking ref (public repo, no token).
       - name: Install appmixer CLI (dev dist-tag) and fetch upstream dev
@@ -321,8 +322,7 @@ jobs:
                 "allow": [
                   "Read", "Glob", "Grep", "Edit", "Write", "MultiEdit", "TodoWrite", "Task",
                   "Bash(git:*)",
-                  "Bash(npm run lint)",
-                  "Bash(npm ci)",
+                  "Bash(appmixer connector lint:*)",
                   "Bash(node scripts/validate.js:*)",
                   "Bash(rm:*)"
                 ]
@@ -368,8 +368,8 @@ jobs:
               NOT push: you only edit code, commit on the current branch, and
               write the replies file described below. A later workflow step
               pushes your commits to the PR branch and posts the replies.
-            - The only shell commands you may run are `git`, `npm run lint`,
-              `npm ci`, `node scripts/validate.js` and `rm`; anything else
+            - The only shell commands you may run are `git`,
+              `appmixer connector lint`, `node scripts/validate.js` and `rm`; anything else
               (`cat`, `node <script>`, `python3`, …) is denied. Read files —
               including /tmp/copilot-review.json — with the Read tool and change
               them with Edit, also JSON flow files whose Code Blocks embed code
@@ -385,7 +385,7 @@ jobs:
             2. For every VALID comment, make the minimal correct fix ON THE CURRENT
                BRANCH. Group related fixes sensibly. Make NO change for INVALID
                comments — you will explain why in the reply instead.
-            3. If you changed any files: run `npm run lint`, and if connector files
+            3. If you changed any files: run `appmixer connector lint`, and if connector files
                changed, `node scripts/validate.js --changed --base upstream/dev`
                (the appmixer CLI is installed; `upstream/dev` is fetched).
                Fix anything they flag.
