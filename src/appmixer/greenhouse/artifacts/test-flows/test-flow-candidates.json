@@ -1,0 +1,578 @@
+{
+    "name": "E2E Greenhouse - candidates",
+    "description": "End-to-end test of Greenhouse candidates: Create, Get, Update, Find and Delete Candidate.",
+    "flow": {
+        "26aefa9c-fa9b-46c5-9af7-9744c641ce9b": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {},
+            "config": {},
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "02a56339-0663-43c4-b309-d2edb6ca3d17": {
+            "type": "appmixer.greenhouse.core.CreateCandidate",
+            "x": 272,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "26aefa9c-fa9b-46c5-9af7-9744c641ce9b": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "26aefa9c-fa9b-46c5-9af7-9744c641ce9b": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "firstName": {},
+                                    "lastName": {},
+                                    "email": {},
+                                    "emailType": {},
+                                    "phone": {},
+                                    "tags": {}
+                                },
+                                "lambda": {
+                                    "firstName": "E2E",
+                                    "lastName": "Greenhouse Candidate",
+                                    "email": "appmixer-e2e-candidate@example.com",
+                                    "emailType": "work",
+                                    "phone": "+1 555 0100",
+                                    "tags": "appmixer-e2e"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "83396a25-0b9f-495e-af59-acf7bc233f69": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 480,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "02a56339-0663-43c4-b309-d2edb6ca3d17": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "02a56339-0663-43c4-b309-d2edb6ca3d17": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "342c55e6-566d-4f4e-8fd4-c3dc763e0cb7": {
+                                            "variable": "$.02a56339-0663-43c4-b309-d2edb6ca3d17.out.first_name",
+                                            "functions": []
+                                        },
+                                        "f040655b-721f-4543-b517-29c5505186ba": {
+                                            "variable": "$.02a56339-0663-43c4-b309-d2edb6ca3d17.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{342c55e6-566d-4f4e-8fd4-c3dc763e0cb7}}}",
+                                                "assertion": "equal",
+                                                "expected": "E2E"
+                                            },
+                                            {
+                                                "field": "{{{f040655b-721f-4543-b517-29c5505186ba}}}",
+                                                "assertion": "regex",
+                                                "regex": "^\\d+$"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "3726833c-20c4-4c30-8bea-caba5c6d4e8f": {
+            "type": "appmixer.greenhouse.core.GetCandidate",
+            "x": 688,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "83396a25-0b9f-495e-af59-acf7bc233f69": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "83396a25-0b9f-495e-af59-acf7bc233f69": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "candidateId": {
+                                        "c9c56f7f-c314-4f60-91ac-f3928fd74ec3": {
+                                            "variable": "$.02a56339-0663-43c4-b309-d2edb6ca3d17.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "candidateId": "{{{c9c56f7f-c314-4f60-91ac-f3928fd74ec3}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "8ae5844e-6c56-4cd4-8806-8e4fd2ecc371": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 896,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "3726833c-20c4-4c30-8bea-caba5c6d4e8f": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "3726833c-20c4-4c30-8bea-caba5c6d4e8f": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "66011c1b-416d-4672-a608-240bd3d359e6": {
+                                            "variable": "$.3726833c-20c4-4c30-8bea-caba5c6d4e8f.out.last_name",
+                                            "functions": []
+                                        },
+                                        "d2f3aee5-905d-4e87-a4a2-1e8dbc500539": {
+                                            "variable": "$.3726833c-20c4-4c30-8bea-caba5c6d4e8f.out.tags",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$[0]"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{66011c1b-416d-4672-a608-240bd3d359e6}}}",
+                                                "assertion": "equal",
+                                                "expected": "Greenhouse Candidate"
+                                            },
+                                            {
+                                                "field": "{{{d2f3aee5-905d-4e87-a4a2-1e8dbc500539}}}",
+                                                "assertion": "equal",
+                                                "expected": "appmixer-e2e"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "33897432-8709-4e4d-b689-5e9358cd7059": {
+            "type": "appmixer.greenhouse.core.UpdateCandidate",
+            "x": 1104,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "8ae5844e-6c56-4cd4-8806-8e4fd2ecc371": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "8ae5844e-6c56-4cd4-8806-8e4fd2ecc371": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "candidateId": {
+                                        "1d9b6d6d-244b-4859-83f9-1c9844a524ad": {
+                                            "variable": "$.02a56339-0663-43c4-b309-d2edb6ca3d17.out.id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "title": {},
+                                    "company": {}
+                                },
+                                "lambda": {
+                                    "candidateId": "{{{1d9b6d6d-244b-4859-83f9-1c9844a524ad}}}",
+                                    "title": "E2E Updated Title",
+                                    "company": "Appmixer"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "74387b2f-3750-4070-a24f-629b5da7ffe2": {
+            "type": "appmixer.greenhouse.core.GetCandidate",
+            "x": 1312,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "33897432-8709-4e4d-b689-5e9358cd7059": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "33897432-8709-4e4d-b689-5e9358cd7059": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "candidateId": {
+                                        "9a61177b-ced0-49cf-8bc5-63ea56603cc8": {
+                                            "variable": "$.02a56339-0663-43c4-b309-d2edb6ca3d17.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "candidateId": "{{{9a61177b-ced0-49cf-8bc5-63ea56603cc8}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "66129cd4-2573-4f84-8a67-f8279414ffda": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1520,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "74387b2f-3750-4070-a24f-629b5da7ffe2": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "74387b2f-3750-4070-a24f-629b5da7ffe2": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "1b5f56ad-7bd9-439e-818d-a63756cb755d": {
+                                            "variable": "$.74387b2f-3750-4070-a24f-629b5da7ffe2.out.title",
+                                            "functions": []
+                                        },
+                                        "3e4685c2-c0e7-4eb8-81e4-18756450166e": {
+                                            "variable": "$.74387b2f-3750-4070-a24f-629b5da7ffe2.out.company",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{1b5f56ad-7bd9-439e-818d-a63756cb755d}}}",
+                                                "assertion": "equal",
+                                                "expected": "E2E Updated Title"
+                                            },
+                                            {
+                                                "field": "{{{3e4685c2-c0e7-4eb8-81e4-18756450166e}}}",
+                                                "assertion": "equal",
+                                                "expected": "Appmixer"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "c42f34a8-e399-4ef8-94b7-25891f344659": {
+            "type": "appmixer.greenhouse.core.FindCandidates",
+            "x": 1728,
+            "y": 400,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "66129cd4-2573-4f84-8a67-f8279414ffda": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "66129cd4-2573-4f84-8a67-f8279414ffda": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "email": {},
+                                    "outputType": {}
+                                },
+                                "lambda": {
+                                    "email": "appmixer-e2e-candidate@example.com",
+                                    "outputType": "first"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "d1c27752-41f4-4996-bab6-01394ca9aa89": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1936,
+            "y": 400,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "c42f34a8-e399-4ef8-94b7-25891f344659": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "c42f34a8-e399-4ef8-94b7-25891f344659": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "38e0f970-dcc4-4a42-9f43-2c14680a6d01": {
+                                            "variable": "$.c42f34a8-e399-4ef8-94b7-25891f344659.out.email_addresses",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$[0].value"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        },
+                                        "3233e89d-3ffd-42c4-b286-3b5eea482d73": {
+                                            "variable": "$.c42f34a8-e399-4ef8-94b7-25891f344659.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{38e0f970-dcc4-4a42-9f43-2c14680a6d01}}}",
+                                                "assertion": "equal",
+                                                "expected": "appmixer-e2e-candidate@example.com"
+                                            },
+                                            {
+                                                "field": "{{{3233e89d-3ffd-42c4-b286-3b5eea482d73}}}",
+                                                "assertion": "regex",
+                                                "regex": "^\\d+$"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "09d70ffb-cae1-4722-9978-fab7e80fb78d": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 2144,
+            "y": 400,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "83396a25-0b9f-495e-af59-acf7bc233f69": [
+                        "out"
+                    ],
+                    "8ae5844e-6c56-4cd4-8806-8e4fd2ecc371": [
+                        "out"
+                    ],
+                    "66129cd4-2573-4f84-8a67-f8279414ffda": [
+                        "out"
+                    ],
+                    "d1c27752-41f4-4996-bab6-01394ca9aa89": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 180
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "3b8f046a-9a93-4e90-acaf-70120b95d1fa": {
+            "type": "appmixer.greenhouse.core.DeleteCandidate",
+            "x": 2352,
+            "y": 400,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "09d70ffb-cae1-4722-9978-fab7e80fb78d": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "09d70ffb-cae1-4722-9978-fab7e80fb78d": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "candidateId": {
+                                        "4ede8707-777d-47a2-990a-59df1bf6b145": {
+                                            "variable": "$.02a56339-0663-43c4-b309-d2edb6ca3d17.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "candidateId": "{{{4ede8707-777d-47a2-990a-59df1bf6b145}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "798e4da1-78b8-4d30-b3bb-edca0f29e114": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 2560,
+            "y": 400,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "3b8f046a-9a93-4e90-acaf-70120b95d1fa": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "successStoreId": "64f6f1f9193228000754082f",
+                    "failedStoreId": "64f6f1f0193228000754082e"
+                },
+                "transform": {
+                    "in": {
+                        "3b8f046a-9a93-4e90-acaf-70120b95d1fa": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "cbf4c576-4cb6-4a19-b0e8-965d2dfac8ae": {
+                                            "variable": "$.09d70ffb-cae1-4722-9978-fab7e80fb78d.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E Greenhouse - candidates",
+                                    "result": "{{{cbf4c576-4cb6-4a19-b0e8-965d2dfac8ae}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        }
+    }
+}

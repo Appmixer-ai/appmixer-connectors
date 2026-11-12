@@ -1,0 +1,201 @@
+{
+    "name": "E2E Greenhouse - make API call",
+    "description": "End-to-end test of Make API Call: GET /v3/jobs filtered by the status query parameter.",
+    "flow": {
+        "22ece130-9a10-45d4-beaa-fc9b06b021bc": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {},
+            "config": {},
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "946deb70-5306-4d4f-93aa-e5afca3b726e": {
+            "type": "appmixer.greenhouse.core.MakeApiCall",
+            "x": 272,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "22ece130-9a10-45d4-beaa-fc9b06b021bc": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "22ece130-9a10-45d4-beaa-fc9b06b021bc": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "url": {},
+                                    "method": {},
+                                    "parameters": {},
+                                    "headers": {}
+                                },
+                                "lambda": {
+                                    "url": "/v3/jobs",
+                                    "method": "GET",
+                                    "parameters": "{\"status\":\"open\",\"per_page\":\"1\"}",
+                                    "headers": "{\"Accept\":\"application/json\"}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "6b51b967-2282-492c-ad49-3a856cb820df": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 480,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "946deb70-5306-4d4f-93aa-e5afca3b726e": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "946deb70-5306-4d4f-93aa-e5afca3b726e": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "a3d278d1-0ebb-420c-ad2d-fc06d02a4ef2": {
+                                            "variable": "$.946deb70-5306-4d4f-93aa-e5afca3b726e.out.statusCode",
+                                            "functions": []
+                                        },
+                                        "87a1eaa1-6d38-4a11-84a5-97987f1fe7ba": {
+                                            "variable": "$.946deb70-5306-4d4f-93aa-e5afca3b726e.out.body",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$[0].status"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{a3d278d1-0ebb-420c-ad2d-fc06d02a4ef2}}}",
+                                                "assertion": "equal",
+                                                "expected": "200"
+                                            },
+                                            {
+                                                "field": "{{{87a1eaa1-6d38-4a11-84a5-97987f1fe7ba}}}",
+                                                "assertion": "equal",
+                                                "expected": "open"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "26b7ade7-866a-44d9-b3ea-4b3e756903a2": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 688,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "6b51b967-2282-492c-ad49-3a856cb820df": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 180
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "27ec3cd3-2ef7-4b4f-ab2f-c890ccb51bf5": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 896,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "26b7ade7-866a-44d9-b3ea-4b3e756903a2": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "successStoreId": "64f6f1f9193228000754082f",
+                    "failedStoreId": "64f6f1f0193228000754082e"
+                },
+                "transform": {
+                    "in": {
+                        "26b7ade7-866a-44d9-b3ea-4b3e756903a2": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "e504fd8d-7ef7-44a1-b14e-332e84466696": {
+                                            "variable": "$.26b7ade7-866a-44d9-b3ea-4b3e756903a2.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E Greenhouse - make API call",
+                                    "result": "{{{e504fd8d-7ef7-44a1-b14e-332e84466696}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        }
+    },
+    "notes": {
+        "b462dd32-4f78-4df9-9297-3a3f175d1c37": {
+            "x": 64,
+            "y": 160,
+            "width": 672,
+            "height": 160,
+            "content": "## ⚠️ Test data assumption\n\nThe call lists jobs with the query parameter `status=open` and asserts that the first job is open, which proves the query parameters arrive. The account needs at least one open job."
+        }
+    }
+}

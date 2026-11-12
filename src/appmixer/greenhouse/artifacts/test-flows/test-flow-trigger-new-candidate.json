@@ -1,0 +1,279 @@
+{
+    "name": "E2E Greenhouse - New Candidate trigger",
+    "description": "End-to-end test of the New Candidate trigger: the provoke lane creates a candidate after the trigger's first poll; the trigger lane asserts it and deletes it.",
+    "flow": {
+        "1e1ec626-f551-4591-a2f3-86413736e9a6": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {},
+            "config": {},
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "eabad2f0-e16a-4f2f-baed-34723a497a91": {
+            "type": "appmixer.utils.timers.Wait",
+            "x": 272,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "1e1ec626-f551-4591-a2f3-86413736e9a6": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "1e1ec626-f551-4591-a2f3-86413736e9a6": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "interval": {}
+                                },
+                                "lambda": {
+                                    "interval": "2m"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "4575a9ba-ffba-4f87-8e6d-5e22830b0096": {
+            "type": "appmixer.greenhouse.core.CreateCandidate",
+            "x": 480,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "eabad2f0-e16a-4f2f-baed-34723a497a91": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "eabad2f0-e16a-4f2f-baed-34723a497a91": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "firstName": {},
+                                    "lastName": {}
+                                },
+                                "lambda": {
+                                    "firstName": "E2E",
+                                    "lastName": "Greenhouse NewCandidate"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "6a33b05f-e56e-40da-9407-c4175f70b38f": {
+            "type": "appmixer.greenhouse.core.NewCandidate",
+            "x": 64,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {},
+            "config": {
+                "properties": {}
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "f3d51386-2623-4a8a-98fd-16e5d1c9dc37": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 272,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "6a33b05f-e56e-40da-9407-c4175f70b38f": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "6a33b05f-e56e-40da-9407-c4175f70b38f": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "bdb51f10-b3a0-4ecc-ba4b-aeff1ad66625": {
+                                            "variable": "$.6a33b05f-e56e-40da-9407-c4175f70b38f.out.last_name",
+                                            "functions": []
+                                        },
+                                        "8c83cb74-1b2c-4341-94c6-e8c68c128974": {
+                                            "variable": "$.6a33b05f-e56e-40da-9407-c4175f70b38f.out.id",
+                                            "functions": []
+                                        },
+                                        "6fd4bf0a-50a5-425a-a4ff-b80b8e06642e": {
+                                            "variable": "$.4575a9ba-ffba-4f87-8e6d-5e22830b0096.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{bdb51f10-b3a0-4ecc-ba4b-aeff1ad66625}}}",
+                                                "assertion": "equal",
+                                                "expected": "Greenhouse NewCandidate"
+                                            },
+                                            {
+                                                "field": "{{{8c83cb74-1b2c-4341-94c6-e8c68c128974}}}",
+                                                "assertion": "equal",
+                                                "expected": "{{{6fd4bf0a-50a5-425a-a4ff-b80b8e06642e}}}"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "00ca3114-ff8f-488c-bde3-79d54a8fca69": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 480,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "f3d51386-2623-4a8a-98fd-16e5d1c9dc37": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 420
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "68dcbfef-1ce3-4a34-baa3-17d2571c137a": {
+            "type": "appmixer.greenhouse.core.DeleteCandidate",
+            "x": 688,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "00ca3114-ff8f-488c-bde3-79d54a8fca69": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "00ca3114-ff8f-488c-bde3-79d54a8fca69": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "candidateId": {
+                                        "5878a2e2-cb4e-48b1-81bb-655698626da4": {
+                                            "variable": "$.6a33b05f-e56e-40da-9407-c4175f70b38f.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "candidateId": "{{{5878a2e2-cb4e-48b1-81bb-655698626da4}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "2f51cf8e-aa70-4efa-b747-334c42817d15": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 896,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "68dcbfef-1ce3-4a34-baa3-17d2571c137a": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "successStoreId": "64f6f1f9193228000754082f",
+                    "failedStoreId": "64f6f1f0193228000754082e"
+                },
+                "transform": {
+                    "in": {
+                        "68dcbfef-1ce3-4a34-baa3-17d2571c137a": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "d0c56198-0fa5-4634-9b8b-1dcaddab7a59": {
+                                            "variable": "$.00ca3114-ff8f-488c-bde3-79d54a8fca69.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E Greenhouse - New Candidate trigger",
+                                    "result": "{{{d0c56198-0fa5-4634-9b8b-1dcaddab7a59}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        }
+    },
+    "notes": {
+        "3c8481d6-9720-4681-ad06-193a98abcb40": {
+            "x": 64,
+            "y": 400,
+            "width": 672,
+            "height": 224,
+            "content": "## ⏱ Trigger test\n\nNew Candidate polls every minute and its first poll only records the candidates that already exist. The provoke lane waits 2 minutes (do not remove the Wait) so the candidate is created after that first poll. Run this flow alone: candidates created by other flows at the same time would also fire the trigger."
+        }
+    }
+}

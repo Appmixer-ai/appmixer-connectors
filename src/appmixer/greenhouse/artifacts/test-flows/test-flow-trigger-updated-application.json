@@ -1,0 +1,311 @@
+{
+    "name": "E2E Greenhouse - Updated Application trigger",
+    "description": "End-to-end test of the Updated Application trigger: a prospect is created before the trigger's first poll, then its profile is updated, which updates its application.",
+    "flow": {
+        "0beaa41d-8237-4b98-a86a-7b37d8ea7a2f": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {},
+            "config": {},
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "55f19c0f-a5b3-4d42-88de-ebab5d0edbb4": {
+            "type": "appmixer.greenhouse.core.CreateCandidate",
+            "x": 272,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "0beaa41d-8237-4b98-a86a-7b37d8ea7a2f": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "0beaa41d-8237-4b98-a86a-7b37d8ea7a2f": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "firstName": {},
+                                    "lastName": {}
+                                },
+                                "lambda": {
+                                    "firstName": "E2E",
+                                    "lastName": "Greenhouse UpdatedApplication"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "4aae0905-a573-4a39-877c-556f096bfc6c": {
+            "type": "appmixer.utils.timers.Wait",
+            "x": 480,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "55f19c0f-a5b3-4d42-88de-ebab5d0edbb4": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "55f19c0f-a5b3-4d42-88de-ebab5d0edbb4": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "interval": {}
+                                },
+                                "lambda": {
+                                    "interval": "2m"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "ddb11d7f-2d2d-4253-b29f-5bd4569d7373": {
+            "type": "appmixer.greenhouse.core.UpdateCandidate",
+            "x": 688,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "4aae0905-a573-4a39-877c-556f096bfc6c": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "4aae0905-a573-4a39-877c-556f096bfc6c": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "candidateId": {
+                                        "7d122a34-ad78-4b95-8266-3e715e176e9d": {
+                                            "variable": "$.55f19c0f-a5b3-4d42-88de-ebab5d0edbb4.out.id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "title": {}
+                                },
+                                "lambda": {
+                                    "candidateId": "{{{7d122a34-ad78-4b95-8266-3e715e176e9d}}}",
+                                    "title": "E2E Trigger Title"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "31ebe27a-e942-4c3f-984e-b6bb13d363a6": {
+            "type": "appmixer.greenhouse.core.UpdatedApplication",
+            "x": 64,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {},
+            "config": {
+                "properties": {}
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "c742ad69-c260-4201-b28e-7a536e8a0ed0": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 272,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "31ebe27a-e942-4c3f-984e-b6bb13d363a6": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "31ebe27a-e942-4c3f-984e-b6bb13d363a6": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "30a9f675-3ac4-4b53-8e58-6051d99a8068": {
+                                            "variable": "$.31ebe27a-e942-4c3f-984e-b6bb13d363a6.out.candidate_id",
+                                            "functions": []
+                                        },
+                                        "9a5e93ce-c8da-44c8-8759-8875250af491": {
+                                            "variable": "$.55f19c0f-a5b3-4d42-88de-ebab5d0edbb4.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{30a9f675-3ac4-4b53-8e58-6051d99a8068}}}",
+                                                "assertion": "equal",
+                                                "expected": "{{{9a5e93ce-c8da-44c8-8759-8875250af491}}}"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "edafbaee-3ec7-4e38-856b-fa051dca54b3": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 480,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "c742ad69-c260-4201-b28e-7a536e8a0ed0": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 420
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "b652ecfc-ab8f-4f12-90d8-00f6d6c2e4a4": {
+            "type": "appmixer.greenhouse.core.DeleteCandidate",
+            "x": 688,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "edafbaee-3ec7-4e38-856b-fa051dca54b3": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "edafbaee-3ec7-4e38-856b-fa051dca54b3": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "candidateId": {
+                                        "e1c1c75b-2003-455b-a86e-cbc2712ef585": {
+                                            "variable": "$.55f19c0f-a5b3-4d42-88de-ebab5d0edbb4.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "candidateId": "{{{e1c1c75b-2003-455b-a86e-cbc2712ef585}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "42d7d62c-02e2-4efc-99da-3bdf4bf22b7f": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 896,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "b652ecfc-ab8f-4f12-90d8-00f6d6c2e4a4": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "successStoreId": "64f6f1f9193228000754082f",
+                    "failedStoreId": "64f6f1f0193228000754082e"
+                },
+                "transform": {
+                    "in": {
+                        "b652ecfc-ab8f-4f12-90d8-00f6d6c2e4a4": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "e87b54c9-ee9a-4ede-93f8-8c58d6453280": {
+                                            "variable": "$.edafbaee-3ec7-4e38-856b-fa051dca54b3.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E Greenhouse - Updated Application trigger",
+                                    "result": "{{{e87b54c9-ee9a-4ede-93f8-8c58d6453280}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        }
+    },
+    "notes": {
+        "7edc6f56-566a-458c-9a98-18c772cf4bce": {
+            "x": 64,
+            "y": 400,
+            "width": 672,
+            "height": 224,
+            "content": "## ⏱ Trigger test\n\nUpdated Application polls every minute; its first poll only records the applications that already exist. The provoke lane creates a prospect (a candidate always gets an application), waits 2 minutes (do not remove the Wait) and then updates the candidate's title. Greenhouse updates the application's updated_at when candidate data changes, which fires the trigger. Run this flow alone: other changes to applications at the same time would also fire it."
+        }
+    }
+}

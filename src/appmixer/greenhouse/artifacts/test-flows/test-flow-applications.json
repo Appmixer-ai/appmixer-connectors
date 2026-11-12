@@ -1,0 +1,1078 @@
+{
+    "name": "E2E Greenhouse - applications",
+    "description": "End-to-end test of Greenhouse jobs and applications: Find Jobs, Create Candidate on a job, Find and Get Application, List Job Stages, Move Application, List Rejection Reasons, Reject Application, List Offers.",
+    "flow": {
+        "912e67b2-65e6-434d-b204-ac20628dcdc1": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {},
+            "config": {},
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "3054f2dd-95df-4046-846e-fa8cd75deba9": {
+            "type": "appmixer.greenhouse.core.FindJobs",
+            "x": 272,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "912e67b2-65e6-434d-b204-ac20628dcdc1": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "912e67b2-65e6-434d-b204-ac20628dcdc1": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "status": {},
+                                    "outputType": {}
+                                },
+                                "lambda": {
+                                    "status": "open",
+                                    "outputType": "first"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "1e34dab9-940e-43a3-902b-c3a3b1322155": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 480,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "3054f2dd-95df-4046-846e-fa8cd75deba9": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "3054f2dd-95df-4046-846e-fa8cd75deba9": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "efb9f0a7-6ce7-459b-bdaa-b60dd7a76806": {
+                                            "variable": "$.3054f2dd-95df-4046-846e-fa8cd75deba9.out.status",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{efb9f0a7-6ce7-459b-bdaa-b60dd7a76806}}}",
+                                                "assertion": "equal",
+                                                "expected": "open"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "e53426e3-3899-4b80-89fc-9e76371a58ba": {
+            "type": "appmixer.greenhouse.core.CreateCandidate",
+            "x": 688,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "1e34dab9-940e-43a3-902b-c3a3b1322155": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "1e34dab9-940e-43a3-902b-c3a3b1322155": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "firstName": {},
+                                    "lastName": {},
+                                    "jobId": {
+                                        "f257e437-2c20-4823-b345-2b3f45709f02": {
+                                            "variable": "$.3054f2dd-95df-4046-846e-fa8cd75deba9.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "firstName": "E2E",
+                                    "lastName": "Greenhouse Applicant",
+                                    "jobId": "{{{f257e437-2c20-4823-b345-2b3f45709f02}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "378d69a6-437b-4d1e-819e-474fb99a2dfb": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 896,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "e53426e3-3899-4b80-89fc-9e76371a58ba": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "e53426e3-3899-4b80-89fc-9e76371a58ba": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "0f59448c-4168-4a4e-954f-aa837d8ce965": {
+                                            "variable": "$.e53426e3-3899-4b80-89fc-9e76371a58ba.out.applicationId",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{0f59448c-4168-4a4e-954f-aa837d8ce965}}}",
+                                                "assertion": "regex",
+                                                "regex": "^\\d+$"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "0b71fff5-1e78-4a56-bdc5-be7902cb3a1a": {
+            "type": "appmixer.greenhouse.core.FindApplications",
+            "x": 1104,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "378d69a6-437b-4d1e-819e-474fb99a2dfb": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "378d69a6-437b-4d1e-819e-474fb99a2dfb": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "candidateId": {
+                                        "eae7ec06-3b44-42fc-a450-d7c592bbb702": {
+                                            "variable": "$.e53426e3-3899-4b80-89fc-9e76371a58ba.out.id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "status": {},
+                                    "outputType": {}
+                                },
+                                "lambda": {
+                                    "candidateId": "{{{eae7ec06-3b44-42fc-a450-d7c592bbb702}}}",
+                                    "status": "in_process",
+                                    "outputType": "first"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "9ae0f64b-b9a3-4028-9530-bb533ed53561": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1312,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "0b71fff5-1e78-4a56-bdc5-be7902cb3a1a": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "0b71fff5-1e78-4a56-bdc5-be7902cb3a1a": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "4855c88a-611e-4289-97df-893c6ee6e20b": {
+                                            "variable": "$.0b71fff5-1e78-4a56-bdc5-be7902cb3a1a.out.id",
+                                            "functions": []
+                                        },
+                                        "d4b588e6-8208-4780-b1fa-083e82db69d3": {
+                                            "variable": "$.e53426e3-3899-4b80-89fc-9e76371a58ba.out.applicationId",
+                                            "functions": []
+                                        },
+                                        "210076cb-d437-4f84-8716-884fe78c5664": {
+                                            "variable": "$.0b71fff5-1e78-4a56-bdc5-be7902cb3a1a.out.status",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{4855c88a-611e-4289-97df-893c6ee6e20b}}}",
+                                                "assertion": "equal",
+                                                "expected": "{{{d4b588e6-8208-4780-b1fa-083e82db69d3}}}"
+                                            },
+                                            {
+                                                "field": "{{{210076cb-d437-4f84-8716-884fe78c5664}}}",
+                                                "assertion": "equal",
+                                                "expected": "in_process"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "5427f35a-e99c-430a-98d9-3faa1c80339e": {
+            "type": "appmixer.greenhouse.core.GetApplication",
+            "x": 1520,
+            "y": 400,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "9ae0f64b-b9a3-4028-9530-bb533ed53561": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "9ae0f64b-b9a3-4028-9530-bb533ed53561": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "applicationId": {
+                                        "df71d10e-7c1d-457d-84ad-fe262dab1053": {
+                                            "variable": "$.e53426e3-3899-4b80-89fc-9e76371a58ba.out.applicationId",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "applicationId": "{{{df71d10e-7c1d-457d-84ad-fe262dab1053}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "03a8c06b-59c9-4e17-b177-ebb3f2dc823c": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1728,
+            "y": 400,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "5427f35a-e99c-430a-98d9-3faa1c80339e": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "5427f35a-e99c-430a-98d9-3faa1c80339e": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "8df0a53e-23e9-4c96-8b7c-41cd85057f66": {
+                                            "variable": "$.5427f35a-e99c-430a-98d9-3faa1c80339e.out.job_id",
+                                            "functions": []
+                                        },
+                                        "18bbdbb6-b1f1-4977-bc71-ed04660a64ed": {
+                                            "variable": "$.3054f2dd-95df-4046-846e-fa8cd75deba9.out.id",
+                                            "functions": []
+                                        },
+                                        "8c5acc88-cdbb-4faf-a1c2-98991999a025": {
+                                            "variable": "$.5427f35a-e99c-430a-98d9-3faa1c80339e.out.stage_name",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{8df0a53e-23e9-4c96-8b7c-41cd85057f66}}}",
+                                                "assertion": "equal",
+                                                "expected": "{{{18bbdbb6-b1f1-4977-bc71-ed04660a64ed}}}"
+                                            },
+                                            {
+                                                "field": "{{{8c5acc88-cdbb-4faf-a1c2-98991999a025}}}",
+                                                "assertion": "notEmpty",
+                                                "expected": ""
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "94a24b8c-6c7d-4554-9a74-bd0e2e687582": {
+            "type": "appmixer.greenhouse.core.ListJobStages",
+            "x": 1936,
+            "y": 528,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "03a8c06b-59c9-4e17-b177-ebb3f2dc823c": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "03a8c06b-59c9-4e17-b177-ebb3f2dc823c": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "jobId": {
+                                        "d22fedff-0ee6-4f19-b0c9-72d73f392671": {
+                                            "variable": "$.3054f2dd-95df-4046-846e-fa8cd75deba9.out.id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "outputType": {}
+                                },
+                                "lambda": {
+                                    "jobId": "{{{d22fedff-0ee6-4f19-b0c9-72d73f392671}}}",
+                                    "outputType": "array"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "5b84f9aa-1e8e-4cfd-9f17-3c53416f678c": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 2144,
+            "y": 528,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "94a24b8c-6c7d-4554-9a74-bd0e2e687582": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "94a24b8c-6c7d-4554-9a74-bd0e2e687582": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "d65d294a-1011-49e0-a6e6-90bae2541655": {
+                                            "variable": "$.94a24b8c-6c7d-4554-9a74-bd0e2e687582.out.result",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$[0].job_id"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        },
+                                        "a3009d31-b1bc-48c3-b507-9864f834f0fd": {
+                                            "variable": "$.3054f2dd-95df-4046-846e-fa8cd75deba9.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{d65d294a-1011-49e0-a6e6-90bae2541655}}}",
+                                                "assertion": "equal",
+                                                "expected": "{{{a3009d31-b1bc-48c3-b507-9864f834f0fd}}}"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "654fe209-63c7-4c15-a38f-1ba0a82116a8": {
+            "type": "appmixer.greenhouse.core.MoveApplication",
+            "x": 2352,
+            "y": 656,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "5b84f9aa-1e8e-4cfd-9f17-3c53416f678c": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "5b84f9aa-1e8e-4cfd-9f17-3c53416f678c": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "applicationId": {
+                                        "ade7d2b0-6858-4aa9-aaaf-c753b6066af8": {
+                                            "variable": "$.e53426e3-3899-4b80-89fc-9e76371a58ba.out.applicationId",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "applicationId": "{{{ade7d2b0-6858-4aa9-aaaf-c753b6066af8}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "ad495cda-63ae-4095-a812-31aeec39f6f0": {
+            "type": "appmixer.greenhouse.core.GetApplication",
+            "x": 2560,
+            "y": 656,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "654fe209-63c7-4c15-a38f-1ba0a82116a8": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "654fe209-63c7-4c15-a38f-1ba0a82116a8": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "applicationId": {
+                                        "83f878d4-e8e9-4f3c-8cdf-04d499c04741": {
+                                            "variable": "$.e53426e3-3899-4b80-89fc-9e76371a58ba.out.applicationId",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "applicationId": "{{{83f878d4-e8e9-4f3c-8cdf-04d499c04741}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "415cb062-adac-4f73-b65e-e63e8aa5636b": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 2768,
+            "y": 656,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "ad495cda-63ae-4095-a812-31aeec39f6f0": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "ad495cda-63ae-4095-a812-31aeec39f6f0": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "96ada816-0487-4cae-99cf-6ce94ea35ad0": {
+                                            "variable": "$.ad495cda-63ae-4095-a812-31aeec39f6f0.out.stage_name",
+                                            "functions": []
+                                        },
+                                        "4562f6e1-8538-4129-ad71-582bcbd4a1c7": {
+                                            "variable": "$.ad495cda-63ae-4095-a812-31aeec39f6f0.out.status",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{96ada816-0487-4cae-99cf-6ce94ea35ad0}}}",
+                                                "assertion": "regex",
+                                                "regex": "^(?!Application Review$).+"
+                                            },
+                                            {
+                                                "field": "{{{4562f6e1-8538-4129-ad71-582bcbd4a1c7}}}",
+                                                "assertion": "equal",
+                                                "expected": "in_process"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "c9b190e8-1465-4d22-804e-0f13b6ba1f29": {
+            "type": "appmixer.greenhouse.core.ListRejectionReasons",
+            "x": 2976,
+            "y": 784,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "415cb062-adac-4f73-b65e-e63e8aa5636b": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "415cb062-adac-4f73-b65e-e63e8aa5636b": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "outputType": {}
+                                },
+                                "lambda": {
+                                    "outputType": "first"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "5dcfb5fb-a3b2-477e-8094-4b4e6a9eee24": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 3184,
+            "y": 784,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "c9b190e8-1465-4d22-804e-0f13b6ba1f29": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "c9b190e8-1465-4d22-804e-0f13b6ba1f29": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "77691967-b7d4-4941-9130-4f76fe2592f3": {
+                                            "variable": "$.c9b190e8-1465-4d22-804e-0f13b6ba1f29.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{77691967-b7d4-4941-9130-4f76fe2592f3}}}",
+                                                "assertion": "regex",
+                                                "regex": "^\\d+$"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "33064e2a-b88c-40cd-8282-0a546d0ca2f0": {
+            "type": "appmixer.greenhouse.core.RejectApplication",
+            "x": 3392,
+            "y": 912,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "5dcfb5fb-a3b2-477e-8094-4b4e6a9eee24": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "5dcfb5fb-a3b2-477e-8094-4b4e6a9eee24": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "applicationId": {
+                                        "78a561d6-854b-463e-85e9-ca30b229d406": {
+                                            "variable": "$.e53426e3-3899-4b80-89fc-9e76371a58ba.out.applicationId",
+                                            "functions": []
+                                        }
+                                    },
+                                    "rejectionReasonId": {
+                                        "6f0fb28d-1e02-4495-a231-7b59f31c0dcd": {
+                                            "variable": "$.c9b190e8-1465-4d22-804e-0f13b6ba1f29.out.id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "notes": {}
+                                },
+                                "lambda": {
+                                    "applicationId": "{{{78a561d6-854b-463e-85e9-ca30b229d406}}}",
+                                    "rejectionReasonId": "{{{6f0fb28d-1e02-4495-a231-7b59f31c0dcd}}}",
+                                    "notes": "Rejected by the Appmixer E2E test."
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "2e195080-1d77-4eae-ba10-e5cd3bb4cdee": {
+            "type": "appmixer.greenhouse.core.GetApplication",
+            "x": 3600,
+            "y": 912,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "33064e2a-b88c-40cd-8282-0a546d0ca2f0": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "33064e2a-b88c-40cd-8282-0a546d0ca2f0": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "applicationId": {
+                                        "48148a36-7c4a-4630-a051-4080214a9429": {
+                                            "variable": "$.e53426e3-3899-4b80-89fc-9e76371a58ba.out.applicationId",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "applicationId": "{{{48148a36-7c4a-4630-a051-4080214a9429}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "baf1acad-4883-403c-bb1d-2d7389048f56": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 3808,
+            "y": 912,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "2e195080-1d77-4eae-ba10-e5cd3bb4cdee": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "2e195080-1d77-4eae-ba10-e5cd3bb4cdee": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "84c75ec4-de4c-4736-9125-fb6d1d9fae5e": {
+                                            "variable": "$.2e195080-1d77-4eae-ba10-e5cd3bb4cdee.out.status",
+                                            "functions": []
+                                        },
+                                        "4ae8a294-145b-439a-b9d8-ef6892e4111a": {
+                                            "variable": "$.2e195080-1d77-4eae-ba10-e5cd3bb4cdee.out.rejection_reason_id",
+                                            "functions": []
+                                        },
+                                        "60e02a59-f4df-42be-8f6c-502a32226f24": {
+                                            "variable": "$.c9b190e8-1465-4d22-804e-0f13b6ba1f29.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{84c75ec4-de4c-4736-9125-fb6d1d9fae5e}}}",
+                                                "assertion": "equal",
+                                                "expected": "rejected"
+                                            },
+                                            {
+                                                "field": "{{{4ae8a294-145b-439a-b9d8-ef6892e4111a}}}",
+                                                "assertion": "equal",
+                                                "expected": "{{{60e02a59-f4df-42be-8f6c-502a32226f24}}}"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "d8219582-62d4-4908-8fe6-b9d6ccc86e33": {
+            "type": "appmixer.greenhouse.core.ListOffers",
+            "x": 4016,
+            "y": 1040,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "baf1acad-4883-403c-bb1d-2d7389048f56": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "baf1acad-4883-403c-bb1d-2d7389048f56": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "outputType": {}
+                                },
+                                "lambda": {
+                                    "outputType": "file"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "22c794e4-a655-49b0-9dad-c27ab9298e4f": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 4224,
+            "y": 1040,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "d8219582-62d4-4908-8fe6-b9d6ccc86e33": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "d8219582-62d4-4908-8fe6-b9d6ccc86e33": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "cb53d42b-7e98-4284-af2d-30977971237f": {
+                                            "variable": "$.d8219582-62d4-4908-8fe6-b9d6ccc86e33.out.fileId",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{cb53d42b-7e98-4284-af2d-30977971237f}}}",
+                                                "assertion": "notEmpty",
+                                                "expected": ""
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "09a79ff0-794d-48f4-8ec7-c3103a975770": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 4432,
+            "y": 1040,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "1e34dab9-940e-43a3-902b-c3a3b1322155": [
+                        "out"
+                    ],
+                    "378d69a6-437b-4d1e-819e-474fb99a2dfb": [
+                        "out"
+                    ],
+                    "9ae0f64b-b9a3-4028-9530-bb533ed53561": [
+                        "out"
+                    ],
+                    "03a8c06b-59c9-4e17-b177-ebb3f2dc823c": [
+                        "out"
+                    ],
+                    "5b84f9aa-1e8e-4cfd-9f17-3c53416f678c": [
+                        "out"
+                    ],
+                    "415cb062-adac-4f73-b65e-e63e8aa5636b": [
+                        "out"
+                    ],
+                    "5dcfb5fb-a3b2-477e-8094-4b4e6a9eee24": [
+                        "out"
+                    ],
+                    "baf1acad-4883-403c-bb1d-2d7389048f56": [
+                        "out"
+                    ],
+                    "22c794e4-a655-49b0-9dad-c27ab9298e4f": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 180
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "e7d4cee8-0741-426f-ad2c-827c6983bc2f": {
+            "type": "appmixer.greenhouse.core.DeleteCandidate",
+            "x": 4640,
+            "y": 1040,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "09a79ff0-794d-48f4-8ec7-c3103a975770": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "09a79ff0-794d-48f4-8ec7-c3103a975770": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "candidateId": {
+                                        "7d8c4f16-8f42-49cb-99ac-3b87cf53005f": {
+                                            "variable": "$.e53426e3-3899-4b80-89fc-9e76371a58ba.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "candidateId": "{{{7d8c4f16-8f42-49cb-99ac-3b87cf53005f}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "35240cd6-8bda-4646-b99a-4ed319ca3788": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 4848,
+            "y": 1040,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "e7d4cee8-0741-426f-ad2c-827c6983bc2f": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "successStoreId": "64f6f1f9193228000754082f",
+                    "failedStoreId": "64f6f1f0193228000754082e"
+                },
+                "transform": {
+                    "in": {
+                        "e7d4cee8-0741-426f-ad2c-827c6983bc2f": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "4b4692bb-4669-4014-a593-571a4b9aec70": {
+                                            "variable": "$.09a79ff0-794d-48f4-8ec7-c3103a975770.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E Greenhouse - applications",
+                                    "result": "{{{4b4692bb-4669-4014-a593-571a4b9aec70}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        }
+    },
+    "notes": {
+        "524a61c0-8521-4dfe-afa8-df11fd0d4394": {
+            "x": 64,
+            "y": 400,
+            "width": 672,
+            "height": 224,
+            "content": "## ⚠️ Test data assumption\n\nThe flow needs **at least one open job** in Greenhouse whose interview plan has at least two stages (every plan starts with Application Review). It creates a candidate with an application on the first open job, advances it to the next stage, rejects it with the first rejection reason and deletes the candidate at the end. No rejection email is sent. List Offers stores the offers to a CSV file, so it passes even when the account has no offers.\n\nThe API credential needs the candidate, application, job, job stage, rejection reason and offer permissions."
+        }
+    }
+}

@@ -1,0 +1,158 @@
+{
+    "name": "appmixer.greenhouse.core.FindApplications",
+    "label": "Find Applications",
+    "description": "Find applications by candidate, job, status or the time they were updated. Returns up to 500 applications, newest first.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:greenhouse"
+    },
+    "quota": {
+        "manager": "appmixer:greenhouse",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "candidateId": {
+                        "type": "string"
+                    },
+                    "jobId": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "",
+                            "in_process",
+                            "rejected",
+                            "hired",
+                            "converted"
+                        ]
+                    },
+                    "updatedAfter": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "outputType": {
+                        "type": "string",
+                        "default": "array"
+                    }
+                }
+            },
+            "inspector": {
+                "inputs": {
+                    "candidateId": {
+                        "type": "text",
+                        "index": 1,
+                        "label": "Candidate ID",
+                        "tooltip": "Return the applications of this candidate."
+                    },
+                    "jobId": {
+                        "type": "text",
+                        "index": 2,
+                        "label": "Job",
+                        "tooltip": "Pick a job, or type the Job ID, to return the applications on it.",
+                        "source": {
+                            "url": "/component/appmixer/greenhouse/core/FindJobs?outPort=out",
+                            "data": {
+                                "messages": {
+                                    "in/outputType": "array"
+                                },
+                                "properties": {
+                                    "isSource": true
+                                },
+                                "transform": "./FindJobs#toSelectArray"
+                            }
+                        }
+                    },
+                    "status": {
+                        "type": "select",
+                        "index": 3,
+                        "label": "Status",
+                        "tooltip": "Return only applications with this status.",
+                        "options": [
+                            {
+                                "label": "All",
+                                "value": ""
+                            },
+                            {
+                                "label": "In Process",
+                                "value": "in_process"
+                            },
+                            {
+                                "label": "Rejected",
+                                "value": "rejected"
+                            },
+                            {
+                                "label": "Hired",
+                                "value": "hired"
+                            },
+                            {
+                                "label": "Converted",
+                                "value": "converted"
+                            }
+                        ]
+                    },
+                    "updatedAfter": {
+                        "type": "date-time",
+                        "index": 4,
+                        "label": "Updated After",
+                        "tooltip": "Return applications updated at or after this time."
+                    },
+                    "outputType": {
+                        "type": "select",
+                        "label": "Output Type",
+                        "index": 5,
+                        "defaultValue": "array",
+                        "tooltip": "Choose whether you want to receive the result set as one complete list, or first item only or one item at a time or stream the items to a file.",
+                        "options": [
+                            {
+                                "label": "First Item Only",
+                                "value": "first"
+                            },
+                            {
+                                "label": "All items at once",
+                                "value": "array"
+                            },
+                            {
+                                "label": "One item at a time",
+                                "value": "object"
+                            },
+                            {
+                                "label": "Store to CSV file",
+                                "value": "file"
+                            }
+                        ]
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "source": {
+                "url": "/component/appmixer/greenhouse/core/FindApplications?outPort=out&ignoreAuth=true",
+                "data": {
+                    "properties": {
+                        "generateOutputPortOptions": true
+                    },
+                    "messages": {
+                        "in/outputType": "inputs/in/outputType"
+                    }
+                }
+            }
+        },
+        {
+            "name": "notFound"
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB2aWV3Qm94PSIwIDAgMjQgMjQiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHRpdGxlPkdyZWVuaG91c2U8L3RpdGxlPjxwYXRoIGZpbGw9IiMyNEE0N0YiIGQ9Ik0xNi4yNzkgNy4xM2MwIDEuMTYtLjQ5IDIuMTg1LTEuMjkzIDIuOTg3LS44OTEuODkxLTIuMTg0IDEuMTE0LTIuMTg0IDEuODcyIDAgMS4wMjUgMS42NS43MTMgMy4yMzEgMi4yOTUgMS4wNDggMS4wNDcgMS42OTQgMi40MyAxLjY5NCA0LjAzNEMxNy43MjcgMjEuNDgyIDE1LjE4NyAyNCAxMiAyNGMtMy4xODcgMC01LjcyNy0yLjUxOC01LjcyNy01LjY4IDAtMS42MDcuNjQ2LTIuOTg5IDEuNjk0LTQuMDM2IDEuNTgyLTEuNTgyIDMuMjMtMS4yNyAzLjIzLTIuMjk1IDAtLjc1OC0xLjI5Mi0uOTgtMi4xODMtMS44NzItLjgwMi0uODAyLTEuMjkzLTEuODI3LTEuMjkzLTMuMDMgMC0yLjMxOCAxLjg5NS00LjE5IDQuMjEyLTQuMTkuNDQ2IDAgLjg0Ny4wNjcgMS4xODEuMDY3LjYwMiAwIC45MTQtLjI2OC45MTQtLjY5MSAwLS4yNDUtLjExMi0uNTU3LS4xMTItLjg5MSAwLS43NTguNjQ3LTEuMzgyIDEuNDI3LTEuMzgyczEuNDA0LjY0NiAxLjQwNCAxLjQyNmMwIC44MjUtLjY0NyAxLjIwNC0xLjEzNyAxLjM4Mi0uNDAxLjEzNC0uNzEzLjMxMi0uNzEzLjcxMyAwIC43NTggMS4zODIgMS40OTMgMS4zODIgMy42MXptLS40NDYgMTEuMTljMC0yLjIwNi0xLjYyNy0zLjk5LTMuODMzLTMuOTktMi4yMDYgMC0zLjgzMyAxLjc4NC0zLjgzMyAzLjk5IDAgMi4xODQgMS42MjcgMy45ODkgMy44MzMgMy45ODkgMi4yMDYgMCAzLjgzMy0xLjgwOCAzLjgzMy0zLjk5ek0xNC41MTggNy4wODZjMC0xLjQwNC0xLjEzNi0yLjU2Mi0yLjUxOC0yLjU2MlM5LjQ4MiA1LjY4MiA5LjQ4MiA3LjA4NiAxMC42MTggOS42NSAxMiA5LjY1czIuNTE4LTEuMTU5IDIuNTE4LTIuNTYzeiIvPjwvc3ZnPg=="
+}

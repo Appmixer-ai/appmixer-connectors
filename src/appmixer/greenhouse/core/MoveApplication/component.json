@@ -1,0 +1,126 @@
+{
+    "name": "appmixer.greenhouse.core.MoveApplication",
+    "label": "Move Application",
+    "description": "Move an application to another interview stage. Leave Stage and Transfer To Job empty to advance the application to the next stage of its job. Pick a stage to move it within its job, or a job to transfer it to the first stage of that job. Stage transition rules configured in Greenhouse, such as automated emails, run as usual.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:greenhouse"
+    },
+    "quota": {
+        "manager": "appmixer:greenhouse",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "applicationId": {
+                        "type": "string"
+                    },
+                    "jobId": {
+                        "type": "string"
+                    },
+                    "toStageId": {
+                        "type": "string"
+                    },
+                    "toJobId": {
+                        "type": "string"
+                    },
+                    "fromStageId": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "applicationId"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "applicationId": {
+                        "type": "text",
+                        "index": 1,
+                        "label": "Application ID",
+                        "tooltip": "The ID of the application. Use Find Applications to look it up."
+                    },
+                    "jobId": {
+                        "type": "text",
+                        "index": 2,
+                        "label": "Job Of The Stage List",
+                        "tooltip": "Only used to load the stage list of the Stage field below: pick the job of the application (or the job you transfer it to). It is not sent to Greenhouse.",
+                        "source": {
+                            "url": "/component/appmixer/greenhouse/core/FindJobs?outPort=out",
+                            "data": {
+                                "messages": {
+                                    "in/outputType": "array"
+                                },
+                                "properties": {
+                                    "isSource": true
+                                },
+                                "transform": "./FindJobs#toSelectArray"
+                            }
+                        }
+                    },
+                    "toStageId": {
+                        "type": "text",
+                        "index": 3,
+                        "label": "Stage",
+                        "tooltip": "The interview stage to move the application to. Pick a stage (choose the job above first), or type the Job Interview Stage ID. Leave empty to advance to the next stage.",
+                        "source": {
+                            "url": "/component/appmixer/greenhouse/core/ListJobStages?outPort=out",
+                            "data": {
+                                "messages": {
+                                    "in/outputType": "array",
+                                    "in/jobId": "inputs/in/jobId"
+                                },
+                                "properties": {
+                                    "isSource": true
+                                },
+                                "transform": "./ListJobStages#toSelectArray"
+                            }
+                        }
+                    },
+                    "toJobId": {
+                        "type": "text",
+                        "index": 4,
+                        "label": "Transfer To Job",
+                        "tooltip": "Transfer the application to another job. It lands on that job's first interview stage, or on Stage when you pick one of the new job's stages.",
+                        "source": {
+                            "url": "/component/appmixer/greenhouse/core/FindJobs?outPort=out",
+                            "data": {
+                                "messages": {
+                                    "in/outputType": "array"
+                                },
+                                "properties": {
+                                    "isSource": true
+                                },
+                                "transform": "./FindJobs#toSelectArray"
+                            }
+                        }
+                    },
+                    "fromStageId": {
+                        "type": "text",
+                        "index": 5,
+                        "label": "Current Stage ID",
+                        "tooltip": "Greenhouse moves the application only when this matches its current stage, a guard against moving it twice. Leave empty to use the application's current job interview stage."
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "schema": {
+                "type": "object",
+                "properties": {}
+            }
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB2aWV3Qm94PSIwIDAgMjQgMjQiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHRpdGxlPkdyZWVuaG91c2U8L3RpdGxlPjxwYXRoIGZpbGw9IiMyNEE0N0YiIGQ9Ik0xNi4yNzkgNy4xM2MwIDEuMTYtLjQ5IDIuMTg1LTEuMjkzIDIuOTg3LS44OTEuODkxLTIuMTg0IDEuMTE0LTIuMTg0IDEuODcyIDAgMS4wMjUgMS42NS43MTMgMy4yMzEgMi4yOTUgMS4wNDggMS4wNDcgMS42OTQgMi40MyAxLjY5NCA0LjAzNEMxNy43MjcgMjEuNDgyIDE1LjE4NyAyNCAxMiAyNGMtMy4xODcgMC01LjcyNy0yLjUxOC01LjcyNy01LjY4IDAtMS42MDcuNjQ2LTIuOTg5IDEuNjk0LTQuMDM2IDEuNTgyLTEuNTgyIDMuMjMtMS4yNyAzLjIzLTIuMjk1IDAtLjc1OC0xLjI5Mi0uOTgtMi4xODMtMS44NzItLjgwMi0uODAyLTEuMjkzLTEuODI3LTEuMjkzLTMuMDMgMC0yLjMxOCAxLjg5NS00LjE5IDQuMjEyLTQuMTkuNDQ2IDAgLjg0Ny4wNjcgMS4xODEuMDY3LjYwMiAwIC45MTQtLjI2OC45MTQtLjY5MSAwLS4yNDUtLjExMi0uNTU3LS4xMTItLjg5MSAwLS43NTguNjQ3LTEuMzgyIDEuNDI3LTEuMzgyczEuNDA0LjY0NiAxLjQwNCAxLjQyNmMwIC44MjUtLjY0NyAxLjIwNC0xLjEzNyAxLjM4Mi0uNDAxLjEzNC0uNzEzLjMxMi0uNzEzLjcxMyAwIC43NTggMS4zODIgMS40OTMgMS4zODIgMy42MXptLS40NDYgMTEuMTljMC0yLjIwNi0xLjYyNy0zLjk5LTMuODMzLTMuOTktMi4yMDYgMC0zLjgzMyAxLjc4NC0zLjgzMyAzLjk5IDAgMi4xODQgMS42MjcgMy45ODkgMy44MzMgMy45ODkgMi4yMDYgMCAzLjgzMy0xLjgwOCAzLjgzMy0zLjk5ek0xNC41MTggNy4wODZjMC0xLjQwNC0xLjEzNi0yLjU2Mi0yLjUxOC0yLjU2MlM5LjQ4MiA1LjY4MiA5LjQ4MiA3LjA4NiAxMC42MTggOS42NSAxMiA5LjY1czIuNTE4LTEuMTU5IDIuNTE4LTIuNTYzeiIvPjwvc3ZnPg=="
+}
