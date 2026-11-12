@@ -2,7 +2,16 @@
 
 const lib = require('../../lib');
 
-const ITEM_SCHEMA = require('../../schemas/organization.json');
+const ITEM_SCHEMA = {
+    type: 'object',
+    required: ['id', 'name'],
+    properties: {
+        id: { type: 'string', title: 'Organization ID', example: '5e7a1b2c3d4e5f6a7b8c9d0e' },
+        name: { type: 'string', title: 'Name', example: 'My Company' },
+        ownerEmail: { type: 'string', title: 'Owner Email', example: 'owner@example.com' },
+        channelCount: { type: 'integer', title: 'Channel Count', example: 3 }
+    }
+};
 
 module.exports = {
 

@@ -59,13 +59,6 @@ const IDEA_FIELDS = `
     content { title text }
 `;
 
-// Item contracts, one per entity, shared by the static and the dynamic output ports.
-// Plain JSON so that the offline validators can read them.
-const POST_ITEM_SCHEMA = require('./schemas/post.json');
-const CHANNEL_ITEM_SCHEMA = require('./schemas/channel.json');
-const ORGANIZATION_ITEM_SCHEMA = require('./schemas/organization.json');
-const IDEA_ITEM_SCHEMA = require('./schemas/idea.json');
-
 const TYPENAME = '__typename';
 
 // GraphQL error codes that retrying cannot fix.
@@ -522,10 +515,6 @@ module.exports = {
     POST_FIELDS,
     CHANNEL_FIELDS,
     IDEA_FIELDS,
-    POST_ITEM_SCHEMA,
-    CHANNEL_ITEM_SCHEMA,
-    ORGANIZATION_ITEM_SCHEMA,
-    IDEA_ITEM_SCHEMA,
 
     authHeaders,
     graphql,
