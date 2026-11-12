@@ -5,6 +5,11 @@ const ITEM_SCHEMA = require('../../item-schemas.json').deal;
 
 const subscriptionType = 'deal.propertyChange';
 
+// HubSpot sends propertyChange events for the initial values of a new deal, stamped with the creation time.
+// They can arrive before the deal.creation event the plugin uses to drop them, so they are also recognised here
+// by their occurredAt: an event that occurred within this window after the deal's createdAt is part of the creation.
+const CREATION_WINDOW_MS = 1000;
+
 class UpdatedDeal extends BaseSubscriptionComponent {
 
     async receive(context) {
@@ -64,6 +69,12 @@ class UpdatedDeal extends BaseSubscriptionComponent {
 
         const results = [];
         data.results.forEach((deal) => {
+            const createdAt = Date.parse(deal.createdAt);
+            const occurredAt = Number(events[deal.id]?.occurredAt);
+            if (createdAt && occurredAt && occurredAt <= createdAt + CREATION_WINDOW_MS) {
+                // The event carries the deal's initial values (creation), not an update.
+                return;
+            }
             if (deal.updatedAt !== deal.createdAt) {
                 // Filter by pipeline if configured
                 if (filterPipeline && deal.properties?.pipeline !== filterPipeline) {

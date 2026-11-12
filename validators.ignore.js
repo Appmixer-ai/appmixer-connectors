@@ -341,14 +341,18 @@ module.exports = [
             'hubspot/crm/NewContactInList/component.json',
             'hubspot/crm/CreateCompany/component.json',
             'hubspot/crm/CreateDeal/component.json',
+            'hubspot/crm/CreateTicket/component.json',
             'hubspot/crm/FindCompanies/component.json',
             'hubspot/crm/FindContacts/component.json',
+            'hubspot/crm/GetCompany/component.json',
             'hubspot/crm/GetContact/component.json',
             'hubspot/crm/GetDeal/component.json',
             'hubspot/crm/ListContacts/component.json',
             'hubspot/crm/ListDeals/component.json',
+            'hubspot/crm/NewCompany/component.json',
             'hubspot/crm/NewContact/component.json',
             'hubspot/crm/NewDeal/component.json',
+            'hubspot/crm/NewTicket/component.json',
             'hubspot/crm/UpdateCompany/component.json',
             'hubspot/crm/UpdateContact/component.json',
             'hubspot/crm/UpdateDeal/component.json',
@@ -356,7 +360,7 @@ module.exports = [
             'hubspot/crm/UpdatedDeal/component.json',
             'hubspot/engagements/FindNotes/component.json'
         ],
-        reason: 'Every hubspot dynamic outPort source resolves through the live HubSpot properties API (GetContactsProperties / GetDealsProperties / GetCompaniesProperties, either directly or via componentStaticCall inside the component\'s own generateOutputPortOptions). These calls need an authenticated session; adding ignoreAuth=true would make the dropdown request unauthenticated and fail with 500 Invalid URL chips in the designer.'
+        reason: 'Every hubspot dynamic outPort source resolves through the live HubSpot properties API (GetContactsProperties / GetDealsProperties / GetCompaniesProperties / GetTicketsProperties, either directly or via componentStaticCall inside the component\'s own generateOutputPortOptions). These calls need an authenticated session; adding ignoreAuth=true would make the dropdown request unauthenticated and fail with 500 Invalid URL chips in the designer.'
     },
     {
         validator: 'dynamic-outport-required-inputs',

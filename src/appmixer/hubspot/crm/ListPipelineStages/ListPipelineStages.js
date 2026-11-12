@@ -6,7 +6,7 @@ module.exports = {
     async receive(context) {
 
         const {
-            pipelineId, isSource
+            pipelineId, isSource, objectType = 'deals'
         } = context.messages.in.content;
 
         if (isSource && !pipelineId) {
@@ -17,10 +17,8 @@ module.exports = {
         const { auth } = context;
         const hs = new Hubspot(auth.accessToken, context.config, context.httpRequest);
 
-        const objectType = 'deals';
-
         try {
-            const { data } = await hs.call('get', `crm/v3/pipelines/${objectType}/${pipelineId}/stages`);
+            const { data } = await hs.call('get', `crm/v3/pipelines/${encodeURIComponent(objectType || 'deals')}/${encodeURIComponent(pipelineId)}/stages`);
 
             return context.sendJson({ stages: data.results }, 'out');
         } catch (err) {

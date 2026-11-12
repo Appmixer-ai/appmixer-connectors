@@ -1,0 +1,107 @@
+{
+    "name": "appmixer.hubspot.crm.GetCompany",
+    "author": "Appmixer <info@appmixer.com>",
+    "icon": "data:image/svg+xml;base64,PHN2ZyBoZWlnaHQ9IjI1MDAiIHZpZXdCb3g9IjYuMjA4NTYyODMgLjY0NDk4ODI0IDI0NC4yNjk0MzcxNyAyNTEuMjQ3MDExNzYiIHdpZHRoPSIyNTAwIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxwYXRoIGQ9Im0xOTEuMzg1IDg1LjY5NHYtMjkuNTA2YTIyLjcyMiAyMi43MjIgMCAwIDAgMTMuMTAxLTIwLjQ4di0uNjc3YzAtMTIuNTQ5LTEwLjE3My0yMi43MjItMjIuNzIxLTIyLjcyMmgtLjY3OGMtMTIuNTQ5IDAtMjIuNzIyIDEwLjE3My0yMi43MjIgMjIuNzIydi42NzdhMjIuNzIyIDIyLjcyMiAwIDAgMCAxMy4xMDEgMjAuNDh2MjkuNTA2YTY0LjM0MiA2NC4zNDIgMCAwIDAgLTMwLjU5NCAxMy40N2wtODAuOTIyLTYzLjAzYy41NzctMi4wODMuODc4LTQuMjI1LjkxMi02LjM3NWEyNS42IDI1LjYgMCAxIDAgLTI1LjYzMyAyNS41NSAyNS4zMjMgMjUuMzIzIDAgMCAwIDEyLjYwNy0zLjQzbDc5LjY4NSA2Mi4wMDdjLTE0LjY1IDIyLjEzMS0xNC4yNTggNTAuOTc0Ljk4NyA3Mi43bC0yNC4yMzYgMjQuMjQzYy0xLjk2LS42MjYtNC0uOTU5LTYuMDU3LS45ODctMTEuNjA3LjAxLTIxLjAxIDkuNDIzLTIxLjAwNyAyMS4wMy4wMDMgMTEuNjA2IDkuNDEyIDIxLjAxNCAyMS4wMTggMjEuMDE3IDExLjYwNy4wMDMgMjEuMDItOS40IDIxLjAzLTIxLjAwN2EyMC43NDcgMjAuNzQ3IDAgMCAwIC0uOTg4LTYuMDU2bDIzLjk3Ni0yMy45ODVjMjEuNDIzIDE2LjQ5MiA1MC44NDYgMTcuOTEzIDczLjc1OSAzLjU2MiAyMi45MTItMTQuMzUyIDM0LjQ3NS00MS40NDYgMjguOTg1LTY3LjkxOC01LjQ5LTI2LjQ3My0yNi44NzMtNDYuNzM0LTUzLjYwMy01MC43OTJtLTkuOTM4IDk3LjA0NGEzMy4xNyAzMy4xNyAwIDEgMSAwLTY2LjMxNmMxNy44NS42MjUgMzIgMTUuMjcyIDMyLjAxIDMzLjEzNC4wMDggMTcuODYtMTQuMTI3IDMyLjUyMi0zMS45NzcgMzMuMTY1IiBmaWxsPSIjZmY3YTU5Ii8+PC9zdmc+",
+    "description": "Get a company by its ID or by the value of a unique identifier property.",
+    "version": "1.0.0",
+    "private": false,
+    "auth": {
+        "service": "appmixer:hubspot"
+    },
+    "quota": {
+        "manager": "appmixer:hubspot",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "companyId": {
+                        "type": "string"
+                    },
+                    "idProperty": {
+                        "type": "string"
+                    },
+                    "properties": {
+                        "type": "string"
+                    },
+                    "associations": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "companyId"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "companyId": {
+                        "type": "text",
+                        "label": "Company ID",
+                        "tooltip": "The record ID of the company, or the value of the unique property set in ID Property.",
+                        "index": 1
+                    },
+                    "idProperty": {
+                        "type": "text",
+                        "label": "ID Property",
+                        "tooltip": "Optional. The name of a property with unique values to look the company up by, instead of the record ID. HubSpot only accepts unique identifier properties here; to look a company up by its domain, use Find Companies.",
+                        "index": 2
+                    },
+                    "properties": {
+                        "type": "text",
+                        "label": "Properties",
+                        "tooltip": "A comma separated list of the properties to be returned in the response. If not specified, the default company properties are returned.",
+                        "source": {
+                            "url": "/component/appmixer/hubspot/crm/GetCompaniesProperties?outPort=out",
+                            "data": {
+                                "transform": "./GetCompaniesProperties#companyToLabelNameArray"
+                            }
+                        },
+                        "index": 3
+                    },
+                    "associations": {
+                        "type": "text",
+                        "label": "Associations",
+                        "tooltip": "A comma separated list of object types to retrieve associated IDs for, e.g. <code>contacts,deals</code>. Learn more about the <a href=\"https://developers.hubspot.com/docs/api-reference/crm-associations-v4/guide\" target=\"_blank\">associations API</a>.",
+                        "index": 4
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "company",
+            "source": {
+                "url": "/component/appmixer/hubspot/crm/GetCompaniesProperties?outPort=out",
+                "data": {
+                    "transform": "./GetCompaniesProperties#companyToSelectArray",
+                    "messages": {
+                        "in/companyId": "dummy"
+                    }
+                }
+            }
+        },
+        {
+            "name": "notFound",
+            "options": [
+                {
+                    "label": "Company ID",
+                    "value": "companyId",
+                    "schema": {
+                        "type": "string",
+                        "example": "18234567890"
+                    }
+                }
+            ]
+        }
+    ],
+    "dependencies": {
+        "service": "1.0.1"
+    }
+}

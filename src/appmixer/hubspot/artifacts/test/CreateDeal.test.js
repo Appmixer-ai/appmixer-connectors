@@ -72,5 +72,25 @@ describe('CreateDeal', () => {
         assert.equal(createDealArgs[0], 'post', 'Should call post method');
         assert.equal(createDealArgs[1], 'crm/v3/objects/deals', 'Should call correct endpoint');
         assert.deepEqual(createDealArgs[2].properties, expectedData, 'Should send custom properties to HubSpot');
+        assert.equal(createDealArgs[2].associations, undefined, 'Should send no associations when none are set');
+    });
+
+    it('should associate the deal with contacts and companies', async function() {
+
+        context.messages.in.content = {
+            dealname: 'My Deal',
+            contactIds: '101,102',
+            companyIds: '201'
+        };
+        hubspotStub.resolves({ data: { id: '1' } });
+
+        await CreateDeal.receive(context);
+
+        const { associations } = hubspotStub.getCall(0).args[2];
+        assert.deepEqual(associations, [
+            { to: { id: '101' }, types: [{ associationCategory: 'HUBSPOT_DEFINED', associationTypeId: 3 }] },
+            { to: { id: '102' }, types: [{ associationCategory: 'HUBSPOT_DEFINED', associationTypeId: 3 }] },
+            { to: { id: '201' }, types: [{ associationCategory: 'HUBSPOT_DEFINED', associationTypeId: 341 }] }
+        ]);
     });
 });

@@ -1,0 +1,784 @@
+{
+    "name": "E2E HubSpot - GetCompany, CreateAssociation and CreateDeal associations",
+    "description": "Gets a created company, associates a contact with it and creates a deal associated with both, then cleans up.",
+    "flow": {
+        "2befe938-bca7-496e-a234-25dd86e3335a": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 304,
+            "version": "1.0.0",
+            "source": {},
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {}
+        },
+        "9deefae9-d822-4fad-ba1f-a7345b71af33": {
+            "type": "appmixer.hubspot.crm.CreateCompany",
+            "x": 272,
+            "y": 304,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "2befe938-bca7-496e-a234-25dd86e3335a": [
+                        "out"
+                    ]
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "2befe938-bca7-496e-a234-25dd86e3335a": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "domain": {
+                                        "b9ebb8b0-0140-4e50-8b8c-dd886ee64ea7": {
+                                            "functions": [
+                                                {
+                                                    "name": "g_timestamp"
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "name": {
+                                        "3cf59595-ed59-4b7c-8cfc-e270cb99cde8": {
+                                            "functions": [
+                                                {
+                                                    "name": "g_timestamp"
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "domain": "e2e-{{{b9ebb8b0-0140-4e50-8b8c-dd886ee64ea7}}}.example.com",
+                                    "name": "E2E Company {{{3cf59595-ed59-4b7c-8cfc-e270cb99cde8}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "67f9eae3-d134-4a07-88e7-76b28c72c817": {
+            "type": "appmixer.hubspot.crm.GetCompany",
+            "x": 480,
+            "y": 304,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "9deefae9-d822-4fad-ba1f-a7345b71af33": [
+                        "out"
+                    ]
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "9deefae9-d822-4fad-ba1f-a7345b71af33": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "companyId": {
+                                        "43712ac3-2a40-4683-9c90-548c7629279e": {
+                                            "variable": "$.9deefae9-d822-4fad-ba1f-a7345b71af33.out.properties.hs_object_id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "properties": {}
+                                },
+                                "lambda": {
+                                    "companyId": "{{{43712ac3-2a40-4683-9c90-548c7629279e}}}",
+                                    "properties": "name,domain,hs_object_id"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "8f7b6357-33d7-475f-a5ba-f856e44360a5": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 688,
+            "y": 304,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "67f9eae3-d134-4a07-88e7-76b28c72c817": [
+                        "company"
+                    ]
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "67f9eae3-d134-4a07-88e7-76b28c72c817": {
+                            "company": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "3b258b8c-50df-4bc7-8420-3593dc4cd09b": {
+                                            "variable": "$.67f9eae3-d134-4a07-88e7-76b28c72c817.company.properties.name",
+                                            "functions": []
+                                        },
+                                        "d4ffca36-c6a9-45f6-b70d-c3872bdd3a8b": {
+                                            "variable": "$.67f9eae3-d134-4a07-88e7-76b28c72c817.company.properties.domain",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{3b258b8c-50df-4bc7-8420-3593dc4cd09b}}}",
+                                                "assertion": "regex",
+                                                "regex": "^E2E Company [0-9]+$"
+                                            },
+                                            {
+                                                "field": "{{{d4ffca36-c6a9-45f6-b70d-c3872bdd3a8b}}}",
+                                                "assertion": "regex",
+                                                "regex": "^e2e-[0-9]+\\.example\\.com$"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "0d855953-7ea6-4fac-9a36-816584e0f806": {
+            "type": "appmixer.hubspot.crm.CreateContact",
+            "x": 480,
+            "y": 432,
+            "version": "1.0.2",
+            "source": {
+                "in": {
+                    "9deefae9-d822-4fad-ba1f-a7345b71af33": [
+                        "out"
+                    ]
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "9deefae9-d822-4fad-ba1f-a7345b71af33": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "email": {
+                                        "305da4bf-3867-45a1-a5bd-82f7fe1e1e79": {
+                                            "functions": [
+                                                {
+                                                    "name": "g_timestamp"
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "firstname": {},
+                                    "lastname": {}
+                                },
+                                "lambda": {
+                                    "email": "e2e-association-{{{305da4bf-3867-45a1-a5bd-82f7fe1e1e79}}}@example.org",
+                                    "firstname": "E2E",
+                                    "lastname": "Association"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "cef5b4bf-cd1f-49b7-ac48-d0b9b32a166b": {
+            "type": "appmixer.hubspot.crm.CreateAssociation",
+            "x": 688,
+            "y": 432,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "0d855953-7ea6-4fac-9a36-816584e0f806": [
+                        "contact"
+                    ]
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "0d855953-7ea6-4fac-9a36-816584e0f806": {
+                            "contact": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "fromObjectType": {},
+                                    "fromObjectId": {
+                                        "81e831c2-04e6-4949-9d26-0430f357fdc1": {
+                                            "variable": "$.0d855953-7ea6-4fac-9a36-816584e0f806.contact.id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "toObjectType": {},
+                                    "toObjectId": {
+                                        "0d6d7f0b-1502-416c-9614-b957dfb4529d": {
+                                            "variable": "$.9deefae9-d822-4fad-ba1f-a7345b71af33.out.properties.hs_object_id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "fromObjectType": "0-1",
+                                    "fromObjectId": "{{{81e831c2-04e6-4949-9d26-0430f357fdc1}}}",
+                                    "toObjectType": "0-2",
+                                    "toObjectId": "{{{0d6d7f0b-1502-416c-9614-b957dfb4529d}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "6b425042-8f74-4c6b-a148-7fa5b7508c3b": {
+            "type": "appmixer.hubspot.core.MakeApiCall",
+            "x": 896,
+            "y": 432,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "cef5b4bf-cd1f-49b7-ac48-d0b9b32a166b": [
+                        "out"
+                    ]
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "cef5b4bf-cd1f-49b7-ac48-d0b9b32a166b": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "url": {
+                                        "1231e766-6fee-4efb-8a00-d12519057acc": {
+                                            "variable": "$.0d855953-7ea6-4fac-9a36-816584e0f806.contact.id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "method": {}
+                                },
+                                "lambda": {
+                                    "url": "/crm/v4/objects/0-1/{{{1231e766-6fee-4efb-8a00-d12519057acc}}}/associations/0-2",
+                                    "method": "GET"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "09338424-29b2-4ff7-a438-d9c995a69222": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1104,
+            "y": 432,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "6b425042-8f74-4c6b-a148-7fa5b7508c3b": [
+                        "out"
+                    ]
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "6b425042-8f74-4c6b-a148-7fa5b7508c3b": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "b25d33a8-d230-448c-8c39-a8cc5afb36b9": {
+                                            "variable": "$.cef5b4bf-cd1f-49b7-ac48-d0b9b32a166b.out.toObjectType",
+                                            "functions": []
+                                        },
+                                        "1c5c5e3b-11c8-46e9-a10d-dd6d8b9bbf46": {
+                                            "variable": "$.6b425042-8f74-4c6b-a148-7fa5b7508c3b.out.body",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$.results[0].toObjectId"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{b25d33a8-d230-448c-8c39-a8cc5afb36b9}}}",
+                                                "assertion": "equal",
+                                                "expected": "0-2"
+                                            },
+                                            {
+                                                "field": "{{{1c5c5e3b-11c8-46e9-a10d-dd6d8b9bbf46}}}",
+                                                "assertion": "regex",
+                                                "regex": "^[0-9]+$"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "46c4f966-f404-4686-8812-284673e35942": {
+            "type": "appmixer.hubspot.crm.CreateDeal",
+            "x": 896,
+            "y": 560,
+            "version": "1.0.4",
+            "source": {
+                "in": {
+                    "cef5b4bf-cd1f-49b7-ac48-d0b9b32a166b": [
+                        "out"
+                    ]
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "cef5b4bf-cd1f-49b7-ac48-d0b9b32a166b": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "dealname": {
+                                        "457e28a7-05bb-45e6-9692-65f3cb1c1fc6": {
+                                            "functions": [
+                                                {
+                                                    "name": "g_timestamp"
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "amount": {},
+                                    "contactIds": {
+                                        "9edd375e-8716-4176-a34d-942a480d4710": {
+                                            "variable": "$.0d855953-7ea6-4fac-9a36-816584e0f806.contact.id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "companyIds": {
+                                        "fb8602a0-0f4c-4ebe-a47c-5caab9dc7fc8": {
+                                            "variable": "$.9deefae9-d822-4fad-ba1f-a7345b71af33.out.properties.hs_object_id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "dealname": "E2E Associated Deal {{{457e28a7-05bb-45e6-9692-65f3cb1c1fc6}}}",
+                                    "amount": "100",
+                                    "contactIds": "{{{9edd375e-8716-4176-a34d-942a480d4710}}}",
+                                    "companyIds": "{{{fb8602a0-0f4c-4ebe-a47c-5caab9dc7fc8}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "7a5f4716-86a9-4f05-b919-618ef5486071": {
+            "type": "appmixer.hubspot.core.MakeApiCall",
+            "x": 1104,
+            "y": 560,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "46c4f966-f404-4686-8812-284673e35942": [
+                        "newDeal"
+                    ]
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "46c4f966-f404-4686-8812-284673e35942": {
+                            "newDeal": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "url": {
+                                        "c6ba8c61-e53c-4fd7-aa29-aa40d7b96636": {
+                                            "variable": "$.46c4f966-f404-4686-8812-284673e35942.newDeal.properties.hs_object_id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "method": {}
+                                },
+                                "lambda": {
+                                    "url": "/crm/v4/objects/0-3/{{{c6ba8c61-e53c-4fd7-aa29-aa40d7b96636}}}/associations/0-2",
+                                    "method": "GET"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "f8619c08-7169-4981-a821-d434445a0425": {
+            "type": "appmixer.hubspot.core.MakeApiCall",
+            "x": 1312,
+            "y": 560,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "7a5f4716-86a9-4f05-b919-618ef5486071": [
+                        "out"
+                    ]
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "7a5f4716-86a9-4f05-b919-618ef5486071": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "url": {
+                                        "ae8a949e-9574-4f57-93f9-bcf6583c578e": {
+                                            "variable": "$.46c4f966-f404-4686-8812-284673e35942.newDeal.properties.hs_object_id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "method": {}
+                                },
+                                "lambda": {
+                                    "url": "/crm/v4/objects/0-3/{{{ae8a949e-9574-4f57-93f9-bcf6583c578e}}}/associations/0-1",
+                                    "method": "GET"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "e5c152fc-7806-4dc6-a806-5504b1915f7c": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1520,
+            "y": 560,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "f8619c08-7169-4981-a821-d434445a0425": [
+                        "out"
+                    ]
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "f8619c08-7169-4981-a821-d434445a0425": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "ca4fffc3-d56a-4cf6-8390-31ea18afa4fb": {
+                                            "variable": "$.7a5f4716-86a9-4f05-b919-618ef5486071.out.body",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$.results[0].toObjectId"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        },
+                                        "0e91f7f5-320e-47d3-8665-b04c07f0a2e2": {
+                                            "variable": "$.f8619c08-7169-4981-a821-d434445a0425.out.body",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$.results[0].toObjectId"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{ca4fffc3-d56a-4cf6-8390-31ea18afa4fb}}}",
+                                                "assertion": "regex",
+                                                "regex": "^[0-9]+$"
+                                            },
+                                            {
+                                                "field": "{{{0e91f7f5-320e-47d3-8665-b04c07f0a2e2}}}",
+                                                "assertion": "regex",
+                                                "regex": "^[0-9]+$"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "00b17bdb-176f-4359-96ce-ee65bcd75e4b": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 1728,
+            "y": 560,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "8f7b6357-33d7-475f-a5ba-f856e44360a5": [
+                        "out"
+                    ],
+                    "09338424-29b2-4ff7-a438-d9c995a69222": [
+                        "out"
+                    ],
+                    "e5c152fc-7806-4dc6-a806-5504b1915f7c": [
+                        "out"
+                    ]
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "properties": {
+                    "timeout": 300
+                }
+            }
+        },
+        "b8313619-5334-43e0-8519-01b89290d16c": {
+            "type": "appmixer.hubspot.crm.DeleteDeal",
+            "x": 1936,
+            "y": 560,
+            "version": "1.0.1",
+            "source": {
+                "in": {
+                    "00b17bdb-176f-4359-96ce-ee65bcd75e4b": [
+                        "out"
+                    ]
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "00b17bdb-176f-4359-96ce-ee65bcd75e4b": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "dealId": {
+                                        "8d676920-6462-490c-bd52-afbe1d8a58f6": {
+                                            "variable": "$.46c4f966-f404-4686-8812-284673e35942.newDeal.properties.hs_object_id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "dealId": "{{{8d676920-6462-490c-bd52-afbe1d8a58f6}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "e7f6298d-aafc-4f79-9e8d-d26b572e510e": {
+            "type": "appmixer.hubspot.crm.DeleteContact",
+            "x": 2144,
+            "y": 560,
+            "version": "1.0.1",
+            "source": {
+                "in": {
+                    "b8313619-5334-43e0-8519-01b89290d16c": [
+                        "out"
+                    ]
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "b8313619-5334-43e0-8519-01b89290d16c": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "contactId": {
+                                        "3cc74d22-d7ab-4e13-9569-c6e1dda015d5": {
+                                            "variable": "$.0d855953-7ea6-4fac-9a36-816584e0f806.contact.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "contactId": "{{{3cc74d22-d7ab-4e13-9569-c6e1dda015d5}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "6a35f2ef-158c-4f88-a8df-c64991f657e2": {
+            "type": "appmixer.hubspot.crm.DeleteCompany",
+            "x": 2352,
+            "y": 560,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "e7f6298d-aafc-4f79-9e8d-d26b572e510e": [
+                        "out"
+                    ]
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "e7f6298d-aafc-4f79-9e8d-d26b572e510e": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "companyId": {
+                                        "3fb69152-8478-4d72-ba4a-3469b16a13b1": {
+                                            "variable": "$.9deefae9-d822-4fad-ba1f-a7345b71af33.out.properties.hs_object_id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "companyId": "{{{3fb69152-8478-4d72-ba4a-3469b16a13b1}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "be15b755-8f24-4495-95fd-21ae1f9f7501": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 2560,
+            "y": 560,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "6a35f2ef-158c-4f88-a8df-c64991f657e2": [
+                        "out"
+                    ]
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "properties": {
+                    "successStoreId": "64f6f1f9193228000754082f",
+                    "failedStoreId": "64f6f1f0193228000754082e"
+                },
+                "transform": {
+                    "in": {
+                        "6a35f2ef-158c-4f88-a8df-c64991f657e2": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "ef202f39-fe0a-4f14-9c9a-abbbce0345ae": {
+                                            "variable": "$.00b17bdb-176f-4359-96ce-ee65bcd75e4b.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E HubSpot - GetCompany, CreateAssociation and CreateDeal associations",
+                                    "result": "{{{ef202f39-fe0a-4f14-9c9a-abbbce0345ae}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "notes": {
+        "0d612e5b-fd50-4947-a850-4d3d467c916b": {
+            "x": 64,
+            "y": 32,
+            "width": 672,
+            "height": 224,
+            "content": "## ⚠️ Test data assumption\n\n- Creates its own company, contact and deal (unique names per run) and deletes them at the end.\n- The contact email is on `example.org` and the company domain on `example.com`, so HubSpot's automatic contact-to-company association by email domain does not add another company: the association the MakeApiCall checks find is the one this flow created.\n- CreateAssociation links the contact (`0-1`) to the company (`0-2`) with the default association; CreateDeal links the new deal to both through its Contact IDs / Company IDs inputs."
+        }
+    }
+}

@@ -10,7 +10,7 @@ module.exports = {
     async receive(context) {
 
         const { auth } = context;
-        const hubSpot = new HubSpot(auth.accessToken, context.config);
+        const hubSpot = new HubSpot(auth.accessToken, context.config, context.httpRequest);
         const { data } = await  hubSpot.call('get', 'crm/v3/objects/products', {}, { query: 'limit=100' });
         return context.sendJson(data.results, 'out');
     },
