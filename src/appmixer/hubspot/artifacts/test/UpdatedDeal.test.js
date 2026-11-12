@@ -77,6 +77,37 @@ describe('UpdatedDeal', () => {
         assert.equal(context.response.callCount, 1);
     });
 
+    // The propertyChange events of a new deal can arrive before its creation event and HubSpot can modify
+    // the deal (updatedAt) seconds after creating it. The event's occurredAt still marks it as part of the creation.
+    it('propertyChange of the creation is skipped even when the deal was modified since', async () => {
+
+        context.messages.webhook.content.data = {
+            '38533722674': {
+                occurredAt: Date.parse('2026-11-12T11:22:43.863Z'),
+                propertyName: 'amount',
+                propertyValue: '100'
+            }
+        };
+
+        hubspotStub.withArgs('post', 'crm/v3/objects/deals/batch/read').resolves({
+            data: {
+                results: [
+                    {
+                        id: '38533722674',
+                        createdAt: '2026-11-12T11:22:43.863Z',
+                        updatedAt: '2026-11-12T11:22:51.470Z',
+                        properties: { amount: '100' }
+                    }
+                ]
+            }
+        });
+
+        await UpdatedDeal.receive(context);
+
+        assert.equal(context.sendArray.callCount, 1);
+        assert.equal(context.sendArray.args[0][0].length, 0, 'Creation not sent as an update');
+    });
+
     it('any property change (including custom/non-standard) triggers update', async () => {
 
         context.messages.webhook.content.data = {
