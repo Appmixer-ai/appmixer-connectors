@@ -31,18 +31,24 @@ const CURATED_MODELS = {
 
 /**
  * Normalises auth fields from both validate context (fields on context directly)
- * and component context (fields under context.auth).
+ * and component context (context.auth).
+ *
+ * The auth dialog (auth.js) stores provider-specific fields under their own keys, because a
+ * field is shown for one provider only: accessKeyId and awsRegion (Amazon Bedrock), location
+ * (Google Vertex AI), azureEndpoint (Azure OpenAI). They are mapped to the common names here.
+ * Accounts connected before the dialog had conditional fields stored these values as apiKey,
+ * region and baseURL, which keep working.
  */
 function resolveAuth(context) {
 
     const src = context.auth || context;
     return {
         provider: src.provider || 'openai',
-        apiKey: src.apiKey,
+        apiKey: src.apiKey || src.accessKeyId,
         secretKey: src.secretKey,
-        region: src.region,
+        region: src.region || src.awsRegion || src.location,
         projectId: src.projectId,
-        baseURL: src.baseURL,
+        baseURL: src.baseURL || src.azureEndpoint,
         customHeaders: src.customHeaders
     };
 }
@@ -147,9 +153,30 @@ function createModel(context) {
     }
 }
 
+// Names under which the providers' model endpoints report the context window (input tokens).
+const CONTEXT_WINDOW_FIELDS = [
+    'max_input_tokens',     // Anthropic
+    'inputTokenLimit',      // Google (Gemini)
+    'context_window',       // Groq
+    'context_length',       // Together AI, Cohere, OpenRouter
+    'max_context_length',   // Mistral
+    'max_model_len'         // vLLM
+];
+
+function readContextWindow(modelInfo) {
+
+    if (!modelInfo || typeof modelInfo !== 'object') return undefined;
+    for (const field of CONTEXT_WINDOW_FIELDS) {
+        const value = Number(modelInfo[field]);
+        if (Number.isFinite(value) && value > 0) return value;
+    }
+    return undefined;
+}
+
 /**
  * List available models for the provider configured in context.auth.
- * Returns an array of { id } objects, normalised across providers.
+ * Returns an array of { id, contextWindow } objects, normalised across providers;
+ * contextWindow (input tokens) is set only where the provider reports it.
  * For providers without a public listing endpoint, returns a curated list.
  * Works in both auth-validate context (fields on context) and component context (context.auth).
  */
@@ -162,6 +189,8 @@ async function listModels(context) {
         'Authorization': `Bearer ${key}`,
         ...extraHeaders
     });
+    // contextWindow is undefined for providers that do not report it.
+    const model = (id, info) => ({ id, contextWindow: readContextWindow(info) });
 
     switch (provider) {
 
@@ -170,7 +199,7 @@ async function listModels(context) {
             'https://api.openai.com/v1/models',
             { headers: bearer(apiKey) }
         );
-        return (data.data || []).map(m => ({ id: m.id }));
+        return (data.data || []).map(m => model(m.id, m));
     }
 
     case 'openai-compatible': {
@@ -179,12 +208,12 @@ async function listModels(context) {
             `${baseURL.replace(/\/$/, '')}/models`,
             { headers: bearer(apiKey) }
         );
-        return (data.data || []).map(m => ({ id: m.id }));
+        return (data.data || []).map(m => model(m.id, m));
     }
 
     case 'anthropic': {
         const { data } = await context.httpRequest.get(
-            'https://api.anthropic.com/v1/models',
+            'https://api.anthropic.com/v1/models?limit=1000',
             {
                 headers: {
                     'x-api-key': apiKey,
@@ -193,16 +222,16 @@ async function listModels(context) {
                 }
             }
         );
-        return (data.data || []).map(m => ({ id: m.id }));
+        return (data.data || []).map(m => model(m.id, m));
     }
 
     case 'google': {
         const { data } = await context.httpRequest.get(
-            `https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`
+            `https://generativelanguage.googleapis.com/v1beta/models?pageSize=1000&key=${apiKey}`
         );
         return (data.models || [])
             .filter(m => (m.supportedGenerationMethods || []).includes('generateContent'))
-            .map(m => ({ id: m.name.replace('models/', '') }));
+            .map(m => model(m.name.replace('models/', ''), m));
     }
 
     case 'mistral': {
@@ -210,7 +239,7 @@ async function listModels(context) {
             'https://api.mistral.ai/v1/models',
             { headers: bearer(apiKey) }
         );
-        return (data.data || []).map(m => ({ id: m.id }));
+        return (data.data || []).map(m => model(m.id, m));
     }
 
     case 'xai': {
@@ -218,7 +247,7 @@ async function listModels(context) {
             'https://api.x.ai/v1/models',
             { headers: bearer(apiKey) }
         );
-        return (data.data || []).map(m => ({ id: m.id }));
+        return (data.data || []).map(m => model(m.id, m));
     }
 
     case 'cohere': {
@@ -228,7 +257,7 @@ async function listModels(context) {
         );
         return (data.models || [])
             .filter(m => (m.endpoints || []).includes('chat'))
-            .map(m => ({ id: m.name }));
+            .map(m => model(m.name, m));
     }
 
     case 'deepseek': {
@@ -236,7 +265,7 @@ async function listModels(context) {
             'https://api.deepseek.com/v1/models',
             { headers: bearer(apiKey) }
         );
-        return (data.data || []).map(m => ({ id: m.id }));
+        return (data.data || []).map(m => model(m.id, m));
     }
 
     case 'groq': {
@@ -244,7 +273,7 @@ async function listModels(context) {
             'https://api.groq.com/openai/v1/models',
             { headers: bearer(apiKey) }
         );
-        return (data.data || []).map(m => ({ id: m.id }));
+        return (data.data || []).map(m => model(m.id, m));
     }
 
     case 'togetherai': {
@@ -256,7 +285,7 @@ async function listModels(context) {
         const list = Array.isArray(data) ? data : (data.data || []);
         return list
             .filter(m => (m.type || '').toLowerCase() === 'chat' || !m.type)
-            .map(m => ({ id: m.id || m.name }));
+            .map(m => model(m.id || m.name, m));
     }
 
     case 'perplexity': {
@@ -276,13 +305,13 @@ async function listModels(context) {
     }
 
     case 'azure': {
-        if (!baseURL) throw new Error('Base URL is required for Azure OpenAI.');
+        if (!baseURL) throw new Error('Endpoint is required for Azure OpenAI.');
         const endpoint = baseURL.replace(/\/$/, '');
         const { data } = await context.httpRequest.get(
             `${endpoint}/openai/models?api-version=2024-02-01`,
             { headers: { 'api-key': apiKey, ...extraHeaders } }
         );
-        return (data.data || []).map(m => ({ id: m.id }));
+        return (data.data || []).map(m => model(m.id, m));
     }
 
     default:
@@ -290,4 +319,33 @@ async function listModels(context) {
     }
 }
 
-module.exports = { createModel, listModels };
+/**
+ * The context windows of the provider's models, for the account's profile info: a list of
+ * { id, contextWindow }. It is requested once, when the account is connected (auth.js,
+ * requestProfileInfo), and reaches the components as context.profileInfo. Models whose
+ * provider does not report the context window are left out.
+ */
+async function listContextWindows(context) {
+
+    const models = await listModels(context);
+    return models
+        .filter(model => model.contextWindow)
+        .map(({ id, contextWindow }) => ({ id, contextWindow }));
+}
+
+/**
+ * The context window (in input tokens) of the model selected on the agent, from the profile
+ * info of the connected account, or undefined when it is not there: the provider does not
+ * report it, the model was released after the account was connected, or the account was
+ * connected before context windows were recorded. Callers must have a default for that case.
+ */
+function getContextWindow(context) {
+
+    const contextWindows = (context.profileInfo || context.auth?.profileInfo)?.contextWindows;
+    if (!Array.isArray(contextWindows)) return undefined;
+    const entry = contextWindows.find(model => model.id === context.properties?.model);
+    const value = Number(entry?.contextWindow);
+    return Number.isFinite(value) && value > 0 ? value : undefined;
+}
+
+module.exports = { createModel, listModels, listContextWindows, resolveAuth, getContextWindow };

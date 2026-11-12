@@ -45,8 +45,20 @@ const MEMORY_SUMMARY_INSTRUCTION = [
     '- Merge the new messages into the previous summary; keep what is still relevant, drop what is obsolete.',
     '- Omit chit-chat, greetings, repetition and resolved minor details.',
     '- Do not invent facts.',
+    '- Keep dates. Each user message is labelled with the time it was sent. Record when decisions,',
+    '  events and deadlines happened or are due as absolute dates (YYYY-MM-DD), and turn relative',
+    '  references ("tomorrow", "last week") into absolute dates using the time of the message.',
     '- Write compactly, in the language of the conversation.'
 ].join('\n');
+
+// Added to the system prompt of a thread, so the model can read the time labels of the user
+// messages (see renderMessagesForModel) and does not copy them.
+const MESSAGE_TIME_NOTE = [
+    'Each user message starts with a line such as "[Sent: Thu 2026-11-12 14:05 UTC]" telling when',
+    'it was sent. The line is added automatically, it is not written by the user. The time of the',
+    'latest user message is the current time. Use these times to resolve relative dates and to',
+    'judge how old earlier information is. Never write such a line in your own replies.'
+].join(' ');
 
 function config(context, name, fallback) {
 
@@ -91,6 +103,51 @@ function truncate(text, maxChars) {
         return text;
     }
     return `${text.slice(0, maxChars)}… [truncated ${text.length - maxChars} characters]`;
+}
+
+const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+/**
+ * 'Thu 2026-11-12 14:05 UTC' for an ISO timestamp; undefined when it is missing or invalid.
+ * UTC, because the time zone of the user is not known.
+ */
+function formatTimestamp(timestamp) {
+
+    const date = timestamp ? new Date(timestamp) : null;
+    if (!date || Number.isNaN(date.getTime())) {
+        return undefined;
+    }
+    return `${WEEKDAYS[date.getUTCDay()]} ${date.toISOString().slice(0, 16).replace('T', ' ')} UTC`;
+}
+
+/**
+ * The messages as they are sent to the model. Memory keeps the time a user message was sent
+ * in its `createdAt` field, apart from the content; here the field is removed (it is not part
+ * of the message format of the model) and shown as a first line of the user message instead.
+ * Keeping it out of the stored content means the label can change without touching stored
+ * threads. Messages without a time, e.g. stored before times were recorded, are left as they are.
+ * Returns new messages; the input is not modified.
+ */
+function renderMessagesForModel(messages) {
+
+    return (messages || []).map(message => {
+        if (!message || typeof message !== 'object' || !('createdAt' in message)) {
+            return message;
+        }
+        const { createdAt, ...rest } = message;
+        const time = rest.role === 'user' ? formatTimestamp(createdAt) : undefined;
+        if (!time) {
+            return rest;
+        }
+        const label = `[Sent: ${time}]`;
+        if (typeof rest.content === 'string') {
+            return { ...rest, content: `${label}\n${rest.content}` };
+        }
+        if (Array.isArray(rest.content)) {
+            return { ...rest, content: [{ type: 'text', text: label }, ...rest.content] };
+        }
+        return rest;
+    });
 }
 
 /**
@@ -200,7 +257,11 @@ function splitMessagesByTokenBudget(messages, maxTokens) {
 function formatMessagesForSummary(messages) {
 
     return messages
-        .map((m, i) => `[${i + 1}] ${String(m.role).toUpperCase()}:\n${normalizeContent(m.content)}`)
+        .map((m, i) => {
+            const time = formatTimestamp(m.createdAt);
+            const header = `[${i + 1}] ${String(m.role).toUpperCase()}${time ? ` (sent ${time})` : ''}:`;
+            return `${header}\n${normalizeContent(m.content)}`;
+        })
         .join('\n\n');
 }
 
@@ -243,7 +304,7 @@ async function summarizeHistory(context, oldSummary, oldMessages, langfuse = {})
     try {
         const result = await generateText({
             model: provider.createModel(context),
-            system: config(context, 'MEMORY_SUMMARY_INSTRUCTION', MEMORY_SUMMARY_INSTRUCTION),
+            system: context.config?.MEMORY_SUMMARY_INSTRUCTION || MEMORY_SUMMARY_INSTRUCTION,
             prompt,
             maxTokens: config(context, 'MEMORY_SUMMARY_TOKEN_BUDGET', MEMORY_SUMMARY_TOKEN_BUDGET)
         });
@@ -410,7 +471,11 @@ module.exports = {
     saveMemory,
     appendMessages,
     lockThread,
+    renderMessagesForModel,
+    MESSAGE_TIME_NOTE,
     // Exported for tests.
+    formatTimestamp,
+    formatMessagesForSummary,
     sanitizeMessage,
     groupIntoTurns,
     splitMessagesByTokenBudget,

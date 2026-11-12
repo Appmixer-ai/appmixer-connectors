@@ -289,6 +289,82 @@ describe('ai.agent memory', () => {
         });
     });
 
+    describe('timestamps', () => {
+
+        const sentAt = '2026-11-12T14:05:33.000Z';
+
+        it('formats a timestamp in UTC with the weekday', () => {
+
+            assert.strictEqual(memory.formatTimestamp(sentAt), 'Thu 2026-11-12 14:05 UTC');
+            assert.strictEqual(memory.formatTimestamp(undefined), undefined);
+            assert.strictEqual(memory.formatTimestamp('not a date'), undefined);
+        });
+
+        it('shows the time as the first line of a user message and removes the field', () => {
+
+            const stored = [
+                { role: 'user', content: 'Remind me tomorrow.', createdAt: sentAt },
+                { role: 'assistant', content: [{ type: 'text', text: 'I will.' }] },
+                {
+                    role: 'user',
+                    content: [{ type: 'image', image: 'x' }, { type: 'text', text: 'What is this?' }],
+                    createdAt: sentAt
+                }
+            ];
+
+            const rendered = memory.renderMessagesForModel(stored);
+
+            assert.deepStrictEqual(rendered, [
+                { role: 'user', content: '[Sent: Thu 2026-11-12 14:05 UTC]\nRemind me tomorrow.' },
+                { role: 'assistant', content: [{ type: 'text', text: 'I will.' }] },
+                {
+                    role: 'user',
+                    content: [
+                        { type: 'text', text: '[Sent: Thu 2026-11-12 14:05 UTC]' },
+                        { type: 'image', image: 'x' },
+                        { type: 'text', text: 'What is this?' }
+                    ]
+                }
+            ]);
+            // The stored messages are not modified.
+            assert.strictEqual(stored[0].content, 'Remind me tomorrow.');
+            assert.strictEqual(stored[0].createdAt, sentAt);
+        });
+
+        it('leaves messages without a usable time as they are', () => {
+
+            const legacy = [{ role: 'user', content: 'Hello' }, { role: 'assistant', content: 'Hi' }];
+            assert.deepStrictEqual(memory.renderMessagesForModel(legacy), legacy);
+
+            assert.deepStrictEqual(
+                memory.renderMessagesForModel([{ role: 'user', content: 'Hello', createdAt: 'garbage' }]),
+                [{ role: 'user', content: 'Hello' }]
+            );
+        });
+
+        it('keeps the time through sanitizing', () => {
+
+            const sanitized = memory.sanitizeMessage({ role: 'user', content: 'Hello', createdAt: sentAt }, 100);
+            assert.strictEqual(sanitized.createdAt, sentAt);
+        });
+
+        it('gives the summarizer the time of each user message', () => {
+
+            const text = memory.formatMessagesForSummary([
+                { role: 'user', content: 'The launch is next Friday.', createdAt: sentAt },
+                { role: 'assistant', content: 'Noted.' }
+            ]);
+
+            assert.strictEqual(text, [
+                '[1] USER (sent Thu 2026-11-12 14:05 UTC):',
+                'The launch is next Friday.',
+                '',
+                '[2] ASSISTANT:',
+                'Noted.'
+            ].join('\n'));
+        });
+    });
+
     describe('lockThread', () => {
 
         it('locks per store and thread, or per component and thread without a store', async () => {

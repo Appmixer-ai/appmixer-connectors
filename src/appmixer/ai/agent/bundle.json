@@ -1,8 +1,13 @@
 {
     "name": "appmixer.ai.agent",
-    "engine": ">=6.4",
-    "version": "1.7.0",
+    "engine": ">=6.5",
+    "version": "1.8.0",
     "changelog": {
+        "1.8.0": [
+            "Memory: the time each user message was sent is stored with the message (createdAt) and shown to the model as a first line of the message ([Sent: Thu 2026-11-12 14:05 UTC]), so the agent can resolve relative dates and judge how old earlier information is. The summary keeps dates as absolute dates. Applies to messages with a thread ID; threads stored earlier keep working without times.",
+            "Authentication dialog: provider-specific fields are shown only for the selected provider (conditional fields, Appmixer 6.5). Amazon Bedrock, Google Vertex AI and Azure OpenAI have their own fields (AWS Access Key ID, AWS Secret Access Key, AWS Region, Project ID, Location, Endpoint). Accounts connected with the previous dialog keep working.",
+            "Tools: the result of a tool call (component or MCP) is sent to the model as compact JSON, and all tool results of one turn together are limited; a result is cut only when it no longer fits. The limit follows the context window of the selected model where the provider reports it (Anthropic, Google, Mistral, Groq, Together AI, Cohere, OpenAI-compatible): half of the window, at 3 characters per token. The context windows are recorded in the account's profile info when the account is connected, so accounts connected earlier have to be reconnected to get them. Otherwise the limit is 240000 characters. AI_AGENT_MAX_TOOL_RESULTS_TOTAL_CHARS overrides both. AI_AGENT_MAX_TOOL_RESULT_CHARS optionally limits a single result (not set by default). Fixes 'prompt is too long' errors caused by tools returning large results. A truncation is logged as tool-result-truncated; the full result stays in the log."
+        ],
         "1.7.0": [
             "Memory: the user's messages are now stored in the thread memory (previously only the assistant and tool messages were).",
             "Memory: the history is split on turn boundaries, so a tool call is never separated from its result.",

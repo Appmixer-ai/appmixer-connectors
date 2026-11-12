@@ -5,6 +5,7 @@ const provider = require('./provider');
 const tracer = require('./tracer');
 const componentTool = require('./tool');
 const lib = require('./lib');
+const memoryModule = require('./memory');
 
 const AI_AGENT_MAX_ATTEMPTS = 20;
 const AI_AGENT_MAX_FILE_SIZE = 1024 * 1024 * 5;
@@ -125,18 +126,37 @@ async function agent(context, instructions, prompt, fileId, componentToolsDef, m
     } : { isEnabled: false };
 
     const userContent = await buildUserContent(context, prompt, fileId);
-    const userMessage = { role: 'user', content: userContent };
-    const inputMessages = [
+    // In a thread, the time each user message was sent is kept in the memory (createdAt) and
+    // shown to the model as a first line of the message, so it can tell how old earlier
+    // information is and what "tomorrow" meant. Without a thread there is no history to date.
+    const userMessage = threadId
+        ? { role: 'user', content: userContent, createdAt: new Date().toISOString() }
+        : { role: 'user', content: userContent };
+    const inputMessages = memoryModule.renderMessagesForModel([
         ...(memory.messages || []),
         userMessage
-    ];
+    ]);
 
     // The summary of the older conversation is part of the system prompt rather than a system
     // message in the list: not every provider accepts system messages among the others.
     const system = (instructions || 'You are a helpful assistant.')
+        + (threadId ? `\n\n${memoryModule.MESSAGE_TIME_NOTE}` : '')
         + (memory.summary ? `\n\n## Summary of the earlier conversation\n\n${memory.summary}` : '');
 
-    await context.log({ step: 'agent-start', isStream, maxSteps });
+    // The limit on tool results follows the context window of the selected model. It was
+    // recorded in the account's profile info when the account was connected (auth.js);
+    // undefined when it is not known, in which case a default limit applies.
+    const contextWindow = provider.getContextWindow(context);
+
+    await context.log({
+        step: 'agent-start',
+        isStream,
+        maxSteps,
+        ...(componentToolsDef?.length ? {
+            contextWindow: contextWindow || 'unknown',
+            toolResultsLimit: componentTool.toolResultsLimit(contextWindow)
+        } : {})
+    });
 
     let finalText;
     let responseMessages;
@@ -150,7 +170,9 @@ async function agent(context, instructions, prompt, fileId, componentToolsDef, m
         let currentStepCtx = null;
         const getStepCtx = () => currentStepCtx;
 
-        const componentVercelTools = componentTool.buildComponentVercelTools(context, componentToolsDef, otelTracer, getStepCtx);
+        const componentVercelTools = componentTool.buildComponentVercelTools(
+            context, componentToolsDef, otelTracer, getStepCtx, { contextWindow }
+        );
         const vercelTools = Object.keys(componentVercelTools).length ? componentVercelTools : undefined;
 
         const sharedOptions = {

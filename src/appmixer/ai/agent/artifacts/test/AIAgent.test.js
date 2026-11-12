@@ -80,12 +80,35 @@ describe('ai.agent AIAgent memory', () => {
         context.messages.in.content = { prompt: 'What is my name?', threadId: 't1' };
         await AIAgent.receive(context);
 
-        assert.deepStrictEqual(userTexts(modelCalls[1]), ['My name is Ada.', 'What is my name?']);
+        // Each user message carries the time it was sent, as a first line.
+        const texts = userTexts(modelCalls[1]);
+        assert.strictEqual(texts.length, 2);
+        assert.match(texts[0], /^\[Sent: \w{3} \d{4}-\d{2}-\d{2} \d{2}:\d{2} UTC\]\nMy name is Ada\.$/);
+        assert.match(texts[1], /^\[Sent: .+ UTC\]\nWhat is my name\?$/);
+        assert.match(systemText(modelCalls[1]), /The time of the latest user message is the current time/);
         assert.strictEqual(modelCalls[1].filter(m => m.role === 'assistant').length, 1);
 
         const saved = JSON.parse(await context.stateGet('agent_memory_t1'));
         assert.deepStrictEqual(saved.messages.map(m => m.role), ['user', 'assistant', 'user', 'assistant']);
         assert.strictEqual(context.sendJson.firstCall.args[0].answer, 'The answer.');
+
+        // The time is stored apart from the content, on user messages only.
+        assert.ok(!Number.isNaN(Date.parse(saved.messages[0].createdAt)));
+        assert.deepStrictEqual(saved.messages[0].content, 'My name is Ada.');
+        assert.strictEqual(saved.messages[1].createdAt, undefined);
+        // ...and the field itself is not sent to the model.
+        assert.ok(modelCalls[1].every(message => !('createdAt' in message)));
+    });
+
+    it('adds no time to the prompt without a thread', async () => {
+
+        sandbox.stub(provider, 'createModel').callsFake(() => createModel('ok'));
+        const context = createContext({ prompt: 'Hello' });
+
+        await AIAgent.receive(context);
+
+        assert.deepStrictEqual(userTexts(modelCalls[0]), ['Hello']);
+        assert.strictEqual(systemText(modelCalls[0]), 'Be brief.');
     });
 
     it('sends the answer before saving the memory, all under the thread lock', async () => {

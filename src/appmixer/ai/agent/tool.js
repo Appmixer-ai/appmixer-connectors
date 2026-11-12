@@ -23,6 +23,28 @@ const mcp = require('./mcp');
 
 const TOOL_PORT = 'tool';
 
+// Limit on what tools may add to the prompt. Tool results stay in the conversation for the
+// rest of the turn (up to AI_AGENT_MAX_ATTEMPTS steps), so without a limit a single tool that
+// returns a large list can exceed the model's context window. The limit is on all tool
+// results of one turn together, so a single large result passes whole as long as the turn
+// has room for it; results are cut only when the prompt would otherwise grow too long.
+//
+// The limit follows the model: a share of its context window, when the provider reports it
+// (provider.getContextWindow), converted to characters. The rest of the window is left for
+// the instructions, the memory, tool definitions and the answer.
+const TOOL_RESULTS_CONTEXT_SHARE = 0.5;
+// Characters per token, on the low side: JSON takes more tokens than prose.
+const TOOL_RESULTS_CHARS_PER_TOKEN = 3;
+// Used when the context window is not known. Fits a 128k-token model.
+const AI_AGENT_MAX_TOOL_RESULTS_TOTAL_CHARS = 240000;
+// Both can be set in the service configuration (context.config), in characters:
+//   AI_AGENT_MAX_TOOL_RESULTS_TOTAL_CHARS  all tool results of one turn; overrides the
+//                                          limit derived from the model
+//   AI_AGENT_MAX_TOOL_RESULT_CHARS         one tool result; not set by default
+// What is left for a result once the turn's total is used up: enough for the model to see
+// that the tool worked and that it has to ask for less.
+const TOOL_RESULT_MIN_CHARS = 500;
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function isHandlebarsExpression(val) {
@@ -302,12 +324,64 @@ function buildComponentToolDef(componentId, componentDescriptor, manifest, conne
     };
 }
 
+// ─── Tool result limits ───────────────────────────────────────────────────────
+
+function configNumber(context, name, defaultValue) {
+    const value = Number(context.config?.[name]);
+    return Number.isFinite(value) && value > 0 ? value : defaultValue;
+}
+
+/**
+ * The limit on all tool results of one turn, in characters, for a model with the given
+ * context window (in tokens). Without a known context window, the default.
+ */
+function toolResultsLimit(contextWindow) {
+    if (!Number.isFinite(contextWindow) || contextWindow <= 0) {
+        return AI_AGENT_MAX_TOOL_RESULTS_TOTAL_CHARS;
+    }
+    return Math.floor(contextWindow * TOOL_RESULTS_CONTEXT_SHARE * TOOL_RESULTS_CHARS_PER_TOKEN);
+}
+
+/**
+ * Creates the function that turns a tool's output into the text sent to the model, for one
+ * turn of the agent. The text is compact JSON (no indentation), cut to what is left of the
+ * turn's total (and to the per-result limit, if one is configured). A cut result ends with a
+ * note telling the model how much is missing, so it can call the tool again with a narrower
+ * request.
+ */
+function createToolResultFormatter(context, { contextWindow } = {}) {
+    let remaining = configNumber(context, 'AI_AGENT_MAX_TOOL_RESULTS_TOTAL_CHARS', toolResultsLimit(contextWindow));
+    const maxChars = configNumber(context, 'AI_AGENT_MAX_TOOL_RESULT_CHARS', remaining);
+
+    return async (output, displayName) => {
+        let text = typeof output === 'string' ? output : JSON.stringify(output);
+        if (typeof text !== 'string') text = String(text);
+
+        const limit = Math.min(maxChars, Math.max(remaining, TOOL_RESULT_MIN_CHARS));
+        if (text.length > limit) {
+            await context.log({
+                step: 'tool-result-truncated',
+                displayName,
+                length: text.length,
+                limit
+            });
+            text = `${text.slice(0, limit)}\n\n[Result truncated: showing the first ${limit} of `
+                + `${text.length} characters. If you need the rest, call the tool again with a `
+                + 'narrower request (filters, fewer fields, a smaller page).]';
+        }
+        remaining -= text.length;
+        return text;
+    };
+}
+
 // ─── Vercel AI SDK wrappers ───────────────────────────────────────────────────
 
-function buildComponentVercelTools(context, componentToolsDef, tracer, getStepCtx) {
+function buildComponentVercelTools(context, componentToolsDef, tracer, getStepCtx, options = {}) {
     if (!componentToolsDef || componentToolsDef.length === 0) return {};
 
     const vercelTools = {};
+    // One formatter per call, i.e. per turn: it tracks the turn's total of tool result text.
+    const formatResult = createToolResultFormatter(context, options);
 
     for (const toolDef of componentToolsDef) {
         const { name, description } = toolDef.function;
@@ -321,14 +395,15 @@ function buildComponentVercelTools(context, componentToolsDef, tracer, getStepCt
             description: description || '',
             parameters: jsonSchema(params),
             execute: async (args, options = {}) =>
-                executeComponentTool(context, toolDef, args, tracer, options.toolCallId, getStepCtx)
+                executeComponentTool(context, toolDef, args, tracer, options.toolCallId, getStepCtx, formatResult)
         });
     }
 
     return vercelTools;
 }
 
-async function executeComponentTool(context, toolDef, args, tracer, toolCallId, getStepCtx) {
+async function executeComponentTool(context, toolDef, args, tracer, toolCallId, getStepCtx, formatResult) {
+    formatResult = formatResult || createToolResultFormatter(context);
     const { name: fullToolName, _isMCP, _componentId, _mcpToolName,
         _componentType, _inPort, _userStaticValues } = toolDef.function;
     const displayName = _isMCP ? _mcpToolName : fullToolName.split('_').slice(1).join('_');
@@ -338,7 +413,7 @@ async function executeComponentTool(context, toolDef, args, tracer, toolCallId, 
             try {
                 const output = await mcp.mcpCallTool(context, _componentId, _mcpToolName, args);
                 await context.log({ step: 'mcp-tool-call-result', displayName, output });
-                return typeof output === 'string' ? output : JSON.stringify(output, null, 2);
+                return formatResult(output, displayName);
             } catch (err) {
                 await context.log({ step: 'mcp-tool-call-error', displayName, error: err.message });
                 return `Error calling tool ${displayName}: ${err.message}`;
@@ -363,11 +438,13 @@ async function executeComponentTool(context, toolDef, args, tracer, toolCallId, 
                 method: 'POST',
                 body: {
                     componentId: _componentId,
-                    messages: { [_inPort]: messagePayload }
+                    messages: { [_inPort]: messagePayload },
+                    log: true,
+                    correlationId: context.messages?.in?.correlationId
                 }
             });
             await context.log({ step: 'component-tool-result', displayName, result });
-            return typeof result === 'string' ? result : JSON.stringify(result, null, 2);
+            return formatResult(result, displayName);
         } catch (err) {
             await context.log({ step: 'component-tool-call-error', displayName, endPoint, error: err.message });
             return `Error calling tool ${displayName}: ${err.message}`;
@@ -424,5 +501,7 @@ async function executeComponentTool(context, toolDef, args, tracer, toolCallId, 
 module.exports = {
     collectComponentTools,
     buildComponentToolDefs,
-    buildComponentVercelTools
+    buildComponentVercelTools,
+    createToolResultFormatter,
+    toolResultsLimit
 };
