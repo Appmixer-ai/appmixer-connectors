@@ -1,0 +1,447 @@
+{
+    "name": "E2E HubSpot - NewTicket and NewCompany Triggers",
+    "description": "Creates a ticket and a company and checks that the NewTicket and NewCompany polling triggers emit them.",
+    "flow": {
+        "87908173-66d4-46a3-9d27-7b59657a5ad9": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 304,
+            "version": "1.0.0",
+            "source": {},
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {}
+        },
+        "be592573-192d-4a1d-bd7c-403f8ac5aa6c": {
+            "type": "appmixer.utils.timers.Wait",
+            "x": 272,
+            "y": 304,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "87908173-66d4-46a3-9d27-7b59657a5ad9": [
+                        "out"
+                    ]
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "87908173-66d4-46a3-9d27-7b59657a5ad9": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "interval": {}
+                                },
+                                "lambda": {
+                                    "interval": "1m"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "9df0ff72-5168-48e5-9ff0-fd883e53cf02": {
+            "type": "appmixer.hubspot.crm.CreateTicket",
+            "x": 480,
+            "y": 304,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "be592573-192d-4a1d-bd7c-403f8ac5aa6c": [
+                        "out"
+                    ]
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "be592573-192d-4a1d-bd7c-403f8ac5aa6c": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "subject": {
+                                        "313e74c0-0a6f-46c6-ae7c-10f1ebb16dc5": {
+                                            "functions": [
+                                                {
+                                                    "name": "g_timestamp"
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "hsPipeline": {},
+                                    "hsPipelineStage": {}
+                                },
+                                "lambda": {
+                                    "subject": "E2E New Ticket {{{313e74c0-0a6f-46c6-ae7c-10f1ebb16dc5}}}",
+                                    "hsPipeline": "0",
+                                    "hsPipelineStage": "1"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "b7926e5a-d3a2-4842-a573-80ca54c2ef06": {
+            "type": "appmixer.hubspot.crm.CreateCompany",
+            "x": 480,
+            "y": 432,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "be592573-192d-4a1d-bd7c-403f8ac5aa6c": [
+                        "out"
+                    ]
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "be592573-192d-4a1d-bd7c-403f8ac5aa6c": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "domain": {
+                                        "55e34d0b-ef77-4419-af72-a6fdbb16e045": {
+                                            "functions": [
+                                                {
+                                                    "name": "g_timestamp"
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "name": {
+                                        "7f785e04-142c-4439-a3a4-ff2c4c1d7567": {
+                                            "functions": [
+                                                {
+                                                    "name": "g_timestamp"
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "domain": "e2e-new-{{{55e34d0b-ef77-4419-af72-a6fdbb16e045}}}.example.com",
+                                    "name": "E2E New Company {{{7f785e04-142c-4439-a3a4-ff2c4c1d7567}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "b21a18f3-1635-4a17-8dbb-fadbe7a8fa97": {
+            "type": "appmixer.hubspot.crm.NewTicket",
+            "x": 64,
+            "y": 560,
+            "version": "1.0.0",
+            "source": {},
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "properties": {
+                    "pipeline": "0",
+                    "properties": "subject,hs_pipeline,hs_object_id"
+                }
+            }
+        },
+        "7afd0962-984f-42f3-8c41-5cfaaa52fe52": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 272,
+            "y": 560,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "b21a18f3-1635-4a17-8dbb-fadbe7a8fa97": [
+                        "ticket"
+                    ]
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "b21a18f3-1635-4a17-8dbb-fadbe7a8fa97": {
+                            "ticket": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "1bf87a01-ea75-4678-93a0-88e7994a27ab": {
+                                            "variable": "$.b21a18f3-1635-4a17-8dbb-fadbe7a8fa97.ticket.properties.subject",
+                                            "functions": []
+                                        },
+                                        "7b65b2bd-b265-4f93-aa15-b8c738412606": {
+                                            "variable": "$.b21a18f3-1635-4a17-8dbb-fadbe7a8fa97.ticket.properties.hs_pipeline",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{1bf87a01-ea75-4678-93a0-88e7994a27ab}}}",
+                                                "assertion": "regex",
+                                                "regex": "^E2E New Ticket [0-9]+$"
+                                            },
+                                            {
+                                                "field": "{{{7b65b2bd-b265-4f93-aa15-b8c738412606}}}",
+                                                "assertion": "equal",
+                                                "expected": "0"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "c81560a8-cfbe-4df9-9fa4-cccede661c0b": {
+            "type": "appmixer.hubspot.crm.NewCompany",
+            "x": 64,
+            "y": 688,
+            "version": "1.0.0",
+            "source": {},
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "properties": {
+                    "properties": "name,domain,hs_object_id"
+                }
+            }
+        },
+        "f3ec5616-50cb-4b02-99a2-d8c23c892b1a": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 272,
+            "y": 688,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "c81560a8-cfbe-4df9-9fa4-cccede661c0b": [
+                        "company"
+                    ]
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "c81560a8-cfbe-4df9-9fa4-cccede661c0b": {
+                            "company": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "663ce2f9-6b51-412c-ba08-0d89f212ac20": {
+                                            "variable": "$.c81560a8-cfbe-4df9-9fa4-cccede661c0b.company.properties.name",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{663ce2f9-6b51-412c-ba08-0d89f212ac20}}}",
+                                                "assertion": "regex",
+                                                "regex": "^E2E New Company [0-9]+$"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "c95570ef-703c-4975-8600-adaff15fe989": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 480,
+            "y": 688,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "7afd0962-984f-42f3-8c41-5cfaaa52fe52": [
+                        "out"
+                    ],
+                    "f3ec5616-50cb-4b02-99a2-d8c23c892b1a": [
+                        "out"
+                    ]
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "properties": {
+                    "timeout": 420
+                }
+            }
+        },
+        "fdd453cf-a6cf-40ed-ad93-fb10eb6bb351": {
+            "type": "appmixer.hubspot.core.MakeApiCall",
+            "x": 688,
+            "y": 688,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "c95570ef-703c-4975-8600-adaff15fe989": [
+                        "out"
+                    ]
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "c95570ef-703c-4975-8600-adaff15fe989": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "url": {
+                                        "a046b84a-1da4-4a24-a8ad-12ee46010f43": {
+                                            "variable": "$.b21a18f3-1635-4a17-8dbb-fadbe7a8fa97.ticket.properties.hs_object_id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "method": {}
+                                },
+                                "lambda": {
+                                    "url": "/crm/v3/objects/tickets/{{{a046b84a-1da4-4a24-a8ad-12ee46010f43}}}",
+                                    "method": "DELETE"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "b0aab8c4-2ea3-4667-b883-5bfd48681582": {
+            "type": "appmixer.hubspot.crm.DeleteCompany",
+            "x": 896,
+            "y": 688,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "fdd453cf-a6cf-40ed-ad93-fb10eb6bb351": [
+                        "out"
+                    ]
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "fdd453cf-a6cf-40ed-ad93-fb10eb6bb351": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "companyId": {
+                                        "9d7a51e6-e1ba-488f-8e1b-79afe44de075": {
+                                            "variable": "$.c81560a8-cfbe-4df9-9fa4-cccede661c0b.company.properties.hs_object_id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "companyId": "{{{9d7a51e6-e1ba-488f-8e1b-79afe44de075}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "e7b5b3cc-a825-4839-807a-d635d41b567e": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1104,
+            "y": 688,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "b0aab8c4-2ea3-4667-b883-5bfd48681582": [
+                        "out"
+                    ]
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "properties": {
+                    "successStoreId": "64f6f1f9193228000754082f",
+                    "failedStoreId": "64f6f1f0193228000754082e"
+                },
+                "transform": {
+                    "in": {
+                        "b0aab8c4-2ea3-4667-b883-5bfd48681582": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "1f362165-4625-41fd-9c91-b0162bf97ed7": {
+                                            "variable": "$.c95570ef-703c-4975-8600-adaff15fe989.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E HubSpot - NewTicket and NewCompany Triggers",
+                                    "result": "{{{1f362165-4625-41fd-9c91-b0162bf97ed7}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "notes": {
+        "9b6c24a9-94b8-41f5-8170-22f4fbb2a0e2": {
+            "x": 64,
+            "y": 32,
+            "width": 672,
+            "height": 224,
+            "content": "## ⚠️ Test data assumption\n\n- NewTicket and NewCompany are polling triggers: they emit records created after the flow started, checked on every tick of the instance, so AfterAll waits up to 7 minutes.\n- The 1 minute Wait before the provoking CreateTicket / CreateCompany must stay: it keeps the new records clearly after the trigger's start time.\n- Nobody else may create tickets in pipeline `0` or companies in the portal during the run — the triggers would fire for those too and the Asserts expect the E2E names.\n- Cleanup deletes the ticket (MakeApiCall) and the company using the triggers' output, so it also proves the triggers fired."
+        }
+    }
+}

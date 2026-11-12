@@ -1,0 +1,452 @@
+{
+    "name": "E2E HubSpot - Tickets (Create, Update, Find)",
+    "description": "Creates a ticket, updates its priority and finds it by ID and priority, then deletes it.",
+    "flow": {
+        "58dc37b4-e0f3-48e8-91a5-66b977033e4a": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 304,
+            "version": "1.0.0",
+            "source": {},
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {}
+        },
+        "ba0b0140-2352-4dbf-97c6-0c3b618dd3d7": {
+            "type": "appmixer.hubspot.crm.CreateTicket",
+            "x": 272,
+            "y": 304,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "58dc37b4-e0f3-48e8-91a5-66b977033e4a": [
+                        "out"
+                    ]
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "58dc37b4-e0f3-48e8-91a5-66b977033e4a": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "subject": {
+                                        "bfcef3f1-625c-4329-80a7-d358789bb3c5": {
+                                            "functions": [
+                                                {
+                                                    "name": "g_timestamp"
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "content": {},
+                                    "hsPipeline": {},
+                                    "hsPipelineStage": {},
+                                    "priority": {}
+                                },
+                                "lambda": {
+                                    "subject": "E2E Ticket {{{bfcef3f1-625c-4329-80a7-d358789bb3c5}}}",
+                                    "content": "Created by the E2E test",
+                                    "hsPipeline": "0",
+                                    "hsPipelineStage": "1",
+                                    "priority": "HIGH"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "94d7970f-fa7f-4219-ae22-76c888e21c87": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 480,
+            "y": 304,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "ba0b0140-2352-4dbf-97c6-0c3b618dd3d7": [
+                        "ticket"
+                    ]
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "ba0b0140-2352-4dbf-97c6-0c3b618dd3d7": {
+                            "ticket": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "f8d2152b-52bb-4e0f-adf3-2a3cbfe2c7f3": {
+                                            "variable": "$.ba0b0140-2352-4dbf-97c6-0c3b618dd3d7.ticket.properties.subject",
+                                            "functions": []
+                                        },
+                                        "c32d14b1-f7a6-420c-8709-1c986899a15b": {
+                                            "variable": "$.ba0b0140-2352-4dbf-97c6-0c3b618dd3d7.ticket.properties.hs_ticket_priority",
+                                            "functions": []
+                                        },
+                                        "59880ee9-c9a7-40e9-8bd1-049c786ccf20": {
+                                            "variable": "$.ba0b0140-2352-4dbf-97c6-0c3b618dd3d7.ticket.properties.hs_object_id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{f8d2152b-52bb-4e0f-adf3-2a3cbfe2c7f3}}}",
+                                                "assertion": "regex",
+                                                "regex": "^E2E Ticket [0-9]+$"
+                                            },
+                                            {
+                                                "field": "{{{c32d14b1-f7a6-420c-8709-1c986899a15b}}}",
+                                                "assertion": "equal",
+                                                "expected": "HIGH"
+                                            },
+                                            {
+                                                "field": "{{{59880ee9-c9a7-40e9-8bd1-049c786ccf20}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "e003b23c-2c51-4c7c-b5d8-fbf4a7872c8b": {
+            "type": "appmixer.hubspot.crm.UpdateTicket",
+            "x": 480,
+            "y": 432,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "ba0b0140-2352-4dbf-97c6-0c3b618dd3d7": [
+                        "ticket"
+                    ]
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "ba0b0140-2352-4dbf-97c6-0c3b618dd3d7": {
+                            "ticket": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "ticketId": {
+                                        "661eb2b5-2915-49c2-823e-17e8312eff54": {
+                                            "variable": "$.ba0b0140-2352-4dbf-97c6-0c3b618dd3d7.ticket.properties.hs_object_id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "priority": {},
+                                    "content": {}
+                                },
+                                "lambda": {
+                                    "ticketId": "{{{661eb2b5-2915-49c2-823e-17e8312eff54}}}",
+                                    "priority": "LOW",
+                                    "content": "Updated by the E2E test"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "3f887836-5016-4aa4-9895-c905ed9cd7fa": {
+            "type": "appmixer.utils.timers.Wait",
+            "x": 688,
+            "y": 432,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "e003b23c-2c51-4c7c-b5d8-fbf4a7872c8b": [
+                        "out"
+                    ]
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "e003b23c-2c51-4c7c-b5d8-fbf4a7872c8b": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "interval": {}
+                                },
+                                "lambda": {
+                                    "interval": "1m"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "80ee6681-a9e6-4e51-b541-ec7c749ea9c2": {
+            "type": "appmixer.hubspot.crm.FindTickets",
+            "x": 896,
+            "y": 432,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "3f887836-5016-4aa4-9895-c905ed9cd7fa": [
+                        "out"
+                    ]
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "3f887836-5016-4aa4-9895-c905ed9cd7fa": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "filters": {
+                                        "933fb3f8-7174-4451-9e5e-279685458c3e": {
+                                            "variable": "$.ba0b0140-2352-4dbf-97c6-0c3b618dd3d7.ticket.properties.hs_object_id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "properties": {},
+                                    "outputType": {}
+                                },
+                                "lambda": {
+                                    "filters": {
+                                        "AND": [
+                                            {
+                                                "propertyName": "hs_object_id",
+                                                "operator": "EQ",
+                                                "value": "{{{933fb3f8-7174-4451-9e5e-279685458c3e}}}"
+                                            },
+                                            {
+                                                "propertyName": "hs_ticket_priority",
+                                                "operator": "EQ",
+                                                "value": "LOW"
+                                            }
+                                        ]
+                                    },
+                                    "properties": "subject,content,hs_ticket_priority,hs_pipeline_stage",
+                                    "outputType": "first"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "78c6127c-38d7-486c-b95c-ac2d08b58850": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1104,
+            "y": 432,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "80ee6681-a9e6-4e51-b541-ec7c749ea9c2": [
+                        "out"
+                    ]
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "80ee6681-a9e6-4e51-b541-ec7c749ea9c2": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "a6388014-74d3-40da-8950-26bebab02410": {
+                                            "variable": "$.80ee6681-a9e6-4e51-b541-ec7c749ea9c2.out.properties.hs_ticket_priority",
+                                            "functions": []
+                                        },
+                                        "9b9c85fc-30de-4a31-9d5c-36d33de78188": {
+                                            "variable": "$.80ee6681-a9e6-4e51-b541-ec7c749ea9c2.out.properties.content",
+                                            "functions": []
+                                        },
+                                        "39c2e544-c2ed-4eba-b31f-7938087f128b": {
+                                            "variable": "$.80ee6681-a9e6-4e51-b541-ec7c749ea9c2.out.properties.subject",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{a6388014-74d3-40da-8950-26bebab02410}}}",
+                                                "assertion": "equal",
+                                                "expected": "LOW"
+                                            },
+                                            {
+                                                "field": "{{{9b9c85fc-30de-4a31-9d5c-36d33de78188}}}",
+                                                "assertion": "equal",
+                                                "expected": "Updated by the E2E test"
+                                            },
+                                            {
+                                                "field": "{{{39c2e544-c2ed-4eba-b31f-7938087f128b}}}",
+                                                "assertion": "regex",
+                                                "regex": "^E2E Ticket [0-9]+$"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "660c896b-c22f-480b-bd75-45c7e0f03902": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 1312,
+            "y": 432,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "94d7970f-fa7f-4219-ae22-76c888e21c87": [
+                        "out"
+                    ],
+                    "78c6127c-38d7-486c-b95c-ac2d08b58850": [
+                        "out"
+                    ]
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "properties": {
+                    "timeout": 300
+                }
+            }
+        },
+        "2bbd664f-9e73-43fc-9fe7-47ee7a4ce136": {
+            "type": "appmixer.hubspot.core.MakeApiCall",
+            "x": 1520,
+            "y": 432,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "660c896b-c22f-480b-bd75-45c7e0f03902": [
+                        "out"
+                    ]
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "660c896b-c22f-480b-bd75-45c7e0f03902": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "url": {
+                                        "3c4c8261-4f60-4f84-b64b-373c0173e61c": {
+                                            "variable": "$.ba0b0140-2352-4dbf-97c6-0c3b618dd3d7.ticket.properties.hs_object_id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "method": {}
+                                },
+                                "lambda": {
+                                    "url": "/crm/v3/objects/tickets/{{{3c4c8261-4f60-4f84-b64b-373c0173e61c}}}",
+                                    "method": "DELETE"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "4828cbc2-7954-4efa-9047-0e0a11f2ca74": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1728,
+            "y": 432,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "2bbd664f-9e73-43fc-9fe7-47ee7a4ce136": [
+                        "out"
+                    ]
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "properties": {
+                    "successStoreId": "64f6f1f9193228000754082f",
+                    "failedStoreId": "64f6f1f0193228000754082e"
+                },
+                "transform": {
+                    "in": {
+                        "2bbd664f-9e73-43fc-9fe7-47ee7a4ce136": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "468b404b-760a-4588-a908-00b328bf9a46": {
+                                            "variable": "$.660c896b-c22f-480b-bd75-45c7e0f03902.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E HubSpot - Tickets (Create, Update, Find)",
+                                    "result": "{{{468b404b-760a-4588-a908-00b328bf9a46}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "notes": {
+        "75e69abf-b790-4528-a52d-5a6b1364bb88": {
+            "x": 64,
+            "y": 32,
+            "width": 672,
+            "height": 224,
+            "content": "## ⚠️ Test data assumption\n\n- The portal has the default ticket pipeline `0` (Support Pipeline) with the stage `1` (New) — every HubSpot portal gets them; set other IDs in CreateTicket if they were deleted.\n- The connected account needs the `tickets` scope (the connector requests it).\n- The 1 minute Wait between UpdateTicket and FindTickets must stay: FindTickets reads the CRM search index, which picks up the update a few seconds later.\n- The ticket is deleted at the end through MakeApiCall (there is no DeleteTicket component)."
+        }
+    }
+}

@@ -1,0 +1,205 @@
+{
+    "name": "appmixer.hubspot.crm.FindTickets",
+    "author": "Appmixer <info@appmixer.com>",
+    "icon": "data:image/svg+xml;base64,PHN2ZyBoZWlnaHQ9IjI1MDAiIHZpZXdCb3g9IjYuMjA4NTYyODMgLjY0NDk4ODI0IDI0NC4yNjk0MzcxNyAyNTEuMjQ3MDExNzYiIHdpZHRoPSIyNTAwIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxwYXRoIGQ9Im0xOTEuMzg1IDg1LjY5NHYtMjkuNTA2YTIyLjcyMiAyMi43MjIgMCAwIDAgMTMuMTAxLTIwLjQ4di0uNjc3YzAtMTIuNTQ5LTEwLjE3My0yMi43MjItMjIuNzIxLTIyLjcyMmgtLjY3OGMtMTIuNTQ5IDAtMjIuNzIyIDEwLjE3My0yMi43MjIgMjIuNzIydi42NzdhMjIuNzIyIDIyLjcyMiAwIDAgMCAxMy4xMDEgMjAuNDh2MjkuNTA2YTY0LjM0MiA2NC4zNDIgMCAwIDAgLTMwLjU5NCAxMy40N2wtODAuOTIyLTYzLjAzYy41NzctMi4wODMuODc4LTQuMjI1LjkxMi02LjM3NWEyNS42IDI1LjYgMCAxIDAgLTI1LjYzMyAyNS41NSAyNS4zMjMgMjUuMzIzIDAgMCAwIDEyLjYwNy0zLjQzbDc5LjY4NSA2Mi4wMDdjLTE0LjY1IDIyLjEzMS0xNC4yNTggNTAuOTc0Ljk4NyA3Mi43bC0yNC4yMzYgMjQuMjQzYy0xLjk2LS42MjYtNC0uOTU5LTYuMDU3LS45ODctMTEuNjA3LjAxLTIxLjAxIDkuNDIzLTIxLjAwNyAyMS4wMy4wMDMgMTEuNjA2IDkuNDEyIDIxLjAxNCAyMS4wMTggMjEuMDE3IDExLjYwNy4wMDMgMjEuMDItOS40IDIxLjAzLTIxLjAwN2EyMC43NDcgMjAuNzQ3IDAgMCAwIC0uOTg4LTYuMDU2bDIzLjk3Ni0yMy45ODVjMjEuNDIzIDE2LjQ5MiA1MC44NDYgMTcuOTEzIDczLjc1OSAzLjU2MiAyMi45MTItMTQuMzUyIDM0LjQ3NS00MS40NDYgMjguOTg1LTY3LjkxOC01LjQ5LTI2LjQ3My0yNi44NzMtNDYuNzM0LTUzLjYwMy01MC43OTJtLTkuOTM4IDk3LjA0NGEzMy4xNyAzMy4xNyAwIDEgMSAwLTY2LjMxNmMxNy44NS42MjUgMzIgMTUuMjcyIDMyLjAxIDMzLjEzNC4wMDggMTcuODYtMTQuMTI3IDMyLjUyMi0zMS45NzcgMzMuMTY1IiBmaWxsPSIjZmY3YTU5Ii8+PC9zdmc+",
+    "description": "Find tickets by a search query and property filters, newest first. Returns up to 10,000 tickets (the limit of the HubSpot search API).",
+    "version": "1.0.0",
+    "private": false,
+    "auth": {
+        "service": "appmixer:hubspot"
+    },
+    "quota": {
+        "manager": "appmixer:hubspot",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "properties": {
+        "schema": {
+            "properties": {
+                "generateOutputPortOptions": {
+                    "type": "boolean"
+                }
+            }
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "query": {
+                        "type": "string"
+                    },
+                    "filters": {
+                        "type": "object"
+                    },
+                    "properties": {
+                        "type": "string"
+                    },
+                    "outputType": {
+                        "type": "string"
+                    }
+                }
+            },
+            "inspector": {
+                "inputs": {
+                    "query": {
+                        "type": "text",
+                        "label": "Search Query",
+                        "tooltip": "Optional. Find tickets that contain this text in their default searchable properties (such as the ticket name and description).",
+                        "index": 1
+                    },
+                    "filters": {
+                        "type": "expression",
+                        "label": "Filters",
+                        "tooltip": "Optional. Find tickets whose properties match ALL of these conditions, e.g. Ticket Status equal to <code>1</code> or a custom external ID property equal to a value.",
+                        "index": 2,
+                        "levels": [
+                            "AND"
+                        ],
+                        "fields": {
+                            "propertyName": {
+                                "type": "text",
+                                "label": "Property",
+                                "tooltip": "The internal name of the ticket property.",
+                                "index": 1,
+                                "source": {
+                                    "url": "/component/appmixer/hubspot/crm/GetTicketsProperties?outPort=out",
+                                    "data": {
+                                        "transform": "./GetTicketsProperties#ticketToLabelNameArray"
+                                    }
+                                }
+                            },
+                            "operator": {
+                                "type": "select",
+                                "label": "Operator",
+                                "defaultValue": "EQ",
+                                "index": 2,
+                                "options": [
+                                    {
+                                        "label": "Equal to",
+                                        "value": "EQ"
+                                    },
+                                    {
+                                        "label": "Not equal to",
+                                        "value": "NEQ"
+                                    },
+                                    {
+                                        "label": "Less than",
+                                        "value": "LT"
+                                    },
+                                    {
+                                        "label": "Less than or equal to",
+                                        "value": "LTE"
+                                    },
+                                    {
+                                        "label": "Greater than",
+                                        "value": "GT"
+                                    },
+                                    {
+                                        "label": "Greater than or equal to",
+                                        "value": "GTE"
+                                    },
+                                    {
+                                        "label": "Contains token",
+                                        "value": "CONTAINS_TOKEN"
+                                    },
+                                    {
+                                        "label": "Does not contain token",
+                                        "value": "NOT_CONTAINS_TOKEN"
+                                    },
+                                    {
+                                        "label": "Has a value",
+                                        "value": "HAS_PROPERTY"
+                                    },
+                                    {
+                                        "label": "Has no value",
+                                        "value": "NOT_HAS_PROPERTY"
+                                    }
+                                ]
+                            },
+                            "value": {
+                                "type": "text",
+                                "label": "Value",
+                                "tooltip": "The value to compare with. Not used by 'Has a value' and 'Has no value'. Dates are compared as Unix timestamps in milliseconds.",
+                                "index": 3
+                            }
+                        }
+                    },
+                    "properties": {
+                        "type": "text",
+                        "label": "Properties",
+                        "tooltip": "A comma separated list of the ticket properties to return. If not specified, the ticket name, description, pipeline, status, priority, owner and dates are returned.",
+                        "source": {
+                            "url": "/component/appmixer/hubspot/crm/GetTicketsProperties?outPort=out",
+                            "data": {
+                                "transform": "./GetTicketsProperties#ticketToLabelNameArray"
+                            }
+                        },
+                        "index": 3
+                    },
+                    "outputType": {
+                        "type": "select",
+                        "label": "Output Type",
+                        "index": 4,
+                        "defaultValue": "array",
+                        "tooltip": "Choose whether you want to receive the result set as one complete list, or one item at a time or stream the items to a file. For large datasets, streaming the rows to a file is the most efficient method.",
+                        "options": [
+                            {
+                                "label": "First",
+                                "value": "first"
+                            },
+                            {
+                                "label": "All at once",
+                                "value": "array"
+                            },
+                            {
+                                "label": "One at a time",
+                                "value": "object"
+                            },
+                            {
+                                "label": "File",
+                                "value": "file"
+                            }
+                        ]
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "source": {
+                "url": "/component/appmixer/hubspot/crm/FindTickets?outPort=out&ignoreAuth=true",
+                "data": {
+                    "properties": {
+                        "generateOutputPortOptions": true
+                    },
+                    "messages": {
+                        "in/outputType": "inputs/in/outputType"
+                    }
+                }
+            }
+        },
+        {
+            "name": "notFound",
+            "options": [
+                {
+                    "label": "Query",
+                    "value": "query",
+                    "schema": {
+                        "type": "string",
+                        "example": "login error"
+                    }
+                }
+            ]
+        }
+    ],
+    "dependencies": {
+        "service": "1.0.1"
+    }
+}
