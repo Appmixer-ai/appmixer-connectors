@@ -2,13 +2,14 @@
 
 const lib = require('../../lib');
 
-// Posts Buffer published since the flow started. startDate matches posts created or due after
-// the window start; the window reaches back 24 hours because a post can be published well
-// after it was due (paused queue, retries). Only posts sent after the flow start fire.
+// Posts Buffer published since the flow started. The window filters on dueAt (the filter Buffer
+// documents for recently sent posts; Share Now posts get dueAt set to the moment they are sent).
+// It reaches back 24 hours because a post can be published well after it was due (paused queue,
+// retries). Only posts sent after the flow start fire.
 const POLL_OPTIONS = {
     buildFilter(windowStart) {
 
-        return { status: ['sent'], startDate: windowStart.toISOString() };
+        return { status: ['sent'], dueAt: { start: windowStart.toISOString() } };
     },
     sortField: 'dueAt',
     timeFields: ['sentAt', 'dueAt'],

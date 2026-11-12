@@ -322,7 +322,7 @@ describe('appmixer.buffer', function() {
             await PostSent.tick(context);
 
             const { input } = context.httpRequest.firstCall.args[0].data.variables;
-            assert.deepStrictEqual(input.filter, { status: ['sent'], startDate: '2025-12-31T10:01:00.000Z' });
+            assert.deepStrictEqual(input.filter, { status: ['sent'], dueAt: { start: '2025-12-31T10:01:00.000Z' } });
             assert.deepStrictEqual(context.sent.map(s => s.data.id), ['late']);
         });
     });
