@@ -1,6 +1,6 @@
 {
     "name": "E2E Buffer - post sent trigger",
-    "description": "Publishes a post right away (Share Now) and waits for the Post Sent trigger to emit it, then deletes it from Buffer.",
+    "description": "Publishes a post right away (Share Now) and waits for the Post Sent trigger to emit it. Buffer does not allow deleting a sent post through the API, so there is no cleanup step.",
     "flow": {
         "8f5b946b-4e25-4935-b886-1e243139364d": {
             "type": "appmixer.buffer.core.PostSent",
@@ -249,52 +249,13 @@
                 "onError": "stopFlow"
             }
         },
-        "ea4fec3e-c2a4-474d-b3a0-a0a3868d0f87": {
-            "type": "appmixer.buffer.core.DeletePost",
-            "x": 1104,
-            "y": 400,
-            "source": {
-                "in": {
-                    "c769d27f-887a-4087-a61b-1d758443eaee": [
-                        "out"
-                    ]
-                }
-            },
-            "version": "1.0.0",
-            "config": {
-                "transform": {
-                    "in": {
-                        "c769d27f-887a-4087-a61b-1d758443eaee": {
-                            "out": {
-                                "type": "json2new",
-                                "modifiers": {
-                                    "postId": {
-                                        "6bd36c77-19cb-4e02-b2bd-4566be31718b": {
-                                            "variable": "$.8f5b946b-4e25-4935-b886-1e243139364d.out.id",
-                                            "functions": []
-                                        }
-                                    }
-                                },
-                                "lambda": {
-                                    "postId": "{{{6bd36c77-19cb-4e02-b2bd-4566be31718b}}}"
-                                }
-                            }
-                        }
-                    }
-                }
-            },
-            "errorHandling": {
-                "autoRetry": false,
-                "onError": "stopFlow"
-            }
-        },
         "028e3ac8-da46-452c-9fcd-388bbd998c16": {
             "type": "appmixer.utils.test.ProcessE2EResults",
             "x": 1312,
             "y": 400,
             "source": {
                 "in": {
-                    "ea4fec3e-c2a4-474d-b3a0-a0a3868d0f87": [
+                    "c769d27f-887a-4087-a61b-1d758443eaee": [
                         "out"
                     ]
                 }
@@ -307,7 +268,7 @@
                 },
                 "transform": {
                     "in": {
-                        "ea4fec3e-c2a4-474d-b3a0-a0a3868d0f87": {
+                        "c769d27f-887a-4087-a61b-1d758443eaee": {
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
@@ -342,7 +303,7 @@
             "y": 560,
             "width": 672,
             "height": 256,
-            "content": "## ⚠️ Publishes a real post\n\nThis flow **publishes** a post to the **first channel** of the connected Buffer account (Share Now). Connect a Buffer account whose first channel is a test social profile. Delete Post removes the post from Buffer only, not from the social network.\n\nThe trigger polls the first organization every 5 minutes, so the run takes up to ~7 minutes. Run it alone: another post published in the organization meanwhile fails the assertion."
+            "content": "## ⚠️ Publishes a real post\n\nThis flow **publishes** a post to the **first channel** of the connected Buffer account (Share Now). Connect a Buffer account whose first channel is a test social profile. The published post stays on the profile and in Buffer: Buffer refuses to delete sent posts (\"Account is not allowed to perform this action on post\"), so delete it by hand if needed.\n\nThe trigger polls the first organization every 5 minutes, so the run takes up to ~7 minutes. Run it alone: another post published in the organization meanwhile fails the assertion."
         }
     }
 }
