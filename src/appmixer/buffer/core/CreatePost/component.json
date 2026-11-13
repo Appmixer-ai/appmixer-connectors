@@ -1,0 +1,323 @@
+{
+    "name": "appmixer.buffer.core.CreatePost",
+    "label": "Create Post",
+    "description": "Create a post on a Buffer channel: add it to the queue, share it next or now, schedule it for a specific time, or save it as a draft.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:buffer"
+    },
+    "quota": {
+        "manager": "appmixer:buffer",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "channelId": {
+                        "type": "string"
+                    },
+                    "text": {
+                        "type": "string"
+                    },
+                    "mode": {
+                        "type": "string",
+                        "enum": [
+                            "addToQueue",
+                            "shareNext",
+                            "shareNow",
+                            "customScheduled"
+                        ]
+                    },
+                    "dueAt": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "schedulingType": {
+                        "type": "string",
+                        "enum": [
+                            "automatic",
+                            "notification"
+                        ]
+                    },
+                    "saveToDraft": {
+                        "type": "boolean"
+                    },
+                    "imageUrls": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "channelId",
+                    "text"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "channelId": {
+                        "type": "text",
+                        "index": 1,
+                        "label": "Channel",
+                        "tooltip": "Pick a channel (a connected social profile), or type its Channel ID.",
+                        "source": {
+                            "url": "/component/appmixer/buffer/core/ListChannels?outPort=out",
+                            "data": {
+                                "properties": {
+                                    "isSource": true
+                                },
+                                "transform": "./ListChannels#toSelectArray"
+                            }
+                        }
+                    },
+                    "text": {
+                        "type": "textarea",
+                        "index": 2,
+                        "label": "Text",
+                        "tooltip": "The text of the post. Each network enforces its own character limit."
+                    },
+                    "mode": {
+                        "type": "select",
+                        "index": 3,
+                        "label": "Mode",
+                        "defaultValue": "addToQueue",
+                        "tooltip": "How the post is scheduled. <b>Custom Scheduled</b> publishes at the Due At time.",
+                        "options": [
+                            {
+                                "label": "Add to Queue",
+                                "value": "addToQueue"
+                            },
+                            {
+                                "label": "Share Next",
+                                "value": "shareNext"
+                            },
+                            {
+                                "label": "Share Now",
+                                "value": "shareNow"
+                            },
+                            {
+                                "label": "Custom Scheduled",
+                                "value": "customScheduled"
+                            }
+                        ]
+                    },
+                    "dueAt": {
+                        "type": "date-time",
+                        "index": 4,
+                        "label": "Due At",
+                        "tooltip": "When to publish the post. Required when Mode is Custom Scheduled."
+                    },
+                    "schedulingType": {
+                        "type": "select",
+                        "index": 5,
+                        "label": "Scheduling Type",
+                        "defaultValue": "automatic",
+                        "tooltip": "<b>Automatic</b>: Buffer publishes the post. <b>Notification</b>: Buffer reminds you to publish it by hand.",
+                        "options": [
+                            {
+                                "label": "Automatic",
+                                "value": "automatic"
+                            },
+                            {
+                                "label": "Notification",
+                                "value": "notification"
+                            }
+                        ]
+                    },
+                    "saveToDraft": {
+                        "type": "toggle",
+                        "index": 6,
+                        "label": "Save to Draft",
+                        "defaultValue": false,
+                        "tooltip": "Save the post as a draft instead of scheduling it."
+                    },
+                    "imageUrls": {
+                        "type": "textarea",
+                        "index": 7,
+                        "label": "Image URLs",
+                        "tooltip": "Optional images, one public URL per line (or comma separated). Buffer downloads them, so they must be publicly accessible."
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "title": "Post ID",
+                        "example": "69a1b2c3d4e5f60718293a4b"
+                    },
+                    "text": {
+                        "type": "string",
+                        "title": "Text",
+                        "example": "Hello from the Buffer API!"
+                    },
+                    "status": {
+                        "type": "string",
+                        "title": "Status",
+                        "example": "scheduled"
+                    },
+                    "channelId": {
+                        "type": "string",
+                        "title": "Channel ID",
+                        "example": "5f8e1c2b3a4d5e6f7a8b9c0d"
+                    },
+                    "channelService": {
+                        "type": "string",
+                        "title": "Channel Service",
+                        "example": "linkedin"
+                    },
+                    "dueAt": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Due At",
+                        "example": "2026-03-10T15:00:00.000Z"
+                    },
+                    "sentAt": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Sent At",
+                        "example": "2026-03-10T15:00:04.000Z"
+                    },
+                    "createdAt": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Created At",
+                        "example": "2026-03-05T14:30:00.000Z"
+                    },
+                    "updatedAt": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Updated At",
+                        "example": "2026-03-05T14:31:00.000Z"
+                    },
+                    "shareMode": {
+                        "type": "string",
+                        "title": "Share Mode",
+                        "example": "addToQueue"
+                    },
+                    "schedulingType": {
+                        "type": "string",
+                        "title": "Scheduling Type",
+                        "example": "automatic"
+                    },
+                    "isCustomScheduled": {
+                        "type": "boolean",
+                        "title": "Is Custom Scheduled",
+                        "example": false
+                    },
+                    "sharedNow": {
+                        "type": "boolean",
+                        "title": "Shared Now",
+                        "example": false
+                    },
+                    "externalLink": {
+                        "type": "string",
+                        "title": "External Link",
+                        "example": "https://www.linkedin.com/feed/update/urn:li:share:7123456789"
+                    },
+                    "ideaId": {
+                        "type": "string",
+                        "title": "Idea ID",
+                        "example": "6a0b1c2d3e4f5a6b7c8d9e0f"
+                    },
+                    "via": {
+                        "type": "string",
+                        "title": "Via",
+                        "example": "api"
+                    },
+                    "errorMessage": {
+                        "type": "string",
+                        "title": "Error Message",
+                        "example": "The channel was disconnected."
+                    },
+                    "tags": {
+                        "type": "array",
+                        "title": "Tags",
+                        "example": [
+                            {
+                                "id": "65f0a1b2c3d4e5f6a7b8c9d0",
+                                "name": "Summer sales",
+                                "color": "#F523F1"
+                            }
+                        ],
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "id": {
+                                    "type": "string",
+                                    "title": "Tags.ID",
+                                    "example": "65f0a1b2c3d4e5f6a7b8c9d0"
+                                },
+                                "name": {
+                                    "type": "string",
+                                    "title": "Tags.Name",
+                                    "example": "Summer sales"
+                                },
+                                "color": {
+                                    "type": "string",
+                                    "title": "Tags.Color",
+                                    "example": "#F523F1"
+                                }
+                            }
+                        }
+                    },
+                    "assets": {
+                        "type": "array",
+                        "title": "Assets",
+                        "example": [
+                            {
+                                "id": "66a0b1c2d3e4f5a6b7c8d9e0",
+                                "type": "image",
+                                "mimeType": "image/jpeg",
+                                "source": "https://example.com/images/launch.jpg",
+                                "thumbnail": "https://example.com/images/launch-thumb.jpg"
+                            }
+                        ],
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "id": {
+                                    "type": "string",
+                                    "title": "Assets.ID",
+                                    "example": "66a0b1c2d3e4f5a6b7c8d9e0"
+                                },
+                                "type": {
+                                    "type": "string",
+                                    "title": "Assets.Type",
+                                    "example": "image"
+                                },
+                                "mimeType": {
+                                    "type": "string",
+                                    "title": "Assets.MIME Type",
+                                    "example": "image/jpeg"
+                                },
+                                "source": {
+                                    "type": "string",
+                                    "title": "Assets.Source",
+                                    "example": "https://example.com/images/launch.jpg"
+                                },
+                                "thumbnail": {
+                                    "type": "string",
+                                    "title": "Assets.Thumbnail",
+                                    "example": "https://example.com/images/launch-thumb.jpg"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZmlsbD0iIzIzMUYyMCIgZD0iTTEuMzcxIDUuNDc2TDExLjk0MyAwbDEwLjY4NiA1LjQ3Ni0xMC42ODYgNS40OTV6bTMuMzYgNC44MWw3LjIxMiAzLjU0NyA3LjI4OC0zLjU0NyAzLjM5OCAxLjY1NS0xMC42ODYgNS4yMDJMMS4zNzEgMTEuOTR6bTAgNi4xNzFsNy4yMTIgMy45MTEgNy4yODgtMy45MSAzLjM5OCAxLjgxNUwxMS45NDMgMjQgMS4zNzEgMTguMjczeiIvPjwvc3ZnPg=="
+}
