@@ -1,0 +1,222 @@
+{
+    "name": "appmixer.zoho.books.FindInvoices",
+    "label": "Find Invoices",
+    "author": "Appmixer <info@appmixer.com>",
+    "description": "Find invoices in Zoho Books by customer, status, invoice number, reference number, date range or search text. Returns up to 200 invoices, newest first.",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:zoho:books",
+        "scope": [
+            "ZohoBooks.invoices.READ"
+        ]
+    },
+    "quota": {
+        "manager": "appmixer:zoho:books",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "organizationId": {
+                        "type": "string"
+                    },
+                    "customerId": {
+                        "type": "string"
+                    },
+                    "customerName": {
+                        "type": "string",
+                        "maxLength": 100
+                    },
+                    "status": {
+                        "type": "string"
+                    },
+                    "invoiceNumber": {
+                        "type": "string",
+                        "maxLength": 100
+                    },
+                    "referenceNumber": {
+                        "type": "string"
+                    },
+                    "dateStart": {
+                        "type": "string"
+                    },
+                    "dateEnd": {
+                        "type": "string"
+                    },
+                    "searchText": {
+                        "type": "string",
+                        "maxLength": 100
+                    },
+                    "outputType": {
+                        "type": "string"
+                    }
+                }
+            },
+            "inspector": {
+                "inputs": {
+                    "organizationId": {
+                        "type": "text",
+                        "label": "Organization ID",
+                        "index": 0,
+                        "tooltip": "Select the organization, or enter its ID. When empty, the default organization of the connected account is used.",
+                        "source": {
+                            "url": "/component/appmixer/zoho/books/ListOrganizations?outPort=out",
+                            "data": {
+                                "transform": "./transformers#organizationsToSelectArray"
+                            }
+                        }
+                    },
+                    "customerId": {
+                        "type": "text",
+                        "label": "Customer ID",
+                        "index": 1,
+                        "tooltip": "Only invoices of this customer."
+                    },
+                    "customerName": {
+                        "type": "text",
+                        "label": "Customer Name",
+                        "index": 2,
+                        "tooltip": "Only invoices of customers with this name."
+                    },
+                    "status": {
+                        "type": "select",
+                        "label": "Status",
+                        "index": 3,
+                        "tooltip": "Only invoices in this status.",
+                        "options": [
+                            {
+                                "clearItem": true,
+                                "content": "-- Clear selection --"
+                            },
+                            {
+                                "label": "Draft",
+                                "value": "draft"
+                            },
+                            {
+                                "label": "Sent",
+                                "value": "sent"
+                            },
+                            {
+                                "label": "Viewed",
+                                "value": "viewed"
+                            },
+                            {
+                                "label": "Overdue",
+                                "value": "overdue"
+                            },
+                            {
+                                "label": "Unpaid",
+                                "value": "unpaid"
+                            },
+                            {
+                                "label": "Partially Paid",
+                                "value": "partially_paid"
+                            },
+                            {
+                                "label": "Paid",
+                                "value": "paid"
+                            },
+                            {
+                                "label": "Void",
+                                "value": "void"
+                            }
+                        ]
+                    },
+                    "invoiceNumber": {
+                        "type": "text",
+                        "label": "Invoice Number",
+                        "index": 4,
+                        "tooltip": "Invoice number, e.g. INV-00001."
+                    },
+                    "referenceNumber": {
+                        "type": "text",
+                        "label": "Reference Number",
+                        "index": 5,
+                        "tooltip": "Reference number of the invoice, e.g. a purchase order number."
+                    },
+                    "dateStart": {
+                        "type": "date-time",
+                        "label": "Invoice Date From",
+                        "index": 6,
+                        "tooltip": "Only invoices dated on or after this date.",
+                        "config": {
+                            "format": "YYYY-MM-DD",
+                            "enableTime": false
+                        }
+                    },
+                    "dateEnd": {
+                        "type": "date-time",
+                        "label": "Invoice Date To",
+                        "index": 7,
+                        "tooltip": "Only invoices dated on or before this date.",
+                        "config": {
+                            "format": "YYYY-MM-DD",
+                            "enableTime": false
+                        }
+                    },
+                    "searchText": {
+                        "type": "text",
+                        "label": "Search Text",
+                        "index": 8,
+                        "tooltip": "Searches the invoice number, purchase order and customer name."
+                    },
+                    "outputType": {
+                        "type": "select",
+                        "label": "Output Type",
+                        "index": 9,
+                        "defaultValue": "array",
+                        "tooltip": "Choose whether you want to receive the result set as one complete list, or first item only or one item at a time or stream the items to a file.",
+                        "options": [
+                            {
+                                "label": "First Item Only",
+                                "value": "first"
+                            },
+                            {
+                                "label": "All items at once",
+                                "value": "array"
+                            },
+                            {
+                                "label": "One item at a time",
+                                "value": "object"
+                            },
+                            {
+                                "label": "Store to CSV file",
+                                "value": "file"
+                            }
+                        ]
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "source": {
+                "url": "/component/appmixer/zoho/books/FindInvoices?outPort=out&ignoreAuth=true",
+                "data": {
+                    "properties": {
+                        "generateOutputPortOptions": true
+                    },
+                    "messages": {
+                        "in/outputType": "inputs/in/outputType"
+                    }
+                }
+            }
+        },
+        {
+            "name": "notFound",
+            "schema": {
+                "type": "object",
+                "properties": {}
+            }
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGNsYXNzPSJsb2dvLWNvbG9yIiB2aWV3Qm94PSIwIDAgMTAyNCAxMDI0Ij48cGF0aCBmaWxsPSIjMjI2ZWIzIiBkPSJNNzI5LjU0IDEwMjRIMzBjLTE2LjU3IDAtMzAtMTMuNDMtMzAtMzBWNzM5Ljg0YzAtNTUuNTIgMzUuMjgtMTA0LjkzIDg3LjgtMTIyLjk2bDc3NS4yOC0yNjYuMDlDOTIzLjQ0IDMzMC4wNyA5NjQgMjczLjI2IDk2NCAyMDkuNDQgOTY0IDEyNy4wNCA4OTYuOTYgNjAgODE0LjU2IDYwSDYwdjQ5NC45NmMwIDE2LjU3LTEzLjQzIDMwLTMwIDMwcy0zMC0xMy40My0zMC0zMFYzMEMwIDEzLjQzIDEzLjQzIDAgMzAgMGg3ODQuNTZDOTMwLjA1IDAgMTAyNCA5My45NSAxMDI0IDIwOS40NGMwIDg5LjQ1LTU2Ljg0IDE2OS4wNi0xNDEuNDUgMTk4LjFMMTA3LjI4IDY3My42M0M3OSA2ODMuMzMgNjAgNzA5Ljk0IDYwIDczOS44NFY5NjRoNjY5LjU0YzYyLjYzIDAgMTIxLjUtMjQuMzkgMTY1Ljc5LTY4LjY3QzkzOS42MSA4NTEuMDQgOTY0IDc5Mi4xNyA5NjQgNzI5LjU0YzAtNDQuMzMtMTIuNDktODcuNTYtMzYuMTEtMTI1LjAyLTIzLjM5LTM3LjEtNTYuNTUtNjYuNzktOTUuODktODUuODgtMTQuOTEtNy4yMy0yMS4xMy0yNS4xOC0xMy44OS00MC4wOSA3LjIzLTE0LjkxIDI1LjE4LTIxLjEzIDQwLjA5LTEzLjg5IDQ5LjQyIDIzLjk4IDkxLjA3IDYxLjI4IDEyMC40NSAxMDcuODYgMjkuNjggNDcuMDYgNDUuMzYgMTAxLjM2IDQ1LjM2IDE1Ny4wMyAwIDc4LjY1LTMwLjYzIDE1Mi42LTg2LjI1IDIwOC4yMi01NS42MiA1NS42LTEyOS41NyA4Ni4yMy0yMDguMjIgODYuMjN6IiBvcGFjaXR5PSIuOSIvPjxwYXRoIGZpbGw9IiMyMjZlYjMiIGQ9Ik0zMzcuNTIgNDE5LjgyYy02Ni4xNyAwLTEyMC01My44My0xMjAtMTIwczUzLjgzLTEyMCAxMjAtMTIwIDEyMCA1My44MyAxMjAgMTIwLTUzLjgzIDEyMC0xMjAgMTIwem0wLTE4MGMtMzMuMDggMC02MCAyNi45Mi02MCA2MHMyNi45MiA2MCA2MCA2MCA2MC0yNi45MiA2MC02MC0yNi45Mi02MC02MC02MHpNNjM4LjM0IDg0My41M2MtNjYuMTcgMC0xMjAtNTMuODMtMTIwLTEyMHM1My44My0xMjAgMTIwLTEyMCAxMjAgNTMuODMgMTIwIDEyMC01My44MyAxMjAtMTIwIDEyMHptMC0xODBjLTMzLjA4IDAtNjAgMjYuOTItNjAgNjBzMjYuOTIgNjAgNjAgNjAgNjAtMjYuOTIgNjAtNjAtMjYuOTItNjAtNjAtNjB6IiBvcGFjaXR5PSIuOSIvPjwvc3ZnPgo="
+}

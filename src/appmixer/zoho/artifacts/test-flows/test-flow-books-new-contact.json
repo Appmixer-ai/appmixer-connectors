@@ -1,0 +1,298 @@
+{
+    "name": "E2E Zoho Books - new contact",
+    "description": "Provokes the NewContact polling trigger: waits for the baseline tick, creates a customer, asserts the contact the trigger emits and deletes it.",
+    "notes": {
+        "55b513cd-ca0b-4fac-b5a5-5096c6e1a8d1": {
+            "x": 64,
+            "y": 512,
+            "width": 672,
+            "height": 256,
+            "content": "## ⚠️ Test data assumption + timing\n\n**Organization ID** `20111141498` is set on the New Contact trigger and on the Create/Delete components. It must be an organization of the connected Zoho Books account — on another tenant replace it in all three places.\n\n**Do not remove the Wait.** New Contact records the existing contacts on its first tick and only emits contacts created later; a contact created at flow start lands in that baseline and never fires.\n\nThe trigger watches customers only. Another flow creating customers in the same organization at the same time can fire it first and fail the name assertion — run this flow on its own. The cleanup reads the **trigger's** `contact_id`, so it doubles as the proof that the trigger fired."
+        }
+    },
+    "flow": {
+        "374206a7-ee11-4bef-a9ae-1e14a1d25fed": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 128,
+            "version": "1.0.0",
+            "source": {},
+            "config": {},
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "e4a23754-c51b-417f-a6ef-8eb2a7121bf9": {
+            "type": "appmixer.utils.timers.Wait",
+            "x": 272,
+            "y": 128,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "374206a7-ee11-4bef-a9ae-1e14a1d25fed": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "374206a7-ee11-4bef-a9ae-1e14a1d25fed": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "interval": {}
+                                },
+                                "lambda": {
+                                    "interval": "2m"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "3f0b0795-347f-4773-854e-0d6ad3d9bf3a": {
+            "type": "appmixer.zoho.books.CreateContact",
+            "x": 480,
+            "y": 128,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "e4a23754-c51b-417f-a6ef-8eb2a7121bf9": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "e4a23754-c51b-417f-a6ef-8eb2a7121bf9": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "organization_id": {},
+                                    "contact_type": {},
+                                    "contact_name": {
+                                        "3cb93d74-b881-4a71-9305-ddb1f3b15716": {
+                                            "functions": [
+                                                {
+                                                    "name": "g_uuid4"
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "organization_id": "20111141498",
+                                    "contact_type": "customer",
+                                    "contact_name": "Appmixer E2E new contact {{{3cb93d74-b881-4a71-9305-ddb1f3b15716}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "469efc4b-31ff-4049-a295-6dc4174c5940": {
+            "type": "appmixer.zoho.books.NewContact",
+            "x": 64,
+            "y": 384,
+            "version": "1.0.0",
+            "source": {},
+            "config": {
+                "properties": {
+                    "organizationId": "20111141498",
+                    "contactType": "customer"
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "fdb3324e-3e3e-44a4-acc0-73e9a76ea3ad": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 272,
+            "y": 384,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "469efc4b-31ff-4049-a295-6dc4174c5940": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "469efc4b-31ff-4049-a295-6dc4174c5940": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "01d690e3-7e35-43a4-971c-c46063d29207": {
+                                            "variable": "$.469efc4b-31ff-4049-a295-6dc4174c5940.out.contact_id",
+                                            "functions": []
+                                        },
+                                        "c86d1a8d-f85d-4314-b676-793d8230480c": {
+                                            "variable": "$.469efc4b-31ff-4049-a295-6dc4174c5940.out.contact_name",
+                                            "functions": []
+                                        },
+                                        "05340c0d-f3cc-44fa-92c4-325f12e0b85d": {
+                                            "variable": "$.469efc4b-31ff-4049-a295-6dc4174c5940.out.contact_type",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{01d690e3-7e35-43a4-971c-c46063d29207}}}",
+                                                "assertion": "notEmpty"
+                                            },
+                                            {
+                                                "field": "{{{c86d1a8d-f85d-4314-b676-793d8230480c}}}",
+                                                "assertion": "regex",
+                                                "regex": "^Appmixer E2E new contact "
+                                            },
+                                            {
+                                                "field": "{{{05340c0d-f3cc-44fa-92c4-325f12e0b85d}}}",
+                                                "assertion": "equal",
+                                                "expected": "customer"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "e38c72f8-fc30-493f-8b90-804fae8f718c": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 480,
+            "y": 384,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "fdb3324e-3e3e-44a4-acc0-73e9a76ea3ad": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 600
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "41e9bdd4-51d9-4338-a867-f9eb72fb7283": {
+            "type": "appmixer.zoho.books.DeleteContact",
+            "x": 688,
+            "y": 384,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "e38c72f8-fc30-493f-8b90-804fae8f718c": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "e38c72f8-fc30-493f-8b90-804fae8f718c": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "organization_id": {},
+                                    "contact_id": {
+                                        "bd035733-a052-4e25-b7b9-a7a84bc74b0d": {
+                                            "variable": "$.469efc4b-31ff-4049-a295-6dc4174c5940.out.contact_id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "organization_id": "20111141498",
+                                    "contact_id": "{{{bd035733-a052-4e25-b7b9-a7a84bc74b0d}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "0c26b399-68fd-4314-a127-2f3944c59c2f": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 896,
+            "y": 384,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "41e9bdd4-51d9-4338-a867-f9eb72fb7283": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "successStoreId": "64f6f1f9193228000754082f",
+                    "failedStoreId": "64f6f1f0193228000754082e"
+                },
+                "transform": {
+                    "in": {
+                        "41e9bdd4-51d9-4338-a867-f9eb72fb7283": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "ef652dde-4301-42c7-b022-424ab36311f4": {
+                                            "variable": "$.e38c72f8-fc30-493f-8b90-804fae8f718c.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.com",
+                                    "testCase": "E2E Zoho Books - new contact",
+                                    "result": "{{{ef652dde-4301-42c7-b022-424ab36311f4}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        }
+    }
+}

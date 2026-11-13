@@ -1,0 +1,422 @@
+{
+    "name": "E2E Zoho Books - updated invoice",
+    "description": "Provokes the NewInvoice trigger in the Created or updated mode: creates a draft invoice, waits for the baseline tick, marks the invoice as sent and asserts the sent invoice the trigger emits, then deletes invoice and customer.",
+    "notes": {
+        "942d5a12-ef39-4803-87be-464cbc06ba2c": {
+            "x": 64,
+            "y": 512,
+            "width": 672,
+            "height": 272,
+            "content": "## ⚠️ Test data assumption + timing\n\n**Organization ID** `20111141498` is set on the New Invoice trigger and on the Zoho Books actions. It must be an organization of the connected Zoho Books account — on another tenant replace it everywhere.\n\nNew Invoice runs with **Events: Created or updated** and **Status: Sent**, so the draft invoice created at flow start does not fire; marking it as sent changes it, and the trigger emits it. **Do not remove the Wait** — the status change must come after the trigger's first (baseline) tick.\n\nThe cleanup reads the **trigger's** `invoice_id` and `customer_id`, so it doubles as the proof that the trigger fired. If the flow times out, delete the customer *Appmixer E2E updated invoice customer …* and its invoice by hand."
+        }
+    },
+    "flow": {
+        "46e22b19-89d4-4d0b-ac43-a6d033e46909": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 128,
+            "version": "1.0.0",
+            "source": {},
+            "config": {},
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "e2c64392-8d84-44c1-810d-ac88ad3a8d5b": {
+            "type": "appmixer.zoho.books.CreateContact",
+            "x": 272,
+            "y": 128,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "46e22b19-89d4-4d0b-ac43-a6d033e46909": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "46e22b19-89d4-4d0b-ac43-a6d033e46909": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "organization_id": {},
+                                    "contact_name": {
+                                        "031d9736-b9fb-4049-b0cd-e41b6135c7b4": {
+                                            "functions": [
+                                                {
+                                                    "name": "g_uuid4"
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "organization_id": "20111141498",
+                                    "contact_name": "Appmixer E2E updated invoice customer {{{031d9736-b9fb-4049-b0cd-e41b6135c7b4}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "50aca917-6f20-4c89-a6bc-0630dd616d53": {
+            "type": "appmixer.zoho.books.CreateInvoice",
+            "x": 480,
+            "y": 128,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "e2c64392-8d84-44c1-810d-ac88ad3a8d5b": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "e2c64392-8d84-44c1-810d-ac88ad3a8d5b": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "organization_id": {},
+                                    "customer_id": {
+                                        "3e735434-c6a9-4c2f-97c7-0e08a294b4d6": {
+                                            "variable": "$.e2c64392-8d84-44c1-810d-ac88ad3a8d5b.out.contact_id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "line_items": {}
+                                },
+                                "lambda": {
+                                    "organization_id": "20111141498",
+                                    "customer_id": "{{{3e735434-c6a9-4c2f-97c7-0e08a294b4d6}}}",
+                                    "line_items": "[{\"quantity\": 1, \"rate\": 15, \"description\": \"Appmixer E2E updated invoice trigger\"}]"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "c23570b2-e94c-434d-8c29-bc115d11ce48": {
+            "type": "appmixer.utils.timers.Wait",
+            "x": 688,
+            "y": 128,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "50aca917-6f20-4c89-a6bc-0630dd616d53": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "50aca917-6f20-4c89-a6bc-0630dd616d53": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "interval": {}
+                                },
+                                "lambda": {
+                                    "interval": "2m"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "642a85d5-d6ff-47b6-839c-4d5d0bdfdc9c": {
+            "type": "appmixer.zoho.books.MarkAsSent",
+            "x": 896,
+            "y": 128,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "c23570b2-e94c-434d-8c29-bc115d11ce48": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "c23570b2-e94c-434d-8c29-bc115d11ce48": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "organization_id": {},
+                                    "invoice_id": {
+                                        "cc6b6040-c215-4709-a28e-9f631872664f": {
+                                            "variable": "$.50aca917-6f20-4c89-a6bc-0630dd616d53.out.invoice_id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "organization_id": "20111141498",
+                                    "invoice_id": "{{{cc6b6040-c215-4709-a28e-9f631872664f}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "3f97c98e-ade7-4174-ba9f-0e5355560a38": {
+            "type": "appmixer.zoho.books.NewInvoice",
+            "x": 64,
+            "y": 384,
+            "version": "1.0.0",
+            "source": {},
+            "config": {
+                "properties": {
+                    "organizationId": "20111141498",
+                    "events": "created_or_updated",
+                    "status": "Status.Sent"
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "edb0b491-da4f-4566-b3db-e3cdbee0ba54": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 272,
+            "y": 384,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "3f97c98e-ade7-4174-ba9f-0e5355560a38": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "3f97c98e-ade7-4174-ba9f-0e5355560a38": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "7dca8a11-4299-4262-a49b-9ea9014c1b56": {
+                                            "variable": "$.3f97c98e-ade7-4174-ba9f-0e5355560a38.out.invoice_id",
+                                            "functions": []
+                                        },
+                                        "a817b745-730f-40e3-8b0e-39eece8f06c7": {
+                                            "variable": "$.3f97c98e-ade7-4174-ba9f-0e5355560a38.out.status",
+                                            "functions": []
+                                        },
+                                        "2946b931-1af4-44f6-b201-8fa0ea68d08e": {
+                                            "variable": "$.3f97c98e-ade7-4174-ba9f-0e5355560a38.out.customer_name",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{7dca8a11-4299-4262-a49b-9ea9014c1b56}}}",
+                                                "assertion": "notEmpty"
+                                            },
+                                            {
+                                                "field": "{{{a817b745-730f-40e3-8b0e-39eece8f06c7}}}",
+                                                "assertion": "equal",
+                                                "expected": "sent"
+                                            },
+                                            {
+                                                "field": "{{{2946b931-1af4-44f6-b201-8fa0ea68d08e}}}",
+                                                "assertion": "regex",
+                                                "regex": "^Appmixer E2E updated invoice customer "
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "09bd4f5f-6870-4b51-a6ed-b2205c9e93a1": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 480,
+            "y": 384,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "edb0b491-da4f-4566-b3db-e3cdbee0ba54": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 600
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "5646057c-7351-4835-9896-de343bcab7cf": {
+            "type": "appmixer.zoho.books.DeleteInvoice",
+            "x": 688,
+            "y": 384,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "09bd4f5f-6870-4b51-a6ed-b2205c9e93a1": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "09bd4f5f-6870-4b51-a6ed-b2205c9e93a1": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "organization_id": {},
+                                    "invoice_id": {
+                                        "4b6a71fb-4245-4e3f-8dc0-db465009d2ec": {
+                                            "variable": "$.3f97c98e-ade7-4174-ba9f-0e5355560a38.out.invoice_id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "organization_id": "20111141498",
+                                    "invoice_id": "{{{4b6a71fb-4245-4e3f-8dc0-db465009d2ec}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "6e30a634-9497-4832-bc48-a538c01cdc13": {
+            "type": "appmixer.zoho.books.DeleteContact",
+            "x": 896,
+            "y": 384,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "5646057c-7351-4835-9896-de343bcab7cf": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "5646057c-7351-4835-9896-de343bcab7cf": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "organization_id": {},
+                                    "contact_id": {
+                                        "c70ef6de-dfe8-439a-bd26-c3200d82562e": {
+                                            "variable": "$.3f97c98e-ade7-4174-ba9f-0e5355560a38.out.customer_id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "organization_id": "20111141498",
+                                    "contact_id": "{{{c70ef6de-dfe8-439a-bd26-c3200d82562e}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "6479c72f-ee1b-42ee-acfa-ecdc74d66209": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1104,
+            "y": 384,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "6e30a634-9497-4832-bc48-a538c01cdc13": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "successStoreId": "64f6f1f9193228000754082f",
+                    "failedStoreId": "64f6f1f0193228000754082e"
+                },
+                "transform": {
+                    "in": {
+                        "6e30a634-9497-4832-bc48-a538c01cdc13": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "a93de0ef-c31e-4f61-861c-9ac53cc525b4": {
+                                            "variable": "$.09bd4f5f-6870-4b51-a6ed-b2205c9e93a1.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.com",
+                                    "testCase": "E2E Zoho Books - updated invoice",
+                                    "result": "{{{a93de0ef-c31e-4f61-861c-9ac53cc525b4}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        }
+    }
+}

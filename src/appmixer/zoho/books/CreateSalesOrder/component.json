@@ -1,0 +1,424 @@
+{
+    "name": "appmixer.zoho.books.CreateSalesOrder",
+    "label": "Create Sales Order",
+    "author": "Appmixer <info@appmixer.com>",
+    "description": "Create a sales order for a customer in Zoho Books.",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:zoho:books",
+        "scope": [
+            "ZohoBooks.salesorders.CREATE"
+        ]
+    },
+    "quota": {
+        "manager": "appmixer:zoho:books",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "organizationId": {
+                        "type": "string"
+                    },
+                    "customerId": {
+                        "type": "string"
+                    },
+                    "lineItems": {
+                        "type": "string"
+                    },
+                    "salesorderNumber": {
+                        "type": "string"
+                    },
+                    "referenceNumber": {
+                        "type": "string"
+                    },
+                    "date": {
+                        "type": "string"
+                    },
+                    "shipmentDate": {
+                        "type": "string"
+                    },
+                    "currencyId": {
+                        "type": "string"
+                    },
+                    "exchangeRate": {
+                        "type": "number"
+                    },
+                    "discount": {
+                        "type": "string"
+                    },
+                    "discountType": {
+                        "type": "string"
+                    },
+                    "isDiscountBeforeTax": {
+                        "type": "boolean"
+                    },
+                    "isInclusiveTax": {
+                        "type": "boolean"
+                    },
+                    "deliveryMethod": {
+                        "type": "string"
+                    },
+                    "salespersonName": {
+                        "type": "string"
+                    },
+                    "estimateId": {
+                        "type": "string"
+                    },
+                    "notes": {
+                        "type": "string"
+                    },
+                    "terms": {
+                        "type": "string"
+                    },
+                    "shippingCharge": {
+                        "type": "number"
+                    },
+                    "adjustment": {
+                        "type": "number"
+                    },
+                    "adjustmentDescription": {
+                        "type": "string"
+                    },
+                    "customFields": {
+                        "type": "string"
+                    },
+                    "ignoreAutoNumberGeneration": {
+                        "type": "boolean"
+                    }
+                },
+                "required": [
+                    "customerId"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "organizationId": {
+                        "type": "text",
+                        "label": "Organization ID",
+                        "index": 0,
+                        "tooltip": "Select the organization, or enter its ID. When empty, the default organization of the connected account is used.",
+                        "source": {
+                            "url": "/component/appmixer/zoho/books/ListOrganizations?outPort=out",
+                            "data": {
+                                "transform": "./transformers#organizationsToSelectArray"
+                            }
+                        }
+                    },
+                    "customerId": {
+                        "type": "text",
+                        "label": "Customer ID",
+                        "index": 1,
+                        "tooltip": "ID of the customer the sales order is for."
+                    },
+                    "lineItems": {
+                        "type": "textarea",
+                        "label": "Line Items",
+                        "index": 2,
+                        "tooltip": "Line items as a JSON array of objects. Use <code>item_id</code> to reference an existing item, or set <code>name</code>/<code>description</code>, <code>rate</code> and <code>quantity</code> directly. Example: <code>[{\"item_id\": \"460000000017088\", \"quantity\": 2}, {\"description\": \"Consulting\", \"rate\": 120, \"quantity\": 1}]</code>. See the <a href=\"https://www.zoho.com/books/api/v3/sales-order/#create-a-sales-order\" target=\"_blank\">Zoho Books API docs</a> for all line item fields."
+                    },
+                    "salesorderNumber": {
+                        "type": "text",
+                        "label": "Sales Order Number",
+                        "index": 3,
+                        "tooltip": "Number of the sales order. Required only when Ignore Auto Number Generation is on; otherwise Zoho Books numbers the sales order."
+                    },
+                    "referenceNumber": {
+                        "type": "text",
+                        "label": "Reference Number",
+                        "index": 4,
+                        "tooltip": "Your reference for the order, e.g. the order number in your store."
+                    },
+                    "date": {
+                        "type": "date-time",
+                        "label": "Date",
+                        "index": 5,
+                        "tooltip": "Date of the sales order. Defaults to today.",
+                        "config": {
+                            "format": "YYYY-MM-DD",
+                            "enableTime": false
+                        }
+                    },
+                    "shipmentDate": {
+                        "type": "date-time",
+                        "label": "Shipment Date",
+                        "index": 6,
+                        "tooltip": "Expected shipment date.",
+                        "config": {
+                            "format": "YYYY-MM-DD",
+                            "enableTime": false
+                        }
+                    },
+                    "currencyId": {
+                        "type": "text",
+                        "label": "Currency ID",
+                        "index": 7,
+                        "tooltip": "ID of the currency of the sales order. Defaults to the customer's currency."
+                    },
+                    "exchangeRate": {
+                        "type": "number",
+                        "label": "Exchange Rate",
+                        "index": 8,
+                        "tooltip": "Exchange rate of the currency."
+                    },
+                    "discount": {
+                        "type": "text",
+                        "label": "Discount",
+                        "index": 9,
+                        "tooltip": "Discount on the sales order, as a percentage (<code>12.5%</code>) or an amount (<code>190</code>)."
+                    },
+                    "discountType": {
+                        "type": "select",
+                        "label": "Discount Type",
+                        "index": 10,
+                        "tooltip": "Whether the discount applies to the whole order or per line item.",
+                        "options": [
+                            {
+                                "label": "Entity Level",
+                                "value": "entity_level"
+                            },
+                            {
+                                "label": "Item Level",
+                                "value": "item_level"
+                            }
+                        ]
+                    },
+                    "isDiscountBeforeTax": {
+                        "type": "toggle",
+                        "label": "Discount Before Tax",
+                        "index": 11,
+                        "tooltip": "Apply the discount before tax is calculated."
+                    },
+                    "isInclusiveTax": {
+                        "type": "toggle",
+                        "label": "Rates Include Tax",
+                        "index": 12,
+                        "tooltip": "Line item rates include tax."
+                    },
+                    "deliveryMethod": {
+                        "type": "text",
+                        "label": "Delivery Method",
+                        "index": 13,
+                        "tooltip": "Delivery method of the order, e.g. Courier."
+                    },
+                    "salespersonName": {
+                        "type": "text",
+                        "label": "Salesperson Name",
+                        "index": 14,
+                        "tooltip": "Name of the salesperson."
+                    },
+                    "estimateId": {
+                        "type": "text",
+                        "label": "Estimate ID",
+                        "index": 15,
+                        "tooltip": "ID of the estimate the sales order is created from. Zoho Books converts only accepted estimates."
+                    },
+                    "notes": {
+                        "type": "textarea",
+                        "label": "Notes",
+                        "index": 16,
+                        "tooltip": "Notes shown on the sales order."
+                    },
+                    "terms": {
+                        "type": "textarea",
+                        "label": "Terms",
+                        "index": 17,
+                        "tooltip": "Terms and conditions shown on the sales order."
+                    },
+                    "shippingCharge": {
+                        "type": "number",
+                        "label": "Shipping Charge",
+                        "index": 18,
+                        "tooltip": "Shipping charge added to the order."
+                    },
+                    "adjustment": {
+                        "type": "number",
+                        "label": "Adjustment",
+                        "index": 19,
+                        "tooltip": "Amount added to or subtracted from the total, e.g. for rounding."
+                    },
+                    "adjustmentDescription": {
+                        "type": "text",
+                        "label": "Adjustment Description",
+                        "index": 20,
+                        "tooltip": "Description of the adjustment, e.g. Rounding off."
+                    },
+                    "customFields": {
+                        "type": "textarea",
+                        "label": "Custom Fields",
+                        "index": 21,
+                        "tooltip": "Custom fields as a JSON array. Example: <code>[{\"customfield_id\": \"460000000639129\", \"value\": \"Web shop\"}]</code>."
+                    },
+                    "ignoreAutoNumberGeneration": {
+                        "type": "toggle",
+                        "label": "Ignore Auto Number Generation",
+                        "index": 22,
+                        "tooltip": "Use the Sales Order Number you set instead of the automatic number."
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "salesorder_id": {
+                        "type": "string",
+                        "title": "Sales Order ID",
+                        "example": "460000000039129"
+                    },
+                    "salesorder_number": {
+                        "type": "string",
+                        "title": "Sales Order Number",
+                        "example": "SO-00001"
+                    },
+                    "date": {
+                        "type": "string",
+                        "title": "Date",
+                        "example": "2026-11-13"
+                    },
+                    "shipment_date": {
+                        "type": "string",
+                        "title": "Shipment Date",
+                        "example": "2026-11-20"
+                    },
+                    "reference_number": {
+                        "type": "string",
+                        "title": "Reference Number",
+                        "example": "WEB-1043"
+                    },
+                    "status": {
+                        "type": "string",
+                        "title": "Status",
+                        "example": "draft"
+                    },
+                    "customer_id": {
+                        "type": "string",
+                        "title": "Customer ID",
+                        "example": "460000000026049"
+                    },
+                    "customer_name": {
+                        "type": "string",
+                        "title": "Customer Name",
+                        "example": "Bowman Furniture"
+                    },
+                    "currency_code": {
+                        "type": "string",
+                        "title": "Currency Code",
+                        "example": "USD"
+                    },
+                    "delivery_method": {
+                        "type": "string",
+                        "title": "Delivery Method",
+                        "example": "Courier"
+                    },
+                    "sub_total": {
+                        "type": "number",
+                        "title": "Sub Total",
+                        "example": 120
+                    },
+                    "tax_total": {
+                        "type": "number",
+                        "title": "Tax Total",
+                        "example": 0
+                    },
+                    "total": {
+                        "type": "number",
+                        "title": "Total",
+                        "example": 120
+                    },
+                    "line_items": {
+                        "type": "array",
+                        "title": "Line Items",
+                        "example": [
+                            {
+                                "line_item_id": "460000000038092",
+                                "item_id": "460000000017088",
+                                "name": "Hard Drive",
+                                "description": "500GB, USB 2.0",
+                                "quantity": 1,
+                                "rate": 120,
+                                "item_total": 120
+                            }
+                        ],
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "line_item_id": {
+                                    "type": "string",
+                                    "title": "Line Items.Line Item ID",
+                                    "example": "460000000038092"
+                                },
+                                "item_id": {
+                                    "type": "string",
+                                    "title": "Line Items.Item ID",
+                                    "example": "460000000017088"
+                                },
+                                "name": {
+                                    "type": "string",
+                                    "title": "Line Items.Name",
+                                    "example": "Hard Drive"
+                                },
+                                "description": {
+                                    "type": "string",
+                                    "title": "Line Items.Description",
+                                    "example": "500GB, USB 2.0"
+                                },
+                                "quantity": {
+                                    "type": "number",
+                                    "title": "Line Items.Quantity",
+                                    "example": 1
+                                },
+                                "rate": {
+                                    "type": "number",
+                                    "title": "Line Items.Rate",
+                                    "example": 120
+                                },
+                                "item_total": {
+                                    "type": "number",
+                                    "title": "Line Items.Item Total",
+                                    "example": 120
+                                }
+                            }
+                        }
+                    },
+                    "notes": {
+                        "type": "string",
+                        "title": "Notes",
+                        "example": "Leave the parcel at the reception."
+                    },
+                    "terms": {
+                        "type": "string",
+                        "title": "Terms",
+                        "example": "Payment due on delivery."
+                    },
+                    "salesperson_name": {
+                        "type": "string",
+                        "title": "Salesperson Name",
+                        "example": "Will Smith"
+                    },
+                    "created_time": {
+                        "type": "string",
+                        "title": "Created Time",
+                        "example": "2026-11-13T10:30:00+0000"
+                    },
+                    "last_modified_time": {
+                        "type": "string",
+                        "title": "Last Modified Time",
+                        "example": "2026-11-13T10:30:00+0000"
+                    }
+                }
+            }
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGNsYXNzPSJsb2dvLWNvbG9yIiB2aWV3Qm94PSIwIDAgMTAyNCAxMDI0Ij48cGF0aCBmaWxsPSIjMjI2ZWIzIiBkPSJNNzI5LjU0IDEwMjRIMzBjLTE2LjU3IDAtMzAtMTMuNDMtMzAtMzBWNzM5Ljg0YzAtNTUuNTIgMzUuMjgtMTA0LjkzIDg3LjgtMTIyLjk2bDc3NS4yOC0yNjYuMDlDOTIzLjQ0IDMzMC4wNyA5NjQgMjczLjI2IDk2NCAyMDkuNDQgOTY0IDEyNy4wNCA4OTYuOTYgNjAgODE0LjU2IDYwSDYwdjQ5NC45NmMwIDE2LjU3LTEzLjQzIDMwLTMwIDMwcy0zMC0xMy40My0zMC0zMFYzMEMwIDEzLjQzIDEzLjQzIDAgMzAgMGg3ODQuNTZDOTMwLjA1IDAgMTAyNCA5My45NSAxMDI0IDIwOS40NGMwIDg5LjQ1LTU2Ljg0IDE2OS4wNi0xNDEuNDUgMTk4LjFMMTA3LjI4IDY3My42M0M3OSA2ODMuMzMgNjAgNzA5Ljk0IDYwIDczOS44NFY5NjRoNjY5LjU0YzYyLjYzIDAgMTIxLjUtMjQuMzkgMTY1Ljc5LTY4LjY3QzkzOS42MSA4NTEuMDQgOTY0IDc5Mi4xNyA5NjQgNzI5LjU0YzAtNDQuMzMtMTIuNDktODcuNTYtMzYuMTEtMTI1LjAyLTIzLjM5LTM3LjEtNTYuNTUtNjYuNzktOTUuODktODUuODgtMTQuOTEtNy4yMy0yMS4xMy0yNS4xOC0xMy44OS00MC4wOSA3LjIzLTE0LjkxIDI1LjE4LTIxLjEzIDQwLjA5LTEzLjg5IDQ5LjQyIDIzLjk4IDkxLjA3IDYxLjI4IDEyMC40NSAxMDcuODYgMjkuNjggNDcuMDYgNDUuMzYgMTAxLjM2IDQ1LjM2IDE1Ny4wMyAwIDc4LjY1LTMwLjYzIDE1Mi42LTg2LjI1IDIwOC4yMi01NS42MiA1NS42LTEyOS41NyA4Ni4yMy0yMDguMjIgODYuMjN6IiBvcGFjaXR5PSIuOSIvPjxwYXRoIGZpbGw9IiMyMjZlYjMiIGQ9Ik0zMzcuNTIgNDE5LjgyYy02Ni4xNyAwLTEyMC01My44My0xMjAtMTIwczUzLjgzLTEyMCAxMjAtMTIwIDEyMCA1My44MyAxMjAgMTIwLTUzLjgzIDEyMC0xMjAgMTIwem0wLTE4MGMtMzMuMDggMC02MCAyNi45Mi02MCA2MHMyNi45MiA2MCA2MCA2MCA2MC0yNi45MiA2MC02MC0yNi45Mi02MC02MC02MHpNNjM4LjM0IDg0My41M2MtNjYuMTcgMC0xMjAtNTMuODMtMTIwLTEyMHM1My44My0xMjAgMTIwLTEyMCAxMjAgNTMuODMgMTIwIDEyMC01My44MyAxMjAtMTIwIDEyMHptMC0xODBjLTMzLjA4IDAtNjAgMjYuOTItNjAgNjBzMjYuOTIgNjAgNjAgNjAgNjAtMjYuOTIgNjAtNjAtMjYuOTItNjAtNjAtNjB6IiBvcGFjaXR5PSIuOSIvPjwvc3ZnPgo="
+}
