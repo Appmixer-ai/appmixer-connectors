@@ -1,0 +1,42 @@
+{
+    "name": "appmixer.ai.agent",
+    "engine": ">=6.5",
+    "version": "1.8.0",
+    "changelog": {
+        "1.8.0": [
+            "Memory: the time each user message was sent is stored with the message (createdAt) and shown to the model as a first line of the message ([Sent: Thu 2026-11-12 14:05 UTC]), so the agent can resolve relative dates and judge how old earlier information is. The summary keeps dates as absolute dates. Applies to messages with a thread ID; threads stored earlier keep working without times.",
+            "Authentication dialog: provider-specific fields are shown only for the selected provider (conditional fields, Appmixer 6.5). Amazon Bedrock, Google Vertex AI and Azure OpenAI have their own fields (AWS Access Key ID, AWS Secret Access Key, AWS Region, Project ID, Location, Endpoint). Accounts connected with the previous dialog keep working.",
+            "Tools: the result of a tool call (component or MCP) is sent to the model as compact JSON, and all tool results of one turn together are limited; a result is cut only when it no longer fits. The limit follows the context window of the selected model where the provider reports it (Anthropic, Google, Mistral, Groq, Together AI, Cohere, OpenAI-compatible): half of the window, at 3 characters per token. The context windows are recorded in the account's profile info when the account is connected, so accounts connected earlier have to be reconnected to get them. Otherwise the limit is 240000 characters. AI_AGENT_MAX_TOOL_RESULTS_TOTAL_CHARS overrides both. AI_AGENT_MAX_TOOL_RESULT_CHARS optionally limits a single result (not set by default). Fixes 'prompt is too long' errors caused by tools returning large results. A truncation is logged as tool-result-truncated; the full result stays in the log."
+        ],
+        "1.7.0": [
+            "Memory: the user's messages are now stored in the thread memory (previously only the assistant and tool messages were).",
+            "Memory: the history is split on turn boundaries, so a tool call is never separated from its result.",
+            "Memory: once over the token budget, the history is compacted to half of it (MEMORY_COMPACTION_TARGET_RATIO) instead of summarizing on every following turn. The summary counts against the budget.",
+            "Memory: turns of one thread are processed one at a time, the answer is sent before the memory is saved, and a failed summarization or save no longer fails the message.",
+            "Memory: attached images and files are stored as placeholders and oversized tool results are truncated (MEMORY_MAX_CONTENT_CHARS).",
+            "Memory: the summary is passed in the system prompt, has a structured format and a length target (MEMORY_SUMMARY_TARGET_WORDS) and is traced in Langfuse. It always uses the model selected on the agent.",
+            "Memory: the raw message history is written only when a data store is selected."
+        ],
+        "1.6.0": [
+            "Knowledgebase: use the knowledgebase API built into Appmixer (the knowledgebase system plugin, /system-plugins/knowledgebases) instead of the external proof-of-concept service. The knowledgebaseApi service configuration is no longer used."
+        ],
+        "1.4.0": [
+            "Rework Langfuse trace hierarchy for streaming: disable SDK auto-telemetry and build spans manually. Hierarchy: Appmixer AI Agent (AGENT) > generation (SPAN, input=system+messages, output=final text) > model_step_N (SPAN, input=req body, output=text+toolcalls, usage) > tool_call:name (SPAN, model decision) + text (SPAN, text chunk) + tool execution spans (SPAN, input=args, output=result)."
+        ],
+        "1.3.0": [
+            "Fix Langfuse generation spans showing no input/output/toolCalls: removed functionId from experimental_telemetry — the prefix it added to span names (e.g. 'appmixer-ai-agent:ai.streamText.doStream') broke Langfuse OTLP ingestion's name-based mapping of ai.prompt.messages and ai.response.toolCalls.",
+            "Fix total cost not shown on agent span: stamp gen_ai.usage.input_tokens/output_tokens and gen_ai.request.model on the agent span after run() so Langfuse can compute aggregate cost.",
+            "Fix tool call span nested under root Agent instead of under the step's generation: drop capturedCtx override and rely on AsyncLocalStorageContextManager for natural OTEL context propagation — the SDK's ai.streamText span is active when execute() is called, so tool spans are now correctly nested as siblings of the doStream GENERATION observations."
+        ],
+        "1.2.0": [
+            "Fix Langfuse tracing: tool call spans were being silently dropped by @langfuse/otel v5 LangfuseSpanProcessor. The processor's isDefaultExportSpan filter requires a gen_ai.* attribute to pass. Added gen_ai.operation.name: 'execute_tool' and gen_ai.tool.name to all tool spans so they are correctly exported and appear in Langfuse traces."
+        ],
+        "1.1.0": [
+            "Fix Langfuse tracing: tool call spans were not appearing in Langfuse traces.",
+            "Root causes: (1) tool spans were parented to the wrong OTEL context because async-context propagation through the Vercel AI SDK was unavailable; fixed by capturing the agent span OTEL context synchronously in buildVercelTools and passing it explicitly to executeToolByName. (2) langfuse.observation.type was set to 'tool' which is not a valid Langfuse type; changed to 'span'. (3) Added @opentelemetry/context-async-hooks dependency for proper async context propagation."
+        ],
+        "1.0.0": [
+            "First version."
+        ]
+    }
+}
