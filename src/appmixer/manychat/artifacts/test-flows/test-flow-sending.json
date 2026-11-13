@@ -1,0 +1,453 @@
+{
+    "name": "E2E Manychat - sending",
+    "description": "Find the test subscriber by name, list flows, send a flow and a text message to the subscriber.",
+    "flow": {
+        "f9a22749-1c0f-4586-8a15-989e49cf4348": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {},
+            "config": {},
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "f970a94f-f7a5-4445-8645-cb6db0ee7f65": {
+            "type": "appmixer.manychat.core.FindSubscribers",
+            "x": 272,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "f9a22749-1c0f-4586-8a15-989e49cf4348": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "f9a22749-1c0f-4586-8a15-989e49cf4348": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "searchBy": {},
+                                    "searchValue": {},
+                                    "outputType": {}
+                                },
+                                "lambda": {
+                                    "searchBy": "name",
+                                    "searchValue": "Appmixer E2E",
+                                    "outputType": "first"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "36dea26b-a829-49d3-b805-e1fd3550993d": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 480,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "f970a94f-f7a5-4445-8645-cb6db0ee7f65": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "f970a94f-f7a5-4445-8645-cb6db0ee7f65": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "4f9cd55e-d114-4678-9124-70aac1bf7fc9": {
+                                            "variable": "$.f970a94f-f7a5-4445-8645-cb6db0ee7f65.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{4f9cd55e-d114-4678-9124-70aac1bf7fc9}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "f42d51ff-0b6c-4a7f-9d46-3461e562b2e3": {
+            "type": "appmixer.manychat.core.ListFlows",
+            "x": 480,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "f970a94f-f7a5-4445-8645-cb6db0ee7f65": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "f970a94f-f7a5-4445-8645-cb6db0ee7f65": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "outputType": {}
+                                },
+                                "lambda": {
+                                    "outputType": "first"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "ce81e8bc-ef4a-4332-89e9-3111cd2bde31": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 688,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "f42d51ff-0b6c-4a7f-9d46-3461e562b2e3": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "f42d51ff-0b6c-4a7f-9d46-3461e562b2e3": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "bbbe3499-e851-419c-9d3f-57011cfd3051": {
+                                            "variable": "$.f42d51ff-0b6c-4a7f-9d46-3461e562b2e3.out.ns",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{bbbe3499-e851-419c-9d3f-57011cfd3051}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "c4392991-193d-41f4-a4f2-ecd39a01ff0b": {
+            "type": "appmixer.manychat.core.SendFlow",
+            "x": 688,
+            "y": 400,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "f42d51ff-0b6c-4a7f-9d46-3461e562b2e3": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "f42d51ff-0b6c-4a7f-9d46-3461e562b2e3": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "subscriberId": {
+                                        "2ecf2fa9-f977-46e5-b8c2-4810a25cca10": {
+                                            "functions": [],
+                                            "variable": "$.f970a94f-f7a5-4445-8645-cb6db0ee7f65.out.id"
+                                        }
+                                    },
+                                    "flowNs": {
+                                        "61dcdc7a-b6ec-49ad-a239-55141d4fd953": {
+                                            "functions": [],
+                                            "variable": "$.f42d51ff-0b6c-4a7f-9d46-3461e562b2e3.out.ns"
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "subscriberId": "{{{2ecf2fa9-f977-46e5-b8c2-4810a25cca10}}}",
+                                    "flowNs": "{{{61dcdc7a-b6ec-49ad-a239-55141d4fd953}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "d5753e3a-7549-4207-bc1b-1c490c18b591": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 896,
+            "y": 400,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "c4392991-193d-41f4-a4f2-ecd39a01ff0b": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "c4392991-193d-41f4-a4f2-ecd39a01ff0b": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "101fd0e7-ce2f-4a06-8a5f-1e4cb865ccd2": {
+                                            "variable": "$.c4392991-193d-41f4-a4f2-ecd39a01ff0b.out.flowNs",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{101fd0e7-ce2f-4a06-8a5f-1e4cb865ccd2}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "38253a3e-29af-4101-b35c-d06494d221c1": {
+            "type": "appmixer.manychat.core.SendContent",
+            "x": 896,
+            "y": 528,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "c4392991-193d-41f4-a4f2-ecd39a01ff0b": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "c4392991-193d-41f4-a4f2-ecd39a01ff0b": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "subscriberId": {
+                                        "f5de9be6-ff99-4723-bfe8-c427e247cff3": {
+                                            "functions": [],
+                                            "variable": "$.f970a94f-f7a5-4445-8645-cb6db0ee7f65.out.id"
+                                        }
+                                    },
+                                    "channel": {},
+                                    "contentType": {},
+                                    "text": {}
+                                },
+                                "lambda": {
+                                    "subscriberId": "{{{f5de9be6-ff99-4723-bfe8-c427e247cff3}}}",
+                                    "channel": "facebook",
+                                    "contentType": "text",
+                                    "text": "Appmixer E2E test message"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "c6a6f673-0d4d-465e-8cb6-c8731f73aa19": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1104,
+            "y": 528,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "38253a3e-29af-4101-b35c-d06494d221c1": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "38253a3e-29af-4101-b35c-d06494d221c1": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "13918f05-41cc-4ed3-b21d-1a4b6039c0cd": {
+                                            "variable": "$.38253a3e-29af-4101-b35c-d06494d221c1.out.status",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{13918f05-41cc-4ed3-b21d-1a4b6039c0cd}}}",
+                                                "assertion": "equal",
+                                                "expected": "success"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "d55c5967-52ff-4d26-9621-7963f755dc8d": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 1312,
+            "y": 656,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "36dea26b-a829-49d3-b805-e1fd3550993d": [
+                        "out"
+                    ],
+                    "ce81e8bc-ef4a-4332-89e9-3111cd2bde31": [
+                        "out"
+                    ],
+                    "d5753e3a-7549-4207-bc1b-1c490c18b591": [
+                        "out"
+                    ],
+                    "c6a6f673-0d4d-465e-8cb6-c8731f73aa19": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 240
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "d7982c85-285e-43ed-8982-4c07f2a11c95": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1520,
+            "y": 656,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "d55c5967-52ff-4d26-9621-7963f755dc8d": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "d55c5967-52ff-4d26-9621-7963f755dc8d": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "c6ac9c7f-7be8-4e12-90c5-396fe39e2fef": {
+                                            "functions": [],
+                                            "variable": "$.d55c5967-52ff-4d26-9621-7963f755dc8d.out"
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E Manychat - sending",
+                                    "result": "{{{c6ac9c7f-7be8-4e12-90c5-396fe39e2fef}}}"
+                                }
+                            }
+                        }
+                    }
+                },
+                "properties": {
+                    "successStoreId": "64f6f1f9193228000754082f",
+                    "failedStoreId": "64f6f1f0193228000754082e"
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        }
+    },
+    "notes": {
+        "caa98a2d-35a1-4083-a5f1-bb907c1d75a1": {
+            "x": 64,
+            "y": 848,
+            "width": 720,
+            "height": 260,
+            "content": "## ⚠️ Test data assumptions\n\nMessages can only be sent to a real contact who talks to the connected channel, so this flow needs a prepared subscriber:\n\n1. Connect a Facebook page (Messenger) to the Manychat account.\n2. From a Facebook profile named **Appmixer E2E**, send any message to the page. The contact appears in Manychat → Contacts.\n3. Repeat step 2 **within 24 hours before each run**: Meta allows messages without a message tag only inside the 24-hour window.\n4. The account needs at least one flow (List Flows takes the first one; Send Flow starts it for the subscriber)."
+        }
+    }
+}
