@@ -1,6 +1,6 @@
 {
     "name": "E2E Zoho Books - item, estimate and sales order",
-    "description": "Creates a customer and an item, quotes the item in an estimate, turns it into a sales order, asserts each record and deletes all of them.",
+    "description": "Creates a customer and an item, quotes the item in an estimate, marks the estimate sent and accepted, turns it into a sales order, asserts each record and deletes all of them.",
     "notes": {
         "57a84c1d-c0d0-4a6a-98e8-ab16d86bf2c4": {
             "x": 64,
@@ -233,6 +233,92 @@
                 "onError": "stopFlow"
             }
         },
+        "5b1e2c40-7d3a-4f6e-9a21-3c8e4d2f1a01": {
+            "type": "appmixer.zoho.books.MakeApiCall",
+            "x": 1104,
+            "y": 384,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "003705cc-1294-4f3a-926b-c342c94d8a48": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "003705cc-1294-4f3a-926b-c342c94d8a48": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "url": {
+                                        "8a0f6c12-2b4e-4d7a-b1c3-6e5f7a8b9c01": {
+                                            "variable": "$.003705cc-1294-4f3a-926b-c342c94d8a48.out.estimate_id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "method": {},
+                                    "parameters": {}
+                                },
+                                "lambda": {
+                                    "url": "/estimates/{{{8a0f6c12-2b4e-4d7a-b1c3-6e5f7a8b9c01}}}/status/sent",
+                                    "method": "POST",
+                                    "parameters": "{\"organization_id\":\"20111141498\"}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "5b1e2c40-7d3a-4f6e-9a21-3c8e4d2f1a02": {
+            "type": "appmixer.zoho.books.MakeApiCall",
+            "x": 1312,
+            "y": 384,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "5b1e2c40-7d3a-4f6e-9a21-3c8e4d2f1a01": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "5b1e2c40-7d3a-4f6e-9a21-3c8e4d2f1a01": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "url": {
+                                        "8a0f6c12-2b4e-4d7a-b1c3-6e5f7a8b9c02": {
+                                            "variable": "$.003705cc-1294-4f3a-926b-c342c94d8a48.out.estimate_id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "method": {},
+                                    "parameters": {}
+                                },
+                                "lambda": {
+                                    "url": "/estimates/{{{8a0f6c12-2b4e-4d7a-b1c3-6e5f7a8b9c02}}}/status/accepted",
+                                    "method": "POST",
+                                    "parameters": "{\"organization_id\":\"20111141498\"}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
         "1e566aba-ec3f-4c39-803d-4b45e5a15249": {
             "type": "appmixer.utils.test.Assert",
             "x": 1104,
@@ -307,12 +393,12 @@
         },
         "9592a041-156e-4505-8153-c23d6df7919c": {
             "type": "appmixer.zoho.books.CreateSalesOrder",
-            "x": 1312,
+            "x": 1728,
             "y": 384,
             "version": "1.0.0",
             "source": {
                 "in": {
-                    "003705cc-1294-4f3a-926b-c342c94d8a48": [
+                    "5b1e2c40-7d3a-4f6e-9a21-3c8e4d2f1a02": [
                         "out"
                     ]
                 }
@@ -320,7 +406,7 @@
             "config": {
                 "transform": {
                     "in": {
-                        "003705cc-1294-4f3a-926b-c342c94d8a48": {
+                        "5b1e2c40-7d3a-4f6e-9a21-3c8e4d2f1a02": {
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
@@ -366,7 +452,7 @@
         },
         "012549a9-6a1a-4e89-9b89-bb45f2fb9f17": {
             "type": "appmixer.utils.test.Assert",
-            "x": 1520,
+            "x": 1936,
             "y": 384,
             "version": "1.0.0",
             "source": {
@@ -429,7 +515,7 @@
         },
         "c7b04875-9834-40a4-830f-e6023a5464a1": {
             "type": "appmixer.utils.test.AfterAll",
-            "x": 1728,
+            "x": 2144,
             "y": 384,
             "version": "1.0.0",
             "source": {
@@ -457,7 +543,7 @@
         },
         "d7e75443-cca1-4d5a-bda1-934ac2843c54": {
             "type": "appmixer.zoho.books.MakeApiCall",
-            "x": 1936,
+            "x": 2352,
             "y": 384,
             "version": "1.0.0",
             "source": {
@@ -500,7 +586,7 @@
         },
         "0c50c3bc-f2c4-43bb-8d00-77bc5fdefd14": {
             "type": "appmixer.zoho.books.MakeApiCall",
-            "x": 2144,
+            "x": 2560,
             "y": 384,
             "version": "1.0.0",
             "source": {
@@ -543,7 +629,7 @@
         },
         "12cc4534-1750-4094-84ac-e084c4953c55": {
             "type": "appmixer.zoho.books.MakeApiCall",
-            "x": 2352,
+            "x": 2768,
             "y": 384,
             "version": "1.0.0",
             "source": {
@@ -586,7 +672,7 @@
         },
         "24a3f142-fee4-4eaa-854c-b2bcb9bfcc54": {
             "type": "appmixer.zoho.books.DeleteContact",
-            "x": 2560,
+            "x": 2976,
             "y": 384,
             "version": "1.0.0",
             "source": {
@@ -627,7 +713,7 @@
         },
         "00f0b192-cfb5-428a-a7ac-76793789eb42": {
             "type": "appmixer.utils.test.ProcessE2EResults",
-            "x": 2768,
+            "x": 3184,
             "y": 384,
             "version": "1.0.0",
             "source": {
