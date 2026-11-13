@@ -1,0 +1,319 @@
+{
+    "name": "appmixer.zoho.books.CreatePayment",
+    "label": "Create Payment",
+    "author": "Appmixer <info@appmixer.com>",
+    "description": "Record a customer payment in Zoho Books and apply it to one or more invoices.",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:zoho:books",
+        "scope": [
+            "ZohoBooks.customerpayments.CREATE"
+        ]
+    },
+    "quota": {
+        "manager": "appmixer:zoho:books",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "organizationId": {
+                        "type": "string"
+                    },
+                    "customerId": {
+                        "type": "string"
+                    },
+                    "paymentMode": {
+                        "type": "string"
+                    },
+                    "amount": {
+                        "type": "number"
+                    },
+                    "date": {
+                        "type": "string",
+                        "format": "date"
+                    },
+                    "invoiceId": {
+                        "type": "string"
+                    },
+                    "amountApplied": {
+                        "type": "number"
+                    },
+                    "invoices": {
+                        "type": "string"
+                    },
+                    "referenceNumber": {
+                        "type": "string",
+                        "maxLength": 100
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "accountId": {
+                        "type": "string"
+                    },
+                    "bankCharges": {
+                        "type": "number"
+                    },
+                    "exchangeRate": {
+                        "type": "number"
+                    }
+                },
+                "required": [
+                    "customerId",
+                    "paymentMode",
+                    "amount",
+                    "date"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "organizationId": {
+                        "type": "text",
+                        "label": "Organization ID",
+                        "index": 0,
+                        "tooltip": "Select the organization, or enter its ID. When empty, the default organization of the connected account is used.",
+                        "source": {
+                            "url": "/component/appmixer/zoho/books/ListOrganizations?outPort=out",
+                            "data": {
+                                "transform": "./transformers#organizationsToSelectArray"
+                            }
+                        }
+                    },
+                    "customerId": {
+                        "type": "text",
+                        "label": "Customer ID",
+                        "index": 1,
+                        "tooltip": "ID of the customer who made the payment."
+                    },
+                    "paymentMode": {
+                        "type": "select",
+                        "label": "Payment Mode",
+                        "index": 2,
+                        "tooltip": "How the payment was made.",
+                        "options": [
+                            {
+                                "label": "Cash",
+                                "value": "cash"
+                            },
+                            {
+                                "label": "Check",
+                                "value": "check"
+                            },
+                            {
+                                "label": "Credit Card",
+                                "value": "creditcard"
+                            },
+                            {
+                                "label": "Bank Transfer",
+                                "value": "banktransfer"
+                            },
+                            {
+                                "label": "Bank Remittance",
+                                "value": "bankremittance"
+                            },
+                            {
+                                "label": "Auto Transaction",
+                                "value": "autotransaction"
+                            },
+                            {
+                                "label": "Others",
+                                "value": "others"
+                            }
+                        ]
+                    },
+                    "amount": {
+                        "type": "number",
+                        "label": "Amount",
+                        "index": 3,
+                        "tooltip": "Total amount of the payment."
+                    },
+                    "date": {
+                        "type": "date-time",
+                        "label": "Payment Date",
+                        "index": 4,
+                        "tooltip": "Date on which the payment was made.",
+                        "config": {
+                            "format": "YYYY-MM-DD",
+                            "enableTime": false
+                        }
+                    },
+                    "invoiceId": {
+                        "type": "text",
+                        "label": "Invoice ID",
+                        "index": 5,
+                        "tooltip": "ID of the invoice the payment is applied to. To split the payment over several invoices, use Invoices instead."
+                    },
+                    "amountApplied": {
+                        "type": "number",
+                        "label": "Amount Applied",
+                        "index": 6,
+                        "tooltip": "Amount applied to the invoice set in Invoice ID. Defaults to the payment Amount."
+                    },
+                    "invoices": {
+                        "type": "textarea",
+                        "label": "Invoices",
+                        "index": 7,
+                        "tooltip": "Invoices the payment is applied to, as a JSON array. Overrides Invoice ID and Amount Applied. Example: <code>[{\"invoice_id\": \"460000000038080\", \"amount_applied\": 300}, {\"invoice_id\": \"460000000038095\", \"amount_applied\": 150}]</code>."
+                    },
+                    "referenceNumber": {
+                        "type": "text",
+                        "label": "Reference Number",
+                        "index": 8,
+                        "tooltip": "Reference of the payment, e.g. the transaction ID in your payment provider."
+                    },
+                    "description": {
+                        "type": "textarea",
+                        "label": "Description",
+                        "index": 9,
+                        "tooltip": "Description of the payment."
+                    },
+                    "accountId": {
+                        "type": "text",
+                        "label": "Deposit Account ID",
+                        "index": 10,
+                        "tooltip": "ID of the cash or bank account the payment is deposited to."
+                    },
+                    "bankCharges": {
+                        "type": "number",
+                        "label": "Bank Charges",
+                        "index": 11,
+                        "tooltip": "Bank charges deducted from the payment."
+                    },
+                    "exchangeRate": {
+                        "type": "number",
+                        "label": "Exchange Rate",
+                        "index": 12,
+                        "tooltip": "Exchange rate between the payment currency and the base currency. Defaults to 1."
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "payment_id": {
+                        "type": "string",
+                        "title": "Payment ID",
+                        "example": "460000000042061"
+                    },
+                    "payment_number": {
+                        "type": "string",
+                        "title": "Payment Number",
+                        "example": "2"
+                    },
+                    "payment_mode": {
+                        "type": "string",
+                        "title": "Payment Mode",
+                        "example": "cash"
+                    },
+                    "amount": {
+                        "type": "number",
+                        "title": "Amount",
+                        "example": 450
+                    },
+                    "bank_charges": {
+                        "type": "number",
+                        "title": "Bank Charges",
+                        "example": 0
+                    },
+                    "date": {
+                        "type": "string",
+                        "title": "Date",
+                        "example": "2026-11-13"
+                    },
+                    "reference_number": {
+                        "type": "string",
+                        "title": "Reference Number",
+                        "example": "INV-384"
+                    },
+                    "description": {
+                        "type": "string",
+                        "title": "Description",
+                        "example": "Payment has been added to INV-384"
+                    },
+                    "customer_id": {
+                        "type": "string",
+                        "title": "Customer ID",
+                        "example": "460000000026049"
+                    },
+                    "customer_name": {
+                        "type": "string",
+                        "title": "Customer Name",
+                        "example": "Bowman Furniture"
+                    },
+                    "email": {
+                        "type": "string",
+                        "title": "Email",
+                        "example": "benjamin.geri@bowmanfurniture.com"
+                    },
+                    "currency_code": {
+                        "type": "string",
+                        "title": "Currency Code",
+                        "example": "USD"
+                    },
+                    "invoices": {
+                        "type": "array",
+                        "title": "Invoices",
+                        "example": [
+                            {
+                                "invoice_id": "460000000038080",
+                                "invoice_number": "INV-00001",
+                                "date": "2026-11-01",
+                                "invoice_amount": 450,
+                                "amount_applied": 450,
+                                "balance_amount": 0
+                            }
+                        ],
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "invoice_id": {
+                                    "type": "string",
+                                    "title": "Invoices.Invoice ID",
+                                    "example": "460000000038080"
+                                },
+                                "invoice_number": {
+                                    "type": "string",
+                                    "title": "Invoices.Invoice Number",
+                                    "example": "INV-00001"
+                                },
+                                "date": {
+                                    "type": "string",
+                                    "title": "Invoices.Date",
+                                    "example": "2026-11-01"
+                                },
+                                "invoice_amount": {
+                                    "type": "number",
+                                    "title": "Invoices.Invoice Amount",
+                                    "example": 450
+                                },
+                                "amount_applied": {
+                                    "type": "number",
+                                    "title": "Invoices.Amount Applied",
+                                    "example": 450
+                                },
+                                "balance_amount": {
+                                    "type": "number",
+                                    "title": "Invoices.Balance Amount",
+                                    "example": 0
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGNsYXNzPSJsb2dvLWNvbG9yIiB2aWV3Qm94PSIwIDAgMTAyNCAxMDI0Ij48cGF0aCBmaWxsPSIjMjI2ZWIzIiBkPSJNNzI5LjU0IDEwMjRIMzBjLTE2LjU3IDAtMzAtMTMuNDMtMzAtMzBWNzM5Ljg0YzAtNTUuNTIgMzUuMjgtMTA0LjkzIDg3LjgtMTIyLjk2bDc3NS4yOC0yNjYuMDlDOTIzLjQ0IDMzMC4wNyA5NjQgMjczLjI2IDk2NCAyMDkuNDQgOTY0IDEyNy4wNCA4OTYuOTYgNjAgODE0LjU2IDYwSDYwdjQ5NC45NmMwIDE2LjU3LTEzLjQzIDMwLTMwIDMwcy0zMC0xMy40My0zMC0zMFYzMEMwIDEzLjQzIDEzLjQzIDAgMzAgMGg3ODQuNTZDOTMwLjA1IDAgMTAyNCA5My45NSAxMDI0IDIwOS40NGMwIDg5LjQ1LTU2Ljg0IDE2OS4wNi0xNDEuNDUgMTk4LjFMMTA3LjI4IDY3My42M0M3OSA2ODMuMzMgNjAgNzA5Ljk0IDYwIDczOS44NFY5NjRoNjY5LjU0YzYyLjYzIDAgMTIxLjUtMjQuMzkgMTY1Ljc5LTY4LjY3QzkzOS42MSA4NTEuMDQgOTY0IDc5Mi4xNyA5NjQgNzI5LjU0YzAtNDQuMzMtMTIuNDktODcuNTYtMzYuMTEtMTI1LjAyLTIzLjM5LTM3LjEtNTYuNTUtNjYuNzktOTUuODktODUuODgtMTQuOTEtNy4yMy0yMS4xMy0yNS4xOC0xMy44OS00MC4wOSA3LjIzLTE0LjkxIDI1LjE4LTIxLjEzIDQwLjA5LTEzLjg5IDQ5LjQyIDIzLjk4IDkxLjA3IDYxLjI4IDEyMC40NSAxMDcuODYgMjkuNjggNDcuMDYgNDUuMzYgMTAxLjM2IDQ1LjM2IDE1Ny4wMyAwIDc4LjY1LTMwLjYzIDE1Mi42LTg2LjI1IDIwOC4yMi01NS42MiA1NS42LTEyOS41NyA4Ni4yMy0yMDguMjIgODYuMjN6IiBvcGFjaXR5PSIuOSIvPjxwYXRoIGZpbGw9IiMyMjZlYjMiIGQ9Ik0zMzcuNTIgNDE5LjgyYy02Ni4xNyAwLTEyMC01My44My0xMjAtMTIwczUzLjgzLTEyMCAxMjAtMTIwIDEyMCA1My44MyAxMjAgMTIwLTUzLjgzIDEyMC0xMjAgMTIwem0wLTE4MGMtMzMuMDggMC02MCAyNi45Mi02MCA2MHMyNi45MiA2MCA2MCA2MCA2MC0yNi45MiA2MC02MC0yNi45Mi02MC02MC02MHpNNjM4LjM0IDg0My41M2MtNjYuMTcgMC0xMjAtNTMuODMtMTIwLTEyMHM1My44My0xMjAgMTIwLTEyMCAxMjAgNTMuODMgMTIwIDEyMC01My44MyAxMjAtMTIwIDEyMHptMC0xODBjLTMzLjA4IDAtNjAgMjYuOTItNjAgNjBzMjYuOTIgNjAgNjAgNjAgNjAtMjYuOTIgNjAtNjAtMjYuOTItNjAtNjAtNjB6IiBvcGFjaXR5PSIuOSIvPjwvc3ZnPgo="
+}

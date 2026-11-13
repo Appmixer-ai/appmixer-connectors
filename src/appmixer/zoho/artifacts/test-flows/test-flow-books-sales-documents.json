@@ -1,0 +1,676 @@
+{
+    "name": "E2E Zoho Books - item, estimate and sales order",
+    "description": "Creates a customer and an item, quotes the item in an estimate, turns it into a sales order, asserts each record and deletes all of them.",
+    "notes": {
+        "57a84c1d-c0d0-4a6a-98e8-ab16d86bf2c4": {
+            "x": 64,
+            "y": 512,
+            "width": 672,
+            "height": 240,
+            "content": "## ⚠️ Test data assumption\n\n**Organization ID** `20111141498` is set on every Zoho Books component, including the MakeApiCall cleanup steps (Query Parameters). It must be an organization of the connected Zoho Books account — on another tenant replace it everywhere (List Organizations returns it).\n\nThe cleanup deletes the sales order, the estimate, the item and the customer in that order: an item cannot be deleted while a transaction still uses it. If the flow stops half way, delete the records named *Appmixer E2E …* by hand."
+        }
+    },
+    "flow": {
+        "b05dcd50-434d-4bc1-855d-e19acd444a2d": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 128,
+            "version": "1.0.0",
+            "source": {},
+            "config": {},
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "ab80a4dd-24d8-415d-b7b4-de8e736354f3": {
+            "type": "appmixer.zoho.books.CreateContact",
+            "x": 272,
+            "y": 128,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "b05dcd50-434d-4bc1-855d-e19acd444a2d": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "b05dcd50-434d-4bc1-855d-e19acd444a2d": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "organization_id": {},
+                                    "contact_name": {
+                                        "c2eda7bc-e62c-4ac4-97a5-5b04d8af64db": {
+                                            "functions": [
+                                                {
+                                                    "name": "g_uuid4"
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "organization_id": "20111141498",
+                                    "contact_name": "Appmixer E2E sales customer {{{c2eda7bc-e62c-4ac4-97a5-5b04d8af64db}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "2d7660ae-68cf-496f-ac35-170d877c68e9": {
+            "type": "appmixer.zoho.books.CreateItem",
+            "x": 480,
+            "y": 128,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "ab80a4dd-24d8-415d-b7b4-de8e736354f3": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "ab80a4dd-24d8-415d-b7b4-de8e736354f3": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "organizationId": {},
+                                    "name": {
+                                        "8b965f8a-d56f-41a1-9181-dc52486a6860": {
+                                            "functions": [
+                                                {
+                                                    "name": "g_uuid4"
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "rate": {},
+                                    "productType": {},
+                                    "description": {}
+                                },
+                                "lambda": {
+                                    "organizationId": "20111141498",
+                                    "name": "Appmixer E2E item {{{8b965f8a-d56f-41a1-9181-dc52486a6860}}}",
+                                    "rate": 25,
+                                    "productType": "service",
+                                    "description": "Appmixer E2E test item"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "aafb5357-32ec-41d0-82a5-c4172fd365dd": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 688,
+            "y": 128,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "2d7660ae-68cf-496f-ac35-170d877c68e9": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "2d7660ae-68cf-496f-ac35-170d877c68e9": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "ede2f663-d9c8-4d79-b0b4-4fbf46f10eda": {
+                                            "variable": "$.2d7660ae-68cf-496f-ac35-170d877c68e9.out.item_id",
+                                            "functions": []
+                                        },
+                                        "e86af0c1-32b5-47e5-b9c3-9534c12a7976": {
+                                            "variable": "$.2d7660ae-68cf-496f-ac35-170d877c68e9.out.name",
+                                            "functions": []
+                                        },
+                                        "cd4e5f52-a1d3-43e4-b4fe-e8696aa05000": {
+                                            "variable": "$.2d7660ae-68cf-496f-ac35-170d877c68e9.out.product_type",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{ede2f663-d9c8-4d79-b0b4-4fbf46f10eda}}}",
+                                                "assertion": "notEmpty"
+                                            },
+                                            {
+                                                "field": "{{{e86af0c1-32b5-47e5-b9c3-9534c12a7976}}}",
+                                                "assertion": "regex",
+                                                "regex": "^Appmixer E2E item "
+                                            },
+                                            {
+                                                "field": "{{{cd4e5f52-a1d3-43e4-b4fe-e8696aa05000}}}",
+                                                "assertion": "equal",
+                                                "expected": "service"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "003705cc-1294-4f3a-926b-c342c94d8a48": {
+            "type": "appmixer.zoho.books.CreateEstimate",
+            "x": 896,
+            "y": 256,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "2d7660ae-68cf-496f-ac35-170d877c68e9": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "2d7660ae-68cf-496f-ac35-170d877c68e9": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "organizationId": {},
+                                    "customerId": {
+                                        "7c60cacd-8e2d-48b7-8687-df52ad80e69e": {
+                                            "variable": "$.ab80a4dd-24d8-415d-b7b4-de8e736354f3.out.contact_id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "lineItems": {
+                                        "6d994046-cc5f-4cd9-8184-c7252cd20408": {
+                                            "variable": "$.2d7660ae-68cf-496f-ac35-170d877c68e9.out.item_id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "referenceNumber": {},
+                                    "notes": {}
+                                },
+                                "lambda": {
+                                    "organizationId": "20111141498",
+                                    "customerId": "{{{7c60cacd-8e2d-48b7-8687-df52ad80e69e}}}",
+                                    "lineItems": "[{\"item_id\": \"{{{6d994046-cc5f-4cd9-8184-c7252cd20408}}}\", \"quantity\": 2}]",
+                                    "referenceNumber": "E2E-EST-1",
+                                    "notes": "Appmixer E2E estimate"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "1e566aba-ec3f-4c39-803d-4b45e5a15249": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1104,
+            "y": 256,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "003705cc-1294-4f3a-926b-c342c94d8a48": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "003705cc-1294-4f3a-926b-c342c94d8a48": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "a5c1d5a5-f4d0-480b-96d9-692a971a0657": {
+                                            "variable": "$.003705cc-1294-4f3a-926b-c342c94d8a48.out.estimate_id",
+                                            "functions": []
+                                        },
+                                        "7a5b29f2-9988-46bd-bcae-5ad44bf8d35a": {
+                                            "variable": "$.003705cc-1294-4f3a-926b-c342c94d8a48.out.reference_number",
+                                            "functions": []
+                                        },
+                                        "20516501-d6f0-4d13-999c-61841916f309": {
+                                            "variable": "$.003705cc-1294-4f3a-926b-c342c94d8a48.out.line_items",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$[0].item_id"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{a5c1d5a5-f4d0-480b-96d9-692a971a0657}}}",
+                                                "assertion": "notEmpty"
+                                            },
+                                            {
+                                                "field": "{{{7a5b29f2-9988-46bd-bcae-5ad44bf8d35a}}}",
+                                                "assertion": "equal",
+                                                "expected": "E2E-EST-1"
+                                            },
+                                            {
+                                                "field": "{{{20516501-d6f0-4d13-999c-61841916f309}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "9592a041-156e-4505-8153-c23d6df7919c": {
+            "type": "appmixer.zoho.books.CreateSalesOrder",
+            "x": 1312,
+            "y": 384,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "003705cc-1294-4f3a-926b-c342c94d8a48": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "003705cc-1294-4f3a-926b-c342c94d8a48": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "organizationId": {},
+                                    "customerId": {
+                                        "7bffb324-f17b-4e55-a681-a2f23cc2b9b0": {
+                                            "variable": "$.ab80a4dd-24d8-415d-b7b4-de8e736354f3.out.contact_id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "lineItems": {
+                                        "67e73508-c7a8-4246-969e-06c6c32c1403": {
+                                            "variable": "$.2d7660ae-68cf-496f-ac35-170d877c68e9.out.item_id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "referenceNumber": {},
+                                    "estimateId": {
+                                        "3c036ed3-0bfd-4103-992f-dff6f86c1623": {
+                                            "variable": "$.003705cc-1294-4f3a-926b-c342c94d8a48.out.estimate_id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "notes": {}
+                                },
+                                "lambda": {
+                                    "organizationId": "20111141498",
+                                    "customerId": "{{{7bffb324-f17b-4e55-a681-a2f23cc2b9b0}}}",
+                                    "lineItems": "[{\"item_id\": \"{{{67e73508-c7a8-4246-969e-06c6c32c1403}}}\", \"quantity\": 2}]",
+                                    "referenceNumber": "E2E-SO-1",
+                                    "estimateId": "{{{3c036ed3-0bfd-4103-992f-dff6f86c1623}}}",
+                                    "notes": "Appmixer E2E sales order"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "012549a9-6a1a-4e89-9b89-bb45f2fb9f17": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1520,
+            "y": 384,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "9592a041-156e-4505-8153-c23d6df7919c": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "9592a041-156e-4505-8153-c23d6df7919c": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "e9e73a79-7172-4210-a92f-e812406eddb1": {
+                                            "variable": "$.9592a041-156e-4505-8153-c23d6df7919c.out.salesorder_id",
+                                            "functions": []
+                                        },
+                                        "23ee2588-8ac6-4377-af88-16a2422541c4": {
+                                            "variable": "$.9592a041-156e-4505-8153-c23d6df7919c.out.reference_number",
+                                            "functions": []
+                                        },
+                                        "40c26960-aa69-4d88-9100-f0ffdc9e3eca": {
+                                            "variable": "$.9592a041-156e-4505-8153-c23d6df7919c.out.customer_id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{e9e73a79-7172-4210-a92f-e812406eddb1}}}",
+                                                "assertion": "notEmpty"
+                                            },
+                                            {
+                                                "field": "{{{23ee2588-8ac6-4377-af88-16a2422541c4}}}",
+                                                "assertion": "equal",
+                                                "expected": "E2E-SO-1"
+                                            },
+                                            {
+                                                "field": "{{{40c26960-aa69-4d88-9100-f0ffdc9e3eca}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "c7b04875-9834-40a4-830f-e6023a5464a1": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 1728,
+            "y": 384,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "012549a9-6a1a-4e89-9b89-bb45f2fb9f17": [
+                        "out"
+                    ],
+                    "aafb5357-32ec-41d0-82a5-c4172fd365dd": [
+                        "out"
+                    ],
+                    "1e566aba-ec3f-4c39-803d-4b45e5a15249": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 180
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "d7e75443-cca1-4d5a-bda1-934ac2843c54": {
+            "type": "appmixer.zoho.books.MakeApiCall",
+            "x": 1936,
+            "y": 384,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "c7b04875-9834-40a4-830f-e6023a5464a1": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "c7b04875-9834-40a4-830f-e6023a5464a1": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "url": {
+                                        "4108445c-bfbb-43af-8596-7094198f8270": {
+                                            "variable": "$.9592a041-156e-4505-8153-c23d6df7919c.out.salesorder_id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "method": {},
+                                    "parameters": {}
+                                },
+                                "lambda": {
+                                    "url": "/salesorders/{{{4108445c-bfbb-43af-8596-7094198f8270}}}",
+                                    "method": "DELETE",
+                                    "parameters": "{\"organization_id\":\"20111141498\"}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "0c50c3bc-f2c4-43bb-8d00-77bc5fdefd14": {
+            "type": "appmixer.zoho.books.MakeApiCall",
+            "x": 2144,
+            "y": 384,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "d7e75443-cca1-4d5a-bda1-934ac2843c54": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "d7e75443-cca1-4d5a-bda1-934ac2843c54": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "url": {
+                                        "dd9ec204-8129-4e53-a56e-d62561e08313": {
+                                            "variable": "$.003705cc-1294-4f3a-926b-c342c94d8a48.out.estimate_id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "method": {},
+                                    "parameters": {}
+                                },
+                                "lambda": {
+                                    "url": "/estimates/{{{dd9ec204-8129-4e53-a56e-d62561e08313}}}",
+                                    "method": "DELETE",
+                                    "parameters": "{\"organization_id\":\"20111141498\"}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "12cc4534-1750-4094-84ac-e084c4953c55": {
+            "type": "appmixer.zoho.books.MakeApiCall",
+            "x": 2352,
+            "y": 384,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "0c50c3bc-f2c4-43bb-8d00-77bc5fdefd14": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "0c50c3bc-f2c4-43bb-8d00-77bc5fdefd14": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "url": {
+                                        "b2556e45-c377-4734-942a-6e3e3b53f603": {
+                                            "variable": "$.2d7660ae-68cf-496f-ac35-170d877c68e9.out.item_id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "method": {},
+                                    "parameters": {}
+                                },
+                                "lambda": {
+                                    "url": "/items/{{{b2556e45-c377-4734-942a-6e3e3b53f603}}}",
+                                    "method": "DELETE",
+                                    "parameters": "{\"organization_id\":\"20111141498\"}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "24a3f142-fee4-4eaa-854c-b2bcb9bfcc54": {
+            "type": "appmixer.zoho.books.DeleteContact",
+            "x": 2560,
+            "y": 384,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "12cc4534-1750-4094-84ac-e084c4953c55": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "12cc4534-1750-4094-84ac-e084c4953c55": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "organization_id": {},
+                                    "contact_id": {
+                                        "c59a7d3d-cb31-474b-98c2-c1098bb5e16a": {
+                                            "variable": "$.ab80a4dd-24d8-415d-b7b4-de8e736354f3.out.contact_id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "organization_id": "20111141498",
+                                    "contact_id": "{{{c59a7d3d-cb31-474b-98c2-c1098bb5e16a}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "00f0b192-cfb5-428a-a7ac-76793789eb42": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 2768,
+            "y": 384,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "24a3f142-fee4-4eaa-854c-b2bcb9bfcc54": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "successStoreId": "64f6f1f9193228000754082f",
+                    "failedStoreId": "64f6f1f0193228000754082e"
+                },
+                "transform": {
+                    "in": {
+                        "24a3f142-fee4-4eaa-854c-b2bcb9bfcc54": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "fe5f1645-93f3-48b6-9821-1b506eeb134f": {
+                                            "variable": "$.c7b04875-9834-40a4-830f-e6023a5464a1.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.com",
+                                    "testCase": "E2E Zoho Books - item, estimate and sales order",
+                                    "result": "{{{fe5f1645-93f3-48b6-9821-1b506eeb134f}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        }
+    }
+}
