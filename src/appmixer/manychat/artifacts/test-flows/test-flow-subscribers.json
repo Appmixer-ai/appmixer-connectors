@@ -1,12 +1,11 @@
 {
     "name": "E2E Manychat - subscribers",
-    "description": "Create a tag and a subscriber, get, update, find, tag and untag the subscriber, set a Text custom field, then delete the tag.",
+    "description": "Create a tag, find the prepared Telegram contact by the appmixer_e2e custom field, get and update it, tag and untag it, set the custom field, then delete the tag.",
     "flow": {
         "c521e88c-cce1-4100-9223-99181749b29e": {
             "type": "appmixer.utils.controls.OnStart",
             "x": 64,
             "y": 16,
-            "version": "1.0.0",
             "source": {},
             "config": {},
             "errorHandling": {
@@ -34,7 +33,7 @@
                                 "type": "json2new",
                                 "modifiers": {
                                     "name": {
-                                        "edc97721-6ac6-484a-89f9-9a380b55f2b9": {
+                                        "c6b14f11-9b5d-422b-b520-3a7ad0574232": {
                                             "functions": [
                                                 {
                                                     "name": "g_timestamp"
@@ -44,7 +43,7 @@
                                     }
                                 },
                                 "lambda": {
-                                    "name": "E2E Subscriber Tag {{{edc97721-6ac6-484a-89f9-9a380b55f2b9}}}"
+                                    "name": "E2E Subscriber Tag {{{c6b14f11-9b5d-422b-b520-3a7ad0574232}}}"
                                 }
                             }
                         }
@@ -60,7 +59,6 @@
             "type": "appmixer.utils.test.Assert",
             "x": 480,
             "y": 144,
-            "version": "1.0.0",
             "source": {
                 "in": {
                     "bb3313dd-5b5c-463a-91fb-154d62ac0bbb": [
@@ -76,7 +74,7 @@
                                 "type": "json2new",
                                 "modifiers": {
                                     "expression": {
-                                        "3b13cdd5-b288-42b2-9109-b53221dc8b6e": {
+                                        "32bc4736-2587-497a-b03f-b89270cd669a": {
                                             "variable": "$.bb3313dd-5b5c-463a-91fb-154d62ac0bbb.out.id",
                                             "functions": []
                                         }
@@ -86,7 +84,7 @@
                                     "expression": {
                                         "AND": [
                                             {
-                                                "field": "{{{3b13cdd5-b288-42b2-9109-b53221dc8b6e}}}",
+                                                "field": "{{{32bc4736-2587-497a-b03f-b89270cd669a}}}",
                                                 "assertion": "notEmpty"
                                             }
                                         ]
@@ -102,8 +100,8 @@
                 "onError": "stopFlow"
             }
         },
-        "f78ad034-5ef8-4141-a4bd-e8eb9ad6ee3d": {
-            "type": "appmixer.manychat.core.CreateSubscriber",
+        "1e0d923c-f9bd-44b6-b77f-98d1d78dd716": {
+            "type": "appmixer.manychat.core.ListCustomFields",
             "x": 480,
             "y": 272,
             "version": "1.0.0",
@@ -121,26 +119,10 @@
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
-                                    "firstName": {},
-                                    "lastName": {},
-                                    "email": {
-                                        "2a3b6530-7a59-40b2-9c93-c933a9076873": {
-                                            "functions": [
-                                                {
-                                                    "name": "g_timestamp"
-                                                }
-                                            ]
-                                        }
-                                    },
-                                    "hasOptInEmail": {},
-                                    "gender": {}
+                                    "outputType": {}
                                 },
                                 "lambda": {
-                                    "firstName": "E2E",
-                                    "lastName": "Appmixer",
-                                    "email": "appmixer.e2e+{{{2a3b6530-7a59-40b2-9c93-c933a9076873}}}@example.com",
-                                    "hasOptInEmail": false,
-                                    "gender": "female"
+                                    "outputType": "array"
                                 }
                             }
                         }
@@ -152,14 +134,13 @@
                 "onError": "stopFlow"
             }
         },
-        "19b0d798-323a-44dd-be23-fe3f2f12b83c": {
+        "e3fa6cfc-5d4a-431e-8b53-5f1cfb87b314": {
             "type": "appmixer.utils.test.Assert",
             "x": 688,
             "y": 272,
-            "version": "1.0.0",
             "source": {
                 "in": {
-                    "f78ad034-5ef8-4141-a4bd-e8eb9ad6ee3d": [
+                    "1e0d923c-f9bd-44b6-b77f-98d1d78dd716": [
                         "out"
                     ]
                 }
@@ -167,18 +148,23 @@
             "config": {
                 "transform": {
                     "in": {
-                        "f78ad034-5ef8-4141-a4bd-e8eb9ad6ee3d": {
+                        "1e0d923c-f9bd-44b6-b77f-98d1d78dd716": {
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
                                     "expression": {
-                                        "804098fa-3db5-44ac-99cd-369718c55360": {
-                                            "variable": "$.f78ad034-5ef8-4141-a4bd-e8eb9ad6ee3d.out.id",
-                                            "functions": []
-                                        },
-                                        "2ba168f4-e57c-48b6-8d6a-90ba89385b1f": {
-                                            "variable": "$.f78ad034-5ef8-4141-a4bd-e8eb9ad6ee3d.out.first_name",
-                                            "functions": []
+                                        "8edc3ed6-abc7-4a98-be79-b659aa3b61fb": {
+                                            "variable": "$.1e0d923c-f9bd-44b6-b77f-98d1d78dd716.out.result",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$[?(@.name=='appmixer_e2e')].id"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
                                         }
                                     }
                                 },
@@ -186,234 +172,8 @@
                                     "expression": {
                                         "AND": [
                                             {
-                                                "field": "{{{804098fa-3db5-44ac-99cd-369718c55360}}}",
+                                                "field": "{{{8edc3ed6-abc7-4a98-be79-b659aa3b61fb}}}",
                                                 "assertion": "notEmpty"
-                                            },
-                                            {
-                                                "field": "{{{2ba168f4-e57c-48b6-8d6a-90ba89385b1f}}}",
-                                                "assertion": "equal",
-                                                "expected": "E2E"
-                                            }
-                                        ]
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            },
-            "errorHandling": {
-                "autoRetry": false,
-                "onError": "stopFlow"
-            }
-        },
-        "c7d21088-3ebd-43b2-80f2-91b3531b06f9": {
-            "type": "appmixer.manychat.core.GetSubscriber",
-            "x": 688,
-            "y": 400,
-            "version": "1.0.0",
-            "source": {
-                "in": {
-                    "f78ad034-5ef8-4141-a4bd-e8eb9ad6ee3d": [
-                        "out"
-                    ]
-                }
-            },
-            "config": {
-                "transform": {
-                    "in": {
-                        "f78ad034-5ef8-4141-a4bd-e8eb9ad6ee3d": {
-                            "out": {
-                                "type": "json2new",
-                                "modifiers": {
-                                    "subscriberId": {
-                                        "7504b9e9-1ab3-4557-9490-f6ba88a2236a": {
-                                            "functions": [],
-                                            "variable": "$.f78ad034-5ef8-4141-a4bd-e8eb9ad6ee3d.out.id"
-                                        }
-                                    }
-                                },
-                                "lambda": {
-                                    "subscriberId": "{{{7504b9e9-1ab3-4557-9490-f6ba88a2236a}}}"
-                                }
-                            }
-                        }
-                    }
-                }
-            },
-            "errorHandling": {
-                "autoRetry": false,
-                "onError": "stopFlow"
-            }
-        },
-        "ad7daa4f-9850-4572-908a-5b76b07a6fc0": {
-            "type": "appmixer.utils.test.Assert",
-            "x": 896,
-            "y": 400,
-            "version": "1.0.0",
-            "source": {
-                "in": {
-                    "c7d21088-3ebd-43b2-80f2-91b3531b06f9": [
-                        "out"
-                    ]
-                }
-            },
-            "config": {
-                "transform": {
-                    "in": {
-                        "c7d21088-3ebd-43b2-80f2-91b3531b06f9": {
-                            "out": {
-                                "type": "json2new",
-                                "modifiers": {
-                                    "expression": {
-                                        "0d2f4cc5-29a6-4077-9675-ebd972281bcd": {
-                                            "variable": "$.c7d21088-3ebd-43b2-80f2-91b3531b06f9.out.id",
-                                            "functions": []
-                                        },
-                                        "aeb081c3-7a2d-48b2-8ec8-20efb4468083": {
-                                            "variable": "$.c7d21088-3ebd-43b2-80f2-91b3531b06f9.out.email",
-                                            "functions": []
-                                        }
-                                    }
-                                },
-                                "lambda": {
-                                    "expression": {
-                                        "AND": [
-                                            {
-                                                "field": "{{{0d2f4cc5-29a6-4077-9675-ebd972281bcd}}}",
-                                                "assertion": "notEmpty"
-                                            },
-                                            {
-                                                "field": "{{{aeb081c3-7a2d-48b2-8ec8-20efb4468083}}}",
-                                                "assertion": "regex",
-                                                "regex": "^appmixer\\.e2e\\+"
-                                            }
-                                        ]
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            },
-            "errorHandling": {
-                "autoRetry": false,
-                "onError": "stopFlow"
-            }
-        },
-        "247f4563-402f-4e43-aab8-624eeebbb474": {
-            "type": "appmixer.manychat.core.UpdateSubscriber",
-            "x": 896,
-            "y": 528,
-            "version": "1.0.0",
-            "source": {
-                "in": {
-                    "c7d21088-3ebd-43b2-80f2-91b3531b06f9": [
-                        "out"
-                    ]
-                }
-            },
-            "config": {
-                "transform": {
-                    "in": {
-                        "c7d21088-3ebd-43b2-80f2-91b3531b06f9": {
-                            "out": {
-                                "type": "json2new",
-                                "modifiers": {
-                                    "subscriberId": {
-                                        "908e53db-48dc-402b-9a37-f0f6ac1e7c02": {
-                                            "functions": [],
-                                            "variable": "$.f78ad034-5ef8-4141-a4bd-e8eb9ad6ee3d.out.id"
-                                        }
-                                    },
-                                    "lastName": {}
-                                },
-                                "lambda": {
-                                    "subscriberId": "{{{908e53db-48dc-402b-9a37-f0f6ac1e7c02}}}",
-                                    "lastName": "Updated"
-                                }
-                            }
-                        }
-                    }
-                }
-            },
-            "errorHandling": {
-                "autoRetry": false,
-                "onError": "stopFlow"
-            }
-        },
-        "68f2ea32-30d4-49fc-8806-5ff799df3492": {
-            "type": "appmixer.manychat.core.GetSubscriber",
-            "x": 1104,
-            "y": 656,
-            "version": "1.0.0",
-            "source": {
-                "in": {
-                    "247f4563-402f-4e43-aab8-624eeebbb474": [
-                        "out"
-                    ]
-                }
-            },
-            "config": {
-                "transform": {
-                    "in": {
-                        "247f4563-402f-4e43-aab8-624eeebbb474": {
-                            "out": {
-                                "type": "json2new",
-                                "modifiers": {
-                                    "subscriberId": {
-                                        "8ef0c35f-3bb0-4652-8d8c-54e65b371417": {
-                                            "functions": [],
-                                            "variable": "$.f78ad034-5ef8-4141-a4bd-e8eb9ad6ee3d.out.id"
-                                        }
-                                    }
-                                },
-                                "lambda": {
-                                    "subscriberId": "{{{8ef0c35f-3bb0-4652-8d8c-54e65b371417}}}"
-                                }
-                            }
-                        }
-                    }
-                }
-            },
-            "errorHandling": {
-                "autoRetry": false,
-                "onError": "stopFlow"
-            }
-        },
-        "075a3f3b-9b97-4737-8a33-0ef266c244fe": {
-            "type": "appmixer.utils.test.Assert",
-            "x": 1312,
-            "y": 656,
-            "version": "1.0.0",
-            "source": {
-                "in": {
-                    "68f2ea32-30d4-49fc-8806-5ff799df3492": [
-                        "out"
-                    ]
-                }
-            },
-            "config": {
-                "transform": {
-                    "in": {
-                        "68f2ea32-30d4-49fc-8806-5ff799df3492": {
-                            "out": {
-                                "type": "json2new",
-                                "modifiers": {
-                                    "expression": {
-                                        "c98b74bd-108f-4485-8baa-6b063051ba04": {
-                                            "variable": "$.68f2ea32-30d4-49fc-8806-5ff799df3492.out.last_name",
-                                            "functions": []
-                                        }
-                                    }
-                                },
-                                "lambda": {
-                                    "expression": {
-                                        "AND": [
-                                            {
-                                                "field": "{{{c98b74bd-108f-4485-8baa-6b063051ba04}}}",
-                                                "assertion": "equal",
-                                                "expected": "Updated"
                                             }
                                         ]
                                     }
@@ -430,12 +190,12 @@
         },
         "facc8538-3a36-412e-ba83-68d8499858d7": {
             "type": "appmixer.manychat.core.FindSubscribers",
-            "x": 1312,
-            "y": 784,
+            "x": 688,
+            "y": 400,
             "version": "1.0.0",
             "source": {
                 "in": {
-                    "68f2ea32-30d4-49fc-8806-5ff799df3492": [
+                    "1e0d923c-f9bd-44b6-b77f-98d1d78dd716": [
                         "out"
                     ]
                 }
@@ -443,22 +203,33 @@
             "config": {
                 "transform": {
                     "in": {
-                        "68f2ea32-30d4-49fc-8806-5ff799df3492": {
+                        "1e0d923c-f9bd-44b6-b77f-98d1d78dd716": {
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
                                     "searchBy": {},
-                                    "searchValue": {
-                                        "495e376e-3459-4eae-ae3e-1735871bf266": {
-                                            "functions": [],
-                                            "variable": "$.f78ad034-5ef8-4141-a4bd-e8eb9ad6ee3d.out.email"
+                                    "fieldId": {
+                                        "d402270f-5017-4342-9310-f900075ded00": {
+                                            "variable": "$.1e0d923c-f9bd-44b6-b77f-98d1d78dd716.out.result",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$[?(@.name=='appmixer_e2e')].id"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
                                         }
                                     },
+                                    "searchValue": {},
                                     "outputType": {}
                                 },
                                 "lambda": {
-                                    "searchBy": "email",
-                                    "searchValue": "{{{495e376e-3459-4eae-ae3e-1735871bf266}}}",
+                                    "searchBy": "customField",
+                                    "fieldId": "{{{d402270f-5017-4342-9310-f900075ded00}}}",
+                                    "searchValue": "e2e-contact",
                                     "outputType": "first"
                                 }
                             }
@@ -473,9 +244,8 @@
         },
         "a618a2d2-9c4d-4d93-858f-e42c1862b89b": {
             "type": "appmixer.utils.test.Assert",
-            "x": 1520,
-            "y": 784,
-            "version": "1.0.0",
+            "x": 896,
+            "y": 400,
             "source": {
                 "in": {
                     "facc8538-3a36-412e-ba83-68d8499858d7": [
@@ -491,7 +261,7 @@
                                 "type": "json2new",
                                 "modifiers": {
                                     "expression": {
-                                        "19e4c0b6-a860-4a30-8196-e914cde8c859": {
+                                        "d11d19ff-f63e-4beb-8be4-8edc77be1575": {
                                             "variable": "$.facc8538-3a36-412e-ba83-68d8499858d7.out.id",
                                             "functions": []
                                         }
@@ -501,8 +271,250 @@
                                     "expression": {
                                         "AND": [
                                             {
-                                                "field": "{{{19e4c0b6-a860-4a30-8196-e914cde8c859}}}",
+                                                "field": "{{{d11d19ff-f63e-4beb-8be4-8edc77be1575}}}",
                                                 "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "c7d21088-3ebd-43b2-80f2-91b3531b06f9": {
+            "type": "appmixer.manychat.core.GetSubscriber",
+            "x": 896,
+            "y": 528,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "facc8538-3a36-412e-ba83-68d8499858d7": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "facc8538-3a36-412e-ba83-68d8499858d7": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "subscriberId": {
+                                        "07096d24-de1d-47b4-8345-827cc0cfe7b8": {
+                                            "variable": "$.facc8538-3a36-412e-ba83-68d8499858d7.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "subscriberId": "{{{07096d24-de1d-47b4-8345-827cc0cfe7b8}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "ad7daa4f-9850-4572-908a-5b76b07a6fc0": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1104,
+            "y": 528,
+            "source": {
+                "in": {
+                    "c7d21088-3ebd-43b2-80f2-91b3531b06f9": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "c7d21088-3ebd-43b2-80f2-91b3531b06f9": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "7795f2cf-0033-42ff-8b82-10adcd946b6b": {
+                                            "variable": "$.c7d21088-3ebd-43b2-80f2-91b3531b06f9.out.id",
+                                            "functions": []
+                                        },
+                                        "3c9f413d-0269-443d-b844-1012459e0647": {
+                                            "variable": "$.facc8538-3a36-412e-ba83-68d8499858d7.out.id",
+                                            "functions": []
+                                        },
+                                        "dd2ebd61-1738-4cb9-9b79-ca10596171d1": {
+                                            "variable": "$.c7d21088-3ebd-43b2-80f2-91b3531b06f9.out.custom_fields",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$[?(@.name=='appmixer_e2e')].value"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{7795f2cf-0033-42ff-8b82-10adcd946b6b}}}",
+                                                "assertion": "equal",
+                                                "expected": "{{{3c9f413d-0269-443d-b844-1012459e0647}}}"
+                                            },
+                                            {
+                                                "field": "{{{dd2ebd61-1738-4cb9-9b79-ca10596171d1}}}",
+                                                "assertion": "equal",
+                                                "expected": "e2e-contact"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "247f4563-402f-4e43-aab8-624eeebbb474": {
+            "type": "appmixer.manychat.core.UpdateSubscriber",
+            "x": 1104,
+            "y": 656,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "c7d21088-3ebd-43b2-80f2-91b3531b06f9": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "c7d21088-3ebd-43b2-80f2-91b3531b06f9": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "subscriberId": {
+                                        "7d8bd573-58bc-4767-bc3b-b1fe9991501f": {
+                                            "variable": "$.facc8538-3a36-412e-ba83-68d8499858d7.out.id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "lastName": {
+                                        "1e5a117d-f1e5-47c2-80fc-7f5e5650a365": {
+                                            "variable": "$.bb3313dd-5b5c-463a-91fb-154d62ac0bbb.out.name",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "subscriberId": "{{{7d8bd573-58bc-4767-bc3b-b1fe9991501f}}}",
+                                    "lastName": "{{{1e5a117d-f1e5-47c2-80fc-7f5e5650a365}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "68f2ea32-30d4-49fc-8806-5ff799df3492": {
+            "type": "appmixer.manychat.core.GetSubscriber",
+            "x": 1312,
+            "y": 784,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "247f4563-402f-4e43-aab8-624eeebbb474": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "247f4563-402f-4e43-aab8-624eeebbb474": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "subscriberId": {
+                                        "57466127-3aec-4518-9d4f-cd7f1fe57858": {
+                                            "variable": "$.facc8538-3a36-412e-ba83-68d8499858d7.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "subscriberId": "{{{57466127-3aec-4518-9d4f-cd7f1fe57858}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "075a3f3b-9b97-4737-8a33-0ef266c244fe": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1520,
+            "y": 784,
+            "source": {
+                "in": {
+                    "68f2ea32-30d4-49fc-8806-5ff799df3492": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "68f2ea32-30d4-49fc-8806-5ff799df3492": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "d00054d1-32fa-4ce9-81fb-47133d0e2907": {
+                                            "variable": "$.68f2ea32-30d4-49fc-8806-5ff799df3492.out.last_name",
+                                            "functions": []
+                                        },
+                                        "80e2e7eb-2351-4a1d-bfa6-6bf57fcc6434": {
+                                            "variable": "$.bb3313dd-5b5c-463a-91fb-154d62ac0bbb.out.name",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{d00054d1-32fa-4ce9-81fb-47133d0e2907}}}",
+                                                "assertion": "equal",
+                                                "expected": "{{{80e2e7eb-2351-4a1d-bfa6-6bf57fcc6434}}}"
                                             }
                                         ]
                                     }
@@ -524,7 +536,7 @@
             "version": "1.0.0",
             "source": {
                 "in": {
-                    "facc8538-3a36-412e-ba83-68d8499858d7": [
+                    "68f2ea32-30d4-49fc-8806-5ff799df3492": [
                         "out"
                     ]
                 }
@@ -532,26 +544,26 @@
             "config": {
                 "transform": {
                     "in": {
-                        "facc8538-3a36-412e-ba83-68d8499858d7": {
+                        "68f2ea32-30d4-49fc-8806-5ff799df3492": {
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
                                     "subscriberId": {
-                                        "a1b04c8b-89e7-44aa-a11a-8ec9cd139241": {
-                                            "functions": [],
-                                            "variable": "$.f78ad034-5ef8-4141-a4bd-e8eb9ad6ee3d.out.id"
+                                        "ce6b7d0d-4100-407d-a153-7a07bfe77bbb": {
+                                            "variable": "$.facc8538-3a36-412e-ba83-68d8499858d7.out.id",
+                                            "functions": []
                                         }
                                     },
                                     "tagId": {
-                                        "d7f25b5a-cfe3-400a-b02b-0c25c0301a48": {
-                                            "functions": [],
-                                            "variable": "$.bb3313dd-5b5c-463a-91fb-154d62ac0bbb.out.id"
+                                        "2fa6e3a8-58d0-49da-83b7-c15e6309f4e4": {
+                                            "variable": "$.bb3313dd-5b5c-463a-91fb-154d62ac0bbb.out.id",
+                                            "functions": []
                                         }
                                     }
                                 },
                                 "lambda": {
-                                    "subscriberId": "{{{a1b04c8b-89e7-44aa-a11a-8ec9cd139241}}}",
-                                    "tagId": "{{{d7f25b5a-cfe3-400a-b02b-0c25c0301a48}}}"
+                                    "subscriberId": "{{{ce6b7d0d-4100-407d-a153-7a07bfe77bbb}}}",
+                                    "tagId": "{{{2fa6e3a8-58d0-49da-83b7-c15e6309f4e4}}}"
                                 }
                             }
                         }
@@ -567,7 +579,6 @@
             "type": "appmixer.utils.test.Assert",
             "x": 1728,
             "y": 912,
-            "version": "1.0.0",
             "source": {
                 "in": {
                     "f7dea6bc-b738-47aa-ab9d-1d99d514145f": [
@@ -583,7 +594,7 @@
                                 "type": "json2new",
                                 "modifiers": {
                                     "expression": {
-                                        "ea420847-f264-42a2-bb20-aa68708f4e73": {
+                                        "ff30c1d0-a4f8-49fd-bc90-cc7aa78382ec": {
                                             "variable": "$.f7dea6bc-b738-47aa-ab9d-1d99d514145f.out.tagId",
                                             "functions": []
                                         }
@@ -593,7 +604,7 @@
                                     "expression": {
                                         "AND": [
                                             {
-                                                "field": "{{{ea420847-f264-42a2-bb20-aa68708f4e73}}}",
+                                                "field": "{{{ff30c1d0-a4f8-49fd-bc90-cc7aa78382ec}}}",
                                                 "assertion": "notEmpty"
                                             }
                                         ]
@@ -629,21 +640,21 @@
                                 "type": "json2new",
                                 "modifiers": {
                                     "subscriberId": {
-                                        "6413ca0b-9af4-498e-833f-05ad5149ee18": {
-                                            "functions": [],
-                                            "variable": "$.f78ad034-5ef8-4141-a4bd-e8eb9ad6ee3d.out.id"
+                                        "79abf42e-4cad-496d-b3aa-27311c48c8b7": {
+                                            "variable": "$.facc8538-3a36-412e-ba83-68d8499858d7.out.id",
+                                            "functions": []
                                         }
                                     },
                                     "tagId": {
-                                        "4a14db5a-b269-4135-ba39-1f0263420588": {
-                                            "functions": [],
-                                            "variable": "$.bb3313dd-5b5c-463a-91fb-154d62ac0bbb.out.id"
+                                        "292ad01b-9428-4673-8af8-7b20d1eb5e42": {
+                                            "variable": "$.bb3313dd-5b5c-463a-91fb-154d62ac0bbb.out.id",
+                                            "functions": []
                                         }
                                     }
                                 },
                                 "lambda": {
-                                    "subscriberId": "{{{6413ca0b-9af4-498e-833f-05ad5149ee18}}}",
-                                    "tagId": "{{{4a14db5a-b269-4135-ba39-1f0263420588}}}"
+                                    "subscriberId": "{{{79abf42e-4cad-496d-b3aa-27311c48c8b7}}}",
+                                    "tagId": "{{{292ad01b-9428-4673-8af8-7b20d1eb5e42}}}"
                                 }
                             }
                         }
@@ -659,7 +670,6 @@
             "type": "appmixer.utils.test.Assert",
             "x": 1936,
             "y": 1040,
-            "version": "1.0.0",
             "source": {
                 "in": {
                     "f073f6dc-681d-4520-964a-e21c7e61e425": [
@@ -675,7 +685,7 @@
                                 "type": "json2new",
                                 "modifiers": {
                                     "expression": {
-                                        "4970975b-9eac-4d50-ab9b-5ad7905a5a8b": {
+                                        "344a3c90-524c-4d34-8a10-0d04165fdcf6": {
                                             "variable": "$.f073f6dc-681d-4520-964a-e21c7e61e425.out.subscriberId",
                                             "functions": []
                                         }
@@ -685,96 +695,7 @@
                                     "expression": {
                                         "AND": [
                                             {
-                                                "field": "{{{4970975b-9eac-4d50-ab9b-5ad7905a5a8b}}}",
-                                                "assertion": "notEmpty"
-                                            }
-                                        ]
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            },
-            "errorHandling": {
-                "autoRetry": false,
-                "onError": "stopFlow"
-            }
-        },
-        "1e0d923c-f9bd-44b6-b77f-98d1d78dd716": {
-            "type": "appmixer.manychat.core.ListCustomFields",
-            "x": 1936,
-            "y": 1168,
-            "version": "1.0.0",
-            "source": {
-                "in": {
-                    "f073f6dc-681d-4520-964a-e21c7e61e425": [
-                        "out"
-                    ]
-                }
-            },
-            "config": {
-                "transform": {
-                    "in": {
-                        "f073f6dc-681d-4520-964a-e21c7e61e425": {
-                            "out": {
-                                "type": "json2new",
-                                "modifiers": {
-                                    "outputType": {}
-                                },
-                                "lambda": {
-                                    "outputType": "array"
-                                }
-                            }
-                        }
-                    }
-                }
-            },
-            "errorHandling": {
-                "autoRetry": false,
-                "onError": "stopFlow"
-            }
-        },
-        "e3fa6cfc-5d4a-431e-8b53-5f1cfb87b314": {
-            "type": "appmixer.utils.test.Assert",
-            "x": 2144,
-            "y": 1168,
-            "version": "1.0.0",
-            "source": {
-                "in": {
-                    "1e0d923c-f9bd-44b6-b77f-98d1d78dd716": [
-                        "out"
-                    ]
-                }
-            },
-            "config": {
-                "transform": {
-                    "in": {
-                        "1e0d923c-f9bd-44b6-b77f-98d1d78dd716": {
-                            "out": {
-                                "type": "json2new",
-                                "modifiers": {
-                                    "expression": {
-                                        "f5050110-1437-4d81-9312-edadb170233c": {
-                                            "variable": "$.1e0d923c-f9bd-44b6-b77f-98d1d78dd716.out.result",
-                                            "functions": [
-                                                {
-                                                    "name": "g_jsonPath",
-                                                    "params": [
-                                                        {
-                                                            "value": "$[?(@.type=='text')].id"
-                                                        }
-                                                    ]
-                                                }
-                                            ]
-                                        }
-                                    }
-                                },
-                                "lambda": {
-                                    "expression": {
-                                        "AND": [
-                                            {
-                                                "field": "{{{f5050110-1437-4d81-9312-edadb170233c}}}",
+                                                "field": "{{{344a3c90-524c-4d34-8a10-0d04165fdcf6}}}",
                                                 "assertion": "notEmpty"
                                             }
                                         ]
@@ -792,12 +713,12 @@
         },
         "44c5fad2-004f-4f35-8e64-9a8f84ab8a11": {
             "type": "appmixer.manychat.core.SetCustomField",
-            "x": 2144,
-            "y": 1296,
+            "x": 1936,
+            "y": 1168,
             "version": "1.0.0",
             "source": {
                 "in": {
-                    "1e0d923c-f9bd-44b6-b77f-98d1d78dd716": [
+                    "f073f6dc-681d-4520-964a-e21c7e61e425": [
                         "out"
                     ]
                 }
@@ -805,37 +726,37 @@
             "config": {
                 "transform": {
                     "in": {
-                        "1e0d923c-f9bd-44b6-b77f-98d1d78dd716": {
+                        "f073f6dc-681d-4520-964a-e21c7e61e425": {
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
                                     "subscriberId": {
-                                        "21e5656f-28a4-4764-8468-3af274e13df0": {
-                                            "functions": [],
-                                            "variable": "$.f78ad034-5ef8-4141-a4bd-e8eb9ad6ee3d.out.id"
+                                        "fe2b33a4-17ef-45b5-91ac-eefdbf7f6e4d": {
+                                            "variable": "$.facc8538-3a36-412e-ba83-68d8499858d7.out.id",
+                                            "functions": []
                                         }
                                     },
                                     "fieldId": {
-                                        "d002e00c-eda0-4d16-8527-896a17ccda75": {
+                                        "dcf10f09-3bca-4594-90f0-5aea321548ee": {
+                                            "variable": "$.1e0d923c-f9bd-44b6-b77f-98d1d78dd716.out.result",
                                             "functions": [
                                                 {
                                                     "name": "g_jsonPath",
                                                     "params": [
                                                         {
-                                                            "value": "$[?(@.type=='text')].id"
+                                                            "value": "$[?(@.name=='appmixer_e2e')].id"
                                                         }
                                                     ]
                                                 }
-                                            ],
-                                            "variable": "$.1e0d923c-f9bd-44b6-b77f-98d1d78dd716.out.result"
+                                            ]
                                         }
                                     },
                                     "fieldValue": {}
                                 },
                                 "lambda": {
-                                    "subscriberId": "{{{21e5656f-28a4-4764-8468-3af274e13df0}}}",
-                                    "fieldId": "{{{d002e00c-eda0-4d16-8527-896a17ccda75}}}",
-                                    "fieldValue": "E2E value"
+                                    "subscriberId": "{{{fe2b33a4-17ef-45b5-91ac-eefdbf7f6e4d}}}",
+                                    "fieldId": "{{{dcf10f09-3bca-4594-90f0-5aea321548ee}}}",
+                                    "fieldValue": "e2e-contact"
                                 }
                             }
                         }
@@ -849,9 +770,8 @@
         },
         "8bbff315-9c49-4a74-886b-3b7cb0161d34": {
             "type": "appmixer.utils.test.Assert",
-            "x": 2352,
-            "y": 1296,
-            "version": "1.0.0",
+            "x": 2144,
+            "y": 1168,
             "source": {
                 "in": {
                     "44c5fad2-004f-4f35-8e64-9a8f84ab8a11": [
@@ -867,7 +787,7 @@
                                 "type": "json2new",
                                 "modifiers": {
                                     "expression": {
-                                        "e85268b6-b0cd-41f2-8319-61892774302d": {
+                                        "6b0f10e4-a420-435b-8bd1-ef99b64a34e5": {
                                             "variable": "$.44c5fad2-004f-4f35-8e64-9a8f84ab8a11.out.fieldValue",
                                             "functions": []
                                         }
@@ -877,9 +797,9 @@
                                     "expression": {
                                         "AND": [
                                             {
-                                                "field": "{{{e85268b6-b0cd-41f2-8319-61892774302d}}}",
+                                                "field": "{{{6b0f10e4-a420-435b-8bd1-ef99b64a34e5}}}",
                                                 "assertion": "equal",
-                                                "expected": "E2E value"
+                                                "expected": "e2e-contact"
                                             }
                                         ]
                                     }
@@ -896,15 +816,17 @@
         },
         "48518f4d-4891-46d9-a0fe-f608106ed9ca": {
             "type": "appmixer.utils.test.AfterAll",
-            "x": 2560,
-            "y": 1424,
-            "version": "1.0.0",
+            "x": 2352,
+            "y": 1296,
             "source": {
                 "in": {
                     "d1f9632d-368c-4a04-9b52-b61189e6e103": [
                         "out"
                     ],
-                    "19b0d798-323a-44dd-be23-fe3f2f12b83c": [
+                    "e3fa6cfc-5d4a-431e-8b53-5f1cfb87b314": [
+                        "out"
+                    ],
+                    "a618a2d2-9c4d-4d93-858f-e42c1862b89b": [
                         "out"
                     ],
                     "ad7daa4f-9850-4572-908a-5b76b07a6fc0": [
@@ -913,16 +835,10 @@
                     "075a3f3b-9b97-4737-8a33-0ef266c244fe": [
                         "out"
                     ],
-                    "a618a2d2-9c4d-4d93-858f-e42c1862b89b": [
-                        "out"
-                    ],
                     "c3e64704-542e-44f7-9b11-0b69d7cdff51": [
                         "out"
                     ],
                     "4bbfba61-16d1-4946-b36b-e3a61ed7722e": [
-                        "out"
-                    ],
-                    "e3fa6cfc-5d4a-431e-8b53-5f1cfb87b314": [
                         "out"
                     ],
                     "8bbff315-9c49-4a74-886b-3b7cb0161d34": [
@@ -942,8 +858,8 @@
         },
         "a5905b22-a3c7-49c9-aaf9-ff77cc233059": {
             "type": "appmixer.manychat.core.DeleteTag",
-            "x": 2768,
-            "y": 1424,
+            "x": 2560,
+            "y": 1296,
             "version": "1.0.0",
             "source": {
                 "in": {
@@ -960,14 +876,14 @@
                                 "type": "json2new",
                                 "modifiers": {
                                     "tagId": {
-                                        "1ed157a3-65cd-414c-979d-c227797dbf0b": {
-                                            "functions": [],
-                                            "variable": "$.bb3313dd-5b5c-463a-91fb-154d62ac0bbb.out.id"
+                                        "3f9cc339-50ca-447b-937f-65e81b397212": {
+                                            "variable": "$.bb3313dd-5b5c-463a-91fb-154d62ac0bbb.out.id",
+                                            "functions": []
                                         }
                                     }
                                 },
                                 "lambda": {
-                                    "tagId": "{{{1ed157a3-65cd-414c-979d-c227797dbf0b}}}"
+                                    "tagId": "{{{3f9cc339-50ca-447b-937f-65e81b397212}}}"
                                 }
                             }
                         }
@@ -981,9 +897,8 @@
         },
         "2228bc25-db0d-41ba-9242-1c7057c5f54e": {
             "type": "appmixer.utils.test.ProcessE2EResults",
-            "x": 2976,
-            "y": 1424,
-            "version": "1.0.0",
+            "x": 2768,
+            "y": 1296,
             "source": {
                 "in": {
                     "a5905b22-a3c7-49c9-aaf9-ff77cc233059": [
@@ -1001,16 +916,16 @@
                                     "recipients": {},
                                     "testCase": {},
                                     "result": {
-                                        "77f8d098-dd80-4703-9702-a798fba5bedf": {
-                                            "functions": [],
-                                            "variable": "$.48518f4d-4891-46d9-a0fe-f608106ed9ca.out"
+                                        "364e6f8b-2889-4f15-8295-1099a9089874": {
+                                            "variable": "$.48518f4d-4891-46d9-a0fe-f608106ed9ca.out",
+                                            "functions": []
                                         }
                                     }
                                 },
                                 "lambda": {
                                     "recipients": "test@appmixer.ai",
                                     "testCase": "E2E Manychat - subscribers",
-                                    "result": "{{{77f8d098-dd80-4703-9702-a798fba5bedf}}}"
+                                    "result": "{{{364e6f8b-2889-4f15-8295-1099a9089874}}}"
                                 }
                             }
                         }
@@ -1030,10 +945,10 @@
     "notes": {
         "02088594-c102-42cd-85d3-273db6d935b7": {
             "x": 64,
-            "y": 1616,
-            "width": 720,
-            "height": 260,
-            "content": "## ⚠️ Test data assumptions\n\n- The Manychat account needs **at least one Text custom user field** (Settings → Fields → New User Field, type Text). Set Custom Field writes `E2E value` to the first Text field.\n- The Manychat API has **no endpoint to delete a subscriber**. Every run leaves one subscriber **E2E Updated** with the email `appmixer.e2e+<timestamp>@example.com`; delete them in Manychat (Contacts) from time to time.\n- The tag created by the run is deleted after AfterAll."
+            "y": 1424,
+            "width": 760,
+            "height": 330,
+            "content": "## ⚠️ Test data: one prepared Telegram contact\n\nThis flow does not create contacts. It finds the contact whose Text custom field **appmixer_e2e** is **e2e-contact**.\nOne-time setup on the Manychat test account:\n\n1. Settings → Channels → connect Telegram with the bot **@AppmixerManychatBot** (token in appmixer-test-credentials).\n2. Settings → Fields → New User Field: name **appmixer_e2e**, type **Text**.\n3. In Telegram, open @AppmixerManychatBot and press Start. In Manychat → Contacts open that contact and set **appmixer_e2e** = **e2e-contact**.\n\nTelegram has no 24-hour messaging window, so the contact keeps working without re-messaging.\n\nEach run sets the contact's last name to the run's tag name (E2E Subscriber Tag <timestamp>)."
         }
     }
 }
