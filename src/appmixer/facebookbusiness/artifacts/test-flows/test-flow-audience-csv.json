@@ -1,6 +1,6 @@
 {
     "name": "E2E Facebook Business - custom audience members from CSV (csv-parse)",
-    "description": "Creates a two-row CSV (Email, Phone) and a custom audience in the first ad account, then runs AddMembersFromCSVToAudience, ReplaceMembersFromCSVInAudience and RemoveMembersInCSVFromAudience (all parse the file with csv-parse in lib.js), then deletes the audience and the file.",
+    "description": "Creates a two-row CSV (Email, Phone) and a custom audience in the test ad account, then runs ReplaceMembersFromCSVInAudience, AddMembersFromCSVToAudience and RemoveMembersInCSVFromAudience (all parse the file with csv-parse in lib.js), then deletes the audience and the file.",
     "flow": {
         "b62fffe0-9f22-5da4-afdf-268a0bdbc7c2": {
             "type": "appmixer.utils.controls.OnStart",
@@ -52,8 +52,8 @@
                 "onError": "stopFlow"
             }
         },
-        "54ce0584-f6a7-509d-8e5f-bc4b7f17af45": {
-            "type": "appmixer.facebookbusiness.marketing.GetAdAccounts",
+        "8c57b5c0-5846-5674-9d74-66c17a564331": {
+            "type": "appmixer.facebookbusiness.marketing.CreateAudience",
             "x": 448,
             "y": 16,
             "version": "1.0.0",
@@ -71,46 +71,7 @@
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
-                                    "outputType": {}
-                                },
-                                "lambda": {
-                                    "outputType": "first"
-                                }
-                            }
-                        }
-                    }
-                }
-            },
-            "errorHandling": {
-                "autoRetry": false,
-                "onError": "stopFlow"
-            }
-        },
-        "8c57b5c0-5846-5674-9d74-66c17a564331": {
-            "type": "appmixer.facebookbusiness.marketing.CreateAudience",
-            "x": 640,
-            "y": 16,
-            "version": "1.0.0",
-            "source": {
-                "in": {
-                    "54ce0584-f6a7-509d-8e5f-bc4b7f17af45": [
-                        "out"
-                    ]
-                }
-            },
-            "config": {
-                "transform": {
-                    "in": {
-                        "54ce0584-f6a7-509d-8e5f-bc4b7f17af45": {
-                            "out": {
-                                "type": "json2new",
-                                "modifiers": {
-                                    "accountId": {
-                                        "2833e2ba-c195-5e31-ad4d-1b5a29ffc362": {
-                                            "variable": "$.54ce0584-f6a7-509d-8e5f-bc4b7f17af45.out.account_id",
-                                            "functions": []
-                                        }
-                                    },
+                                    "accountId": {},
                                     "name": {
                                         "c2c1dd9b-8ab1-5fb1-ae8f-d1a905488659": {
                                             "functions": [
@@ -125,11 +86,138 @@
                                     "subtype": {}
                                 },
                                 "lambda": {
-                                    "accountId": "{{{2833e2ba-c195-5e31-ad4d-1b5a29ffc362}}}",
+                                    "accountId": "1163919515709231",
                                     "name": "E2E CSV Audience - {{{c2c1dd9b-8ab1-5fb1-ae8f-d1a905488659}}}",
                                     "description": "E2E csv-parse test audience - safe to delete",
                                     "customer_file_source": "USER_PROVIDED_ONLY",
                                     "subtype": "CUSTOM"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "47cc2430-8ce0-551b-b785-1fe6edb4a1c4": {
+            "type": "appmixer.facebookbusiness.marketing.ReplaceMembersFromCSVInAudience",
+            "x": 640,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "8c57b5c0-5846-5674-9d74-66c17a564331": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "8c57b5c0-5846-5674-9d74-66c17a564331": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "accountId": {},
+                                    "audienceId": {
+                                        "fa7ac71a-93ee-5365-8b0c-e00815ebebfd": {
+                                            "variable": "$.8c57b5c0-5846-5674-9d74-66c17a564331.out.id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "fileId": {
+                                        "f74b0c02-5dea-51b5-98b9-4d3207912db6": {
+                                            "variable": "$.93dbb841-abee-58ab-b46f-e58ac7516abc.out.fileId",
+                                            "functions": []
+                                        }
+                                    },
+                                    "schema": {},
+                                    "delimiter": {}
+                                },
+                                "lambda": {
+                                    "accountId": "1163919515709231",
+                                    "audienceId": "{{{fa7ac71a-93ee-5365-8b0c-e00815ebebfd}}}",
+                                    "fileId": "{{{f74b0c02-5dea-51b5-98b9-4d3207912db6}}}",
+                                    "schema": {
+                                        "ADD": [
+                                            {
+                                                "csvHeader": "Email",
+                                                "fbType": "EMAIL"
+                                            },
+                                            {
+                                                "csvHeader": "Phone",
+                                                "fbType": "PHONE"
+                                            }
+                                        ]
+                                    },
+                                    "delimiter": ","
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "cb42d3eb-f0d1-5402-89ed-7ec591779c7a": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 832,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "47cc2430-8ce0-551b-b785-1fe6edb4a1c4": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "47cc2430-8ce0-551b-b785-1fe6edb4a1c4": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "7fa1012e-786e-5ed3-bd06-7f664ac50f68": {
+                                            "variable": "$.47cc2430-8ce0-551b-b785-1fe6edb4a1c4.out.audience_id",
+                                            "functions": []
+                                        },
+                                        "591dff16-4185-57da-88b7-e21fd6ced10e": {
+                                            "variable": "$.47cc2430-8ce0-551b-b785-1fe6edb4a1c4.out.num_total_entries",
+                                            "functions": []
+                                        },
+                                        "5e1106c3-e7a8-5429-b27f-94545d6d9431": {
+                                            "variable": "$.47cc2430-8ce0-551b-b785-1fe6edb4a1c4.out.num_invalid_entries",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{7fa1012e-786e-5ed3-bd06-7f664ac50f68}}}",
+                                                "assertion": "notEmpty"
+                                            },
+                                            {
+                                                "field": "{{{591dff16-4185-57da-88b7-e21fd6ced10e}}}",
+                                                "assertion": "equal",
+                                                "expected": "2"
+                                            },
+                                            {
+                                                "field": "{{{5e1106c3-e7a8-5429-b27f-94545d6d9431}}}",
+                                                "assertion": "equal",
+                                                "expected": "0"
+                                            }
+                                        ]
+                                    }
                                 }
                             }
                         }
@@ -148,7 +236,7 @@
             "version": "1.0.0",
             "source": {
                 "in": {
-                    "8c57b5c0-5846-5674-9d74-66c17a564331": [
+                    "47cc2430-8ce0-551b-b785-1fe6edb4a1c4": [
                         "out"
                     ]
                 }
@@ -156,24 +244,19 @@
             "config": {
                 "transform": {
                     "in": {
-                        "8c57b5c0-5846-5674-9d74-66c17a564331": {
+                        "47cc2430-8ce0-551b-b785-1fe6edb4a1c4": {
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
-                                    "accountId": {
-                                        "05cb28d6-4ad7-5a28-b0b6-e862439b8631": {
-                                            "variable": "$.54ce0584-f6a7-509d-8e5f-bc4b7f17af45.out.account_id",
-                                            "functions": []
-                                        }
-                                    },
+                                    "accountId": {},
                                     "audienceId": {
-                                        "62c682dc-c533-5e41-b973-1eb93e2f3b62": {
+                                        "35c4e7dc-9405-571d-b04a-34a0fc6a1e60": {
                                             "variable": "$.8c57b5c0-5846-5674-9d74-66c17a564331.out.id",
                                             "functions": []
                                         }
                                     },
                                     "fileId": {
-                                        "4536abbb-af42-5a88-8434-c4139c15b45a": {
+                                        "e76ca042-d225-5cc8-8536-deb4d619cef5": {
                                             "variable": "$.93dbb841-abee-58ab-b46f-e58ac7516abc.out.fileId",
                                             "functions": []
                                         }
@@ -182,9 +265,9 @@
                                     "delimiter": {}
                                 },
                                 "lambda": {
-                                    "accountId": "{{{05cb28d6-4ad7-5a28-b0b6-e862439b8631}}}",
-                                    "audienceId": "{{{62c682dc-c533-5e41-b973-1eb93e2f3b62}}}",
-                                    "fileId": "{{{4536abbb-af42-5a88-8434-c4139c15b45a}}}",
+                                    "accountId": "1163919515709231",
+                                    "audienceId": "{{{35c4e7dc-9405-571d-b04a-34a0fc6a1e60}}}",
+                                    "fileId": "{{{e76ca042-d225-5cc8-8536-deb4d619cef5}}}",
                                     "schema": {
                                         "ADD": [
                                             {
@@ -229,15 +312,15 @@
                                 "type": "json2new",
                                 "modifiers": {
                                     "expression": {
-                                        "076bd9f3-d028-5f18-bbf4-c0700ff02948": {
+                                        "cf46c966-556a-5367-9f62-4095d7948a96": {
                                             "variable": "$.f5a579f2-9106-5cb7-a904-bfcb9aa8f7ae.out.audience_id",
                                             "functions": []
                                         },
-                                        "4931a556-fc76-580d-9e4c-69ffcb796508": {
+                                        "a2b7c307-4a32-5d33-a410-f2a80b47f72b": {
                                             "variable": "$.f5a579f2-9106-5cb7-a904-bfcb9aa8f7ae.out.num_total_entries",
                                             "functions": []
                                         },
-                                        "7c0d0ca7-0950-5d4d-9a8f-05510a70293f": {
+                                        "9d8677f7-1395-5d06-ae1d-6e88fa5fa8f5": {
                                             "variable": "$.f5a579f2-9106-5cb7-a904-bfcb9aa8f7ae.out.num_invalid_entries",
                                             "functions": []
                                         }
@@ -247,148 +330,16 @@
                                     "expression": {
                                         "AND": [
                                             {
-                                                "field": "{{{076bd9f3-d028-5f18-bbf4-c0700ff02948}}}",
+                                                "field": "{{{cf46c966-556a-5367-9f62-4095d7948a96}}}",
                                                 "assertion": "notEmpty"
                                             },
                                             {
-                                                "field": "{{{4931a556-fc76-580d-9e4c-69ffcb796508}}}",
+                                                "field": "{{{a2b7c307-4a32-5d33-a410-f2a80b47f72b}}}",
                                                 "assertion": "equal",
                                                 "expected": "2"
                                             },
                                             {
-                                                "field": "{{{7c0d0ca7-0950-5d4d-9a8f-05510a70293f}}}",
-                                                "assertion": "equal",
-                                                "expected": "0"
-                                            }
-                                        ]
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            },
-            "errorHandling": {
-                "autoRetry": false,
-                "onError": "stopFlow"
-            }
-        },
-        "47cc2430-8ce0-551b-b785-1fe6edb4a1c4": {
-            "type": "appmixer.facebookbusiness.marketing.ReplaceMembersFromCSVInAudience",
-            "x": 1024,
-            "y": 16,
-            "version": "1.0.0",
-            "source": {
-                "in": {
-                    "f5a579f2-9106-5cb7-a904-bfcb9aa8f7ae": [
-                        "out"
-                    ]
-                }
-            },
-            "config": {
-                "transform": {
-                    "in": {
-                        "f5a579f2-9106-5cb7-a904-bfcb9aa8f7ae": {
-                            "out": {
-                                "type": "json2new",
-                                "modifiers": {
-                                    "accountId": {
-                                        "09549636-b57d-51bc-8eba-5776e7159ff5": {
-                                            "variable": "$.54ce0584-f6a7-509d-8e5f-bc4b7f17af45.out.account_id",
-                                            "functions": []
-                                        }
-                                    },
-                                    "audienceId": {
-                                        "67e84a04-ff27-5f89-9cb8-4d564f921d43": {
-                                            "variable": "$.8c57b5c0-5846-5674-9d74-66c17a564331.out.id",
-                                            "functions": []
-                                        }
-                                    },
-                                    "fileId": {
-                                        "631dcc56-ba2e-5ba5-9a05-b835701684c4": {
-                                            "variable": "$.93dbb841-abee-58ab-b46f-e58ac7516abc.out.fileId",
-                                            "functions": []
-                                        }
-                                    },
-                                    "schema": {},
-                                    "delimiter": {}
-                                },
-                                "lambda": {
-                                    "accountId": "{{{09549636-b57d-51bc-8eba-5776e7159ff5}}}",
-                                    "audienceId": "{{{67e84a04-ff27-5f89-9cb8-4d564f921d43}}}",
-                                    "fileId": "{{{631dcc56-ba2e-5ba5-9a05-b835701684c4}}}",
-                                    "schema": {
-                                        "ADD": [
-                                            {
-                                                "csvHeader": "Email",
-                                                "fbType": "EMAIL"
-                                            },
-                                            {
-                                                "csvHeader": "Phone",
-                                                "fbType": "PHONE"
-                                            }
-                                        ]
-                                    },
-                                    "delimiter": ","
-                                }
-                            }
-                        }
-                    }
-                }
-            },
-            "errorHandling": {
-                "autoRetry": false,
-                "onError": "stopFlow"
-            }
-        },
-        "cb42d3eb-f0d1-5402-89ed-7ec591779c7a": {
-            "type": "appmixer.utils.test.Assert",
-            "x": 1216,
-            "y": 144,
-            "version": "1.0.0",
-            "source": {
-                "in": {
-                    "47cc2430-8ce0-551b-b785-1fe6edb4a1c4": [
-                        "out"
-                    ]
-                }
-            },
-            "config": {
-                "transform": {
-                    "in": {
-                        "47cc2430-8ce0-551b-b785-1fe6edb4a1c4": {
-                            "out": {
-                                "type": "json2new",
-                                "modifiers": {
-                                    "expression": {
-                                        "85ddaf79-8346-54b9-baba-8e107da01b1b": {
-                                            "variable": "$.47cc2430-8ce0-551b-b785-1fe6edb4a1c4.out.audience_id",
-                                            "functions": []
-                                        },
-                                        "f8c041f4-735a-5188-a7d2-136431f010f5": {
-                                            "variable": "$.47cc2430-8ce0-551b-b785-1fe6edb4a1c4.out.num_total_entries",
-                                            "functions": []
-                                        },
-                                        "a72558e0-c2dd-5cc6-bb8e-bca130058316": {
-                                            "variable": "$.47cc2430-8ce0-551b-b785-1fe6edb4a1c4.out.num_invalid_entries",
-                                            "functions": []
-                                        }
-                                    }
-                                },
-                                "lambda": {
-                                    "expression": {
-                                        "AND": [
-                                            {
-                                                "field": "{{{85ddaf79-8346-54b9-baba-8e107da01b1b}}}",
-                                                "assertion": "notEmpty"
-                                            },
-                                            {
-                                                "field": "{{{f8c041f4-735a-5188-a7d2-136431f010f5}}}",
-                                                "assertion": "equal",
-                                                "expected": "2"
-                                            },
-                                            {
-                                                "field": "{{{a72558e0-c2dd-5cc6-bb8e-bca130058316}}}",
+                                                "field": "{{{9d8677f7-1395-5d06-ae1d-6e88fa5fa8f5}}}",
                                                 "assertion": "equal",
                                                 "expected": "0"
                                             }
@@ -407,12 +358,12 @@
         },
         "c8591397-8bc1-50da-8cea-dba6958e9226": {
             "type": "appmixer.facebookbusiness.marketing.RemoveMembersInCSVFromAudience",
-            "x": 1216,
+            "x": 1024,
             "y": 16,
             "version": "1.0.0",
             "source": {
                 "in": {
-                    "47cc2430-8ce0-551b-b785-1fe6edb4a1c4": [
+                    "f5a579f2-9106-5cb7-a904-bfcb9aa8f7ae": [
                         "out"
                     ]
                 }
@@ -420,24 +371,19 @@
             "config": {
                 "transform": {
                     "in": {
-                        "47cc2430-8ce0-551b-b785-1fe6edb4a1c4": {
+                        "f5a579f2-9106-5cb7-a904-bfcb9aa8f7ae": {
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
-                                    "accountId": {
-                                        "3f52bf90-674f-5050-9895-fd67ea29f1dd": {
-                                            "variable": "$.54ce0584-f6a7-509d-8e5f-bc4b7f17af45.out.account_id",
-                                            "functions": []
-                                        }
-                                    },
+                                    "accountId": {},
                                     "audienceId": {
-                                        "75713a70-53fd-533a-9123-ffe85154dea3": {
+                                        "6fd128b5-0cba-5a6d-a275-37fd694207d0": {
                                             "variable": "$.8c57b5c0-5846-5674-9d74-66c17a564331.out.id",
                                             "functions": []
                                         }
                                     },
                                     "fileId": {
-                                        "5fbc1c75-24b5-5c8c-821f-c3d99228df15": {
+                                        "e46736bc-fb34-5d8c-94f0-eaa33d26ecb4": {
                                             "variable": "$.93dbb841-abee-58ab-b46f-e58ac7516abc.out.fileId",
                                             "functions": []
                                         }
@@ -446,9 +392,9 @@
                                     "delimiter": {}
                                 },
                                 "lambda": {
-                                    "accountId": "{{{3f52bf90-674f-5050-9895-fd67ea29f1dd}}}",
-                                    "audienceId": "{{{75713a70-53fd-533a-9123-ffe85154dea3}}}",
-                                    "fileId": "{{{5fbc1c75-24b5-5c8c-821f-c3d99228df15}}}",
+                                    "accountId": "1163919515709231",
+                                    "audienceId": "{{{6fd128b5-0cba-5a6d-a275-37fd694207d0}}}",
+                                    "fileId": "{{{e46736bc-fb34-5d8c-94f0-eaa33d26ecb4}}}",
                                     "schema": {
                                         "ADD": [
                                             {
@@ -475,7 +421,7 @@
         },
         "6c89150e-6f9b-5401-aa6c-eddb035cf279": {
             "type": "appmixer.utils.test.Assert",
-            "x": 1408,
+            "x": 1216,
             "y": 144,
             "version": "1.0.0",
             "source": {
@@ -493,15 +439,15 @@
                                 "type": "json2new",
                                 "modifiers": {
                                     "expression": {
-                                        "2153e457-e06c-5277-8942-0d52b1657e98": {
+                                        "e5de55b9-0e3b-5a2a-9ddc-c643cc10e844": {
                                             "variable": "$.c8591397-8bc1-50da-8cea-dba6958e9226.out.audience_id",
                                             "functions": []
                                         },
-                                        "262cce00-2523-5c42-badb-5201a2bbee37": {
+                                        "2a40ab01-267e-583f-abaf-9671af5bc7ad": {
                                             "variable": "$.c8591397-8bc1-50da-8cea-dba6958e9226.out.num_total_entries",
                                             "functions": []
                                         },
-                                        "fa698e40-737f-5de1-9418-dc7f481ec8c8": {
+                                        "bbffce9c-2b00-5a02-9baf-fc0371222122": {
                                             "variable": "$.c8591397-8bc1-50da-8cea-dba6958e9226.out.num_invalid_entries",
                                             "functions": []
                                         }
@@ -511,16 +457,16 @@
                                     "expression": {
                                         "AND": [
                                             {
-                                                "field": "{{{2153e457-e06c-5277-8942-0d52b1657e98}}}",
+                                                "field": "{{{e5de55b9-0e3b-5a2a-9ddc-c643cc10e844}}}",
                                                 "assertion": "notEmpty"
                                             },
                                             {
-                                                "field": "{{{262cce00-2523-5c42-badb-5201a2bbee37}}}",
+                                                "field": "{{{2a40ab01-267e-583f-abaf-9671af5bc7ad}}}",
                                                 "assertion": "equal",
                                                 "expected": "2"
                                             },
                                             {
-                                                "field": "{{{fa698e40-737f-5de1-9418-dc7f481ec8c8}}}",
+                                                "field": "{{{bbffce9c-2b00-5a02-9baf-fc0371222122}}}",
                                                 "assertion": "equal",
                                                 "expected": "0"
                                             }
@@ -539,7 +485,7 @@
         },
         "e446d855-ef0d-5a6d-b0f9-93557457b466": {
             "type": "appmixer.utils.test.AfterAll",
-            "x": 1600,
+            "x": 1408,
             "y": 16,
             "version": "1.0.0",
             "source": {
@@ -567,7 +513,7 @@
         },
         "16cddb99-c662-5d28-acce-63fe3051bc30": {
             "type": "appmixer.facebookbusiness.marketing.DeleteAudience",
-            "x": 1792,
+            "x": 1600,
             "y": 16,
             "version": "1.0.0",
             "source": {
@@ -584,22 +530,17 @@
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
-                                    "accountId": {
-                                        "186b9732-d956-5450-8a1a-eaef4b1c6f3e": {
-                                            "variable": "$.54ce0584-f6a7-509d-8e5f-bc4b7f17af45.out.account_id",
-                                            "functions": []
-                                        }
-                                    },
+                                    "accountId": {},
                                     "audienceId": {
-                                        "a3546a83-278a-5bef-ba96-ecfabf06e745": {
+                                        "aa967099-a9ef-529e-a91e-9eadb3610305": {
                                             "variable": "$.8c57b5c0-5846-5674-9d74-66c17a564331.out.id",
                                             "functions": []
                                         }
                                     }
                                 },
                                 "lambda": {
-                                    "accountId": "{{{186b9732-d956-5450-8a1a-eaef4b1c6f3e}}}",
-                                    "audienceId": "{{{a3546a83-278a-5bef-ba96-ecfabf06e745}}}"
+                                    "accountId": "1163919515709231",
+                                    "audienceId": "{{{aa967099-a9ef-529e-a91e-9eadb3610305}}}"
                                 }
                             }
                         }
@@ -613,7 +554,7 @@
         },
         "f801db17-2378-564e-905b-61d2db33de11": {
             "type": "appmixer.utils.files.RemoveFile",
-            "x": 1984,
+            "x": 1792,
             "y": 16,
             "version": "1.1.0",
             "source": {
@@ -631,14 +572,14 @@
                                 "type": "json2new",
                                 "modifiers": {
                                     "fileId": {
-                                        "20cb0f71-8081-5e71-95c6-c252d2d8f800": {
+                                        "b53369c5-2882-5704-a002-3416862d8a76": {
                                             "variable": "$.93dbb841-abee-58ab-b46f-e58ac7516abc.out.fileId",
                                             "functions": []
                                         }
                                     }
                                 },
                                 "lambda": {
-                                    "fileId": "{{{20cb0f71-8081-5e71-95c6-c252d2d8f800}}}"
+                                    "fileId": "{{{b53369c5-2882-5704-a002-3416862d8a76}}}"
                                 }
                             }
                         }
@@ -652,7 +593,7 @@
         },
         "8352c2d4-d5c2-5f1f-85ad-56b80e5f98f5": {
             "type": "appmixer.utils.test.ProcessE2EResults",
-            "x": 2176,
+            "x": 1984,
             "y": 16,
             "version": "1.0.0",
             "source": {
@@ -676,7 +617,7 @@
                                     "recipients": {},
                                     "testCase": {},
                                     "result": {
-                                        "78b5e485-597b-5641-8f1d-53ede39c9622": {
+                                        "dc864437-2602-5eba-a884-ea8f176ae09b": {
                                             "variable": "$.e446d855-ef0d-5a6d-b0f9-93557457b466.out",
                                             "functions": []
                                         }
@@ -685,7 +626,7 @@
                                 "lambda": {
                                     "recipients": "test@appmixer.ai",
                                     "testCase": "E2E Facebook Business - custom audience members from CSV (csv-parse)",
-                                    "result": "{{{78b5e485-597b-5641-8f1d-53ede39c9622}}}"
+                                    "result": "{{{dc864437-2602-5eba-a884-ea8f176ae09b}}}"
                                 }
                             }
                         }
