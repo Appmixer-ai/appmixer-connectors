@@ -31,6 +31,8 @@ const auth = new Proxy({}, {
     get: (target, prop) => {
         if (typeof prop !== 'string') return undefined;
         if (prop === 'profileInfo') return PROFILE_INFO;
+        // An Azure resource endpoint: ai.foundry refuses a host outside the Azure OpenAI domains.
+        if (prop === 'endpoint') return 'https://kv-test.openai.azure.com';
         return /(url|uri|domain)$/i.test(prop) ? 'https://kv-test.example.com' : 'kv-test';
     }
 });
