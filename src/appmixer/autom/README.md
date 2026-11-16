@@ -20,4 +20,9 @@ Get an API key at [app.autom.dev](https://app.autom.dev) and enter it in the con
 
 ## Tests
 
-`artifacts/test/autom.test.js` has unit tests with the network mocked. `artifacts/test-flows/test-flow-autom.json` is an end-to-end flow that runs the main components against the live API.
+`artifacts/test/autom.test.js` has unit tests with the network mocked. The end-to-end flows in `artifacts/test-flows/` run against the live API and need an account with credits:
+
+- `test-flow-autom-find.json`: Find Google Results with outputType first, and Find Google News with outputType array.
+- `test-flow-autom-usage-api-call.json`: Get Usage, and Make API Call with a request header and with query parameters.
+
+A run makes two Google searches and one Google News request.

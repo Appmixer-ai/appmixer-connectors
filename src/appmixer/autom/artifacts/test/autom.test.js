@@ -145,4 +145,97 @@ describe('Autom connector', () => {
         assert.equal(lib.resolveApiUrl(ctx, 'v1/usage'), 'https://api.autom.dev/v1/usage');
         assert.throws(() => lib.resolveApiUrl(ctx, 'https://user:pass@api.autom.dev/x'), CancelError);
     });
+
+    it('refuses protocol-relative and look-alike hosts', () => {
+        const ctx = contextFor({}, null);
+        assert.throws(() => lib.resolveApiUrl(ctx, '//evil.example.com/x'), CancelError);
+        assert.throws(() => lib.resolveApiUrl(ctx, 'https://api.autom.dev.evil.example.com/x'), CancelError);
+        assert.throws(() => lib.resolveApiUrl(ctx, 'http://api.autom.dev/v1/usage'), CancelError);
+        assert.equal(lib.resolveApiUrl(ctx, 'https://api.autom.dev/v1/usage'), 'https://api.autom.dev/v1/usage');
+    });
+
+    it('Find Google Results sends one item with index and count for outputType first', async () => {
+        const calls = [];
+        const ctx = contextFor({ query: 'appmixer', country: 'de', language: 'en', outputType: 'first' }, async options => {
+            calls.push(options);
+            return {
+                data: {
+                    organic_results: [
+                        { position: 1, title: 'A', link: 'https://a.example.com', extra: 'dropped' },
+                        { position: 2, title: 'No link' },
+                        { position: 3, title: 'B', link: 'https://b.example.com' }
+                    ]
+                }
+            };
+        });
+        await findGoogleResults.receive(ctx);
+        assert.deepEqual(calls[0].params, { query: 'appmixer', gl: 'de', hl: 'en' });
+        assert.equal(ctx.output.port, 'out');
+        assert.equal(ctx.output.sent.length, 1);
+        assert.equal(ctx.output.data.link, 'https://a.example.com');
+        assert.equal(ctx.output.data.index, 0);
+        assert.equal(ctx.output.data.count, 2);
+        assert.equal(ctx.output.data.extra, undefined);
+    });
+
+    it('Find Google News sends result and count for outputType array', async () => {
+        const ctx = contextFor({ query: 'technology', outputType: 'array' }, async () => ({
+            data: { organic_results: [{ title: 'N', link: 'https://news.example.com/n', source: 'Example' }] }
+        }));
+        await findGoogleNews.receive(ctx);
+        assert.equal(ctx.output.port, 'out');
+        assert.equal(ctx.output.data.count, 1);
+        assert.equal(ctx.output.data.result[0].source, 'Example');
+    });
+
+    it('generates output port options from the item fields', async () => {
+        const first = contextFor({ outputType: 'first' }, null, { generateOutputPortOptions: true });
+        await findGoogleResults.receive(first);
+        const values = first.output.data.map(option => option.value);
+        assert.deepEqual(values.slice(0, 2), ['index', 'count']);
+        assert.ok(values.includes('link'));
+        assert.ok(!values.includes('properties'));
+
+        const array = contextFor({ outputType: 'array' }, null, { generateOutputPortOptions: true });
+        await findGoogleNews.receive(array);
+        assert.deepEqual(array.output.data.map(option => option.value), ['count', 'result']);
+        assert.ok(array.output.data[1].schema.items.properties.source);
+    });
+
+    it('Make API Call sends the Designer key-value rows as query parameters and headers', async () => {
+        const calls = [];
+        // The Designer stores key-value fields as the JSON string of an object.
+        const ctx = contextFor({
+            url: '/v1/google/search',
+            method: 'GET',
+            parameters: '{"query":"appmixer","gl":"us"}',
+            headers: '{"Accept":"application/json","Authorization":"Bearer other"}'
+        }, async options => {
+            calls.push(options);
+            return { status: 200, headers: {}, data: { organic_results: [] } };
+        });
+        await makeApiCall.receive(ctx);
+        assert.deepEqual(calls[0].params, { query: 'appmixer', gl: 'us' });
+        assert.equal(calls[0].headers.Accept, 'application/json');
+        assert.equal(calls[0].headers.Authorization, undefined);
+        assert.equal(calls[0].headers['x-api-key'], 'test-api-key-material');
+        assert.equal(calls[0].data, undefined);
+    });
+
+    it('Make API Call sends a JSON body and cancels on an invalid one', async () => {
+        const calls = [];
+        const ctx = contextFor({ url: '/v1/example', method: 'POST', body: '{"query":"coffee"}' }, async options => {
+            calls.push(options);
+            return { status: 201, headers: {}, data: { id: 1 } };
+        });
+        await makeApiCall.receive(ctx);
+        assert.deepEqual(calls[0].data, { query: 'coffee' });
+        assert.equal(calls[0].headers['Content-Type'], 'application/json');
+
+        const bad = contextFor({ url: '/v1/example', method: 'POST', body: '{not json' }, async () => { throw new Error('no request expected'); });
+        await assert.rejects(() => makeApiCall.receive(bad), /Request Body must be valid JSON/);
+
+        const badHeaders = contextFor({ url: '/v1/usage', method: 'GET', headers: 'not json' }, async () => { throw new Error('no request expected'); });
+        await assert.rejects(() => makeApiCall.receive(badHeaders), CancelError);
+    });
 });
