@@ -1,0 +1,525 @@
+{
+    "name": "E2E Cal.com - meeting ended trigger",
+    "description": "Meeting Ended fires when a short meeting booked by the flow reaches its end time.",
+    "flow": {
+        "7ddfbb67-b573-417b-ad2a-4e5ce7c2703b": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {},
+            "config": {},
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "547ac31b-e7c8-4219-b1ec-8f72288e4cc4": {
+            "type": "appmixer.calcom.core.CreateEventType",
+            "x": 272,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "7ddfbb67-b573-417b-ad2a-4e5ce7c2703b": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "7ddfbb67-b573-417b-ad2a-4e5ce7c2703b": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "title": {},
+                                    "slug": {},
+                                    "lengthInMinutes": {},
+                                    "minimumBookingNotice": {},
+                                    "slotInterval": {},
+                                    "hidden": {},
+                                    "requiresConfirmation": {}
+                                },
+                                "lambda": {
+                                    "title": "E2E Cal.com Meeting Ended",
+                                    "slug": "e2e-calcom-meeting-ended",
+                                    "lengthInMinutes": 5,
+                                    "minimumBookingNotice": 0,
+                                    "slotInterval": 5,
+                                    "hidden": true,
+                                    "requiresConfirmation": false
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "ed5b7879-9169-443f-83d8-129f69fcec73": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 480,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "547ac31b-e7c8-4219-b1ec-8f72288e4cc4": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "547ac31b-e7c8-4219-b1ec-8f72288e4cc4": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "c84041f4-4624-4aa7-9603-3c0a05319ed2": {
+                                            "variable": "$.547ac31b-e7c8-4219-b1ec-8f72288e4cc4.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{c84041f4-4624-4aa7-9603-3c0a05319ed2}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "541264cb-ed51-4ae6-b6d3-ec0c11ce4a09": {
+            "type": "appmixer.calcom.core.FindAvailableSlots",
+            "x": 480,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "547ac31b-e7c8-4219-b1ec-8f72288e4cc4": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "547ac31b-e7c8-4219-b1ec-8f72288e4cc4": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "eventTypeId": {
+                                        "7535216e-b92d-409d-a79e-13c953c8da35": {
+                                            "functions": [],
+                                            "variable": "$.547ac31b-e7c8-4219-b1ec-8f72288e4cc4.out.id"
+                                        }
+                                    },
+                                    "start": {
+                                        "acc704f3-91ba-4674-813a-2e1d32b6d04f": {
+                                            "functions": [
+                                                {
+                                                    "name": "g_now"
+                                                },
+                                                {
+                                                    "name": "g_addTimeSpan",
+                                                    "hashParams": {
+                                                        "minutes": {
+                                                            "value": 1
+                                                        }
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "end": {
+                                        "8fe9402f-9238-4830-a474-a5fde8b38ecc": {
+                                            "functions": [
+                                                {
+                                                    "name": "g_now"
+                                                },
+                                                {
+                                                    "name": "g_addTimeSpan",
+                                                    "hashParams": {
+                                                        "minutes": {
+                                                            "value": 60
+                                                        }
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "outputType": {}
+                                },
+                                "lambda": {
+                                    "eventTypeId": "{{{7535216e-b92d-409d-a79e-13c953c8da35}}}",
+                                    "start": "{{{acc704f3-91ba-4674-813a-2e1d32b6d04f}}}",
+                                    "end": "{{{8fe9402f-9238-4830-a474-a5fde8b38ecc}}}",
+                                    "outputType": "first"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "c454a2e7-6ca8-483b-b15e-7b1f7bbacee4": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 688,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "541264cb-ed51-4ae6-b6d3-ec0c11ce4a09": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "541264cb-ed51-4ae6-b6d3-ec0c11ce4a09": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "94df7fa9-6661-4ce5-a38b-1d482062488a": {
+                                            "variable": "$.541264cb-ed51-4ae6-b6d3-ec0c11ce4a09.out.start",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{94df7fa9-6661-4ce5-a38b-1d482062488a}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "54b942e2-9b5a-412c-bb54-7bf0e61f9c2e": {
+            "type": "appmixer.calcom.core.CreateBooking",
+            "x": 688,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "541264cb-ed51-4ae6-b6d3-ec0c11ce4a09": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "541264cb-ed51-4ae6-b6d3-ec0c11ce4a09": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "eventTypeId": {
+                                        "07cc7dfc-fbf3-4651-b750-bceb265f4186": {
+                                            "functions": [],
+                                            "variable": "$.547ac31b-e7c8-4219-b1ec-8f72288e4cc4.out.id"
+                                        }
+                                    },
+                                    "start": {
+                                        "c18c0870-7407-41d2-98aa-3df904e1045d": {
+                                            "functions": [],
+                                            "variable": "$.541264cb-ed51-4ae6-b6d3-ec0c11ce4a09.out.start"
+                                        }
+                                    },
+                                    "attendeeName": {},
+                                    "attendeeEmail": {},
+                                    "attendeeTimeZone": {}
+                                },
+                                "lambda": {
+                                    "eventTypeId": "{{{07cc7dfc-fbf3-4651-b750-bceb265f4186}}}",
+                                    "start": "{{{c18c0870-7407-41d2-98aa-3df904e1045d}}}",
+                                    "attendeeName": "E2E Cal.com Attendee",
+                                    "attendeeEmail": "test+calcom-e2e@appmixer.ai",
+                                    "attendeeTimeZone": "UTC"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "2d87cc45-6eec-432e-8834-6abd3ae436a9": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 896,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "54b942e2-9b5a-412c-bb54-7bf0e61f9c2e": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "54b942e2-9b5a-412c-bb54-7bf0e61f9c2e": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "d6e02c17-5ee9-4f01-ac92-b32399fe924e": {
+                                            "variable": "$.54b942e2-9b5a-412c-bb54-7bf0e61f9c2e.out.uid",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{d6e02c17-5ee9-4f01-ac92-b32399fe924e}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "e1c00fb4-4ecd-475f-a8a8-ad14e2fd1d57": {
+            "type": "appmixer.calcom.core.MeetingEnded",
+            "x": 64,
+            "y": 400,
+            "version": "1.0.0",
+            "source": {},
+            "config": {},
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "f1901609-6c90-464d-9c67-1037576bc730": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 272,
+            "y": 400,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "e1c00fb4-4ecd-475f-a8a8-ad14e2fd1d57": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "e1c00fb4-4ecd-475f-a8a8-ad14e2fd1d57": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "a68c307d-4f9d-413e-8ffe-618468261aab": {
+                                            "variable": "$.e1c00fb4-4ecd-475f-a8a8-ad14e2fd1d57.out.triggerEvent",
+                                            "functions": []
+                                        },
+                                        "f7ff51f9-6ce2-4a69-95e5-e725aac52331": {
+                                            "variable": "$.e1c00fb4-4ecd-475f-a8a8-ad14e2fd1d57.out.title",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{a68c307d-4f9d-413e-8ffe-618468261aab}}}",
+                                                "assertion": "equal",
+                                                "expected": "MEETING_ENDED"
+                                            },
+                                            {
+                                                "field": "{{{f7ff51f9-6ce2-4a69-95e5-e725aac52331}}}",
+                                                "assertion": "regex",
+                                                "regex": "E2E Cal.com Meeting Ended"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "358bc33f-eb6c-407f-835d-264ccc8984a2": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 1104,
+            "y": 400,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "ed5b7879-9169-443f-83d8-129f69fcec73": [
+                        "out"
+                    ],
+                    "c454a2e7-6ca8-483b-b15e-7b1f7bbacee4": [
+                        "out"
+                    ],
+                    "2d87cc45-6eec-432e-8834-6abd3ae436a9": [
+                        "out"
+                    ],
+                    "f1901609-6c90-464d-9c67-1037576bc730": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 1500
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "38b592cc-2f47-4af9-b63e-cbcb9687881b": {
+            "type": "appmixer.calcom.core.DeleteEventType",
+            "x": 1312,
+            "y": 400,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "358bc33f-eb6c-407f-835d-264ccc8984a2": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "358bc33f-eb6c-407f-835d-264ccc8984a2": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "eventTypeId": {
+                                        "60cebb1d-c739-4791-826e-b9cd564778c8": {
+                                            "functions": [],
+                                            "variable": "$.547ac31b-e7c8-4219-b1ec-8f72288e4cc4.out.id"
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "eventTypeId": "{{{60cebb1d-c739-4791-826e-b9cd564778c8}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "505e9671-926e-44ea-b71d-a95e25d28615": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1520,
+            "y": 400,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "38b592cc-2f47-4af9-b63e-cbcb9687881b": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "successStoreId": "64f6f1f9193228000754082f",
+                    "failedStoreId": "64f6f1f0193228000754082e"
+                },
+                "transform": {
+                    "in": {
+                        "38b592cc-2f47-4af9-b63e-cbcb9687881b": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "9a703211-a71b-4541-b2b3-0229392254d0": {
+                                            "functions": [],
+                                            "variable": "$.358bc33f-eb6c-407f-835d-264ccc8984a2.out"
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E Cal.com - meeting ended trigger",
+                                    "result": "{{{9a703211-a71b-4541-b2b3-0229392254d0}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        }
+    },
+    "notes": {
+        "f3d71328-8d71-422e-8b5b-e30c1da190ea": {
+            "x": 64,
+            "y": 592,
+            "width": 672,
+            "height": 256,
+            "content": "## ⚠️ Timing assumption\n\nBooks the first free 5-minute slot within the next hour on the hidden event type **e2e-calcom-meeting-ended** and waits up to 25 minutes for MEETING_ENDED, which Cal.com sends at the scheduled end time. Run it while the connected user is **available right now** (inside the working hours of the default schedule), otherwise there is no slot. The event type is deleted at the end; the slug must be free."
+        }
+    }
+}

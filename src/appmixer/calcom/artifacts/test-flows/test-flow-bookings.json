@@ -1,0 +1,1074 @@
+{
+    "name": "E2E Cal.com - bookings",
+    "description": "Book a free slot, confirm, read, find, add an attendee, reschedule and cancel the booking.",
+    "flow": {
+        "4b4632b9-5dc0-4b65-b3f9-68c98f5a78c3": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {},
+            "config": {},
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "30b04c05-c8ac-4961-990f-18ed099beb52": {
+            "type": "appmixer.calcom.core.CreateEventType",
+            "x": 272,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "4b4632b9-5dc0-4b65-b3f9-68c98f5a78c3": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "4b4632b9-5dc0-4b65-b3f9-68c98f5a78c3": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "title": {},
+                                    "slug": {},
+                                    "lengthInMinutes": {},
+                                    "minimumBookingNotice": {},
+                                    "hidden": {},
+                                    "requiresConfirmation": {}
+                                },
+                                "lambda": {
+                                    "title": "E2E Cal.com Bookings",
+                                    "slug": "e2e-calcom-bookings",
+                                    "lengthInMinutes": 30,
+                                    "minimumBookingNotice": 60,
+                                    "hidden": true,
+                                    "requiresConfirmation": true
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "bdf096d6-757a-44ef-91e2-3ba592c264c2": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 480,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "30b04c05-c8ac-4961-990f-18ed099beb52": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "30b04c05-c8ac-4961-990f-18ed099beb52": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "f4da5409-4cc3-41b4-8f29-bf6fd0769b89": {
+                                            "variable": "$.30b04c05-c8ac-4961-990f-18ed099beb52.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{f4da5409-4cc3-41b4-8f29-bf6fd0769b89}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "f4f6735b-f1eb-4dbe-a255-804e40bd3c99": {
+            "type": "appmixer.calcom.core.FindAvailableSlots",
+            "x": 480,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "30b04c05-c8ac-4961-990f-18ed099beb52": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "30b04c05-c8ac-4961-990f-18ed099beb52": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "eventTypeId": {
+                                        "ac780556-82af-461e-8e82-06aacc9c1184": {
+                                            "functions": [],
+                                            "variable": "$.30b04c05-c8ac-4961-990f-18ed099beb52.out.id"
+                                        }
+                                    },
+                                    "start": {
+                                        "0d4eeabd-8abe-400b-bf16-3d848d63efff": {
+                                            "functions": [
+                                                {
+                                                    "name": "g_now"
+                                                },
+                                                {
+                                                    "name": "g_addTimeSpan",
+                                                    "hashParams": {
+                                                        "minutes": {
+                                                            "value": 1440
+                                                        }
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "end": {
+                                        "5c892c98-24d3-4b04-8438-f9148e66e4f1": {
+                                            "functions": [
+                                                {
+                                                    "name": "g_now"
+                                                },
+                                                {
+                                                    "name": "g_addTimeSpan",
+                                                    "hashParams": {
+                                                        "minutes": {
+                                                            "value": 11520
+                                                        }
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "timeZone": {},
+                                    "outputType": {}
+                                },
+                                "lambda": {
+                                    "eventTypeId": "{{{ac780556-82af-461e-8e82-06aacc9c1184}}}",
+                                    "start": "{{{0d4eeabd-8abe-400b-bf16-3d848d63efff}}}",
+                                    "end": "{{{5c892c98-24d3-4b04-8438-f9148e66e4f1}}}",
+                                    "timeZone": "UTC",
+                                    "outputType": "array"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "363d65cf-70e3-4034-86ec-aef8fce3bcff": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 688,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "f4f6735b-f1eb-4dbe-a255-804e40bd3c99": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "f4f6735b-f1eb-4dbe-a255-804e40bd3c99": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "69d9b23f-8e50-4299-8180-1dc79819f060": {
+                                            "variable": "$.f4f6735b-f1eb-4dbe-a255-804e40bd3c99.out.count",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{69d9b23f-8e50-4299-8180-1dc79819f060}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "1b079a36-18c7-4da7-ab73-4ad3ac2b100a": {
+            "type": "appmixer.calcom.core.CreateBooking",
+            "x": 688,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "f4f6735b-f1eb-4dbe-a255-804e40bd3c99": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "f4f6735b-f1eb-4dbe-a255-804e40bd3c99": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "eventTypeId": {
+                                        "dbc5a5d0-1358-49ee-aa3e-9ef49590e181": {
+                                            "functions": [],
+                                            "variable": "$.30b04c05-c8ac-4961-990f-18ed099beb52.out.id"
+                                        }
+                                    },
+                                    "start": {
+                                        "f68dbec0-9bde-428a-bd60-2cad5eaee792": {
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$[0].start"
+                                                        }
+                                                    ]
+                                                }
+                                            ],
+                                            "variable": "$.f4f6735b-f1eb-4dbe-a255-804e40bd3c99.out.result"
+                                        }
+                                    },
+                                    "attendeeName": {},
+                                    "attendeeEmail": {},
+                                    "attendeeTimeZone": {}
+                                },
+                                "lambda": {
+                                    "eventTypeId": "{{{dbc5a5d0-1358-49ee-aa3e-9ef49590e181}}}",
+                                    "start": "{{{f68dbec0-9bde-428a-bd60-2cad5eaee792}}}",
+                                    "attendeeName": "E2E Cal.com Attendee",
+                                    "attendeeEmail": "test+calcom-e2e@appmixer.ai",
+                                    "attendeeTimeZone": "Europe/Prague"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "40de2f68-cc67-47dd-8f94-ff90d1b2e110": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 896,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "1b079a36-18c7-4da7-ab73-4ad3ac2b100a": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "1b079a36-18c7-4da7-ab73-4ad3ac2b100a": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "a79567da-79bb-4cd3-852c-99a5ecbca441": {
+                                            "variable": "$.1b079a36-18c7-4da7-ab73-4ad3ac2b100a.out.uid",
+                                            "functions": []
+                                        },
+                                        "f07e8d39-18ab-43f8-824b-e5def300b6c5": {
+                                            "variable": "$.1b079a36-18c7-4da7-ab73-4ad3ac2b100a.out.status",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{a79567da-79bb-4cd3-852c-99a5ecbca441}}}",
+                                                "assertion": "notEmpty"
+                                            },
+                                            {
+                                                "field": "{{{f07e8d39-18ab-43f8-824b-e5def300b6c5}}}",
+                                                "assertion": "equal",
+                                                "expected": "pending"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "82222e90-2bc3-4b60-abbe-9aff24a436a7": {
+            "type": "appmixer.calcom.core.ConfirmBooking",
+            "x": 896,
+            "y": 400,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "1b079a36-18c7-4da7-ab73-4ad3ac2b100a": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "1b079a36-18c7-4da7-ab73-4ad3ac2b100a": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "bookingUid": {
+                                        "61410023-84cd-472b-9c37-b3892b95765f": {
+                                            "functions": [],
+                                            "variable": "$.1b079a36-18c7-4da7-ab73-4ad3ac2b100a.out.uid"
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "bookingUid": "{{{61410023-84cd-472b-9c37-b3892b95765f}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "a49f41aa-a776-4e21-abd5-a2c4b4fa6cab": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1104,
+            "y": 400,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "82222e90-2bc3-4b60-abbe-9aff24a436a7": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "82222e90-2bc3-4b60-abbe-9aff24a436a7": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "db8a2aff-06c6-4c81-b464-0c277502c69c": {
+                                            "variable": "$.82222e90-2bc3-4b60-abbe-9aff24a436a7.out.status",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{db8a2aff-06c6-4c81-b464-0c277502c69c}}}",
+                                                "assertion": "equal",
+                                                "expected": "accepted"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "9522c0ea-cf9c-4001-b148-ece482aa181b": {
+            "type": "appmixer.calcom.core.GetBooking",
+            "x": 1104,
+            "y": 528,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "82222e90-2bc3-4b60-abbe-9aff24a436a7": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "82222e90-2bc3-4b60-abbe-9aff24a436a7": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "bookingUid": {
+                                        "21a07a3a-9f50-48f0-b18a-4da5788a1155": {
+                                            "functions": [],
+                                            "variable": "$.1b079a36-18c7-4da7-ab73-4ad3ac2b100a.out.uid"
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "bookingUid": "{{{21a07a3a-9f50-48f0-b18a-4da5788a1155}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "b75573b3-46bf-4b2f-b6c6-4d0aab848a34": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1312,
+            "y": 528,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "9522c0ea-cf9c-4001-b148-ece482aa181b": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "9522c0ea-cf9c-4001-b148-ece482aa181b": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "4a628d94-9850-4061-b547-5b28402d45a3": {
+                                            "variable": "$.9522c0ea-cf9c-4001-b148-ece482aa181b.out.uid",
+                                            "functions": []
+                                        },
+                                        "fb311b00-c035-4abe-9f0c-fc48409f0766": {
+                                            "variable": "$.9522c0ea-cf9c-4001-b148-ece482aa181b.out.title",
+                                            "functions": []
+                                        },
+                                        "c8add8c0-1dc6-4bc9-b097-be90d2fd6105": {
+                                            "variable": "$.1b079a36-18c7-4da7-ab73-4ad3ac2b100a.out.uid",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{4a628d94-9850-4061-b547-5b28402d45a3}}}",
+                                                "assertion": "equal",
+                                                "expected": "{{{c8add8c0-1dc6-4bc9-b097-be90d2fd6105}}}"
+                                            },
+                                            {
+                                                "field": "{{{fb311b00-c035-4abe-9f0c-fc48409f0766}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "2299ee98-90ec-48aa-a825-79c231b07114": {
+            "type": "appmixer.calcom.core.FindBookings",
+            "x": 1312,
+            "y": 656,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "9522c0ea-cf9c-4001-b148-ece482aa181b": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "9522c0ea-cf9c-4001-b148-ece482aa181b": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "eventTypeId": {
+                                        "862d00e0-047d-4f69-afa8-b0b7f33c1731": {
+                                            "functions": [],
+                                            "variable": "$.30b04c05-c8ac-4961-990f-18ed099beb52.out.id"
+                                        }
+                                    },
+                                    "attendeeEmail": {},
+                                    "status": {},
+                                    "sortStart": {},
+                                    "outputType": {}
+                                },
+                                "lambda": {
+                                    "eventTypeId": "{{{862d00e0-047d-4f69-afa8-b0b7f33c1731}}}",
+                                    "attendeeEmail": "test+calcom-e2e@appmixer.ai",
+                                    "status": "upcoming",
+                                    "sortStart": "asc",
+                                    "outputType": "first"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "48e322f1-114b-4ca9-8f92-0952537cbc76": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1520,
+            "y": 656,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "2299ee98-90ec-48aa-a825-79c231b07114": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "2299ee98-90ec-48aa-a825-79c231b07114": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "b745c61c-1f2b-40ae-a117-8878d370ac22": {
+                                            "variable": "$.2299ee98-90ec-48aa-a825-79c231b07114.out.uid",
+                                            "functions": []
+                                        },
+                                        "79e5ced1-253c-4721-bdbb-7da68b765bc1": {
+                                            "variable": "$.2299ee98-90ec-48aa-a825-79c231b07114.out.eventTypeId",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{b745c61c-1f2b-40ae-a117-8878d370ac22}}}",
+                                                "assertion": "notEmpty"
+                                            },
+                                            {
+                                                "field": "{{{79e5ced1-253c-4721-bdbb-7da68b765bc1}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "3cdd9e55-dca4-44ca-8498-b85b5004b0d4": {
+            "type": "appmixer.calcom.core.AddBookingAttendee",
+            "x": 1520,
+            "y": 784,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "2299ee98-90ec-48aa-a825-79c231b07114": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "2299ee98-90ec-48aa-a825-79c231b07114": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "bookingUid": {
+                                        "ee1b7ec9-dc2a-4175-bca9-7e273a8cb2e8": {
+                                            "functions": [],
+                                            "variable": "$.1b079a36-18c7-4da7-ab73-4ad3ac2b100a.out.uid"
+                                        }
+                                    },
+                                    "name": {},
+                                    "email": {},
+                                    "timeZone": {}
+                                },
+                                "lambda": {
+                                    "bookingUid": "{{{ee1b7ec9-dc2a-4175-bca9-7e273a8cb2e8}}}",
+                                    "name": "E2E Cal.com Guest",
+                                    "email": "test+calcom-guest@appmixer.ai",
+                                    "timeZone": "UTC"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "d48c4fc5-5c18-45c8-beb6-c50c2aeea92a": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1728,
+            "y": 784,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "3cdd9e55-dca4-44ca-8498-b85b5004b0d4": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "3cdd9e55-dca4-44ca-8498-b85b5004b0d4": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "e0ffb2ca-fca2-48ff-9d9d-ebd53cae97f9": {
+                                            "variable": "$.3cdd9e55-dca4-44ca-8498-b85b5004b0d4.out.email",
+                                            "functions": []
+                                        },
+                                        "b3472b53-30af-43b3-8b6b-fd125c8219d8": {
+                                            "variable": "$.3cdd9e55-dca4-44ca-8498-b85b5004b0d4.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{e0ffb2ca-fca2-48ff-9d9d-ebd53cae97f9}}}",
+                                                "assertion": "equal",
+                                                "expected": "test+calcom-guest@appmixer.ai"
+                                            },
+                                            {
+                                                "field": "{{{b3472b53-30af-43b3-8b6b-fd125c8219d8}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "f7ac2916-8162-43dc-a5ca-8653002d39da": {
+            "type": "appmixer.calcom.core.RescheduleBooking",
+            "x": 1728,
+            "y": 912,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "3cdd9e55-dca4-44ca-8498-b85b5004b0d4": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "3cdd9e55-dca4-44ca-8498-b85b5004b0d4": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "bookingUid": {
+                                        "2e909627-d554-43c5-95c5-9c1118a5539a": {
+                                            "functions": [],
+                                            "variable": "$.1b079a36-18c7-4da7-ab73-4ad3ac2b100a.out.uid"
+                                        }
+                                    },
+                                    "start": {
+                                        "03ded00d-529a-4591-98de-d8b1572836c5": {
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$[1].start"
+                                                        }
+                                                    ]
+                                                }
+                                            ],
+                                            "variable": "$.f4f6735b-f1eb-4dbe-a255-804e40bd3c99.out.result"
+                                        }
+                                    },
+                                    "reschedulingReason": {}
+                                },
+                                "lambda": {
+                                    "bookingUid": "{{{2e909627-d554-43c5-95c5-9c1118a5539a}}}",
+                                    "start": "{{{03ded00d-529a-4591-98de-d8b1572836c5}}}",
+                                    "reschedulingReason": "E2E test reschedule"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "0be61976-2a2f-4c26-9ae8-85d8987c735d": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1936,
+            "y": 912,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "f7ac2916-8162-43dc-a5ca-8653002d39da": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "f7ac2916-8162-43dc-a5ca-8653002d39da": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "bafce2d0-88cb-4bed-a425-a33e4a1c7dc9": {
+                                            "variable": "$.f7ac2916-8162-43dc-a5ca-8653002d39da.out.uid",
+                                            "functions": []
+                                        },
+                                        "931d1f3f-345d-437d-926a-ab57b7120e85": {
+                                            "variable": "$.f7ac2916-8162-43dc-a5ca-8653002d39da.out.start",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{bafce2d0-88cb-4bed-a425-a33e4a1c7dc9}}}",
+                                                "assertion": "notEmpty"
+                                            },
+                                            {
+                                                "field": "{{{931d1f3f-345d-437d-926a-ab57b7120e85}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "e49ac38d-d62c-435f-89da-a07e3c0a2aa8": {
+            "type": "appmixer.calcom.core.CancelBooking",
+            "x": 1936,
+            "y": 1040,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "f7ac2916-8162-43dc-a5ca-8653002d39da": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "f7ac2916-8162-43dc-a5ca-8653002d39da": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "bookingUid": {
+                                        "31577bd2-317a-4469-888b-d73d428fe45f": {
+                                            "functions": [],
+                                            "variable": "$.f7ac2916-8162-43dc-a5ca-8653002d39da.out.uid"
+                                        }
+                                    },
+                                    "cancellationReason": {}
+                                },
+                                "lambda": {
+                                    "bookingUid": "{{{31577bd2-317a-4469-888b-d73d428fe45f}}}",
+                                    "cancellationReason": "E2E test cleanup"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "aefd8597-1ca3-432b-b593-f4735f8e9011": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 2144,
+            "y": 1040,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "e49ac38d-d62c-435f-89da-a07e3c0a2aa8": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "e49ac38d-d62c-435f-89da-a07e3c0a2aa8": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "45577c40-7f93-4814-b6f2-99dd4380387b": {
+                                            "variable": "$.e49ac38d-d62c-435f-89da-a07e3c0a2aa8.out.status",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{45577c40-7f93-4814-b6f2-99dd4380387b}}}",
+                                                "assertion": "equal",
+                                                "expected": "cancelled"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "d91abaa1-2df2-401d-ae3c-6a3b0efc6248": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 2352,
+            "y": 1040,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "bdf096d6-757a-44ef-91e2-3ba592c264c2": [
+                        "out"
+                    ],
+                    "363d65cf-70e3-4034-86ec-aef8fce3bcff": [
+                        "out"
+                    ],
+                    "40de2f68-cc67-47dd-8f94-ff90d1b2e110": [
+                        "out"
+                    ],
+                    "a49f41aa-a776-4e21-abd5-a2c4b4fa6cab": [
+                        "out"
+                    ],
+                    "b75573b3-46bf-4b2f-b6c6-4d0aab848a34": [
+                        "out"
+                    ],
+                    "48e322f1-114b-4ca9-8f92-0952537cbc76": [
+                        "out"
+                    ],
+                    "d48c4fc5-5c18-45c8-beb6-c50c2aeea92a": [
+                        "out"
+                    ],
+                    "0be61976-2a2f-4c26-9ae8-85d8987c735d": [
+                        "out"
+                    ],
+                    "aefd8597-1ca3-432b-b593-f4735f8e9011": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 180
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "b8e1cba5-89b4-48b0-93de-09e0474dbbc1": {
+            "type": "appmixer.calcom.core.DeleteEventType",
+            "x": 2560,
+            "y": 1040,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "d91abaa1-2df2-401d-ae3c-6a3b0efc6248": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "d91abaa1-2df2-401d-ae3c-6a3b0efc6248": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "eventTypeId": {
+                                        "a77deeb7-526e-4cb4-a591-57a0502f058c": {
+                                            "functions": [],
+                                            "variable": "$.30b04c05-c8ac-4961-990f-18ed099beb52.out.id"
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "eventTypeId": "{{{a77deeb7-526e-4cb4-a591-57a0502f058c}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "44b7dd72-b541-4a0c-9e5f-445077f221e1": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 2768,
+            "y": 1040,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "b8e1cba5-89b4-48b0-93de-09e0474dbbc1": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "successStoreId": "64f6f1f9193228000754082f",
+                    "failedStoreId": "64f6f1f0193228000754082e"
+                },
+                "transform": {
+                    "in": {
+                        "b8e1cba5-89b4-48b0-93de-09e0474dbbc1": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "bb235eaa-b664-44bb-9c04-8af208115cdc": {
+                                            "functions": [],
+                                            "variable": "$.d91abaa1-2df2-401d-ae3c-6a3b0efc6248.out"
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E Cal.com - bookings",
+                                    "result": "{{{bb235eaa-b664-44bb-9c04-8af208115cdc}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        }
+    },
+    "notes": {
+        "0cc36317-0a44-42c9-8d29-7e20b2bb8f12": {
+            "x": 64,
+            "y": 1232,
+            "width": 672,
+            "height": 256,
+            "content": "## ⚠️ Test data\n\n- Creates the hidden event type **e2e-calcom-bookings** (requires confirmation) and deletes it at the end; the slug must be free.\n- The connected user needs **free time in the next 8 days** in the default availability schedule (the default working hours are enough), otherwise Find Available Slots returns nothing.\n- Bookings go to **test+calcom-e2e@appmixer.ai**; Cal.com sends confirmation emails there."
+        }
+    }
+}
