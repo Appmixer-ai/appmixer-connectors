@@ -1,0 +1,339 @@
+{
+    "name": "E2E Piloterr - Usage and Make API Call",
+    "description": "End-to-end test for the Piloterr connector - Get Usage, Make API Call with a request header (GET /v2/usage) and Make API Call with a query parameter (GET /v2/website/crawler?query=...), which proves the key-value parameters reach the API.",
+    "flow": {
+        "ac83d6b8-e425-48ac-915d-3931fdc08337": {
+            "type": "appmixer.utils.controls.OnStart",
+            "label": "OnStart",
+            "x": 64,
+            "y": 16,
+            "source": {},
+            "version": "1.0.0",
+            "config": {},
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "87885fd7-701e-4715-90e9-d8d57b5b403d": {
+            "type": "appmixer.piloterr.core.GetUsage",
+            "label": "Get Usage",
+            "x": 272,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "ac83d6b8-e425-48ac-915d-3931fdc08337": ["out"]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "ac83d6b8-e425-48ac-915d-3931fdc08337": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {},
+                                "lambda": {}
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "f6ef439d-1f9a-49c6-98e0-98bead10eb9d": {
+            "type": "appmixer.utils.test.Assert",
+            "label": "Assert usage",
+            "x": 480,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "87885fd7-701e-4715-90e9-d8d57b5b403d": ["out"]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "87885fd7-701e-4715-90e9-d8d57b5b403d": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "93bfc00c-a16e-4f7b-b1ae-858863e1cdbb": {
+                                            "variable": "$.87885fd7-701e-4715-90e9-d8d57b5b403d.out.total_used",
+                                            "functions": []
+                                        },
+                                        "f6381571-840c-42bf-b36b-d8d403dbf690": {
+                                            "variable": "$.87885fd7-701e-4715-90e9-d8d57b5b403d.out.remaining",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{93bfc00c-a16e-4f7b-b1ae-858863e1cdbb}}}",
+                                                "assertion": "regex",
+                                                "regex": "^[0-9]+(\\.[0-9]+)?$"
+                                            },
+                                            {
+                                                "field": "{{{f6381571-840c-42bf-b36b-d8d403dbf690}}}",
+                                                "assertion": "regex",
+                                                "regex": "^-?[0-9]+(\\.[0-9]+)?$"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "5baaa9ae-c28d-46dc-9698-bfabaf8f234d": {
+            "type": "appmixer.piloterr.core.MakeApiCall",
+            "label": "Make API Call (usage, header)",
+            "x": 480,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "ac83d6b8-e425-48ac-915d-3931fdc08337": ["out"]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "ac83d6b8-e425-48ac-915d-3931fdc08337": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "url": {},
+                                    "method": {},
+                                    "headers": {}
+                                },
+                                "lambda": {
+                                    "url": "/v2/usage",
+                                    "method": "GET",
+                                    "headers": "{\"Accept\":\"application/json\"}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "40fe5903-ba96-45d3-93b9-9f5df5c4fa00": {
+            "type": "appmixer.utils.test.Assert",
+            "label": "Assert usage call",
+            "x": 688,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "5baaa9ae-c28d-46dc-9698-bfabaf8f234d": ["out"]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "5baaa9ae-c28d-46dc-9698-bfabaf8f234d": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "70cec677-0cce-48b9-89ce-2e401e29c754": {
+                                            "variable": "$.5baaa9ae-c28d-46dc-9698-bfabaf8f234d.out.statusCode",
+                                            "functions": []
+                                        },
+                                        "54783158-b0be-4aa4-a077-4a69ca4cd394": {
+                                            "variable": "$.5baaa9ae-c28d-46dc-9698-bfabaf8f234d.out.body",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [{ "value": "$.total_used" }]
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{70cec677-0cce-48b9-89ce-2e401e29c754}}}",
+                                                "assertion": "equal",
+                                                "expected": "200"
+                                            },
+                                            {
+                                                "field": "{{{54783158-b0be-4aa4-a077-4a69ca4cd394}}}",
+                                                "assertion": "regex",
+                                                "regex": "^[0-9]+(\\.[0-9]+)?$"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "e1cf8015-8f9c-4b6d-b6db-6cc2c2f3c108": {
+            "type": "appmixer.piloterr.core.MakeApiCall",
+            "label": "Make API Call (crawler, query parameter)",
+            "x": 688,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "ac83d6b8-e425-48ac-915d-3931fdc08337": ["out"]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "ac83d6b8-e425-48ac-915d-3931fdc08337": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "url": {},
+                                    "method": {},
+                                    "parameters": {}
+                                },
+                                "lambda": {
+                                    "url": "/v2/website/crawler",
+                                    "method": "GET",
+                                    "parameters": "{\"query\":\"https://example.com\"}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "540931a6-1a71-46e6-9142-66ff4c9e6540": {
+            "type": "appmixer.utils.test.Assert",
+            "label": "Assert crawler call",
+            "x": 896,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "e1cf8015-8f9c-4b6d-b6db-6cc2c2f3c108": ["out"]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "e1cf8015-8f9c-4b6d-b6db-6cc2c2f3c108": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "d91aebee-9b3b-41e5-9008-44631d4d03a5": {
+                                            "variable": "$.e1cf8015-8f9c-4b6d-b6db-6cc2c2f3c108.out.statusCode",
+                                            "functions": []
+                                        },
+                                        "aa1ea934-c2aa-4155-b962-1b3be39ac4c3": {
+                                            "variable": "$.e1cf8015-8f9c-4b6d-b6db-6cc2c2f3c108.out.body",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{d91aebee-9b3b-41e5-9008-44631d4d03a5}}}",
+                                                "assertion": "equal",
+                                                "expected": "200"
+                                            },
+                                            {
+                                                "field": "{{{aa1ea934-c2aa-4155-b962-1b3be39ac4c3}}}",
+                                                "assertion": "regex",
+                                                "regex": "Example Domain"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "b75e6e3b-4f10-47fc-9ac3-8a796e541bf2": {
+            "type": "appmixer.utils.test.AfterAll",
+            "label": "AfterAll",
+            "x": 1104,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "f6ef439d-1f9a-49c6-98e0-98bead10eb9d": ["out"],
+                    "40fe5903-ba96-45d3-93b9-9f5df5c4fa00": ["out"],
+                    "540931a6-1a71-46e6-9142-66ff4c9e6540": ["out"]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 180
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "a8b9ba80-633f-440a-b467-9b994438fa30": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "label": "ProcessE2EResults",
+            "x": 1312,
+            "y": 272,
+            "version": "1.0.1",
+            "source": {
+                "in": {
+                    "b75e6e3b-4f10-47fc-9ac3-8a796e541bf2": ["out"]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "b75e6e3b-4f10-47fc-9ac3-8a796e541bf2": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "b0a913e6-5805-44d6-8d59-af303ac712d5": {
+                                            "variable": "$.b75e6e3b-4f10-47fc-9ac3-8a796e541bf2.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E Piloterr - Usage and Make API Call",
+                                    "result": "{{{b0a913e6-5805-44d6-8d59-af303ac712d5}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        }
+    },
+    "notes": {
+        "e6bbfc6e-c891-45ed-a100-1a7d5ccb7efd": {
+            "x": 64,
+            "y": 432,
+            "width": 672,
+            "height": 160,
+            "content": "## ⚠️ Test data assumption\n\n- Get Usage and the `/v2/usage` call are free. The crawler call uses **one credit** of the Piloterr account.\n- The crawler call answers only when the `query` parameter arrives, so a dropped key-value parameter fails the flow instead of passing silently."
+        }
+    }
+}

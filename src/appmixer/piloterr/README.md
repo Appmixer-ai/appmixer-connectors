@@ -19,4 +19,9 @@ Get an API key at [app.piloterr.com](https://app.piloterr.com) and enter it in t
 
 ## Tests
 
-`artifacts/test/piloterr.test.js` has unit tests with the network mocked. `artifacts/test-flows/test-flow-piloterr.json` is an end-to-end flow that runs the main components against the live API.
+`artifacts/test/piloterr.test.js` has unit tests with the network mocked. The end-to-end flows in `artifacts/test-flows/` run against the live API and need an account with credits:
+
+- `test-flow-piloterr-website-html.json`: Get Website HTML with the crawler engine (HTML output) and with the rendering engine and Save HTML as File (the file is loaded, checked and removed).
+- `test-flow-piloterr-usage-api-call.json`: Get Usage, and Make API Call with a request header and with a query parameter.
+
+A run uses one crawler request, one rendering request and one more crawler request through Make API Call.

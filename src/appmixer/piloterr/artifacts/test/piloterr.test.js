@@ -134,4 +134,58 @@ describe('Piloterr connector', () => {
         assert.equal(lib.resolveApiUrl(ctx, 'v2/usage'), 'https://api.piloterr.com/v2/usage');
         assert.throws(() => lib.resolveApiUrl(ctx, 'https://user:pass@api.piloterr.com/x'), CancelError);
     });
+
+    it('refuses protocol-relative and look-alike hosts', () => {
+        const ctx = contextFor({}, null);
+        assert.throws(() => lib.resolveApiUrl(ctx, '//evil.example.com/x'), CancelError);
+        assert.throws(() => lib.resolveApiUrl(ctx, 'https://api.piloterr.com.evil.example.com/x'), CancelError);
+        assert.throws(() => lib.resolveApiUrl(ctx, 'http://api.piloterr.com/v2/usage'), CancelError);
+        assert.equal(lib.resolveApiUrl(ctx, 'https://api.piloterr.com/v2/usage'), 'https://api.piloterr.com/v2/usage');
+    });
+
+    it('Get Website HTML cancels on an unknown engine without a request', async () => {
+        const ctx = contextFor({ url: 'https://example.com', engine: 'turbo' }, async () => { throw new Error('no request expected'); });
+        await assert.rejects(() => getWebsiteHtml.receive(ctx), /Engine must be one of/);
+    });
+
+    it('Make API Call sends the Designer key-value rows as query parameters and headers', async () => {
+        const calls = [];
+        // The Designer stores key-value fields as the JSON string of an object.
+        const ctx = contextFor({
+            url: '/v2/website/crawler',
+            method: 'GET',
+            parameters: '{"query":"https://example.com"}',
+            headers: '{"Accept":"text/html","authorization":"Bearer other"}'
+        }, async options => {
+            calls.push(options);
+            return { status: 200, headers: { 'content-type': 'application/json' }, data: '<html></html>' };
+        });
+        await makeApiCall.receive(ctx);
+        assert.deepEqual(calls[0].params, { query: 'https://example.com' });
+        assert.equal(calls[0].headers.Accept, 'text/html');
+        assert.equal(calls[0].headers.authorization, undefined);
+        assert.equal(calls[0].headers['x-api-key'], 'test-api-key-material');
+        assert.equal(calls[0].data, undefined);
+        assert.equal(ctx.output.data.statusCode, 200);
+        assert.equal(ctx.output.data.body, '<html></html>');
+    });
+
+    it('Make API Call sends a JSON body and cancels on an invalid one', async () => {
+        const calls = [];
+        const ctx = contextFor({ url: '/v2/example', method: 'POST', body: '{"query":"coffee"}' }, async options => {
+            calls.push(options);
+            return { status: 201, headers: {}, data: { id: 1 } };
+        });
+        await makeApiCall.receive(ctx);
+        assert.equal(calls[0].method, 'POST');
+        assert.deepEqual(calls[0].data, { query: 'coffee' });
+        assert.equal(calls[0].headers['Content-Type'], 'application/json');
+        assert.equal(calls[0].params, undefined);
+
+        const bad = contextFor({ url: '/v2/example', method: 'POST', body: '{not json' }, async () => { throw new Error('no request expected'); });
+        await assert.rejects(() => makeApiCall.receive(bad), /Request Body must be valid JSON/);
+
+        const badHeaders = contextFor({ url: '/v2/usage', method: 'GET', headers: 'not json' }, async () => { throw new Error('no request expected'); });
+        await assert.rejects(() => makeApiCall.receive(badHeaders), CancelError);
+    });
 });
