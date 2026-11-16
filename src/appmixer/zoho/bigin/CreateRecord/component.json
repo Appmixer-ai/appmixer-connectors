@@ -1,0 +1,151 @@
+{
+    "name": "appmixer.zoho.bigin.CreateRecord",
+    "label": "Create Record",
+    "description": "Create a record in a Bigin module (Contacts, Pipelines, Companies, Products, Tasks, Events or Calls). Provide the field values as a JSON object of field API names.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:zoho:bigin"
+    },
+    "quota": {
+        "manager": "appmixer:zoho:bigin",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "module": {
+                        "type": "string",
+                        "enum": [
+                            "Contacts",
+                            "Pipelines",
+                            "Accounts",
+                            "Products",
+                            "Tasks",
+                            "Events",
+                            "Calls"
+                        ]
+                    },
+                    "recordData": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "module",
+                    "recordData"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "module": {
+                        "type": "select",
+                        "index": 1,
+                        "label": "Module",
+                        "defaultValue": "Contacts",
+                        "tooltip": "The Bigin module. Companies are <code>Accounts</code> and pipeline records (deals) are <code>Pipelines</code> in the API.",
+                        "options": [
+                            {
+                                "label": "Contacts",
+                                "value": "Contacts"
+                            },
+                            {
+                                "label": "Pipelines",
+                                "value": "Pipelines"
+                            },
+                            {
+                                "label": "Companies",
+                                "value": "Accounts"
+                            },
+                            {
+                                "label": "Products",
+                                "value": "Products"
+                            },
+                            {
+                                "label": "Tasks",
+                                "value": "Tasks"
+                            },
+                            {
+                                "label": "Events",
+                                "value": "Events"
+                            },
+                            {
+                                "label": "Calls",
+                                "value": "Calls"
+                            }
+                        ]
+                    },
+                    "recordData": {
+                        "type": "textarea",
+                        "index": 2,
+                        "label": "Record Fields",
+                        "tooltip": "A JSON object of field API names and values, for example <code>{\"Last_Name\": \"Brooks\", \"Email\": \"sophia.brooks@example.com\"}</code>. Lookup fields take an object with the ID: <code>{\"Account_Name\": {\"id\": \"2034020000000478021\"}}</code>. Mandatory fields: Contacts <code>Last_Name</code>; Pipelines <code>Deal_Name</code>, <code>Sub_Pipeline</code>, <code>Stage</code>; Companies <code>Account_Name</code>; Products <code>Product_Name</code>; Tasks <code>Subject</code>; Events <code>Event_Title</code>, <code>Start_DateTime</code>, <code>End_DateTime</code>; Calls <code>Call_Type</code>, <code>Call_Start_Time</code>, <code>Call_Duration</code>. Use List Fields to get the field API names."
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "title": "Record ID",
+                        "example": "2034020000000644029"
+                    },
+                    "Created_Time": {
+                        "type": "string",
+                        "title": "Created Time",
+                        "example": "2026-06-27T13:14:19+05:30"
+                    },
+                    "Modified_Time": {
+                        "type": "string",
+                        "title": "Modified Time",
+                        "example": "2026-06-27T13:14:19+05:30"
+                    },
+                    "Created_By": {
+                        "type": "object",
+                        "title": "Created By",
+                        "properties": {
+                            "id": {
+                                "type": "string",
+                                "title": "Created By.ID",
+                                "example": "2034020000000457001"
+                            },
+                            "name": {
+                                "type": "string",
+                                "title": "Created By.Name",
+                                "example": "Zylker Travels"
+                            }
+                        }
+                    },
+                    "Modified_By": {
+                        "type": "object",
+                        "title": "Modified By",
+                        "properties": {
+                            "id": {
+                                "type": "string",
+                                "title": "Modified By.ID",
+                                "example": "2034020000000457001"
+                            },
+                            "name": {
+                                "type": "string",
+                                "title": "Modified By.Name",
+                                "example": "Zylker Travels"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyMS45ODgiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyMS45ODggMjQiPgogIDxwYXRoIGlkPSJQYXRoXzY4OCIgZGF0YS1uYW1lPSJQYXRoIDY4OCIgZD0iTTE0Ljg4NCwyOS42ODZhMS41MDYsMS41MDYsMCwwLDEtMS41LTEuNVYyMy4yNzVMNC42OTQsNy45MzFhMS40ODYsMS40ODYsMCwwLDEsLjAwOC0xLjVBMS41MDksMS41MDksMCwwLDEsNiw1LjY4NkgyMi43QTEuNSwxLjUsMCwwLDEsMjQsNy45NDNMMjIuNjA3LDEwLjM2SDI0Ljk4YTEuNSwxLjUsMCwwLDEsMS4zLDIuMjY5TDIwLDIzLjI4M3Y0YTEuNSwxLjUsMCwwLDEtMS4xMzksMS40NTlsLTMuNjEzLjlBMS41MjYsMS41MjYsMCwwLDEsMTQuODg0LDI5LjY4NlpNNi43NjEsNy42MzJsOC4zNzMsMTQuNzg2YTEuNTEsMS41MSwwLDAsMSwuMi43NDF2NC40NTdsMi43MjktLjY4MlYyMy4xNjRhMS41MDcsMS41MDcsMCwwLDEsLjIwNy0uNzYzbDUuOTQzLTEwLjFIMTVMMTcuMTM5LDE2bDEuMzc4LTIuMTU1YS45NzMuOTczLDAsMCwxLDEuNjQsMS4wNDhMMTguNDA5LDE3LjYzYTEuNSwxLjUsMCwwLDEtMi41OTEtLjAyM2wtMi44ODItNC45OWExLjUwNSwxLjUwNSwwLDAsMSwxLjMtMi4yNTdIMjAuMzZsMS41NzQtMi43MjhaIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgtNC40OTYgLTUuNjg2KSIgZmlsbD0iIzIzYWU3MyIvPgo8L3N2Zz4="
+}
