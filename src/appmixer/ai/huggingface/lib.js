@@ -160,6 +160,35 @@ module.exports = {
     },
 
     /**
+     * Read an image from Appmixer file storage and return it base64 encoded, the
+     * form the image tasks of Inference Providers take in `inputs`. A file whose
+     * stored content type says it is not an image is refused up front, so the user
+     * gets a clear message instead of a model error about undecodable input.
+     * @param {object} context Appmixer component context
+     * @param {string} fileId Appmixer file ID
+     * @returns {Promise<string>}
+     */
+    async loadImageBase64(context, fileId) {
+
+        const fileInfo = await context.getFileInfo(fileId);
+        const contentType = String((fileInfo && fileInfo.contentType) || '').toLowerCase();
+
+        if (contentType && !contentType.startsWith('image/') && contentType !== 'application/octet-stream') {
+            throw new context.CancelError(
+                `File ${fileId} is not an image (content type ${contentType}).`
+            );
+        }
+
+        const buffer = await context.loadFile(fileId);
+
+        if (!buffer || buffer.length === 0) {
+            throw new context.CancelError(`File ${fileId} is empty.`);
+        }
+
+        return Buffer.from(buffer).toString('base64');
+    },
+
+    /**
      * Normalize the Hub `gated` field, which is `'auto'`, `'manual'` or `false`,
      * into a plain string so the declared output schema stays a single type.
      * @param {string|boolean|undefined} gated
