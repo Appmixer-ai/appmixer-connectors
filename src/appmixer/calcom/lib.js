@@ -664,6 +664,10 @@ module.exports = {
                     type: 'array',
                     items: { type: 'object', properties: itemSchema }
                 }
+            }, {
+                label: 'Items Count',
+                value: 'count',
+                schema: { type: 'integer' }
             }], 'out');
         }
 
