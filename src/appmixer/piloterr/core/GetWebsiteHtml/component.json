@@ -1,0 +1,119 @@
+{
+    "name": "appmixer.piloterr.core.GetWebsiteHtml",
+    "label": "Get Website HTML",
+    "description": "Fetch the HTML of a public web page with Piloterr. Choose the crawler (plain HTTP), rendering (headless browser for JavaScript pages) or web unlocker (anti-bot protection) engine.",
+    "author": "Piloterr <josselin.liebe@piloterr.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:piloterr"
+    },
+    "quota": {
+        "manager": "appmixer:piloterr",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "url": {
+                        "type": "string"
+                    },
+                    "engine": {
+                        "type": "string"
+                    },
+                    "saveAsFile": {
+                        "type": "boolean"
+                    }
+                },
+                "required": [
+                    "url"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "url": {
+                        "type": "text",
+                        "index": 1,
+                        "label": "URL",
+                        "tooltip": "Public URL of the page, starting with <code>http://</code> or <code>https://</code>."
+                    },
+                    "engine": {
+                        "type": "select",
+                        "index": 2,
+                        "label": "Engine",
+                        "tooltip": "<code>crawler</code> is the cheapest; <code>rendering</code> runs a headless browser; <code>webunlocker</code> gets past anti-bot protection.",
+                        "defaultValue": "crawler",
+                        "options": [
+                            {
+                                "label": "Crawler",
+                                "value": "crawler"
+                            },
+                            {
+                                "label": "Rendering",
+                                "value": "rendering"
+                            },
+                            {
+                                "label": "Web Unlocker",
+                                "value": "webunlocker"
+                            }
+                        ]
+                    },
+                    "saveAsFile": {
+                        "type": "toggle",
+                        "index": 3,
+                        "label": "Save HTML as File",
+                        "defaultValue": false,
+                        "tooltip": "Store the HTML as a file and output its file ID instead of the HTML text. Use it for large rendered pages."
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "url": {
+                        "type": "string",
+                        "title": "URL",
+                        "example": "https://example.com"
+                    },
+                    "engine": {
+                        "type": "string",
+                        "title": "Engine",
+                        "example": "crawler"
+                    },
+                    "html": {
+                        "type": "string",
+                        "title": "HTML",
+                        "example": "<!doctype html><html>...</html>"
+                    },
+                    "fileId": {
+                        "type": "string",
+                        "format": "appmixer-file-id",
+                        "title": "File ID",
+                        "example": "64f6f1f9193228000754082f"
+                    },
+                    "filename": {
+                        "type": "string",
+                        "title": "File Name",
+                        "example": "piloterr-crawler-1784548800000.html"
+                    },
+                    "fileSize": {
+                        "type": "integer",
+                        "title": "File Size (bytes)",
+                        "example": 45231
+                    }
+                }
+            }
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9Ii0wLjMgMS4yIDIwIDIwIiBmaWxsPSJub25lIiByb2xlPSJpbWciIGFyaWEtbGFiZWw9InBpbG90ZXJyIj4KPHBhdGggZD0iTTkuNjgxNjQgMS44MjcxNUMxNS4wMTYxIDEuODI3MTUgMTkuMzYzMyA2LjE1NzA0IDE5LjM2MzMgMTEuNTA4OEMxOS4zNjMzIDE2Ljg2MDUgMTUuMDUwOCAyMS4xNzI5IDkuNjgxNjQgMjEuMTcyOUM0LjMxMjU3IDIxLjE3MjggMCAxNi44NDMzIDAgMTEuNTA4OEM3LjczMjI2ZS0wNyAxMC4yMjcyIDAuMjU5NDA1IDkuMDE0NjggMC42OTIzODMgNy45MDYyNUMxLjIxMTk3IDguNDk1MTEgMS44NzA3NSA4Ljk0NTAzIDIuNjMyODEgOS4xODc1QzIuNDA3NjYgOS45MTQ5MyAyLjI2ODU2IDEwLjY5NDggMi4yNjg1NSAxMS41MDg4QzIuMjY4NTUgMTUuNjEzNCA1LjU3Njc2IDE4LjkwNDIgOS42NjQwNiAxOC45MDQzQzEzLjc1MTUgMTguOTA0MyAxNy4wNTk2IDE1LjU3ODkgMTcuMDU5NiAxMS41MDg4QzE3LjA1OTYgNy40Mzg2OSAxMy43MzQxIDQuMTEzMjggOS42NjQwNiA0LjExMzI4QzkuMzM1MSA0LjExMzMgOS4wNDA0NSA0LjE0Nzk4IDguNzQ2MDkgNC4xODI2MkM4LjY0MjE4IDMuMzY4NjggOC4zNDg0MSAyLjY0MTA0IDcuODgwODYgMi4wMTc1OEM4LjQ1MjE4IDEuOTEzNzMgOS4wNDA4MiAxLjg0NDc1IDkuNjY0MDYgMS44NDQ3M0w5LjY4MTY0IDEuODI3MTVaTTkuNjY0MDYgNi4zODE4NEMxMi40Njk4IDYuMzgxODQgMTQuNzczNCA4LjY4NTk0IDE0Ljc3MzQgMTEuNTI2NEMxNC43NzMzIDE0LjM2NjYgMTIuNTA0NCAxNi42NTIzIDkuNjY0MDYgMTYuNjUyM0M2LjgyMzkgMTYuNjUyMSA0LjUyMDY0IDE0LjM2NjUgNC41MjA1MSAxMS41MjY0QzQuNTIwNTEgMTAuOTcyMSA0LjU5MDIxIDEwLjQ2OTMgNC43NDYwOSA5Ljk4NDM4QzQuNzYzNDMgOS45MTU0MSA0Ljc5NzE2IDkuODgwNTcgNC44MTQ0NSA5LjgxMTUyQzQuODY2NCA5LjY1NTY3IDQuOTE5MDIgOS40OTk4NyA0Ljk4ODI4IDkuMzYxMzNINS4wMjI0NkM2LjU4MTIxIDkuMDQ5NTggNy44NjMyOCA3Ljk3NTM1IDguNDUyMTUgNi41MjA1MUM4LjY0MjYyIDYuNDg1ODggOC44MzMyMiA2LjQ1MTYzIDkuMDQxMDIgNi40MTY5OUM5LjIzMTQxIDYuMzgyMzkgOS40MzkwNyA2LjM4MTg0IDkuNjY0MDYgNi4zODE4NFpNNC4xMjIwNyAyLjAxNzU4QzUuNjQ2MTUgMi4wMTc2MiA2Ljg3NTk4IDMuMjY0NzEgNi44NzU5OCA0Ljc3MTQ4QzYuODc1OTcgNi4yNzgyNiA1LjY0NjE1IDcuNTA3NzcgNC4xMjIwNyA3LjUwNzgxQzIuNjE1MjcgNy41MDc4MSAxLjM4NTc1IDYuMjk1NiAxLjM4NTc0IDQuNzcxNDhDMS4zODU3NCAzLjI0NzM2IDIuNTk3OTUgMi4wMTc1OCA0LjEyMjA3IDIuMDE3NThaIiBmaWxsPSIjNEY0NkU1Ii8+Cjwvc3ZnPgo="
+}
