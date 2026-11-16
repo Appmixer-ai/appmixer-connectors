@@ -68,7 +68,15 @@
                                 "type": "json2new",
                                 "modifiers": {
                                     "title": {},
-                                    "slug": {},
+                                    "slug": {
+                                        "4a72dc06-8c6d-4b4d-b2ff-41063f29f779": {
+                                            "functions": [
+                                                {
+                                                    "name": "g_timestamp"
+                                                }
+                                            ]
+                                        }
+                                    },
                                     "lengthInMinutes": {},
                                     "minimumBookingNotice": {},
                                     "hidden": {},
@@ -76,7 +84,7 @@
                                 },
                                 "lambda": {
                                     "title": "E2E Cal.com Bookings",
-                                    "slug": "e2e-calcom-triggers",
+                                    "slug": "e2e-calcom-triggers-{{{4a72dc06-8c6d-4b4d-b2ff-41063f29f779}}}",
                                     "lengthInMinutes": 30,
                                     "minimumBookingNotice": 60,
                                     "hidden": true,
@@ -800,6 +808,9 @@
                     ],
                     "1e030b68-18aa-42d6-8293-6d23bac07b61": [
                         "out"
+                    ],
+                    "0b29feac-a0a1-428e-903c-c300d6d48cec": [
+                        "out"
                     ]
                 }
             },
@@ -820,7 +831,7 @@
             "version": "1.0.0",
             "source": {
                 "in": {
-                    "cfe731a6-eb77-480f-b341-b91077d86017": [
+                    "a3607e7a-7457-408b-b67f-8a9f64493ed4": [
                         "out"
                     ]
                 }
@@ -828,7 +839,7 @@
             "config": {
                 "transform": {
                     "in": {
-                        "cfe731a6-eb77-480f-b341-b91077d86017": {
+                        "a3607e7a-7457-408b-b67f-8a9f64493ed4": {
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
@@ -859,7 +870,7 @@
             "version": "1.0.0",
             "source": {
                 "in": {
-                    "0b29feac-a0a1-428e-903c-c300d6d48cec": [
+                    "cfe731a6-eb77-480f-b341-b91077d86017": [
                         "out"
                     ]
                 }
@@ -871,7 +882,7 @@
                 },
                 "transform": {
                     "in": {
-                        "0b29feac-a0a1-428e-903c-c300d6d48cec": {
+                        "cfe731a6-eb77-480f-b341-b91077d86017": {
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
@@ -898,6 +909,40 @@
                 "autoRetry": false,
                 "onError": "stopFlow"
             }
+        },
+        "a3607e7a-7457-408b-b67f-8a9f64493ed4": {
+            "type": "appmixer.utils.timers.Wait",
+            "x": 1728,
+            "y": 912,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "a5047ba0-1ee0-4587-8800-1087ca995eab": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "a5047ba0-1ee0-4587-8800-1087ca995eab": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "interval": {}
+                                },
+                                "lambda": {
+                                    "interval": "1m"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
         }
     },
     "notes": {
@@ -906,7 +951,7 @@
             "y": 1104,
             "width": 672,
             "height": 256,
-            "content": "## ⚠️ Provokes its own events\n\nThe triggers subscribe account-wide webhooks when the flow starts; the Wait gives Cal.com a minute before the flow books, reschedules and cancels a booking of the hidden event type **e2e-calcom-triggers** (deleted at the end, the slug must be free). Keep the Wait.\n\n- The user needs free time in the next 8 days.\n- Run it alone: other bookings made in the account meanwhile fire the triggers too."
+            "content": "## ⚠️ Provokes its own events\n\nThe triggers subscribe account-wide webhooks when the flow starts; the Wait gives Cal.com a minute before the flow books, reschedules and cancels a booking of a hidden event type **e2e-calcom-triggers-<timestamp>**. Keep the Wait. The event type is deleted in the main chain a minute after the cancellation (the AfterAll output carries the correlation of whichever trigger arrives last, so it cannot reference the event type).\n\n- The user needs free time in the next 8 days.\n- Run it alone: other bookings made in the account meanwhile fire the triggers too."
         }
     }
 }

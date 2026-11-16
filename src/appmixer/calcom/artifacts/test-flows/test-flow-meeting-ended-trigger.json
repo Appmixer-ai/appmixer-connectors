@@ -34,7 +34,15 @@
                                 "type": "json2new",
                                 "modifiers": {
                                     "title": {},
-                                    "slug": {},
+                                    "slug": {
+                                        "25ffd417-e8bc-40aa-a194-ab4a2986bfe9": {
+                                            "functions": [
+                                                {
+                                                    "name": "g_timestamp"
+                                                }
+                                            ]
+                                        }
+                                    },
                                     "lengthInMinutes": {},
                                     "minimumBookingNotice": {},
                                     "slotInterval": {},
@@ -43,7 +51,7 @@
                                 },
                                 "lambda": {
                                     "title": "E2E Cal.com Meeting Ended",
-                                    "slug": "e2e-calcom-meeting-ended",
+                                    "slug": "e2e-calcom-meeting-ended-{{{25ffd417-e8bc-40aa-a194-ab4a2986bfe9}}}",
                                     "lengthInMinutes": 5,
                                     "minimumBookingNotice": 0,
                                     "slotInterval": 5,
@@ -413,6 +421,9 @@
                     ],
                     "f1901609-6c90-464d-9c67-1037576bc730": [
                         "out"
+                    ],
+                    "38b592cc-2f47-4af9-b63e-cbcb9687881b": [
+                        "out"
                     ]
                 }
             },
@@ -433,7 +444,7 @@
             "version": "1.0.0",
             "source": {
                 "in": {
-                    "358bc33f-eb6c-407f-835d-264ccc8984a2": [
+                    "8f4a6d8c-3020-46fd-aef9-84550b06903e": [
                         "out"
                     ]
                 }
@@ -441,7 +452,7 @@
             "config": {
                 "transform": {
                     "in": {
-                        "358bc33f-eb6c-407f-835d-264ccc8984a2": {
+                        "8f4a6d8c-3020-46fd-aef9-84550b06903e": {
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
@@ -472,7 +483,7 @@
             "version": "1.0.0",
             "source": {
                 "in": {
-                    "38b592cc-2f47-4af9-b63e-cbcb9687881b": [
+                    "358bc33f-eb6c-407f-835d-264ccc8984a2": [
                         "out"
                     ]
                 }
@@ -484,7 +495,7 @@
                 },
                 "transform": {
                     "in": {
-                        "38b592cc-2f47-4af9-b63e-cbcb9687881b": {
+                        "358bc33f-eb6c-407f-835d-264ccc8984a2": {
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
@@ -511,6 +522,40 @@
                 "autoRetry": false,
                 "onError": "stopFlow"
             }
+        },
+        "8f4a6d8c-3020-46fd-aef9-84550b06903e": {
+            "type": "appmixer.utils.timers.Wait",
+            "x": 1104,
+            "y": 400,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "54b942e2-9b5a-412c-bb54-7bf0e61f9c2e": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "54b942e2-9b5a-412c-bb54-7bf0e61f9c2e": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "interval": {}
+                                },
+                                "lambda": {
+                                    "interval": "15m"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
         }
     },
     "notes": {
@@ -519,7 +564,7 @@
             "y": 592,
             "width": 672,
             "height": 256,
-            "content": "## ⚠️ Timing assumption\n\nBooks the first free 5-minute slot within the next hour on the hidden event type **e2e-calcom-meeting-ended** and waits up to 25 minutes for MEETING_ENDED, which Cal.com sends at the scheduled end time. Run it while the connected user is **available right now** (inside the working hours of the default schedule), otherwise there is no slot. The event type is deleted at the end; the slug must be free."
+            "content": "## ⚠️ Timing assumption\n\nBooks the first free 5-minute slot within the next hour on a hidden event type **e2e-calcom-meeting-ended-<timestamp>** and waits up to 25 minutes for MEETING_ENDED, which Cal.com sends at the scheduled end time. Run it while the connected user is **available right now** (inside the working hours of the default schedule), otherwise there is no slot. The event type is deleted in the main chain 15 minutes after the booking, when the meeting is already over (the AfterAll output carries the trigger's correlation, so it cannot reference the event type)."
         }
     }
 }
