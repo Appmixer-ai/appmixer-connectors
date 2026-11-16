@@ -58,11 +58,38 @@ const toCsv = (records) => {
     return [columns.map(csvCell).join(','), ...rows].join('\n');
 };
 
+/**
+ * Build the Manychat contact body from the inputs. Opt-ins are sent only together
+ * with the email or phone they belong to (Manychat requires them in that case).
+ * @param {object} content input message content
+ * @returns {object}
+ */
+const contactBody = function(content) {
+
+    const { firstName, lastName, email, hasOptInEmail, phone, hasOptInSms, consentPhrase, gender } = content;
+    const body = {};
+    if (firstName) body.first_name = firstName;
+    if (lastName) body.last_name = lastName;
+    if (gender) body.gender = gender;
+    if (email) {
+        body.email = email;
+        body.has_opt_in_email = hasOptInEmail === true || hasOptInEmail === 'true';
+    }
+    if (phone) {
+        body.phone = phone;
+        body.has_opt_in_sms = hasOptInSms === true || hasOptInSms === 'true';
+    }
+    if (consentPhrase) body.consent_phrase = consentPhrase;
+    return body;
+};
+
 module.exports = {
 
     API_BASE_URL,
 
     errorMessage,
+
+    contactBody,
 
     /**
      * The one place that turns a connected account into request headers.

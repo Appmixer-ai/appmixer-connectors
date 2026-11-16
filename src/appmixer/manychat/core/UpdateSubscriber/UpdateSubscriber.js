@@ -1,7 +1,6 @@
 'use strict';
 
 const lib = require('../../lib');
-const { contactBody } = require('../CreateSubscriber/CreateSubscriber');
 
 module.exports = {
 
@@ -19,7 +18,7 @@ module.exports = {
             path: '/fb/subscriber/updateSubscriber',
             data: {
                 subscriber_id: lib.toApiId(context, subscriberId, 'Subscriber ID'),
-                ...contactBody(content)
+                ...lib.contactBody(content)
             }
         });
 
