@@ -1,0 +1,1007 @@
+{
+    "name": "E2E Tableau - groups and users",
+    "description": "End-to-end test for Tableau - creates, renames and finds a group, adds an existing user to it, creates, updates and deletes an unlicensed user.",
+    "flow": {
+        "9c49d47c-7aa2-421a-b562-e9006f223c3c": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {},
+            "config": {},
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "95a7d2ff-d88d-436d-ac08-21309735639a": {
+            "type": "appmixer.tableau.core.CreateGroup",
+            "x": 272,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "9c49d47c-7aa2-421a-b562-e9006f223c3c": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "9c49d47c-7aa2-421a-b562-e9006f223c3c": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "name": {
+                                        "a09447e4-f214-4c21-8986-1ff3f8439527": {
+                                            "variable": "$.9c49d47c-7aa2-421a-b562-e9006f223c3c.out.started",
+                                            "functions": [
+                                                {
+                                                    "name": "g_timestamp"
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "name": "E2E Tableau Group {{{a09447e4-f214-4c21-8986-1ff3f8439527}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "0c3ef544-038e-4eea-9868-47e1b4141c56": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 480,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "95a7d2ff-d88d-436d-ac08-21309735639a": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "95a7d2ff-d88d-436d-ac08-21309735639a": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "eb6d7a05-3b12-4201-b48a-77bb9c497e77": {
+                                            "variable": "$.95a7d2ff-d88d-436d-ac08-21309735639a.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{eb6d7a05-3b12-4201-b48a-77bb9c497e77}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "23793ba0-47c4-46aa-82c2-d182b65d799d": {
+            "type": "appmixer.tableau.core.UpdateGroup",
+            "x": 480,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "95a7d2ff-d88d-436d-ac08-21309735639a": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "95a7d2ff-d88d-436d-ac08-21309735639a": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "groupId": {
+                                        "984fcfb8-3337-4730-b0d1-033b791eb1c9": {
+                                            "variable": "$.95a7d2ff-d88d-436d-ac08-21309735639a.out.id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "name": {
+                                        "0b147415-74f5-4744-a3a7-6458745e76ee": {
+                                            "variable": "$.9c49d47c-7aa2-421a-b562-e9006f223c3c.out.started",
+                                            "functions": [
+                                                {
+                                                    "name": "g_timestamp"
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "groupId": "{{{984fcfb8-3337-4730-b0d1-033b791eb1c9}}}",
+                                    "name": "E2E Tableau Group {{{0b147415-74f5-4744-a3a7-6458745e76ee}}} renamed"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "821f7ff7-3313-41a3-a5e9-560647afeab4": {
+            "type": "appmixer.tableau.core.FindGroups",
+            "x": 688,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "23793ba0-47c4-46aa-82c2-d182b65d799d": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "23793ba0-47c4-46aa-82c2-d182b65d799d": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "name": {
+                                        "599b7eeb-59b4-4d43-9319-9ce9fc1c4735": {
+                                            "variable": "$.9c49d47c-7aa2-421a-b562-e9006f223c3c.out.started",
+                                            "functions": [
+                                                {
+                                                    "name": "g_timestamp"
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "outputType": {}
+                                },
+                                "lambda": {
+                                    "name": "E2E Tableau Group {{{599b7eeb-59b4-4d43-9319-9ce9fc1c4735}}} renamed",
+                                    "outputType": "first"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "af348c2e-ecc8-4444-a74b-468f57f0a8bf": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 896,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "821f7ff7-3313-41a3-a5e9-560647afeab4": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "821f7ff7-3313-41a3-a5e9-560647afeab4": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "8470b368-38f3-4291-a4b4-1df6f8679000": {
+                                            "variable": "$.821f7ff7-3313-41a3-a5e9-560647afeab4.out.id",
+                                            "functions": []
+                                        },
+                                        "43679bdc-007f-4c24-826a-2f610ff2ec32": {
+                                            "variable": "$.95a7d2ff-d88d-436d-ac08-21309735639a.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{8470b368-38f3-4291-a4b4-1df6f8679000}}}",
+                                                "assertion": "equal",
+                                                "expected": "{{{43679bdc-007f-4c24-826a-2f610ff2ec32}}}"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "a951bc39-9a60-4b9b-ba72-5727b4247d07": {
+            "type": "appmixer.tableau.core.FindUsers",
+            "x": 896,
+            "y": 400,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "821f7ff7-3313-41a3-a5e9-560647afeab4": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "821f7ff7-3313-41a3-a5e9-560647afeab4": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "outputType": {}
+                                },
+                                "lambda": {
+                                    "outputType": "first"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "218b7876-cc35-492f-8eed-c8608245e2cf": {
+            "type": "appmixer.tableau.core.GetUser",
+            "x": 1104,
+            "y": 528,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "a951bc39-9a60-4b9b-ba72-5727b4247d07": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "a951bc39-9a60-4b9b-ba72-5727b4247d07": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "userId": {
+                                        "7cbec6fc-a45f-44e3-a0b9-4b24efc3d3da": {
+                                            "variable": "$.a951bc39-9a60-4b9b-ba72-5727b4247d07.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "userId": "{{{7cbec6fc-a45f-44e3-a0b9-4b24efc3d3da}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "78c92b70-b420-4b12-874c-a1567ebee92f": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1312,
+            "y": 528,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "218b7876-cc35-492f-8eed-c8608245e2cf": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "218b7876-cc35-492f-8eed-c8608245e2cf": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "3bc2dd61-0032-43da-8526-e1c7d0c6261a": {
+                                            "variable": "$.218b7876-cc35-492f-8eed-c8608245e2cf.out.id",
+                                            "functions": []
+                                        },
+                                        "7005c47d-45f9-48b5-9e0b-20690dbac943": {
+                                            "variable": "$.a951bc39-9a60-4b9b-ba72-5727b4247d07.out.id",
+                                            "functions": []
+                                        },
+                                        "56849bf6-3bd2-4e19-b504-5642d7c888b3": {
+                                            "variable": "$.218b7876-cc35-492f-8eed-c8608245e2cf.out.siteRole",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{3bc2dd61-0032-43da-8526-e1c7d0c6261a}}}",
+                                                "assertion": "equal",
+                                                "expected": "{{{7005c47d-45f9-48b5-9e0b-20690dbac943}}}"
+                                            },
+                                            {
+                                                "field": "{{{56849bf6-3bd2-4e19-b504-5642d7c888b3}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "52413ec6-7752-46db-9255-2f0e4f90570d": {
+            "type": "appmixer.tableau.core.AddUserToGroup",
+            "x": 1312,
+            "y": 656,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "218b7876-cc35-492f-8eed-c8608245e2cf": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "218b7876-cc35-492f-8eed-c8608245e2cf": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "groupId": {
+                                        "89b9d805-bd68-4183-94ba-a797858fcc88": {
+                                            "variable": "$.95a7d2ff-d88d-436d-ac08-21309735639a.out.id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "userId": {
+                                        "83a24aa8-1a60-40b4-8018-fb3e8a970e44": {
+                                            "variable": "$.a951bc39-9a60-4b9b-ba72-5727b4247d07.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "groupId": "{{{89b9d805-bd68-4183-94ba-a797858fcc88}}}",
+                                    "userId": "{{{83a24aa8-1a60-40b4-8018-fb3e8a970e44}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "9b98f962-4799-4dd6-b768-c6be041418df": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1520,
+            "y": 656,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "52413ec6-7752-46db-9255-2f0e4f90570d": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "52413ec6-7752-46db-9255-2f0e4f90570d": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "087c0f0d-4808-484c-b657-104e399b3e99": {
+                                            "variable": "$.52413ec6-7752-46db-9255-2f0e4f90570d.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{087c0f0d-4808-484c-b657-104e399b3e99}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "36d8693d-cd5f-4f1b-9ed1-132246a20e81": {
+            "type": "appmixer.tableau.core.ListGroupUsers",
+            "x": 1520,
+            "y": 784,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "52413ec6-7752-46db-9255-2f0e4f90570d": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "52413ec6-7752-46db-9255-2f0e4f90570d": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "groupId": {
+                                        "38ced346-ad38-49b0-8a25-bfac8dfb66b7": {
+                                            "variable": "$.95a7d2ff-d88d-436d-ac08-21309735639a.out.id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "outputType": {}
+                                },
+                                "lambda": {
+                                    "groupId": "{{{38ced346-ad38-49b0-8a25-bfac8dfb66b7}}}",
+                                    "outputType": "first"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "2cd944f2-d7c9-4fed-8383-1e17183dd10b": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1728,
+            "y": 784,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "36d8693d-cd5f-4f1b-9ed1-132246a20e81": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "36d8693d-cd5f-4f1b-9ed1-132246a20e81": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "32dbc6e6-6bc4-4b47-b5a4-66e60579331d": {
+                                            "variable": "$.36d8693d-cd5f-4f1b-9ed1-132246a20e81.out.id",
+                                            "functions": []
+                                        },
+                                        "e78839e6-dc69-4c94-81a7-533ae373c321": {
+                                            "variable": "$.a951bc39-9a60-4b9b-ba72-5727b4247d07.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{32dbc6e6-6bc4-4b47-b5a4-66e60579331d}}}",
+                                                "assertion": "equal",
+                                                "expected": "{{{e78839e6-dc69-4c94-81a7-533ae373c321}}}"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "a3da6d1a-fb3f-4b0e-a37d-f4e34563c3a0": {
+            "type": "appmixer.tableau.core.RemoveUserFromGroup",
+            "x": 1728,
+            "y": 912,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "36d8693d-cd5f-4f1b-9ed1-132246a20e81": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "36d8693d-cd5f-4f1b-9ed1-132246a20e81": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "groupId": {
+                                        "78fdef2f-6863-4687-89e4-5043d70aa92f": {
+                                            "variable": "$.95a7d2ff-d88d-436d-ac08-21309735639a.out.id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "userId": {
+                                        "771c4743-7844-4341-9578-6d69be988402": {
+                                            "variable": "$.a951bc39-9a60-4b9b-ba72-5727b4247d07.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "groupId": "{{{78fdef2f-6863-4687-89e4-5043d70aa92f}}}",
+                                    "userId": "{{{771c4743-7844-4341-9578-6d69be988402}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "b9b17c5b-70e9-444a-a465-fdaccc03391a": {
+            "type": "appmixer.tableau.core.CreateUser",
+            "x": 1936,
+            "y": 1040,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "a3da6d1a-fb3f-4b0e-a37d-f4e34563c3a0": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "a3da6d1a-fb3f-4b0e-a37d-f4e34563c3a0": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "name": {
+                                        "299f25de-e512-4ac6-a673-3a3b408a44e3": {
+                                            "variable": "$.9c49d47c-7aa2-421a-b562-e9006f223c3c.out.started",
+                                            "functions": [
+                                                {
+                                                    "name": "g_timestamp"
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "siteRole": {}
+                                },
+                                "lambda": {
+                                    "name": "e2e-tableau-{{{299f25de-e512-4ac6-a673-3a3b408a44e3}}}@example.com",
+                                    "siteRole": "Viewer"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "2f24a41c-dfd5-4e73-8d46-7bef7aef7602": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 2144,
+            "y": 1040,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "b9b17c5b-70e9-444a-a465-fdaccc03391a": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "b9b17c5b-70e9-444a-a465-fdaccc03391a": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "f615476c-5600-40ad-abfb-e5eb75a2f315": {
+                                            "variable": "$.b9b17c5b-70e9-444a-a465-fdaccc03391a.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{f615476c-5600-40ad-abfb-e5eb75a2f315}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "7cdea6b4-779c-47a4-bdb9-0cb22207563a": {
+            "type": "appmixer.tableau.core.UpdateUser",
+            "x": 2144,
+            "y": 1168,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "b9b17c5b-70e9-444a-a465-fdaccc03391a": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "b9b17c5b-70e9-444a-a465-fdaccc03391a": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "userId": {
+                                        "b0f5e65a-0d92-4ca8-8ced-11d8c05b3b4e": {
+                                            "variable": "$.b9b17c5b-70e9-444a-a465-fdaccc03391a.out.id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "siteRole": {}
+                                },
+                                "lambda": {
+                                    "userId": "{{{b0f5e65a-0d92-4ca8-8ced-11d8c05b3b4e}}}",
+                                    "siteRole": "Unlicensed"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "8940537c-d2d2-449b-91ed-d24ec126d11e": {
+            "type": "appmixer.tableau.core.GetUser",
+            "x": 2352,
+            "y": 1296,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "7cdea6b4-779c-47a4-bdb9-0cb22207563a": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "7cdea6b4-779c-47a4-bdb9-0cb22207563a": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "userId": {
+                                        "b3796306-d2fa-4cad-90bb-46346577ea34": {
+                                            "variable": "$.b9b17c5b-70e9-444a-a465-fdaccc03391a.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "userId": "{{{b3796306-d2fa-4cad-90bb-46346577ea34}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "fa70ac0d-84f8-4966-8f9e-3f2e0f7c835f": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 2560,
+            "y": 1296,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "8940537c-d2d2-449b-91ed-d24ec126d11e": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "8940537c-d2d2-449b-91ed-d24ec126d11e": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "a1174941-b894-4ad1-8e8a-5925542a07f9": {
+                                            "variable": "$.8940537c-d2d2-449b-91ed-d24ec126d11e.out.siteRole",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{a1174941-b894-4ad1-8e8a-5925542a07f9}}}",
+                                                "assertion": "equal",
+                                                "expected": "Unlicensed"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "4ed15691-ca2d-4098-a9b7-22f29ff48648": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 2768,
+            "y": 1296,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "0c3ef544-038e-4eea-9868-47e1b4141c56": [
+                        "out"
+                    ],
+                    "af348c2e-ecc8-4444-a74b-468f57f0a8bf": [
+                        "out"
+                    ],
+                    "78c92b70-b420-4b12-874c-a1567ebee92f": [
+                        "out"
+                    ],
+                    "9b98f962-4799-4dd6-b768-c6be041418df": [
+                        "out"
+                    ],
+                    "2cd944f2-d7c9-4fed-8383-1e17183dd10b": [
+                        "out"
+                    ],
+                    "2f24a41c-dfd5-4e73-8d46-7bef7aef7602": [
+                        "out"
+                    ],
+                    "fa70ac0d-84f8-4966-8f9e-3f2e0f7c835f": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 300
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "d811e3d4-352f-4cbd-a12a-812fc0d1019d": {
+            "type": "appmixer.tableau.core.DeleteUser",
+            "x": 2976,
+            "y": 1296,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "4ed15691-ca2d-4098-a9b7-22f29ff48648": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "4ed15691-ca2d-4098-a9b7-22f29ff48648": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "userId": {
+                                        "9a7fb28c-ce7d-4b85-963e-559cfa2af659": {
+                                            "variable": "$.b9b17c5b-70e9-444a-a465-fdaccc03391a.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "userId": "{{{9a7fb28c-ce7d-4b85-963e-559cfa2af659}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "1a8dcb4e-0af9-421b-8c92-7d6ce3dc2bcf": {
+            "type": "appmixer.tableau.core.DeleteGroup",
+            "x": 3184,
+            "y": 1296,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "d811e3d4-352f-4cbd-a12a-812fc0d1019d": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "d811e3d4-352f-4cbd-a12a-812fc0d1019d": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "groupId": {
+                                        "dfdb1ad3-4210-4823-be06-cea2a8e3e02c": {
+                                            "variable": "$.95a7d2ff-d88d-436d-ac08-21309735639a.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "groupId": "{{{dfdb1ad3-4210-4823-be06-cea2a8e3e02c}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "8a28e9a2-730a-4ddf-92cf-a727ddc72bb5": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 3392,
+            "y": 1296,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "1a8dcb4e-0af9-421b-8c92-7d6ce3dc2bcf": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "1a8dcb4e-0af9-421b-8c92-7d6ce3dc2bcf": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "443ba67d-88b1-4adf-8ec7-dfcb3e6ecc06": {
+                                            "variable": "$.4ed15691-ca2d-4098-a9b7-22f29ff48648.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E Tableau - groups and users",
+                                    "result": "{{{443ba67d-88b1-4adf-8ec7-dfcb3e6ecc06}}}"
+                                }
+                            }
+                        }
+                    }
+                },
+                "properties": {
+                    "successStoreId": "64f6f1f9193228000754082f",
+                    "failedStoreId": "64f6f1f0193228000754082e"
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        }
+    },
+    "notes": {
+        "b8f11968-76db-45be-8142-edcf63148b4b": {
+            "x": 64,
+            "y": 1500,
+            "width": 672,
+            "height": 224,
+            "content": "## ⚠️ Test data assumption\n\nThe connected account must be a **site administrator** (users and groups). The flow adds the first user returned by Find Users to its own temporary group and removes them again. It creates the user `e2e-tableau-<timestamp>@example.com` as Viewer (Tableau makes it Unlicensed when no licence is left), changes it to Unlicensed and deletes it; on Tableau Cloud an invitation is sent to that example.com address."
+        }
+    }
+}

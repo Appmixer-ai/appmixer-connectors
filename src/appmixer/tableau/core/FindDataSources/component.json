@@ -1,0 +1,126 @@
+{
+    "name": "appmixer.tableau.core.FindDataSources",
+    "label": "Find Data Sources",
+    "description": "Find published data sources on the site by name, project, owner, tag or last update. Returns up to 1000 data sources the connected user can see; without filters it returns all of them.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:tableau"
+    },
+    "quota": {
+        "manager": "appmixer:tableau",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string"
+                    },
+                    "projectName": {
+                        "type": "string"
+                    },
+                    "ownerName": {
+                        "type": "string"
+                    },
+                    "tag": {
+                        "type": "string"
+                    },
+                    "updatedAfter": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "outputType": {
+                        "type": "string",
+                        "default": "array"
+                    }
+                }
+            },
+            "inspector": {
+                "inputs": {
+                    "name": {
+                        "type": "text",
+                        "index": 1,
+                        "label": "Name",
+                        "tooltip": "Exact data source name."
+                    },
+                    "projectName": {
+                        "type": "text",
+                        "index": 2,
+                        "label": "Project Name",
+                        "tooltip": "Exact name of the project the data source is in."
+                    },
+                    "ownerName": {
+                        "type": "text",
+                        "index": 3,
+                        "label": "Owner Name",
+                        "tooltip": "Exact user name of the owner (on Tableau Cloud the email address)."
+                    },
+                    "tag": {
+                        "type": "text",
+                        "index": 4,
+                        "label": "Tag",
+                        "tooltip": "Return data sources that have this tag."
+                    },
+                    "updatedAfter": {
+                        "type": "date-time",
+                        "index": 5,
+                        "label": "Updated After",
+                        "tooltip": "Return data sources updated at or after this time."
+                    },
+                    "outputType": {
+                        "type": "select",
+                        "index": 6,
+                        "label": "Output Type",
+                        "defaultValue": "array",
+                        "tooltip": "Choose whether you want to receive the result set as one complete list, or first item only or one item at a time or stream the items to a file.",
+                        "options": [
+                            {
+                                "label": "First Item Only",
+                                "value": "first"
+                            },
+                            {
+                                "label": "All items at once",
+                                "value": "array"
+                            },
+                            {
+                                "label": "One item at a time",
+                                "value": "object"
+                            },
+                            {
+                                "label": "Store to CSV file",
+                                "value": "file"
+                            }
+                        ]
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "source": {
+                "url": "/component/appmixer/tableau/core/FindDataSources?outPort=out&ignoreAuth=true",
+                "data": {
+                    "properties": {
+                        "generateOutputPortOptions": true
+                    },
+                    "messages": {
+                        "in/outputType": "inputs/in/outputType"
+                    }
+                }
+            }
+        },
+        {
+            "name": "notFound"
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZmlsbD0iI0U5NzYyNyIgZD0iTTExLjY1NC4xNzRWMi4zNzdIOS42ODJ2LjU4aDEuOTcyVjUuMTZoLjY5NlYyLjk1N2gxLjk3di0uNThoLTEuOTdWLjE3NGgtLjM0OHptNi4wMyAyLjI2MmwtLjAwMiAxLjYyM3YxLjYyM2gtMi45NTd2LjkyN2gyLjk1N3YzLjE4OEgxOC43MjVsLjAxMS0xLjU4Mi4wMi0xLjU3NiAxLjQ2NS0uMDIgMS40Ni0uMDF2LS45MjdIMTguNzI4VjIuNDM2aC0uNTIyem0tMTIuNDA3LjA2VjUuNjg2SDIuMjkxdi45MjVINS4yNzdWOS44MDFoLjk4NVY2LjYxaDMuMDEzdi0uOTI1SDYuMjYyVjIuNDk2SDUuNzcwem02LjA4NiA1LjI3djMuNTkzSDguMDZ2MS4xODhoMy4zMDR2My41OTZoMS4yOHYtMy41OTZIMTUuOTUzdi0xLjE4OEgxMi42NDNWNy43NjZoLS42Mzd6bTkuNzIxIDEuNTV2Mi4yMjFoLTIuMDEydi44MTFoMi4wMTJ2Mi4yNjFoLjg4N3YtMi4yNjFIMjR2LS44MTFoLTIuMDI5VjkuMzE3aC0uNDIyem0tMTkuMTExLjEzMVYxMS42MjFIMHYuNjIxSDEuOTczdjIuMTk0SDIuNjR2LTIuMTk0aDJ2LS42MkgyLjYwOVY5LjQ0NmgtLjMxOHptMTUuNzA5IDQuNTE2djMuMjU0aC0zLjAxNnYuOTI3aDMuMDE2djMuMjE3aDEuMDcydi0zLjIxNkgyMS43NHYtLjkyOEgxOC43NTR2LTMuMjU0aC0uNTMzem0tMTIuNDYzLjAwOHYzLjI0NkgyLjI2MnYuOTI4aDIuOTU3djMuMTg5SDYuMzIwdi0zLjE4OWgyLjk1NXYtLjkyOEg2LjMyMFYxMy45N2gtLjU1em02LjMxNiA0LjU3OGwuMDAyIDEuMTAzdjEuMUg5LjU2NnYuODEyaDEuOTcxdjIuMjYyaC45MjhsLjAxMi0xLjExOS4wMTctMS4xNDNIMTQuNDYzdi0uODEyaC0yVjE4LjU0OWgtLjQ2NXoiLz48L3N2Zz4="
+}

@@ -1,0 +1,961 @@
+{
+    "name": "E2E Tableau - extract refresh",
+    "description": "End-to-end test for Tableau - refreshes a workbook extract, a data source extract and runs a refresh task, checks the job, and verifies the Extract Refresh Started / Succeeded webhook triggers and the Job Finished polling trigger.",
+    "flow": {
+        "683d8f40-9a3b-41a1-a466-a935f37b961e": {
+            "type": "appmixer.tableau.core.ExtractRefreshStarted",
+            "x": 64,
+            "y": 1600,
+            "version": "1.0.0",
+            "source": {},
+            "config": {
+                "properties": {
+                    "contentType": "workbook"
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "06156fb6-1f3d-4931-b9df-fdac1b18268e": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 272,
+            "y": 1600,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "683d8f40-9a3b-41a1-a466-a935f37b961e": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "683d8f40-9a3b-41a1-a466-a935f37b961e": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "d1ece518-f869-4ff4-bf28-4a340343e106": {
+                                            "variable": "$.683d8f40-9a3b-41a1-a466-a935f37b961e.out.eventType",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{d1ece518-f869-4ff4-bf28-4a340343e106}}}",
+                                                "assertion": "equal",
+                                                "expected": "WorkbookRefreshStarted"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "3bb9738f-5a37-4ecf-a929-8d5a3a3806ff": {
+            "type": "appmixer.tableau.core.ExtractRefreshSucceeded",
+            "x": 64,
+            "y": 1728,
+            "version": "1.0.0",
+            "source": {},
+            "config": {
+                "properties": {
+                    "contentType": "workbook"
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "278af7d2-144c-49c2-837e-26b163c7f0e5": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 272,
+            "y": 1728,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "3bb9738f-5a37-4ecf-a929-8d5a3a3806ff": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "3bb9738f-5a37-4ecf-a929-8d5a3a3806ff": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "a0d5a9c2-83f1-400a-9307-43267656162f": {
+                                            "variable": "$.3bb9738f-5a37-4ecf-a929-8d5a3a3806ff.out.eventType",
+                                            "functions": []
+                                        },
+                                        "330d918b-7306-4f3f-9fdf-d70634d8d6c8": {
+                                            "variable": "$.3bb9738f-5a37-4ecf-a929-8d5a3a3806ff.out.resourceId",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{a0d5a9c2-83f1-400a-9307-43267656162f}}}",
+                                                "assertion": "equal",
+                                                "expected": "WorkbookRefreshSucceeded"
+                                            },
+                                            {
+                                                "field": "{{{330d918b-7306-4f3f-9fdf-d70634d8d6c8}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "f24e8021-03bf-4f2d-8d06-79637e2d17ac": {
+            "type": "appmixer.tableau.core.JobFinished",
+            "x": 64,
+            "y": 1856,
+            "version": "1.0.0",
+            "source": {},
+            "config": {
+                "properties": {
+                    "jobType": "refresh_extracts",
+                    "status": "Success"
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "3f09fbb4-3b20-49ab-8eaf-d07b5ef2f763": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 272,
+            "y": 1856,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "f24e8021-03bf-4f2d-8d06-79637e2d17ac": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "f24e8021-03bf-4f2d-8d06-79637e2d17ac": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "c11171f3-217a-4cd8-aa08-0dee3e418650": {
+                                            "variable": "$.f24e8021-03bf-4f2d-8d06-79637e2d17ac.out.status",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{c11171f3-217a-4cd8-aa08-0dee3e418650}}}",
+                                                "assertion": "equal",
+                                                "expected": "Success"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "575f5549-5c1f-4a8e-8b6d-d35c92858b41": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {},
+            "config": {},
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "2c1e5a18-8d3d-4ffe-a7c7-d2bbe0df6107": {
+            "type": "appmixer.utils.timers.Wait",
+            "x": 272,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "575f5549-5c1f-4a8e-8b6d-d35c92858b41": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "575f5549-5c1f-4a8e-8b6d-d35c92858b41": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "interval": {}
+                                },
+                                "lambda": {
+                                    "interval": "1m"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "7f828636-bbc3-4666-922b-b54bb49fe62e": {
+            "type": "appmixer.tableau.core.MakeApiCall",
+            "x": 480,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "2c1e5a18-8d3d-4ffe-a7c7-d2bbe0df6107": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "2c1e5a18-8d3d-4ffe-a7c7-d2bbe0df6107": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "url": {},
+                                    "method": {},
+                                    "parameters": {}
+                                },
+                                "lambda": {
+                                    "url": "/sites/{site-id}/workbooks",
+                                    "method": "GET",
+                                    "parameters": "{\"filter\": \"hasExtracts:eq:true\", \"pageSize\": \"1\"}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "ac7457b8-b16c-4deb-8944-2ca61d876c24": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 688,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "7f828636-bbc3-4666-922b-b54bb49fe62e": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "7f828636-bbc3-4666-922b-b54bb49fe62e": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "b28eed58-c7a5-4861-aae3-5098d1c39e1d": {
+                                            "variable": "$.7f828636-bbc3-4666-922b-b54bb49fe62e.out.statusCode",
+                                            "functions": []
+                                        },
+                                        "095b2c23-bbff-44f0-b53d-77f320d24d18": {
+                                            "variable": "$.7f828636-bbc3-4666-922b-b54bb49fe62e.out.body",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$.workbooks.workbook[0].id"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{b28eed58-c7a5-4861-aae3-5098d1c39e1d}}}",
+                                                "assertion": "equal",
+                                                "expected": 200
+                                            },
+                                            {
+                                                "field": "{{{095b2c23-bbff-44f0-b53d-77f320d24d18}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "89517f8b-b34b-4ec1-b398-1c9780294917": {
+            "type": "appmixer.tableau.core.RefreshWorkbookExtract",
+            "x": 688,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "7f828636-bbc3-4666-922b-b54bb49fe62e": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "7f828636-bbc3-4666-922b-b54bb49fe62e": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "workbookId": {
+                                        "4255ba4c-9ead-423d-88ac-9a342ec1f8d9": {
+                                            "variable": "$.7f828636-bbc3-4666-922b-b54bb49fe62e.out.body",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$.workbooks.workbook[0].id"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "timeout": {}
+                                },
+                                "lambda": {
+                                    "workbookId": "{{{4255ba4c-9ead-423d-88ac-9a342ec1f8d9}}}",
+                                    "timeout": 30
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "b260df0c-0f4a-4863-804f-25be097f2bfd": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 896,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "89517f8b-b34b-4ec1-b398-1c9780294917": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "89517f8b-b34b-4ec1-b398-1c9780294917": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "12df6c54-028e-4868-9d8c-844ce93ca163": {
+                                            "variable": "$.89517f8b-b34b-4ec1-b398-1c9780294917.out.status",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{12df6c54-028e-4868-9d8c-844ce93ca163}}}",
+                                                "assertion": "equal",
+                                                "expected": "Success"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "5d0b7130-6a64-4121-8475-5f1ae2d653a4": {
+            "type": "appmixer.tableau.core.GetJob",
+            "x": 896,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "89517f8b-b34b-4ec1-b398-1c9780294917": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "89517f8b-b34b-4ec1-b398-1c9780294917": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "jobId": {
+                                        "5755303f-9530-4689-931f-4b1e5535663a": {
+                                            "variable": "$.89517f8b-b34b-4ec1-b398-1c9780294917.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "jobId": "{{{5755303f-9530-4689-931f-4b1e5535663a}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "50fa63ea-4b7f-42f1-9bed-790c16e5cf91": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1104,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "5d0b7130-6a64-4121-8475-5f1ae2d653a4": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "5d0b7130-6a64-4121-8475-5f1ae2d653a4": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "80d1e559-87df-46bb-ab0d-d2218c43fd13": {
+                                            "variable": "$.5d0b7130-6a64-4121-8475-5f1ae2d653a4.out.id",
+                                            "functions": []
+                                        },
+                                        "d96fca9d-b4b8-4644-b6a6-d63d0c0a7522": {
+                                            "variable": "$.89517f8b-b34b-4ec1-b398-1c9780294917.out.id",
+                                            "functions": []
+                                        },
+                                        "4128cbff-d20a-40ac-9dd5-7cedcf0fe3f6": {
+                                            "variable": "$.5d0b7130-6a64-4121-8475-5f1ae2d653a4.out.status",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{80d1e559-87df-46bb-ab0d-d2218c43fd13}}}",
+                                                "assertion": "equal",
+                                                "expected": "{{{d96fca9d-b4b8-4644-b6a6-d63d0c0a7522}}}"
+                                            },
+                                            {
+                                                "field": "{{{4128cbff-d20a-40ac-9dd5-7cedcf0fe3f6}}}",
+                                                "assertion": "equal",
+                                                "expected": "Success"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "a98386d8-8243-44cf-ba55-6ff041ef4438": {
+            "type": "appmixer.tableau.core.MakeApiCall",
+            "x": 1104,
+            "y": 400,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "5d0b7130-6a64-4121-8475-5f1ae2d653a4": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "5d0b7130-6a64-4121-8475-5f1ae2d653a4": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "url": {},
+                                    "method": {},
+                                    "parameters": {}
+                                },
+                                "lambda": {
+                                    "url": "/sites/{site-id}/datasources",
+                                    "method": "GET",
+                                    "parameters": "{\"filter\": \"hasExtracts:eq:true\", \"pageSize\": \"1\"}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "b4ec335f-9984-4d95-8b6c-fff6d2e52a6e": {
+            "type": "appmixer.tableau.core.RefreshDataSourceExtract",
+            "x": 1312,
+            "y": 528,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "a98386d8-8243-44cf-ba55-6ff041ef4438": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "a98386d8-8243-44cf-ba55-6ff041ef4438": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "datasourceId": {
+                                        "b3ff4621-bf06-4b1d-becb-6a05c367faa8": {
+                                            "variable": "$.a98386d8-8243-44cf-ba55-6ff041ef4438.out.body",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$.datasources.datasource[0].id"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "timeout": {}
+                                },
+                                "lambda": {
+                                    "datasourceId": "{{{b3ff4621-bf06-4b1d-becb-6a05c367faa8}}}",
+                                    "timeout": 30
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "d5e4ae58-efef-4af0-bed8-087498c1f15e": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1520,
+            "y": 528,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "b4ec335f-9984-4d95-8b6c-fff6d2e52a6e": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "b4ec335f-9984-4d95-8b6c-fff6d2e52a6e": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "22dd9718-b5b3-4b99-bfb4-174e0a432d17": {
+                                            "variable": "$.b4ec335f-9984-4d95-8b6c-fff6d2e52a6e.out.status",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{22dd9718-b5b3-4b99-bfb4-174e0a432d17}}}",
+                                                "assertion": "equal",
+                                                "expected": "Success"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "9cf2b93f-56ab-4974-b84a-8d6eaf31bf73": {
+            "type": "appmixer.tableau.core.ListExtractRefreshTasks",
+            "x": 1520,
+            "y": 656,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "b4ec335f-9984-4d95-8b6c-fff6d2e52a6e": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "b4ec335f-9984-4d95-8b6c-fff6d2e52a6e": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "outputType": {}
+                                },
+                                "lambda": {
+                                    "outputType": "first"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "7b340a27-5afe-42e6-813a-1ac5313af4bb": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1728,
+            "y": 656,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "9cf2b93f-56ab-4974-b84a-8d6eaf31bf73": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "9cf2b93f-56ab-4974-b84a-8d6eaf31bf73": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "10fe3522-8631-4312-a85d-3064c4576dd7": {
+                                            "variable": "$.9cf2b93f-56ab-4974-b84a-8d6eaf31bf73.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{10fe3522-8631-4312-a85d-3064c4576dd7}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "0b9e1a7c-329a-443f-9237-4fb07002a1d8": {
+            "type": "appmixer.tableau.core.RunExtractRefreshTask",
+            "x": 1728,
+            "y": 784,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "9cf2b93f-56ab-4974-b84a-8d6eaf31bf73": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "9cf2b93f-56ab-4974-b84a-8d6eaf31bf73": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "taskId": {
+                                        "659dde7b-70af-4982-9b01-9c51db1c33d4": {
+                                            "variable": "$.9cf2b93f-56ab-4974-b84a-8d6eaf31bf73.out.id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "timeout": {}
+                                },
+                                "lambda": {
+                                    "taskId": "{{{659dde7b-70af-4982-9b01-9c51db1c33d4}}}",
+                                    "timeout": 30
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "67d421cc-7a40-4c35-8e00-a70df2ac4408": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1936,
+            "y": 784,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "0b9e1a7c-329a-443f-9237-4fb07002a1d8": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "0b9e1a7c-329a-443f-9237-4fb07002a1d8": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "b5c0138e-e037-4f1b-a1b0-4ff6673d39d9": {
+                                            "variable": "$.0b9e1a7c-329a-443f-9237-4fb07002a1d8.out.id",
+                                            "functions": []
+                                        },
+                                        "75a0ce03-0ce6-4067-8bed-4903b2aa22bd": {
+                                            "variable": "$.0b9e1a7c-329a-443f-9237-4fb07002a1d8.out.status",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{b5c0138e-e037-4f1b-a1b0-4ff6673d39d9}}}",
+                                                "assertion": "notEmpty"
+                                            },
+                                            {
+                                                "field": "{{{75a0ce03-0ce6-4067-8bed-4903b2aa22bd}}}",
+                                                "assertion": "regex",
+                                                "regex": "^(Success|Failed|Cancelled)$"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "e6667a45-da06-4a49-9e01-4024d1a8a0e0": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 2144,
+            "y": 784,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "06156fb6-1f3d-4931-b9df-fdac1b18268e": [
+                        "out"
+                    ],
+                    "278af7d2-144c-49c2-837e-26b163c7f0e5": [
+                        "out"
+                    ],
+                    "3f09fbb4-3b20-49ab-8eaf-d07b5ef2f763": [
+                        "out"
+                    ],
+                    "ac7457b8-b16c-4deb-8944-2ca61d876c24": [
+                        "out"
+                    ],
+                    "b260df0c-0f4a-4863-804f-25be097f2bfd": [
+                        "out"
+                    ],
+                    "50fa63ea-4b7f-42f1-9bed-790c16e5cf91": [
+                        "out"
+                    ],
+                    "d5e4ae58-efef-4af0-bed8-087498c1f15e": [
+                        "out"
+                    ],
+                    "7b340a27-5afe-42e6-813a-1ac5313af4bb": [
+                        "out"
+                    ],
+                    "67d421cc-7a40-4c35-8e00-a70df2ac4408": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 2400
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "af739d74-8570-48cb-abb1-d54e7f3277e3": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 2352,
+            "y": 784,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "e6667a45-da06-4a49-9e01-4024d1a8a0e0": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "e6667a45-da06-4a49-9e01-4024d1a8a0e0": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "24fd09e4-be19-4ebb-9236-e889ddfa6c9b": {
+                                            "variable": "$.e6667a45-da06-4a49-9e01-4024d1a8a0e0.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E Tableau - extract refresh",
+                                    "result": "{{{24fd09e4-be19-4ebb-9236-e889ddfa6c9b}}}"
+                                }
+                            }
+                        }
+                    }
+                },
+                "properties": {
+                    "successStoreId": "64f6f1f9193228000754082f",
+                    "failedStoreId": "64f6f1f0193228000754082e"
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        }
+    },
+    "notes": {
+        "582a9f77-0313-4e61-bf31-8adff494bd48": {
+            "x": 64,
+            "y": 1150,
+            "width": 672,
+            "height": 300,
+            "content": "## ⚠️ Test data assumption\n\nThe connected account must be a **site administrator** (the webhook triggers register Tableau webhooks). The site needs a **workbook with an extract**, a **published data source with an extract** and at least one **extract refresh task** (a scheduled refresh). The `Wait 1m` must stay: Job Finished records the existing jobs on its first poll and only fires for jobs that finish later. Refreshes take minutes, so AfterAll waits up to 40 minutes."
+        }
+    }
+}
