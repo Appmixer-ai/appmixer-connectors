@@ -1,0 +1,550 @@
+{
+    "name": "E2E SurveyMonkey - surveys, collector and API call",
+    "description": "Creates, reads, updates and lists a survey, creates a web link collector, calls /v3/users/me through Make API Call, then deletes the survey.",
+    "flow": {
+        "42344b84-2f7f-495c-919d-8c47005761bc": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 64,
+            "source": {},
+            "version": "1.0.0",
+            "config": {},
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "257fb94f-9c8f-434f-ab90-0cadce7849e5": {
+            "type": "appmixer.surveymonkey.core.CreateSurvey",
+            "x": 272,
+            "y": 192,
+            "source": {
+                "in": {
+                    "42344b84-2f7f-495c-919d-8c47005761bc": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "42344b84-2f7f-495c-919d-8c47005761bc": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "title": {
+                                        "89c376ca-3b8f-4a6e-b4a9-5eb24bc52cbc": {
+                                            "variable": "$.42344b84-2f7f-495c-919d-8c47005761bc.out.started",
+                                            "functions": []
+                                        }
+                                    },
+                                    "language": {}
+                                },
+                                "lambda": {
+                                    "title": "E2E SurveyMonkey survey {{{89c376ca-3b8f-4a6e-b4a9-5eb24bc52cbc}}}",
+                                    "language": "en"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "17007710-dc38-4d6f-9ce3-5de28e94bd60": {
+            "type": "appmixer.surveymonkey.core.GetSurvey",
+            "x": 480,
+            "y": 320,
+            "source": {
+                "in": {
+                    "257fb94f-9c8f-434f-ab90-0cadce7849e5": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "257fb94f-9c8f-434f-ab90-0cadce7849e5": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "surveyId": {
+                                        "5dcee24f-995b-43b2-8c79-f4e6bbff7866": {
+                                            "variable": "$.257fb94f-9c8f-434f-ab90-0cadce7849e5.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "surveyId": "{{{5dcee24f-995b-43b2-8c79-f4e6bbff7866}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "45f0d126-510b-4f72-abab-823365790aed": {
+            "type": "appmixer.surveymonkey.core.UpdateSurvey",
+            "x": 688,
+            "y": 448,
+            "source": {
+                "in": {
+                    "17007710-dc38-4d6f-9ce3-5de28e94bd60": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "17007710-dc38-4d6f-9ce3-5de28e94bd60": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "surveyId": {
+                                        "cab86f31-1fe7-435a-91bc-6c5f3b0beb5d": {
+                                            "variable": "$.257fb94f-9c8f-434f-ab90-0cadce7849e5.out.id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "title": {},
+                                    "nickname": {}
+                                },
+                                "lambda": {
+                                    "surveyId": "{{{cab86f31-1fe7-435a-91bc-6c5f3b0beb5d}}}",
+                                    "title": "E2E SurveyMonkey survey updated",
+                                    "nickname": "E2E nickname"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "eba00ee7-6d97-4aa1-bae9-6bbdf267fa5c": {
+            "type": "appmixer.surveymonkey.core.GetSurvey",
+            "x": 896,
+            "y": 576,
+            "source": {
+                "in": {
+                    "45f0d126-510b-4f72-abab-823365790aed": [
+                        "out"
+                    ]
+                }
+            },
+            "label": "Get Survey (after update)",
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "45f0d126-510b-4f72-abab-823365790aed": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "surveyId": {
+                                        "b52c455d-d4c6-4674-bde0-c4b6799c30b0": {
+                                            "variable": "$.257fb94f-9c8f-434f-ab90-0cadce7849e5.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "surveyId": "{{{b52c455d-d4c6-4674-bde0-c4b6799c30b0}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "da27d6ac-3543-4b53-8ed2-b04d190c09a6": {
+            "type": "appmixer.surveymonkey.core.ListSurveys",
+            "x": 1104,
+            "y": 704,
+            "source": {
+                "in": {
+                    "eba00ee7-6d97-4aa1-bae9-6bbdf267fa5c": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "eba00ee7-6d97-4aa1-bae9-6bbdf267fa5c": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "outputType": {}
+                                },
+                                "lambda": {
+                                    "outputType": "array"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "7b7382bc-d9ce-47cd-84a0-d00dab0d20ac": {
+            "type": "appmixer.surveymonkey.core.CreateCollector",
+            "x": 1312,
+            "y": 832,
+            "source": {
+                "in": {
+                    "da27d6ac-3543-4b53-8ed2-b04d190c09a6": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "da27d6ac-3543-4b53-8ed2-b04d190c09a6": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "surveyId": {
+                                        "713f362b-e953-4b2a-be5f-4279839c71f9": {
+                                            "variable": "$.257fb94f-9c8f-434f-ab90-0cadce7849e5.out.id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "type": {},
+                                    "name": {},
+                                    "thankYouMessage": {}
+                                },
+                                "lambda": {
+                                    "surveyId": "{{{713f362b-e953-4b2a-be5f-4279839c71f9}}}",
+                                    "type": "weblink",
+                                    "name": "E2E web link",
+                                    "thankYouMessage": "Thanks from the E2E test"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "243b2174-232b-4c09-920b-0596382adcb3": {
+            "type": "appmixer.surveymonkey.core.MakeApiCall",
+            "x": 1520,
+            "y": 960,
+            "source": {
+                "in": {
+                    "7b7382bc-d9ce-47cd-84a0-d00dab0d20ac": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "7b7382bc-d9ce-47cd-84a0-d00dab0d20ac": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "url": {},
+                                    "method": {}
+                                },
+                                "lambda": {
+                                    "url": "/v3/users/me",
+                                    "method": "GET"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "835c96bd-f30a-4533-9d62-b85de0d71c8f": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1728,
+            "y": 1088,
+            "source": {
+                "in": {
+                    "243b2174-232b-4c09-920b-0596382adcb3": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "243b2174-232b-4c09-920b-0596382adcb3": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "1d4a319e-2598-40ae-bdea-502a5812393f": {
+                                            "variable": "$.257fb94f-9c8f-434f-ab90-0cadce7849e5.out.id",
+                                            "functions": []
+                                        },
+                                        "8337b01c-a54b-4059-b750-f001ebda1855": {
+                                            "variable": "$.17007710-dc38-4d6f-9ce3-5de28e94bd60.out.id",
+                                            "functions": []
+                                        },
+                                        "fddee4e3-3207-45cb-a4cc-08d9d117ea34": {
+                                            "variable": "$.257fb94f-9c8f-434f-ab90-0cadce7849e5.out.id",
+                                            "functions": []
+                                        },
+                                        "13db854e-a921-4eb8-9f45-1047b10da4db": {
+                                            "variable": "$.17007710-dc38-4d6f-9ce3-5de28e94bd60.out.title",
+                                            "functions": []
+                                        },
+                                        "fa912ea7-8329-4a7a-a602-c09f56328c98": {
+                                            "variable": "$.17007710-dc38-4d6f-9ce3-5de28e94bd60.out.pages",
+                                            "functions": []
+                                        },
+                                        "686c4d53-c52b-474b-ba52-a100f68283b0": {
+                                            "variable": "$.eba00ee7-6d97-4aa1-bae9-6bbdf267fa5c.out.title",
+                                            "functions": []
+                                        },
+                                        "98c799be-9d50-42ee-99cb-477ca565a5de": {
+                                            "variable": "$.eba00ee7-6d97-4aa1-bae9-6bbdf267fa5c.out.nickname",
+                                            "functions": []
+                                        },
+                                        "49e5aebd-aae5-491c-a402-c141a5ae2d24": {
+                                            "variable": "$.da27d6ac-3543-4b53-8ed2-b04d190c09a6.out.count",
+                                            "functions": []
+                                        },
+                                        "276c107c-be10-4c80-8ee1-6273a4b06a01": {
+                                            "variable": "$.7b7382bc-d9ce-47cd-84a0-d00dab0d20ac.out.id",
+                                            "functions": []
+                                        },
+                                        "fbd9fa9c-dea2-4d78-8d34-853e5e159a6a": {
+                                            "variable": "$.7b7382bc-d9ce-47cd-84a0-d00dab0d20ac.out.url",
+                                            "functions": []
+                                        },
+                                        "215988e9-7459-4cc0-b3e9-40770f9e1078": {
+                                            "variable": "$.243b2174-232b-4c09-920b-0596382adcb3.out.statusCode",
+                                            "functions": []
+                                        },
+                                        "4146b9ab-6d2b-46d7-b47d-4ed6d9042b3d": {
+                                            "variable": "$.243b2174-232b-4c09-920b-0596382adcb3.out.body",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$.id"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{1d4a319e-2598-40ae-bdea-502a5812393f}}}",
+                                                "assertion": "notEmpty"
+                                            },
+                                            {
+                                                "field": "{{{8337b01c-a54b-4059-b750-f001ebda1855}}}",
+                                                "assertion": "equal",
+                                                "expected": "{{{fddee4e3-3207-45cb-a4cc-08d9d117ea34}}}"
+                                            },
+                                            {
+                                                "field": "{{{13db854e-a921-4eb8-9f45-1047b10da4db}}}",
+                                                "assertion": "regex",
+                                                "regex": "^E2E SurveyMonkey survey "
+                                            },
+                                            {
+                                                "field": "{{{fa912ea7-8329-4a7a-a602-c09f56328c98}}}",
+                                                "assertion": "notEmpty"
+                                            },
+                                            {
+                                                "field": "{{{686c4d53-c52b-474b-ba52-a100f68283b0}}}",
+                                                "assertion": "equal",
+                                                "expected": "E2E SurveyMonkey survey updated"
+                                            },
+                                            {
+                                                "field": "{{{98c799be-9d50-42ee-99cb-477ca565a5de}}}",
+                                                "assertion": "equal",
+                                                "expected": "E2E nickname"
+                                            },
+                                            {
+                                                "field": "{{{49e5aebd-aae5-491c-a402-c141a5ae2d24}}}",
+                                                "assertion": "regex",
+                                                "regex": "^[1-9][0-9]*$"
+                                            },
+                                            {
+                                                "field": "{{{276c107c-be10-4c80-8ee1-6273a4b06a01}}}",
+                                                "assertion": "notEmpty"
+                                            },
+                                            {
+                                                "field": "{{{fbd9fa9c-dea2-4d78-8d34-853e5e159a6a}}}",
+                                                "assertion": "regex",
+                                                "regex": "^https://"
+                                            },
+                                            {
+                                                "field": "{{{215988e9-7459-4cc0-b3e9-40770f9e1078}}}",
+                                                "assertion": "regex",
+                                                "regex": "^200$"
+                                            },
+                                            {
+                                                "field": "{{{4146b9ab-6d2b-46d7-b47d-4ed6d9042b3d}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "a97075c6-f20f-4f9c-a12c-5eb6cda41641": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 1936,
+            "y": 1216,
+            "source": {
+                "in": {
+                    "835c96bd-f30a-4533-9d62-b85de0d71c8f": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "properties": {
+                    "timeout": 300
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "06a9d773-d89e-46b3-b20e-7b7ad1880a82": {
+            "type": "appmixer.surveymonkey.core.DeleteSurvey",
+            "x": 2144,
+            "y": 1344,
+            "source": {
+                "in": {
+                    "a97075c6-f20f-4f9c-a12c-5eb6cda41641": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "a97075c6-f20f-4f9c-a12c-5eb6cda41641": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "surveyId": {
+                                        "43115d60-84c6-4bad-a9b2-3f0503be7d38": {
+                                            "variable": "$.257fb94f-9c8f-434f-ab90-0cadce7849e5.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "surveyId": "{{{43115d60-84c6-4bad-a9b2-3f0503be7d38}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "53ba368e-2ac1-497a-9b45-0a5dd1ad775d": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 2352,
+            "y": 1472,
+            "source": {
+                "in": {
+                    "06a9d773-d89e-46b3-b20e-7b7ad1880a82": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "properties": {
+                    "successStoreId": "64f6f1f9193228000754082f",
+                    "failedStoreId": "64f6f1f0193228000754082e"
+                },
+                "transform": {
+                    "in": {
+                        "06a9d773-d89e-46b3-b20e-7b7ad1880a82": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "7bd2b525-5799-4121-81d6-75e0d24ed3c4": {
+                                            "variable": "$.a97075c6-f20f-4f9c-a12c-5eb6cda41641.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E SurveyMonkey - surveys, collector and API call",
+                                    "result": "{{{7bd2b525-5799-4121-81d6-75e0d24ed3c4}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        }
+    }
+}

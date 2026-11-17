@@ -1,0 +1,468 @@
+{
+    "name": "E2E SurveyMonkey - new response trigger",
+    "description": "Submits a response through a new web link collector and waits for the New Response webhook trigger to emit it, then deletes the collector with its responses.",
+    "flow": {
+        "0fd45671-a1b9-4d89-b2a0-fa363cb42f65": {
+            "type": "appmixer.surveymonkey.core.NewResponse",
+            "x": 64,
+            "y": 576,
+            "source": {},
+            "version": "1.0.0",
+            "config": {
+                "properties": {
+                    "surveyId": "REPLACE_WITH_SURVEY_ID",
+                    "simple": true
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "27e2943c-2364-4694-8544-606cec5272ed": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 64,
+            "source": {},
+            "version": "1.0.0",
+            "config": {},
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "02622074-da75-4756-a654-4b89a7ffce25": {
+            "type": "appmixer.utils.timers.Wait",
+            "x": 272,
+            "y": 64,
+            "source": {
+                "in": {
+                    "27e2943c-2364-4694-8544-606cec5272ed": [
+                        "out"
+                    ]
+                }
+            },
+            "label": "Wait (webhook registration)",
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "27e2943c-2364-4694-8544-606cec5272ed": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "interval": {}
+                                },
+                                "lambda": {
+                                    "interval": "1m"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "cb4863e6-0f11-4928-a13e-0942828ad535": {
+            "type": "appmixer.surveymonkey.core.GetSurvey",
+            "x": 480,
+            "y": 192,
+            "source": {
+                "in": {
+                    "02622074-da75-4756-a654-4b89a7ffce25": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "02622074-da75-4756-a654-4b89a7ffce25": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "surveyId": {}
+                                },
+                                "lambda": {
+                                    "surveyId": "REPLACE_WITH_SURVEY_ID"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "46a73b7c-d9ad-482a-b19b-10652ff126a5": {
+            "type": "appmixer.surveymonkey.core.CreateCollector",
+            "x": 688,
+            "y": 320,
+            "source": {
+                "in": {
+                    "cb4863e6-0f11-4928-a13e-0942828ad535": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "cb4863e6-0f11-4928-a13e-0942828ad535": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "surveyId": {},
+                                    "type": {},
+                                    "name": {}
+                                },
+                                "lambda": {
+                                    "surveyId": "REPLACE_WITH_SURVEY_ID",
+                                    "type": "weblink",
+                                    "name": "E2E response collector"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "88d75964-ca63-455c-8f19-5c8af386e58a": {
+            "type": "appmixer.surveymonkey.core.MakeApiCall",
+            "x": 896,
+            "y": 448,
+            "source": {
+                "in": {
+                    "46a73b7c-d9ad-482a-b19b-10652ff126a5": [
+                        "out"
+                    ]
+                }
+            },
+            "label": "Submit Response",
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "46a73b7c-d9ad-482a-b19b-10652ff126a5": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "url": {
+                                        "56013296-b825-4d7e-bbe6-5150c5bf52d6": {
+                                            "variable": "$.46a73b7c-d9ad-482a-b19b-10652ff126a5.out.id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "method": {},
+                                    "body": {
+                                        "638b5366-d442-468b-bf69-d37f033cfff7": {
+                                            "variable": "$.cb4863e6-0f11-4928-a13e-0942828ad535.out.pages",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$[0].id"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        },
+                                        "d1baaa5e-e0e3-4a4d-b11a-ae336700bafe": {
+                                            "variable": "$.cb4863e6-0f11-4928-a13e-0942828ad535.out.pages",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$[0].questions[0].id"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "url": "/v3/collectors/{{{56013296-b825-4d7e-bbe6-5150c5bf52d6}}}/responses",
+                                    "method": "POST",
+                                    "body": "{\"pages\":[{\"id\":\"{{{638b5366-d442-468b-bf69-d37f033cfff7}}}\",\"questions\":[{\"id\":\"{{{d1baaa5e-e0e3-4a4d-b11a-ae336700bafe}}}\",\"answers\":[{\"text\":\"E2E answer\"}]}]}]}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "c39e64a1-4f55-47c8-82f7-5c9a8ffa58fe": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1104,
+            "y": 704,
+            "source": {
+                "in": {
+                    "0fd45671-a1b9-4d89-b2a0-fa363cb42f65": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "0fd45671-a1b9-4d89-b2a0-fa363cb42f65": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "2dd4d7d2-c353-4e00-ab84-ed992f074a18": {
+                                            "variable": "$.0fd45671-a1b9-4d89-b2a0-fa363cb42f65.out.id",
+                                            "functions": []
+                                        },
+                                        "e5bcf92e-6328-4903-b69f-f4a44c6af65c": {
+                                            "variable": "$.0fd45671-a1b9-4d89-b2a0-fa363cb42f65.out.survey_id",
+                                            "functions": []
+                                        },
+                                        "d65e48f5-346e-4c8a-addc-0aeb173ed66d": {
+                                            "variable": "$.0fd45671-a1b9-4d89-b2a0-fa363cb42f65.out.collector_id",
+                                            "functions": []
+                                        },
+                                        "985ec72d-af3b-40d3-835e-41843509e7fb": {
+                                            "variable": "$.46a73b7c-d9ad-482a-b19b-10652ff126a5.out.id",
+                                            "functions": []
+                                        },
+                                        "433f9269-714e-4122-b4e4-9820fac6532d": {
+                                            "variable": "$.0fd45671-a1b9-4d89-b2a0-fa363cb42f65.out.response_status",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{2dd4d7d2-c353-4e00-ab84-ed992f074a18}}}",
+                                                "assertion": "notEmpty"
+                                            },
+                                            {
+                                                "field": "{{{e5bcf92e-6328-4903-b69f-f4a44c6af65c}}}",
+                                                "assertion": "equal",
+                                                "expected": "REPLACE_WITH_SURVEY_ID"
+                                            },
+                                            {
+                                                "field": "{{{d65e48f5-346e-4c8a-addc-0aeb173ed66d}}}",
+                                                "assertion": "equal",
+                                                "expected": "{{{985ec72d-af3b-40d3-835e-41843509e7fb}}}"
+                                            },
+                                            {
+                                                "field": "{{{433f9269-714e-4122-b4e4-9820fac6532d}}}",
+                                                "assertion": "equal",
+                                                "expected": "completed"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "a69ef42b-f5c9-43b1-85de-ce584bb41f30": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1104,
+            "y": 448,
+            "source": {
+                "in": {
+                    "88d75964-ca63-455c-8f19-5c8af386e58a": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "88d75964-ca63-455c-8f19-5c8af386e58a": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "76ee3f06-f960-4995-9b3a-56876a20e9da": {
+                                            "variable": "$.88d75964-ca63-455c-8f19-5c8af386e58a.out.body",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$.id"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{76ee3f06-f960-4995-9b3a-56876a20e9da}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "be7c9007-4536-49f3-bdd4-3bb1cff21faf": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 1312,
+            "y": 576,
+            "source": {
+                "in": {
+                    "c39e64a1-4f55-47c8-82f7-5c9a8ffa58fe": [
+                        "out"
+                    ],
+                    "a69ef42b-f5c9-43b1-85de-ce584bb41f30": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "properties": {
+                    "timeout": 300
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "ae3d48f1-cf78-48a3-9b40-3a3ba86f7551": {
+            "type": "appmixer.surveymonkey.core.MakeApiCall",
+            "x": 1520,
+            "y": 704,
+            "source": {
+                "in": {
+                    "be7c9007-4536-49f3-bdd4-3bb1cff21faf": [
+                        "out"
+                    ]
+                }
+            },
+            "label": "Delete Collector",
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "be7c9007-4536-49f3-bdd4-3bb1cff21faf": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "url": {
+                                        "493e242a-0cad-45fa-bda6-45b2b60a5c2a": {
+                                            "variable": "$.46a73b7c-d9ad-482a-b19b-10652ff126a5.out.id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "method": {}
+                                },
+                                "lambda": {
+                                    "url": "/v3/collectors/{{{493e242a-0cad-45fa-bda6-45b2b60a5c2a}}}",
+                                    "method": "DELETE"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "03d956a3-6239-428e-9d1c-0ce6f1079db9": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1728,
+            "y": 832,
+            "source": {
+                "in": {
+                    "ae3d48f1-cf78-48a3-9b40-3a3ba86f7551": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "properties": {
+                    "successStoreId": "64f6f1f9193228000754082f",
+                    "failedStoreId": "64f6f1f0193228000754082e"
+                },
+                "transform": {
+                    "in": {
+                        "ae3d48f1-cf78-48a3-9b40-3a3ba86f7551": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "a79d4b77-5335-44f2-864e-7a879fddc6ad": {
+                                            "variable": "$.be7c9007-4536-49f3-bdd4-3bb1cff21faf.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E SurveyMonkey - new response trigger",
+                                    "result": "{{{a79d4b77-5335-44f2-864e-7a879fddc6ad}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        }
+    },
+    "notes": {
+        "ca1fa269-f9ee-4b52-92b2-8b93bff12a09": {
+            "x": 64,
+            "y": 800,
+            "width": 720,
+            "height": 280,
+            "content": "## ⚠️ Test data assumption\n\nSet **Survey** of the New Response trigger and the three `REPLACE_WITH_SURVEY_ID` values (Get Survey, Create Collector, Assert) to an existing survey whose **first page starts with an open-ended single-textbox question**. The trigger subscribes to that survey when the flow starts, so the survey cannot be created inside the flow.\n\nSubmitting a response through the API (Submit Response) needs the `responses_write` scope, which SurveyMonkey grants only to approved apps on paid plans. Without it, open the collector URL (Create Collector output) and complete the survey by hand within 5 minutes. The collector and its responses are deleted at the end."
+        }
+    }
+}

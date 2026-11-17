@@ -1,0 +1,109 @@
+{
+    "name": "appmixer.surveymonkey.core.ListResponses",
+    "label": "List Responses",
+    "description": "List the responses of a survey with their answers, most recently modified first. Returns up to 100 responses. Needs the View Response Details scope, which requires a paid SurveyMonkey plan.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:surveymonkey"
+    },
+    "quota": {
+        "manager": "appmixer:surveymonkey",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "surveyId": {
+                        "type": "string"
+                    },
+                    "simple": {
+                        "type": "boolean"
+                    },
+                    "outputType": {
+                        "type": "string",
+                        "default": "array"
+                    }
+                },
+                "required": [
+                    "surveyId"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "surveyId": {
+                        "type": "text",
+                        "index": 1,
+                        "label": "Survey",
+                        "tooltip": "Pick a survey, or type its Survey ID.",
+                        "source": {
+                            "url": "/component/appmixer/surveymonkey/core/ListSurveys?outPort=out",
+                            "data": {
+                                "properties": {
+                                    "isSource": true
+                                },
+                                "transform": "./ListSurveys#toSelectArray"
+                            }
+                        }
+                    },
+                    "simple": {
+                        "type": "toggle",
+                        "index": 2,
+                        "label": "Include Question and Answer Text",
+                        "defaultValue": false,
+                        "tooltip": "Adds the question and answer text to the IDs (SurveyMonkey's <code>simple</code> option)."
+                    },
+                    "outputType": {
+                        "type": "select",
+                        "label": "Output Type",
+                        "index": 3,
+                        "defaultValue": "array",
+                        "tooltip": "Choose whether you want to receive the result set as one complete list, or first item only or one item at a time or stream the items to a file.",
+                        "options": [
+                            {
+                                "label": "First Item Only",
+                                "value": "first"
+                            },
+                            {
+                                "label": "All items at once",
+                                "value": "array"
+                            },
+                            {
+                                "label": "One item at a time",
+                                "value": "object"
+                            },
+                            {
+                                "label": "Store to CSV file",
+                                "value": "file"
+                            }
+                        ]
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "source": {
+                "url": "/component/appmixer/surveymonkey/core/ListResponses?outPort=out&ignoreAuth=true",
+                "data": {
+                    "properties": {
+                        "generateOutputPortOptions": true
+                    },
+                    "messages": {
+                        "in/outputType": "inputs/in/outputType",
+                        "in/surveyId": "dummy"
+                    }
+                }
+            }
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZmlsbD0iIzAwQkY2RiIgZD0iTTIxLjE2MjcgMTMuMTg0M2EyLjg1MTcgMi44NTE3IDAgMCAwLS42Nzc4LjA4NDFjLS44NDM4LTMuMzE4MS0zLjU0NzgtNS44Mzc2LTYuOTE3Mi02LjQ0NTJhOC4zOTMzIDguMzkzMyAwIDAgMC0uNDQwNy0uMDY2OGMuMDI1OS0uODI1NS4wNjM2LTEuNzc5MSAxLjI3ODEtMi42MzY5bC0uMTkxOC0uNDgzOHMtMi4zNzA4LjczNDktMi42MzkxIDIuNzU5OGMtLjExNzUtLjU1MDctMS4yMjA5LTEuMjQwMy0xLjc2NzMtMS4zNzA3bC0uMjcxNy40Mzg0cy43MjQyLjM2MjEuOTAwOSAxLjM2MWMtMy4zNjkxLjYwNTYtNi4wNzQzIDMuMTIyOS02LjkyMDQgNi40Mzk4LTEuNTE5NC0uMzc2LTMuMDU2LjU1MDgtMy40MzIgMi4wNzAzLS4zNzYgMS41MTk0LjU1MDggMy4wNTYgMi4wNzAzIDMuNDMyYTIuODM0NiAyLjgzNDYgMCAwIDAgMS43MTk1LS4xMTQyIDguNjgyMSA4LjY4MjEgMCAwIDAgLjkyMDMgMS43MTIzbDIuMzUyNC0xLjU4NTJjLS42MzgxLS44MDcxLTEuMDIwNi0xLjk4ODQtMS4wODczLTMuMTczNi0uMDctMS4yOTMxLjI0NDYtMi41NzU1IDEuMDcwMS0zLjMyOTggMS43MDE2LTEuNDQ4MyAzLjU1NjEtLjc4NzcgNC43MTM1LjYwMDJoLjMxMTRjMS4xNjA2LTEuMzg4IDMuMDE3My0yLjA0NzUgNC43MTM1LS42MDAyLjgyNDQuNzU0MyAxLjE0MDEgMi4wMzc4IDEuMDcwMSAzLjMyOTgtLjA2NTYgMS4xODUzLS40NDgxIDIuMzY2NC0xLjA4NzMgMy4xNzM2bDIuMzUyNCAxLjU4NTJhOC42ODU0IDguNjg1NCAwIDAgMCAuOTIyNC0xLjcxMjNjMS40NTUxLjU3NTEgMy4xMDA5LS4xMzg0IDMuNjc2LTEuNTkzNXMtLjEzODQtMy4xMDA5LTEuNTkzNS0zLjY3NmEyLjgzNDkgMi44MzQ5IDAgMCAwLTEuMDQ0OC0uMTk4M3pNMi43ODYxIDE2Ljg0ODJhLjgzNjIuODM2MiAwIDAgMSAwLTEuNjcyNC44NDQyLjg0NDIgMCAwIDEgLjQ2ODguMTQ0NGMuMDA3MS40MzkxLjAzNjkuODc3Ni4wODk0IDEuMzEzNi0uMTQ3Mi4xMzQ2LS4zNzM4LjIzMjktLjU1ODIuMjE0NHptMTguNDI3MyAwYS44MzYxLjgzNjEgMCAwIDEtLjU1ODItLjIxNTUgMTIuNjc5IDEyLjY3OSAwIDAgMCAuMDg5NC0xLjMxMzYuODM1Mi44MzUyIDAgMCAxIDEuMzA0LjY5MjljLjAwNzguNDU3NC0uMzgyMy44NTgxLS44MzUyLjgzNjJ6Ii8+PC9zdmc+"
+}

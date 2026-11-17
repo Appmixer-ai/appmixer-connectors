@@ -1,0 +1,368 @@
+{
+    "name": "E2E SurveyMonkey - contacts",
+    "description": "Creates a contact, reads it back, lists contacts and contact lists, then deletes the contact.",
+    "flow": {
+        "19a6f7cb-9e09-488f-8e41-855c66e62b91": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 64,
+            "source": {},
+            "version": "1.0.0",
+            "config": {},
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "ee8b9270-c86a-4f62-a76d-f45a717fa4c8": {
+            "type": "appmixer.surveymonkey.core.CreateContact",
+            "x": 272,
+            "y": 192,
+            "source": {
+                "in": {
+                    "19a6f7cb-9e09-488f-8e41-855c66e62b91": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "19a6f7cb-9e09-488f-8e41-855c66e62b91": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "firstName": {},
+                                    "lastName": {},
+                                    "email": {}
+                                },
+                                "lambda": {
+                                    "firstName": "E2E",
+                                    "lastName": "Contact",
+                                    "email": "appmixer.e2e.contact@example.com"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "b1e9ba5d-a79c-46d4-9f31-5735a6caba42": {
+            "type": "appmixer.surveymonkey.core.GetContact",
+            "x": 480,
+            "y": 320,
+            "source": {
+                "in": {
+                    "ee8b9270-c86a-4f62-a76d-f45a717fa4c8": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "ee8b9270-c86a-4f62-a76d-f45a717fa4c8": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "contactId": {
+                                        "7cb2fbfb-abc0-4287-b189-3f7f563b76d4": {
+                                            "variable": "$.ee8b9270-c86a-4f62-a76d-f45a717fa4c8.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "contactId": "{{{7cb2fbfb-abc0-4287-b189-3f7f563b76d4}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "27d04245-aa6d-4753-9e21-1764c11ac78e": {
+            "type": "appmixer.surveymonkey.core.FindContacts",
+            "x": 688,
+            "y": 448,
+            "source": {
+                "in": {
+                    "b1e9ba5d-a79c-46d4-9f31-5735a6caba42": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "b1e9ba5d-a79c-46d4-9f31-5735a6caba42": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "status": {},
+                                    "outputType": {}
+                                },
+                                "lambda": {
+                                    "status": "active",
+                                    "outputType": "array"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "9b7b3c1e-9737-44dc-8128-480c6ef076ca": {
+            "type": "appmixer.surveymonkey.core.ListContactLists",
+            "x": 896,
+            "y": 576,
+            "source": {
+                "in": {
+                    "27d04245-aa6d-4753-9e21-1764c11ac78e": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "27d04245-aa6d-4753-9e21-1764c11ac78e": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "outputType": {}
+                                },
+                                "lambda": {
+                                    "outputType": "array"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "f636945b-83cd-4ee8-bcc2-45f5c905eddc": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1104,
+            "y": 704,
+            "source": {
+                "in": {
+                    "9b7b3c1e-9737-44dc-8128-480c6ef076ca": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "9b7b3c1e-9737-44dc-8128-480c6ef076ca": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "4dc17747-9113-4b88-8c7e-b113511cffd5": {
+                                            "variable": "$.ee8b9270-c86a-4f62-a76d-f45a717fa4c8.out.id",
+                                            "functions": []
+                                        },
+                                        "ad66bab5-f43d-4d45-8936-06402ee92f1e": {
+                                            "variable": "$.b1e9ba5d-a79c-46d4-9f31-5735a6caba42.out.id",
+                                            "functions": []
+                                        },
+                                        "da47c580-acd1-4227-b6b5-b649c483335a": {
+                                            "variable": "$.ee8b9270-c86a-4f62-a76d-f45a717fa4c8.out.id",
+                                            "functions": []
+                                        },
+                                        "b934bdbe-3162-46fb-88c1-b132e7bca4ba": {
+                                            "variable": "$.b1e9ba5d-a79c-46d4-9f31-5735a6caba42.out.email",
+                                            "functions": []
+                                        },
+                                        "0f37c441-56b0-4978-bfe4-8eae40983f59": {
+                                            "variable": "$.b1e9ba5d-a79c-46d4-9f31-5735a6caba42.out.first_name",
+                                            "functions": []
+                                        },
+                                        "1631f375-fae2-4853-bbc3-d5b9360574af": {
+                                            "variable": "$.27d04245-aa6d-4753-9e21-1764c11ac78e.out.count",
+                                            "functions": []
+                                        },
+                                        "d67861e3-163f-41f1-93dc-6ecd35368c00": {
+                                            "variable": "$.9b7b3c1e-9737-44dc-8128-480c6ef076ca.out.count",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{4dc17747-9113-4b88-8c7e-b113511cffd5}}}",
+                                                "assertion": "notEmpty"
+                                            },
+                                            {
+                                                "field": "{{{ad66bab5-f43d-4d45-8936-06402ee92f1e}}}",
+                                                "assertion": "equal",
+                                                "expected": "{{{da47c580-acd1-4227-b6b5-b649c483335a}}}"
+                                            },
+                                            {
+                                                "field": "{{{b934bdbe-3162-46fb-88c1-b132e7bca4ba}}}",
+                                                "assertion": "equal",
+                                                "expected": "appmixer.e2e.contact@example.com"
+                                            },
+                                            {
+                                                "field": "{{{0f37c441-56b0-4978-bfe4-8eae40983f59}}}",
+                                                "assertion": "equal",
+                                                "expected": "E2E"
+                                            },
+                                            {
+                                                "field": "{{{1631f375-fae2-4853-bbc3-d5b9360574af}}}",
+                                                "assertion": "regex",
+                                                "regex": "^[1-9][0-9]*$"
+                                            },
+                                            {
+                                                "field": "{{{d67861e3-163f-41f1-93dc-6ecd35368c00}}}",
+                                                "assertion": "regex",
+                                                "regex": "^[0-9]+$"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "5fa8ed4b-df2b-4ced-9c72-0fb83f3d9410": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 1312,
+            "y": 832,
+            "source": {
+                "in": {
+                    "f636945b-83cd-4ee8-bcc2-45f5c905eddc": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "properties": {
+                    "timeout": 300
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "ccd53097-e664-4908-985d-4f6ca859bfa9": {
+            "type": "appmixer.surveymonkey.core.DeleteContact",
+            "x": 1520,
+            "y": 960,
+            "source": {
+                "in": {
+                    "5fa8ed4b-df2b-4ced-9c72-0fb83f3d9410": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "5fa8ed4b-df2b-4ced-9c72-0fb83f3d9410": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "contactId": {
+                                        "f7f42fdd-1145-4dc8-9e21-11c9671765bf": {
+                                            "variable": "$.ee8b9270-c86a-4f62-a76d-f45a717fa4c8.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "contactId": "{{{f7f42fdd-1145-4dc8-9e21-11c9671765bf}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "f6120072-ef15-42d8-9b16-f6c4a918f7e9": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1728,
+            "y": 1088,
+            "source": {
+                "in": {
+                    "ccd53097-e664-4908-985d-4f6ca859bfa9": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "properties": {
+                    "successStoreId": "64f6f1f9193228000754082f",
+                    "failedStoreId": "64f6f1f0193228000754082e"
+                },
+                "transform": {
+                    "in": {
+                        "ccd53097-e664-4908-985d-4f6ca859bfa9": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "997e1187-e65a-472c-8a68-311a16b96ee5": {
+                                            "variable": "$.5fa8ed4b-df2b-4ced-9c72-0fb83f3d9410.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E SurveyMonkey - contacts",
+                                    "result": "{{{997e1187-e65a-472c-8a68-311a16b96ee5}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        }
+    }
+}

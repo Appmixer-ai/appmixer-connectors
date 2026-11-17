@@ -1,0 +1,292 @@
+{
+    "name": "appmixer.surveymonkey.core.CreateCollector",
+    "label": "Create Collector",
+    "description": "Create a collector for a survey: a web link, an email invitation or an SMS collector. A web link collector returns the URL to share with respondents.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:surveymonkey"
+    },
+    "quota": {
+        "manager": "appmixer:surveymonkey",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "surveyId": {
+                        "type": "string"
+                    },
+                    "type": {
+                        "type": "string",
+                        "enum": [
+                            "weblink",
+                            "email",
+                            "sms"
+                        ]
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "thankYouMessage": {
+                        "type": "string"
+                    },
+                    "redirectUrl": {
+                        "type": "string"
+                    },
+                    "closeDate": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "responseLimit": {
+                        "type": "integer"
+                    },
+                    "allowMultipleResponses": {
+                        "type": "boolean"
+                    },
+                    "anonymousType": {
+                        "type": "string",
+                        "enum": [
+                            "not_anonymous",
+                            "partially_anonymous",
+                            "fully_anonymous"
+                        ]
+                    }
+                },
+                "required": [
+                    "surveyId",
+                    "type"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "surveyId": {
+                        "type": "text",
+                        "index": 1,
+                        "label": "Survey",
+                        "tooltip": "The survey to collect responses for. Pick a survey, or type its Survey ID.",
+                        "source": {
+                            "url": "/component/appmixer/surveymonkey/core/ListSurveys?outPort=out",
+                            "data": {
+                                "properties": {
+                                    "isSource": true
+                                },
+                                "transform": "./ListSurveys#toSelectArray"
+                            }
+                        }
+                    },
+                    "type": {
+                        "type": "select",
+                        "index": 2,
+                        "label": "Collector Type",
+                        "defaultValue": "weblink",
+                        "tooltip": "How the survey is distributed.",
+                        "options": [
+                            {
+                                "label": "Web Link",
+                                "value": "weblink"
+                            },
+                            {
+                                "label": "Email Invitation",
+                                "value": "email"
+                            },
+                            {
+                                "label": "SMS",
+                                "value": "sms"
+                            }
+                        ]
+                    },
+                    "name": {
+                        "type": "text",
+                        "index": 3,
+                        "label": "Name",
+                        "tooltip": "The collector name."
+                    },
+                    "thankYouMessage": {
+                        "type": "textarea",
+                        "index": 4,
+                        "label": "Thank You Message",
+                        "tooltip": "The message shown after a respondent completes the survey."
+                    },
+                    "redirectUrl": {
+                        "type": "text",
+                        "index": 5,
+                        "label": "Redirect URL",
+                        "tooltip": "Redirect respondents to this URL when they complete the survey."
+                    },
+                    "closeDate": {
+                        "type": "date-time",
+                        "index": 6,
+                        "label": "Close Date",
+                        "tooltip": "The collector stops accepting responses at this date and time."
+                    },
+                    "responseLimit": {
+                        "type": "number",
+                        "index": 7,
+                        "label": "Response Limit",
+                        "tooltip": "Close the collector after this many responses."
+                    },
+                    "allowMultipleResponses": {
+                        "type": "toggle",
+                        "index": 8,
+                        "label": "Allow Multiple Responses",
+                        "defaultValue": false,
+                        "tooltip": "Allow respondents to take the survey more than once from the same browser. Not available for email collectors."
+                    },
+                    "anonymousType": {
+                        "type": "select",
+                        "index": 9,
+                        "label": "Anonymous Responses",
+                        "tooltip": "Turns off IP tracking. For email collectors, also removes the respondent's email address and name from the response.",
+                        "options": [
+                            {
+                                "label": "Not anonymous",
+                                "value": "not_anonymous"
+                            },
+                            {
+                                "label": "Partially anonymous",
+                                "value": "partially_anonymous"
+                            },
+                            {
+                                "label": "Fully anonymous",
+                                "value": "fully_anonymous"
+                            }
+                        ]
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "title": "Collector ID",
+                        "example": "431234567"
+                    },
+                    "survey_id": {
+                        "type": "string",
+                        "title": "Survey ID",
+                        "example": "405123456"
+                    },
+                    "type": {
+                        "type": "string",
+                        "title": "Type",
+                        "example": "weblink"
+                    },
+                    "name": {
+                        "type": "string",
+                        "title": "Name",
+                        "example": "Web Link 1"
+                    },
+                    "status": {
+                        "type": "string",
+                        "title": "Status",
+                        "example": "open"
+                    },
+                    "url": {
+                        "type": "string",
+                        "title": "Survey URL",
+                        "example": "https://www.surveymonkey.com/r/2Q3RXZB"
+                    },
+                    "thank_you_message": {
+                        "type": "string",
+                        "title": "Thank You Message",
+                        "example": "Thank you for taking my survey."
+                    },
+                    "disqualification_message": {
+                        "type": "string",
+                        "title": "Disqualification Message",
+                        "example": "Thank you for taking my survey."
+                    },
+                    "disqualification_url": {
+                        "type": "string",
+                        "title": "Disqualification URL",
+                        "example": "https://example.com/disqualified"
+                    },
+                    "close_date": {
+                        "type": "string",
+                        "title": "Close Date",
+                        "example": "2038-01-01T00:00:00+00:00"
+                    },
+                    "closed_page_message": {
+                        "type": "string",
+                        "title": "Closed Page Message",
+                        "example": "This survey is currently closed."
+                    },
+                    "redirect_url": {
+                        "type": "string",
+                        "title": "Redirect URL",
+                        "example": "https://example.com/thanks"
+                    },
+                    "redirect_type": {
+                        "type": "string",
+                        "title": "Redirect Type",
+                        "example": "url"
+                    },
+                    "display_survey_results": {
+                        "type": "boolean",
+                        "title": "Display Survey Results",
+                        "example": false
+                    },
+                    "edit_response_type": {
+                        "type": "string",
+                        "title": "Edit Response Type",
+                        "example": "until_complete"
+                    },
+                    "anonymous_type": {
+                        "type": "string",
+                        "title": "Anonymous Type",
+                        "example": "not_anonymous"
+                    },
+                    "allow_multiple_responses": {
+                        "type": "boolean",
+                        "title": "Allow Multiple Responses",
+                        "example": false
+                    },
+                    "password_enabled": {
+                        "type": "boolean",
+                        "title": "Password Enabled",
+                        "example": false
+                    },
+                    "sender_email": {
+                        "type": "string",
+                        "title": "Sender Email",
+                        "example": "surveys@example.com"
+                    },
+                    "response_limit": {
+                        "type": "integer",
+                        "title": "Response Limit",
+                        "example": 100
+                    },
+                    "date_created": {
+                        "type": "string",
+                        "title": "Date Created",
+                        "example": "2026-03-05T14:30:00+00:00"
+                    },
+                    "date_modified": {
+                        "type": "string",
+                        "title": "Date Modified",
+                        "example": "2026-03-05T14:30:00+00:00"
+                    },
+                    "href": {
+                        "type": "string",
+                        "title": "API URL",
+                        "example": "https://api.surveymonkey.com/v3/collectors/431234567"
+                    }
+                }
+            }
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZmlsbD0iIzAwQkY2RiIgZD0iTTIxLjE2MjcgMTMuMTg0M2EyLjg1MTcgMi44NTE3IDAgMCAwLS42Nzc4LjA4NDFjLS44NDM4LTMuMzE4MS0zLjU0NzgtNS44Mzc2LTYuOTE3Mi02LjQ0NTJhOC4zOTMzIDguMzkzMyAwIDAgMC0uNDQwNy0uMDY2OGMuMDI1OS0uODI1NS4wNjM2LTEuNzc5MSAxLjI3ODEtMi42MzY5bC0uMTkxOC0uNDgzOHMtMi4zNzA4LjczNDktMi42MzkxIDIuNzU5OGMtLjExNzUtLjU1MDctMS4yMjA5LTEuMjQwMy0xLjc2NzMtMS4zNzA3bC0uMjcxNy40Mzg0cy43MjQyLjM2MjEuOTAwOSAxLjM2MWMtMy4zNjkxLjYwNTYtNi4wNzQzIDMuMTIyOS02LjkyMDQgNi40Mzk4LTEuNTE5NC0uMzc2LTMuMDU2LjU1MDgtMy40MzIgMi4wNzAzLS4zNzYgMS41MTk0LjU1MDggMy4wNTYgMi4wNzAzIDMuNDMyYTIuODM0NiAyLjgzNDYgMCAwIDAgMS43MTk1LS4xMTQyIDguNjgyMSA4LjY4MjEgMCAwIDAgLjkyMDMgMS43MTIzbDIuMzUyNC0xLjU4NTJjLS42MzgxLS44MDcxLTEuMDIwNi0xLjk4ODQtMS4wODczLTMuMTczNi0uMDctMS4yOTMxLjI0NDYtMi41NzU1IDEuMDcwMS0zLjMyOTggMS43MDE2LTEuNDQ4MyAzLjU1NjEtLjc4NzcgNC43MTM1LjYwMDJoLjMxMTRjMS4xNjA2LTEuMzg4IDMuMDE3My0yLjA0NzUgNC43MTM1LS42MDAyLjgyNDQuNzU0MyAxLjE0MDEgMi4wMzc4IDEuMDcwMSAzLjMyOTgtLjA2NTYgMS4xODUzLS40NDgxIDIuMzY2NC0xLjA4NzMgMy4xNzM2bDIuMzUyNCAxLjU4NTJhOC42ODU0IDguNjg1NCAwIDAgMCAuOTIyNC0xLjcxMjNjMS40NTUxLjU3NTEgMy4xMDA5LS4xMzg0IDMuNjc2LTEuNTkzNXMtLjEzODQtMy4xMDA5LTEuNTkzNS0zLjY3NmEyLjgzNDkgMi44MzQ5IDAgMCAwLTEuMDQ0OC0uMTk4M3pNMi43ODYxIDE2Ljg0ODJhLjgzNjIuODM2MiAwIDAgMSAwLTEuNjcyNC44NDQyLjg0NDIgMCAwIDEgLjQ2ODguMTQ0NGMuMDA3MS40MzkxLjAzNjkuODc3Ni4wODk0IDEuMzEzNi0uMTQ3Mi4xMzQ2LS4zNzM4LjIzMjktLjU1ODIuMjE0NHptMTguNDI3MyAwYS44MzYxLjgzNjEgMCAwIDEtLjU1ODItLjIxNTUgMTIuNjc5IDEyLjY3OSAwIDAgMCAuMDg5NC0xLjMxMzYuODM1Mi44MzUyIDAgMCAxIDEuMzA0LjY5MjljLjAwNzguNDU3NC0uMzgyMy44NTgxLS44MzUyLjgzNjJ6Ii8+PC9zdmc+"
+}
