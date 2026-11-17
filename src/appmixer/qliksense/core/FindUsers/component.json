@@ -1,0 +1,125 @@
+{
+    "name": "appmixer.qliksense.core.FindUsers",
+    "label": "Find Users",
+    "description": "Find users of the tenant by email, name or status. Returns at most 100 users.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:qliksense"
+    },
+    "quota": {
+        "manager": "appmixer:qliksense",
+        "resources": "reads",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "email": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "type": "string"
+                    },
+                    "outputType": {
+                        "type": "string",
+                        "default": "array"
+                    }
+                }
+            },
+            "inspector": {
+                "inputs": {
+                    "email": {
+                        "type": "text",
+                        "index": 1,
+                        "label": "Email",
+                        "tooltip": "Users whose email contains this text."
+                    },
+                    "name": {
+                        "type": "text",
+                        "index": 2,
+                        "label": "Name",
+                        "tooltip": "Users whose name contains this text."
+                    },
+                    "status": {
+                        "type": "select",
+                        "index": 3,
+                        "label": "Status",
+                        "tooltip": "Only users with this status.",
+                        "options": [
+                            {
+                                "label": "Active",
+                                "value": "active"
+                            },
+                            {
+                                "label": "Invited",
+                                "value": "invited"
+                            },
+                            {
+                                "label": "Disabled",
+                                "value": "disabled"
+                            },
+                            {
+                                "label": "Deleted",
+                                "value": "deleted"
+                            }
+                        ]
+                    },
+                    "outputType": {
+                        "type": "select",
+                        "label": "Output Type",
+                        "index": 4,
+                        "defaultValue": "array",
+                        "tooltip": "Choose whether you want to receive the result set as one complete list, or first item only or one item at a time or stream the items to a file.",
+                        "options": [
+                            {
+                                "label": "First Item Only",
+                                "value": "first"
+                            },
+                            {
+                                "label": "All items at once",
+                                "value": "array"
+                            },
+                            {
+                                "label": "One item at a time",
+                                "value": "object"
+                            },
+                            {
+                                "label": "Store to CSV file",
+                                "value": "file"
+                            }
+                        ]
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "source": {
+                "url": "/component/appmixer/qliksense/core/FindUsers?outPort=out&ignoreAuth=true",
+                "data": {
+                    "properties": {
+                        "generateOutputPortOptions": true
+                    },
+                    "messages": {
+                        "in/outputType": "inputs/in/outputType"
+                    }
+                }
+            }
+        },
+        {
+            "name": "notFound"
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB2aWV3Qm94PSIwIDAgMjQgMjQiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZmlsbD0iIzAwOTg0NSIgZD0ibTIzLjc1MTUgMjAuMTM2Ny0zLjEzLTIuNjMyNmMxLjA4NjItMS43MzA3IDEuNzMwMy0zLjc3NDUgMS43MzAzLTUuOTY1NSAwLTYuMTY4NC01LjAwOC0xMS4xNzY0LTExLjE3Ni0xMS4xNzY0UzAgNS4zNzAyIDAgMTEuNTM4NmMwIDYuMTY4IDUuMDA4IDExLjE3NiAxMS4xNzU5IDExLjE3NiAyLjM5MzQgMCA0LjYyMTYtLjc1NTIgNi40NDQzLTIuMDQzOGwzLjMzMjQgMi43OTg4cy40OTc0LjQyMzYuOTIxLS4wNzM4bDEuOTg4NC0yLjM1NjhjLS4wMTg2IDAgLjM4NjQtLjQ5NjgtLjExMDUtLjkwMjN6bS01LjcwNzgtOC41OThjMCAzLjc5MjYtMy4wNzQ3IDYuODY3Mi02Ljg2NzggNi44NjcyLTMuNzkyNiAwLTYuODY3OC0zLjA3NDYtNi44Njc4LTYuODY3MyAwLTMuNzkzIDMuMDc1Mi02Ljg2NzggNi44Njc4LTYuODY3OCAzLjc5MzEgMCA2Ljg2NzggMy4wNzQ3IDYuODY3OCA2Ljg2Nzh6bS0xMS4yODcgMGMwLTIuNDMwNCAxLjk3MDItNC40MDA2IDQuNDAwNi00LjQwMDYgMi40MzAzIDAgNC40MDA1IDEuOTcwMiA0LjQwMDUgNC40MDA1IDAgMi40MzA0LTEuOTcwMiA0LjQwMDYtNC40MDA1IDQuNDAwNi0yLjQzMDQgMC00LjQwMDUtMS45NzAyLTQuNDAwNS00LjQwMDZ6Ii8+PC9zdmc+"
+}

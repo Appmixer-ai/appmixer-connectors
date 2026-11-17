@@ -1,0 +1,140 @@
+{
+    "name": "appmixer.qliksense.core.CreateSpace",
+    "label": "Create Space",
+    "description": "Create a shared, managed or data space.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:qliksense"
+    },
+    "quota": {
+        "manager": "appmixer:qliksense",
+        "resources": "writes",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string"
+                    },
+                    "type": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "name",
+                    "type"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "name": {
+                        "type": "text",
+                        "index": 1,
+                        "label": "Name",
+                        "tooltip": "The name of the space. It must be unique in the tenant."
+                    },
+                    "type": {
+                        "type": "select",
+                        "index": 2,
+                        "label": "Type",
+                        "defaultValue": "shared",
+                        "tooltip": "Shared spaces are for collaboration, managed spaces for published content, data spaces for data files and connections.",
+                        "options": [
+                            {
+                                "label": "Shared",
+                                "value": "shared"
+                            },
+                            {
+                                "label": "Managed",
+                                "value": "managed"
+                            },
+                            {
+                                "label": "Data",
+                                "value": "data"
+                            }
+                        ]
+                    },
+                    "description": {
+                        "type": "textarea",
+                        "index": 3,
+                        "label": "Description",
+                        "tooltip": "The description of the space."
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "schema": {
+                "type": "object",
+                "required": [
+                    "id",
+                    "name",
+                    "tenantId"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "title": "Space ID",
+                        "example": "62716f4b39b865ece543cd45"
+                    },
+                    "name": {
+                        "type": "string",
+                        "title": "Name",
+                        "example": "Finance"
+                    },
+                    "type": {
+                        "type": "string",
+                        "title": "Type",
+                        "example": "shared"
+                    },
+                    "description": {
+                        "type": "string",
+                        "title": "Description",
+                        "example": "Shared analytics for the finance team."
+                    },
+                    "ownerId": {
+                        "type": "string",
+                        "title": "Owner ID",
+                        "example": "5f8a1c2b3d4e5f6a7b8c9d0e"
+                    },
+                    "tenantId": {
+                        "type": "string",
+                        "title": "Tenant ID",
+                        "example": "xqGQ0k66vSR8f9G7J-vYtHZQkiYrCpct"
+                    },
+                    "createdAt": {
+                        "type": "string",
+                        "title": "Created At",
+                        "example": "2026-11-16T09:00:00.000Z",
+                        "format": "date-time"
+                    },
+                    "createdBy": {
+                        "type": "string",
+                        "title": "Created By",
+                        "example": "5f8a1c2b3d4e5f6a7b8c9d0e"
+                    },
+                    "updatedAt": {
+                        "type": "string",
+                        "title": "Updated At",
+                        "example": "2026-11-16T09:30:00.000Z",
+                        "format": "date-time"
+                    }
+                }
+            }
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB2aWV3Qm94PSIwIDAgMjQgMjQiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZmlsbD0iIzAwOTg0NSIgZD0ibTIzLjc1MTUgMjAuMTM2Ny0zLjEzLTIuNjMyNmMxLjA4NjItMS43MzA3IDEuNzMwMy0zLjc3NDUgMS43MzAzLTUuOTY1NSAwLTYuMTY4NC01LjAwOC0xMS4xNzY0LTExLjE3Ni0xMS4xNzY0UzAgNS4zNzAyIDAgMTEuNTM4NmMwIDYuMTY4IDUuMDA4IDExLjE3NiAxMS4xNzU5IDExLjE3NiAyLjM5MzQgMCA0LjYyMTYtLjc1NTIgNi40NDQzLTIuMDQzOGwzLjMzMjQgMi43OTg4cy40OTc0LjQyMzYuOTIxLS4wNzM4bDEuOTg4NC0yLjM1NjhjLS4wMTg2IDAgLjM4NjQtLjQ5NjgtLjExMDUtLjkwMjN6bS01LjcwNzgtOC41OThjMCAzLjc5MjYtMy4wNzQ3IDYuODY3Mi02Ljg2NzggNi44NjcyLTMuNzkyNiAwLTYuODY3OC0zLjA3NDYtNi44Njc4LTYuODY3MyAwLTMuNzkzIDMuMDc1Mi02Ljg2NzggNi44Njc4LTYuODY3OCAzLjc5MzEgMCA2Ljg2NzggMy4wNzQ3IDYuODY3OCA2Ljg2Nzh6bS0xMS4yODcgMGMwLTIuNDMwNCAxLjk3MDItNC40MDA2IDQuNDAwNi00LjQwMDYgMi40MzAzIDAgNC40MDA1IDEuOTcwMiA0LjQwMDUgNC40MDA1IDAgMi40MzA0LTEuOTcwMiA0LjQwMDYtNC40MDA1IDQuNDAwNi0yLjQzMDQgMC00LjQwMDUtMS45NzAyLTQuNDAwNS00LjQwMDZ6Ii8+PC9zdmc+"
+}

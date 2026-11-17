@@ -1,0 +1,144 @@
+{
+    "name": "appmixer.qliksense.core.MakeApiCall",
+    "label": "Make API Call",
+    "description": "Perform an arbitrary authorized call to the Qlik Cloud REST API of the connected tenant. Provide a path (or a full URL on the tenant host), method, headers, query parameters and body. The Authorization and qlik-api-version headers are added automatically.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:qliksense"
+    },
+    "quota": {
+        "manager": "appmixer:qliksense",
+        "resources": "writes",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "url": {
+                        "type": "string"
+                    },
+                    "method": {
+                        "type": "string",
+                        "enum": [
+                            "GET",
+                            "POST",
+                            "PUT",
+                            "PATCH",
+                            "DELETE"
+                        ]
+                    },
+                    "parameters": {
+                        "type": "string"
+                    },
+                    "body": {
+                        "type": "string"
+                    },
+                    "headers": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "url",
+                    "method"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "url": {
+                        "type": "text",
+                        "index": 1,
+                        "label": "API Endpoint Path",
+                        "tooltip": "A path relative to your tenant, for example <code>/api/v1/spaces</code>. A full URL is accepted only when it points at your Qlik Cloud tenant (<code>https://&lt;tenant&gt;.&lt;region&gt;.qlikcloud.com</code>); any other host is rejected so your API key is never sent elsewhere."
+                    },
+                    "method": {
+                        "type": "select",
+                        "index": 2,
+                        "label": "HTTP Method",
+                        "defaultValue": "GET",
+                        "tooltip": "The HTTP method for the API call.",
+                        "options": [
+                            {
+                                "label": "GET",
+                                "value": "GET"
+                            },
+                            {
+                                "label": "POST",
+                                "value": "POST"
+                            },
+                            {
+                                "label": "PUT",
+                                "value": "PUT"
+                            },
+                            {
+                                "label": "PATCH",
+                                "value": "PATCH"
+                            },
+                            {
+                                "label": "DELETE",
+                                "value": "DELETE"
+                            }
+                        ]
+                    },
+                    "parameters": {
+                        "type": "key-value",
+                        "keyLabel": "Key",
+                        "valueLabel": "Value",
+                        "addLabel": "Add item",
+                        "removeLabel": "Remove item",
+                        "index": 3,
+                        "label": "Query Parameters",
+                        "tooltip": "Optional query parameters, for example <code>limit</code>."
+                    },
+                    "body": {
+                        "type": "textarea",
+                        "index": 4,
+                        "label": "Request Body",
+                        "tooltip": "Optional JSON request body."
+                    },
+                    "headers": {
+                        "type": "key-value",
+                        "keyLabel": "Key",
+                        "valueLabel": "Value",
+                        "addLabel": "Add item",
+                        "removeLabel": "Remove item",
+                        "index": 5,
+                        "label": "Request Headers",
+                        "tooltip": "Optional additional headers. The Authorization and qlik-api-version headers are set automatically."
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "statusCode": {
+                        "type": "integer",
+                        "title": "Status Code",
+                        "example": 200
+                    },
+                    "headers": {
+                        "type": "object",
+                        "title": "Response Headers",
+                        "properties": {}
+                    },
+                    "body": {
+                        "type": "object",
+                        "title": "Response Body",
+                        "properties": {}
+                    }
+                }
+            }
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB2aWV3Qm94PSIwIDAgMjQgMjQiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZmlsbD0iIzAwOTg0NSIgZD0ibTIzLjc1MTUgMjAuMTM2Ny0zLjEzLTIuNjMyNmMxLjA4NjItMS43MzA3IDEuNzMwMy0zLjc3NDUgMS43MzAzLTUuOTY1NSAwLTYuMTY4NC01LjAwOC0xMS4xNzY0LTExLjE3Ni0xMS4xNzY0UzAgNS4zNzAyIDAgMTEuNTM4NmMwIDYuMTY4IDUuMDA4IDExLjE3NiAxMS4xNzU5IDExLjE3NiAyLjM5MzQgMCA0LjYyMTYtLjc1NTIgNi40NDQzLTIuMDQzOGwzLjMzMjQgMi43OTg4cy40OTc0LjQyMzYuOTIxLS4wNzM4bDEuOTg4NC0yLjM1NjhjLS4wMTg2IDAgLjM4NjQtLjQ5NjgtLjExMDUtLjkwMjN6bS01LjcwNzgtOC41OThjMCAzLjc5MjYtMy4wNzQ3IDYuODY3Mi02Ljg2NzggNi44NjcyLTMuNzkyNiAwLTYuODY3OC0zLjA3NDYtNi44Njc4LTYuODY3MyAwLTMuNzkzIDMuMDc1Mi02Ljg2NzggNi44Njc4LTYuODY3OCAzLjc5MzEgMCA2Ljg2NzggMy4wNzQ3IDYuODY3OCA2Ljg2Nzh6bS0xMS4yODcgMGMwLTIuNDMwNCAxLjk3MDItNC40MDA2IDQuNDAwNi00LjQwMDYgMi40MzAzIDAgNC40MDA1IDEuOTcwMiA0LjQwMDUgNC40MDA1IDAgMi40MzA0LTEuOTcwMiA0LjQwMDYtNC40MDA1IDQuNDAwNi0yLjQzMDQgMC00LjQwMDUtMS45NzAyLTQuNDAwNS00LjQwMDZ6Ii8+PC9zdmc+"
+}

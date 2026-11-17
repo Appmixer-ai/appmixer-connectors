@@ -1,0 +1,150 @@
+{
+    "name": "appmixer.qliksense.core.NewApp",
+    "label": "New App",
+    "description": "Triggers when an app is created in Qlik Cloud (also by copying, importing or publishing). Registers a Qlik Cloud webhook while the flow runs.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "trigger": true,
+    "webhook": true,
+    "auth": {
+        "service": "appmixer:qliksense"
+    },
+    "quota": {
+        "manager": "appmixer:qliksense",
+        "resources": "writes",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "properties": {
+        "schema": {
+            "type": "object",
+            "properties": {
+                "spaceId": {
+                    "type": "string"
+                }
+            }
+        },
+        "inspector": {
+            "inputs": {
+                "spaceId": {
+                    "type": "text",
+                    "index": 1,
+                    "label": "Space",
+                    "tooltip": "Only apps in this space. Pick a space, or type the Space ID. Leave empty for all apps you can access.",
+                    "source": {
+                        "url": "/component/appmixer/qliksense/core/FindSpaces?outPort=out",
+                        "data": {
+                            "messages": {
+                                "in/outputType": "array"
+                            },
+                            "properties": {
+                                "isSource": true
+                            },
+                            "transform": "./FindSpaces#toSelectArray"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "outPorts": [
+        {
+            "name": "out",
+            "schema": {
+                "type": "object",
+                "required": [
+                    "id",
+                    "name"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "title": "App ID",
+                        "example": "f34b2a1e-5c7d-4e8f-9a0b-1c2d3e4f5a6b"
+                    },
+                    "name": {
+                        "type": "string",
+                        "title": "Name",
+                        "example": "Sales Dashboard"
+                    },
+                    "description": {
+                        "type": "string",
+                        "title": "Description",
+                        "example": "Quarterly sales by region."
+                    },
+                    "spaceId": {
+                        "type": "string",
+                        "title": "Space ID",
+                        "example": "62716f4b39b865ece543cd45"
+                    },
+                    "ownerId": {
+                        "type": "string",
+                        "title": "Owner ID",
+                        "example": "5f8a1c2b3d4e5f6a7b8c9d0e"
+                    },
+                    "usage": {
+                        "type": "string",
+                        "title": "Usage",
+                        "example": "ANALYTICS"
+                    },
+                    "createdDate": {
+                        "type": "string",
+                        "title": "Created Date",
+                        "example": "2026-11-16T09:12:44.512Z",
+                        "format": "date-time"
+                    },
+                    "modifiedDate": {
+                        "type": "string",
+                        "title": "Modified Date",
+                        "example": "2026-11-16T10:02:11.003Z",
+                        "format": "date-time"
+                    },
+                    "lastReloadTime": {
+                        "type": "string",
+                        "title": "Last Reload Time",
+                        "example": "2026-11-16T10:01:58.940Z",
+                        "format": "date-time"
+                    },
+                    "publishTime": {
+                        "type": "string",
+                        "title": "Publish Time",
+                        "example": "2026-11-16T11:00:00.000Z",
+                        "format": "date-time"
+                    },
+                    "published": {
+                        "type": "boolean",
+                        "title": "Published",
+                        "example": false
+                    },
+                    "originAppId": {
+                        "type": "string",
+                        "title": "Origin App ID",
+                        "example": "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d"
+                    },
+                    "hasSectionAccess": {
+                        "type": "boolean",
+                        "title": "Has Section Access",
+                        "example": false
+                    },
+                    "isDirectQueryMode": {
+                        "type": "boolean",
+                        "title": "Direct Query Mode",
+                        "example": false
+                    },
+                    "encrypted": {
+                        "type": "boolean",
+                        "title": "Encrypted",
+                        "example": true
+                    },
+                    "thumbnail": {
+                        "type": "string",
+                        "title": "Thumbnail",
+                        "example": "/api/v1/apps/f34b2a1e-5c7d-4e8f-9a0b-1c2d3e4f5a6b/media/content/thumbnail.png"
+                    }
+                }
+            }
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB2aWV3Qm94PSIwIDAgMjQgMjQiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZmlsbD0iIzAwOTg0NSIgZD0ibTIzLjc1MTUgMjAuMTM2Ny0zLjEzLTIuNjMyNmMxLjA4NjItMS43MzA3IDEuNzMwMy0zLjc3NDUgMS43MzAzLTUuOTY1NSAwLTYuMTY4NC01LjAwOC0xMS4xNzY0LTExLjE3Ni0xMS4xNzY0UzAgNS4zNzAyIDAgMTEuNTM4NmMwIDYuMTY4IDUuMDA4IDExLjE3NiAxMS4xNzU5IDExLjE3NiAyLjM5MzQgMCA0LjYyMTYtLjc1NTIgNi40NDQzLTIuMDQzOGwzLjMzMjQgMi43OTg4cy40OTc0LjQyMzYuOTIxLS4wNzM4bDEuOTg4NC0yLjM1NjhjLS4wMTg2IDAgLjM4NjQtLjQ5NjgtLjExMDUtLjkwMjN6bS01LjcwNzgtOC41OThjMCAzLjc5MjYtMy4wNzQ3IDYuODY3Mi02Ljg2NzggNi44NjcyLTMuNzkyNiAwLTYuODY3OC0zLjA3NDYtNi44Njc4LTYuODY3MyAwLTMuNzkzIDMuMDc1Mi02Ljg2NzggNi44Njc4LTYuODY3OCAzLjc5MzEgMCA2Ljg2NzggMy4wNzQ3IDYuODY3OCA2Ljg2Nzh6bS0xMS4yODcgMGMwLTIuNDMwNCAxLjk3MDItNC40MDA2IDQuNDAwNi00LjQwMDYgMi40MzAzIDAgNC40MDA1IDEuOTcwMiA0LjQwMDUgNC40MDA1IDAgMi40MzA0LTEuOTcwMiA0LjQwMDYtNC40MDA1IDQuNDAwNi0yLjQzMDQgMC00LjQwMDUtMS45NzAyLTQuNDAwNS00LjQwMDZ6Ii8+PC9zdmc+"
+}
