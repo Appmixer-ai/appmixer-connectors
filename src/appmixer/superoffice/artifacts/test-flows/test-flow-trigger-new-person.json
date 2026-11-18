@@ -1,0 +1,446 @@
+{
+    "name": "E2E SuperOffice - New Person trigger",
+    "description": "Polling trigger NewPerson fires for a record created by the flow.",
+    "notes": "The trigger polls every minute; its first tick only records existing records. The flow waits 1 minute, creates a record and the trigger must report it on a later tick. AfterAll timeout is 300 s.",
+    "flow": {
+        "11c14d9e-566c-45a0-b9f0-152ec6b8dafb": {
+            "type": "appmixer.superoffice.core.NewPerson",
+            "x": 64,
+            "y": 400,
+            "version": "1.0.0",
+            "source": {},
+            "config": {},
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "5ffd6295-b38c-4210-91ea-65e7be64c62c": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {},
+            "config": {},
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "3b29ee60-2499-443c-a161-fa97265b09f7": {
+            "type": "appmixer.utils.timers.Wait",
+            "x": 272,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "5ffd6295-b38c-4210-91ea-65e7be64c62c": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "5ffd6295-b38c-4210-91ea-65e7be64c62c": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "interval": {}
+                                },
+                                "lambda": {
+                                    "interval": "1m"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "7ddd7fdf-fe7b-43bf-bd27-d2771034ca2b": {
+            "type": "appmixer.superoffice.core.CreateCompany",
+            "x": 480,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "3b29ee60-2499-443c-a161-fa97265b09f7": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "3b29ee60-2499-443c-a161-fa97265b09f7": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "name": {
+                                        "82c41579-0d04-4446-8a2f-ec6123cbba1e": {
+                                            "functions": [
+                                                {
+                                                    "name": "g_timestamp"
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "name": "E2E SO Trigger Co {{{82c41579-0d04-4446-8a2f-ec6123cbba1e}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "507f301d-0943-4d19-9fd2-26a4cab2d329": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 688,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "7ddd7fdf-fe7b-43bf-bd27-d2771034ca2b": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "7ddd7fdf-fe7b-43bf-bd27-d2771034ca2b": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "9e1ebaeb-d6c4-4b03-94a3-d15f915a0eaf": {
+                                            "variable": "$.7ddd7fdf-fe7b-43bf-bd27-d2771034ca2b.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{9e1ebaeb-d6c4-4b03-94a3-d15f915a0eaf}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "c0e07aaa-6bb1-45c4-b47d-f65b8553c675": {
+            "type": "appmixer.superoffice.core.CreatePerson",
+            "x": 688,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "7ddd7fdf-fe7b-43bf-bd27-d2771034ca2b": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "7ddd7fdf-fe7b-43bf-bd27-d2771034ca2b": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "companyId": {
+                                        "01361f54-743a-4593-9d24-7b694c9a08f7": {
+                                            "variable": "$.7ddd7fdf-fe7b-43bf-bd27-d2771034ca2b.out.id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "firstName": {},
+                                    "lastName": {}
+                                },
+                                "lambda": {
+                                    "companyId": "{{{01361f54-743a-4593-9d24-7b694c9a08f7}}}",
+                                    "firstName": "Tess",
+                                    "lastName": "Trigger"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "79f4d381-31ff-4480-85be-c7fb4b81675a": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 896,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "c0e07aaa-6bb1-45c4-b47d-f65b8553c675": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "c0e07aaa-6bb1-45c4-b47d-f65b8553c675": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "118c3b7c-fcc6-4e51-aa7c-e2393baab7ca": {
+                                            "variable": "$.c0e07aaa-6bb1-45c4-b47d-f65b8553c675.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{118c3b7c-fcc6-4e51-aa7c-e2393baab7ca}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "f2b84568-5801-4533-81d7-b284c2a7f588": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 272,
+            "y": 400,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "11c14d9e-566c-45a0-b9f0-152ec6b8dafb": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "11c14d9e-566c-45a0-b9f0-152ec6b8dafb": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "b81a1837-c63c-440b-8651-e626c71e82d7": {
+                                            "variable": "$.11c14d9e-566c-45a0-b9f0-152ec6b8dafb.out.id",
+                                            "functions": []
+                                        },
+                                        "069aa088-fe1b-4351-a7ac-e6a9a063adc1": {
+                                            "variable": "$.c0e07aaa-6bb1-45c4-b47d-f65b8553c675.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{b81a1837-c63c-440b-8651-e626c71e82d7}}}",
+                                                "assertion": "equal",
+                                                "expected": "{{{069aa088-fe1b-4351-a7ac-e6a9a063adc1}}}"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "c8ab2c13-891e-4130-9f7f-b7ce08a026d7": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 1104,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "507f301d-0943-4d19-9fd2-26a4cab2d329": [
+                        "out"
+                    ],
+                    "79f4d381-31ff-4480-85be-c7fb4b81675a": [
+                        "out"
+                    ],
+                    "f2b84568-5801-4533-81d7-b284c2a7f588": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 300
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "8290b071-99fd-40b8-83c7-f19d8b9e319c": {
+            "type": "appmixer.superoffice.core.DeletePerson",
+            "x": 1312,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "c8ab2c13-891e-4130-9f7f-b7ce08a026d7": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "c8ab2c13-891e-4130-9f7f-b7ce08a026d7": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "personId": {
+                                        "a5dcf2f6-6be4-48db-9570-355b0fc8a0b7": {
+                                            "variable": "$.c0e07aaa-6bb1-45c4-b47d-f65b8553c675.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "personId": "{{{a5dcf2f6-6be4-48db-9570-355b0fc8a0b7}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "ae3a96ba-4cc1-4e21-90bf-7644d6df0432": {
+            "type": "appmixer.superoffice.core.DeleteCompany",
+            "x": 1520,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "8290b071-99fd-40b8-83c7-f19d8b9e319c": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "8290b071-99fd-40b8-83c7-f19d8b9e319c": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "companyId": {
+                                        "0bd59fcf-6b7b-4f97-a161-44565f4d6c9e": {
+                                            "variable": "$.7ddd7fdf-fe7b-43bf-bd27-d2771034ca2b.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "companyId": "{{{0bd59fcf-6b7b-4f97-a161-44565f4d6c9e}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "d35a13f1-34d4-46cd-8a2f-2e12edd13b5a": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1728,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "ae3a96ba-4cc1-4e21-90bf-7644d6df0432": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "successStoreId": "64f6f1f9193228000754082f",
+                    "failedStoreId": "64f6f1f0193228000754082e"
+                },
+                "transform": {
+                    "in": {
+                        "ae3a96ba-4cc1-4e21-90bf-7644d6df0432": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "eaecf9b9-8fe9-4e2c-b571-24697f86ea04": {
+                                            "variable": "$.c8ab2c13-891e-4130-9f7f-b7ce08a026d7.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E SuperOffice - New Person trigger",
+                                    "result": "{{{eaecf9b9-8fe9-4e2c-b571-24697f86ea04}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        }
+    }
+}

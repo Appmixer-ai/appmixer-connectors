@@ -1,0 +1,563 @@
+{
+    "name": "E2E SuperOffice - projects",
+    "description": "Create, get, update, find and delete a project.",
+    "notes": "Creates its own project named \"E2E SO Project <timestamp>\" and deletes it at the end.",
+    "flow": {
+        "9e7f645c-15a2-47d2-b753-daa9b78834df": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {},
+            "config": {},
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "ba0cdec4-53e2-4312-baf7-9b115ca3918b": {
+            "type": "appmixer.superoffice.core.CreateProject",
+            "x": 272,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "9e7f645c-15a2-47d2-b753-daa9b78834df": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "9e7f645c-15a2-47d2-b753-daa9b78834df": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "name": {
+                                        "c626cb96-8d2c-4fe4-a8e9-069fb04737a8": {
+                                            "functions": [
+                                                {
+                                                    "name": "g_timestamp"
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "description": {},
+                                    "endDate": {
+                                        "06162909-bceb-4dfd-9767-9c9d490765d3": {
+                                            "functions": [
+                                                {
+                                                    "name": "g_now"
+                                                },
+                                                {
+                                                    "name": "g_addTimeSpan",
+                                                    "hashParams": {
+                                                        "minutes": {
+                                                            "value": 43200
+                                                        }
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "name": "E2E SO Project {{{c626cb96-8d2c-4fe4-a8e9-069fb04737a8}}}",
+                                    "description": "Created by an Appmixer E2E test.",
+                                    "endDate": "{{{06162909-bceb-4dfd-9767-9c9d490765d3}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "06435a70-a01c-436c-9ca6-b4035e66faef": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 480,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "ba0cdec4-53e2-4312-baf7-9b115ca3918b": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "ba0cdec4-53e2-4312-baf7-9b115ca3918b": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "81cb5669-b6fd-4db7-a17c-b5c0d3b983b1": {
+                                            "variable": "$.ba0cdec4-53e2-4312-baf7-9b115ca3918b.out.id",
+                                            "functions": []
+                                        },
+                                        "82396982-3fcb-4bb0-863e-f62668ef0b61": {
+                                            "variable": "$.ba0cdec4-53e2-4312-baf7-9b115ca3918b.out.description",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{81cb5669-b6fd-4db7-a17c-b5c0d3b983b1}}}",
+                                                "assertion": "notEmpty"
+                                            },
+                                            {
+                                                "field": "{{{82396982-3fcb-4bb0-863e-f62668ef0b61}}}",
+                                                "assertion": "equal",
+                                                "expected": "Created by an Appmixer E2E test."
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "c11f2497-be6b-4f38-8321-7aacfe9edd2f": {
+            "type": "appmixer.superoffice.core.GetProject",
+            "x": 480,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "ba0cdec4-53e2-4312-baf7-9b115ca3918b": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "ba0cdec4-53e2-4312-baf7-9b115ca3918b": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "projectId": {
+                                        "3f56a5e0-a3ae-4437-850e-c4ac99dbd6aa": {
+                                            "variable": "$.ba0cdec4-53e2-4312-baf7-9b115ca3918b.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "projectId": "{{{3f56a5e0-a3ae-4437-850e-c4ac99dbd6aa}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "51b519fc-225a-4d53-b05c-73d043e62369": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 688,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "c11f2497-be6b-4f38-8321-7aacfe9edd2f": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "c11f2497-be6b-4f38-8321-7aacfe9edd2f": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "d61b0c9f-d47f-4b45-876c-0beada2c8f9f": {
+                                            "variable": "$.c11f2497-be6b-4f38-8321-7aacfe9edd2f.out.name",
+                                            "functions": []
+                                        },
+                                        "fba801f1-820d-4645-b849-5ae6259f85bc": {
+                                            "variable": "$.ba0cdec4-53e2-4312-baf7-9b115ca3918b.out.name",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{d61b0c9f-d47f-4b45-876c-0beada2c8f9f}}}",
+                                                "assertion": "equal",
+                                                "expected": "{{{fba801f1-820d-4645-b849-5ae6259f85bc}}}"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "50e7fdc7-a4bf-42d8-92d9-ceb095bd8b14": {
+            "type": "appmixer.superoffice.core.UpdateProject",
+            "x": 688,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "c11f2497-be6b-4f38-8321-7aacfe9edd2f": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "c11f2497-be6b-4f38-8321-7aacfe9edd2f": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "projectId": {
+                                        "d2d6e6e1-b641-42c0-b25d-a6f25fbc310b": {
+                                            "variable": "$.ba0cdec4-53e2-4312-baf7-9b115ca3918b.out.id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "description": {}
+                                },
+                                "lambda": {
+                                    "projectId": "{{{d2d6e6e1-b641-42c0-b25d-a6f25fbc310b}}}",
+                                    "description": "Updated by an Appmixer E2E test."
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "66785528-1668-4b47-bd70-d1dd006766eb": {
+            "type": "appmixer.superoffice.core.GetProject",
+            "x": 896,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "50e7fdc7-a4bf-42d8-92d9-ceb095bd8b14": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "50e7fdc7-a4bf-42d8-92d9-ceb095bd8b14": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "projectId": {
+                                        "7dba163f-f8fb-41b3-bc1e-c7ecb3477e43": {
+                                            "variable": "$.ba0cdec4-53e2-4312-baf7-9b115ca3918b.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "projectId": "{{{7dba163f-f8fb-41b3-bc1e-c7ecb3477e43}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "label": "GetProjectAfterUpdate"
+        },
+        "8c8cb11b-be32-45eb-a526-997e892b2d7b": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1104,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "66785528-1668-4b47-bd70-d1dd006766eb": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "66785528-1668-4b47-bd70-d1dd006766eb": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "46d0fc50-b5f9-410d-afd8-9fb4318c55c0": {
+                                            "variable": "$.66785528-1668-4b47-bd70-d1dd006766eb.out.description",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{46d0fc50-b5f9-410d-afd8-9fb4318c55c0}}}",
+                                                "assertion": "equal",
+                                                "expected": "Updated by an Appmixer E2E test."
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "e72d53c2-9604-40bb-a3d4-981803fc1820": {
+            "type": "appmixer.superoffice.core.FindProjects",
+            "x": 1104,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "66785528-1668-4b47-bd70-d1dd006766eb": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "66785528-1668-4b47-bd70-d1dd006766eb": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "name": {
+                                        "a22c5164-581b-4bdb-bfd2-021da21c80a5": {
+                                            "variable": "$.ba0cdec4-53e2-4312-baf7-9b115ca3918b.out.name",
+                                            "functions": []
+                                        }
+                                    },
+                                    "outputType": {}
+                                },
+                                "lambda": {
+                                    "name": "{{{a22c5164-581b-4bdb-bfd2-021da21c80a5}}}",
+                                    "outputType": "first"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "a2fad26a-1ea7-4d64-9257-ae1f09fe9268": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1312,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "e72d53c2-9604-40bb-a3d4-981803fc1820": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "e72d53c2-9604-40bb-a3d4-981803fc1820": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "cf519008-8b81-40c6-b6da-2fe2313730a3": {
+                                            "variable": "$.e72d53c2-9604-40bb-a3d4-981803fc1820.out.id",
+                                            "functions": []
+                                        },
+                                        "80070f46-0567-4b76-80db-9be4bab3917e": {
+                                            "variable": "$.ba0cdec4-53e2-4312-baf7-9b115ca3918b.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{cf519008-8b81-40c6-b6da-2fe2313730a3}}}",
+                                                "assertion": "equal",
+                                                "expected": "{{{80070f46-0567-4b76-80db-9be4bab3917e}}}"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "e33ef866-ed6e-42e4-9ed2-d536ac420031": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 1520,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "06435a70-a01c-436c-9ca6-b4035e66faef": [
+                        "out"
+                    ],
+                    "51b519fc-225a-4d53-b05c-73d043e62369": [
+                        "out"
+                    ],
+                    "8c8cb11b-be32-45eb-a526-997e892b2d7b": [
+                        "out"
+                    ],
+                    "a2fad26a-1ea7-4d64-9257-ae1f09fe9268": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 180
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "33e5273e-d9a6-4945-b823-e1ee14812074": {
+            "type": "appmixer.superoffice.core.DeleteProject",
+            "x": 1728,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "e33ef866-ed6e-42e4-9ed2-d536ac420031": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "e33ef866-ed6e-42e4-9ed2-d536ac420031": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "projectId": {
+                                        "2730e564-bd0f-4e77-abc5-14676ee6a1d9": {
+                                            "variable": "$.ba0cdec4-53e2-4312-baf7-9b115ca3918b.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "projectId": "{{{2730e564-bd0f-4e77-abc5-14676ee6a1d9}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "e0faefc7-3bfa-4cf3-8932-18aa5ecdb833": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1936,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "33e5273e-d9a6-4945-b823-e1ee14812074": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "successStoreId": "64f6f1f9193228000754082f",
+                    "failedStoreId": "64f6f1f0193228000754082e"
+                },
+                "transform": {
+                    "in": {
+                        "33e5273e-d9a6-4945-b823-e1ee14812074": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "822b8d84-e3c9-4bea-a0fb-b8d11c45c7e1": {
+                                            "variable": "$.e33ef866-ed6e-42e4-9ed2-d536ac420031.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E SuperOffice - projects",
+                                    "result": "{{{822b8d84-e3c9-4bea-a0fb-b8d11c45c7e1}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        }
+    }
+}
