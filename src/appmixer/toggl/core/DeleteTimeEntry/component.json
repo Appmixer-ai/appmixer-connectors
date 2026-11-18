@@ -1,0 +1,68 @@
+{
+    "name": "appmixer.toggl.core.DeleteTimeEntry",
+    "label": "Delete Time Entry",
+    "description": "Delete a time entry.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:toggl"
+    },
+    "quota": {
+        "manager": "appmixer:toggl",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "workspaceId": {
+                        "type": "string"
+                    },
+                    "timeEntryId": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "timeEntryId"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "workspaceId": {
+                        "type": "text",
+                        "label": "Workspace",
+                        "index": 1,
+                        "tooltip": "Pick a workspace or type its numeric ID. Leave empty to use the default workspace of the connected account. Must be the workspace of the time entry.",
+                        "source": {
+                            "url": "/component/appmixer/toggl/core/ListWorkspaces?outPort=out",
+                            "data": {
+                                "messages": {
+                                    "in/outputType": "array"
+                                },
+                                "properties": {
+                                    "isSource": true
+                                },
+                                "transform": "./ListWorkspaces#toSelectArray"
+                            }
+                        }
+                    },
+                    "timeEntryId": {
+                        "type": "text",
+                        "label": "Time Entry ID",
+                        "index": 2,
+                        "tooltip": "Numeric ID of the time entry to delete."
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        "out"
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZmlsbD0iI0U1N0NEOCIgZD0iTTEyIDBhMTIgMTIgMCAxIDAgMCAyNCAxMiAxMiAwIDAgMCAwLTI0em0tLjg4MyA0LjMyMmgxLjc2NnY4Ljc1N2gtMS43NjZ6bS0uNzQgMi4wNTN2MS43ODlhNC40NDggNC40NDggMCAxIDAgMy4yNDcgMFY2LjM3NWE2LjE0NiA2LjE0NiAwIDEgMS01LjY2OSAxMC41NTIgNi4xNDUgNi4xNDUgMCAwIDEgMi40MjEtMTAuNTUyeiIvPjwvc3ZnPg=="
+}

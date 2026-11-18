@@ -1,0 +1,169 @@
+{
+    "name": "appmixer.toggl.core.FindReportTimeEntries",
+    "label": "Find Report Time Entries",
+    "description": "Search the detailed report of a workspace (Reports API v3) for time entries between two dates, with optional filters. Returns the first page of up to 50 rows. On the Free plan you can only report on your own time.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:toggl"
+    },
+    "quota": {
+        "manager": "appmixer:toggl",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "workspaceId": {
+                        "type": "string"
+                    },
+                    "startDate": {
+                        "type": "string",
+                        "format": "date"
+                    },
+                    "endDate": {
+                        "type": "string",
+                        "format": "date"
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "projectIds": {
+                        "type": "string"
+                    },
+                    "clientIds": {
+                        "type": "string"
+                    },
+                    "userIds": {
+                        "type": "string"
+                    },
+                    "outputType": {
+                        "type": "string",
+                        "default": "array"
+                    }
+                },
+                "required": [
+                    "startDate",
+                    "endDate"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "workspaceId": {
+                        "type": "text",
+                        "label": "Workspace",
+                        "index": 1,
+                        "tooltip": "Pick a workspace or type its numeric ID. Leave empty to use the default workspace of the connected account.",
+                        "source": {
+                            "url": "/component/appmixer/toggl/core/ListWorkspaces?outPort=out",
+                            "data": {
+                                "messages": {
+                                    "in/outputType": "array"
+                                },
+                                "properties": {
+                                    "isSource": true
+                                },
+                                "transform": "./ListWorkspaces#toSelectArray"
+                            }
+                        }
+                    },
+                    "startDate": {
+                        "type": "date-time",
+                        "label": "Start Date",
+                        "index": 2,
+                        "config": {
+                            "enableTime": false
+                        },
+                        "tooltip": "First day of the report (inclusive), evaluated in each user's Toggl time zone."
+                    },
+                    "endDate": {
+                        "type": "date-time",
+                        "label": "End Date",
+                        "index": 3,
+                        "config": {
+                            "enableTime": false
+                        },
+                        "tooltip": "Last day of the report (inclusive)."
+                    },
+                    "description": {
+                        "type": "text",
+                        "label": "Description",
+                        "index": 4,
+                        "tooltip": "Return only time entries with this description."
+                    },
+                    "projectIds": {
+                        "type": "text",
+                        "label": "Project IDs",
+                        "index": 5,
+                        "tooltip": "Comma-separated numeric project IDs."
+                    },
+                    "clientIds": {
+                        "type": "text",
+                        "label": "Client IDs",
+                        "index": 6,
+                        "tooltip": "Comma-separated numeric client IDs."
+                    },
+                    "userIds": {
+                        "type": "text",
+                        "label": "User IDs",
+                        "index": 7,
+                        "tooltip": "Comma-separated numeric user IDs."
+                    },
+                    "outputType": {
+                        "type": "select",
+                        "label": "Output Type",
+                        "index": 8,
+                        "defaultValue": "array",
+                        "tooltip": "Choose whether you want to receive the result set as one complete list, or first item only or one item at a time or stream the items to a file.",
+                        "options": [
+                            {
+                                "label": "First Item Only",
+                                "value": "first"
+                            },
+                            {
+                                "label": "All items at once",
+                                "value": "array"
+                            },
+                            {
+                                "label": "One item at a time",
+                                "value": "object"
+                            },
+                            {
+                                "label": "Store to CSV file",
+                                "value": "file"
+                            }
+                        ]
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "source": {
+                "url": "/component/appmixer/toggl/core/FindReportTimeEntries?outPort=out&ignoreAuth=true",
+                "data": {
+                    "properties": {
+                        "generateOutputPortOptions": true
+                    },
+                    "messages": {
+                        "in/outputType": "inputs/in/outputType",
+                        "in/startDate": "2026-01-01",
+                        "in/endDate": "2026-01-01"
+                    }
+                }
+            }
+        },
+        {
+            "name": "notFound"
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZmlsbD0iI0U1N0NEOCIgZD0iTTEyIDBhMTIgMTIgMCAxIDAgMCAyNCAxMiAxMiAwIDAgMCAwLTI0em0tLjg4MyA0LjMyMmgxLjc2NnY4Ljc1N2gtMS43NjZ6bS0uNzQgMi4wNTN2MS43ODlhNC40NDggNC40NDggMCAxIDAgMy4yNDcgMFY2LjM3NWE2LjE0NiA2LjE0NiAwIDEgMS01LjY2OSAxMC41NTIgNi4xNDUgNi4xNDUgMCAwIDEgMi40MjEtMTAuNTUyeiIvPjwvc3ZnPg=="
+}

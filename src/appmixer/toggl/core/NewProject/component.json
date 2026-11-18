@@ -1,0 +1,121 @@
+{
+    "name": "appmixer.toggl.core.NewProject",
+    "label": "New Project",
+    "description": "Triggers when a project is created in the workspace (Toggl webhook). Registers a webhook subscription when the flow starts and removes it when the flow stops.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "trigger": true,
+    "webhook": true,
+    "tick": true,
+    "auth": {
+        "service": "appmixer:toggl"
+    },
+    "quota": {
+        "manager": "appmixer:toggl",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "properties": {
+        "schema": {
+            "type": "object",
+            "properties": {
+                "workspaceId": {
+                    "type": "string"
+                }
+            }
+        },
+        "inspector": {
+            "inputs": {
+                "workspaceId": {
+                    "type": "text",
+                    "label": "Workspace",
+                    "index": 1,
+                    "tooltip": "Pick a workspace or type its numeric ID. Leave empty to use the default workspace of the connected account.",
+                    "source": {
+                        "url": "/component/appmixer/toggl/core/ListWorkspaces?outPort=out",
+                        "data": {
+                            "messages": {
+                                "in/outputType": "array"
+                            },
+                            "properties": {
+                                "isSource": true
+                            },
+                            "transform": "./ListWorkspaces#toSelectArray"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "outPorts": [
+        {
+            "name": "out",
+            "schema": {
+                "type": "object",
+                "required": [
+                    "id",
+                    "workspace_id",
+                    "name",
+                    "active"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "title": "Project ID",
+                        "example": 203456789
+                    },
+                    "workspace_id": {
+                        "type": "integer",
+                        "title": "Workspace ID",
+                        "example": 1234567
+                    },
+                    "client_id": {
+                        "type": "integer",
+                        "title": "Client ID",
+                        "example": 64123456
+                    },
+                    "name": {
+                        "type": "string",
+                        "title": "Name",
+                        "example": "Website Redesign"
+                    },
+                    "active": {
+                        "type": "boolean",
+                        "title": "Active",
+                        "example": true
+                    },
+                    "is_private": {
+                        "type": "boolean",
+                        "title": "Private",
+                        "example": true
+                    },
+                    "billable": {
+                        "type": "boolean",
+                        "title": "Billable",
+                        "example": false
+                    },
+                    "color": {
+                        "type": "string",
+                        "title": "Color",
+                        "example": "#06aaf5"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "title": "Created At",
+                        "example": "2026-11-18T09:00:00+00:00",
+                        "format": "date-time"
+                    },
+                    "at": {
+                        "type": "string",
+                        "title": "Updated At",
+                        "example": "2026-11-18T09:00:00+00:00",
+                        "format": "date-time"
+                    }
+                }
+            }
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZmlsbD0iI0U1N0NEOCIgZD0iTTEyIDBhMTIgMTIgMCAxIDAgMCAyNCAxMiAxMiAwIDAgMCAwLTI0em0tLjg4MyA0LjMyMmgxLjc2NnY4Ljc1N2gtMS43NjZ6bS0uNzQgMi4wNTN2MS43ODlhNC40NDggNC40NDggMCAxIDAgMy4yNDcgMFY2LjM3NWE2LjE0NiA2LjE0NiAwIDEgMS01LjY2OSAxMC41NTIgNi4xNDUgNi4xNDUgMCAwIDEgMi40MjEtMTAuNTUyeiIvPjwvc3ZnPg=="
+}

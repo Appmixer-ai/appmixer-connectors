@@ -1,0 +1,803 @@
+{
+    "name": "E2E Toggl Track - clients, projects and tasks",
+    "description": "List workspaces, create a client, a project and a task, list projects, read the client with Make API Call, then delete the project and the client.",
+    "flow": {
+        "e7f100a8-33be-4420-9d3d-cd4e6ce390d1": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {},
+            "config": {},
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "e9590f38-0513-47b8-8d64-8148f9fb1179": {
+            "type": "appmixer.toggl.core.ListWorkspaces",
+            "x": 272,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "e7f100a8-33be-4420-9d3d-cd4e6ce390d1": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "e7f100a8-33be-4420-9d3d-cd4e6ce390d1": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "outputType": {}
+                                },
+                                "lambda": {
+                                    "outputType": "first"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "f18078df-1124-4551-9dff-6e427a695925": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 480,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "e9590f38-0513-47b8-8d64-8148f9fb1179": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "e9590f38-0513-47b8-8d64-8148f9fb1179": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "90deb15a-73f4-493a-8c33-1c11b2d5518b": {
+                                            "variable": "$.e9590f38-0513-47b8-8d64-8148f9fb1179.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{90deb15a-73f4-493a-8c33-1c11b2d5518b}}}",
+                                                "assertion": "notEmpty",
+                                                "expected": ""
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "dfd81e51-5198-4453-8987-677ab1ff8bc5": {
+            "type": "appmixer.toggl.core.CreateClient",
+            "x": 688,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "f18078df-1124-4551-9dff-6e427a695925": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "f18078df-1124-4551-9dff-6e427a695925": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "workspaceId": {
+                                        "f2aa4fcb-5203-4c16-82cf-a65753ba1d17": {
+                                            "functions": [],
+                                            "variable": "$.e9590f38-0513-47b8-8d64-8148f9fb1179.out.id"
+                                        }
+                                    },
+                                    "name": {
+                                        "50f60af8-626f-464e-960f-de4adf201de7": {
+                                            "functions": [
+                                                {
+                                                    "name": "g_formatDate",
+                                                    "params": [
+                                                        {
+                                                            "value": "YYYYMMDD-HHmmss"
+                                                        }
+                                                    ]
+                                                }
+                                            ],
+                                            "variable": "$.e7f100a8-33be-4420-9d3d-cd4e6ce390d1.out.started"
+                                        }
+                                    },
+                                    "notes": {}
+                                },
+                                "lambda": {
+                                    "workspaceId": "{{{f2aa4fcb-5203-4c16-82cf-a65753ba1d17}}}",
+                                    "name": "E2E Toggl client {{{50f60af8-626f-464e-960f-de4adf201de7}}}",
+                                    "notes": "Created by an E2E test"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "4b030e4b-7b48-4bac-a890-e5cac489d0ad": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 896,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "dfd81e51-5198-4453-8987-677ab1ff8bc5": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "dfd81e51-5198-4453-8987-677ab1ff8bc5": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "f4ce5ee0-5ce2-40fe-8d86-15c2ec506884": {
+                                            "variable": "$.dfd81e51-5198-4453-8987-677ab1ff8bc5.out.name",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{f4ce5ee0-5ce2-40fe-8d86-15c2ec506884}}}",
+                                                "assertion": "regex",
+                                                "regex": "^E2E Toggl client "
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "f4fc945b-bc6a-4fa1-ac83-1e751934b09f": {
+            "type": "appmixer.toggl.core.CreateProject",
+            "x": 1104,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "4b030e4b-7b48-4bac-a890-e5cac489d0ad": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "4b030e4b-7b48-4bac-a890-e5cac489d0ad": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "workspaceId": {
+                                        "b027a154-65fe-4560-83c3-e28dc90f59c7": {
+                                            "functions": [],
+                                            "variable": "$.e9590f38-0513-47b8-8d64-8148f9fb1179.out.id"
+                                        }
+                                    },
+                                    "name": {
+                                        "f678618c-d099-4e40-b297-3ef660d6566d": {
+                                            "functions": [
+                                                {
+                                                    "name": "g_formatDate",
+                                                    "params": [
+                                                        {
+                                                            "value": "YYYYMMDD-HHmmss"
+                                                        }
+                                                    ]
+                                                }
+                                            ],
+                                            "variable": "$.e7f100a8-33be-4420-9d3d-cd4e6ce390d1.out.started"
+                                        }
+                                    },
+                                    "clientId": {
+                                        "97e969e1-d839-426b-8ffe-c325dec377b6": {
+                                            "functions": [],
+                                            "variable": "$.dfd81e51-5198-4453-8987-677ab1ff8bc5.out.id"
+                                        }
+                                    },
+                                    "isPrivate": {}
+                                },
+                                "lambda": {
+                                    "workspaceId": "{{{b027a154-65fe-4560-83c3-e28dc90f59c7}}}",
+                                    "name": "E2E Toggl project {{{f678618c-d099-4e40-b297-3ef660d6566d}}}",
+                                    "clientId": "{{{97e969e1-d839-426b-8ffe-c325dec377b6}}}",
+                                    "isPrivate": true
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "a2ef63d9-0a59-4172-924d-ef792c9ed051": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1312,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "f4fc945b-bc6a-4fa1-ac83-1e751934b09f": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "f4fc945b-bc6a-4fa1-ac83-1e751934b09f": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "b7632d8c-b10d-421a-98ae-57b464505c1b": {
+                                            "variable": "$.f4fc945b-bc6a-4fa1-ac83-1e751934b09f.out.name",
+                                            "functions": []
+                                        },
+                                        "bfa8de29-adf8-4e68-a61c-6065e76464c6": {
+                                            "variable": "$.f4fc945b-bc6a-4fa1-ac83-1e751934b09f.out.client_id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{b7632d8c-b10d-421a-98ae-57b464505c1b}}}",
+                                                "assertion": "regex",
+                                                "regex": "^E2E Toggl project "
+                                            },
+                                            {
+                                                "field": "{{{bfa8de29-adf8-4e68-a61c-6065e76464c6}}}",
+                                                "assertion": "notEmpty",
+                                                "expected": ""
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "871229e2-5109-4136-bd82-946cea5cc296": {
+            "type": "appmixer.toggl.core.CreateTask",
+            "x": 1520,
+            "y": 400,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "a2ef63d9-0a59-4172-924d-ef792c9ed051": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "a2ef63d9-0a59-4172-924d-ef792c9ed051": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "workspaceId": {
+                                        "b97d9508-9ca1-467f-b0ca-455023d1b50c": {
+                                            "functions": [],
+                                            "variable": "$.e9590f38-0513-47b8-8d64-8148f9fb1179.out.id"
+                                        }
+                                    },
+                                    "projectId": {
+                                        "902c6bf1-2894-48a1-82d1-7b08d1c48883": {
+                                            "functions": [],
+                                            "variable": "$.f4fc945b-bc6a-4fa1-ac83-1e751934b09f.out.id"
+                                        }
+                                    },
+                                    "name": {},
+                                    "estimatedSeconds": {}
+                                },
+                                "lambda": {
+                                    "workspaceId": "{{{b97d9508-9ca1-467f-b0ca-455023d1b50c}}}",
+                                    "projectId": "{{{902c6bf1-2894-48a1-82d1-7b08d1c48883}}}",
+                                    "name": "E2E Toggl task",
+                                    "estimatedSeconds": 3600
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "6d005fd2-5213-473b-9939-4db106ab70b9": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1728,
+            "y": 400,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "871229e2-5109-4136-bd82-946cea5cc296": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "871229e2-5109-4136-bd82-946cea5cc296": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "517b522d-6cac-47e7-adee-f1a337f0207f": {
+                                            "variable": "$.871229e2-5109-4136-bd82-946cea5cc296.out.name",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{517b522d-6cac-47e7-adee-f1a337f0207f}}}",
+                                                "assertion": "equal",
+                                                "expected": "E2E Toggl task"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "837373fd-9064-40e0-a339-11b7f3789665": {
+            "type": "appmixer.toggl.core.ListProjects",
+            "x": 1936,
+            "y": 528,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "6d005fd2-5213-473b-9939-4db106ab70b9": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "6d005fd2-5213-473b-9939-4db106ab70b9": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "workspaceId": {
+                                        "9032eed1-a474-46ee-b49b-44f476fa1378": {
+                                            "functions": [],
+                                            "variable": "$.e9590f38-0513-47b8-8d64-8148f9fb1179.out.id"
+                                        }
+                                    },
+                                    "outputType": {}
+                                },
+                                "lambda": {
+                                    "workspaceId": "{{{9032eed1-a474-46ee-b49b-44f476fa1378}}}",
+                                    "outputType": "first"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "6842b75f-5749-4e5d-887c-d4dd8c6ad807": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 2144,
+            "y": 528,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "837373fd-9064-40e0-a339-11b7f3789665": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "837373fd-9064-40e0-a339-11b7f3789665": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "b99b9d5d-ac67-4a98-a163-04be3023dcd6": {
+                                            "variable": "$.837373fd-9064-40e0-a339-11b7f3789665.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{b99b9d5d-ac67-4a98-a163-04be3023dcd6}}}",
+                                                "assertion": "notEmpty",
+                                                "expected": ""
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "8700e787-1ff8-4c62-9652-4428a3feb5d7": {
+            "type": "appmixer.toggl.core.MakeApiCall",
+            "x": 2352,
+            "y": 656,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "6842b75f-5749-4e5d-887c-d4dd8c6ad807": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "6842b75f-5749-4e5d-887c-d4dd8c6ad807": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "url": {
+                                        "0dc01d19-746a-4737-8c3b-a71c1d98f2d7": {
+                                            "functions": [],
+                                            "variable": "$.e9590f38-0513-47b8-8d64-8148f9fb1179.out.id"
+                                        },
+                                        "246405dc-bdb8-45be-a253-f71079d9ec2b": {
+                                            "functions": [],
+                                            "variable": "$.dfd81e51-5198-4453-8987-677ab1ff8bc5.out.id"
+                                        }
+                                    },
+                                    "method": {},
+                                    "headers": {}
+                                },
+                                "lambda": {
+                                    "url": "/workspaces/{{{0dc01d19-746a-4737-8c3b-a71c1d98f2d7}}}/clients/{{{246405dc-bdb8-45be-a253-f71079d9ec2b}}}",
+                                    "method": "GET",
+                                    "headers": "{\"Accept\": \"application/json\"}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "d5209748-e149-43e7-8e9e-f839798482e8": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 2560,
+            "y": 656,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "8700e787-1ff8-4c62-9652-4428a3feb5d7": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "8700e787-1ff8-4c62-9652-4428a3feb5d7": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "a553737f-82c8-4a50-88b6-0e6ea861c541": {
+                                            "variable": "$.8700e787-1ff8-4c62-9652-4428a3feb5d7.out.statusCode",
+                                            "functions": []
+                                        },
+                                        "5e337768-32ef-4dce-b1dc-596ea0de1157": {
+                                            "variable": "$.8700e787-1ff8-4c62-9652-4428a3feb5d7.out.body",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$.name"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{a553737f-82c8-4a50-88b6-0e6ea861c541}}}",
+                                                "assertion": "equal",
+                                                "expected": "200"
+                                            },
+                                            {
+                                                "field": "{{{5e337768-32ef-4dce-b1dc-596ea0de1157}}}",
+                                                "assertion": "regex",
+                                                "regex": "^E2E Toggl client "
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "5aa61d4d-21bd-4c7e-ac56-097313fac62f": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 2768,
+            "y": 656,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "f18078df-1124-4551-9dff-6e427a695925": [
+                        "out"
+                    ],
+                    "4b030e4b-7b48-4bac-a890-e5cac489d0ad": [
+                        "out"
+                    ],
+                    "a2ef63d9-0a59-4172-924d-ef792c9ed051": [
+                        "out"
+                    ],
+                    "6d005fd2-5213-473b-9939-4db106ab70b9": [
+                        "out"
+                    ],
+                    "6842b75f-5749-4e5d-887c-d4dd8c6ad807": [
+                        "out"
+                    ],
+                    "d5209748-e149-43e7-8e9e-f839798482e8": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 180
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "92647cc6-d7f7-4682-8afd-b88bc5d1295e": {
+            "type": "appmixer.toggl.core.MakeApiCall",
+            "x": 2976,
+            "y": 656,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "5aa61d4d-21bd-4c7e-ac56-097313fac62f": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "5aa61d4d-21bd-4c7e-ac56-097313fac62f": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "url": {
+                                        "7b258beb-6b4d-4d4f-adec-f506d3de8a06": {
+                                            "functions": [],
+                                            "variable": "$.e9590f38-0513-47b8-8d64-8148f9fb1179.out.id"
+                                        },
+                                        "ce512656-4628-4645-a1ad-b7967c277e95": {
+                                            "functions": [],
+                                            "variable": "$.f4fc945b-bc6a-4fa1-ac83-1e751934b09f.out.id"
+                                        }
+                                    },
+                                    "method": {}
+                                },
+                                "lambda": {
+                                    "url": "/workspaces/{{{7b258beb-6b4d-4d4f-adec-f506d3de8a06}}}/projects/{{{ce512656-4628-4645-a1ad-b7967c277e95}}}",
+                                    "method": "DELETE"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "12e28e4d-d50d-431c-94e9-79841bfa9763": {
+            "type": "appmixer.toggl.core.MakeApiCall",
+            "x": 3184,
+            "y": 656,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "92647cc6-d7f7-4682-8afd-b88bc5d1295e": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "92647cc6-d7f7-4682-8afd-b88bc5d1295e": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "url": {
+                                        "fff11ba3-7b99-43b8-986c-c2a0f42cd994": {
+                                            "functions": [],
+                                            "variable": "$.e9590f38-0513-47b8-8d64-8148f9fb1179.out.id"
+                                        },
+                                        "e7711173-894f-4cc8-b312-36c1950d454f": {
+                                            "functions": [],
+                                            "variable": "$.dfd81e51-5198-4453-8987-677ab1ff8bc5.out.id"
+                                        }
+                                    },
+                                    "method": {}
+                                },
+                                "lambda": {
+                                    "url": "/workspaces/{{{fff11ba3-7b99-43b8-986c-c2a0f42cd994}}}/clients/{{{e7711173-894f-4cc8-b312-36c1950d454f}}}",
+                                    "method": "DELETE"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "a3093a49-b018-4b5b-b54c-dc6764772ba2": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 3392,
+            "y": 656,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "12e28e4d-d50d-431c-94e9-79841bfa9763": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "12e28e4d-d50d-431c-94e9-79841bfa9763": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "39a93cd8-7458-4bd2-b86b-076841eb8a81": {
+                                            "functions": [],
+                                            "variable": "$.5aa61d4d-21bd-4c7e-ac56-097313fac62f.out"
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E Toggl Track - clients, projects and tasks",
+                                    "result": "{{{39a93cd8-7458-4bd2-b86b-076841eb8a81}}}"
+                                }
+                            }
+                        }
+                    }
+                },
+                "properties": {
+                    "successStoreId": "64f6f1f9193228000754082f",
+                    "failedStoreId": "64f6f1f0193228000754082e"
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        }
+    },
+    "notes": {
+        "4f5e2dc2-800b-4b15-aa47-226d2d691810": {
+            "x": 64,
+            "y": 520,
+            "width": 672,
+            "height": 200,
+            "content": "## ⚠️ Test data assumption\n\nTasks are a paid Toggl Track feature: run this flow in a workspace on a paid plan or in the 30-day trial. The flow uses the first workspace of the account."
+        }
+    }
+}

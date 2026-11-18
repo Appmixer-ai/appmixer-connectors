@@ -1,0 +1,151 @@
+{
+    "name": "appmixer.toggl.core.UpdateTimeEntry",
+    "label": "Update Time Entry",
+    "description": "Update a time entry. Only the fields you fill in are changed.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:toggl"
+    },
+    "quota": {
+        "manager": "appmixer:toggl",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "workspaceId": {
+                        "type": "string"
+                    },
+                    "timeEntryId": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "start": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "stop": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "projectId": {
+                        "type": "string"
+                    },
+                    "taskId": {
+                        "type": "string"
+                    },
+                    "billable": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "timeEntryId"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "workspaceId": {
+                        "type": "text",
+                        "label": "Workspace",
+                        "index": 1,
+                        "tooltip": "Pick a workspace or type its numeric ID. Leave empty to use the default workspace of the connected account. Must be the workspace of the time entry.",
+                        "source": {
+                            "url": "/component/appmixer/toggl/core/ListWorkspaces?outPort=out",
+                            "data": {
+                                "messages": {
+                                    "in/outputType": "array"
+                                },
+                                "properties": {
+                                    "isSource": true
+                                },
+                                "transform": "./ListWorkspaces#toSelectArray"
+                            }
+                        }
+                    },
+                    "timeEntryId": {
+                        "type": "text",
+                        "label": "Time Entry ID",
+                        "index": 2,
+                        "tooltip": "Numeric ID of the time entry to update."
+                    },
+                    "description": {
+                        "type": "text",
+                        "label": "Description",
+                        "index": 3,
+                        "tooltip": "New description."
+                    },
+                    "start": {
+                        "type": "date-time",
+                        "label": "Start",
+                        "index": 4,
+                        "tooltip": "New start time."
+                    },
+                    "stop": {
+                        "type": "date-time",
+                        "label": "Stop",
+                        "index": 5,
+                        "tooltip": "New stop time."
+                    },
+                    "projectId": {
+                        "type": "text",
+                        "label": "Project",
+                        "index": 6,
+                        "tooltip": "Pick a project or type its numeric ID.",
+                        "source": {
+                            "url": "/component/appmixer/toggl/core/ListProjects?outPort=out",
+                            "data": {
+                                "messages": {
+                                    "in/workspaceId": "inputs/in/workspaceId",
+                                    "in/outputType": "array"
+                                },
+                                "properties": {
+                                    "isSource": true
+                                },
+                                "transform": "./ListProjects#toSelectArray"
+                            }
+                        }
+                    },
+                    "taskId": {
+                        "type": "text",
+                        "label": "Task ID",
+                        "index": 7,
+                        "tooltip": "Numeric ID of a task of the project."
+                    },
+                    "billable": {
+                        "type": "select",
+                        "label": "Billable",
+                        "index": 8,
+                        "tooltip": "Change the billable flag (paid plans). Leave unchanged to keep it.",
+                        "options": [
+                            {
+                                "label": "Unchanged",
+                                "value": ""
+                            },
+                            {
+                                "label": "Billable",
+                                "value": "true"
+                            },
+                            {
+                                "label": "Not billable",
+                                "value": "false"
+                            }
+                        ]
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        "out"
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZmlsbD0iI0U1N0NEOCIgZD0iTTEyIDBhMTIgMTIgMCAxIDAgMCAyNCAxMiAxMiAwIDAgMCAwLTI0em0tLjg4MyA0LjMyMmgxLjc2NnY4Ljc1N2gtMS43NjZ6bS0uNzQgMi4wNTN2MS43ODlhNC40NDggNC40NDggMCAxIDAgMy4yNDcgMFY2LjM3NWE2LjE0NiA2LjE0NiAwIDEgMS01LjY2OSAxMC41NTIgNi4xNDUgNi4xNDUgMCAwIDEgMi40MjEtMTAuNTUyeiIvPjwvc3ZnPg=="
+}

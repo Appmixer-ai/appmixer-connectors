@@ -1,0 +1,286 @@
+{
+    "name": "E2E Toggl Track - New Project trigger",
+    "description": "A project created after the webhook subscription is validated fires New Project.",
+    "flow": {
+        "e4c6d245-98a6-4c5f-ac5f-60dc2d30edf3": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {},
+            "config": {},
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "c2135878-3152-40c3-b14c-c070127bb158": {
+            "type": "appmixer.utils.timers.Wait",
+            "x": 272,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "e4c6d245-98a6-4c5f-ac5f-60dc2d30edf3": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "e4c6d245-98a6-4c5f-ac5f-60dc2d30edf3": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "interval": {}
+                                },
+                                "lambda": {
+                                    "interval": "3m"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "9e1eca94-f242-4d42-87f1-a88fadcab274": {
+            "type": "appmixer.toggl.core.CreateProject",
+            "x": 480,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "c2135878-3152-40c3-b14c-c070127bb158": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "c2135878-3152-40c3-b14c-c070127bb158": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "name": {
+                                        "0e9aab46-e2f8-4759-8c82-88b6a6b56f77": {
+                                            "functions": [
+                                                {
+                                                    "name": "g_formatDate",
+                                                    "params": [
+                                                        {
+                                                            "value": "YYYYMMDD-HHmmss"
+                                                        }
+                                                    ]
+                                                }
+                                            ],
+                                            "variable": "$.e4c6d245-98a6-4c5f-ac5f-60dc2d30edf3.out.started"
+                                        }
+                                    },
+                                    "isPrivate": {}
+                                },
+                                "lambda": {
+                                    "name": "E2E Toggl webhook project {{{0e9aab46-e2f8-4759-8c82-88b6a6b56f77}}}",
+                                    "isPrivate": true
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "3a9b0a58-c0c6-4f9d-a022-3e0d03201179": {
+            "type": "appmixer.toggl.core.NewProject",
+            "x": 64,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {},
+            "config": {
+                "properties": {}
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "b426bef4-164b-42e1-910a-a90356c28c02": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 272,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "3a9b0a58-c0c6-4f9d-a022-3e0d03201179": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "3a9b0a58-c0c6-4f9d-a022-3e0d03201179": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "1befea51-102c-4586-a0ac-a8f8841420fd": {
+                                            "variable": "$.3a9b0a58-c0c6-4f9d-a022-3e0d03201179.out.name",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{1befea51-102c-4586-a0ac-a8f8841420fd}}}",
+                                                "assertion": "regex",
+                                                "regex": "^E2E Toggl webhook project "
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "62eb1d27-8688-42a0-aa76-d9fef778a55f": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 480,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "b426bef4-164b-42e1-910a-a90356c28c02": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 420
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "8034a14f-6c65-4868-9428-75fccf20fdb8": {
+            "type": "appmixer.toggl.core.MakeApiCall",
+            "x": 688,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "62eb1d27-8688-42a0-aa76-d9fef778a55f": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "62eb1d27-8688-42a0-aa76-d9fef778a55f": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "url": {
+                                        "8a869a9b-ca2b-44c5-a9cd-b42e2ab71752": {
+                                            "functions": [],
+                                            "variable": "$.3a9b0a58-c0c6-4f9d-a022-3e0d03201179.out.workspace_id"
+                                        },
+                                        "1ed2e1e0-9b77-44e6-986e-c44e7247943e": {
+                                            "functions": [],
+                                            "variable": "$.3a9b0a58-c0c6-4f9d-a022-3e0d03201179.out.id"
+                                        }
+                                    },
+                                    "method": {}
+                                },
+                                "lambda": {
+                                    "url": "/workspaces/{{{8a869a9b-ca2b-44c5-a9cd-b42e2ab71752}}}/projects/{{{1ed2e1e0-9b77-44e6-986e-c44e7247943e}}}",
+                                    "method": "DELETE"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "5d853217-925b-4381-85fe-d10c6e1680e9": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 896,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "8034a14f-6c65-4868-9428-75fccf20fdb8": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "8034a14f-6c65-4868-9428-75fccf20fdb8": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "920e813a-93b2-469a-a915-345069123dd0": {
+                                            "functions": [],
+                                            "variable": "$.62eb1d27-8688-42a0-aa76-d9fef778a55f.out"
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E Toggl Track - New Project trigger",
+                                    "result": "{{{920e813a-93b2-469a-a915-345069123dd0}}}"
+                                }
+                            }
+                        }
+                    }
+                },
+                "properties": {
+                    "successStoreId": "64f6f1f9193228000754082f",
+                    "failedStoreId": "64f6f1f0193228000754082e"
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        }
+    },
+    "notes": {
+        "2a1aec38-6408-4563-b266-035dad2de691": {
+            "x": 64,
+            "y": 400,
+            "width": 672,
+            "height": 240,
+            "content": "## ⚠️ Webhook trigger\n\nThe trigger creates a Toggl webhook subscription when the flow starts; Toggl must validate it (a PING answered by the trigger) before it sends events, so the provoking action waits 3 minutes. Do not remove the Wait. Toggl limits subscriptions per workspace (Free: 1, Starter: 2, Premium: 3): run the trigger flows one after another, and remove leftover subscriptions of stopped flows if the start fails with a limit error."
+        }
+    }
+}

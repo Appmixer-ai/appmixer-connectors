@@ -1,0 +1,170 @@
+{
+    "name": "appmixer.toggl.core.CreateTask",
+    "label": "Create Task",
+    "description": "Create a task in a project. Tasks need a paid Toggl Track plan.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:toggl"
+    },
+    "quota": {
+        "manager": "appmixer:toggl",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "workspaceId": {
+                        "type": "string"
+                    },
+                    "projectId": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "estimatedSeconds": {
+                        "type": "integer"
+                    },
+                    "active": {
+                        "type": "boolean"
+                    }
+                },
+                "required": [
+                    "projectId",
+                    "name"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "workspaceId": {
+                        "type": "text",
+                        "label": "Workspace",
+                        "index": 1,
+                        "tooltip": "Pick a workspace or type its numeric ID. Leave empty to use the default workspace of the connected account.",
+                        "source": {
+                            "url": "/component/appmixer/toggl/core/ListWorkspaces?outPort=out",
+                            "data": {
+                                "messages": {
+                                    "in/outputType": "array"
+                                },
+                                "properties": {
+                                    "isSource": true
+                                },
+                                "transform": "./ListWorkspaces#toSelectArray"
+                            }
+                        }
+                    },
+                    "projectId": {
+                        "type": "text",
+                        "label": "Project",
+                        "index": 2,
+                        "tooltip": "Pick the project or type its numeric ID.",
+                        "source": {
+                            "url": "/component/appmixer/toggl/core/ListProjects?outPort=out",
+                            "data": {
+                                "messages": {
+                                    "in/workspaceId": "inputs/in/workspaceId",
+                                    "in/outputType": "array"
+                                },
+                                "properties": {
+                                    "isSource": true
+                                },
+                                "transform": "./ListProjects#toSelectArray"
+                            }
+                        }
+                    },
+                    "name": {
+                        "type": "text",
+                        "label": "Name",
+                        "index": 3,
+                        "tooltip": "Task name."
+                    },
+                    "estimatedSeconds": {
+                        "type": "number",
+                        "label": "Estimated Seconds",
+                        "index": 4,
+                        "tooltip": "Estimated time in seconds. Optional."
+                    },
+                    "active": {
+                        "type": "toggle",
+                        "label": "Active",
+                        "index": 5,
+                        "defaultValue": true,
+                        "tooltip": "Turn off to create the task as done."
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "schema": {
+                "type": "object",
+                "required": [
+                    "id",
+                    "name",
+                    "project_id",
+                    "workspace_id",
+                    "active"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "title": "Task ID",
+                        "example": 98765432
+                    },
+                    "name": {
+                        "type": "string",
+                        "title": "Name",
+                        "example": "Design homepage"
+                    },
+                    "workspace_id": {
+                        "type": "integer",
+                        "title": "Workspace ID",
+                        "example": 1234567
+                    },
+                    "project_id": {
+                        "type": "integer",
+                        "title": "Project ID",
+                        "example": 203456789
+                    },
+                    "user_id": {
+                        "type": "integer",
+                        "title": "User ID",
+                        "example": 5551234
+                    },
+                    "active": {
+                        "type": "boolean",
+                        "title": "Active",
+                        "example": true
+                    },
+                    "estimated_seconds": {
+                        "type": "integer",
+                        "title": "Estimated Seconds",
+                        "example": 7200
+                    },
+                    "tracked_seconds": {
+                        "type": "integer",
+                        "title": "Tracked Seconds",
+                        "example": 0
+                    },
+                    "at": {
+                        "type": "string",
+                        "title": "Updated At",
+                        "example": "2026-11-18T09:00:00+00:00",
+                        "format": "date-time"
+                    }
+                }
+            }
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZmlsbD0iI0U1N0NEOCIgZD0iTTEyIDBhMTIgMTIgMCAxIDAgMCAyNCAxMiAxMiAwIDAgMCAwLTI0em0tLjg4MyA0LjMyMmgxLjc2NnY4Ljc1N2gtMS43NjZ6bS0uNzQgMi4wNTN2MS43ODlhNC40NDggNC40NDggMCAxIDAgMy4yNDcgMFY2LjM3NWE2LjE0NiA2LjE0NiAwIDEgMS01LjY2OSAxMC41NTIgNi4xNDUgNi4xNDUgMCAwIDEgMi40MjEtMTAuNTUyeiIvPjwvc3ZnPg=="
+}

@@ -1,0 +1,147 @@
+{
+    "name": "appmixer.toggl.core.NewTimeEntry",
+    "label": "New Time Entry",
+    "description": "Triggers when a time entry is created in the workspace (Toggl webhook). Registers a webhook subscription when the flow starts and removes it when the flow stops. Toggl limits webhook subscriptions per workspace by plan (Free: 1).",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "trigger": true,
+    "webhook": true,
+    "tick": true,
+    "auth": {
+        "service": "appmixer:toggl"
+    },
+    "quota": {
+        "manager": "appmixer:toggl",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "properties": {
+        "schema": {
+            "type": "object",
+            "properties": {
+                "workspaceId": {
+                    "type": "string"
+                }
+            }
+        },
+        "inspector": {
+            "inputs": {
+                "workspaceId": {
+                    "type": "text",
+                    "label": "Workspace",
+                    "index": 1,
+                    "tooltip": "Pick a workspace or type its numeric ID. Leave empty to use the default workspace of the connected account.",
+                    "source": {
+                        "url": "/component/appmixer/toggl/core/ListWorkspaces?outPort=out",
+                        "data": {
+                            "messages": {
+                                "in/outputType": "array"
+                            },
+                            "properties": {
+                                "isSource": true
+                            },
+                            "transform": "./ListWorkspaces#toSelectArray"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "outPorts": [
+        {
+            "name": "out",
+            "schema": {
+                "type": "object",
+                "required": [
+                    "id",
+                    "workspace_id",
+                    "start",
+                    "duration"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "title": "Time Entry ID",
+                        "example": 4123456789
+                    },
+                    "workspace_id": {
+                        "type": "integer",
+                        "title": "Workspace ID",
+                        "example": 1234567
+                    },
+                    "project_id": {
+                        "type": "integer",
+                        "title": "Project ID",
+                        "example": 203456789
+                    },
+                    "task_id": {
+                        "type": "integer",
+                        "title": "Task ID",
+                        "example": 98765432
+                    },
+                    "user_id": {
+                        "type": "integer",
+                        "title": "User ID",
+                        "example": 5551234
+                    },
+                    "description": {
+                        "type": "string",
+                        "title": "Description",
+                        "example": "Write release notes"
+                    },
+                    "start": {
+                        "type": "string",
+                        "title": "Start",
+                        "example": "2026-11-18T09:00:00+00:00",
+                        "format": "date-time"
+                    },
+                    "stop": {
+                        "type": "string",
+                        "title": "Stop",
+                        "example": "2026-11-18T10:30:00+00:00",
+                        "format": "date-time"
+                    },
+                    "duration": {
+                        "type": "integer",
+                        "title": "Duration (seconds)",
+                        "example": 5400
+                    },
+                    "billable": {
+                        "type": "boolean",
+                        "title": "Billable",
+                        "example": false
+                    },
+                    "tags": {
+                        "type": "array",
+                        "title": "Tags",
+                        "items": {
+                            "type": "string"
+                        },
+                        "example": [
+                            "release"
+                        ]
+                    },
+                    "tag_ids": {
+                        "type": "array",
+                        "title": "Tag IDs",
+                        "items": {
+                            "type": "integer"
+                        },
+                        "example": [
+                            16123456
+                        ]
+                    },
+                    "at": {
+                        "type": "string",
+                        "title": "Updated At",
+                        "example": "2026-11-18T10:30:05+00:00",
+                        "format": "date-time"
+                    }
+                }
+            }
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZmlsbD0iI0U1N0NEOCIgZD0iTTEyIDBhMTIgMTIgMCAxIDAgMCAyNCAxMiAxMiAwIDAgMCAwLTI0em0tLjg4MyA0LjMyMmgxLjc2NnY4Ljc1N2gtMS43NjZ6bS0uNzQgMi4wNTN2MS43ODlhNC40NDggNC40NDggMCAxIDAgMy4yNDcgMFY2LjM3NWE2LjE0NiA2LjE0NiAwIDEgMS01LjY2OSAxMC41NTIgNi4xNDUgNi4xNDUgMCAwIDEgMi40MjEtMTAuNTUyeiIvPjwvc3ZnPg=="
+}
