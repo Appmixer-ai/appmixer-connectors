@@ -1,6 +1,6 @@
 {
-    "name": "E2E Toggl Track - Time Entry Updated trigger",
-    "description": "Updating a time entry after the webhook subscription is validated fires Time Entry Updated.",
+    "name": "E2E Toggl - Time Entry Updated trigger",
+    "description": "Updating a time entry after the first check fires Time Entry Updated.",
     "flow": {
         "1fd40f4d-6f46-464a-99ff-9def7d4e915c": {
             "type": "appmixer.utils.controls.OnStart",
@@ -84,7 +84,7 @@
                                     }
                                 },
                                 "lambda": {
-                                    "description": "E2E Toggl webhook {{{e4cb851f-e994-403d-9472-9952c397136b}}}",
+                                    "description": "E2E Toggl trigger {{{e4cb851f-e994-403d-9472-9952c397136b}}}",
                                     "start": "{{{b3fa9059-c2ef-4443-9b21-5c5a7626ef5e}}}",
                                     "stop": "{{{1bdd10a6-8dc0-4ea1-8b42-0552eb232cca}}}"
                                 }
@@ -120,7 +120,7 @@
                                     "interval": {}
                                 },
                                 "lambda": {
-                                    "interval": "3m"
+                                    "interval": "2m"
                                 }
                             }
                         }
@@ -151,12 +151,6 @@
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
-                                    "workspaceId": {
-                                        "df92b78f-8a0a-484f-bf73-8060759df6a7": {
-                                            "functions": [],
-                                            "variable": "$.bafd9963-e5d2-49ed-a2d2-6fe8bc7a82dd.out.workspace_id"
-                                        }
-                                    },
                                     "timeEntryId": {
                                         "ccc9d298-6032-498b-a423-58551f2ebc69": {
                                             "functions": [],
@@ -180,9 +174,8 @@
                                     }
                                 },
                                 "lambda": {
-                                    "workspaceId": "{{{df92b78f-8a0a-484f-bf73-8060759df6a7}}}",
                                     "timeEntryId": "{{{ccc9d298-6032-498b-a423-58551f2ebc69}}}",
-                                    "description": "E2E Toggl webhook updated {{{6a6ff1a8-877c-4f41-9439-677796aaa3cc}}}"
+                                    "description": "E2E Toggl trigger updated {{{6a6ff1a8-877c-4f41-9439-677796aaa3cc}}}"
                                 }
                             }
                         }
@@ -240,7 +233,7 @@
                                             {
                                                 "field": "{{{7702d1c3-c759-4ce9-8a35-dc7b706f5599}}}",
                                                 "assertion": "regex",
-                                                "regex": "^E2E Toggl webhook updated "
+                                                "regex": "^E2E Toggl trigger updated "
                                             }
                                         ]
                                     }
@@ -269,7 +262,7 @@
             },
             "config": {
                 "properties": {
-                    "timeout": 420
+                    "timeout": 720
                 }
             },
             "errorHandling": {
@@ -296,12 +289,6 @@
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
-                                    "workspaceId": {
-                                        "d38c40e7-f3b4-41b1-9c71-b8bbadf4e977": {
-                                            "functions": [],
-                                            "variable": "$.79b421e2-cf5c-4e82-b6ff-f8b93d84a8c3.out.workspace_id"
-                                        }
-                                    },
                                     "timeEntryId": {
                                         "7bc23016-9fb1-4151-893e-cd2693c6e443": {
                                             "functions": [],
@@ -310,7 +297,6 @@
                                     }
                                 },
                                 "lambda": {
-                                    "workspaceId": "{{{d38c40e7-f3b4-41b1-9c71-b8bbadf4e977}}}",
                                     "timeEntryId": "{{{7bc23016-9fb1-4151-893e-cd2693c6e443}}}"
                                 }
                             }
@@ -353,7 +339,7 @@
                                 },
                                 "lambda": {
                                     "recipients": "test@appmixer.ai",
-                                    "testCase": "E2E Toggl Track - Time Entry Updated trigger",
+                                    "testCase": "E2E Toggl - Time Entry Updated trigger",
                                     "result": "{{{2dec3bcc-76f3-4fcd-b6fc-c77700b9b559}}}"
                                 }
                             }
@@ -377,7 +363,7 @@
             "y": 400,
             "width": 672,
             "height": 240,
-            "content": "## ⚠️ Webhook trigger\n\nThe trigger creates a Toggl webhook subscription when the flow starts; Toggl must validate it (a PING answered by the trigger) before it sends events, so the provoking action waits 3 minutes. Do not remove the Wait. Toggl limits subscriptions per workspace (Free: 1, Starter: 2, Premium: 3): run the trigger flows one after another, and remove leftover subscriptions of stopped flows if the start fails with a limit error."
+            "content": "## ⚠️ Polling trigger\n\nToggl has no webhooks. The trigger records where the account stands on its first check and then checks every 5 minutes, so the provoking action runs after a 2-minute Wait (after the first check) and the event can take up to about 7 minutes. Do not remove the Wait."
         }
     }
 }

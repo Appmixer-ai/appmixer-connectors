@@ -6,16 +6,18 @@ module.exports = {
 
     async receive(context) {
 
+        const { workspace } = await lib.urls(context);
+
         const { data } = await lib.request(context, {
             method: 'GET',
-            url: `${lib.API_BASE_URL}/me/time_entries/current`
+            url: `${workspace}/tracking/current`
         });
 
-        // The API answers null when no timer is running.
+        // The API answers 204 without a body when no timer is running.
         if (!data || !data.id) {
             return context.sendJson({}, 'notFound');
         }
 
-        return context.sendJson(data, 'out');
+        return context.sendJson(lib.toTimeEntry(data), 'out');
     }
 };

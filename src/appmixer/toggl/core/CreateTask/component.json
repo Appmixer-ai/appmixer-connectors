@@ -1,7 +1,7 @@
 {
     "name": "appmixer.toggl.core.CreateTask",
     "label": "Create Task",
-    "description": "Create a task in a project. Tasks need a paid Toggl Track plan.",
+    "description": "Create a task in the workspace, optionally in a project.",
     "author": "Appmixer <info@appmixer.com>",
     "version": "1.0.0",
     "auth": {
@@ -20,57 +20,42 @@
             "schema": {
                 "type": "object",
                 "properties": {
-                    "workspaceId": {
+                    "name": {
                         "type": "string"
                     },
                     "projectId": {
                         "type": "string"
                     },
-                    "name": {
+                    "description": {
                         "type": "string"
                     },
-                    "estimatedSeconds": {
+                    "estimatedMinutes": {
                         "type": "integer"
                     },
-                    "active": {
-                        "type": "boolean"
+                    "priority": {
+                        "type": "string"
                     }
                 },
                 "required": [
-                    "projectId",
                     "name"
                 ]
             },
             "inspector": {
                 "inputs": {
-                    "workspaceId": {
+                    "name": {
                         "type": "text",
-                        "label": "Workspace",
-                        "index": 1,
-                        "tooltip": "Pick a workspace or type its numeric ID. Leave empty to use the default workspace of the connected account.",
-                        "source": {
-                            "url": "/component/appmixer/toggl/core/ListWorkspaces?outPort=out",
-                            "data": {
-                                "messages": {
-                                    "in/outputType": "array"
-                                },
-                                "properties": {
-                                    "isSource": true
-                                },
-                                "transform": "./ListWorkspaces#toSelectArray"
-                            }
-                        }
+                        "label": "Name",
+                        "tooltip": "Name of the task.",
+                        "index": 1
                     },
                     "projectId": {
                         "type": "text",
                         "label": "Project",
-                        "index": 2,
-                        "tooltip": "Pick the project or type its numeric ID.",
+                        "tooltip": "Pick a project or type its numeric ID. Optional: a task can exist without a project.",
                         "source": {
                             "url": "/component/appmixer/toggl/core/ListProjects?outPort=out",
                             "data": {
                                 "messages": {
-                                    "in/workspaceId": "inputs/in/workspaceId",
                                     "in/outputType": "array"
                                 },
                                 "properties": {
@@ -78,26 +63,44 @@
                                 },
                                 "transform": "./ListProjects#toSelectArray"
                             }
-                        }
+                        },
+                        "index": 2
                     },
-                    "name": {
-                        "type": "text",
-                        "label": "Name",
-                        "index": 3,
-                        "tooltip": "Task name."
+                    "description": {
+                        "type": "textarea",
+                        "label": "Description",
+                        "tooltip": "Description of the task. Optional.",
+                        "index": 3
                     },
-                    "estimatedSeconds": {
+                    "estimatedMinutes": {
                         "type": "number",
-                        "label": "Estimated Seconds",
-                        "index": 4,
-                        "tooltip": "Estimated time in seconds. Optional."
+                        "label": "Estimate (minutes)",
+                        "tooltip": "Estimated time of the task in minutes. Optional.",
+                        "index": 4
                     },
-                    "active": {
-                        "type": "toggle",
-                        "label": "Active",
-                        "index": 5,
-                        "defaultValue": true,
-                        "tooltip": "Turn off to create the task as done."
+                    "priority": {
+                        "type": "select",
+                        "label": "Priority",
+                        "tooltip": "Priority of the task. Optional.",
+                        "options": [
+                            {
+                                "label": "None",
+                                "value": "none"
+                            },
+                            {
+                                "label": "Low",
+                                "value": "low"
+                            },
+                            {
+                                "label": "Medium",
+                                "value": "medium"
+                            },
+                            {
+                                "label": "High",
+                                "value": "high"
+                            }
+                        ],
+                        "index": 5
                     }
                 }
             }
@@ -110,57 +113,71 @@
                 "type": "object",
                 "required": [
                     "id",
-                    "name",
-                    "project_id",
                     "workspace_id",
-                    "active"
+                    "name"
                 ],
                 "properties": {
                     "id": {
                         "type": "integer",
                         "title": "Task ID",
-                        "example": 98765432
-                    },
-                    "name": {
-                        "type": "string",
-                        "title": "Name",
-                        "example": "Design homepage"
+                        "example": 18514337
                     },
                     "workspace_id": {
                         "type": "integer",
                         "title": "Workspace ID",
-                        "example": 1234567
+                        "example": 21808213
                     },
                     "project_id": {
                         "type": "integer",
                         "title": "Project ID",
-                        "example": 203456789
+                        "example": 5302177
                     },
-                    "user_id": {
+                    "status_id": {
                         "type": "integer",
-                        "title": "User ID",
-                        "example": 5551234
+                        "title": "Status ID",
+                        "example": 1325348
                     },
-                    "active": {
-                        "type": "boolean",
-                        "title": "Active",
-                        "example": true
-                    },
-                    "estimated_seconds": {
+                    "toggl_user_id": {
                         "type": "integer",
-                        "title": "Estimated Seconds",
-                        "example": 7200
+                        "title": "Creator User ID",
+                        "example": 7987332
                     },
-                    "tracked_seconds": {
-                        "type": "integer",
-                        "title": "Tracked Seconds",
-                        "example": 0
-                    },
-                    "at": {
+                    "name": {
                         "type": "string",
+                        "title": "Name",
+                        "example": "Draft the homepage"
+                    },
+                    "description": {
+                        "type": "string",
+                        "title": "Description",
+                        "example": "First draft of the new homepage copy"
+                    },
+                    "estimated_mins": {
+                        "type": "integer",
+                        "title": "Estimate (minutes)",
+                        "example": 90
+                    },
+                    "priority": {
+                        "type": "string",
+                        "title": "Priority",
+                        "example": "none"
+                    },
+                    "private": {
+                        "type": "boolean",
+                        "title": "Private",
+                        "example": false
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Created At",
+                        "example": "2026-11-18T14:34:59.052686Z"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time",
                         "title": "Updated At",
-                        "example": "2026-11-18T09:00:00+00:00",
-                        "format": "date-time"
+                        "example": "2026-11-18T14:34:59.052686Z"
                     }
                 }
             }

@@ -7,7 +7,6 @@ module.exports = {
     async receive(context) {
 
         const {
-            workspaceId,
             timeEntryId,
             description,
             start,
@@ -18,15 +17,31 @@ module.exports = {
         } = context.messages.in.content;
 
         const id = lib.requireId(context, timeEntryId, 'Time Entry ID');
-        const resolvedWorkspaceId = await lib.resolveWorkspaceId(context, workspaceId);
+        const { workspace } = await lib.urls(context);
+        const url = `${workspace}/time-entries/${id}`;
 
-        // Toggl asks to send only the fields that change.
+        // Only the fields that change are sent.
         const body = {};
         if (description) body.description = description;
         const startTime = lib.toTogglTime(context, start, 'Start');
         if (startTime) body.start = startTime;
         const stopTime = lib.toTogglTime(context, stop, 'Stop');
-        if (stopTime) body.stop = stopTime;
+        if (stopTime) {
+            // Toggl stores start and duration, so a new Stop is a new duration.
+            let from = startTime;
+            if (!from) {
+                const { data } = await lib.request(context, { method: 'GET', url });
+                from = data && data.start;
+            }
+            if (!from) {
+                throw new context.CancelError('Stop cannot be set: the time entry has no Start.');
+            }
+            const seconds = Math.round((new Date(stopTime) - new Date(from)) / 1000);
+            if (seconds < 0) {
+                throw new context.CancelError('Stop must be after Start.');
+            }
+            body.duration = seconds;
+        }
         const project = lib.optionalId(context, projectId, 'Project');
         if (project) body.project_id = project;
         const task = lib.optionalId(context, taskId, 'Task ID');
@@ -38,11 +53,7 @@ module.exports = {
             throw new context.CancelError('Fill in at least one field to update.');
         }
 
-        await lib.request(context, {
-            method: 'PUT',
-            url: `${lib.API_BASE_URL}/workspaces/${resolvedWorkspaceId}/time_entries/${id}`,
-            data: body
-        });
+        await lib.request(context, { method: 'PATCH', url, data: body });
 
         return context.sendJson({}, 'out');
     }

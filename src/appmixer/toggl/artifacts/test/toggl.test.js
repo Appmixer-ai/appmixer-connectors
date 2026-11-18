@@ -5,9 +5,13 @@ const assert = require('assert');
 const lib = require('../../lib');
 const MakeApiCall = require('../../core/MakeApiCall/MakeApiCall');
 const CreateTimeEntry = require('../../core/CreateTimeEntry/CreateTimeEntry');
+const UpdateTimeEntry = require('../../core/UpdateTimeEntry/UpdateTimeEntry');
 const GetTimeEntry = require('../../core/GetTimeEntry/GetTimeEntry');
+const StopTimeEntry = require('../../core/StopTimeEntry/StopTimeEntry');
+const GetCurrentTimeEntry = require('../../core/GetCurrentTimeEntry/GetCurrentTimeEntry');
+const FindReportTimeEntries = require('../../core/FindReportTimeEntries/FindReportTimeEntries');
 const NewTimeEntry = require('../../core/NewTimeEntry/NewTimeEntry');
-const NewTimeEntryPolling = require('../../core/NewTimeEntryPolling/NewTimeEntryPolling');
+const TimeEntryUpdated = require('../../core/TimeEntryUpdated/TimeEntryUpdated');
 
 class CancelError extends Error {
     constructor(message) {
@@ -16,10 +20,14 @@ class CancelError extends Error {
     }
 }
 
-const createContext = ({ content = {}, properties = {}, state = {}, responses = [] } = {}) => {
+const BASE = 'https://focus.toggl.com/api';
+const WORKSPACE = `${BASE}/organizations/11/workspaces/22`;
+
+// A response of an Error makes httpRequest reject with it.
+const createContext = ({ content = {}, properties = {}, state = {}, responses = [], auth } = {}) => {
 
     const context = {
-        auth: { apiToken: 'tok123' },
+        auth: auth || { apiKey: 'toggl_sk_test', organizationId: '11', workspaceId: '22' },
         config: {},
         properties,
         state: { ...state },
@@ -29,18 +37,17 @@ const createContext = ({ content = {}, properties = {}, state = {}, responses = 
         CancelError,
         requests: [],
         sent: [],
-        responded: [],
         cache: {},
         async httpRequest(options) {
             this.requests.push(options);
             const next = responses.length ? responses.shift() : { data: {} };
+            if (next instanceof Error) {
+                throw next;
+            }
             return { status: 200, headers: {}, ...next };
         },
         async sendJson(data, port) {
             this.sent.push({ data, port });
-        },
-        async response(body, status = 200, headers) {
-            this.responded.push({ body, status, headers });
         },
         async log() {},
         async lock() {
@@ -52,61 +59,80 @@ const createContext = ({ content = {}, properties = {}, state = {}, responses = 
                 context.cache[key] = value;
             }
         },
-        async loadState() {
-            return this.state;
-        },
-        async saveState(state) {
-            this.state = { ...state };
-        },
-        async stateSet(key, value) {
-            this.state[key] = value;
-        },
-        getWebhookUrl() {
-            return 'https://api.appmixer.example/flows/flow-1/components/component-1';
+        async saveState(newState) {
+            this.state = { ...newState };
         }
     };
     return context;
 };
 
-describe('Toggl Track', function() {
+const httpError = (status, data) => Object.assign(new Error(`Request failed with status code ${status}`), {
+    response: { status, data, headers: {} }
+});
+
+const LONG_AGO = Date.now() - 10 * 60 * 1000;
+
+describe('Toggl', function() {
 
     describe('lib', function() {
 
-        it('authenticates with Basic <token>:api_token', function() {
-            const header = lib.authHeaders('tok123').Authorization;
-            assert.strictEqual(header, 'Basic ' + Buffer.from('tok123:api_token').toString('base64'));
+        it('authenticates with the API key as a Bearer token, trimmed', function() {
+            assert.strictEqual(lib.authHeaders(' toggl_sk_abc\n').Authorization, 'Bearer toggl_sk_abc');
         });
 
         it('rejects IDs that are not numeric, so they cannot change the URL path', function() {
             const context = createContext();
-            assert.throws(() => lib.requireId(context, '12/../../me', 'Time Entry ID'), /numeric/);
+            assert.throws(() => lib.requireId(context, '12/../../users', 'Time Entry ID'), /numeric/);
             assert.strictEqual(lib.requireId(context, 42, 'Time Entry ID'), '42');
         });
 
-        it('formats times without fractions in UTC', function() {
+        it('formats times in UTC and keeps a typed calendar date', function() {
             const context = createContext();
-            assert.strictEqual(lib.toTogglTime(context, '2026-11-18T10:30:00.123+01:00', 'Start'), '2026-11-18T09:30:00Z');
+            assert.strictEqual(lib.toTogglTime(context, '2026-11-18T10:30:00+01:00', 'Start'), '2026-11-18T09:30:00.000Z');
             assert.strictEqual(lib.toDateOnly(context, '2026-11-18', 'Start Date'), '2026-11-18');
+        });
+
+        it('uses the organization and workspace of the account when it names them', async function() {
+            const context = createContext();
+            assert.deepStrictEqual(await lib.resolveScope(context), { organizationId: '11', workspaceId: '22' });
+            assert.strictEqual(context.requests.length, 0);
+        });
+
+        it('looks up the default workspace once and caches it', async function() {
+            const context = createContext({
+                auth: { apiKey: 'toggl_sk_test' },
+                responses: [{ data: { organization_id: 5, workspace_id: 6, reason: 'default' } }]
+            });
+            assert.deepStrictEqual(await lib.resolveScope(context), { organizationId: '5', workspaceId: '6' });
+            assert.deepStrictEqual(await lib.resolveScope(context), { organizationId: '5', workspaceId: '6' });
+            assert.strictEqual(context.requests.length, 1);
+            assert.strictEqual(context.requests[0].url, `${BASE}/users/me/landing-workspace`);
+        });
+
+        it('adds stop to a finished entry and drops null fields', function() {
+            const entry = lib.toTimeEntry({ id: 1, start: '2026-11-18T09:00:00Z', duration: 5400, project_id: null, tags: [] });
+            assert.deepStrictEqual(entry, { id: 1, start: '2026-11-18T09:00:00Z', duration: 5400, stop: '2026-11-18T10:30:00.000Z' });
+            assert.strictEqual(lib.toTimeEntry({ id: 2, start: '2026-11-18T09:00:00Z' }).stop, undefined);
         });
     });
 
     describe('MakeApiCall', function() {
 
-        it('resolves a relative path against the Track API v9', async function() {
-            const context = createContext({ content: { url: '/me/workspaces', method: 'GET' } });
+        it('resolves a relative path against the Toggl API', async function() {
+            const context = createContext({ content: { url: '/users/me/settings', method: 'GET' } });
             await MakeApiCall.receive(context);
-            assert.strictEqual(context.requests[0].url, 'https://api.track.toggl.com/api/v9/me/workspaces');
+            assert.strictEqual(context.requests[0].url, `${BASE}/users/me/settings`);
         });
 
-        it('accepts a full URL of the Reports API on the Toggl host', async function() {
-            const url = 'https://api.track.toggl.com/reports/api/v3/workspace/1/search/time_entries';
-            const context = createContext({ content: { url, method: 'POST', body: '{"start_date":"2026-11-01"}' } });
+        it('accepts a full URL on the Toggl host', async function() {
+            const url = `${BASE}/reports/workspaces/22/query`;
+            const context = createContext({ content: { url, method: 'POST', body: '{"attributes":[]}' } });
             await MakeApiCall.receive(context);
             assert.strictEqual(context.requests[0].url, url);
-            assert.deepStrictEqual(context.requests[0].data, { start_date: '2026-11-01' });
+            assert.deepStrictEqual(context.requests[0].data, { attributes: [] });
         });
 
-        for (const url of ['https://evil.example/x', '//evil.example/x', 'https://user:pw@api.track.toggl.com/api/v9/me']) {
+        for (const url of ['https://evil.example/x', '//evil.example/x', 'https://user:pw@focus.toggl.com/api/users/me/settings', 'https://api.track.toggl.com/api/v9/me']) {
             it(`refuses ${url} and makes no request`, async function() {
                 const context = createContext({ content: { url, method: 'GET' } });
                 await assert.rejects(() => MakeApiCall.receive(context), CancelError);
@@ -117,17 +143,17 @@ describe('Toggl Track', function() {
         it('sends the key-value headers and parameters the Designer stores and keeps its own Authorization', async function() {
             const context = createContext({
                 content: {
-                    url: '/me',
+                    url: '/workspaces/22/tags',
                     method: 'GET',
-                    headers: '{"Accept":"application/json","Authorization":"Basic other"}',
-                    parameters: '{"with_related_data":"true"}'
+                    headers: '{"Accept":"application/json","Authorization":"Bearer other"}',
+                    parameters: '{"per_page":"5"}'
                 }
             });
             await MakeApiCall.receive(context);
             const request = context.requests[0];
             assert.strictEqual(request.headers.Accept, 'application/json');
-            assert.strictEqual(request.headers.Authorization, lib.authHeaders('tok123').Authorization);
-            assert.deepStrictEqual(request.params, { with_related_data: 'true' });
+            assert.strictEqual(request.headers.Authorization, 'Bearer toggl_sk_test');
+            assert.deepStrictEqual(request.params, { per_page: '5' });
         });
     });
 
@@ -135,37 +161,65 @@ describe('Toggl Track', function() {
 
         it('starts a running timer when neither Stop nor Duration is set', async function() {
             const context = createContext({
-                content: { workspaceId: '123', start: '2026-11-18T09:00:00Z', description: 'Work', tags: 'a, b' },
+                content: { description: 'Work', projectId: '7', tagIds: '3, 4' },
+                responses: [{ data: { id: 1, start: '2026-11-18T09:00:00Z' } }]
+            });
+            await CreateTimeEntry.receive(context);
+            const { url, data } = context.requests[0];
+            assert.strictEqual(url, `${WORKSPACE}/tracking/start`);
+            assert.deepStrictEqual(data, { type: 'activity', description: 'Work', tag_ids: [3, 4], project_id: 7 });
+            assert.deepStrictEqual(context.sent[0], { data: { id: 1, start: '2026-11-18T09:00:00Z' }, port: 'out' });
+        });
+
+        it('turns Start and Stop into a duration', async function() {
+            const context = createContext({
+                content: { start: '2026-11-18T09:00:00Z', stop: '2026-11-18T10:30:00Z', projectId: '7' },
                 responses: [{ data: { id: 1 } }]
             });
             await CreateTimeEntry.receive(context);
             const { url, data } = context.requests[0];
-            assert.strictEqual(url, 'https://api.track.toggl.com/api/v9/workspaces/123/time_entries');
-            assert.strictEqual(data.duration, -1);
-            assert.strictEqual(data.created_with, 'Appmixer');
-            assert.strictEqual(data.workspace_id, 123);
-            assert.deepStrictEqual(data.tags, ['a', 'b']);
-            assert.deepStrictEqual(context.sent[0], { data: { id: 1 }, port: 'out' });
+            assert.strictEqual(url, `${WORKSPACE}/time-entries`);
+            assert.strictEqual(data.duration, 5400);
+            assert.strictEqual(data.project_id, 7);
+            assert.strictEqual(data.stop, undefined);
         });
 
-        it('sends a duration that agrees with Start and Stop', async function() {
+        it('creates an entry of a task under the task', async function() {
             const context = createContext({
-                content: { workspaceId: '123', start: '2026-11-18T09:00:00Z', stop: '2026-11-18T10:30:00Z' },
+                content: { start: '2026-11-18T09:00:00Z', duration: 600, taskId: '9', projectId: '7' },
                 responses: [{ data: { id: 1 } }]
             });
             await CreateTimeEntry.receive(context);
-            assert.strictEqual(context.requests[0].data.duration, 5400);
-            assert.strictEqual(context.requests[0].data.stop, '2026-11-18T10:30:00Z');
+            assert.strictEqual(context.requests[0].url, `${WORKSPACE}/tasks/9/time-entries`);
+            assert.strictEqual(context.requests[0].data.project_id, undefined);
         });
 
-        it('uses the default workspace of the account when none is picked', async function() {
+        it('requires Start for a finished entry and refuses a Stop before Start', async function() {
+            const noStart = createContext({ content: { duration: 600 } });
+            await assert.rejects(() => CreateTimeEntry.receive(noStart), /Start is required/);
+            const backwards = createContext({ content: { start: '2026-11-18T10:00:00Z', stop: '2026-11-18T09:00:00Z' } });
+            await assert.rejects(() => CreateTimeEntry.receive(backwards), /Stop must be after Start/);
+            assert.strictEqual(noStart.requests.length + backwards.requests.length, 0);
+        });
+    });
+
+    describe('UpdateTimeEntry', function() {
+
+        it('reads the current Start to turn a new Stop into a duration, and returns an empty object', async function() {
             const context = createContext({
-                content: { start: '2026-11-18T09:00:00Z' },
-                responses: [{ data: { default_workspace_id: 777 } }, { data: { id: 1 } }]
+                content: { timeEntryId: '5', stop: '2026-11-18T10:00:00Z', billable: 'false' },
+                responses: [{ data: { id: 5, start: '2026-11-18T09:00:00Z' } }, { data: '' }]
             });
-            await CreateTimeEntry.receive(context);
-            assert.strictEqual(context.requests[0].url, 'https://api.track.toggl.com/api/v9/me');
-            assert.strictEqual(context.requests[1].url, 'https://api.track.toggl.com/api/v9/workspaces/777/time_entries');
+            await UpdateTimeEntry.receive(context);
+            assert.strictEqual(context.requests[1].method, 'PATCH');
+            assert.strictEqual(context.requests[1].url, `${WORKSPACE}/time-entries/5`);
+            assert.deepStrictEqual(context.requests[1].data, { duration: 3600, billable: false });
+            assert.deepStrictEqual(context.sent[0], { data: {}, port: 'out' });
+        });
+
+        it('refuses an update without any field', async function() {
+            const context = createContext({ content: { timeEntryId: '5' } });
+            await assert.rejects(() => UpdateTimeEntry.receive(context), /at least one field/);
         });
     });
 
@@ -178,104 +232,158 @@ describe('Toggl Track', function() {
         });
     });
 
-    describe('NewTimeEntry (webhook)', function() {
+    describe('running timer', function() {
 
-        const delivery = (context, data, token) => {
-            context.messages = { webhook: { content: { data, query: { token } } } };
-        };
+        it('Get Current Time Entry goes to notFound on the empty 204 answer', async function() {
+            const context = createContext({ responses: [{ status: 204, data: '' }] });
+            await GetCurrentTimeEntry.receive(context);
+            assert.deepStrictEqual(context.sent[0], { data: {}, port: 'notFound' });
+        });
 
-        it('creates a subscription with a token in the callback URL', async function() {
+        it('Stop Time Entry goes to notFound when no timer is running', async function() {
             const context = createContext({
-                properties: { workspaceId: '123' },
-                responses: [{ data: { subscription_id: 9, validated_at: null } }]
+                responses: [httpError(400, { error: 'invalid_timeentry', error_description: 'User is not tracking time' })]
             });
-            await NewTimeEntry.start(context);
-            const { url, data } = context.requests[0];
-            assert.strictEqual(url, 'https://api.track.toggl.com/webhooks/api/v1/subscriptions/123');
-            assert.deepStrictEqual(data.event_filters, [{ entity: 'time_entry', action: 'created' }]);
-            assert.ok(data.url_callback.endsWith('?token=' + context.state.token));
-            assert.strictEqual(context.state.subscriptionId, 9);
+            await StopTimeEntry.receive(context);
+            assert.strictEqual(context.requests[0].url, `${WORKSPACE}/tracking/stop`);
+            assert.deepStrictEqual(context.sent[0], { data: {}, port: 'notFound' });
         });
 
-        it('rejects a delivery without the token', async function() {
-            const context = createContext({ state: { token: 'secret-token', subscriptionId: 9, workspaceId: '123' } });
-            delivery(context, { subscription_id: 9, payload: { id: 1 } }, 'wrong');
-            await NewTimeEntry.receive(context);
-            assert.strictEqual(context.sent.length, 0);
-            assert.strictEqual(context.responded[0].status, 403);
-        });
-
-        it('answers the validation PING with its code', async function() {
-            const context = createContext({ state: { token: 'secret-token', subscriptionId: 9, workspaceId: '123' } });
-            delivery(context, { subscription_id: 9, payload: 'ping', validation_code: 'abc' }, 'secret-token');
-            await NewTimeEntry.receive(context);
-            assert.deepStrictEqual(context.responded[0].body, { validation_code: 'abc' });
-            assert.strictEqual(context.requests[0].url, 'https://api.track.toggl.com/webhooks/api/v1/validate/123/9/abc');
-            assert.strictEqual(context.state.validated, true);
-            assert.strictEqual(context.sent.length, 0);
-        });
-
-        it('emits the time entry of an event once, even when Toggl retries it', async function() {
-            const context = createContext({ state: { token: 'secret-token', subscriptionId: 9, workspaceId: '123' } });
-            const event = {
-                event_id: 55,
-                subscription_id: 9,
-                metadata: { model: 'time_entry', action: 'created' },
-                payload: { id: 1, description: 'Work' }
-            };
-            delivery(context, event, 'secret-token');
-            await NewTimeEntry.receive(context);
-            delivery(context, event, 'secret-token');
-            await NewTimeEntry.receive(context);
-            assert.deepStrictEqual(context.sent, [{ data: { id: 1, description: 'Work' }, port: 'out' }]);
-        });
-
-        it('pings an unvalidated subscription from tick()', async function() {
+        it('Stop Time Entry does not hide another 400', async function() {
             const context = createContext({
-                state: { token: 't', subscriptionId: 9, workspaceId: '123' },
-                responses: [{ data: [{ subscription_id: 9, validated_at: null }] }, { data: { status: 'ok' } }]
+                responses: [httpError(400, { error: 'invalid_timeentry', error_description: 'Time entry end time must be after start time' })]
             });
-            await NewTimeEntry.tick(context);
-            assert.strictEqual(context.requests[1].method, 'POST');
-            assert.strictEqual(context.requests[1].url, 'https://api.track.toggl.com/webhooks/api/v1/ping/123/9');
+            await assert.rejects(() => StopTimeEntry.receive(context), /status code 400/);
         });
     });
 
-    describe('NewTimeEntryPolling', function() {
+    describe('FindReportTimeEntries', function() {
 
-        it('records a baseline first, then emits only new entries', async function() {
-            const first = createContext({ responses: [{ data: [{ id: 1, start: '2026-11-18T08:00:00Z' }] }] });
-            await NewTimeEntryPolling.tick(first);
-            assert.strictEqual(first.sent.length, 0);
-            assert.deepStrictEqual(first.state.known, [1]);
-
-            const second = createContext({
-                state: { known: [1], lastPoll: Date.now() - 10 * 60 * 1000 },
-                responses: [{ data: [{ id: 2, start: '2026-11-18T09:00:00Z' }, { id: 1, start: '2026-11-18T08:00:00Z' }] }]
+        it('queries the report with filters and computes stop in UTC', async function() {
+            const context = createContext({
+                content: { startDate: '2026-11-17', endDate: '2026-11-19T00:00:00Z', description: 'cli', projectIds: '7,8', outputType: 'array' },
+                responses: [{
+                    data: {
+                        data_json_row: [{
+                            time_entry_id: 1,
+                            start_utc: '2026-11-18T08:00:00+00:00',
+                            duration: 600,
+                            project_id: 0,
+                            project_name: null
+                        }]
+                    }
+                }]
             });
-            await NewTimeEntryPolling.tick(second);
-            assert.deepStrictEqual(second.sent.map(item => item.data.id), [2]);
-            assert.deepStrictEqual(second.state.known, [2, 1]);
+            await FindReportTimeEntries.receive(context);
+            const { url, params, data } = context.requests[0];
+            assert.strictEqual(url, `${BASE}/reports/workspaces/22/query`);
+            assert.deepStrictEqual(params, { response_format: 'json_row' });
+            assert.deepStrictEqual(data.period, { from: '2026-11-17', to: '2026-11-19' });
+            assert.deepStrictEqual(data.filters, [
+                { property: 'description', operator: 'contains', value: 'cli' },
+                { property: 'project_id', operator: 'in', value: [7, 8] }
+            ]);
+            assert.ok(!data.attributes.some(attribute => attribute.property === 'stop'));
+            assert.deepStrictEqual(context.sent[0].data.result, [{
+                time_entry_id: 1,
+                start_utc: '2026-11-18T08:00:00+00:00',
+                duration: 600,
+                stop: '2026-11-18T08:10:00.000Z'
+            }]);
         });
 
-        it('keeps the known entries when the answer is empty', async function() {
+        it('goes to notFound when the report is empty', async function() {
             const context = createContext({
-                state: { known: [1, 2], lastPoll: Date.now() - 10 * 60 * 1000 },
-                responses: [{ data: [] }]
+                content: { startDate: '2026-11-17', endDate: '2026-11-19', outputType: 'array' },
+                responses: [{ data: { data_json_row: [] } }]
             });
-            await NewTimeEntryPolling.tick(context);
-            assert.deepStrictEqual(context.state.known, [1, 2]);
+            await FindReportTimeEntries.receive(context);
+            assert.deepStrictEqual(context.sent[0], { data: {}, port: 'notFound' });
+        });
+    });
 
-            context.state.lastPoll = Date.now() - 10 * 60 * 1000;
-            context.httpRequest = async () => ({ data: [{ id: 2 }, { id: 1 }] });
-            await NewTimeEntryPolling.tick(context);
+    describe('polling triggers', function() {
+
+        const page = entries => ({ data: { page: 1, per_page: 100, data: entries } });
+        const entry = (id, createdAt, updatedAt = createdAt) => ({
+            id, workspace_id: 22, type: 'activity', created_at: createdAt, updated_at: updatedAt
+        });
+
+        it('records a baseline first, then emits only newer entries, oldest first', async function() {
+            const context = createContext({ responses: [page([entry(1, '2026-11-18T08:00:00Z')])] });
+            await NewTimeEntry.tick(context);
+            assert.strictEqual(context.sent.length, 0);
+            assert.strictEqual(context.state.initialized, true);
+            assert.strictEqual(context.requests[0].params.order_by, '-created_at');
+            assert.strictEqual(context.requests[0].params.include_taskless, true);
+
+            context.state.lastPoll = LONG_AGO;
+            context.httpRequest = async () => page([
+                entry(3, '2026-11-18T10:00:00Z'),
+                entry(2, '2026-11-18T09:00:00Z'),
+                entry(1, '2026-11-18T08:00:00Z')
+            ]);
+            await NewTimeEntry.tick(context);
+            assert.deepStrictEqual(context.sent.map(item => item.data.id), [2, 3]);
+        });
+
+        it('emits the first entry ever of an empty account', async function() {
+            const context = createContext({ responses: [page([])] });
+            await NewTimeEntry.tick(context);
+            assert.strictEqual(context.state.initialized, true);
+
+            context.state.lastPoll = LONG_AGO;
+            context.httpRequest = async () => page([entry(1, '2026-11-18T08:00:00Z')]);
+            await NewTimeEntry.tick(context);
+            assert.deepStrictEqual(context.sent.map(item => item.data.id), [1]);
+        });
+
+        it('emits an entry written in the same instant as the last one seen, once', async function() {
+            const context = createContext({ responses: [page([entry(1, '2026-11-18T08:00:00Z')])] });
+            await NewTimeEntry.tick(context);
+
+            const both = page([entry(2, '2026-11-18T08:00:00Z'), entry(1, '2026-11-18T08:00:00Z')]);
+            context.httpRequest = async () => both;
+            context.state.lastPoll = LONG_AGO;
+            await NewTimeEntry.tick(context);
+            context.state.lastPoll = LONG_AGO;
+            await NewTimeEntry.tick(context);
+            assert.deepStrictEqual(context.sent.map(item => item.data.id), [2]);
+        });
+
+        it('keeps its position when the answer is empty', async function() {
+            const context = createContext({
+                state: { initialized: true, lastTimestamp: new Date('2026-11-18T08:00:00Z').getTime(), known: ['1'], lastPoll: LONG_AGO },
+                responses: [page([])]
+            });
+            await NewTimeEntry.tick(context);
+            context.state.lastPoll = LONG_AGO;
+            context.httpRequest = async () => page([entry(1, '2026-11-18T08:00:00Z')]);
+            await NewTimeEntry.tick(context);
             assert.strictEqual(context.sent.length, 0);
         });
 
         it('does not call Toggl again within the polling interval', async function() {
-            const context = createContext({ state: { known: [1], lastPoll: Date.now() - 60 * 1000 } });
-            await NewTimeEntryPolling.tick(context);
+            const context = createContext({ state: { initialized: true, lastPoll: Date.now() - 60 * 1000 } });
+            await NewTimeEntry.tick(context);
             assert.strictEqual(context.requests.length, 0);
+        });
+
+        it('Time Entry Updated fires again for each change and not for a creation', async function() {
+            const context = createContext({ responses: [page([entry(1, '2026-11-18T08:00:00Z')])] });
+            await TimeEntryUpdated.tick(context);
+            assert.strictEqual(context.requests[0].params.order_by, '-updated_at');
+
+            const answers = [
+                page([entry(2, '2026-11-18T09:00:00Z'), entry(1, '2026-11-18T08:00:00Z', '2026-11-18T08:30:00Z')]),
+                page([entry(1, '2026-11-18T08:00:00Z', '2026-11-18T09:30:00Z'), entry(2, '2026-11-18T09:00:00Z')])
+            ];
+            context.httpRequest = async () => answers.shift();
+            context.state.lastPoll = LONG_AGO;
+            await TimeEntryUpdated.tick(context);
+            context.state.lastPoll = LONG_AGO;
+            await TimeEntryUpdated.tick(context);
+            assert.deepStrictEqual(context.sent.map(item => item.data.updated_at), ['2026-11-18T08:30:00Z', '2026-11-18T09:30:00Z']);
         });
     });
 });

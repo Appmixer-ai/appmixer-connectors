@@ -1,7 +1,7 @@
 {
     "name": "appmixer.toggl.core.CreateClient",
     "label": "Create Client",
-    "description": "Create a client in a workspace.",
+    "description": "Create a client in the workspace.",
     "author": "Appmixer <info@appmixer.com>",
     "version": "1.0.0",
     "auth": {
@@ -20,13 +20,16 @@
             "schema": {
                 "type": "object",
                 "properties": {
-                    "workspaceId": {
-                        "type": "string"
-                    },
                     "name": {
                         "type": "string"
                     },
-                    "notes": {
+                    "contactEmail": {
+                        "type": "string"
+                    },
+                    "address": {
+                        "type": "string"
+                    },
+                    "internalReference": {
                         "type": "string"
                     }
                 },
@@ -36,35 +39,29 @@
             },
             "inspector": {
                 "inputs": {
-                    "workspaceId": {
-                        "type": "text",
-                        "label": "Workspace",
-                        "index": 1,
-                        "tooltip": "Pick a workspace or type its numeric ID. Leave empty to use the default workspace of the connected account.",
-                        "source": {
-                            "url": "/component/appmixer/toggl/core/ListWorkspaces?outPort=out",
-                            "data": {
-                                "messages": {
-                                    "in/outputType": "array"
-                                },
-                                "properties": {
-                                    "isSource": true
-                                },
-                                "transform": "./ListWorkspaces#toSelectArray"
-                            }
-                        }
-                    },
                     "name": {
                         "type": "text",
                         "label": "Name",
-                        "index": 2,
-                        "tooltip": "Client name, unique in the workspace."
+                        "tooltip": "Name of the client.",
+                        "index": 1
                     },
-                    "notes": {
+                    "contactEmail": {
+                        "type": "text",
+                        "label": "Contact Email",
+                        "tooltip": "Email address of the contact at the client. Optional.",
+                        "index": 2
+                    },
+                    "address": {
                         "type": "textarea",
-                        "label": "Notes",
-                        "index": 3,
-                        "tooltip": "Optional notes about the client."
+                        "label": "Address",
+                        "tooltip": "Postal address of the client. Optional.",
+                        "index": 3
+                    },
+                    "internalReference": {
+                        "type": "text",
+                        "label": "Internal Reference",
+                        "tooltip": "Your own reference for the client, for example an ID from the accounting system. Optional.",
+                        "index": 4
                     }
                 }
             }
@@ -77,45 +74,61 @@
                 "type": "object",
                 "required": [
                     "id",
-                    "wid",
+                    "workspace_id",
                     "name"
                 ],
                 "properties": {
                     "id": {
                         "type": "integer",
                         "title": "Client ID",
-                        "example": 64123456
+                        "example": 953805
                     },
-                    "wid": {
+                    "workspace_id": {
                         "type": "integer",
                         "title": "Workspace ID",
-                        "example": 1234567
+                        "example": 21808213
+                    },
+                    "toggl_user_id": {
+                        "type": "integer",
+                        "title": "Creator User ID",
+                        "example": 7987332
                     },
                     "name": {
                         "type": "string",
                         "title": "Name",
-                        "example": "Acme Inc."
+                        "example": "Acme"
                     },
-                    "archived": {
+                    "contact_email": {
+                        "type": "string",
+                        "title": "Contact Email",
+                        "example": "billing@acme.com"
+                    },
+                    "address": {
+                        "type": "string",
+                        "title": "Address",
+                        "example": "1 Main Street, Springfield"
+                    },
+                    "internal_reference": {
+                        "type": "string",
+                        "title": "Internal Reference",
+                        "example": "CUST-0042"
+                    },
+                    "active": {
                         "type": "boolean",
-                        "title": "Archived",
-                        "example": false
+                        "title": "Active",
+                        "example": true
                     },
-                    "notes": {
+                    "created_at": {
                         "type": "string",
-                        "title": "Notes",
-                        "example": "Retainer client"
+                        "format": "date-time",
+                        "title": "Created At",
+                        "example": "2026-11-18T14:34:58.648022Z"
                     },
-                    "creator_id": {
-                        "type": "integer",
-                        "title": "Creator ID",
-                        "example": 5551234
-                    },
-                    "at": {
+                    "updated_at": {
                         "type": "string",
+                        "format": "date-time",
                         "title": "Updated At",
-                        "example": "2026-11-18T09:00:00+00:00",
-                        "format": "date-time"
+                        "example": "2026-11-18T14:34:58.648022Z"
                     }
                 }
             }

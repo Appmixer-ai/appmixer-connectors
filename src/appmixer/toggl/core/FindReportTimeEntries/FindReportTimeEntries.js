@@ -2,43 +2,33 @@
 
 const lib = require('../../lib');
 
-// Output contract of one row of the detailed report (search/time_entries). The Reports API v3 reference does not document
-// the response body, so only `time_entries` is required; verify against a live response.
+// Output contract of one report row: a time entry of any workspace member the caller may see
+// in reports. Exported because the `out` port is dynamic. The keys are the report properties
+// requested below (POST /reports/workspaces/{workspace_id}/query, response_format=json_row).
 const ITEM_SCHEMA = {
     type: 'object',
-    required: ['time_entries'],
+    required: ['time_entry_id'],
     properties: {
-        user_id: { type: 'integer', title: 'User ID', example: 5551234 },
-        username: { type: 'string', title: 'Username', example: 'Jane Doe' },
-        project_id: { type: 'integer', title: 'Project ID', example: 203456789 },
-        task_id: { type: 'integer', title: 'Task ID', example: 98765432 },
+        time_entry_id: { type: 'integer', title: 'Time Entry ID', example: 247977688 },
         description: { type: 'string', title: 'Description', example: 'Write release notes' },
-        billable: { type: 'boolean', title: 'Billable', example: false },
-        tag_ids: { type: 'array', title: 'Tag IDs', items: { type: 'integer' }, example: [16123456] },
-        billable_amount_in_cents: { type: 'integer', title: 'Billable Amount (cents)', example: 15000 },
-        hourly_rate_in_cents: { type: 'integer', title: 'Hourly Rate (cents)', example: 10000 },
-        currency: { type: 'string', title: 'Currency', example: 'USD' },
-        row_number: { type: 'integer', title: 'Row Number', example: 1 },
-        time_entries: {
-            type: 'array',
-            title: 'Time Entries',
-            items: {
-                type: 'object',
-                properties: {
-                    id: { type: 'integer', title: 'Time Entry ID' },
-                    seconds: { type: 'integer', title: 'Seconds' },
-                    start: { type: 'string', title: 'Start' },
-                    stop: { type: 'string', title: 'Stop' },
-                    at: { type: 'string', title: 'Updated At' }
-                }
-            },
-            example: [{ id: 4123456789, seconds: 5400, start: '2026-11-18T09:00:00+00:00', stop: '2026-11-18T10:30:00+00:00', at: '2026-11-18T10:30:05+00:00' }]
-        }
+        start_utc: { type: 'string', format: 'date-time', title: 'Start (UTC)', example: '2026-11-18T08:00:00+00:00' },
+        stop: { type: 'string', format: 'date-time', title: 'Stop (UTC)', example: '2026-11-18T08:10:00.000Z' },
+        duration: { type: 'integer', title: 'Duration (seconds)', example: 600 },
+        time_entry_billable: { type: 'boolean', title: 'Billable', example: false },
+        user_account_id: { type: 'integer', title: 'User ID', example: 7987332 },
+        user_name: { type: 'string', title: 'User Name', example: 'Jane Doe' },
+        project_id: { type: 'integer', title: 'Project ID', example: 5302177 },
+        project_name: { type: 'string', title: 'Project Name', example: 'Website Redesign' },
+        client_id: { type: 'integer', title: 'Client ID', example: 953805 },
+        client_name: { type: 'string', title: 'Client Name', example: 'Acme' },
+        task_id: { type: 'integer', title: 'Task ID', example: 18514337 },
+        task_name: { type: 'string', title: 'Task Name', example: 'Draft the homepage' },
+        tag_names: { type: 'array', title: 'Tag Names', items: { type: 'string' }, example: ['release'] },
+        updated_at: { type: 'string', format: 'date-time', title: 'Updated At', example: '2026-11-18T14:34:34.655129+00:00' }
     }
 };
 
-// The documented default page size of the detailed report.
-const PAGE_SIZE = 50;
+const PAGE_SIZE = 100;
 
 module.exports = {
 
@@ -47,7 +37,6 @@ module.exports = {
     async receive(context) {
 
         const {
-            workspaceId,
             startDate,
             endDate,
             description,
@@ -68,28 +57,54 @@ module.exports = {
             throw new context.CancelError('End Date is required!');
         }
 
-        const resolvedWorkspaceId = await lib.resolveWorkspaceId(context, workspaceId);
+        const filters = [];
+        if (description) filters.push({ property: 'description', operator: 'contains', value: description });
+        const projects = lib.idList(context, projectIds, 'Project IDs');
+        if (projects.length) filters.push({ property: 'project_id', operator: 'in', value: projects });
+        const clients = lib.idList(context, clientIds, 'Client IDs');
+        if (clients.length) filters.push({ property: 'client_id', operator: 'in', value: clients });
+        const users = lib.idList(context, userIds, 'User IDs');
+        if (users.length) filters.push({ property: 'user_account_id', operator: 'in', value: users });
 
         const body = {
-            start_date: lib.toDateOnly(context, startDate, 'Start Date'),
-            end_date: lib.toDateOnly(context, endDate, 'End Date'),
-            page_size: PAGE_SIZE
+            // `stop` is not requested: the report returns it in local time without a zone. It is
+            // computed from start_utc and duration instead.
+            attributes: Object.keys(ITEM_SCHEMA.properties)
+                .filter(property => property !== 'stop')
+                .map(property => ({ property })),
+            period: {
+                from: lib.toDateOnly(context, startDate, 'Start Date'),
+                to: lib.toDateOnly(context, endDate, 'End Date')
+            },
+            ordinations: [{ property: 'start_utc', direction: 'desc' }]
         };
-        if (description) body.description = description;
-        const projects = lib.idList(context, projectIds, 'Project IDs');
-        if (projects.length) body.project_ids = projects;
-        const clients = lib.idList(context, clientIds, 'Client IDs');
-        if (clients.length) body.client_ids = clients;
-        const users = lib.idList(context, userIds, 'User IDs');
-        if (users.length) body.user_ids = users;
+        if (filters.length) body.filters = filters;
 
-        const { data } = await lib.request(context, {
-            method: 'POST',
-            url: `${lib.REPORTS_BASE_URL}/workspace/${resolvedWorkspaceId}/search/time_entries`,
-            data: body
-        });
+        const { reports } = await lib.urls(context);
+        const records = [];
+        for (let page = 1; page <= lib.MAX_PAGES; page++) {
+            const { data } = await lib.request(context, {
+                method: 'POST',
+                url: `${reports}/query`,
+                params: { response_format: 'json_row' },
+                data: { ...body, pagination: { page, per_page: PAGE_SIZE } }
+            });
+            const rows = data && Array.isArray(data.data_json_row) ? data.data_json_row : [];
+            // A row without a project carries project_id 0 and null names.
+            records.push(...rows.map(row => {
+                const record = lib.withoutNulls(row);
+                if (record.project_id === 0) delete record.project_id;
+                const start = new Date(record.start_utc).getTime();
+                if (!isNaN(start) && Number.isFinite(record.duration)) {
+                    record.stop = new Date(start + record.duration * 1000).toISOString();
+                }
+                return record;
+            }));
+            if (rows.length < PAGE_SIZE) {
+                break;
+            }
+        }
 
-        const records = Array.isArray(data) ? data : [];
         if (records.length === 0) {
             return context.sendJson({}, 'notFound');
         }

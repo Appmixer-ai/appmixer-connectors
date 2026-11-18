@@ -1,7 +1,7 @@
 {
     "name": "appmixer.toggl.core.FindReportTimeEntries",
     "label": "Find Report Time Entries",
-    "description": "Search the detailed report of a workspace (Reports API v3) for time entries between two dates, with optional filters. Returns the first page of up to 50 rows. On the Free plan you can only report on your own time.",
+    "description": "Find time entries of all workspace members you may see in reports, in a date range, newest first (up to 1,000). Filter by description, projects, clients and users. Reports follow new and changed entries with a short delay.",
     "author": "Appmixer <info@appmixer.com>",
     "version": "1.0.0",
     "auth": {
@@ -20,16 +20,13 @@
             "schema": {
                 "type": "object",
                 "properties": {
-                    "workspaceId": {
-                        "type": "string"
-                    },
                     "startDate": {
                         "type": "string",
-                        "format": "date"
+                        "format": "date-time"
                     },
                     "endDate": {
                         "type": "string",
-                        "format": "date"
+                        "format": "date-time"
                     },
                     "description": {
                         "type": "string"
@@ -55,70 +52,46 @@
             },
             "inspector": {
                 "inputs": {
-                    "workspaceId": {
-                        "type": "text",
-                        "label": "Workspace",
-                        "index": 1,
-                        "tooltip": "Pick a workspace or type its numeric ID. Leave empty to use the default workspace of the connected account.",
-                        "source": {
-                            "url": "/component/appmixer/toggl/core/ListWorkspaces?outPort=out",
-                            "data": {
-                                "messages": {
-                                    "in/outputType": "array"
-                                },
-                                "properties": {
-                                    "isSource": true
-                                },
-                                "transform": "./ListWorkspaces#toSelectArray"
-                            }
-                        }
-                    },
                     "startDate": {
                         "type": "date-time",
                         "label": "Start Date",
-                        "index": 2,
-                        "config": {
-                            "enableTime": false
-                        },
-                        "tooltip": "First day of the report (inclusive), evaluated in each user's Toggl time zone."
+                        "tooltip": "First day of the report period.",
+                        "index": 1
                     },
                     "endDate": {
                         "type": "date-time",
                         "label": "End Date",
-                        "index": 3,
-                        "config": {
-                            "enableTime": false
-                        },
-                        "tooltip": "Last day of the report (inclusive)."
+                        "tooltip": "Last day of the report period.",
+                        "index": 2
                     },
                     "description": {
                         "type": "text",
-                        "label": "Description",
-                        "index": 4,
-                        "tooltip": "Return only time entries with this description."
+                        "label": "Description Contains",
+                        "tooltip": "Return only entries whose description contains this text. Optional.",
+                        "index": 3
                     },
                     "projectIds": {
                         "type": "text",
                         "label": "Project IDs",
-                        "index": 5,
-                        "tooltip": "Comma-separated numeric project IDs."
+                        "tooltip": "Numeric project IDs, separated by commas. Optional.",
+                        "index": 4
                     },
                     "clientIds": {
                         "type": "text",
                         "label": "Client IDs",
-                        "index": 6,
-                        "tooltip": "Comma-separated numeric client IDs."
+                        "tooltip": "Numeric client IDs, separated by commas. Optional.",
+                        "index": 5
                     },
                     "userIds": {
                         "type": "text",
                         "label": "User IDs",
-                        "index": 7,
-                        "tooltip": "Comma-separated numeric user IDs."
+                        "tooltip": "Numeric user IDs (the User ID of a time entry), separated by commas. Optional.",
+                        "index": 6
                     },
                     "outputType": {
                         "type": "select",
                         "label": "Output Type",
-                        "index": 8,
+                        "index": 7,
                         "defaultValue": "array",
                         "tooltip": "Choose whether you want to receive the result set as one complete list, or first item only or one item at a time or stream the items to a file.",
                         "options": [
@@ -154,9 +127,9 @@
                         "generateOutputPortOptions": true
                     },
                     "messages": {
-                        "in/outputType": "inputs/in/outputType",
-                        "in/startDate": "2026-01-01",
-                        "in/endDate": "2026-01-01"
+                        "in/startDate": "2026-01-01T00:00:00Z",
+                        "in/endDate": "2026-01-02T00:00:00Z",
+                        "in/outputType": "inputs/in/outputType"
                     }
                 }
             }

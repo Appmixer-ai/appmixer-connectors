@@ -7,61 +7,72 @@ module.exports = {
     async receive(context) {
 
         const {
-            workspaceId,
             description,
             start,
             stop,
             duration,
             projectId,
             taskId,
-            tags,
+            tagIds,
             billable
         } = context.messages.in.content;
 
-        if (!start) {
-            throw new context.CancelError('Start is required!');
-        }
-
-        const resolvedWorkspaceId = await lib.resolveWorkspaceId(context, workspaceId);
         const startTime = lib.toTogglTime(context, start, 'Start');
         const stopTime = lib.toTogglTime(context, stop, 'Stop');
+        const hasDuration = duration !== undefined && duration !== null && duration !== '';
 
-        const body = {
-            created_with: lib.CREATED_WITH,
-            workspace_id: Number(resolvedWorkspaceId),
-            start: startTime
-        };
+        const body = { type: 'activity' };
+        if (description) body.description = description;
+        const project = lib.optionalId(context, projectId, 'Project');
+        const task = lib.optionalId(context, taskId, 'Task ID');
+        const tags = lib.idList(context, tagIds, 'Tag IDs');
+        if (tags.length) body.tag_ids = tags;
+        if (billable === true || billable === 'true') body.billable = true;
+
+        const { workspace } = await lib.urls(context);
+
+        if (!stopTime && !hasDuration) {
+            // No end: start a running timer. Toggl stops a timer that is already running.
+            if (startTime) body.start = startTime;
+            if (project) body.project_id = project;
+            if (task) body.task_id = task;
+            const { data } = await lib.request(context, {
+                method: 'POST',
+                url: `${workspace}/tracking/start`,
+                data: body
+            });
+            return context.sendJson(lib.toTimeEntry(data), 'out');
+        }
+
+        if (!startTime) {
+            throw new context.CancelError('Start is required when Stop or Duration is set.');
+        }
 
         if (stopTime) {
             const seconds = Math.round((new Date(stopTime) - new Date(startTime)) / 1000);
             if (seconds < 0) {
                 throw new context.CancelError('Stop must be after Start.');
             }
-            // Toggl requires start, stop and duration to agree when all three are sent.
-            body.stop = stopTime;
             body.duration = seconds;
-        } else if (duration !== undefined && duration !== null && duration !== '') {
-            body.duration = Number(duration);
         } else {
-            // A negative duration starts a running timer.
-            body.duration = -1;
+            const seconds = Number(duration);
+            if (!Number.isFinite(seconds) || seconds < 0) {
+                throw new context.CancelError('Duration must be a number of seconds, zero or more.');
+            }
+            body.duration = Math.round(seconds);
+        }
+        body.start = startTime;
+
+        // An entry of a task is created under the task; its project is the task's project.
+        let url = `${workspace}/time-entries`;
+        if (task) {
+            url = `${workspace}/tasks/${task}/time-entries`;
+        } else if (project) {
+            body.project_id = project;
         }
 
-        if (description) body.description = description;
-        const project = lib.optionalId(context, projectId, 'Project');
-        if (project) body.project_id = project;
-        const task = lib.optionalId(context, taskId, 'Task ID');
-        if (task) body.task_id = task;
-        const tagNames = lib.splitList(tags);
-        if (tagNames.length) body.tags = tagNames;
-        if (billable) body.billable = true;
+        const { data } = await lib.request(context, { method: 'POST', url, data: body });
 
-        const { data } = await lib.request(context, {
-            method: 'POST',
-            url: `${lib.API_BASE_URL}/workspaces/${resolvedWorkspaceId}/time_entries`,
-            data: body
-        });
-
-        return context.sendJson(data, 'out');
+        return context.sendJson(lib.toTimeEntry(data), 'out');
     }
 };

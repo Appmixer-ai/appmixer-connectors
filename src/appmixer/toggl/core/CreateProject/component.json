@@ -1,7 +1,7 @@
 {
     "name": "appmixer.toggl.core.CreateProject",
     "label": "Create Project",
-    "description": "Create a project in a workspace.",
+    "description": "Create a project in the workspace.",
     "author": "Appmixer <info@appmixer.com>",
     "version": "1.0.0",
     "auth": {
@@ -20,19 +20,19 @@
             "schema": {
                 "type": "object",
                 "properties": {
-                    "workspaceId": {
+                    "name": {
                         "type": "string"
                     },
-                    "name": {
+                    "description": {
                         "type": "string"
                     },
                     "clientId": {
                         "type": "string"
                     },
-                    "isPrivate": {
-                        "type": "boolean"
-                    },
                     "color": {
+                        "type": "string"
+                    },
+                    "isPrivate": {
                         "type": "string"
                     },
                     "billable": {
@@ -45,55 +45,52 @@
             },
             "inspector": {
                 "inputs": {
-                    "workspaceId": {
-                        "type": "text",
-                        "label": "Workspace",
-                        "index": 1,
-                        "tooltip": "Pick a workspace or type its numeric ID. Leave empty to use the default workspace of the connected account.",
-                        "source": {
-                            "url": "/component/appmixer/toggl/core/ListWorkspaces?outPort=out",
-                            "data": {
-                                "messages": {
-                                    "in/outputType": "array"
-                                },
-                                "properties": {
-                                    "isSource": true
-                                },
-                                "transform": "./ListWorkspaces#toSelectArray"
-                            }
-                        }
-                    },
                     "name": {
                         "type": "text",
                         "label": "Name",
-                        "index": 2,
-                        "tooltip": "Project name, unique in the workspace."
+                        "tooltip": "Name of the project.",
+                        "index": 1
+                    },
+                    "description": {
+                        "type": "textarea",
+                        "label": "Description",
+                        "tooltip": "Description of the project. Optional.",
+                        "index": 2
                     },
                     "clientId": {
                         "type": "text",
                         "label": "Client ID",
-                        "index": 3,
-                        "tooltip": "Numeric ID of the client the project belongs to (Create Client returns it). Optional."
-                    },
-                    "isPrivate": {
-                        "type": "toggle",
-                        "label": "Private",
-                        "index": 4,
-                        "defaultValue": true,
-                        "tooltip": "Private projects are visible only to their members."
+                        "tooltip": "Numeric ID of the client the project belongs to (Create Client returns it). Optional.",
+                        "index": 3
                     },
                     "color": {
                         "type": "text",
                         "label": "Color",
-                        "index": 5,
-                        "tooltip": "Hex color, for example <code>#06aaf5</code>. Optional."
+                        "tooltip": "Hex color, for example <code>#06aaf5</code>. Optional.",
+                        "index": 4
+                    },
+                    "isPrivate": {
+                        "type": "select",
+                        "label": "Private",
+                        "tooltip": "Private projects are visible only to their members. Leave empty to use the workspace default.",
+                        "options": [
+                            {
+                                "label": "Yes",
+                                "value": "true"
+                            },
+                            {
+                                "label": "No",
+                                "value": "false"
+                            }
+                        ],
+                        "index": 5
                     },
                     "billable": {
                         "type": "toggle",
                         "label": "Billable",
-                        "index": 6,
                         "defaultValue": false,
-                        "tooltip": "Mark the project as billable (paid plans)."
+                        "tooltip": "Mark the project as billable.",
+                        "index": 6
                     }
                 }
             }
@@ -107,39 +104,38 @@
                 "required": [
                     "id",
                     "workspace_id",
-                    "name",
-                    "active"
+                    "name"
                 ],
                 "properties": {
                     "id": {
                         "type": "integer",
                         "title": "Project ID",
-                        "example": 203456789
+                        "example": 5302177
                     },
                     "workspace_id": {
                         "type": "integer",
                         "title": "Workspace ID",
-                        "example": 1234567
+                        "example": 21808213
                     },
                     "client_id": {
                         "type": "integer",
                         "title": "Client ID",
-                        "example": 64123456
+                        "example": 953805
                     },
                     "name": {
                         "type": "string",
                         "title": "Name",
                         "example": "Website Redesign"
                     },
-                    "active": {
-                        "type": "boolean",
-                        "title": "Active",
-                        "example": true
+                    "description": {
+                        "type": "string",
+                        "title": "Description",
+                        "example": "Redesign of the marketing site"
                     },
-                    "is_private": {
+                    "private": {
                         "type": "boolean",
                         "title": "Private",
-                        "example": true
+                        "example": false
                     },
                     "billable": {
                         "type": "boolean",
@@ -153,15 +149,15 @@
                     },
                     "created_at": {
                         "type": "string",
+                        "format": "date-time",
                         "title": "Created At",
-                        "example": "2026-11-18T09:00:00+00:00",
-                        "format": "date-time"
+                        "example": "2026-11-18T09:00:00.084772Z"
                     },
-                    "at": {
+                    "updated_at": {
                         "type": "string",
+                        "format": "date-time",
                         "title": "Updated At",
-                        "example": "2026-11-18T09:00:00+00:00",
-                        "format": "date-time"
+                        "example": "2026-11-18T09:00:00.084772Z"
                     }
                 }
             }

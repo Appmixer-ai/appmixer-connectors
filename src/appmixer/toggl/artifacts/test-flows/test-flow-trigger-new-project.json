@@ -1,6 +1,6 @@
 {
-    "name": "E2E Toggl Track - New Project trigger",
-    "description": "A project created after the webhook subscription is validated fires New Project.",
+    "name": "E2E Toggl - New Project trigger",
+    "description": "A project created after the first check fires New Project.",
     "flow": {
         "e4c6d245-98a6-4c5f-ac5f-60dc2d30edf3": {
             "type": "appmixer.utils.controls.OnStart",
@@ -36,7 +36,7 @@
                                     "interval": {}
                                 },
                                 "lambda": {
-                                    "interval": "3m"
+                                    "interval": "2m"
                                 }
                             }
                         }
@@ -85,7 +85,7 @@
                                     "isPrivate": {}
                                 },
                                 "lambda": {
-                                    "name": "E2E Toggl webhook project {{{0e9aab46-e2f8-4759-8c82-88b6a6b56f77}}}",
+                                    "name": "E2E Toggl trigger project {{{0e9aab46-e2f8-4759-8c82-88b6a6b56f77}}}",
                                     "isPrivate": true
                                 }
                             }
@@ -144,7 +144,7 @@
                                             {
                                                 "field": "{{{1befea51-102c-4586-a0ac-a8f8841420fd}}}",
                                                 "assertion": "regex",
-                                                "regex": "^E2E Toggl webhook project "
+                                                "regex": "^E2E Toggl trigger project "
                                             }
                                         ]
                                     }
@@ -173,7 +173,7 @@
             },
             "config": {
                 "properties": {
-                    "timeout": 420
+                    "timeout": 720
                 }
             },
             "errorHandling": {
@@ -201,10 +201,6 @@
                                 "type": "json2new",
                                 "modifiers": {
                                     "url": {
-                                        "8a869a9b-ca2b-44c5-a9cd-b42e2ab71752": {
-                                            "functions": [],
-                                            "variable": "$.3a9b0a58-c0c6-4f9d-a022-3e0d03201179.out.workspace_id"
-                                        },
                                         "1ed2e1e0-9b77-44e6-986e-c44e7247943e": {
                                             "functions": [],
                                             "variable": "$.3a9b0a58-c0c6-4f9d-a022-3e0d03201179.out.id"
@@ -213,7 +209,7 @@
                                     "method": {}
                                 },
                                 "lambda": {
-                                    "url": "/workspaces/{{{8a869a9b-ca2b-44c5-a9cd-b42e2ab71752}}}/projects/{{{1ed2e1e0-9b77-44e6-986e-c44e7247943e}}}",
+                                    "url": "/organizations/{organization_id}/workspaces/{workspace_id}/projects/{{{1ed2e1e0-9b77-44e6-986e-c44e7247943e}}}",
                                     "method": "DELETE"
                                 }
                             }
@@ -256,7 +252,7 @@
                                 },
                                 "lambda": {
                                     "recipients": "test@appmixer.ai",
-                                    "testCase": "E2E Toggl Track - New Project trigger",
+                                    "testCase": "E2E Toggl - New Project trigger",
                                     "result": "{{{920e813a-93b2-469a-a915-345069123dd0}}}"
                                 }
                             }
@@ -280,7 +276,7 @@
             "y": 400,
             "width": 672,
             "height": 240,
-            "content": "## ⚠️ Webhook trigger\n\nThe trigger creates a Toggl webhook subscription when the flow starts; Toggl must validate it (a PING answered by the trigger) before it sends events, so the provoking action waits 3 minutes. Do not remove the Wait. Toggl limits subscriptions per workspace (Free: 1, Starter: 2, Premium: 3): run the trigger flows one after another, and remove leftover subscriptions of stopped flows if the start fails with a limit error."
+            "content": "## ⚠️ Polling trigger\n\nToggl has no webhooks. The trigger records where the account stands on its first check and then checks every 5 minutes, so the provoking action runs after a 2-minute Wait (after the first check) and the event can take up to about 7 minutes. Do not remove the Wait."
         }
     }
 }

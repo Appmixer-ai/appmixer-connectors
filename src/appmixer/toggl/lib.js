@@ -3,37 +3,41 @@
 const crypto = require('crypto');
 const pathModule = require('path');
 
-const API_ORIGIN = 'https://api.track.toggl.com';
-const API_BASE_URL = `${API_ORIGIN}/api/v9`;
-const REPORTS_BASE_URL = `${API_ORIGIN}/reports/api/v3`;
-const WEBHOOKS_BASE_URL = `${API_ORIGIN}/webhooks/api/v1`;
+// Toggl API (the product formerly called Toggl Focus / Toggl 2.0):
+// https://engineering.toggl.com/docs/focus/
+const API_ORIGIN = 'https://focus.toggl.com';
+const API_BASE_URL = `${API_ORIGIN}/api`;
 
 const DEFAULT_PREFIX = 'toggl-objects-export';
-const CREATED_WITH = 'Appmixer';
 
-// GET /me counts against the user-specific quota of 30 requests per hour, so the default
-// workspace it returns is cached.
-const DEFAULT_WORKSPACE_TTL = 10 * 60 * 1000;
+// The default workspace of the account rarely changes; caching it saves one request per run
+// (the Free plan allows 30 requests per hour).
+const SCOPE_TTL = 10 * 60 * 1000;
 
-// A webhook subscription is pinged at most this many times while it waits for validation.
-const MAX_VALIDATION_PINGS = 10;
-const VALIDATION_CHECK_INTERVAL = 60 * 1000;
+// Polling triggers check Toggl at most this often, to stay within the hourly quota.
+const POLL_INTERVAL = 5 * 60 * 1000;
+// Time entries are listed by the time they cover: the triggers watch entries of this window.
+const POLL_WINDOW_BACK = 30 * 24 * 60 * 60 * 1000;
+const POLL_WINDOW_AHEAD = 24 * 60 * 60 * 1000;
+
+// Largest page of the list endpoints.
+const PAGE_SIZE = 100;
+// Upper bound of what Find/List components read: 10 pages.
+const MAX_PAGES = 10;
 
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 
 const hash = value => crypto.createHash('sha256').update(JSON.stringify(value)).digest('hex');
 
-const authHeaders = (apiToken) => {
+const authHeaders = (apiKey) => {
 
-    // A token copied from the Profile page often carries a trailing space or newline.
-    const token = String(apiToken || '').trim();
-    const encoded = Buffer.from(`${token}:api_token`).toString('base64');
-    return { 'Authorization': `Basic ${encoded}` };
+    // A pasted key often carries a trailing space or newline.
+    return { 'Authorization': `Bearer ${String(apiKey || '').trim()}` };
 };
 
 /**
- * context.httpRequest with the Toggl credential, a retry on 429 (leaky bucket, Toggl asks
- * to back off) and a readable error for 402 (hourly quota used up, or a paid feature).
+ * context.httpRequest with the Toggl credential, a retry on 429 and a readable error for
+ * 402 (hourly quota used up, or a feature of a paid plan).
  */
 const request = async (context, options, { maxRetries = 2 } = {}) => {
 
@@ -45,7 +49,7 @@ const request = async (context, options, { maxRetries = 2 } = {}) => {
                 ...options,
                 headers: {
                     ...(options.headers || {}),
-                    ...authHeaders(context.auth.apiToken)
+                    ...authHeaders(context.auth.apiKey)
                 }
             });
         } catch (err) {
@@ -60,14 +64,11 @@ const request = async (context, options, { maxRetries = 2 } = {}) => {
                 continue;
             }
             if (status === 402) {
-                const headers = err.response.headers || {};
-                const resetsIn = headers['x-toggl-quota-resets-in'];
                 const body = err.response.data;
                 const detail = typeof body === 'string' ? body : JSON.stringify(body || '');
                 throw new context.CancelError(
-                    'Toggl Track refused the request with 402: the hourly API quota of the organization is used up' +
-                    (resetsIn ? ` (resets in ${resetsIn} s)` : '') +
-                    ', or the feature needs a paid plan. ' + detail
+                    'Toggl refused the request with 402: the hourly API quota of the plan is used up, ' +
+                    'or the feature needs a paid plan. ' + detail
                 );
             }
             throw err;
@@ -100,29 +101,64 @@ const optionalId = (context, value, label) => {
 };
 
 /**
- * The workspace the user picked, or the account's default workspace (GET /me, cached).
+ * Every endpoint is addressed by organization and workspace. They come from the connected
+ * account when it names them, otherwise from the account's default workspace
+ * (GET /users/me/landing-workspace, cached).
  */
-const resolveWorkspaceId = async (context, workspaceId) => {
+const resolveScope = async (context) => {
 
-    if (workspaceId !== undefined && workspaceId !== null && workspaceId !== '') {
-        return requireId(context, workspaceId, 'Workspace');
+    const { organizationId, workspaceId } = context.auth;
+    if (organizationId && workspaceId) {
+        return {
+            organizationId: requireId(context, organizationId, 'Organization ID'),
+            workspaceId: requireId(context, workspaceId, 'Workspace ID')
+        };
     }
 
-    const key = `toggl-default-workspace-${hash({ token: context.auth.apiToken })}`;
-    const cached = await context.staticCache.get(key);
-    if (cached) {
-        return String(cached);
+    // The cache only saves a request: without it the default workspace is looked up each time.
+    const key = `toggl-scope-${hash({ key: context.auth.apiKey })}`;
+    let cached;
+    try {
+        cached = await context.staticCache.get(key);
+    } catch (err) {
+        cached = null;
     }
-    const { data } = await request(context, { method: 'GET', url: `${API_BASE_URL}/me` });
-    if (!data || !data.default_workspace_id) {
-        throw new context.CancelError('Workspace is required: the account has no default workspace.');
+    if (cached && cached.organizationId && cached.workspaceId) {
+        return cached;
     }
-    await context.staticCache.set(key, data.default_workspace_id, DEFAULT_WORKSPACE_TTL);
-    return String(data.default_workspace_id);
+    const { data } = await request(context, { method: 'GET', url: `${API_BASE_URL}/users/me/landing-workspace` });
+    if (!data || !data.organization_id || !data.workspace_id) {
+        throw new context.CancelError(
+            'The Toggl account has no workspace it can open. Reconnect the account with an Organization ID and a Workspace ID.'
+        );
+    }
+    const scope = { organizationId: String(data.organization_id), workspaceId: String(data.workspace_id) };
+    try {
+        await context.staticCache.set(key, scope, SCOPE_TTL);
+    } catch (err) {
+        // Not cached; the next run asks again.
+    }
+    return scope;
 };
 
 /**
- * Toggl expects RFC 3339 times in UTC without fractions: 2006-01-02T15:04:05Z.
+ * Base URLs of the two path families: most resources live under the organization and the
+ * workspace, clients, tags and reports under the workspace only.
+ */
+const urls = async (context) => {
+
+    const { organizationId, workspaceId } = await resolveScope(context);
+    return {
+        organizationId,
+        workspaceId,
+        workspace: `${API_BASE_URL}/organizations/${organizationId}/workspaces/${workspaceId}`,
+        workspaceOnly: `${API_BASE_URL}/workspaces/${workspaceId}`,
+        reports: `${API_BASE_URL}/reports/workspaces/${workspaceId}`
+    };
+};
+
+/**
+ * RFC 3339 time in UTC.
  */
 const toTogglTime = (context, value, label) => {
 
@@ -133,11 +169,11 @@ const toTogglTime = (context, value, label) => {
     if (isNaN(date.getTime())) {
         throw new context.CancelError(`${label} is not a valid date: ${value}`);
     }
-    return date.toISOString().replace(/\.\d{3}Z$/, 'Z');
+    return date.toISOString();
 };
 
 /**
- * Calendar date (YYYY-MM-DD) for the Reports API. A value that already is a date is kept as
+ * Calendar date (YYYY-MM-DD) for the reports. A value that already is a date is kept as
  * typed, so no time zone shifts it to another day.
  */
 const toDateOnly = (context, value, label) => {
@@ -156,7 +192,7 @@ const toDateOnly = (context, value, label) => {
 };
 
 /**
- * A text input that takes a comma-separated list (tag names, IDs), or an array from a variable.
+ * A text input that takes a comma-separated list of IDs, or an array from a variable.
  */
 const splitList = (value) => {
 
@@ -172,226 +208,177 @@ const splitList = (value) => {
 const idList = (context, value, label) => splitList(value).map(item => Number(requireId(context, item, label)));
 
 /**
- * Cached GET for inspector sources: the designer calls them in bursts when an inspector opens.
+ * Drop the keys Toggl sends as null, so an output field is either present with a value of
+ * its type or absent.
  */
-const getCached = async (context, url, params) => {
+const withoutNulls = (record) => {
+
+    const result = {};
+    for (const [key, value] of Object.entries(record || {})) {
+        if (value !== null && value !== undefined) {
+            result[key] = value;
+        }
+    }
+    return result;
+};
+
+/**
+ * A time entry as the components emit it. Toggl stores start and duration; `stop` is added
+ * for a finished entry. A running timer has neither duration nor stop.
+ */
+const TIME_ENTRY_FIELDS = [
+    'id', 'workspace_id', 'project_id', 'task_id', 'toggl_user_id', 'type', 'description', 'start',
+    'duration', 'billable', 'tag_ids', 'timezone', 'created_at', 'updated_at'
+];
+
+const toTimeEntry = (entry) => {
+
+    const picked = {};
+    for (const field of TIME_ENTRY_FIELDS) {
+        picked[field] = (entry || {})[field];
+    }
+    const result = withoutNulls(picked);
+    if (result.start && Number.isFinite(result.duration)) {
+        const start = new Date(result.start).getTime();
+        if (!isNaN(start)) {
+            result.stop = new Date(start + result.duration * 1000).toISOString();
+        }
+    }
+    return result;
+};
+
+/**
+ * Read a paged list ({ data, page, per_page }) page by page, up to MAX_PAGES pages.
+ */
+const listAll = async (context, url, params = {}, { maxPages = MAX_PAGES } = {}) => {
+
+    const records = [];
+    for (let page = 1; page <= maxPages; page++) {
+        const { data } = await request(context, {
+            method: 'GET',
+            url,
+            params: { ...params, page, per_page: PAGE_SIZE }
+        });
+        const items = data && Array.isArray(data.data) ? data.data : [];
+        records.push(...items);
+        if (items.length < PAGE_SIZE) {
+            break;
+        }
+    }
+    return records;
+};
+
+/**
+ * Cached list for inspector sources: the designer calls them in bursts when an inspector opens.
+ */
+const listAllCached = async (context, url, params) => {
 
     let lock;
     try {
-        const key = `toggl-source-${hash({ url, params, token: context.auth.apiToken })}`;
+        const key = `toggl-source-${hash({ url, params, key: context.auth.apiKey })}`;
         lock = await context.lock(key);
         const cached = await context.staticCache.get(key);
         if (cached) {
             return cached;
         }
-        const { data } = await request(context, { method: 'GET', url, params });
-        await context.staticCache.set(key, data, context.config.listCacheTTL || (2 * 60 * 1000));
-        return data;
+        const records = await listAll(context, url, params);
+        await context.staticCache.set(key, records, context.config.listCacheTTL || (2 * 60 * 1000));
+        return records;
     } finally {
         lock?.unlock();
     }
 };
 
 /**
- * GET /me/time_entries - without parameters it lists the latest entries, with
- * start_date/end_date the entries that start in that range.
+ * The caller's own time entries that overlap [from, to], tasks or not. The API returns only
+ * the entries of the connected user; other members' time is in the reports.
  */
-const listMyTimeEntries = async (context, params = {}) => {
+const listTimeEntries = async (context, { from, to, projectId, orderBy = '-start', maxPages } = {}) => {
 
-    const { data } = await request(context, {
-        method: 'GET',
-        url: `${API_BASE_URL}/me/time_entries`,
-        params
-    });
-    return Array.isArray(data) ? data : [];
-};
-
-const byDateDesc = field => (a, b) => String(b[field] || '').localeCompare(String(a[field] || ''));
-
-const isSameToken = (received, expected) => {
-
-    if (typeof received !== 'string' || typeof expected !== 'string') {
-        return false;
+    const { workspace } = await urls(context);
+    const params = {
+        date_from: from,
+        date_to: to,
+        include_taskless: true,
+        order_by: orderBy
+    };
+    if (projectId) {
+        params.project_id = projectId;
     }
-    const a = Buffer.from(received);
-    const b = Buffer.from(expected);
-    return a.length === b.length && crypto.timingSafeEqual(a, b);
+    const entries = await listAll(context, `${workspace}/time-entries`, params, { maxPages });
+    return entries.map(toTimeEntry);
 };
+
+const pollWindow = (now = Date.now()) => ({
+    from: new Date(now - POLL_WINDOW_BACK).toISOString(),
+    to: new Date(now + POLL_WINDOW_AHEAD).toISOString()
+});
 
 /**
- * Webhook triggers (Webhooks API v1). One subscription per trigger, created when the flow
- * starts and deleted when it stops.
- *
- * Toggl signs events with X-Webhook-Signature-256 (HMAC of the raw body). A component only
- * receives the parsed body, so that HMAC cannot be checked byte-exactly; a random token in the
- * callback URL, checked on every delivery, proves the request comes from the subscription.
+ * Shared body of the polling triggers. `fetch` returns the newest records by `field`
+ * (a timestamp), newest first. State: { initialized, lastTimestamp, known, lastPoll }.
+ *   - `initialized` is kept apart from `lastTimestamp`, so the first record of an empty
+ *     account is not swallowed by a second baseline.
+ *   - A record is emitted when its timestamp is newer than the last one seen, or equal to it
+ *     and its ID is not among the `known` IDs of that boundary timestamp.
+ *   - `accept` drops records the trigger does not report (e.g. an update that is the creation).
  */
-const webhooks = {
+const pollByTimestamp = async (context, { fetch, field, accept }) => {
 
-    async start(context, { eventFilters, label }) {
+    const now = Date.now();
+    const state = context.state || {};
+    if (state.lastPoll && now - state.lastPoll < POLL_INTERVAL) {
+        return;
+    }
 
-        const workspaceId = await resolveWorkspaceId(context, context.properties.workspaceId);
-        const token = crypto.randomBytes(24).toString('hex');
-        const webhookUrl = context.getWebhookUrl();
-        const separator = webhookUrl.indexOf('?') === -1 ? '?' : '&';
+    let lock;
+    try {
+        lock = await context.lock(context.componentId, { ttl: 2 * 60 * 1000, maxRetryCount: 0 });
+    } catch (err) {
+        // Another tick is still running.
+        return;
+    }
 
-        // The validation PING can arrive before the create call returns: the token must be
-        // in the state already.
-        await context.saveState({ token, workspaceId });
+    try {
+        const records = (await fetch()).filter(record => record && record[field]);
+        const time = record => new Date(record[field]).getTime();
 
-        const { data } = await request(context, {
-            method: 'POST',
-            url: `${WEBHOOKS_BASE_URL}/subscriptions/${workspaceId}`,
-            data: {
-                url_callback: `${webhookUrl}${separator}token=${token}`,
-                event_filters: eventFilters,
-                enabled: true,
-                // Must be unique in the workspace.
-                description: `Appmixer ${label} ${context.flowId}:${context.componentId}`
-            }
+        const newest = records.reduce((max, record) => Math.max(max, time(record)), 0);
+        const lastTimestamp = state.lastTimestamp || 0;
+        const boundary = Math.max(newest, lastTimestamp);
+        const knownAtBoundary = records.filter(record => time(record) === boundary).map(record => String(record.id));
+
+        if (!state.initialized) {
+            // First run: remember where the account stands, emit nothing.
+            return await context.saveState({
+                initialized: true,
+                lastTimestamp: boundary,
+                known: knownAtBoundary,
+                lastPoll: now
+            });
+        }
+
+        const known = new Set((state.known || []).map(String));
+        const fresh = records
+            .filter(record => time(record) > lastTimestamp
+                || (time(record) === lastTimestamp && !known.has(String(record.id))))
+            .filter(record => !accept || accept(record))
+            .sort((a, b) => time(a) - time(b));
+
+        for (const record of fresh) {
+            await context.sendJson(record, 'out');
+        }
+
+        await context.saveState({
+            initialized: true,
+            lastTimestamp: boundary,
+            // IDs sharing the boundary timestamp, so a record written in the same instant
+            // is neither skipped nor emitted twice.
+            known: boundary === lastTimestamp ? [...new Set([...known, ...knownAtBoundary])] : knownAtBoundary,
+            lastPoll: now
         });
-
-        await context.stateSet('subscriptionId', data.subscription_id);
-        if (data.validated_at) {
-            await context.stateSet('validated', true);
-        }
-    },
-
-    async stop(context) {
-
-        const { workspaceId, subscriptionId } = await context.loadState();
-        if (!workspaceId || !subscriptionId) {
-            return;
-        }
-        try {
-            await request(context, {
-                method: 'DELETE',
-                url: `${WEBHOOKS_BASE_URL}/subscriptions/${workspaceId}/${subscriptionId}`
-            });
-        } catch (err) {
-            const status = err.response && err.response.status;
-            if (status !== 404) {
-                throw err;
-            }
-        }
-    },
-
-    /**
-     * A subscription receives events only once it is validated. receive() answers the PING
-     * with the validation code; tick() checks the subscription and pings it again until it is
-     * validated (the first PING can arrive before the flow accepts webhooks).
-     */
-    async tick(context) {
-
-        const state = await context.loadState();
-        const { workspaceId, subscriptionId } = state;
-        if (!workspaceId || !subscriptionId || state.validated) {
-            return;
-        }
-        const pings = state.pings || 0;
-        const checkedRecently = state.lastCheck && Date.now() - state.lastCheck < VALIDATION_CHECK_INTERVAL;
-        if (pings >= MAX_VALIDATION_PINGS || checkedRecently) {
-            return;
-        }
-
-        try {
-            const { data } = await request(context, {
-                method: 'GET',
-                url: `${WEBHOOKS_BASE_URL}/subscriptions/${workspaceId}`
-            });
-            const subscription = (Array.isArray(data) ? data : [])
-                .find(item => String(item.subscription_id) === String(subscriptionId));
-            if (subscription && subscription.validated_at) {
-                await context.stateSet('validated', true);
-                return;
-            }
-            await context.stateSet('lastCheck', Date.now());
-            await context.stateSet('pings', pings + 1);
-            await request(context, {
-                method: 'POST',
-                url: `${WEBHOOKS_BASE_URL}/ping/${workspaceId}/${subscriptionId}`
-            });
-        } catch (err) {
-            await context.log({ step: 'webhook-validation-check-failed', error: err.message });
-        }
-    },
-
-    /**
-     * Handle a delivery: the validation PING, or an entity event whose `payload` is emitted.
-     */
-    async receive(context, { model, action }) {
-
-        const webhook = context.messages.webhook;
-        if (!webhook) {
-            return;
-        }
-
-        const state = await context.loadState();
-        const received = webhook.content && webhook.content.query && webhook.content.query.token;
-        if (!isSameToken(received, state.token)) {
-            await context.log({ step: 'webhook-rejected', reason: 'Missing or invalid token in the callback URL.' });
-            return context.response({ error: 'Forbidden' }, 403);
-        }
-
-        const event = (webhook.content && webhook.content.data) || {};
-        if (state.subscriptionId && event.subscription_id
-            && String(event.subscription_id) !== String(state.subscriptionId)) {
-            return context.response();
-        }
-
-        const validationCode = event.validation_code
-            || (event.payload && typeof event.payload === 'object' && event.payload.validation_code);
-        if (validationCode) {
-            if (state.workspaceId && state.subscriptionId) {
-                // Asynchronous validation, in case the response body below is not read.
-                try {
-                    await context.httpRequest({
-                        method: 'GET',
-                        url: `${WEBHOOKS_BASE_URL}/validate/${state.workspaceId}/${state.subscriptionId}/` +
-                            encodeURIComponent(validationCode)
-                    });
-                } catch (err) {
-                    await context.log({ step: 'webhook-validate-call', error: err.message });
-                }
-                await context.stateSet('validated', true);
-            }
-            // Synchronous validation: Toggl reads {"validation_code": "..."} from the response.
-            return context.response({ validation_code: validationCode }, 200, { 'Content-Type': 'application/json' });
-        }
-
-        const payload = event.payload;
-        if (!payload || typeof payload !== 'object') {
-            // A PING without a validation code, or an event without an entity.
-            return context.response();
-        }
-
-        const metadata = event.metadata || {};
-        if ((model && metadata.model && metadata.model !== model)
-            || (action && metadata.action && metadata.action !== action)) {
-            return context.response();
-        }
-
-        if (event.event_id !== undefined && event.event_id !== null) {
-            let lock;
-            try {
-                lock = await context.lock(`toggl-webhook-${context.componentId}`, {
-                    ttl: 1000 * 10,
-                    retryDelay: 500,
-                    maxRetryCount: 3
-                });
-                // Toggl retries a delivery that was not acknowledged: emit each event once.
-                const cacheKey = `toggl-webhook-event-${context.componentId}-${event.event_id}`;
-                if (await context.staticCache.get(cacheKey)) {
-                    return context.response();
-                }
-                await context.staticCache.set(cacheKey, true, 60 * 60 * 1000);
-            } finally {
-                await lock?.unlock();
-            }
-        }
-
-        await context.sendJson(payload, 'out');
-        return context.response();
+    } finally {
+        lock?.unlock();
     }
 };
 
@@ -399,29 +386,31 @@ module.exports = {
 
     API_ORIGIN,
     API_BASE_URL,
-    REPORTS_BASE_URL,
-    WEBHOOKS_BASE_URL,
-    CREATED_WITH,
+    PAGE_SIZE,
+    MAX_PAGES,
 
     authHeaders,
     request,
     requireId,
     optionalId,
-    resolveWorkspaceId,
+    resolveScope,
+    urls,
     toTogglTime,
     toDateOnly,
     splitList,
     idList,
-    getCached,
-    listMyTimeEntries,
-    byDateDesc,
-    webhooks,
+    withoutNulls,
+    toTimeEntry,
+    listAll,
+    listAllCached,
+    listTimeEntries,
+    pollWindow,
+    pollByTimestamp,
 
     /**
-     * Resolve a MakeApiCall URL. A relative path is resolved against the Track API v9
-     * (https://api.track.toggl.com/api/v9); a full URL is accepted only on
-     * https://api.track.toggl.com (Track, Reports and Webhooks APIs), so the API token is never
-     * sent to another host.
+     * Resolve a MakeApiCall URL. A relative path is resolved against the Toggl API
+     * (https://focus.toggl.com/api); a full URL is accepted only on https://focus.toggl.com,
+     * so the API key is never sent to another host.
      */
     resolveApiUrl(context, url) {
 

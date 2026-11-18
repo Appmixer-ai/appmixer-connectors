@@ -7,16 +7,19 @@ module.exports = {
     async receive(context) {
 
         const { timeEntryId } = context.messages.in.content;
+
         if (!timeEntryId) {
             throw new context.CancelError('Time Entry ID is required!');
         }
+
         const id = lib.requireId(context, timeEntryId, 'Time Entry ID');
+        const { workspace } = await lib.urls(context);
 
         const { data } = await lib.request(context, {
             method: 'GET',
-            url: `${lib.API_BASE_URL}/me/time_entries/${id}`
+            url: `${workspace}/time-entries/${id}`
         });
 
-        return context.sendJson(data, 'out');
+        return context.sendJson(lib.toTimeEntry(data), 'out');
     }
 };

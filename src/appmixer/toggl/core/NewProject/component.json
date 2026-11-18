@@ -1,11 +1,10 @@
 {
     "name": "appmixer.toggl.core.NewProject",
     "label": "New Project",
-    "description": "Triggers when a project is created in the workspace (Toggl webhook). Registers a webhook subscription when the flow starts and removes it when the flow stops.",
+    "description": "Triggers when a project is created in the workspace. Toggl has no webhooks, so the trigger checks every 5 minutes.",
     "author": "Appmixer <info@appmixer.com>",
     "version": "1.0.0",
     "trigger": true,
-    "webhook": true,
     "tick": true,
     "auth": {
         "service": "appmixer:toggl"
@@ -17,38 +16,6 @@
             "userId": "{{userId}}"
         }
     },
-    "properties": {
-        "schema": {
-            "type": "object",
-            "properties": {
-                "workspaceId": {
-                    "type": "string"
-                }
-            }
-        },
-        "inspector": {
-            "inputs": {
-                "workspaceId": {
-                    "type": "text",
-                    "label": "Workspace",
-                    "index": 1,
-                    "tooltip": "Pick a workspace or type its numeric ID. Leave empty to use the default workspace of the connected account.",
-                    "source": {
-                        "url": "/component/appmixer/toggl/core/ListWorkspaces?outPort=out",
-                        "data": {
-                            "messages": {
-                                "in/outputType": "array"
-                            },
-                            "properties": {
-                                "isSource": true
-                            },
-                            "transform": "./ListWorkspaces#toSelectArray"
-                        }
-                    }
-                }
-            }
-        }
-    },
     "outPorts": [
         {
             "name": "out",
@@ -57,39 +24,38 @@
                 "required": [
                     "id",
                     "workspace_id",
-                    "name",
-                    "active"
+                    "name"
                 ],
                 "properties": {
                     "id": {
                         "type": "integer",
                         "title": "Project ID",
-                        "example": 203456789
+                        "example": 5302177
                     },
                     "workspace_id": {
                         "type": "integer",
                         "title": "Workspace ID",
-                        "example": 1234567
+                        "example": 21808213
                     },
                     "client_id": {
                         "type": "integer",
                         "title": "Client ID",
-                        "example": 64123456
+                        "example": 953805
                     },
                     "name": {
                         "type": "string",
                         "title": "Name",
                         "example": "Website Redesign"
                     },
-                    "active": {
-                        "type": "boolean",
-                        "title": "Active",
-                        "example": true
+                    "description": {
+                        "type": "string",
+                        "title": "Description",
+                        "example": "Redesign of the marketing site"
                     },
-                    "is_private": {
+                    "private": {
                         "type": "boolean",
                         "title": "Private",
-                        "example": true
+                        "example": false
                     },
                     "billable": {
                         "type": "boolean",
@@ -103,15 +69,27 @@
                     },
                     "created_at": {
                         "type": "string",
+                        "format": "date-time",
                         "title": "Created At",
-                        "example": "2026-11-18T09:00:00+00:00",
-                        "format": "date-time"
+                        "example": "2026-11-18T09:00:00.084772Z"
                     },
-                    "at": {
+                    "updated_at": {
                         "type": "string",
+                        "format": "date-time",
                         "title": "Updated At",
-                        "example": "2026-11-18T09:00:00+00:00",
-                        "format": "date-time"
+                        "example": "2026-11-18T09:00:00.084772Z"
+                    },
+                    "archived_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Archived At",
+                        "example": "2026-11-18T09:00:00.084772Z"
+                    },
+                    "completed_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Completed At",
+                        "example": "2026-11-18T09:00:00.084772Z"
                     }
                 }
             }

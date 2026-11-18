@@ -6,23 +6,24 @@ module.exports = {
 
     async receive(context) {
 
-        const { workspaceId, name, notes } = context.messages.in.content;
+        const { name, contactEmail, address, internalReference } = context.messages.in.content;
 
         if (!name) {
             throw new context.CancelError('Name is required!');
         }
 
-        const resolvedWorkspaceId = await lib.resolveWorkspaceId(context, workspaceId);
-
         const body = { name };
-        if (notes) body.notes = notes;
+        if (contactEmail) body.contact_email = contactEmail;
+        if (address) body.address = address;
+        if (internalReference) body.internal_reference = internalReference;
 
+        const { workspaceOnly } = await lib.urls(context);
         const { data } = await lib.request(context, {
             method: 'POST',
-            url: `${lib.API_BASE_URL}/workspaces/${resolvedWorkspaceId}/clients`,
+            url: `${workspaceOnly}/clients`,
             data: body
         });
 
-        return context.sendJson(data, 'out');
+        return context.sendJson(lib.withoutNulls(data), 'out');
     }
 };

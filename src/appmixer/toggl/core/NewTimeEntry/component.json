@@ -1,11 +1,10 @@
 {
     "name": "appmixer.toggl.core.NewTimeEntry",
     "label": "New Time Entry",
-    "description": "Triggers when a time entry is created in the workspace (Toggl webhook). Registers a webhook subscription when the flow starts and removes it when the flow stops. Toggl limits webhook subscriptions per workspace by plan (Free: 1).",
+    "description": "Triggers when the connected user creates a time entry that covers the last 30 days, a started timer included. Toggl has no webhooks, so the trigger checks every 5 minutes.",
     "author": "Appmixer <info@appmixer.com>",
     "version": "1.0.0",
     "trigger": true,
-    "webhook": true,
     "tick": true,
     "auth": {
         "service": "appmixer:toggl"
@@ -17,38 +16,6 @@
             "userId": "{{userId}}"
         }
     },
-    "properties": {
-        "schema": {
-            "type": "object",
-            "properties": {
-                "workspaceId": {
-                    "type": "string"
-                }
-            }
-        },
-        "inspector": {
-            "inputs": {
-                "workspaceId": {
-                    "type": "text",
-                    "label": "Workspace",
-                    "index": 1,
-                    "tooltip": "Pick a workspace or type its numeric ID. Leave empty to use the default workspace of the connected account.",
-                    "source": {
-                        "url": "/component/appmixer/toggl/core/ListWorkspaces?outPort=out",
-                        "data": {
-                            "messages": {
-                                "in/outputType": "array"
-                            },
-                            "properties": {
-                                "isSource": true
-                            },
-                            "transform": "./ListWorkspaces#toSelectArray"
-                        }
-                    }
-                }
-            }
-        }
-    },
     "outPorts": [
         {
             "name": "out",
@@ -57,34 +24,38 @@
                 "required": [
                     "id",
                     "workspace_id",
-                    "start",
-                    "duration"
+                    "type"
                 ],
                 "properties": {
                     "id": {
                         "type": "integer",
                         "title": "Time Entry ID",
-                        "example": 4123456789
+                        "example": 247977688
                     },
                     "workspace_id": {
                         "type": "integer",
                         "title": "Workspace ID",
-                        "example": 1234567
+                        "example": 21808213
                     },
                     "project_id": {
                         "type": "integer",
                         "title": "Project ID",
-                        "example": 203456789
+                        "example": 5302177
                     },
                     "task_id": {
                         "type": "integer",
                         "title": "Task ID",
-                        "example": 98765432
+                        "example": 18514337
                     },
-                    "user_id": {
+                    "toggl_user_id": {
                         "type": "integer",
                         "title": "User ID",
-                        "example": 5551234
+                        "example": 7987332
+                    },
+                    "type": {
+                        "type": "string",
+                        "title": "Type",
+                        "example": "activity"
                     },
                     "description": {
                         "type": "string",
@@ -93,15 +64,15 @@
                     },
                     "start": {
                         "type": "string",
+                        "format": "date-time",
                         "title": "Start",
-                        "example": "2026-11-18T09:00:00+00:00",
-                        "format": "date-time"
+                        "example": "2026-11-18T09:00:00Z"
                     },
                     "stop": {
                         "type": "string",
+                        "format": "date-time",
                         "title": "Stop",
-                        "example": "2026-11-18T10:30:00+00:00",
-                        "format": "date-time"
+                        "example": "2026-11-18T10:30:00.000Z"
                     },
                     "duration": {
                         "type": "integer",
@@ -113,16 +84,6 @@
                         "title": "Billable",
                         "example": false
                     },
-                    "tags": {
-                        "type": "array",
-                        "title": "Tags",
-                        "items": {
-                            "type": "string"
-                        },
-                        "example": [
-                            "release"
-                        ]
-                    },
                     "tag_ids": {
                         "type": "array",
                         "title": "Tag IDs",
@@ -130,14 +91,25 @@
                             "type": "integer"
                         },
                         "example": [
-                            16123456
+                            16123
                         ]
                     },
-                    "at": {
+                    "timezone": {
                         "type": "string",
+                        "title": "Time Zone",
+                        "example": "Europe/Prague"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Created At",
+                        "example": "2026-11-18T10:30:05.655129Z"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time",
                         "title": "Updated At",
-                        "example": "2026-11-18T10:30:05+00:00",
-                        "format": "date-time"
+                        "example": "2026-11-18T10:30:05.655129Z"
                     }
                 }
             }

@@ -15,9 +15,19 @@ module.exports = {
             throw new context.CancelError('HTTP Method is required!');
         }
 
-        // The API token is attached to the request, so the target is pinned to
-        // https://api.track.toggl.com.
-        const targetUrl = lib.resolveApiUrl(context, url);
+        // The API key is attached to the request, so the target is pinned to
+        // https://focus.toggl.com.
+        // {organization_id} and {workspace_id}, as the Toggl API reference writes its paths, stand
+        // for the organization and workspace of the connected account.
+        let path = String(url);
+        if (/\{(organization_id|workspace_id)\}/.test(path)) {
+            const { organizationId, workspaceId } = await lib.resolveScope(context);
+            path = path
+                .replace(/\{organization_id\}/g, organizationId)
+                .replace(/\{workspace_id\}/g, workspaceId);
+        }
+
+        const targetUrl = lib.resolveApiUrl(context, path);
 
         const requestOptions = {
             method,

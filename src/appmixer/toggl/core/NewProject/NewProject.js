@@ -3,44 +3,30 @@
 const lib = require('../../lib');
 const { fetchProjects } = require('../ListProjects/ListProjects');
 
-const EVENT = { model: 'project', action: 'created' };
+/**
+ * Projects of the workspace, newest created first. One page: more than 100 projects created
+ * between two checks are not expected.
+ */
+const fetchNewest = context => fetchProjects(context, { orderBy: '-created_at', maxPages: 1 });
 
 module.exports = {
 
-    async start(context) {
+    // The Toggl API has no webhooks: the trigger polls.
+    async tick(context) {
 
-        return lib.webhooks.start(context, {
-            eventFilters: [{ entity: EVENT.model, action: EVENT.action }],
-            label: 'New Project'
+        return lib.pollByTimestamp(context, {
+            fetch: () => fetchNewest(context),
+            field: 'created_at'
         });
     },
 
-    async stop(context) {
-
-        return lib.webhooks.stop(context);
-    },
-
-    // Re-pings the subscription until Toggl has validated it.
-    async tick(context) {
-
-        return lib.webhooks.tick(context);
-    },
-
-    async receive(context) {
-
-        return lib.webhooks.receive(context, EVENT);
-    },
-
-    // Flow Test Mode: the newest project of the workspace stands in for the event payload (the
-    // created project). Read-only, no state writes.
+    // Flow Test Mode: the most recently created project. Read-only.
     async test(context) {
 
-        const workspaceId = await lib.resolveWorkspaceId(context, context.properties.workspaceId);
-        const projects = (await fetchProjects(context, workspaceId, false))
-            .sort(lib.byDateDesc('created_at'));
+        const projects = await fetchNewest(context);
 
         if (projects.length === 0) {
-            throw new context.CancelError('No projects in this workspace yet. Create a project in Toggl Track and test again.');
+            throw new context.CancelError('No projects found. Create a project in Toggl and test again.');
         }
 
         return context.sendJson(projects[0], 'out');

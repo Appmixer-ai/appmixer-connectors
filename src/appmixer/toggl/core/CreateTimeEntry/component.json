@@ -1,7 +1,7 @@
 {
     "name": "appmixer.toggl.core.CreateTimeEntry",
     "label": "Create Time Entry",
-    "description": "Create a time entry. Leave Stop and Duration empty to start a running timer (Toggl stops any timer that is already running).",
+    "description": "Create a time entry of the connected user. Leave Stop and Duration empty to start a running timer (Toggl stops a timer that is already running).",
     "author": "Appmixer <info@appmixer.com>",
     "version": "1.0.0",
     "auth": {
@@ -20,9 +20,6 @@
             "schema": {
                 "type": "object",
                 "properties": {
-                    "workspaceId": {
-                        "type": "string"
-                    },
                     "description": {
                         "type": "string"
                     },
@@ -43,71 +40,48 @@
                     "taskId": {
                         "type": "string"
                     },
-                    "tags": {
+                    "tagIds": {
                         "type": "string"
                     },
                     "billable": {
                         "type": "boolean"
                     }
-                },
-                "required": [
-                    "start"
-                ]
+                }
             },
             "inspector": {
                 "inputs": {
-                    "workspaceId": {
-                        "type": "text",
-                        "label": "Workspace",
-                        "index": 1,
-                        "tooltip": "Pick a workspace or type its numeric ID. Leave empty to use the default workspace of the connected account.",
-                        "source": {
-                            "url": "/component/appmixer/toggl/core/ListWorkspaces?outPort=out",
-                            "data": {
-                                "messages": {
-                                    "in/outputType": "array"
-                                },
-                                "properties": {
-                                    "isSource": true
-                                },
-                                "transform": "./ListWorkspaces#toSelectArray"
-                            }
-                        }
-                    },
                     "description": {
                         "type": "text",
                         "label": "Description",
-                        "index": 2,
-                        "tooltip": "What the time was spent on."
+                        "tooltip": "What the time was spent on.",
+                        "index": 1
                     },
                     "start": {
                         "type": "date-time",
                         "label": "Start",
-                        "index": 3,
-                        "tooltip": "When the time entry starts."
+                        "tooltip": "When the time entry starts. Required with Stop or Duration. For a running timer, leave empty to start it now.",
+                        "index": 2
                     },
                     "stop": {
                         "type": "date-time",
                         "label": "Stop",
-                        "index": 4,
-                        "tooltip": "When the time entry ends. Leave empty, together with Duration, to start a running timer."
+                        "tooltip": "When the time entry ends. Leave empty, together with Duration, to start a running timer.",
+                        "index": 3
                     },
                     "duration": {
                         "type": "number",
                         "label": "Duration (seconds)",
-                        "index": 5,
-                        "tooltip": "Length of the time entry in seconds, used when Stop is empty."
+                        "tooltip": "Length of the time entry in seconds, used when Stop is empty.",
+                        "index": 4
                     },
                     "projectId": {
                         "type": "text",
                         "label": "Project",
-                        "index": 6,
-                        "tooltip": "Pick a project or type its numeric ID. Optional.",
+                        "tooltip": "Pick a project or type its numeric ID. Optional. Ignored when Task ID is set: the entry then belongs to the project of the task.",
                         "source": {
                             "url": "/component/appmixer/toggl/core/ListProjects?outPort=out",
                             "data": {
                                 "messages": {
-                                    "in/workspaceId": "inputs/in/workspaceId",
                                     "in/outputType": "array"
                                 },
                                 "properties": {
@@ -115,26 +89,27 @@
                                 },
                                 "transform": "./ListProjects#toSelectArray"
                             }
-                        }
+                        },
+                        "index": 5
                     },
                     "taskId": {
                         "type": "text",
                         "label": "Task ID",
-                        "index": 7,
-                        "tooltip": "Numeric ID of a task of the project (Create Task returns it). Optional; tasks need a paid plan."
+                        "tooltip": "Numeric ID of a task (Create Task returns it). Optional.",
+                        "index": 6
                     },
-                    "tags": {
+                    "tagIds": {
                         "type": "text",
-                        "label": "Tags",
-                        "index": 8,
-                        "tooltip": "Comma-separated tag names, for example <code>meeting, client</code>. Tags that do not exist yet are created."
+                        "label": "Tag IDs",
+                        "tooltip": "Numeric IDs of tags, separated by commas. Optional.",
+                        "index": 7
                     },
                     "billable": {
                         "type": "toggle",
                         "label": "Billable",
-                        "index": 9,
                         "defaultValue": false,
-                        "tooltip": "Mark the time entry as billable (paid plans)."
+                        "tooltip": "Mark the time entry as billable.",
+                        "index": 8
                     }
                 }
             }
@@ -148,34 +123,38 @@
                 "required": [
                     "id",
                     "workspace_id",
-                    "start",
-                    "duration"
+                    "type"
                 ],
                 "properties": {
                     "id": {
                         "type": "integer",
                         "title": "Time Entry ID",
-                        "example": 4123456789
+                        "example": 247977688
                     },
                     "workspace_id": {
                         "type": "integer",
                         "title": "Workspace ID",
-                        "example": 1234567
+                        "example": 21808213
                     },
                     "project_id": {
                         "type": "integer",
                         "title": "Project ID",
-                        "example": 203456789
+                        "example": 5302177
                     },
                     "task_id": {
                         "type": "integer",
                         "title": "Task ID",
-                        "example": 98765432
+                        "example": 18514337
                     },
-                    "user_id": {
+                    "toggl_user_id": {
                         "type": "integer",
                         "title": "User ID",
-                        "example": 5551234
+                        "example": 7987332
+                    },
+                    "type": {
+                        "type": "string",
+                        "title": "Type",
+                        "example": "activity"
                     },
                     "description": {
                         "type": "string",
@@ -184,15 +163,15 @@
                     },
                     "start": {
                         "type": "string",
+                        "format": "date-time",
                         "title": "Start",
-                        "example": "2026-11-18T09:00:00+00:00",
-                        "format": "date-time"
+                        "example": "2026-11-18T09:00:00Z"
                     },
                     "stop": {
                         "type": "string",
+                        "format": "date-time",
                         "title": "Stop",
-                        "example": "2026-11-18T10:30:00+00:00",
-                        "format": "date-time"
+                        "example": "2026-11-18T10:30:00.000Z"
                     },
                     "duration": {
                         "type": "integer",
@@ -204,16 +183,6 @@
                         "title": "Billable",
                         "example": false
                     },
-                    "tags": {
-                        "type": "array",
-                        "title": "Tags",
-                        "items": {
-                            "type": "string"
-                        },
-                        "example": [
-                            "release"
-                        ]
-                    },
                     "tag_ids": {
                         "type": "array",
                         "title": "Tag IDs",
@@ -221,14 +190,25 @@
                             "type": "integer"
                         },
                         "example": [
-                            16123456
+                            16123
                         ]
                     },
-                    "at": {
+                    "timezone": {
                         "type": "string",
+                        "title": "Time Zone",
+                        "example": "Europe/Prague"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Created At",
+                        "example": "2026-11-18T10:30:05.655129Z"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time",
                         "title": "Updated At",
-                        "example": "2026-11-18T10:30:05+00:00",
-                        "format": "date-time"
+                        "example": "2026-11-18T10:30:05.655129Z"
                     }
                 }
             }
