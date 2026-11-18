@@ -1,40 +1,33 @@
 {
     "name": "E2E SurveyMonkey - new response trigger",
-    "description": "Submits a response through a new web link collector and waits for the New Response webhook trigger to emit it, then deletes the collector with its responses.",
-    "flow": {
-        "0fd45671-a1b9-4d89-b2a0-fa363cb42f65": {
-            "type": "appmixer.surveymonkey.core.NewResponse",
+    "description": "Lists the responses of the permanent E2E survey, sends the New Response trigger a response_completed event for the latest one, signed with the secret of the webhook the trigger registered, and asserts the emitted response and Get Response with their answers.",
+    "notes": {
+        "ca1fa269-f9ee-4b52-92b2-8b93bff12a09": {
             "x": 64,
-            "y": 576,
-            "source": {},
-            "version": "1.0.0",
-            "config": {
-                "properties": {
-                    "surveyId": "REPLACE_WITH_SURVEY_ID",
-                    "simple": true
-                }
-            },
-            "errorHandling": {
-                "autoRetry": false,
-                "onError": "stopFlow"
-            }
-        },
+            "y": 624,
+            "width": 1040,
+            "height": 368,
+            "content": "## ⚠️ Test data assumption, self-provoked trigger\n\nThe flow needs a permanent survey in the E2E account: **529066657** (\"E2E SurveyMonkey - permanent survey (do not delete)\") with one single-textbox question, the web link collector **466427749** and completed responses whose answer is `E2E answer`. On a fresh account: create the survey and a web link collector, open the collector URL, answer `E2E answer`, click Done, then put the survey and collector IDs into the trigger, List Responses, Get Response, the event body and the Asserts.\n\n`NewResponse.start()` registers a real `response_completed` webhook for that survey, and `stop()` deletes it. The event itself does not come from SurveyMonkey: the app has no `responses_write` scope, so a flow cannot submit a response, and on the E2E account (Basic plan, draft app) SurveyMonkey delivers no webhook events at all (probed 2026-11-18 with a response submitted through the collector page).\n\nThe provoke lane therefore takes the latest response from List Responses, lists the webhooks, picks the one named `Appmixer New Response <trigger id>`, reads its `authorization` secret back from SurveyMonkey and POSTs an event in SurveyMonkey's documented shape to the trigger's own webhook URL. The trigger checks the secret and reads the response with its answers from the API."
+        }
+    },
+    "flow": {
         "27e2943c-2364-4694-8544-606cec5272ed": {
             "type": "appmixer.utils.controls.OnStart",
             "x": 64,
-            "y": 64,
-            "source": {},
+            "y": 16,
             "version": "1.0.0",
+            "source": {},
             "config": {},
             "errorHandling": {
                 "autoRetry": false,
                 "onError": "stopFlow"
             }
         },
-        "02622074-da75-4756-a654-4b89a7ffce25": {
-            "type": "appmixer.utils.timers.Wait",
+        "9753c7c9-46bc-435e-8529-683d3016a81d": {
+            "type": "appmixer.surveymonkey.core.ListResponses",
             "x": 272,
-            "y": 64,
+            "y": 16,
+            "version": "1.0.0",
             "source": {
                 "in": {
                     "27e2943c-2364-4694-8544-606cec5272ed": [
@@ -42,8 +35,6 @@
                     ]
                 }
             },
-            "label": "Wait (webhook registration)",
-            "version": "1.0.0",
             "config": {
                 "transform": {
                     "in": {
@@ -51,82 +42,14 @@
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
-                                    "interval": {}
-                                },
-                                "lambda": {
-                                    "interval": "1m"
-                                }
-                            }
-                        }
-                    }
-                }
-            },
-            "errorHandling": {
-                "autoRetry": false,
-                "onError": "stopFlow"
-            }
-        },
-        "cb4863e6-0f11-4928-a13e-0942828ad535": {
-            "type": "appmixer.surveymonkey.core.GetSurvey",
-            "x": 480,
-            "y": 192,
-            "source": {
-                "in": {
-                    "02622074-da75-4756-a654-4b89a7ffce25": [
-                        "out"
-                    ]
-                }
-            },
-            "version": "1.0.0",
-            "config": {
-                "transform": {
-                    "in": {
-                        "02622074-da75-4756-a654-4b89a7ffce25": {
-                            "out": {
-                                "type": "json2new",
-                                "modifiers": {
-                                    "surveyId": {}
-                                },
-                                "lambda": {
-                                    "surveyId": "REPLACE_WITH_SURVEY_ID"
-                                }
-                            }
-                        }
-                    }
-                }
-            },
-            "errorHandling": {
-                "autoRetry": false,
-                "onError": "stopFlow"
-            }
-        },
-        "46a73b7c-d9ad-482a-b19b-10652ff126a5": {
-            "type": "appmixer.surveymonkey.core.CreateCollector",
-            "x": 688,
-            "y": 320,
-            "source": {
-                "in": {
-                    "cb4863e6-0f11-4928-a13e-0942828ad535": [
-                        "out"
-                    ]
-                }
-            },
-            "version": "1.0.0",
-            "config": {
-                "transform": {
-                    "in": {
-                        "cb4863e6-0f11-4928-a13e-0942828ad535": {
-                            "out": {
-                                "type": "json2new",
-                                "modifiers": {
                                     "surveyId": {},
-                                    "type": {},
-                                    "name": {}
+                                    "simple": {},
+                                    "outputType": {}
                                 },
                                 "lambda": {
-                                    "surveyId": "REPLACE_WITH_SURVEY_ID",
-                                    "type": "weblink",
-                                    "name": "E2E response collector"
+                                    "surveyId": "529066657",
+                                    "simple": true,
+                                    "outputType": "first"
                                 }
                             }
                         }
@@ -138,55 +61,217 @@
                 "onError": "stopFlow"
             }
         },
-        "88d75964-ca63-455c-8f19-5c8af386e58a": {
+        "03d77633-159d-412b-871d-4e75bf824237": {
             "type": "appmixer.surveymonkey.core.MakeApiCall",
-            "x": 896,
-            "y": 448,
+            "x": 480,
+            "y": 16,
+            "version": "1.0.0",
             "source": {
                 "in": {
-                    "46a73b7c-d9ad-482a-b19b-10652ff126a5": [
+                    "9753c7c9-46bc-435e-8529-683d3016a81d": [
                         "out"
                     ]
                 }
             },
-            "label": "Submit Response",
-            "version": "1.0.0",
             "config": {
                 "transform": {
                     "in": {
-                        "46a73b7c-d9ad-482a-b19b-10652ff126a5": {
+                        "9753c7c9-46bc-435e-8529-683d3016a81d": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "url": {},
+                                    "method": {}
+                                },
+                                "lambda": {
+                                    "url": "/v3/webhooks?per_page=100",
+                                    "method": "GET"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "label": "Make API Call (list webhooks)"
+        },
+        "5c3e3e28-2bc5-45d8-8f22-71a7b69edb48": {
+            "type": "appmixer.surveymonkey.core.MakeApiCall",
+            "x": 688,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "03d77633-159d-412b-871d-4e75bf824237": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "03d77633-159d-412b-871d-4e75bf824237": {
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
                                     "url": {
-                                        "56013296-b825-4d7e-bbe6-5150c5bf52d6": {
-                                            "variable": "$.46a73b7c-d9ad-482a-b19b-10652ff126a5.out.id",
-                                            "functions": []
-                                        }
-                                    },
-                                    "method": {},
-                                    "body": {
-                                        "638b5366-d442-468b-bf69-d37f033cfff7": {
-                                            "variable": "$.cb4863e6-0f11-4928-a13e-0942828ad535.out.pages",
+                                        "c41cd3bd-cf95-498c-852d-7e383be8c181": {
+                                            "variable": "$.03d77633-159d-412b-871d-4e75bf824237.out.body",
                                             "functions": [
                                                 {
                                                     "name": "g_jsonPath",
                                                     "params": [
                                                         {
-                                                            "value": "$[0].id"
+                                                            "value": "$.data[?(@.name==\"Appmixer New Response 0fd45671-a1b9-4d89-b2a0-fa363cb42f65\")].id"
                                                         }
                                                     ]
                                                 }
                                             ]
-                                        },
-                                        "d1baaa5e-e0e3-4a4d-b11a-ae336700bafe": {
-                                            "variable": "$.cb4863e6-0f11-4928-a13e-0942828ad535.out.pages",
+                                        }
+                                    },
+                                    "method": {}
+                                },
+                                "lambda": {
+                                    "url": "/v3/webhooks/{{{c41cd3bd-cf95-498c-852d-7e383be8c181}}}",
+                                    "method": "GET"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "label": "Make API Call (read the webhook secret)"
+        },
+        "d6b58528-6516-4219-8834-83729a487965": {
+            "type": "appmixer.utils.http.Post",
+            "x": 896,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "5c3e3e28-2bc5-45d8-8f22-71a7b69edb48": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "5c3e3e28-2bc5-45d8-8f22-71a7b69edb48": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "url": {
+                                        "6facd8ff-4728-46bc-8265-39c98836032a": {
+                                            "functions": [
+                                                {
+                                                    "name": "g_webhookUrl"
+                                                },
+                                                {
+                                                    "name": "g_replace",
+                                                    "params": [
+                                                        {
+                                                            "value": "/components/d6b58528-6516-4219-8834-83729a487965"
+                                                        },
+                                                        {
+                                                            "value": "/components/0fd45671-a1b9-4d89-b2a0-fa363cb42f65"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "headers": {
+                                        "2e6ff5a1-98ff-44a3-82aa-3a4688346c7c": {
+                                            "variable": "$.5c3e3e28-2bc5-45d8-8f22-71a7b69edb48.out.body",
                                             "functions": [
                                                 {
                                                     "name": "g_jsonPath",
                                                     "params": [
                                                         {
-                                                            "value": "$[0].questions[0].id"
+                                                            "value": "$.authorization"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "bodyType": {},
+                                    "body": {
+                                        "a2eb4586-38f0-4634-8468-cc580dc0d30d": {
+                                            "variable": "$.9753c7c9-46bc-435e-8529-683d3016a81d.out.id",
+                                            "functions": []
+                                        },
+                                        "591963e3-3470-4526-83b2-bbefb5d4d44c": {
+                                            "variable": "$.27e2943c-2364-4694-8544-606cec5272ed.out.started",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "url": "{{{6facd8ff-4728-46bc-8265-39c98836032a}}}",
+                                    "headers": "{\"Content-Type\": \"application/json\", \"Authorization\": \"{{{2e6ff5a1-98ff-44a3-82aa-3a4688346c7c}}}\"}",
+                                    "bodyType": "raw",
+                                    "body": "{\"name\": \"Appmixer New Response\", \"filter_type\": \"survey\", \"filter_id\": \"529066657\", \"event_type\": \"response_completed\", \"event_id\": \"e2e-{{{591963e3-3470-4526-83b2-bbefb5d4d44c}}}\", \"object_type\": \"response\", \"object_id\": \"{{{a2eb4586-38f0-4634-8468-cc580dc0d30d}}}\", \"event_datetime\": \"{{{591963e3-3470-4526-83b2-bbefb5d4d44c}}}\", \"resources\": {\"respondent_id\": \"{{{a2eb4586-38f0-4634-8468-cc580dc0d30d}}}\", \"recipient_id\": \"0\", \"collector_id\": \"466427749\", \"survey_id\": \"529066657\"}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "label": "Post a SurveyMonkey event to the trigger"
+        },
+        "789cb3ce-4bfe-4bc5-8f65-ac76825af7f4": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 480,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "9753c7c9-46bc-435e-8529-683d3016a81d": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "9753c7c9-46bc-435e-8529-683d3016a81d": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "0aeac420-f902-4053-898f-4ed13df65d9e": {
+                                            "variable": "$.9753c7c9-46bc-435e-8529-683d3016a81d.out.id",
+                                            "functions": []
+                                        },
+                                        "af5e8cf9-481f-44fb-8a39-06b8637390ff": {
+                                            "variable": "$.9753c7c9-46bc-435e-8529-683d3016a81d.out.survey_id",
+                                            "functions": []
+                                        },
+                                        "886d0dc1-afdf-4769-858a-cac4c8ad801c": {
+                                            "variable": "$.9753c7c9-46bc-435e-8529-683d3016a81d.out.response_status",
+                                            "functions": []
+                                        },
+                                        "728f4401-6874-4ef5-8287-215d6498ae4c": {
+                                            "variable": "$.9753c7c9-46bc-435e-8529-683d3016a81d.out.pages",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$[0].questions[0].answers[0].text"
                                                         }
                                                     ]
                                                 }
@@ -195,13 +280,51 @@
                                     }
                                 },
                                 "lambda": {
-                                    "url": "/v3/collectors/{{{56013296-b825-4d7e-bbe6-5150c5bf52d6}}}/responses",
-                                    "method": "POST",
-                                    "body": "{\"pages\":[{\"id\":\"{{{638b5366-d442-468b-bf69-d37f033cfff7}}}\",\"questions\":[{\"id\":\"{{{d1baaa5e-e0e3-4a4d-b11a-ae336700bafe}}}\",\"answers\":[{\"text\":\"E2E answer\"}]}]}]}"
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{0aeac420-f902-4053-898f-4ed13df65d9e}}}",
+                                                "assertion": "notEmpty"
+                                            },
+                                            {
+                                                "field": "{{{af5e8cf9-481f-44fb-8a39-06b8637390ff}}}",
+                                                "assertion": "equal",
+                                                "expected": "529066657"
+                                            },
+                                            {
+                                                "field": "{{{886d0dc1-afdf-4769-858a-cac4c8ad801c}}}",
+                                                "assertion": "equal",
+                                                "expected": "completed"
+                                            },
+                                            {
+                                                "field": "{{{728f4401-6874-4ef5-8287-215d6498ae4c}}}",
+                                                "assertion": "equal",
+                                                "expected": "E2E answer"
+                                            }
+                                        ]
+                                    }
                                 }
                             }
                         }
                     }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "label": "Assert List Responses output"
+        },
+        "0fd45671-a1b9-4d89-b2a0-fa363cb42f65": {
+            "type": "appmixer.surveymonkey.core.NewResponse",
+            "x": 64,
+            "y": 336,
+            "version": "1.0.0",
+            "source": {},
+            "config": {
+                "properties": {
+                    "surveyId": "529066657",
+                    "simple": true
                 }
             },
             "errorHandling": {
@@ -211,8 +334,9 @@
         },
         "c39e64a1-4f55-47c8-82f7-5c9a8ffa58fe": {
             "type": "appmixer.utils.test.Assert",
-            "x": 1104,
-            "y": 704,
+            "x": 272,
+            "y": 336,
+            "version": "1.0.0",
             "source": {
                 "in": {
                     "0fd45671-a1b9-4d89-b2a0-fa363cb42f65": [
@@ -220,7 +344,6 @@
                     ]
                 }
             },
-            "version": "1.0.0",
             "config": {
                 "transform": {
                     "in": {
@@ -229,86 +352,30 @@
                                 "type": "json2new",
                                 "modifiers": {
                                     "expression": {
-                                        "2dd4d7d2-c353-4e00-ab84-ed992f074a18": {
+                                        "ad314f08-cdbe-49e4-8278-a29a089ae456": {
                                             "variable": "$.0fd45671-a1b9-4d89-b2a0-fa363cb42f65.out.id",
                                             "functions": []
                                         },
-                                        "e5bcf92e-6328-4903-b69f-f4a44c6af65c": {
+                                        "7b613fcb-c440-4110-8bee-5069f12064d8": {
                                             "variable": "$.0fd45671-a1b9-4d89-b2a0-fa363cb42f65.out.survey_id",
                                             "functions": []
                                         },
-                                        "d65e48f5-346e-4c8a-addc-0aeb173ed66d": {
+                                        "aa4408e0-4f37-480c-80f3-baae30e78437": {
                                             "variable": "$.0fd45671-a1b9-4d89-b2a0-fa363cb42f65.out.collector_id",
                                             "functions": []
                                         },
-                                        "433f9269-714e-4122-b4e4-9820fac6532d": {
+                                        "c2e14058-d657-4560-8274-cf4c7a1e00ea": {
                                             "variable": "$.0fd45671-a1b9-4d89-b2a0-fa363cb42f65.out.response_status",
                                             "functions": []
-                                        }
-                                    }
-                                },
-                                "lambda": {
-                                    "expression": {
-                                        "AND": [
-                                            {
-                                                "field": "{{{2dd4d7d2-c353-4e00-ab84-ed992f074a18}}}",
-                                                "assertion": "notEmpty"
-                                            },
-                                            {
-                                                "field": "{{{e5bcf92e-6328-4903-b69f-f4a44c6af65c}}}",
-                                                "assertion": "equal",
-                                                "expected": "REPLACE_WITH_SURVEY_ID"
-                                            },
-                                            {
-                                                "field": "{{{d65e48f5-346e-4c8a-addc-0aeb173ed66d}}}",
-                                                "assertion": "notEmpty"
-                                            },
-                                            {
-                                                "field": "{{{433f9269-714e-4122-b4e4-9820fac6532d}}}",
-                                                "assertion": "equal",
-                                                "expected": "completed"
-                                            }
-                                        ]
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            },
-            "errorHandling": {
-                "autoRetry": false,
-                "onError": "stopFlow"
-            }
-        },
-        "a69ef42b-f5c9-43b1-85de-ce584bb41f30": {
-            "type": "appmixer.utils.test.Assert",
-            "x": 1104,
-            "y": 448,
-            "source": {
-                "in": {
-                    "88d75964-ca63-455c-8f19-5c8af386e58a": [
-                        "out"
-                    ]
-                }
-            },
-            "version": "1.0.0",
-            "config": {
-                "transform": {
-                    "in": {
-                        "88d75964-ca63-455c-8f19-5c8af386e58a": {
-                            "out": {
-                                "type": "json2new",
-                                "modifiers": {
-                                    "expression": {
-                                        "76ee3f06-f960-4995-9b3a-56876a20e9da": {
-                                            "variable": "$.88d75964-ca63-455c-8f19-5c8af386e58a.out.body",
+                                        },
+                                        "6bf8774b-c600-4113-8aeb-4876379663d2": {
+                                            "variable": "$.0fd45671-a1b9-4d89-b2a0-fa363cb42f65.out.pages",
                                             "functions": [
                                                 {
                                                     "name": "g_jsonPath",
                                                     "params": [
                                                         {
-                                                            "value": "$.id"
+                                                            "value": "$[0].questions[0].answers[0].text"
                                                         }
                                                     ]
                                                 }
@@ -320,8 +387,28 @@
                                     "expression": {
                                         "AND": [
                                             {
-                                                "field": "{{{76ee3f06-f960-4995-9b3a-56876a20e9da}}}",
+                                                "field": "{{{ad314f08-cdbe-49e4-8278-a29a089ae456}}}",
                                                 "assertion": "notEmpty"
+                                            },
+                                            {
+                                                "field": "{{{7b613fcb-c440-4110-8bee-5069f12064d8}}}",
+                                                "assertion": "equal",
+                                                "expected": "529066657"
+                                            },
+                                            {
+                                                "field": "{{{aa4408e0-4f37-480c-80f3-baae30e78437}}}",
+                                                "assertion": "equal",
+                                                "expected": "466427749"
+                                            },
+                                            {
+                                                "field": "{{{c2e14058-d657-4560-8274-cf4c7a1e00ea}}}",
+                                                "assertion": "equal",
+                                                "expected": "completed"
+                                            },
+                                            {
+                                                "field": "{{{6bf8774b-c600-4113-8aeb-4876379663d2}}}",
+                                                "assertion": "equal",
+                                                "expected": "E2E answer"
                                             }
                                         ]
                                     }
@@ -334,26 +421,45 @@
             "errorHandling": {
                 "autoRetry": false,
                 "onError": "stopFlow"
-            }
+            },
+            "label": "Assert New Response output"
         },
-        "be7c9007-4536-49f3-bdd4-3bb1cff21faf": {
-            "type": "appmixer.utils.test.AfterAll",
-            "x": 1312,
-            "y": 576,
+        "30d1b506-6017-45e5-809a-fc8150c25adc": {
+            "type": "appmixer.surveymonkey.core.GetResponse",
+            "x": 272,
+            "y": 464,
+            "version": "1.0.0",
             "source": {
                 "in": {
-                    "c39e64a1-4f55-47c8-82f7-5c9a8ffa58fe": [
-                        "out"
-                    ],
-                    "a69ef42b-f5c9-43b1-85de-ce584bb41f30": [
+                    "0fd45671-a1b9-4d89-b2a0-fa363cb42f65": [
                         "out"
                     ]
                 }
             },
-            "version": "1.0.0",
             "config": {
-                "properties": {
-                    "timeout": 300
+                "transform": {
+                    "in": {
+                        "0fd45671-a1b9-4d89-b2a0-fa363cb42f65": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "surveyId": {},
+                                    "responseId": {
+                                        "96290f5d-a7d7-48d3-89ca-0b887529d8c5": {
+                                            "variable": "$.0fd45671-a1b9-4d89-b2a0-fa363cb42f65.out.id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "simple": {}
+                                },
+                                "lambda": {
+                                    "surveyId": "529066657",
+                                    "responseId": "{{{96290f5d-a7d7-48d3-89ca-0b887529d8c5}}}",
+                                    "simple": true
+                                }
+                            }
+                        }
+                    }
                 }
             },
             "errorHandling": {
@@ -361,41 +467,110 @@
                 "onError": "stopFlow"
             }
         },
-        "ae3d48f1-cf78-48a3-9b40-3a3ba86f7551": {
-            "type": "appmixer.surveymonkey.core.MakeApiCall",
-            "x": 1520,
-            "y": 704,
+        "7a696266-6e53-43b9-8ef9-288bbf938c3e": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 480,
+            "y": 464,
+            "version": "1.0.0",
             "source": {
                 "in": {
-                    "be7c9007-4536-49f3-bdd4-3bb1cff21faf": [
+                    "30d1b506-6017-45e5-809a-fc8150c25adc": [
                         "out"
                     ]
                 }
             },
-            "label": "Delete Collector",
-            "version": "1.0.0",
             "config": {
                 "transform": {
                     "in": {
-                        "be7c9007-4536-49f3-bdd4-3bb1cff21faf": {
+                        "30d1b506-6017-45e5-809a-fc8150c25adc": {
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
-                                    "url": {
-                                        "493e242a-0cad-45fa-bda6-45b2b60a5c2a": {
-                                            "variable": "$.46a73b7c-d9ad-482a-b19b-10652ff126a5.out.id",
+                                    "expression": {
+                                        "e0eaf040-582e-47c5-8845-cce4639a95c4": {
+                                            "variable": "$.30d1b506-6017-45e5-809a-fc8150c25adc.out.id",
                                             "functions": []
+                                        },
+                                        "6c90e453-71da-439f-84a9-42d3bac0fddd": {
+                                            "variable": "$.30d1b506-6017-45e5-809a-fc8150c25adc.out.survey_id",
+                                            "functions": []
+                                        },
+                                        "3f813a4d-0ddc-4792-863d-7686b2f0d41b": {
+                                            "variable": "$.30d1b506-6017-45e5-809a-fc8150c25adc.out.collector_id",
+                                            "functions": []
+                                        },
+                                        "0deeacd9-86e7-4a5a-8036-2dedfcf404d8": {
+                                            "variable": "$.30d1b506-6017-45e5-809a-fc8150c25adc.out.pages",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$[0].questions[0].answers[0].text"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
                                         }
-                                    },
-                                    "method": {}
+                                    }
                                 },
                                 "lambda": {
-                                    "url": "/v3/collectors/{{{493e242a-0cad-45fa-bda6-45b2b60a5c2a}}}",
-                                    "method": "DELETE"
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{e0eaf040-582e-47c5-8845-cce4639a95c4}}}",
+                                                "assertion": "notEmpty"
+                                            },
+                                            {
+                                                "field": "{{{6c90e453-71da-439f-84a9-42d3bac0fddd}}}",
+                                                "assertion": "equal",
+                                                "expected": "529066657"
+                                            },
+                                            {
+                                                "field": "{{{3f813a4d-0ddc-4792-863d-7686b2f0d41b}}}",
+                                                "assertion": "equal",
+                                                "expected": "466427749"
+                                            },
+                                            {
+                                                "field": "{{{0deeacd9-86e7-4a5a-8036-2dedfcf404d8}}}",
+                                                "assertion": "equal",
+                                                "expected": "E2E answer"
+                                            }
+                                        ]
+                                    }
                                 }
                             }
                         }
                     }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "label": "Assert Get Response output"
+        },
+        "be7c9007-4536-49f3-bdd4-3bb1cff21faf": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 688,
+            "y": 336,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "c39e64a1-4f55-47c8-82f7-5c9a8ffa58fe": [
+                        "out"
+                    ],
+                    "789cb3ce-4bfe-4bc5-8f65-ac76825af7f4": [
+                        "out"
+                    ],
+                    "7a696266-6e53-43b9-8ef9-288bbf938c3e": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 180
                 }
             },
             "errorHandling": {
@@ -405,16 +580,16 @@
         },
         "03d956a3-6239-428e-9d1c-0ce6f1079db9": {
             "type": "appmixer.utils.test.ProcessE2EResults",
-            "x": 1728,
-            "y": 832,
+            "x": 896,
+            "y": 336,
+            "version": "1.0.0",
             "source": {
                 "in": {
-                    "ae3d48f1-cf78-48a3-9b40-3a3ba86f7551": [
+                    "be7c9007-4536-49f3-bdd4-3bb1cff21faf": [
                         "out"
                     ]
                 }
             },
-            "version": "1.0.0",
             "config": {
                 "properties": {
                     "successStoreId": "64f6f1f9193228000754082f",
@@ -422,14 +597,14 @@
                 },
                 "transform": {
                     "in": {
-                        "ae3d48f1-cf78-48a3-9b40-3a3ba86f7551": {
+                        "be7c9007-4536-49f3-bdd4-3bb1cff21faf": {
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
                                     "recipients": {},
                                     "testCase": {},
                                     "result": {
-                                        "a79d4b77-5335-44f2-864e-7a879fddc6ad": {
+                                        "0ae6240d-f021-4a7f-8b5d-ce271a0aaf46": {
                                             "variable": "$.be7c9007-4536-49f3-bdd4-3bb1cff21faf.out",
                                             "functions": []
                                         }
@@ -438,7 +613,7 @@
                                 "lambda": {
                                     "recipients": "test@appmixer.ai",
                                     "testCase": "E2E SurveyMonkey - new response trigger",
-                                    "result": "{{{a79d4b77-5335-44f2-864e-7a879fddc6ad}}}"
+                                    "result": "{{{0ae6240d-f021-4a7f-8b5d-ce271a0aaf46}}}"
                                 }
                             }
                         }
@@ -449,15 +624,6 @@
                 "autoRetry": false,
                 "onError": "stopFlow"
             }
-        }
-    },
-    "notes": {
-        "ca1fa269-f9ee-4b52-92b2-8b93bff12a09": {
-            "x": 64,
-            "y": 800,
-            "width": 720,
-            "height": 280,
-            "content": "## ⚠️ Test data assumption\n\nSet **Survey** of the New Response trigger and the three `REPLACE_WITH_SURVEY_ID` values (Get Survey, Create Collector, Assert) to an existing survey whose **first page starts with an open-ended single-textbox question**. The trigger subscribes to that survey when the flow starts, so the survey cannot be created inside the flow.\n\nSubmitting a response through the API (Submit Response) needs the `responses_write` scope, which SurveyMonkey grants only to approved apps on paid plans. Without it, open the collector URL (Create Collector output) and complete the survey by hand within 5 minutes. The collector and its responses are deleted at the end."
         }
     }
 }
