@@ -1,0 +1,279 @@
+{
+    "name": "appmixer.stripe.core.CreateSubscription",
+    "description": "Creates a subscription for a customer from one or more recurring prices. Without a trial or a default payment method, the first invoice may leave the subscription incomplete until it is paid.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:stripe"
+    },
+    "quota": {
+        "manager": "appmixer:stripe",
+        "resources": "requests"
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "customer": {
+                        "type": "string"
+                    },
+                    "items": {
+                        "type": "object"
+                    },
+                    "trialPeriodDays": {
+                        "type": "integer",
+                        "minimum": 0
+                    },
+                    "defaultPaymentMethod": {
+                        "type": "string"
+                    },
+                    "collectionMethod": {
+                        "type": "string",
+                        "enum": [
+                            "charge_automatically",
+                            "send_invoice"
+                        ]
+                    },
+                    "daysUntilDue": {
+                        "type": "integer",
+                        "minimum": 0
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "metadata": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "customer",
+                    "items"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "customer": {
+                        "type": "text",
+                        "label": "Customer ID",
+                        "index": 1,
+                        "tooltip": "The ID of the customer to subscribe, e.g. cus_NffrFeUfNV2Hib."
+                    },
+                    "items": {
+                        "type": "expression",
+                        "label": "Line Items",
+                        "index": 2,
+                        "tooltip": "Up to 20 recurring prices to subscribe the customer to, each with a quantity.",
+                        "levels": [
+                            "AND"
+                        ],
+                        "fields": {
+                            "price": {
+                                "type": "text",
+                                "label": "Price ID",
+                                "index": 1,
+                                "tooltip": "The ID of a Stripe Price, e.g. price_1MoBy5LkdIwHu7ixZhnattbh."
+                            },
+                            "quantity": {
+                                "type": "number",
+                                "label": "Quantity",
+                                "index": 2,
+                                "defaultValue": 1,
+                                "tooltip": "The quantity of the price. Defaults to 1."
+                            }
+                        }
+                    },
+                    "trialPeriodDays": {
+                        "type": "number",
+                        "label": "Trial Period Days",
+                        "index": 3,
+                        "tooltip": "Number of trial days before the customer is charged for the first time."
+                    },
+                    "defaultPaymentMethod": {
+                        "type": "text",
+                        "label": "Default Payment Method ID",
+                        "index": 4,
+                        "tooltip": "ID of a payment method attached to the customer, e.g. pm_1MqLiJLkdIwHu7ixUEgbFdYF. If empty, the customer's default payment method is used."
+                    },
+                    "collectionMethod": {
+                        "type": "select",
+                        "label": "Collection Method",
+                        "index": 5,
+                        "defaultValue": "charge_automatically",
+                        "tooltip": "Charge the default payment method automatically, or email the customer an invoice to pay.",
+                        "options": [
+                            {
+                                "label": "Charge Automatically",
+                                "value": "charge_automatically"
+                            },
+                            {
+                                "label": "Send Invoice",
+                                "value": "send_invoice"
+                            }
+                        ]
+                    },
+                    "daysUntilDue": {
+                        "type": "number",
+                        "label": "Days Until Due",
+                        "index": 6,
+                        "tooltip": "Number of days the customer has to pay each invoice. Required when the collection method is Send Invoice."
+                    },
+                    "description": {
+                        "type": "text",
+                        "label": "Description",
+                        "index": 7,
+                        "tooltip": "A description of the subscription shown to the customer (up to 500 characters)."
+                    },
+                    "metadata": {
+                        "type": "key-value",
+                        "label": "Metadata",
+                        "index": 8,
+                        "tooltip": "Optional key-value pairs to store on the object, e.g. an order ID from your system."
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "title": "Subscription ID",
+                        "example": "sub_1MowQVLkdIwHu7ixeRlqHVzs"
+                    },
+                    "object": {
+                        "type": "string",
+                        "title": "Object",
+                        "example": "subscription"
+                    },
+                    "status": {
+                        "type": "string",
+                        "title": "Status",
+                        "example": "trialing"
+                    },
+                    "customer": {
+                        "type": "string",
+                        "title": "Customer ID",
+                        "example": "cus_Na6dX7aXxi11N4"
+                    },
+                    "collection_method": {
+                        "type": "string",
+                        "title": "Collection Method",
+                        "example": "charge_automatically"
+                    },
+                    "currency": {
+                        "type": "string",
+                        "title": "Currency",
+                        "example": "usd"
+                    },
+                    "created": {
+                        "type": "integer",
+                        "title": "Created (Unix Timestamp)",
+                        "example": 1680893993
+                    },
+                    "start_date": {
+                        "type": "integer",
+                        "title": "Start Date (Unix Timestamp)",
+                        "example": 1680893993
+                    },
+                    "trial_start": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ],
+                        "title": "Trial Start (Unix Timestamp)",
+                        "example": 1680893993
+                    },
+                    "trial_end": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ],
+                        "title": "Trial End (Unix Timestamp)",
+                        "example": 1681498793
+                    },
+                    "cancel_at_period_end": {
+                        "type": "boolean",
+                        "title": "Cancel At Period End",
+                        "example": false
+                    },
+                    "days_until_due": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ],
+                        "title": "Days Until Due",
+                        "example": null
+                    },
+                    "default_payment_method": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "title": "Default Payment Method ID",
+                        "example": "pm_1MqLiJLkdIwHu7ixUEgbFdYF"
+                    },
+                    "latest_invoice": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "title": "Latest Invoice ID",
+                        "example": "in_1MowQWLkdIwHu7ixuzkSPfKd"
+                    },
+                    "description": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "title": "Description",
+                        "example": "Gold plan"
+                    },
+                    "livemode": {
+                        "type": "boolean",
+                        "title": "Live Mode",
+                        "example": false
+                    },
+                    "metadata": {
+                        "type": "object",
+                        "title": "Metadata",
+                        "example": {
+                            "orderId": "1001"
+                        }
+                    },
+                    "items": {
+                        "type": "object",
+                        "title": "Items",
+                        "properties": {
+                            "data": {
+                                "type": "array",
+                                "title": "Items.Data",
+                                "items": {
+                                    "type": "object"
+                                },
+                                "example": [
+                                    {
+                                        "id": "si_Na6dzxczY5fwHx",
+                                        "object": "subscription_item",
+                                        "price": {
+                                            "id": "price_1MowQULkdIwHu7ixraBm864M",
+                                            "unit_amount": 1000,
+                                            "currency": "usd"
+                                        },
+                                        "quantity": 1
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiByeD0iNiIgZmlsbD0iIzYzNUJGRiIvPjxwYXRoIHRyYW5zZm9ybT0idHJhbnNsYXRlKDQgNCkiIGZpbGw9IiNGRkZGRkYiIGQ9Ik0xMy45NzYgOS4xNWMtMi4xNzItLjgwNi0zLjM1Ni0xLjQyNi0zLjM1Ni0yLjQwOSAwLS44MzEuNjgzLTEuMzA1IDEuOTAxLTEuMzA1IDIuMjI3IDAgNC41MTUuODU4IDYuMDkgMS42MzFsLjg5LTUuNDk0QzE4LjI1Mi45NzUgMTUuNjk3IDAgMTIuMTY1IDAgOS42NjcgMCA3LjU4OS42NTQgNi4xMDQgMS44NzIgNC41NiAzLjE0NyAzLjc1NyA0Ljk5MiAzLjc1NyA3LjIxOGMwIDQuMDM5IDIuNDY3IDUuNzYgNi40NzYgNy4yMTkgMi41ODUuOTIgMy40NDUgMS41NzQgMy40NDUgMi41ODMgMCAuOTgtLjg0IDEuNTQ1LTIuMzU0IDEuNTQ1LTEuODc1IDAtNC45NjUtLjkyMS02Ljk5LTIuMTA5bC0uOSA1LjU1NUM1LjE3NSAyMi45OSA4LjM4NSAyNCAxMS43MTQgMjRjMi42NDEgMCA0Ljg0My0uNjI0IDYuMzI4LTEuODEzIDEuNjY0LTEuMzA1IDIuNTI1LTMuMjM2IDIuNTI1LTUuNzMyIDAtNC4xMjgtMi41MjQtNS44NTEtNi41OTQtNy4zMDVoLjAwM3oiLz48L3N2Zz4="
+}

@@ -1,0 +1,324 @@
+{
+    "name": "E2E Stripe - create invoice item",
+    "description": "Creates a customer and adds a pending invoice item for an amount (Create Invoice Item), then deletes the item and the customer.",
+    "flow": {
+        "f33410b1-2a59-4f99-a5d8-7faffe4e30f5": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {},
+            "config": {},
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "d055be8b-2034-4d4a-89bb-7c76447e4cde": {
+            "type": "appmixer.stripe.core.CreateCustomer",
+            "x": 272,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "f33410b1-2a59-4f99-a5d8-7faffe4e30f5": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "f33410b1-2a59-4f99-a5d8-7faffe4e30f5": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "email": {},
+                                    "name": {}
+                                },
+                                "lambda": {
+                                    "email": "e2e-invoice-item@example.com",
+                                    "name": "E2E Invoice Item Customer"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "1ceb889f-a99b-4a1d-ad3c-85500d986302": {
+            "type": "appmixer.stripe.core.CreateInvoiceItem",
+            "x": 480,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "d055be8b-2034-4d4a-89bb-7c76447e4cde": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "d055be8b-2034-4d4a-89bb-7c76447e4cde": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "customer": {
+                                        "5e013119-e862-431e-aa5a-9405e94bdb69": {
+                                            "variable": "$.d055be8b-2034-4d4a-89bb-7c76447e4cde.out.id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "amount": {},
+                                    "currency": {},
+                                    "description": {},
+                                    "metadata": {}
+                                },
+                                "lambda": {
+                                    "customer": "{{{5e013119-e862-431e-aa5a-9405e94bdb69}}}",
+                                    "amount": 1500,
+                                    "currency": "usd",
+                                    "description": "E2E invoice item",
+                                    "metadata": "{\"e2e\":\"invoice-item\"}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "b0378c39-d023-4def-a16b-f9150ac40259": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 688,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "1ceb889f-a99b-4a1d-ad3c-85500d986302": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "1ceb889f-a99b-4a1d-ad3c-85500d986302": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "c485f5a9-ade4-4081-98f9-d79d03752d40": {
+                                            "variable": "$.1ceb889f-a99b-4a1d-ad3c-85500d986302.out.id",
+                                            "functions": []
+                                        },
+                                        "09e033c3-7805-48c5-937e-4df56c1fb8ee": {
+                                            "variable": "$.1ceb889f-a99b-4a1d-ad3c-85500d986302.out.object",
+                                            "functions": []
+                                        },
+                                        "91dae070-edb7-45cb-a347-f4258d53754b": {
+                                            "variable": "$.1ceb889f-a99b-4a1d-ad3c-85500d986302.out.description",
+                                            "functions": []
+                                        },
+                                        "917522be-fa1a-4be3-b779-851ce7cd9955": {
+                                            "variable": "$.1ceb889f-a99b-4a1d-ad3c-85500d986302.out.currency",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{c485f5a9-ade4-4081-98f9-d79d03752d40}}}",
+                                                "assertion": "regex",
+                                                "regex": "^ii_"
+                                            },
+                                            {
+                                                "field": "{{{09e033c3-7805-48c5-937e-4df56c1fb8ee}}}",
+                                                "assertion": "equal",
+                                                "expected": "invoiceitem"
+                                            },
+                                            {
+                                                "field": "{{{91dae070-edb7-45cb-a347-f4258d53754b}}}",
+                                                "assertion": "equal",
+                                                "expected": "E2E invoice item"
+                                            },
+                                            {
+                                                "field": "{{{917522be-fa1a-4be3-b779-851ce7cd9955}}}",
+                                                "assertion": "equal",
+                                                "expected": "usd"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "ed7a7f26-5291-4d53-94d3-8931c1fe1223": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 896,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "b0378c39-d023-4def-a16b-f9150ac40259": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 180
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "0c63954e-ceb8-48e0-b6f0-4e6cd60a6655": {
+            "type": "appmixer.stripe.core.MakeApiCall",
+            "x": 1104,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "ed7a7f26-5291-4d53-94d3-8931c1fe1223": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "ed7a7f26-5291-4d53-94d3-8931c1fe1223": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "url": {
+                                        "411e3e48-4b4e-4f46-b84c-4bc787bbbd9d": {
+                                            "variable": "$.1ceb889f-a99b-4a1d-ad3c-85500d986302.out.id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "method": {}
+                                },
+                                "lambda": {
+                                    "url": "/v1/invoiceitems/{{{411e3e48-4b4e-4f46-b84c-4bc787bbbd9d}}}",
+                                    "method": "DELETE"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "d687b49c-59ac-445a-8f45-9ebe7b8d4cf2": {
+            "type": "appmixer.stripe.core.DeleteCustomer",
+            "x": 1312,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "0c63954e-ceb8-48e0-b6f0-4e6cd60a6655": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "0c63954e-ceb8-48e0-b6f0-4e6cd60a6655": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "customerId": {
+                                        "c92b2ee5-adbe-4a4f-9610-5ef958bee1d2": {
+                                            "variable": "$.d055be8b-2034-4d4a-89bb-7c76447e4cde.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "customerId": "{{{c92b2ee5-adbe-4a4f-9610-5ef958bee1d2}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "350a9bc7-5e56-41ed-bb6d-ef3010264065": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1520,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "d687b49c-59ac-445a-8f45-9ebe7b8d4cf2": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "d687b49c-59ac-445a-8f45-9ebe7b8d4cf2": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "3d4ec5f3-742c-4098-a75a-88ba66a4d4cf": {
+                                            "variable": "$.ed7a7f26-5291-4d53-94d3-8931c1fe1223.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E Stripe - create invoice item",
+                                    "result": "{{{3d4ec5f3-742c-4098-a75a-88ba66a4d4cf}}}"
+                                }
+                            }
+                        }
+                    }
+                },
+                "properties": {
+                    "successStoreId": "64f6f1f9193228000754082f",
+                    "failedStoreId": "64f6f1f0193228000754082e"
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        }
+    }
+}

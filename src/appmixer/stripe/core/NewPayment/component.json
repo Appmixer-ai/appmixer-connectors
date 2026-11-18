@@ -1,0 +1,183 @@
+{
+    "name": "appmixer.stripe.core.NewPayment",
+    "description": "Triggers when a payment succeeds. Choose Payment Intent Succeeded (the PaymentIntent object, one event per payment) or Charge Succeeded (the Charge object). Stripe allows up to 16 webhook endpoints per account; each running flow with this trigger uses one. A restricted API key needs write access to Webhook Endpoints and read access to Events.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "trigger": true,
+    "webhook": true,
+    "auth": {
+        "service": "appmixer:stripe"
+    },
+    "quota": {
+        "manager": "appmixer:stripe",
+        "resources": "requests"
+    },
+    "properties": {
+        "schema": {
+            "type": "object",
+            "properties": {
+                "eventType": {
+                    "type": "string",
+                    "enum": [
+                        "payment_intent.succeeded",
+                        "charge.succeeded"
+                    ]
+                }
+            }
+        },
+        "inspector": {
+            "inputs": {
+                "eventType": {
+                    "type": "select",
+                    "label": "Event",
+                    "index": 1,
+                    "defaultValue": "payment_intent.succeeded",
+                    "tooltip": "The Stripe event that starts the flow.",
+                    "options": [
+                        {
+                            "label": "Payment Intent Succeeded",
+                            "value": "payment_intent.succeeded"
+                        },
+                        {
+                            "label": "Charge Succeeded",
+                            "value": "charge.succeeded"
+                        }
+                    ]
+                }
+            }
+        }
+    },
+    "outPorts": [
+        {
+            "name": "out",
+            "schema": {
+                "type": "object",
+                "required": [
+                    "id",
+                    "type",
+                    "created",
+                    "data"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "title": "Event ID",
+                        "example": "evt_1NG8Du2eZvKYlo2CUI79vXWy"
+                    },
+                    "type": {
+                        "type": "string",
+                        "title": "Event Type",
+                        "example": "payment_intent.succeeded"
+                    },
+                    "created": {
+                        "type": "integer",
+                        "title": "Created (Unix Timestamp)",
+                        "example": 1686089970
+                    },
+                    "livemode": {
+                        "type": "boolean",
+                        "title": "Live Mode",
+                        "example": false
+                    },
+                    "data": {
+                        "type": "object",
+                        "title": "Payment",
+                        "required": [
+                            "id",
+                            "object",
+                            "amount",
+                            "currency",
+                            "status",
+                            "created"
+                        ],
+                        "properties": {
+                            "id": {
+                                "type": "string",
+                                "title": "Payment.ID",
+                                "example": "pi_3MtwBwLkdIwHu7ix28a3tqPa"
+                            },
+                            "object": {
+                                "type": "string",
+                                "title": "Payment.Object",
+                                "example": "payment_intent"
+                            },
+                            "amount": {
+                                "type": "integer",
+                                "title": "Payment.Amount",
+                                "example": 2000
+                            },
+                            "currency": {
+                                "type": "string",
+                                "title": "Payment.Currency",
+                                "example": "usd"
+                            },
+                            "status": {
+                                "type": "string",
+                                "title": "Payment.Status",
+                                "example": "succeeded"
+                            },
+                            "customer": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ],
+                                "title": "Payment.Customer ID",
+                                "example": "cus_NffrFeUfNV2Hib"
+                            },
+                            "description": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ],
+                                "title": "Payment.Description",
+                                "example": "Order 1001"
+                            },
+                            "payment_method": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ],
+                                "title": "Payment.Payment Method ID",
+                                "example": "pm_1MtwBwLkdIwHu7ixS9zIC6Tn"
+                            },
+                            "payment_intent": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ],
+                                "title": "Payment.Payment Intent ID (charges only)",
+                                "example": "pi_3MtwBwLkdIwHu7ix28a3tqPa"
+                            },
+                            "receipt_email": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ],
+                                "title": "Payment.Receipt Email",
+                                "example": "jenny.rosen@example.com"
+                            },
+                            "created": {
+                                "type": "integer",
+                                "title": "Payment.Created (Unix Timestamp)",
+                                "example": 1680800504
+                            },
+                            "livemode": {
+                                "type": "boolean",
+                                "title": "Payment.Live Mode",
+                                "example": false
+                            },
+                            "metadata": {
+                                "type": "object",
+                                "title": "Payment.Metadata",
+                                "example": {
+                                    "orderId": "1001"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiByeD0iNiIgZmlsbD0iIzYzNUJGRiIvPjxwYXRoIHRyYW5zZm9ybT0idHJhbnNsYXRlKDQgNCkiIGZpbGw9IiNGRkZGRkYiIGQ9Ik0xMy45NzYgOS4xNWMtMi4xNzItLjgwNi0zLjM1Ni0xLjQyNi0zLjM1Ni0yLjQwOSAwLS44MzEuNjgzLTEuMzA1IDEuOTAxLTEuMzA1IDIuMjI3IDAgNC41MTUuODU4IDYuMDkgMS42MzFsLjg5LTUuNDk0QzE4LjI1Mi45NzUgMTUuNjk3IDAgMTIuMTY1IDAgOS42NjcgMCA3LjU4OS42NTQgNi4xMDQgMS44NzIgNC41NiAzLjE0NyAzLjc1NyA0Ljk5MiAzLjc1NyA3LjIxOGMwIDQuMDM5IDIuNDY3IDUuNzYgNi40NzYgNy4yMTkgMi41ODUuOTIgMy40NDUgMS41NzQgMy40NDUgMi41ODMgMCAuOTgtLjg0IDEuNTQ1LTIuMzU0IDEuNTQ1LTEuODc1IDAtNC45NjUtLjkyMS02Ljk5LTIuMTA5bC0uOSA1LjU1NUM1LjE3NSAyMi45OSA4LjM4NSAyNCAxMS43MTQgMjRjMi42NDEgMCA0Ljg0My0uNjI0IDYuMzI4LTEuODEzIDEuNjY0LTEuMzA1IDIuNTI1LTMuMjM2IDIuNTI1LTUuNzMyIDAtNC4xMjgtMi41MjQtNS44NTEtNi41OTQtNy4zMDVoLjAwM3oiLz48L3N2Zz4="
+}
