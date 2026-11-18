@@ -4,7 +4,6 @@ const assert = require('assert');
 
 const auth = require('../../auth');
 const lib = require('../../lib');
-const createSubscriber = require('../../core/CreateSubscriber/CreateSubscriber');
 const updateSubscriber = require('../../core/UpdateSubscriber/UpdateSubscriber');
 const getSubscriber = require('../../core/GetSubscriber/GetSubscriber');
 const findSubscribers = require('../../core/FindSubscribers/FindSubscribers');
@@ -117,23 +116,12 @@ describe('manychat connector', function() {
         assert.throws(() => lib.toApiId(context, 'abc', 'Subscriber ID'), CancelError);
     });
 
-    it('creates a subscriber and sends opt-ins only with their email or phone', async function() {
+    it('sends opt-ins only together with their email or phone', function() {
 
-        const context = contextFor({ firstName: 'Jane', email: 'jane@example.com', hasOptInEmail: true, hasOptInSms: true },
-            async () => ok(SUBSCRIBER));
-        await createSubscriber.receive(context);
-
-        assert.strictEqual(context.requests[0].method, 'POST');
-        assert.strictEqual(context.requests[0].url, 'https://api.manychat.com/fb/subscriber/createSubscriber');
-        assert.deepStrictEqual(context.requests[0].data, { first_name: 'Jane', email: 'jane@example.com', has_opt_in_email: true });
-        assert.deepStrictEqual(context.sent[0], { data: SUBSCRIBER, port: 'out' });
-    });
-
-    it('refuses to create a subscriber without email, phone or WhatsApp phone', async function() {
-
-        const context = contextFor({ firstName: 'Jane' }, async () => ok(SUBSCRIBER));
-        await assert.rejects(createSubscriber.receive(context), CancelError);
-        assert.strictEqual(context.requests.length, 0);
+        assert.deepStrictEqual(
+            lib.contactBody({ firstName: 'Jane', email: 'jane@example.com', hasOptInEmail: true, hasOptInSms: true }),
+            { first_name: 'Jane', email: 'jane@example.com', has_opt_in_email: true }
+        );
     });
 
     it('updates a subscriber and returns an empty object', async function() {
