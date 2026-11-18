@@ -52,9 +52,9 @@
                                 "lambda": {
                                     "title": "E2E Cal.com Meeting Ended",
                                     "slug": "e2e-calcom-meeting-ended-{{{25ffd417-e8bc-40aa-a194-ab4a2986bfe9}}}",
-                                    "lengthInMinutes": 5,
+                                    "lengthInMinutes": 1,
                                     "minimumBookingNotice": 0,
-                                    "slotInterval": 5,
+                                    "slotInterval": 1,
                                     "hidden": true,
                                     "requiresConfirmation": false
                                 }
@@ -144,14 +144,6 @@
                                             "functions": [
                                                 {
                                                     "name": "g_now"
-                                                },
-                                                {
-                                                    "name": "g_addTimeSpan",
-                                                    "hashParams": {
-                                                        "minutes": {
-                                                            "value": 1
-                                                        }
-                                                    }
                                                 }
                                             ]
                                         }
@@ -429,7 +421,7 @@
             },
             "config": {
                 "properties": {
-                    "timeout": 1500
+                    "timeout": 420
                 }
             },
             "errorHandling": {
@@ -439,12 +431,12 @@
         },
         "38b592cc-2f47-4af9-b63e-cbcb9687881b": {
             "type": "appmixer.calcom.core.DeleteEventType",
-            "x": 1312,
-            "y": 400,
+            "x": 272,
+            "y": 528,
             "version": "1.0.0",
             "source": {
                 "in": {
-                    "8f4a6d8c-3020-46fd-aef9-84550b06903e": [
+                    "e1c00fb4-4ecd-475f-a8a8-ad14e2fd1d57": [
                         "out"
                     ]
                 }
@@ -452,14 +444,14 @@
             "config": {
                 "transform": {
                     "in": {
-                        "8f4a6d8c-3020-46fd-aef9-84550b06903e": {
+                        "e1c00fb4-4ecd-475f-a8a8-ad14e2fd1d57": {
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
                                     "eventTypeId": {
                                         "60cebb1d-c739-4791-826e-b9cd564778c8": {
                                             "functions": [],
-                                            "variable": "$.547ac31b-e7c8-4219-b1ec-8f72288e4cc4.out.id"
+                                            "variable": "$.e1c00fb4-4ecd-475f-a8a8-ad14e2fd1d57.out.eventTypeId"
                                         }
                                     }
                                 },
@@ -478,7 +470,7 @@
         },
         "505e9671-926e-44ea-b71d-a95e25d28615": {
             "type": "appmixer.utils.test.ProcessE2EResults",
-            "x": 1520,
+            "x": 1312,
             "y": 400,
             "version": "1.0.0",
             "source": {
@@ -522,49 +514,15 @@
                 "autoRetry": false,
                 "onError": "stopFlow"
             }
-        },
-        "8f4a6d8c-3020-46fd-aef9-84550b06903e": {
-            "type": "appmixer.utils.timers.Wait",
-            "x": 1104,
-            "y": 400,
-            "version": "1.0.0",
-            "source": {
-                "in": {
-                    "54b942e2-9b5a-412c-bb54-7bf0e61f9c2e": [
-                        "out"
-                    ]
-                }
-            },
-            "config": {
-                "transform": {
-                    "in": {
-                        "54b942e2-9b5a-412c-bb54-7bf0e61f9c2e": {
-                            "out": {
-                                "type": "json2new",
-                                "modifiers": {
-                                    "interval": {}
-                                },
-                                "lambda": {
-                                    "interval": "15m"
-                                }
-                            }
-                        }
-                    }
-                }
-            },
-            "errorHandling": {
-                "autoRetry": false,
-                "onError": "stopFlow"
-            }
         }
     },
     "notes": {
         "f3d71328-8d71-422e-8b5b-e30c1da190ea": {
             "x": 64,
-            "y": 592,
+            "y": 656,
             "width": 672,
             "height": 256,
-            "content": "## ⚠️ Timing assumption\n\nBooks the first free 5-minute slot within the next hour on a hidden event type **e2e-calcom-meeting-ended-<timestamp>** and waits up to 25 minutes for MEETING_ENDED, which Cal.com sends at the scheduled end time. Run it while the connected user is **available right now** (inside the working hours of the default schedule), otherwise there is no slot. The event type is deleted in the main chain 15 minutes after the booking, when the meeting is already over (the AfterAll output carries the trigger's correlation, so it cannot reference the event type)."
+            "content": "## ⚠️ Timing assumption\n\nBooks the first free 1-minute slot (slot interval 1 minute) within the next hour on a hidden event type **e2e-calcom-meeting-ended-<timestamp>**, so the meeting is over about 2 minutes after the start. Cal.com sends MEETING_ENDED at the scheduled end time; AfterAll waits up to 7 minutes, inside the 8-minute E2E runner window. Run it while the connected user is **available right now** (inside the working hours of the default schedule), otherwise there is no slot. The event type is deleted from the MEETING_ENDED output (its eventTypeId), because the AfterAll output carries the trigger correlation and cannot reference CreateEventType."
         }
     }
 }
