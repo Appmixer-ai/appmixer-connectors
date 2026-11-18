@@ -1,0 +1,398 @@
+{
+    "name": "E2E RabbitMQ - Publish and NewMessage",
+    "description": "Publishes a message to the amq.direct exchange with Publish and checks that NewMessage receives it from the bound appmixer-e2e-publish queue, with its headers and correlation ID.",
+    "flow": {
+        "c81ff0e2-59f5-44f0-9028-c0b2c0b79c4b": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16,
+            "source": {},
+            "version": "1.0.0",
+            "config": {},
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "b3cb60eb-a3d3-4708-99a9-bf33fcbfb36a": {
+            "type": "appmixer.rabbitmq.platform.Publish",
+            "x": 272,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "c81ff0e2-59f5-44f0-9028-c0b2c0b79c4b": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "c81ff0e2-59f5-44f0-9028-c0b2c0b79c4b": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "exchange": {},
+                                    "routingKey": {},
+                                    "message": {},
+                                    "expiration": {},
+                                    "headers": {},
+                                    "correlationId": {},
+                                    "contentType": {},
+                                    "persistent": {},
+                                    "messageId": {},
+                                    "appId": {},
+                                    "type": {}
+                                },
+                                "lambda": {
+                                    "exchange": "amq.direct",
+                                    "routingKey": "appmixer-e2e-publish",
+                                    "message": "{\"test\":\"publish\"}",
+                                    "expiration": "120000",
+                                    "headers": "{\"e2eSource\": \"publish\"}",
+                                    "correlationId": "appmixer-e2e-publish",
+                                    "contentType": "application/json",
+                                    "persistent": true,
+                                    "messageId": "appmixer-e2e-publish-message",
+                                    "appId": "appmixer-e2e",
+                                    "type": "e2e.publish"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "a046fa27-a00c-4671-8362-bba1fb29e9bf": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 480,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "b3cb60eb-a3d3-4708-99a9-bf33fcbfb36a": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "b3cb60eb-a3d3-4708-99a9-bf33fcbfb36a": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "2993526b-bea5-4f41-bd3d-afc8657864fc": {
+                                            "variable": "$.b3cb60eb-a3d3-4708-99a9-bf33fcbfb36a.out.exchange",
+                                            "functions": []
+                                        },
+                                        "8929de70-2e0e-41bd-9640-ae6215a1517f": {
+                                            "variable": "$.b3cb60eb-a3d3-4708-99a9-bf33fcbfb36a.out.routingKey",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{2993526b-bea5-4f41-bd3d-afc8657864fc}}}",
+                                                "assertion": "equal",
+                                                "expected": "amq.direct"
+                                            },
+                                            {
+                                                "field": "{{{8929de70-2e0e-41bd-9640-ae6215a1517f}}}",
+                                                "assertion": "equal",
+                                                "expected": "appmixer-e2e-publish"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "c0599f1b-ab2a-4142-81cf-cf86d88465c6": {
+            "type": "appmixer.rabbitmq.platform.NewMessage",
+            "x": 272,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {},
+            "config": {
+                "properties": {
+                    "queue": "appmixer-e2e-publish"
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "0dc99c39-3395-461a-8ec7-be171b01e7c2": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 480,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "c0599f1b-ab2a-4142-81cf-cf86d88465c6": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "c0599f1b-ab2a-4142-81cf-cf86d88465c6": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "430ff83c-51ea-4054-b5d7-9da922af81fc": {
+                                            "variable": "$.c0599f1b-ab2a-4142-81cf-cf86d88465c6.out.content",
+                                            "functions": []
+                                        },
+                                        "4200500a-56e7-4d1e-92de-51298c703982": {
+                                            "variable": "$.c0599f1b-ab2a-4142-81cf-cf86d88465c6.out.fields",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$.exchange"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        },
+                                        "2345039f-755e-4211-b7aa-c2dcdd51c823": {
+                                            "variable": "$.c0599f1b-ab2a-4142-81cf-cf86d88465c6.out.properties",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$.headers.e2eSource"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        },
+                                        "59dff220-1789-4122-8f1b-72115a792e1f": {
+                                            "variable": "$.c0599f1b-ab2a-4142-81cf-cf86d88465c6.out.properties",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$.correlationId"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        },
+                                        "24c95665-4232-4a2e-8be0-3ab84b64a363": {
+                                            "variable": "$.c0599f1b-ab2a-4142-81cf-cf86d88465c6.out.properties",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$.messageId"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        },
+                                        "6a79cf63-3a37-4067-b55d-560589cfc761": {
+                                            "variable": "$.c0599f1b-ab2a-4142-81cf-cf86d88465c6.out.properties",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$.appId"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        },
+                                        "134d0d69-fcc5-41db-9be0-e197f71b2508": {
+                                            "variable": "$.c0599f1b-ab2a-4142-81cf-cf86d88465c6.out.properties",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$.type"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        },
+                                        "6bc3a9b4-3615-40ca-860e-ea1d132f6c3e": {
+                                            "variable": "$.c0599f1b-ab2a-4142-81cf-cf86d88465c6.out.properties",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$.contentType"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{430ff83c-51ea-4054-b5d7-9da922af81fc}}}",
+                                                "assertion": "equal",
+                                                "expected": "{\"test\":\"publish\"}"
+                                            },
+                                            {
+                                                "field": "{{{4200500a-56e7-4d1e-92de-51298c703982}}}",
+                                                "assertion": "equal",
+                                                "expected": "amq.direct"
+                                            },
+                                            {
+                                                "field": "{{{2345039f-755e-4211-b7aa-c2dcdd51c823}}}",
+                                                "assertion": "equal",
+                                                "expected": "publish"
+                                            },
+                                            {
+                                                "field": "{{{59dff220-1789-4122-8f1b-72115a792e1f}}}",
+                                                "assertion": "equal",
+                                                "expected": "appmixer-e2e-publish"
+                                            },
+                                            {
+                                                "field": "{{{24c95665-4232-4a2e-8be0-3ab84b64a363}}}",
+                                                "assertion": "equal",
+                                                "expected": "appmixer-e2e-publish-message"
+                                            },
+                                            {
+                                                "field": "{{{6a79cf63-3a37-4067-b55d-560589cfc761}}}",
+                                                "assertion": "equal",
+                                                "expected": "appmixer-e2e"
+                                            },
+                                            {
+                                                "field": "{{{134d0d69-fcc5-41db-9be0-e197f71b2508}}}",
+                                                "assertion": "equal",
+                                                "expected": "e2e.publish"
+                                            },
+                                            {
+                                                "field": "{{{6bc3a9b4-3615-40ca-860e-ea1d132f6c3e}}}",
+                                                "assertion": "equal",
+                                                "expected": "application/json"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "f8b26ec7-e07f-4084-9e25-37576968ba57": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 688,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "a046fa27-a00c-4671-8362-bba1fb29e9bf": [
+                        "out"
+                    ],
+                    "0dc99c39-3395-461a-8ec7-be171b01e7c2": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 180
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "bd8f8b0d-efe7-482e-90b2-3972d392ea02": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 896,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "f8b26ec7-e07f-4084-9e25-37576968ba57": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "successStoreId": "64f6f1f9193228000754082f",
+                    "failedStoreId": "64f6f1f0193228000754082e"
+                },
+                "transform": {
+                    "in": {
+                        "f8b26ec7-e07f-4084-9e25-37576968ba57": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "83c7f05d-0f65-4092-863e-7440c3403988": {
+                                            "variable": "$.f8b26ec7-e07f-4084-9e25-37576968ba57.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E RabbitMQ - Publish and NewMessage",
+                                    "result": "{{{83c7f05d-0f65-4092-863e-7440c3403988}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        }
+    },
+    "notes": {
+        "8398d189-9157-4f22-b56c-2ab20b27d070": {
+            "x": 64,
+            "y": 304,
+            "width": 672,
+            "height": 224,
+            "content": "## ⚠️ Test data assumption\n\nThe queue **appmixer-e2e-publish** must exist on the broker of the connected account and be bound to the **amq.direct** exchange with routing key **appmixer-e2e-publish**. The components never declare queues or bindings. Create both in the RabbitMQ management UI (Queues → Add queue; then on the queue page Bindings → From exchange `amq.direct`, routing key `appmixer-e2e-publish`).\n\nThe message is sent with `expiration` 120000 ms, so a message left over from a failed run is gone before the next run. Don't run this flow twice within two minutes. Keep only one consumer on this queue."
+        }
+    }
+}

@@ -1,0 +1,367 @@
+{
+    "name": "E2E RabbitMQ - SendToQueue and NewMessage",
+    "description": "Sends a message to the appmixer-e2e-send-to-queue queue with SendToQueue and checks that NewMessage consumes it from the same queue.",
+    "flow": {
+        "44081491-0d74-465b-b043-45c69e46dad7": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16,
+            "source": {},
+            "version": "1.0.0",
+            "config": {},
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "781c22c8-a01d-471d-92d8-ae5fa8295186": {
+            "type": "appmixer.rabbitmq.platform.SendToQueue",
+            "x": 272,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "44081491-0d74-465b-b043-45c69e46dad7": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "44081491-0d74-465b-b043-45c69e46dad7": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "queue": {},
+                                    "message": {},
+                                    "expiration": {},
+                                    "contentType": {},
+                                    "headers": {},
+                                    "persistent": {},
+                                    "messageId": {},
+                                    "appId": {},
+                                    "type": {}
+                                },
+                                "lambda": {
+                                    "queue": "appmixer-e2e-send-to-queue",
+                                    "message": "{\"test\":\"send-to-queue\"}",
+                                    "expiration": "120000",
+                                    "contentType": "application/json",
+                                    "headers": "{\"e2eSource\": \"send-to-queue\"}",
+                                    "persistent": true,
+                                    "messageId": "appmixer-e2e-send-to-queue-message",
+                                    "appId": "appmixer-e2e",
+                                    "type": "e2e.send-to-queue"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "220e7d0e-2af7-4b82-9e92-ab06840b8a85": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 480,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "781c22c8-a01d-471d-92d8-ae5fa8295186": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "781c22c8-a01d-471d-92d8-ae5fa8295186": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "ca9a0078-03ee-41e6-bdc5-08137fec81c5": {
+                                            "variable": "$.781c22c8-a01d-471d-92d8-ae5fa8295186.out.queue",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{ca9a0078-03ee-41e6-bdc5-08137fec81c5}}}",
+                                                "assertion": "equal",
+                                                "expected": "appmixer-e2e-send-to-queue"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "e468a94f-8f2f-4565-8473-b424a130fd95": {
+            "type": "appmixer.rabbitmq.platform.NewMessage",
+            "x": 272,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {},
+            "config": {
+                "properties": {
+                    "queue": "appmixer-e2e-send-to-queue"
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "0f805776-a4d3-46a6-9cd3-67988be6525a": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 480,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "e468a94f-8f2f-4565-8473-b424a130fd95": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "e468a94f-8f2f-4565-8473-b424a130fd95": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "0c6601ec-1136-4bd9-82d6-c8ecda595d59": {
+                                            "variable": "$.e468a94f-8f2f-4565-8473-b424a130fd95.out.content",
+                                            "functions": []
+                                        },
+                                        "29a09f75-5625-4c89-87ac-b9b20a92178a": {
+                                            "variable": "$.e468a94f-8f2f-4565-8473-b424a130fd95.out.properties",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$.headers.e2eSource"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        },
+                                        "ea71e0f4-c39a-4a2e-bc4e-5a64e17c1c9e": {
+                                            "variable": "$.e468a94f-8f2f-4565-8473-b424a130fd95.out.fields",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$.routingKey"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        },
+                                        "348efcee-2fa9-4a41-9153-fd4ba039d7e2": {
+                                            "variable": "$.e468a94f-8f2f-4565-8473-b424a130fd95.out.properties",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$.messageId"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        },
+                                        "56a46a67-db95-4287-8c71-f7e570b7d153": {
+                                            "variable": "$.e468a94f-8f2f-4565-8473-b424a130fd95.out.properties",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$.appId"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        },
+                                        "98e353bf-d926-4181-aaf9-67aae01b8507": {
+                                            "variable": "$.e468a94f-8f2f-4565-8473-b424a130fd95.out.properties",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$.type"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        },
+                                        "f4f6acdd-f1ce-4ca1-b1fd-8e6ba6267935": {
+                                            "variable": "$.e468a94f-8f2f-4565-8473-b424a130fd95.out.properties",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$.contentType"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{0c6601ec-1136-4bd9-82d6-c8ecda595d59}}}",
+                                                "assertion": "equal",
+                                                "expected": "{\"test\":\"send-to-queue\"}"
+                                            },
+                                            {
+                                                "field": "{{{29a09f75-5625-4c89-87ac-b9b20a92178a}}}",
+                                                "assertion": "equal",
+                                                "expected": "send-to-queue"
+                                            },
+                                            {
+                                                "field": "{{{ea71e0f4-c39a-4a2e-bc4e-5a64e17c1c9e}}}",
+                                                "assertion": "equal",
+                                                "expected": "appmixer-e2e-send-to-queue"
+                                            },
+                                            {
+                                                "field": "{{{348efcee-2fa9-4a41-9153-fd4ba039d7e2}}}",
+                                                "assertion": "equal",
+                                                "expected": "appmixer-e2e-send-to-queue-message"
+                                            },
+                                            {
+                                                "field": "{{{56a46a67-db95-4287-8c71-f7e570b7d153}}}",
+                                                "assertion": "equal",
+                                                "expected": "appmixer-e2e"
+                                            },
+                                            {
+                                                "field": "{{{98e353bf-d926-4181-aaf9-67aae01b8507}}}",
+                                                "assertion": "equal",
+                                                "expected": "e2e.send-to-queue"
+                                            },
+                                            {
+                                                "field": "{{{f4f6acdd-f1ce-4ca1-b1fd-8e6ba6267935}}}",
+                                                "assertion": "equal",
+                                                "expected": "application/json"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "0d1f29cd-4369-4b1f-80f6-d5039dbcb057": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 688,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "220e7d0e-2af7-4b82-9e92-ab06840b8a85": [
+                        "out"
+                    ],
+                    "0f805776-a4d3-46a6-9cd3-67988be6525a": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 180
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "337c04ec-9885-41d8-a1e5-152cb64f3e08": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 896,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "0d1f29cd-4369-4b1f-80f6-d5039dbcb057": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "successStoreId": "64f6f1f9193228000754082f",
+                    "failedStoreId": "64f6f1f0193228000754082e"
+                },
+                "transform": {
+                    "in": {
+                        "0d1f29cd-4369-4b1f-80f6-d5039dbcb057": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "bc454f42-a1b4-4197-86b9-5dc356ef1e1a": {
+                                            "variable": "$.0d1f29cd-4369-4b1f-80f6-d5039dbcb057.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E RabbitMQ - SendToQueue and NewMessage",
+                                    "result": "{{{bc454f42-a1b4-4197-86b9-5dc356ef1e1a}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        }
+    },
+    "notes": {
+        "ba30b697-4b51-4ee3-976d-359b9d0544a3": {
+            "x": 64,
+            "y": 304,
+            "width": 672,
+            "height": 224,
+            "content": "## ⚠️ Test data assumption\n\nThe queue **appmixer-e2e-send-to-queue** must exist on the broker of the connected account: the components never declare queues. Create it in the RabbitMQ management UI (Queues → Add queue, durable).\n\nThe message is sent with `expiration` 120000 ms, so a message left over from a failed run is gone before the next run. Don't run this flow twice within two minutes. Keep only one consumer on this queue: a second consumer takes the message away from this flow."
+        }
+    }
+}
