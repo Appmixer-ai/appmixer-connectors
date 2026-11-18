@@ -25,7 +25,9 @@ const hash = value => crypto.createHash('sha256').update(JSON.stringify(value)).
 
 const authHeaders = (apiToken) => {
 
-    const encoded = Buffer.from(`${apiToken}:api_token`).toString('base64');
+    // A token copied from the Profile page often carries a trailing space or newline.
+    const token = String(apiToken || '').trim();
+    const encoded = Buffer.from(`${token}:api_token`).toString('base64');
     return { 'Authorization': `Basic ${encoded}` };
 };
 
