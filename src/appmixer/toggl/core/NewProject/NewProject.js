@@ -1,13 +1,12 @@
 'use strict';
 
 const lib = require('../../lib');
-const { fetchProjects } = require('../ListProjects/ListProjects');
 
 /**
  * Projects of the workspace, newest created first. One page: more than 100 projects created
  * between two checks are not expected.
  */
-const fetchNewest = context => fetchProjects(context, { orderBy: '-created_at', maxPages: 1 });
+const fetchNewest = context => lib.fetchProjects(context, { orderBy: '-created_at', maxPages: 1 });
 
 module.exports = {
 

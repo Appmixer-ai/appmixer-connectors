@@ -309,6 +309,38 @@ const listTimeEntries = async (context, { from, to, projectId, orderBy = '-start
     return entries.map(toTimeEntry);
 };
 
+const toProject = project => withoutNulls({
+    id: project.id,
+    workspace_id: project.workspace_id,
+    client_id: project.client_id,
+    name: project.name,
+    description: project.description,
+    private: project.private,
+    billable: project.billable,
+    color: project.color,
+    archived_at: project.archived_at,
+    completed_at: project.completed_at,
+    created_at: project.created_at,
+    updated_at: project.updated_at
+});
+
+/**
+ * Projects of the workspace, archived and completed ones included (an empty `archived` and
+ * `completed` parameter means "all"; omitting them hides archived and completed projects).
+ * It lives here, not in List Projects: the engine loads each component from its own versioned
+ * directory, so one component cannot require another.
+ */
+const fetchProjects = async (context, { cached = false, orderBy = 'name', maxPages } = {}) => {
+
+    const { workspace } = await urls(context);
+    const url = `${workspace}/projects`;
+    const params = { archived: '', completed: '', order_by: orderBy };
+    const projects = cached
+        ? await listAllCached(context, url, params)
+        : await listAll(context, url, params, { maxPages });
+    return projects.map(toProject);
+};
+
 const pollWindow = (now = Date.now()) => ({
     from: new Date(now - POLL_WINDOW_BACK).toISOString(),
     to: new Date(now + POLL_WINDOW_AHEAD).toISOString()
@@ -404,6 +436,7 @@ module.exports = {
     listAll,
     listAllCached,
     listTimeEntries,
+    fetchProjects,
     pollWindow,
     pollByTimestamp,
 

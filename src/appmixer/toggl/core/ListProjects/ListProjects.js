@@ -22,41 +22,9 @@ const ITEM_SCHEMA = {
     }
 };
 
-const toProject = project => lib.withoutNulls({
-    id: project.id,
-    workspace_id: project.workspace_id,
-    client_id: project.client_id,
-    name: project.name,
-    description: project.description,
-    private: project.private,
-    billable: project.billable,
-    color: project.color,
-    archived_at: project.archived_at,
-    completed_at: project.completed_at,
-    created_at: project.created_at,
-    updated_at: project.updated_at
-});
-
-/**
- * Projects of the workspace, archived and completed ones included (an empty `archived` and
- * `completed` parameter means "all"; omitting them hides archived and completed projects).
- */
-const fetchProjects = async (context, { cached = false, orderBy = 'name', maxPages } = {}) => {
-
-    const { workspace } = await lib.urls(context);
-    const url = `${workspace}/projects`;
-    const params = { archived: '', completed: '', order_by: orderBy };
-    const projects = cached
-        ? await lib.listAllCached(context, url, params)
-        : await lib.listAll(context, url, params, { maxPages });
-    return projects.map(toProject);
-};
-
 module.exports = {
 
     ITEM_SCHEMA,
-
-    fetchProjects,
 
     async receive(context) {
 
@@ -67,7 +35,7 @@ module.exports = {
         }
 
         try {
-            const records = await fetchProjects(context, { cached: context.properties.isSource });
+            const records = await lib.fetchProjects(context, { cached: context.properties.isSource });
             return lib.sendArrayOutput({ context, outputType, records });
         } catch (err) {
             if (context.properties.isSource) {
