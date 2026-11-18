@@ -604,7 +604,12 @@ module.exports = {
         }
 
         if (outputType === 'array') {
+            // sendArrayOutput() emits { result, count } in array mode, so both are offered.
             return context.sendJson([{
+                label: 'Items Count',
+                value: 'count',
+                schema: { type: 'integer' }
+            }, {
                 label,
                 value,
                 schema: {
