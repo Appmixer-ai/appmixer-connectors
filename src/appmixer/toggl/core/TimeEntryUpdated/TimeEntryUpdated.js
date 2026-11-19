@@ -3,12 +3,13 @@
 const lib = require('../../lib');
 
 /**
- * The connected user's time entries of the watched window, most recently updated first.
+ * The connected user's time entries of the watched window, most recently updated first:
+ * one page, or back to `since` when polling.
  */
-const fetchNewest = context => lib.listTimeEntries(context, {
+const fetchNewest = (context, since) => lib.listTimeEntries(context, {
     ...lib.pollWindow(),
     orderBy: '-updated_at',
-    maxPages: 1
+    ...lib.pagesSince('updated_at', since)
 });
 
 // A new entry has updated_at equal to created_at: that is a creation, not an update.
@@ -20,7 +21,7 @@ module.exports = {
     async tick(context) {
 
         return lib.pollByTimestamp(context, {
-            fetch: () => fetchNewest(context),
+            fetch: since => fetchNewest(context, since),
             field: 'updated_at',
             accept: isUpdate
         });

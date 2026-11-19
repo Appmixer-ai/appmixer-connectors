@@ -249,8 +249,9 @@ const toTimeEntry = (entry) => {
 
 /**
  * Read a paged list ({ data, page, per_page }) page by page, up to MAX_PAGES pages.
+ * `done` gets each page and ends the reading early when it returns true.
  */
-const listAll = async (context, url, params = {}, { maxPages = MAX_PAGES } = {}) => {
+const listAll = async (context, url, params = {}, { maxPages = MAX_PAGES, done } = {}) => {
 
     const records = [];
     for (let page = 1; page <= maxPages; page++) {
@@ -261,11 +262,28 @@ const listAll = async (context, url, params = {}, { maxPages = MAX_PAGES } = {})
         });
         const items = data && Array.isArray(data.data) ? data.data : [];
         records.push(...items);
-        if (items.length < PAGE_SIZE) {
+        if (items.length < PAGE_SIZE || (done && done(items))) {
             break;
         }
     }
     return records;
+};
+
+/**
+ * Paging of a polling trigger over a list sorted newest first by `field`. Without `since`
+ * (the baseline, Flow Test Mode) one page is enough. With it, pages are read until one holds
+ * a record older than `since`, so a bulk import or a bulk edit of more than a page between
+ * two checks is emitted whole. MAX_PAGES still bounds the reading (1,000 records per check).
+ */
+const pagesSince = (field, since) => {
+
+    if (since === undefined || since === null) {
+        return { maxPages: 1 };
+    }
+    return {
+        maxPages: MAX_PAGES,
+        done: items => items.some(item => new Date(item[field]).getTime() < since)
+    };
 };
 
 /**
@@ -293,7 +311,7 @@ const listAllCached = async (context, url, params) => {
  * The caller's own time entries that overlap [from, to], tasks or not. The API returns only
  * the entries of the connected user; other members' time is in the reports.
  */
-const listTimeEntries = async (context, { from, to, projectId, orderBy = '-start', maxPages } = {}) => {
+const listTimeEntries = async (context, { from, to, projectId, orderBy = '-start', maxPages, done } = {}) => {
 
     const { workspace } = await urls(context);
     const params = {
@@ -305,7 +323,7 @@ const listTimeEntries = async (context, { from, to, projectId, orderBy = '-start
     if (projectId) {
         params.project_id = projectId;
     }
-    const entries = await listAll(context, `${workspace}/time-entries`, params, { maxPages });
+    const entries = await listAll(context, `${workspace}/time-entries`, params, { maxPages, done });
     return entries.map(toTimeEntry);
 };
 
@@ -330,14 +348,14 @@ const toProject = project => withoutNulls({
  * It lives here, not in List Projects: the engine loads each component from its own versioned
  * directory, so one component cannot require another.
  */
-const fetchProjects = async (context, { cached = false, orderBy = 'name', maxPages } = {}) => {
+const fetchProjects = async (context, { cached = false, orderBy = 'name', maxPages, done } = {}) => {
 
     const { workspace } = await urls(context);
     const url = `${workspace}/projects`;
     const params = { archived: '', completed: '', order_by: orderBy };
     const projects = cached
         ? await listAllCached(context, url, params)
-        : await listAll(context, url, params, { maxPages });
+        : await listAll(context, url, params, { maxPages, done });
     return projects.map(toProject);
 };
 
@@ -347,8 +365,9 @@ const pollWindow = (now = Date.now()) => ({
 });
 
 /**
- * Shared body of the polling triggers. `fetch` returns the newest records by `field`
- * (a timestamp), newest first. State: { initialized, lastTimestamp, known, lastPoll }.
+ * Shared body of the polling triggers. `fetch(since)` returns the records by `field`
+ * (a timestamp), newest first, back to the timestamp `since` (see pagesSince); `since` is
+ * undefined on the first run. State: { initialized, lastTimestamp, known, lastPoll }.
  *   - `initialized` is kept apart from `lastTimestamp`, so the first record of an empty
  *     account is not swallowed by a second baseline.
  *   - A record is emitted when its timestamp is newer than the last one seen, or equal to it
@@ -372,7 +391,8 @@ const pollByTimestamp = async (context, { fetch, field, accept }) => {
     }
 
     try {
-        const records = (await fetch()).filter(record => record && record[field]);
+        const since = state.initialized ? (state.lastTimestamp || 0) : undefined;
+        const records = (await fetch(since)).filter(record => record && record[field]);
         const time = record => new Date(record[field]).getTime();
 
         const newest = records.reduce((max, record) => Math.max(max, time(record)), 0);
@@ -438,6 +458,7 @@ module.exports = {
     listTimeEntries,
     fetchProjects,
     pollWindow,
+    pagesSince,
     pollByTimestamp,
 
     /**
@@ -612,8 +633,10 @@ const csvCell = (value) => {
 const toCsv = (records) => {
     if (!records.length) return '';
     // Cells are taken by header column, not Object.values(record), so a record with
-    // a different key order or a missing key stays under the right header.
-    const columns = Object.keys(records[0]);
+    // a different key order or a missing key stays under the right header. The columns
+    // are the keys of all records: withoutNulls() drops absent fields, so the first
+    // record (a running timer has no duration and no stop) does not name them all.
+    const columns = [...new Set(records.flatMap(record => Object.keys(record)))];
     const rows = records.map(record => columns.map(column => csvCell(record[column])).join(','));
     return [columns.map(csvCell).join(','), ...rows].join('\n');
 };

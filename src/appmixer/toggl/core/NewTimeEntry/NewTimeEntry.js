@@ -3,13 +3,13 @@
 const lib = require('../../lib');
 
 /**
- * The connected user's time entries of the watched window, newest created first. One page:
- * more than 100 entries created between two checks are not expected.
+ * The connected user's time entries of the watched window, newest created first: one page,
+ * or back to `since` when polling.
  */
-const fetchNewest = context => lib.listTimeEntries(context, {
+const fetchNewest = (context, since) => lib.listTimeEntries(context, {
     ...lib.pollWindow(),
     orderBy: '-created_at',
-    maxPages: 1
+    ...lib.pagesSince('created_at', since)
 });
 
 module.exports = {
@@ -18,7 +18,7 @@ module.exports = {
     async tick(context) {
 
         return lib.pollByTimestamp(context, {
-            fetch: () => fetchNewest(context),
+            fetch: since => fetchNewest(context, since),
             field: 'created_at'
         });
     },

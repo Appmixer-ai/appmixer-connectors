@@ -116,6 +116,33 @@ describe('Toggl', function() {
         });
     });
 
+    describe('CSV output', function() {
+
+        it('names the columns of all records, not only of the first one', async function() {
+            const context = createContext();
+            context.flowDescriptor = { 'component-1': { label: 'Find Time Entries' } };
+            let csv;
+            context.saveFileStream = async (name, buffer) => {
+                csv = buffer.toString('utf8');
+                return { fileId: 'file-1' };
+            };
+            await lib.sendArrayOutput({
+                context,
+                outputType: 'file',
+                records: [
+                    { id: 1, description: 'running', start: '2026-11-18T08:00:00Z' },
+                    { id: 2, description: 'done, "billed"', start: '2026-11-18T07:00:00Z', duration: 600, project_id: 5 }
+                ]
+            });
+            assert.strictEqual(csv, [
+                'id,description,start,duration,project_id',
+                '1,running,2026-11-18T08:00:00Z,,',
+                '2,"done, ""billed""",2026-11-18T07:00:00Z,600,5'
+            ].join('\n'));
+            assert.deepStrictEqual(context.sent[0], { data: { fileId: 'file-1' }, port: 'out' });
+        });
+    });
+
     describe('MakeApiCall', function() {
 
         it('resolves a relative path against the Toggl API', async function() {
@@ -349,6 +376,49 @@ describe('Toggl', function() {
             context.state.lastPoll = LONG_AGO;
             await NewTimeEntry.tick(context);
             assert.deepStrictEqual(context.sent.map(item => item.data.id), [2]);
+        });
+
+        it('reads past the first page until it reaches the last entry seen', async function() {
+            const context = createContext({ responses: [page([entry(1, '2026-11-18T08:00:00Z')])] });
+            await NewTimeEntry.tick(context);
+            assert.strictEqual(context.requests[0].params.page, 1);
+            assert.strictEqual(context.requests.length, 1);
+
+            // 150 entries imported at once: ids 151..2, newest first, then the entry of the baseline.
+            const minute = index => new Date(Date.parse('2026-11-18T09:00:00Z') + index * 60000).toISOString();
+            const imported = [];
+            for (let id = 151; id >= 2; id--) {
+                imported.push(entry(id, minute(id)));
+            }
+            const pages = [
+                page(imported.slice(0, 100)),
+                page([...imported.slice(100), entry(1, '2026-11-18T08:00:00Z')])
+            ];
+            context.requests = [];
+            context.httpRequest = async function(options) {
+                this.requests.push(options);
+                return pages.shift();
+            };
+            context.state.lastPoll = LONG_AGO;
+            await NewTimeEntry.tick(context);
+            assert.deepStrictEqual(context.requests.map(item => item.params.page), [1, 2]);
+            assert.strictEqual(context.sent.length, 150);
+            assert.strictEqual(context.sent[0].data.id, 2);
+            assert.strictEqual(context.sent[149].data.id, 151);
+        });
+
+        it('stops at the first page when it already holds the last entry seen', async function() {
+            const full = [];
+            for (let id = 100; id >= 1; id--) {
+                full.push(entry(id, new Date(Date.parse('2026-11-18T08:00:00Z') + id * 60000).toISOString()));
+            }
+            const context = createContext({
+                state: { initialized: true, lastTimestamp: new Date(full[1].created_at).getTime(), known: ['99'], lastPoll: LONG_AGO },
+                responses: [page(full)]
+            });
+            await NewTimeEntry.tick(context);
+            assert.strictEqual(context.requests.length, 1);
+            assert.deepStrictEqual(context.sent.map(item => item.data.id), [100]);
         });
 
         it('keeps its position when the answer is empty', async function() {

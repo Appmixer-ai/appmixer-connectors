@@ -3,10 +3,12 @@
 const lib = require('../../lib');
 
 /**
- * Projects of the workspace, newest created first. One page: more than 100 projects created
- * between two checks are not expected.
+ * Projects of the workspace, newest created first: one page, or back to `since` when polling.
  */
-const fetchNewest = context => lib.fetchProjects(context, { orderBy: '-created_at', maxPages: 1 });
+const fetchNewest = (context, since) => lib.fetchProjects(context, {
+    orderBy: '-created_at',
+    ...lib.pagesSince('created_at', since)
+});
 
 module.exports = {
 
@@ -14,7 +16,7 @@ module.exports = {
     async tick(context) {
 
         return lib.pollByTimestamp(context, {
-            fetch: () => fetchNewest(context),
+            fetch: since => fetchNewest(context, since),
             field: 'created_at'
         });
     },
