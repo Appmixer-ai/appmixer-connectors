@@ -1,0 +1,100 @@
+{
+    "name": "appmixer.workday.core.RunReport",
+    "label": "Run Report",
+    "description": "Run a custom report enabled as a web service (Reports-as-a-Service) and return its rows as JSON. The report must be shared with the account the connector uses.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:workday"
+    },
+    "quota": {
+        "manager": "appmixer:workday",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "reportOwner": {
+                        "type": "string"
+                    },
+                    "reportName": {
+                        "type": "string"
+                    },
+                    "parameters": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "reportOwner",
+                    "reportName"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "reportOwner": {
+                        "type": "text",
+                        "index": 1,
+                        "label": "Report Owner",
+                        "tooltip": "Username of the report owner as it appears in the report's web service URL, e.g. <code>lmcneil</code> in <code>.../customreport2/acme/lmcneil/Workers_Report</code>."
+                    },
+                    "reportName": {
+                        "type": "text",
+                        "index": 2,
+                        "label": "Report Name",
+                        "tooltip": "Report name as it appears in the report's web service URL, e.g. <code>Workers_Report</code>."
+                    },
+                    "parameters": {
+                        "type": "key-value",
+                        "keyLabel": "Prompt",
+                        "valueLabel": "Value",
+                        "addLabel": "Add prompt",
+                        "removeLabel": "Remove prompt",
+                        "index": 3,
+                        "label": "Report Prompts",
+                        "tooltip": "Optional report prompts as query parameters, e.g. <code>Effective_as_of_Date</code> = <code>2026-01-31-08:00</code>."
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "schema": {
+                "type": "object",
+                "required": [
+                    "result",
+                    "count"
+                ],
+                "properties": {
+                    "result": {
+                        "type": "array",
+                        "title": "Rows",
+                        "items": {
+                            "type": "object",
+                            "properties": {}
+                        },
+                        "example": [
+                            {
+                                "Worker": "Logan McNeil",
+                                "Employee_ID": "21001"
+                            }
+                        ]
+                    },
+                    "count": {
+                        "type": "integer",
+                        "title": "Rows Count",
+                        "example": 1
+                    }
+                }
+            }
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgLTUwIDEyMDAgMTIwMCI+PHBhdGggdHJhbnNmb3JtPSJ0cmFuc2xhdGUoLTI0NC41IDIwKSBzY2FsZSgwLjQpIiBkPSJNMTE3Mi44IDUyMkMxNDIzLjQgMjcxIDE3NTYuOCAxMzIuOCAyMTExLjYgMTMyLjhDMjQ2NS43IDEzMi44IDI3OTguNyAyNzAuNyAzMDQ5LjEgNTIxLjFDMzE5Mi4zIDY2NC4zIDMyOTguNiA4MzQuNCAzMzYzLjUgMTAyMC4xQzMzNjYuMyAxMDI4LjEgMzM3My43IDEwMzMuNCAzMzgyLjIgMTAzMy40SDM0ODAuNkMzNDk0IDEwMzMuNCAzNTAzLjcgMTAyMC40IDM0OTkuNSAxMDA3LjZDMzQyOS40IDc5MS4xIDMzMDguNSA1OTIuOCAzMTQzIDQyNy4yQzI4NjcuNiAxNTEuNyAyNTAxLjMgMCAyMTExLjggMEMxNzIxLjYgMCAxMzU0LjYgMTUyIDEwNzguOSA0MjguMUM5MTMuNyA1OTMuNSA3OTMuMiA3OTEuNSA3MjMuMyAxMDA3LjVDNzE5LjIgMTAyMC4zIDcyOC44IDEwMzMuMyA3NDIuMyAxMDMzLjNIODQwLjdDODQ5LjIgMTAzMy4zIDg1Ni42IDEwMjcuOSA4NTkuNCAxMDIwQzkyNCA4MzQuOSAxMDMwIDY2NSAxMTcyLjggNTIyWiIgZmlsbD0iI0ZDNUIwNSIvPjxwYXRoIHRyYW5zZm9ybT0idHJhbnNsYXRlKDIwMCAtNzgzKSIgZD0iTTE2NC43IDE3ODIuOUMxNDkuNCAxNzgyLjkgMTQwLjQgMTc3Ni41IDEzNS40IDE3NjEuMUM3NS4xOTk5IDE1OTQuMSAzNC4zOTk5IDE0MjguMiAtNy4zMTk0NWUtMDUgMTI2MS4yQy0zLjkwMDA3IDEyNDQuNSAzLjc5OTkzIDEyMzIuOSAyMS41OTk5IDEyMzIuOUgxMDQuN0MxMjAuMSAxMjMyLjkgMTMwLjIgMTI0MC42IDEzMi45IDEyNTQuN0MxNTQuNSAxMzczIDE4MC4yIDE0OTUgMjE0LjcgMTYxNC42TDMxNC4zIDEyNTQuN0MzMTguMSAxMjQwLjYgMzI4LjMgMTIzMi45IDM0My42IDEyMzIuOUg0NTYuMUM0NzEuNCAxMjMyLjkgNDgxLjYgMTI0MC42IDQ4NS40IDEyNTQuN0w1ODUgMTYxNC42QzYxOS41IDE0OTUuMSA2NDUuMiAxMzczIDY2Ni44IDEyNTQuN0M2NjkuMyAxMjQwLjYgNjc5LjcgMTIzMi45IDY5NSAxMjMyLjlINzc4LjFDNzk1LjkgMTIzMi45IDgwMy41IDEyNDQuNCA3OTkuNyAxMjYxLjJDNzY1LjMgMTQyOC4yIDcyNC41IDE1OTQuMSA2NjQuMyAxNzYxLjFDNjU5LjEgMTc3Ni41IDY1MC4zIDE3ODIuOSA2MzUgMTc4Mi45SDU0MS40QzUyNy40IDE3ODIuOSA1MTUuOSAxNzc2LjUgNTEyLjEgMTc2MS4xTDM5OS43IDEzNjUuMkwyODcuMyAxNzYxLjFDMjgzLjUgMTc3Ni41IDI3MiAxNzgyLjkgMjU4IDE3ODIuOUgxNjQuN1oiIGZpbGw9IiMwRjJFNjYiLz48L3N2Zz4="
+}
