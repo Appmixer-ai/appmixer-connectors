@@ -1,0 +1,121 @@
+{
+    "name": "appmixer.superoffice.core.FindCompanies",
+    "label": "Find Companies",
+    "description": "Find companies, newest first. Returns at most 500 companies.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:superoffice"
+    },
+    "quota": {
+        "manager": "appmixer:superoffice",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string"
+                    },
+                    "orgNr": {
+                        "type": "string"
+                    },
+                    "email": {
+                        "type": "string"
+                    },
+                    "filter": {
+                        "type": "string"
+                    },
+                    "outputType": {
+                        "type": "string",
+                        "enum": [
+                            "first",
+                            "array",
+                            "object",
+                            "file"
+                        ]
+                    }
+                }
+            },
+            "inspector": {
+                "inputs": {
+                    "name": {
+                        "type": "text",
+                        "index": 1,
+                        "label": "Name Contains",
+                        "tooltip": "Companies whose name contains this text."
+                    },
+                    "orgNr": {
+                        "type": "text",
+                        "index": 2,
+                        "label": "Organization Number",
+                        "tooltip": "Companies with exactly this organization number."
+                    },
+                    "email": {
+                        "type": "text",
+                        "index": 3,
+                        "label": "Email",
+                        "tooltip": "Companies with exactly this email address."
+                    },
+                    "filter": {
+                        "type": "textarea",
+                        "index": 4,
+                        "label": "Additional Filter",
+                        "tooltip": "Optional SuperOffice OData filter expression added with \"and\", for example <code>registeredDate after '2026-01-01'</code>. See the archive provider columns in the SuperOffice documentation."
+                    },
+                    "outputType": {
+                        "type": "select",
+                        "index": 5,
+                        "label": "Output Type",
+                        "defaultValue": "array",
+                        "tooltip": "Choose whether you want to receive the result set as one complete list, or first item only or one item at a time or stream the items to a file.",
+                        "options": [
+                            {
+                                "label": "First Item Only",
+                                "value": "first"
+                            },
+                            {
+                                "label": "All items at once",
+                                "value": "array"
+                            },
+                            {
+                                "label": "One item at a time",
+                                "value": "object"
+                            },
+                            {
+                                "label": "Store to CSV file",
+                                "value": "file"
+                            }
+                        ]
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "source": {
+                "url": "/component/appmixer/superoffice/core/FindCompanies?outPort=out&ignoreAuth=true",
+                "data": {
+                    "properties": {
+                        "generateOutputPortOptions": true
+                    },
+                    "messages": {
+                        "in/outputType": "inputs/in/outputType"
+                    }
+                }
+            }
+        },
+        {
+            "name": "notFound"
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA3MDAgNzAwIj48ZyB0cmFuc2Zvcm09InRyYW5zbGF0ZSgwLjAwMDAwMCw3MDAuMDAwMDAwKSBzY2FsZSgwLjEwMDAwMCwtMC4xMDAwMDApIiBmaWxsPSIjMGE1ZTU4IiBzdHJva2U9Im5vbmUiPiA8cGF0aCBkPSJNNDIgNTg2MyBjMTMgLTMwIDM1IC03MSA3NiAtMTQzIDI5IC01MiAxNjQgLTI2MyAxNzIgLTI3MCAzIC0zIDMzIC00MSA2NiAtODUgMjg1IC0zNzYgNjQwIC02MjYgOTk0IC02OTggMTM3IC0yOCAxODYgLTMxIDc3NSAtNDIgMjM3IC00IDMwMiAtOCAzNzUgLTIwIDQ5IC05IDEzNSAtMjUgMTU1IC0yOSA1NCAtMTIgMTU4IC01MiAyMjcgLTg4IDE3MyAtODkgMzQyIC0zMjYgNDIyIC01ODggMjcgLTkwIDMwIC0xMDUgNTEgLTI0MCAxMyAtODQgMTMgLTM0NSAwIC00MjAgLTQ1IC0yNjAgLTEzNCAtNDc3IC0yNjYgLTY1MSAtNjAgLTgwIC04NCAtOTcgLTU2IC00MiAxMTAgMjE3IDEyNCA2MTIgMzAgODMzIC02MiAxNDcgLTExMCAyMjEgLTE5NyAzMDMgLTExNiAxMTEgLTI2NiAxNjIgLTQxOCAxNDMgLTg0IC0xMSAtODIgLTggLTY5IC0xMjcgNyAtNTcgMTQgLTExNyAxNyAtMTM0IDIgLTE2IDcgLTY1IDEwIC0xMDggNiAtNzggNiAtNzkgLTE1IC02OCAtMTEgNiAtNzUgNjQgLTE0MiAxMjkgLTY3IDY0IC0xMjUgMTE4IC0xMzAgMTIwIC0xMiA1IC05NiAtMTEzIC0xMzUgLTE5MCAtMTMyIC0yNjIgLTE1MCAtNjI0IC00MyAtODgwIDE3IC00MCAzMyAtODAgMzYgLTg4IDkgLTIxIC01MCA0NCAtMTAzIDExNCAtMTEwIDE0NiAtMTgwIDMxOCAtMjI5IDU2NiAtNCAxOSAtOSAxMTYgLTEwIDIxNSAtMyAxNDUgMCAyMDIgMTYgMjkwIDYwIDM0MiAyMTkgNjIzIDQ0NiA3OTIgNDAgMjkgNzcgNTMgODIgNTMgNiAwIDExIDMgMTEgOCAwIDQgLTEyMCA4IC0yNjcgMTAgLTE0OCAxIC0yOTUgNCAtMzI4IDcgbC02MCA1IC00NCAtNjggYy0xMjEgLTE4NSAtMjMzIC00NzUgLTI1NyAtNjY1IC0zIC0yMyAtNyAtNDkgLTEwIC01NiAtMTcgLTUxIC0yNCAtMzQ1IC0xMSAtNDc2IDEyIC0xMzAgNDQgLTI4MyA4MyAtNDA0IDU1IC0xNjcgMTY5IC0zNzcgMjcyIC01MDEgMTcxIC0yMDYgMzczIC0zNDAgNjE3IC00MDkgMTEwIC0zMSAzODMgLTM4IDQ0OSAtMTIgMTYgNiAzMSA5IDMzIDcgNyAtNiAxNTcgNDcgMjMwIDgyIDIwMSA5NSA0MTcgMjk1IDU1NyA1MTUgNTQgODUgMTM5IDI2OCAxNzQgMzc0IDMyIDk0IDc2IDI4OCA4NyAzNzggMyAyOCA4IDU5IDEwIDcwIDIyIDEwNyAyMyA1MTIgMSA2MzEgLTIgMTAgLTcgNDYgLTEyIDc5IC00IDMzIC04IDYyIC05IDY1IC0xIDMgLTUgMjMgLTkgNDUgLTI0IDEyOCAtODIgMzAyIC0xNDQgNDM1IC0zMiA2OCAtMTE3IDIxOCAtMTMxIDIzMCAtMyAzIC0yNiAzMiAtNTEgNjUgLTY4IDkxIC0yMDUgMjIyIC0zMTEgMjk3IC0xNzkgMTI4IC00NjUgMjUwIC02ODQgMjkzIC0xOTIgMzcgLTI3OCA0NyAtNDIwIDQ1IC0zNzAgLTUgLTU2OSAtNCAtNjM1IDQgLTY3IDcgLTMwMyA0NiAtMzU1IDU5IC0xMSAyIC0zOCA4IC02MCAxMiAtMjIgNSAtNDQgOSAtNTAgMTEgLTI3IDYgLTIxNSA1NyAtMjU1IDY4IC0yNSA4IC03MCAyMCAtMTAwIDI5IC0zMCA4IC0xNDUgNDUgLTI1NiA4MSAtMTEwIDM2IC0yMDQgNjYgLTIwNyA2NiAtNCAwIC0xIC0xMiA1IC0yN3oiLz4gPHBhdGggZD0iTTY2OTUgNTY1MyBjLTY2IC0yOCAtMTMzIC01NiAtMTUwIC02MSAtMTYgLTYgLTgyIC0yOCAtMTQ1IC01MSAtMTE1IC00MCAtMjg5IC04NiAtMzY1IC05NSAtMjIgLTMgLTYyIC04IC05MCAtMTEgLTI3IC0zIC0xNDkgLTggLTI3MCAtMTAgLTMxNyAtNiAtMzkwIC0xMiAtNTg4IC01MCAtNTcgLTExIC0xODQgLTU4IC0yNzcgLTEwMSAtMjAyIC05NiAtMzcwIC0yMzEgLTQ2NyAtMzc5IC01NSAtODIgLTE0MyAtMjUzIC0xNDMgLTI3NSAwIC05IC00IC0yMCAtOSAtMjUgLTIxIC0yMyAtMTAwIC0zMTggLTExNiAtNDM1IC0zIC0yNSAtOCAtNTIgLTEwIC02MCAtMiAtOCAtNyAtNDQgLTExIC04MCAtMyAtMzYgLTggLTc4IC0xMSAtOTUgLTIgLTE2IC02IC0xMjUgLTEwIC0yNDEgbC02IC0yMTAgNDQgLTM0IGM2MCAtNDYgMjE0IC0xODUgMjY3IC0yNDAgOTYgLTk5IDIwNiAtMjIxIDI0MCAtMjY1IDEwMCAtMTMwIDE5OSAtMjgwIDIwNyAtMzE1IDEgLTMgMTEgLTI1IDIyIC01MCAyNyAtNjEgNTAgLTE2MyA1MiAtMjMzIDEgLTI5IDIxIC00MiA3OSAtNTIgMTUgLTIgNDMgLTcgNjIgLTEwIDY0IC0xMiAyMjQgLTcgMjk2IDkgMzk0IDg1IDcxNSA0MzQgODM5IDkxMiAyNSA5NiAyOSAxMjEgNDQgMjU0IDEzIDExMSA1IDM0NiAtMTQgNDQwIC0zIDE0IC04IDM5IC0xMSA1NSAtMjcgMTU3IC0xMDEgMzQ2IC0xOTUgNTAwIC03NyAxMjYgLTY3IDExOSAtMTM1IDEwMSAtMzMgLTggLTg0IC0xOCAtMTE0IC0yMiAtNjIgLTggLTIxOCAtNyAtMjMxIDIgLTI2IDE1IC0yIC0xNSA1NiAtNzEgMTI2IC0xMjQgMjE5IC0zMDQgMjcwIC01MjIgNDggLTIwNSAzNyAtNDkzIC0yNiAtNzA4IC0zOCAtMTI4IC0xMjQgLTI5MiAtMTk4IC0zNzUgLTE3IC0xOSAtMzEgLTM4IC0zMSAtNDEgMCAtMyAtMTQgLTE1IC0zMSAtMjggbC0zMCAtMjIgMjAgNDAgYzUwIDk2IDg1IDIxOSA5OCAzMzYgMzUgMzA5IC01MyA1ODggLTI0MSA3NjcgLTU3IDU0IC0xNjkgMTEzIC0yMzYgMTI0IC05NyAxNiAtMjA5IDEgLTI4OCAtMzggLTIxIC0xMSAtMjIgLTE3IC0xNyAtNjIgOSAtODYgMTcgLTE1MCAyMCAtMTY3IDIgLTggNiAtNTUgMTAgLTEwMyBsNyAtODkgLTIzIDE3IGMtMTMgOSAtNjggNTkgLTEyMSAxMTIgLTU0IDUyIC0xMDIgOTMgLTEwOCA4OSAtNDAgLTI1IC0xNTYgLTI4OCAtMTYyIC0zNzEgLTMgLTMwIC0xOCAtMzIgLTE5IC0xIDAgMTIgLTIgMzMgLTQgNDcgLTYgMzcgLTUgMjU4IDAgMzA5IDQwIDM2MSAyMjggNjgyIDQ2OSA4MDIgMTEwIDU0IDE5OCA2NyA0MTEgNjEgMjI3IC03IDQxNiAtNiA0NDUgMSAxNCA0IDM5IDEwIDU1IDEzIDg3IDE5IDMxNCAxMjUgNDMwIDIwMiAyMjcgMTUxIDQ0MyA0NDkgNTU5IDc3MSAxNSA0MSAyNSA3NyAyNCA4MCAtMiA0IC01NyAtMTcgLTEyMyAtNDZ6Ii8+IDxwYXRoIGQ9Ik0zODc2IDMzODMgYy0zIC0yMSAtOCAtNTggLTExIC04MyAtMTggLTEzNSAtNzggLTM1NCAtMTQ0IC01MjAgLTQ0IC0xMDkgLTE4OCAtMzY0IC0yMzYgLTQxNiAtNSAtNyAtMjYgLTMxIC00NSAtNTUgLTE5IC0yNCAtNjggLTc5IC0xMDkgLTEyMSBsLTc0IC03NyAxMDggLTE3MyBjNjAgLTk1IDExMiAtMTc1IDExNSAtMTc4IDQgLTMgMTMgLTE2IDIwIC0zMCAxMiAtMjMgMjQ4IC0zNjIgMjkyIC00MjAgMTEgLTE0IDEwMyAtMTM5IDIwNSAtMjc4IGwxODYgLTI1MyAyOSAyOCBjNTkgNTYgMTY3IDIyMCAyNDkgMzc3IDExNiAyMjMgMjIyIDUzMCAyNTMgNzM2IDMgMTkgOCA0NiAxMSA2MCAxNiA3OCAyMSAyNTIgMTEgMzU5IC0yMiAyMjggLTE2MiA0NDggLTUwMSA3ODcgLTEyNSAxMjUgLTMyMyAyOTQgLTM0NSAyOTQgLTQgMCAtMTEgLTE3IC0xNCAtMzd6Ii8+IDwvZz4gPC9zdmc+"
+}
