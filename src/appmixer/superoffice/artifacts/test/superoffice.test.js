@@ -226,8 +226,8 @@ describe('superoffice', () => {
 
             const context = createContext({ messages: { in: { content: { name: "O'Brien", companyId: '5', outputType: 'array' } } } });
             stubApi(context, { value: [
-                { personId: 1, fullName: "Pat O'Brien", contactId: 5, email_emailAddress: 'a@x.example' },
-                { personId: 1, fullName: "Pat O'Brien", contactId: 5, email_emailAddress: 'b@x.example' }
+                { personId: 1, fullName: "Pat O'Brien", contactId: 5, email__emailAddress: 'a@x.example', personContact__name: 'Acme' },
+                { personId: 1, fullName: "Pat O'Brien", contactId: 5, email__emailAddress: 'b@x.example', personContact__name: 'Acme' }
             ] });
             await load('FindPersons').receive(context);
             const [call] = apiCalls(context);
@@ -235,6 +235,43 @@ describe('superoffice', () => {
             assert.strictEqual(call.params.$orderBy, 'personId desc');
             assert.strictEqual(context.sent[0].data.count, 1);
             assert.strictEqual(context.sent[0].data.result[0].email, 'a@x.example');
+            assert.strictEqual(context.sent[0].data.result[0].companyName, 'Acme');
+        });
+
+        it('creates a follow-up with title and description as Title + Agenda of one text', async () => {
+
+            const input = { title: 'Kick-off', description: 'Agree on the plan.', startDate: '2026-11-20T09:00:00Z', endDate: '2026-11-20T10:00:00Z' };
+            const context = createContext({ messages: { in: { content: input } } });
+            stubApi(context, { AppointmentId: 0, Title: '', Agenda: '', Description: '' }, (options) => ({ ...options.data, AppointmentId: 5 }));
+            await load('CreateFollowUp').receive(context);
+            const [, post] = apiCalls(context);
+            assert.strictEqual(post.data.Title, 'Kick-off');
+            assert.strictEqual(post.data.Agenda, 'Agree on the plan.');
+            assert.strictEqual(post.data.Description, 'Kick-off\r\nAgree on the plan.');
+            assert.strictEqual(context.sent[0].data.title, 'Kick-off');
+            assert.strictEqual(context.sent[0].data.description, 'Agree on the plan.');
+        });
+
+        it('keeps the stored follow-up text when only other fields are updated', async () => {
+
+            const context = createContext({ messages: { in: { content: { followUpId: '5', location: 'Room 2' } } } });
+            const current = { AppointmentId: 5, Title: 'Kick-off', Agenda: 'Plan', Description: 'Kick-off\r\nPlan', Location: 'Room 1' };
+            stubApi(context, current, {});
+            await load('UpdateFollowUp').receive(context);
+            const [, put] = apiCalls(context);
+            assert.deepStrictEqual(put.data, { ...current, Location: 'Room 2' });
+        });
+
+        it('splits the archive text of a follow-up into title and description', async () => {
+
+            const context = createContext({ messages: { in: { content: { outputType: 'first' } } } });
+            stubApi(context, { value: [{ appointmentId: 4, text: 'Kick-off\r\nAgree on the plan.', contact__contactId: 7, contact__name: 'Acme' }] });
+            await load('FindFollowUps').receive(context);
+            const item = context.sent[0].data;
+            assert.strictEqual(item.title, 'Kick-off');
+            assert.strictEqual(item.description, 'Agree on the plan.');
+            assert.strictEqual(item.companyId, 7);
+            assert.strictEqual(item.companyName, 'Acme');
         });
 
         it('sends notFound when nothing matches', async () => {

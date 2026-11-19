@@ -505,11 +505,53 @@ const ITEM_SCHEMAS = {
 };
 
 const ref = (object, key) => (object && object[key] ? object[key] : undefined);
+
+/**
+ * SuperOffice keeps one appointment text: Description is Title (its first line) and Agenda (the
+ * rest) joined by a line break. When Title is sent, Description is rebuilt from Title and Agenda,
+ * so a Description sent next to it is lost. The component's "description" is the Agenda part.
+ * @param {object} entity current or default AppointmentEntity
+ * @param {object} input component inputs
+ * Without a title only Description is sent (Title and Agenda are dropped from the entity), and
+ * SuperOffice takes its first line as the title.
+ * @returns {object} Title, Agenda and Description to set, or {} when neither input is given
+ */
+const appointmentText = (entity, input) => {
+
+    if (isEmpty(input.title) && isEmpty(input.description)) {
+        return {};
+    }
+    const title = isEmpty(input.title) ? (entity.Title || '') : String(input.title);
+    const agenda = isEmpty(input.description) ? (entity.Agenda || '') : String(input.description);
+    if (!title) {
+        return { Description: agenda };
+    }
+    return {
+        Title: title,
+        Agenda: agenda,
+        Description: agenda ? title + '\r\n' + agenda : title
+    };
+};
+
+/**
+ * The archive "text" column holds the whole appointment text: first line title, rest description.
+ * @param {string|undefined} text
+ * @returns {{title: (string|undefined), description: (string|undefined)}}
+ */
+const splitAppointmentText = (text) => {
+
+    if (text === undefined) {
+        return {};
+    }
+    const [first, ...rest] = text.split(/\r?\n/);
+    const description = rest.join('\n');
+    return { title: first || undefined, description: description || undefined };
+};
 const positive = (value) => (typeof value === 'number' && value > 0 ? value : undefined);
 
 /**
  * Per entity: the REST resource, the archive columns the Find components and triggers read
- * ($select; with $jsonSafe=true "a/b" comes back as "a_b"), the mapping of an entity and of an
+ * ($select; with $jsonSafe=true "a/b" comes back as "a__b"), the mapping of an entity and of an
  * archive row to the shared item shape, and how component inputs become entity fields.
  */
 const ENTITIES = {
@@ -545,8 +587,8 @@ const ENTITIES = {
             category: rowString(r.category),
             business: rowString(r.business),
             country: rowString(r.country),
-            email: rowString(r.email_emailAddress),
-            phone: rowString(r.phone_formattedNumber),
+            email: rowString(r.email__emailAddress),
+            phone: rowString(r.phone__formattedNumber),
             createdDate: rowString(r.registeredDate),
             updatedDate: rowString(r.updatedDate)
         }),
@@ -600,8 +642,8 @@ const ENTITIES = {
             title: rowString(r.title),
             position: rowString(r.position),
             companyId: positive(rowNumber(r.contactId)),
-            companyName: rowString(r.personContact_name),
-            email: rowString(r.email_emailAddress),
+            companyName: rowString(r.personContact__name),
+            email: rowString(r.email__emailAddress),
             createdDate: rowString(r.personRegisteredDate),
             updatedDate: rowString(r.personUpdatedDate)
         }),
@@ -653,11 +695,11 @@ const ENTITIES = {
             saleDate: rowString(r.date),
             status: rowString(r.saleStatus),
             saleType: rowString(r.saleType),
-            companyId: positive(rowNumber(r.contact_contactId)),
-            companyName: rowString(r.contact_name),
-            personId: positive(rowNumber(r.person_personId)),
-            personName: rowString(r.person_fullName),
-            projectId: positive(rowNumber(r.project_projectId)),
+            companyId: positive(rowNumber(r.contact__contactId)),
+            companyName: rowString(r.contact__name),
+            personId: positive(rowNumber(r.person__personId)),
+            personName: rowString(r.person__fullName),
+            projectId: positive(rowNumber(r.project__projectId)),
             description: rowString(r.description),
             createdDate: rowString(r.registeredDate),
             updatedDate: rowString(r.updatedDate)
@@ -744,7 +786,7 @@ const ENTITIES = {
         fromEntity: (e) => compact({
             id: e.AppointmentId,
             title: e.Title,
-            description: e.Description,
+            description: e.Agenda || undefined,
             startDate: e.StartDate,
             endDate: e.EndDate,
             task: ref(e.Task, 'Value'),
@@ -762,24 +804,28 @@ const ENTITIES = {
         }),
         fromRow: (r) => compact({
             id: rowNumber(r.appointmentId),
-            description: rowString(r.text),
+            ...splitAppointmentText(rowString(r.text)),
             startDate: rowString(r.date),
             endDate: rowString(r.endDate),
             task: rowString(r.type),
             location: rowString(r.location),
-            companyId: positive(rowNumber(r.contact_contactId)),
-            companyName: rowString(r.contact_name),
-            personId: positive(rowNumber(r.person_personId)),
-            personName: rowString(r.person_fullName),
-            projectId: positive(rowNumber(r.project_projectId)),
+            companyId: positive(rowNumber(r.contact__contactId)),
+            companyName: rowString(r.contact__name),
+            personId: positive(rowNumber(r.person__personId)),
+            personName: rowString(r.person__fullName),
+            projectId: positive(rowNumber(r.project__projectId)),
             saleId: positive(rowNumber(r.saleId)),
             createdDate: rowString(r.registeredDate),
             updatedDate: rowString(r.updatedDate)
         }),
         apply: (context, entity, input) => {
             const e = { ...entity };
-            if (!isEmpty(input.title)) e.Title = input.title;
-            if (!isEmpty(input.description)) e.Description = input.description;
+            const text = appointmentText(e, input);
+            if (text.Description !== undefined && text.Title === undefined) {
+                delete e.Title;
+                delete e.Agenda;
+            }
+            Object.assign(e, text);
             if (!isEmpty(input.location)) e.Location = input.location;
             const startDate = toIsoDate(context, input.startDate, 'Start Date');
             if (startDate !== undefined) e.StartDate = startDate;
