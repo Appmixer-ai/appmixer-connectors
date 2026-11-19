@@ -525,6 +525,10 @@ module.exports = {
 
         if (outputType === 'array') {
             return context.sendJson([{
+                label: 'Items Count',
+                value: 'count',
+                schema: { type: 'integer' }
+            }, {
                 label,
                 value,
                 schema: {
