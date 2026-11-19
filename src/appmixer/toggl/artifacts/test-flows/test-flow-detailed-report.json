@@ -1,0 +1,427 @@
+{
+    "name": "E2E Toggl - report time entries",
+    "description": "Create a time entry and find it with Find Report Time Entries (reports query).",
+    "flow": {
+        "1eb467a1-9ba3-4240-bf82-01939e8e9052": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {},
+            "config": {},
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "62d266f8-4f73-425b-b4e0-03f128a64631": {
+            "type": "appmixer.toggl.core.CreateTimeEntry",
+            "x": 272,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "1eb467a1-9ba3-4240-bf82-01939e8e9052": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "1eb467a1-9ba3-4240-bf82-01939e8e9052": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "description": {
+                                        "6c573d9b-5d02-418f-871f-9dba274a9086": {
+                                            "functions": [
+                                                {
+                                                    "name": "g_formatDate",
+                                                    "params": [
+                                                        {
+                                                            "value": "YYYYMMDD-HHmmss"
+                                                        }
+                                                    ]
+                                                }
+                                            ],
+                                            "variable": "$.1eb467a1-9ba3-4240-bf82-01939e8e9052.out.started"
+                                        }
+                                    },
+                                    "start": {
+                                        "e19a1137-696d-4f64-b321-3cc49b608b35": {
+                                            "functions": [
+                                                {
+                                                    "name": "g_now"
+                                                },
+                                                {
+                                                    "name": "g_addTimeSpan",
+                                                    "hashParams": {
+                                                        "minutes": {
+                                                            "value": -120
+                                                        }
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "stop": {
+                                        "17c76768-2f3a-450b-8ffa-02d0dc71b1cc": {
+                                            "functions": [
+                                                {
+                                                    "name": "g_now"
+                                                },
+                                                {
+                                                    "name": "g_addTimeSpan",
+                                                    "hashParams": {
+                                                        "minutes": {
+                                                            "value": -90
+                                                        }
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "description": "E2E Toggl report {{{6c573d9b-5d02-418f-871f-9dba274a9086}}}",
+                                    "start": "{{{e19a1137-696d-4f64-b321-3cc49b608b35}}}",
+                                    "stop": "{{{17c76768-2f3a-450b-8ffa-02d0dc71b1cc}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "752d3063-3eff-471c-8fd0-62f67e2610f5": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 480,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "62d266f8-4f73-425b-b4e0-03f128a64631": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "62d266f8-4f73-425b-b4e0-03f128a64631": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "2e0f0642-d858-4eaf-94b8-8f72d3f2e3b2": {
+                                            "variable": "$.62d266f8-4f73-425b-b4e0-03f128a64631.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{2e0f0642-d858-4eaf-94b8-8f72d3f2e3b2}}}",
+                                                "assertion": "notEmpty",
+                                                "expected": ""
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "01533cc3-97ff-4af6-8413-b926b488a12a": {
+            "type": "appmixer.utils.timers.Wait",
+            "x": 688,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "752d3063-3eff-471c-8fd0-62f67e2610f5": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "752d3063-3eff-471c-8fd0-62f67e2610f5": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "interval": {}
+                                },
+                                "lambda": {
+                                    "interval": "1m"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "01aa5e4c-d846-4cf4-87af-627afb0eceba": {
+            "type": "appmixer.toggl.core.FindReportTimeEntries",
+            "x": 896,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "01533cc3-97ff-4af6-8413-b926b488a12a": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "01533cc3-97ff-4af6-8413-b926b488a12a": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "startDate": {
+                                        "ff0af8a9-d720-4bd3-b1d1-6b491b94b83a": {
+                                            "functions": [
+                                                {
+                                                    "name": "g_now"
+                                                },
+                                                {
+                                                    "name": "g_addTimeSpan",
+                                                    "hashParams": {
+                                                        "days": {
+                                                            "value": -1
+                                                        }
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "endDate": {
+                                        "1fd0abfd-736c-45eb-992a-45759dad2cc4": {
+                                            "functions": [
+                                                {
+                                                    "name": "g_now"
+                                                },
+                                                {
+                                                    "name": "g_addTimeSpan",
+                                                    "hashParams": {
+                                                        "days": {
+                                                            "value": 1
+                                                        }
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "description": {
+                                        "2eaf147d-ce34-4c2b-bb35-67051bc9c929": {
+                                            "functions": [],
+                                            "variable": "$.62d266f8-4f73-425b-b4e0-03f128a64631.out.description"
+                                        }
+                                    },
+                                    "outputType": {}
+                                },
+                                "lambda": {
+                                    "startDate": "{{{ff0af8a9-d720-4bd3-b1d1-6b491b94b83a}}}",
+                                    "endDate": "{{{1fd0abfd-736c-45eb-992a-45759dad2cc4}}}",
+                                    "description": "{{{2eaf147d-ce34-4c2b-bb35-67051bc9c929}}}",
+                                    "outputType": "first"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "5f626af6-7ed4-4943-bd91-6d97738534e6": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1104,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "01aa5e4c-d846-4cf4-87af-627afb0eceba": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "01aa5e4c-d846-4cf4-87af-627afb0eceba": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "7cce0919-3e30-4f57-ae42-29f55cc08c74": {
+                                            "variable": "$.01aa5e4c-d846-4cf4-87af-627afb0eceba.out.description",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{7cce0919-3e30-4f57-ae42-29f55cc08c74}}}",
+                                                "assertion": "regex",
+                                                "regex": "^E2E Toggl report "
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "e1c078e9-405e-4edc-a80a-934e8196baef": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 1312,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "752d3063-3eff-471c-8fd0-62f67e2610f5": [
+                        "out"
+                    ],
+                    "5f626af6-7ed4-4943-bd91-6d97738534e6": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 240
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "a379e7f7-36c9-4596-bf92-b6dc481585f8": {
+            "type": "appmixer.toggl.core.DeleteTimeEntry",
+            "x": 1520,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "e1c078e9-405e-4edc-a80a-934e8196baef": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "e1c078e9-405e-4edc-a80a-934e8196baef": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "timeEntryId": {
+                                        "36c6bcf4-c107-41ca-9273-e05af3e70f9f": {
+                                            "functions": [],
+                                            "variable": "$.62d266f8-4f73-425b-b4e0-03f128a64631.out.id"
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "timeEntryId": "{{{36c6bcf4-c107-41ca-9273-e05af3e70f9f}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "153a025a-556a-40a6-bc5b-a3558ee7719a": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1728,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "a379e7f7-36c9-4596-bf92-b6dc481585f8": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "a379e7f7-36c9-4596-bf92-b6dc481585f8": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "24fee057-dd6f-4992-b821-4b87899f012b": {
+                                            "functions": [],
+                                            "variable": "$.e1c078e9-405e-4edc-a80a-934e8196baef.out"
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E Toggl - report time entries",
+                                    "result": "{{{24fee057-dd6f-4992-b821-4b87899f012b}}}"
+                                }
+                            }
+                        }
+                    }
+                },
+                "properties": {
+                    "successStoreId": "64f6f1f9193228000754082f",
+                    "failedStoreId": "64f6f1f0193228000754082e"
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        }
+    },
+    "notes": {
+        "63354004-7bd3-4882-8b5b-4bb41bc3474e": {
+            "x": 64,
+            "y": 400,
+            "width": 672,
+            "height": 200,
+            "content": "## ⚠️ Timing\n\nReports follow new time entries with a short delay: the Wait gives the report time to include the new entry. Do not remove it."
+        }
+    }
+}

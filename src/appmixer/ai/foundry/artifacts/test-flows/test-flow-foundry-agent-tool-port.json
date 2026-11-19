@@ -1,0 +1,244 @@
+{
+    "flow": {
+        "a6362feb-865e-41ba-9076-ecc541eb870d": {
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "source": {},
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 208,
+            "y": 320
+        },
+        "eaedeb4a-4284-4e2e-9558-47d41735c92e": {
+            "config": {
+                "transform": {
+                    "in": {
+                        "a6362feb-865e-41ba-9076-ecc541eb870d": {
+                            "out": {
+                                "lambda": {
+                                    "instructions": "You are a test agent. First call the Echo tool with the value ping. Then look the secret code up with the Secret code tool. Answer with the secret code followed by the word DONE and nothing else.",
+                                    "model": "DeepSeek-V4-Flash",
+                                    "prompt": "What is the secret code?"
+                                },
+                                "modifiers": {
+                                    "instructions": {},
+                                    "model": {},
+                                    "prompt": {}
+                                },
+                                "type": "json2new"
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "source": {
+                "in": {
+                    "a6362feb-865e-41ba-9076-ecc541eb870d": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.ai.foundry.AIAgent",
+            "x": 400,
+            "y": 320
+        },
+        "39fc0028-89ae-4568-848a-8b8b85ddb33d": {
+            "config": {
+                "transform": {
+                    "in": {
+                        "eaedeb4a-4284-4e2e-9558-47d41735c92e": {
+                            "tools": {
+                                "lambda": {
+                                    "value": "APPMIXER-7421"
+                                },
+                                "modifiers": {
+                                    "value": {}
+                                },
+                                "type": "json2new"
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "label": "Secret code",
+            "source": {
+                "in": {
+                    "eaedeb4a-4284-4e2e-9558-47d41735c92e": [
+                        "tools"
+                    ]
+                }
+            },
+            "type": "appmixer.utils.controls.MockValue",
+            "x": 400,
+            "y": 448
+        },
+        "15efeba2-29f6-4744-9074-cafebc45cf4f": {
+            "config": {
+                "transform": {
+                    "in": {
+                        "eaedeb4a-4284-4e2e-9558-47d41735c92e": {
+                            "tools": {
+                                "lambda": {
+                                    "value": "{{{81c0dc0d-ae7b-4093-9571-4cad5afc1084}}}"
+                                },
+                                "modifiers": {
+                                    "value": {
+                                        "81c0dc0d-ae7b-4093-9571-4cad5afc1084": {
+                                            "functions": [],
+                                            "variable": "$.eaedeb4a-4284-4e2e-9558-47d41735c92e.tools.modelDefinedParameter"
+                                        }
+                                    }
+                                },
+                                "type": "json2new"
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "label": "Echo",
+            "source": {
+                "in": {
+                    "eaedeb4a-4284-4e2e-9558-47d41735c92e": [
+                        "tools"
+                    ]
+                }
+            },
+            "type": "appmixer.utils.controls.MockValue",
+            "x": 400,
+            "y": 576
+        },
+        "58c2a212-386a-4d02-902c-4a0c62910861": {
+            "config": {
+                "transform": {
+                    "in": {
+                        "eaedeb4a-4284-4e2e-9558-47d41735c92e": {
+                            "out": {
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "assertion": "regex",
+                                                "field": "{{{1671f9a6-2710-469b-8afa-90a455b4a1bc}}}",
+                                                "regex": "APPMIXER-7421"
+                                            },
+                                            {
+                                                "assertion": "regex",
+                                                "field": "{{{1671f9a6-2710-469b-8afa-90a455b4a1bc}}}",
+                                                "regex": "DONE"
+                                            }
+                                        ]
+                                    }
+                                },
+                                "modifiers": {
+                                    "expression": {
+                                        "1671f9a6-2710-469b-8afa-90a455b4a1bc": {
+                                            "functions": [],
+                                            "variable": "$.eaedeb4a-4284-4e2e-9558-47d41735c92e.out.answer"
+                                        }
+                                    }
+                                },
+                                "type": "json2new"
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "source": {
+                "in": {
+                    "eaedeb4a-4284-4e2e-9558-47d41735c92e": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.utils.test.Assert",
+            "x": 592,
+            "y": 320
+        },
+        "468546c1-e42d-4ba3-a1fb-1e65aa0c3919": {
+            "config": {
+                "properties": {
+                    "timeout": 180
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "source": {
+                "in": {
+                    "58c2a212-386a-4d02-902c-4a0c62910861": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 784,
+            "y": 448
+        },
+        "ac955842-42da-4821-a304-7262f36bb88b": {
+            "config": {
+                "properties": {},
+                "transform": {
+                    "in": {
+                        "468546c1-e42d-4ba3-a1fb-1e65aa0c3919": {
+                            "out": {
+                                "lambda": {
+                                    "recipients": "test@appmixer.com",
+                                    "result": "{{{547ead96-16d5-4697-af57-b93d1d178de4}}}",
+                                    "testCase": "E2E AI Foundry - AI Agent Tool Port"
+                                },
+                                "modifiers": {
+                                    "recipients": {},
+                                    "result": {
+                                        "547ead96-16d5-4697-af57-b93d1d178de4": {
+                                            "functions": [],
+                                            "variable": "$.468546c1-e42d-4ba3-a1fb-1e65aa0c3919.out"
+                                        }
+                                    },
+                                    "testCase": {}
+                                },
+                                "type": "json2new"
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "source": {
+                "in": {
+                    "468546c1-e42d-4ba3-a1fb-1e65aa0c3919": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 976,
+            "y": 448
+        }
+    },
+    "name": "E2E AI Foundry - AI Agent Tool Port",
+    "notes": {},
+    "wizard": {
+        "fields": []
+    }
+}
