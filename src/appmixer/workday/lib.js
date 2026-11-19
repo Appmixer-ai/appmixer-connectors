@@ -1,5 +1,6 @@
 'use strict';
 
+const crypto = require('crypto');
 const pathModule = require('path');
 
 const DEFAULT_PREFIX = 'workday-objects-export';
@@ -16,7 +17,21 @@ const OBJECT_ID_PATTERN = /^[a-z0-9_.-]+(?:=[a-z0-9_.-]+)?$/i;
 
 // REST service versions used by the components (Workday REST Services Directory).
 const COMMON_SERVICE = 'common/v1';
+const STAFFING_SERVICE = 'staffing/v6';
 const WQL_SERVICE = 'wql/v1';
+
+// The REST maximum page size ("limit" default 20, maximum 100).
+const PAGE_SIZE = 100;
+// Workday answers 429 when a tenant is throttled; a collection of several
+// hundred pages must survive that instead of failing half way.
+const MAX_RETRIES = 3;
+const DEFAULT_RETRY_DELAY = 2000;
+const MAX_RETRY_DELAY = 30000;
+// Organization chart lookups run in small batches to stay under the tenant throttle.
+const HIERARCHY_BATCH = 5;
+const SOURCE_CACHE_TTL = 2 * 60 * 1000;
+
+const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
 /**
  * The https origin of the user's Workday host. Throws before any request when the
@@ -91,6 +106,93 @@ const authHeaders = function(context) {
     return { 'Authorization': `Bearer ${context.auth.token}` };
 };
 
+/**
+ * context.httpRequest that waits and retries when Workday throttles the tenant (429).
+ * @param {object} context
+ * @param {object} options
+ * @returns {Promise<object>}
+ */
+const request = async function(context, options) {
+
+    for (let attempt = 0; ; attempt++) {
+        try {
+            return await context.httpRequest(options);
+        } catch (error) {
+            if (error?.response?.status !== 429 || attempt >= MAX_RETRIES) {
+                throw error;
+            }
+            const retryAfter = Number(error.response.headers?.['retry-after']);
+            const delay = retryAfter > 0 ? retryAfter * 1000 : DEFAULT_RETRY_DELAY * (attempt + 1);
+            await sleep(Math.min(delay, MAX_RETRY_DELAY));
+        }
+    }
+};
+
+/**
+ * GET every object of a REST collection, page by page (limit 100 + offset).
+ * @param {object} context
+ * @param {string} service e.g. 'staffing/v6'
+ * @param {string} path path below the service base, e.g. '/workers'
+ * @param {object} [params] extra query parameters
+ * @returns {Promise<Array>}
+ */
+const getAll = async function(context, service, path, params = {}) {
+
+    const url = `${restBaseUrl(context, service)}${path}`;
+    const records = [];
+    for (;;) {
+        const { data } = await request(context, {
+            method: 'GET',
+            url,
+            headers: authHeaders(context),
+            params: { ...params, limit: PAGE_SIZE, offset: records.length }
+        });
+        const page = Array.isArray(data?.data) ? data.data : [];
+        records.push(...page);
+        // A short page is the last one; "total" ends the loop one request earlier
+        // when the collection size is an exact multiple of the page size.
+        if (page.length < PAGE_SIZE || (Number.isInteger(data?.total) && records.length >= data.total)) {
+            return records;
+        }
+    }
+};
+
+/**
+ * GET one object of a REST service.
+ * @param {object} context
+ * @param {string} service
+ * @param {string} path
+ * @returns {Promise<object>}
+ */
+const getOne = async function(context, service, path) {
+
+    const { data } = await request(context, {
+        method: 'GET',
+        url: `${restBaseUrl(context, service)}${path}`,
+        headers: authHeaders(context)
+    });
+    return data;
+};
+
+/**
+ * True when a Workday reference object ({ id, <Type>_ID }) is the one the user
+ * asked for: by Workday ID, by reference ID, or by "Type=Value".
+ * @param {object} reference e.g. primaryJob.location
+ * @param {string} referenceKey e.g. 'Location_ID'
+ * @param {string} wanted
+ * @returns {boolean}
+ */
+const matchesReference = function(reference, referenceKey, wanted) {
+
+    if (!reference) {
+        return false;
+    }
+    const value = String(wanted).trim();
+    const plain = value.includes('=') ? value.slice(value.indexOf('=') + 1) : value;
+    return reference.id === value
+        || (reference[referenceKey] !== undefined && String(reference[referenceKey]) === plain);
+};
+
 // One CSV cell per RFC 4180: null/undefined → empty, objects → JSON, and a value
 // holding a comma, a double quote or a line break is quoted with inner quotes doubled.
 const csvCell = (value) => {
@@ -112,7 +214,11 @@ const toCsv = (records) => {
 module.exports = {
 
     COMMON_SERVICE,
+    STAFFING_SERVICE,
     WQL_SERVICE,
+    request,
+    getAll,
+    getOne,
     hostOrigin,
     tenantName,
     tokenUrl,
@@ -122,21 +228,151 @@ module.exports = {
     toCsv,
 
     /**
-     * GET one page (the REST maximum, 100 objects) of a collection.
+     * Workers with their current staffing information (staffing/v6), every page.
+     * Search, email and terminated workers are filtered by Workday; the REST API has
+     * no organization or location filter, so those two are applied to the primary
+     * job of each worker here.
      * @param {object} context
-     * @param {string} path path below the service base, e.g. '/workers'
-     * @param {object} [params] extra query parameters
-     * @returns {Promise<{total: number, data: Array}>}
+     * @param {object} [filters]
+     * @param {string} [filters.search] name or employee ID
+     * @param {string} [filters.email]
+     * @param {string} [filters.organizationId] Workday ID or Organization_Reference_ID
+     * @param {string} [filters.locationId] Workday ID or Location_ID
+     * @param {boolean} [filters.includeTerminatedWorkers]
+     * @returns {Promise<Array>}
      */
-    async getCollection(context, path, params = {}) {
+    async listWorkers(context, filters = {}) {
 
-        const { data } = await context.httpRequest({
-            method: 'GET',
-            url: `${restBaseUrl(context, COMMON_SERVICE)}${path}`,
-            headers: authHeaders(context),
-            params: { limit: 100, ...params }
+        const { search, email, organizationId, locationId, includeTerminatedWorkers } = filters;
+        const params = {};
+        if (search) params.search = search;
+        if (email) params.email = email;
+        if (includeTerminatedWorkers) params.includeTerminatedWorkers = true;
+
+        const workers = await getAll(context, STAFFING_SERVICE, '/workers', params);
+        return workers.filter(worker => {
+            const job = worker?.primaryJob;
+            return (!organizationId
+                    || matchesReference(job?.supervisoryOrganization, 'Organization_Reference_ID', organizationId))
+                && (!locationId || matchesReference(job?.location, 'Location_ID', locationId));
         });
-        return { total: data?.total || 0, data: Array.isArray(data?.data) ? data.data : [] };
+    },
+
+    /**
+     * The line manager of a worker: the manager of the worker's primary supervisory
+     * organization. A worker who leads that organization (or an organization without
+     * a manager) reports to the manager of the superior organization.
+     * @param {object} context
+     * @param {object} worker a staffing/v6 worker
+     * @returns {Promise<object|null>} null when no manager can be resolved (top of the hierarchy)
+     */
+    async resolveManager(context, worker) {
+
+        const organizationId = worker?.primaryJob?.supervisoryOrganization?.id;
+        if (!organizationId) {
+            return null;
+        }
+        const other = (managers) => (Array.isArray(managers) ? managers : []).find(m => m?.id && m.id !== worker.id);
+
+        const organization = await getOne(context, STAFFING_SERVICE, `/supervisoryOrganizations/${organizationId}`);
+        let reference = other(organization?.managers);
+        if (!reference) {
+            const superior = await this.getSuperiorOrganization(context, organizationId);
+            reference = other(superior?.managers);
+        }
+        if (!reference) {
+            return null;
+        }
+
+        const manager = await getOne(context, STAFFING_SERVICE, `/workers/${reference.id}`);
+        return {
+            id: reference.id,
+            descriptor: manager?.descriptor || reference.descriptor,
+            workerId: manager?.workerId,
+            email: manager?.person?.email,
+            businessTitle: manager?.primaryJob?.businessTitle
+        };
+    },
+
+    /**
+     * The organization one level up, from the organization chart.
+     * @param {object} context
+     * @param {string} organizationId Workday ID
+     * @returns {Promise<object|undefined>} undefined for a top level organization
+     */
+    async getSuperiorOrganization(context, organizationId) {
+
+        const nodes = await getAll(context, STAFFING_SERVICE, `/supervisoryOrganizations/${organizationId}/orgChart`);
+        const node = nodes.find(n => n?.id === organizationId) || nodes[0];
+        return node?.superior?.id ? node.superior : undefined;
+    },
+
+    /**
+     * Supervisory organizations (staffing/v6), every page.
+     * @param {object} context
+     * @param {object} [options]
+     * @param {boolean} [options.includeHierarchy] add "superior" (the parent organization) to each one
+     * @returns {Promise<Array>}
+     */
+    async listSupervisoryOrganizations(context, { includeHierarchy } = {}) {
+
+        const organizations = await getAll(context, STAFFING_SERVICE, '/supervisoryOrganizations');
+        if (!includeHierarchy) {
+            return organizations;
+        }
+
+        const result = [];
+        for (let start = 0; start < organizations.length; start += HIERARCHY_BATCH) {
+            const batch = organizations.slice(start, start + HIERARCHY_BATCH);
+            result.push(...await Promise.all(batch.map(async organization => {
+                const superior = await this.getSuperiorOrganization(context, organization.id);
+                if (!superior) {
+                    return organization;
+                }
+                const { id, descriptor, name, code } = superior;
+                return {
+                    ...organization,
+                    superior: {
+                        id,
+                        descriptor,
+                        name,
+                        code,
+                        Organization_Reference_ID: superior.Organization_Reference_ID
+                    }
+                };
+            })));
+        }
+        return result;
+    },
+
+    /**
+     * Run a lookup for an inspector dropdown: cached for two minutes per account and
+     * never failing the inspector (an empty list lets the user type the value).
+     * @param {object} context
+     * @param {string} name cache key part
+     * @param {Function} fetch
+     * @returns {Promise<Array>}
+     */
+    async cachedSource(context, name, fetch) {
+
+        const key = crypto.createHash('sha256')
+            .update(JSON.stringify([name, context.auth.host, context.auth.tenant, context.auth.token]))
+            .digest('hex');
+        let lock;
+        try {
+            lock = await context.lock(key);
+            const cached = await context.staticCache.get(key);
+            if (cached) {
+                return cached;
+            }
+            const records = await fetch();
+            await context.staticCache.set(key, records, context.config?.listCacheTTL || SOURCE_CACHE_TTL);
+            return records;
+        } catch (error) {
+            return [];
+        } finally {
+            await lock?.unlock();
+        }
     },
 
     /**

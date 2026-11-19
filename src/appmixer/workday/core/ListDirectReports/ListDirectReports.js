@@ -9,7 +9,6 @@ const ITEM_SCHEMA = {
         id: { type: 'string', title: 'Worker ID', example: '3aa5550b7fe348b98d7b5741afc65534' },
         descriptor: { type: 'string', title: 'Name', example: 'Logan McNeil' },
         href: { type: 'string', title: 'URL', example: 'https://wd2-impl-services1.workday.com/api/common/v1/acme/workers/3aa5550b7fe348b98d7b5741afc65534' },
-        workerId: { type: 'string', title: 'Employee ID', example: '21001' },
         businessTitle: { type: 'string', title: 'Business Title', example: 'Vice President, Human Resources' },
         isManager: { type: 'boolean', title: 'Is Manager', example: true },
         primaryWorkEmail: { type: 'string', title: 'Primary Work Email', example: 'lmcneil@workday.net' },
@@ -43,7 +42,7 @@ module.exports = {
         }
 
         const id = lib.objectId(context, workerId, 'Worker ID');
-        const { data } = await lib.getCollection(context, `/workers/${id}/directReports`);
-        return lib.sendArrayOutput({ context, records: data, outputType });
+        const records = await lib.getAll(context, lib.COMMON_SERVICE, `/workers/${id}/directReports`);
+        return lib.sendArrayOutput({ context, records, outputType });
     }
 };

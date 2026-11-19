@@ -6,6 +6,10 @@ const auth = require('../../auth');
 const lib = require('../../lib');
 const MakeApiCall = require('../../core/MakeApiCall/MakeApiCall');
 const GetWorker = require('../../core/GetWorker/GetWorker');
+const ListWorkers = require('../../core/ListWorkers/ListWorkers');
+const FindWorkers = require('../../core/FindWorkers/FindWorkers');
+const ListDirectReports = require('../../core/ListDirectReports/ListDirectReports');
+const ListSupervisoryOrganizations = require('../../core/ListSupervisoryOrganizations/ListSupervisoryOrganizations');
 const RunReport = require('../../core/RunReport/RunReport');
 const RunWQLQuery = require('../../core/RunWQLQuery/RunWQLQuery');
 
@@ -16,18 +20,30 @@ class CancelError extends Error {
     }
 }
 
-const createContext = ({ content = {}, auth: authData = {}, response = { data: {} } } = {}) => {
+const createContext = (options = {}) => {
+    const { content = {}, auth: authData = {}, response = { data: {} }, respond, properties = {} } = options;
     const requests = [];
     const sent = [];
+    const cache = new Map();
     return {
         requests,
         sent,
         CancelError,
-        properties: {},
+        properties,
+        config: {},
+        lock: async () => ({ unlock: async () => {} }),
+        staticCache: {
+            get: async (key) => cache.get(key),
+            set: async (key, value) => { cache.set(key, value); }
+        },
         auth: { host: 'wd2-impl-services1.workday.com', tenant: 'acme', token: 'access-token', ...authData },
         messages: { in: { content } },
         httpRequest: async (options) => {
             requests.push(options);
+            if (respond) {
+                // respond() returns the response body, or throws like a failed request.
+                return { status: 200, headers: {}, data: await respond(options, requests.length) };
+            }
             return { status: 200, headers: {}, ...response };
         },
         sendJson: async (data, port) => {
@@ -94,7 +110,7 @@ describe('workday', function() {
             await GetWorker.receive(context);
             assert.strictEqual(
                 context.requests[0].url,
-                'https://wd2-impl-services1.workday.com/api/common/v1/acme/workers/Employee_ID=21005'
+                'https://wd2-impl-services1.workday.com/api/staffing/v6/acme/workers/Employee_ID=21005'
             );
         });
 
@@ -112,6 +128,24 @@ describe('workday', function() {
             assert.deepStrictEqual(context.sent[0].data, { result: [{ firstName: 'A' }], count: 1, total: 1 });
         });
 
+        it('RunWQLQuery reads every page of a result over 10,000 rows', async function() {
+            const all = Array.from({ length: 18462 }, (_, i) => ({ workdayID: String(i) }));
+            const context = createContext({
+                content: { query: 'SELECT workdayID FROM fieldCuration' },
+                respond: ({ params }) => ({
+                    total: all.length,
+                    data: all.slice(params.offset, params.offset + params.limit)
+                })
+            });
+            await RunWQLQuery.receive(context);
+            assert.deepStrictEqual(
+                context.requests.map(r => [r.params.limit, r.params.offset]),
+                [[10000, 0], [10000, 10000]]
+            );
+            assert.strictEqual(context.sent[0].data.count, 18462);
+            assert.strictEqual(context.sent[0].data.total, 18462);
+        });
+
         it('RunReport builds the RaaS URL and passes prompts', async function() {
             const context = createContext({
                 content: { reportOwner: 'lmcneil', reportName: 'Workers Report', parameters: '{"Effective_as_of_Date":"2026-01-31"}' },
@@ -124,6 +158,236 @@ describe('workday', function() {
             );
             assert.deepStrictEqual(context.requests[0].params, { Effective_as_of_Date: '2026-01-31', format: 'json' });
             assert.strictEqual(context.sent[0].data.count, 1);
+        });
+    });
+
+    describe('workers and organizations', function() {
+
+        const STAFFING = 'https://wd2-impl-services1.workday.com/api/staffing/v6/acme';
+        const worker = (n, organization = 'org1', location = 'loc1') => ({
+            id: `w${n}`,
+            descriptor: `Worker ${n}`,
+            workerId: String(21000 + n),
+            person: { email: `w${n}@example.com` },
+            primaryJob: {
+                businessTitle: `Title ${n}`,
+                supervisoryOrganization: { id: organization, Organization_Reference_ID: `REF_${organization}` },
+                location: { id: location, Location_ID: `SITE_${location}` }
+            }
+        });
+        // Serves a collection 100 objects per page, as the REST API does.
+        const pages = (all) => ({ params }) => ({
+            total: all.length,
+            data: all.slice(params.offset, params.offset + params.limit)
+        });
+        const failure = (status, headers = {}) => Object.assign(new Error(`HTTP ${status}`), { response: { status, headers } });
+
+        it('ListWorkers reads every page', async function() {
+            const all = Array.from({ length: 250 }, (_, i) => worker(i));
+            const context = createContext({ content: { outputType: 'array' }, respond: pages(all) });
+            await ListWorkers.receive(context);
+            assert.strictEqual(context.requests.length, 3);
+            assert.strictEqual(context.requests[0].url, `${STAFFING}/workers`);
+            assert.deepStrictEqual(context.requests.map(r => r.params.offset), [0, 100, 200]);
+            assert.strictEqual(context.sent[0].data.count, 250);
+            assert.strictEqual(context.sent[0].data.result[249].person.email, 'w249@example.com');
+        });
+
+        it('a collection of exactly one page takes one request', async function() {
+            const all = Array.from({ length: 100 }, (_, i) => worker(i));
+            const context = createContext({ content: { outputType: 'array' }, respond: pages(all) });
+            await ListWorkers.receive(context);
+            assert.strictEqual(context.requests.length, 1);
+            assert.strictEqual(context.sent[0].data.count, 100);
+        });
+
+        it('FindWorkers sends search, email and status to Workday', async function() {
+            const context = createContext({
+                content: { search: 'Logan', email: 'w1@example.com', includeTerminatedWorkers: true, outputType: 'array' },
+                respond: pages([worker(1)])
+            });
+            await FindWorkers.receive(context);
+            assert.deepStrictEqual(context.requests[0].params, {
+                search: 'Logan', email: 'w1@example.com', includeTerminatedWorkers: true, limit: 100, offset: 0
+            });
+            assert.strictEqual(context.sent[0].port, 'out');
+        });
+
+        it('FindWorkers filters by organization and location of the primary job', async function() {
+            const all = [worker(1, 'org1', 'loc1'), worker(2, 'org2', 'loc1'), worker(3, 'org1', 'loc2')];
+            const byWid = createContext({
+                content: { organizationId: 'org1', locationId: 'loc1', outputType: 'array' },
+                respond: pages(all)
+            });
+            await FindWorkers.receive(byWid);
+            assert.deepStrictEqual(byWid.sent[0].data.result.map(w => w.id), ['w1']);
+            // No terminated workers unless asked for.
+            assert.strictEqual('includeTerminatedWorkers' in byWid.requests[0].params, false);
+
+            const byReference = createContext({
+                content: { organizationId: 'Organization_Reference_ID=REF_org1', locationId: 'SITE_loc2', outputType: 'array' },
+                respond: pages(all)
+            });
+            await FindWorkers.receive(byReference);
+            assert.deepStrictEqual(byReference.sent[0].data.result.map(w => w.id), ['w3']);
+        });
+
+        it('FindWorkers sends notFound when nothing matches', async function() {
+            const context = createContext({
+                content: { organizationId: 'org9', outputType: 'array' },
+                respond: pages([worker(1)])
+            });
+            await FindWorkers.receive(context);
+            assert.strictEqual(context.sent[0].port, 'notFound');
+            assert.strictEqual(context.sent[0].data.organizationId, 'org9');
+        });
+
+        it('GetWorker without Include Manager takes one request', async function() {
+            const context = createContext({ content: { workerId: 'w1' }, respond: () => worker(1) });
+            await GetWorker.receive(context);
+            assert.strictEqual(context.requests.length, 1);
+            assert.strictEqual('manager' in context.sent[0].data, false);
+        });
+
+        it('GetWorker resolves the manager of the primary organization', async function() {
+            const context = createContext({
+                content: { workerId: 'w1', includeManager: true },
+                respond: ({ url }) => {
+                    if (url === `${STAFFING}/workers/w1`) return worker(1);
+                    if (url === `${STAFFING}/supervisoryOrganizations/org1`) {
+                        return { id: 'org1', managers: [{ id: 'w7', descriptor: 'Worker 7' }] };
+                    }
+                    if (url === `${STAFFING}/workers/w7`) return worker(7);
+                    throw new Error(`unexpected ${url}`);
+                }
+            });
+            await GetWorker.receive(context);
+            assert.deepStrictEqual(context.sent[0].data.manager, {
+                id: 'w7', descriptor: 'Worker 7', workerId: '21007', email: 'w7@example.com', businessTitle: 'Title 7'
+            });
+        });
+
+        it('GetWorker takes the manager of the superior organization for a worker who leads the own one', async function() {
+            const context = createContext({
+                content: { workerId: 'w1', includeManager: true },
+                respond: ({ url }) => {
+                    if (url === `${STAFFING}/workers/w1`) return worker(1);
+                    if (url === `${STAFFING}/supervisoryOrganizations/org1`) {
+                        return { id: 'org1', managers: [{ id: 'w1', descriptor: 'Worker 1' }] };
+                    }
+                    if (url === `${STAFFING}/supervisoryOrganizations/org1/orgChart`) {
+                        return {
+                            total: 1,
+                            data: [{ id: 'org1', superior: { id: 'org0', managers: [{ id: 'w9', descriptor: 'Worker 9' }] } }]
+                        };
+                    }
+                    if (url === `${STAFFING}/workers/w9`) return worker(9);
+                    throw new Error(`unexpected ${url}`);
+                }
+            });
+            await GetWorker.receive(context);
+            assert.strictEqual(context.sent[0].data.manager.email, 'w9@example.com');
+        });
+
+        it('GetWorker leaves manager out at the top of the hierarchy', async function() {
+            const context = createContext({
+                content: { workerId: 'w1', includeManager: true },
+                respond: ({ url }) => {
+                    if (url === `${STAFFING}/workers/w1`) return worker(1);
+                    if (url === `${STAFFING}/supervisoryOrganizations/org1`) return { id: 'org1', managers: [{ id: 'w1' }] };
+                    if (url === `${STAFFING}/supervisoryOrganizations/org1/orgChart`) {
+                        return { total: 1, data: [{ id: 'org1' }] };
+                    }
+                    throw new Error(`unexpected ${url}`);
+                }
+            });
+            await GetWorker.receive(context);
+            assert.strictEqual(context.sent[0].data.id, 'w1');
+            assert.strictEqual('manager' in context.sent[0].data, false);
+        });
+
+        it('ListSupervisoryOrganizations adds the superior organization on request', async function() {
+            const respond = ({ url }) => {
+                if (url === `${STAFFING}/supervisoryOrganizations`) {
+                    return { total: 2, data: [{ id: 'org0', descriptor: 'Top' }, { id: 'org1', descriptor: 'HR' }] };
+                }
+                if (url === `${STAFFING}/supervisoryOrganizations/org0/orgChart`) {
+                    return { total: 1, data: [{ id: 'org0' }] };
+                }
+                if (url === `${STAFFING}/supervisoryOrganizations/org1/orgChart`) {
+                    return {
+                        total: 1,
+                        data: [{ id: 'org1', superior: { id: 'org0', descriptor: 'Top', name: 'Top', code: 'T', managers: [] } }]
+                    };
+                }
+                throw new Error(`unexpected ${url}`);
+            };
+            const plain = createContext({ content: { outputType: 'array' }, respond });
+            await ListSupervisoryOrganizations.receive(plain);
+            assert.strictEqual(plain.requests.length, 1);
+            assert.strictEqual('superior' in plain.sent[0].data.result[1], false);
+
+            const context = createContext({ content: { includeHierarchy: true, outputType: 'array' }, respond });
+            await ListSupervisoryOrganizations.receive(context);
+            const [top, hr] = context.sent[0].data.result;
+            assert.strictEqual('superior' in top, false);
+            assert.deepStrictEqual(hr.superior, {
+                id: 'org0', descriptor: 'Top', name: 'Top', code: 'T', Organization_Reference_ID: undefined
+            });
+        });
+
+        it('the organization lookup is cached and never fails the inspector', async function() {
+            const context = createContext({
+                properties: { isSource: true },
+                content: { outputType: 'array' },
+                respond: () => ({ total: 1, data: [{ id: 'org1', descriptor: 'HR' }] })
+            });
+            await ListSupervisoryOrganizations.receive(context);
+            await ListSupervisoryOrganizations.receive(context);
+            assert.strictEqual(context.requests.length, 1);
+            assert.deepStrictEqual(
+                ListSupervisoryOrganizations.toSelectArray(context.sent[1].data),
+                [{ label: 'HR', value: 'org1' }]
+            );
+
+            const failing = createContext({
+                properties: { isSource: true },
+                content: { outputType: 'array' },
+                respond: () => { throw failure(403); }
+            });
+            await ListSupervisoryOrganizations.receive(failing);
+            assert.deepStrictEqual(failing.sent[0].data, { result: [], count: 0 });
+        });
+
+        it('a flow run does not swallow a permission error', async function() {
+            const context = createContext({ content: { outputType: 'array' }, respond: () => { throw failure(403); } });
+            await assert.rejects(() => ListSupervisoryOrganizations.receive(context), /HTTP 403/);
+        });
+
+        it('ListDirectReports reads every page of common/v1', async function() {
+            const all = Array.from({ length: 130 }, (_, i) => ({ id: `w${i}`, descriptor: `Worker ${i}` }));
+            const context = createContext({ content: { workerId: 'w1', outputType: 'array' }, respond: pages(all) });
+            await ListDirectReports.receive(context);
+            assert.strictEqual(
+                context.requests[0].url,
+                'https://wd2-impl-services1.workday.com/api/common/v1/acme/workers/w1/directReports'
+            );
+            assert.strictEqual(context.sent[0].data.count, 130);
+        });
+
+        it('a throttled request (429) is retried', async function() {
+            const context = createContext({
+                content: { workerId: 'w1' },
+                respond: (options, attempt) => {
+                    if (attempt === 1) {
+                        throw failure(429, { 'retry-after': '0.01' });
+                    }
+                    return worker(1);
+                }
+            });
+            await GetWorker.receive(context);
+            assert.strictEqual(context.requests.length, 2);
+            assert.strictEqual(context.sent[0].data.id, 'w1');
         });
     });
 

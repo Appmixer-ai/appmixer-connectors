@@ -1,7 +1,7 @@
 {
     "name": "appmixer.workday.core.ListSupervisoryOrganizationWorkers",
     "label": "List Supervisory Organization Workers",
-    "description": "Retrieve the workers of a supervisory organization. Returns up to 100 workers (the Workday REST maximum page size).",
+    "description": "Retrieve all workers of a supervisory organization. Reads every page of the result.",
     "author": "Appmixer <info@appmixer.com>",
     "version": "1.0.0",
     "auth": {
@@ -37,8 +37,20 @@
                     "organizationId": {
                         "type": "text",
                         "index": 1,
-                        "label": "Organization ID",
-                        "tooltip": "The Workday ID (WID) of the supervisory organization. Use List Supervisory Organizations to get it."
+                        "label": "Supervisory Organization",
+                        "tooltip": "Select the supervisory organization or enter its Workday ID (WID) or reference ID, e.g. <code>Organization_Reference_ID=SUPERVISORY_Human_Resources</code>.",
+                        "source": {
+                            "url": "/component/appmixer/workday/core/ListSupervisoryOrganizations?outPort=out",
+                            "data": {
+                                "properties": {
+                                    "isSource": true
+                                },
+                                "messages": {
+                                    "in/outputType": "array"
+                                },
+                                "transform": "./ListSupervisoryOrganizations#toSelectArray"
+                            }
+                        }
                     },
                     "outputType": {
                         "type": "select",

@@ -6,19 +6,20 @@ module.exports = {
 
     async receive(context) {
 
-        const { workerId } = context.messages.in.content;
+        const { workerId, includeManager } = context.messages.in.content;
 
         if (!workerId) {
             throw new context.CancelError('Worker ID is required!');
         }
 
         const id = lib.objectId(context, workerId, 'Worker ID');
-        const { data } = await context.httpRequest({
-            method: 'GET',
-            url: `${lib.restBaseUrl(context, lib.COMMON_SERVICE)}/workers/${id}`,
-            headers: lib.authHeaders(context)
-        });
+        const worker = await lib.getOne(context, lib.STAFFING_SERVICE, `/workers/${id}`);
+        if (!includeManager) {
+            return context.sendJson(worker, 'out');
+        }
 
-        return context.sendJson(data, 'out');
+        // No manager (top of the hierarchy) leaves the property out.
+        const manager = await lib.resolveManager(context, worker);
+        return context.sendJson(manager ? { ...worker, manager } : worker, 'out');
     }
 };

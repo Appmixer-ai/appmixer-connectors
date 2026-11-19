@@ -1,7 +1,7 @@
 {
     "name": "appmixer.workday.core.ListSupervisoryOrganizations",
     "label": "List Supervisory Organizations",
-    "description": "Retrieve supervisory organizations of the tenant. Returns up to 100 organizations (the Workday REST maximum page size).",
+    "description": "Retrieve all active supervisory organizations of the tenant with their name, code, reference ID and managers. Optionally adds the superior organization of each one, which gives the organization hierarchy. Reads every page of the result.",
     "author": "Appmixer <info@appmixer.com>",
     "version": "1.0.0",
     "auth": {
@@ -20,6 +20,10 @@
             "schema": {
                 "type": "object",
                 "properties": {
+                    "includeHierarchy": {
+                        "type": "boolean",
+                        "default": false
+                    },
                     "outputType": {
                         "type": "string",
                         "default": "array"
@@ -28,10 +32,17 @@
             },
             "inspector": {
                 "inputs": {
+                    "includeHierarchy": {
+                        "type": "toggle",
+                        "index": 1,
+                        "label": "Include Hierarchy",
+                        "defaultValue": false,
+                        "tooltip": "Turn on to add the superior (parent) organization to each organization. A top level organization has none. Takes one extra request per organization."
+                    },
                     "outputType": {
                         "type": "select",
                         "label": "Output Type",
-                        "index": 1,
+                        "index": 2,
                         "defaultValue": "array",
                         "tooltip": "Choose whether you want to receive the result set as one complete list, or first item only or one item at a time or stream the items to a file.",
                         "options": [
