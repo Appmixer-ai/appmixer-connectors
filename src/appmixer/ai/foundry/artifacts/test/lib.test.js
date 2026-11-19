@@ -50,6 +50,21 @@ describe('ai/foundry lib', () => {
             assert.strictEqual(lib.endpointOrigin(ctx('https://a.example.org', config)), 'https://a.example.org');
             assert.throws(() => lib.endpointOrigin(ctx('https://gw.azure-api.net/')));
         });
+
+        it('allows a single configured gateway host without trusting its siblings', () => {
+            const config = { allowedEndpointHosts: 'my-gateway.azure-api.net' };
+            assert.strictEqual(lib.endpointOrigin(ctx('https://my-gateway.azure-api.net/foundry', config)),
+                'https://my-gateway.azure-api.net');
+            assert.strictEqual(lib.endpointOrigin(ctx('https://eu.my-gateway.azure-api.net', config)),
+                'https://eu.my-gateway.azure-api.net');
+            assert.throws(() => lib.endpointOrigin(ctx('https://other.azure-api.net', config)));
+            assert.throws(() => lib.endpointOrigin(ctx('https://evilmy-gateway.azure-api.net', config)));
+        });
+
+        it('keeps a leading-dot entry and the built-in suffixes subdomain-only', () => {
+            assert.throws(() => lib.endpointOrigin(ctx('https://example.org', { allowedEndpointHosts: '.example.org' })));
+            assert.throws(() => lib.endpointOrigin(ctx('https://openai.azure.com')));
+        });
     });
 
     describe('sdk', () => {

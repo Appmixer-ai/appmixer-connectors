@@ -36,7 +36,9 @@ module.exports = {
         // https://platform.openai.com/docs/api-reference/embeddings/create#embeddings-create-input
         // We devide the maximum input length by 2 to stay on the safe side
         //  because the token to character ratio might not be accurate.
-        const batchSize = Math.min(Math.floor((MAX_INPUT_LENGTH / 2) / chunkSize), MAX_BATCH_SIZE);
+        // At least one chunk per request: a chunk size above half of the maximum input length
+        // would otherwise give a batch size of 0, an empty input and a loop that never advances.
+        const batchSize = Math.max(1, Math.min(Math.floor((MAX_INPUT_LENGTH / 2) / chunkSize), MAX_BATCH_SIZE));
         const embeddings = [];
         // For convenience, the GenerateEmbeddings component returns the first vector.
         // This makes it easy to genereate embedding for a prompt and send it e.g. to the pinecone.QueryVectors component

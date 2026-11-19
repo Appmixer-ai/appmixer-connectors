@@ -64,11 +64,6 @@ module.exports = {
                 value: 'json',
                 label: 'JSON',
                 schema: jsonSchema
-            },
-            {
-                value: 'text',
-                label: 'Text',
-                schema: { type: 'string' }
             }
         ], 'out');
     }

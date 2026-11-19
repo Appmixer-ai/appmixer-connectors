@@ -72,6 +72,27 @@ describe('ai/foundry GenerateEmbeddings component', () => {
         assert.strictEqual(sent[0].port, 'out', 'should send to out port');
     });
 
+    it('still sends one chunk per request when the chunk size exceeds the batch budget', async () => {
+        const sent = [];
+        const context = testUtils.createMockContext({
+            messages: { in: { content: { text: 'hello world', model: 'text-embedding-3-small', chunkSize: 20000 } } },
+            auth: { endpoint: 'https://my-res.openai.azure.com', apiKey: 'test-key' },
+            config: {},
+            sendJson: (data, port) => {
+                sent.push({ data, port });
+                return Promise.resolve();
+            }
+        });
+        // After createMockContext(), which restores every sinon stub.
+        sinon.stub(component, 'splitText').resolves(['hello', 'world']);
+
+        await component.receive(context);
+
+        const payload = sent[0].data;
+        assert.deepStrictEqual(payload.embeddings.map(e => e.text), ['hello', 'world']);
+        assert.deepStrictEqual(payload.embeddings.map(e => e.index), [0, 1]);
+    });
+
     it('throws CancelError when text is missing', async () => {
         const context = testUtils.createMockContext({ messages: { in: { content: { model: 'text-embedding-3-small' } } } });
 

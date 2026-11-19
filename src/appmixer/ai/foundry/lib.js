@@ -4,8 +4,8 @@ const OpenAI = require('openai');
 
 // Hosts a Foundry / Azure OpenAI resource endpoint can live on. The account's API key is sent
 // to the endpoint, so anything else is refused. More suffixes (an Azure API Management gateway
-// in front of Foundry, e.g. '.azure-api.net') can be allowed through the connector configuration
-// 'allowedEndpointHosts' (comma-separated).
+// in front of Foundry, e.g. 'my-gateway.azure-api.net') can be allowed through the connector
+// configuration 'allowedEndpointHosts' (comma-separated).
 const ALLOWED_HOST_SUFFIXES = [
     '.openai.azure.com',
     '.services.ai.azure.com',
@@ -50,11 +50,16 @@ module.exports = {
         const host = parsed.hostname.toLowerCase();
         const extra = (context.config?.allowedEndpointHosts || '')
             .split(',')
-            .map(suffix => suffix.trim().toLowerCase())
-            .filter(Boolean)
-            .map(suffix => (suffix.startsWith('.') ? suffix : `.${suffix}`));
-        const allowed = ALLOWED_HOST_SUFFIXES.concat(extra);
-        if (!allowed.some(suffix => host.endsWith(suffix) && host.length > suffix.length)) {
+            .map(entry => entry.trim().toLowerCase())
+            .filter(Boolean);
+        // A configured entry without a leading dot ('my-gateway.azure-api.net') allows that exact
+        // host and its subdomains, one with a leading dot ('.azure-api.net') subdomains only.
+        const exactHosts = extra.filter(entry => !entry.startsWith('.'));
+        const suffixes = ALLOWED_HOST_SUFFIXES
+            .concat(extra.map(entry => (entry.startsWith('.') ? entry : `.${entry}`)));
+        const isAllowed = exactHosts.includes(host)
+            || suffixes.some(suffix => host.endsWith(suffix) && host.length > suffix.length);
+        if (!isAllowed) {
             throw new Error(`Endpoint host ${host} is not an Azure AI Foundry / Azure OpenAI host `
                 + `(${ALLOWED_HOST_SUFFIXES.slice(0, 3).join(', ')}, ...).`);
         }
