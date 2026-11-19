@@ -1,0 +1,279 @@
+{
+    "name": "appmixer.surveymonkey.core.NewResponse",
+    "label": "New Response",
+    "description": "Triggers when a respondent completes a response to a survey. Emits the response with its answers; on plans without the View Response Details scope (free plans) the answers (pages) are empty.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:surveymonkey"
+    },
+    "quota": {
+        "manager": "appmixer:surveymonkey",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "trigger": true,
+    "webhook": true,
+    "properties": {
+        "schema": {
+            "type": "object",
+            "properties": {
+                "surveyId": {
+                    "type": "string"
+                },
+                "simple": {
+                    "type": "boolean"
+                }
+            },
+            "required": [
+                "surveyId"
+            ]
+        },
+        "inspector": {
+            "inputs": {
+                "surveyId": {
+                    "type": "text",
+                    "index": 1,
+                    "label": "Survey",
+                    "tooltip": "The survey to watch. Pick a survey, or type its Survey ID.",
+                    "source": {
+                        "url": "/component/appmixer/surveymonkey/core/ListSurveys?outPort=out",
+                        "data": {
+                            "properties": {
+                                "isSource": true
+                            },
+                            "transform": "./ListSurveys#toSelectArray"
+                        }
+                    }
+                },
+                "simple": {
+                    "type": "toggle",
+                    "index": 2,
+                    "label": "Include Question and Answer Text",
+                    "defaultValue": false,
+                    "tooltip": "Adds the question and answer text to the IDs (SurveyMonkey's <code>simple</code> option)."
+                }
+            }
+        }
+    },
+    "outPorts": [
+        {
+            "name": "out",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "title": "Response ID",
+                        "example": "114123456789"
+                    },
+                    "survey_id": {
+                        "type": "string",
+                        "title": "Survey ID",
+                        "example": "405123456"
+                    },
+                    "collector_id": {
+                        "type": "string",
+                        "title": "Collector ID",
+                        "example": "431234567"
+                    },
+                    "recipient_id": {
+                        "type": "string",
+                        "title": "Recipient ID",
+                        "example": "0"
+                    },
+                    "response_status": {
+                        "type": "string",
+                        "title": "Response Status",
+                        "example": "completed"
+                    },
+                    "collection_mode": {
+                        "type": "string",
+                        "title": "Collection Mode",
+                        "example": "default"
+                    },
+                    "total_time": {
+                        "type": "integer",
+                        "title": "Total Time (seconds)",
+                        "example": 144
+                    },
+                    "custom_value": {
+                        "type": "string",
+                        "title": "Custom Value",
+                        "example": "order-1001"
+                    },
+                    "ip_address": {
+                        "type": "string",
+                        "title": "IP Address",
+                        "example": "192.0.2.16"
+                    },
+                    "date_created": {
+                        "type": "string",
+                        "title": "Date Created",
+                        "example": "2026-03-05T14:30:00+00:00"
+                    },
+                    "date_modified": {
+                        "type": "string",
+                        "title": "Date Modified",
+                        "example": "2026-03-05T14:32:24+00:00"
+                    },
+                    "edit_url": {
+                        "type": "string",
+                        "title": "Edit URL",
+                        "example": "https://www.surveymonkey.com/r/?sm=abc123"
+                    },
+                    "analyze_url": {
+                        "type": "string",
+                        "title": "Analyze URL",
+                        "example": "https://www.surveymonkey.com/analyze/browse/abc123"
+                    },
+                    "href": {
+                        "type": "string",
+                        "title": "API URL",
+                        "example": "https://api.surveymonkey.com/v3/surveys/405123456/responses/114123456789"
+                    },
+                    "custom_variables": {
+                        "type": "object",
+                        "title": "Custom Variables",
+                        "example": {
+                            "custvar_1": "one"
+                        },
+                        "properties": {}
+                    },
+                    "metadata": {
+                        "type": "object",
+                        "title": "Metadata",
+                        "example": {},
+                        "properties": {}
+                    },
+                    "logic_path": {
+                        "type": "object",
+                        "title": "Logic Path",
+                        "example": {},
+                        "properties": {}
+                    },
+                    "page_path": {
+                        "type": "array",
+                        "title": "Page Path",
+                        "example": [
+                            "987654"
+                        ],
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "pages": {
+                        "type": "array",
+                        "title": "Pages",
+                        "example": [
+                            {
+                                "id": "987654",
+                                "questions": [
+                                    {
+                                        "id": "123456789",
+                                        "answers": [
+                                            {
+                                                "text": "Great service"
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        ],
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "id": {
+                                    "type": "string",
+                                    "title": "Pages.Page ID",
+                                    "example": "987654"
+                                },
+                                "questions": {
+                                    "type": "array",
+                                    "title": "Pages.Questions",
+                                    "example": [
+                                        {
+                                            "id": "123456789",
+                                            "answers": [
+                                                {
+                                                    "text": "Great service"
+                                                }
+                                            ]
+                                        }
+                                    ],
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {
+                                            "id": {
+                                                "type": "string",
+                                                "title": "Pages.Questions.Question ID",
+                                                "example": "123456789"
+                                            },
+                                            "variable_id": {
+                                                "type": "string",
+                                                "title": "Pages.Questions.Variable ID",
+                                                "example": "55512345"
+                                            },
+                                            "answers": {
+                                                "type": "array",
+                                                "title": "Pages.Questions.Answers",
+                                                "example": [
+                                                    {
+                                                        "choice_id": "3057839051"
+                                                    }
+                                                ],
+                                                "items": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "choice_id": {
+                                                            "type": "string",
+                                                            "title": "Pages.Questions.Answers.Choice ID",
+                                                            "example": "3057839051"
+                                                        },
+                                                        "row_id": {
+                                                            "type": "string",
+                                                            "title": "Pages.Questions.Answers.Row ID",
+                                                            "example": "3057839052"
+                                                        },
+                                                        "col_id": {
+                                                            "type": "string",
+                                                            "title": "Pages.Questions.Answers.Column ID",
+                                                            "example": "3057839053"
+                                                        },
+                                                        "other_id": {
+                                                            "type": "string",
+                                                            "title": "Pages.Questions.Answers.Other ID",
+                                                            "example": "3057839054"
+                                                        },
+                                                        "text": {
+                                                            "type": "string",
+                                                            "title": "Pages.Questions.Answers.Text",
+                                                            "example": "Great service"
+                                                        },
+                                                        "download_url": {
+                                                            "type": "string",
+                                                            "title": "Pages.Questions.Answers.Download URL",
+                                                            "example": "https://www.surveymonkey.com/file/abc123"
+                                                        },
+                                                        "content_type": {
+                                                            "type": "string",
+                                                            "title": "Pages.Questions.Answers.Content Type",
+                                                            "example": "image/png"
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZmlsbD0iIzAwQkY2RiIgZD0iTTIxLjE2MjcgMTMuMTg0M2EyLjg1MTcgMi44NTE3IDAgMCAwLS42Nzc4LjA4NDFjLS44NDM4LTMuMzE4MS0zLjU0NzgtNS44Mzc2LTYuOTE3Mi02LjQ0NTJhOC4zOTMzIDguMzkzMyAwIDAgMC0uNDQwNy0uMDY2OGMuMDI1OS0uODI1NS4wNjM2LTEuNzc5MSAxLjI3ODEtMi42MzY5bC0uMTkxOC0uNDgzOHMtMi4zNzA4LjczNDktMi42MzkxIDIuNzU5OGMtLjExNzUtLjU1MDctMS4yMjA5LTEuMjQwMy0xLjc2NzMtMS4zNzA3bC0uMjcxNy40Mzg0cy43MjQyLjM2MjEuOTAwOSAxLjM2MWMtMy4zNjkxLjYwNTYtNi4wNzQzIDMuMTIyOS02LjkyMDQgNi40Mzk4LTEuNTE5NC0uMzc2LTMuMDU2LjU1MDgtMy40MzIgMi4wNzAzLS4zNzYgMS41MTk0LjU1MDggMy4wNTYgMi4wNzAzIDMuNDMyYTIuODM0NiAyLjgzNDYgMCAwIDAgMS43MTk1LS4xMTQyIDguNjgyMSA4LjY4MjEgMCAwIDAgLjkyMDMgMS43MTIzbDIuMzUyNC0xLjU4NTJjLS42MzgxLS44MDcxLTEuMDIwNi0xLjk4ODQtMS4wODczLTMuMTczNi0uMDctMS4yOTMxLjI0NDYtMi41NzU1IDEuMDcwMS0zLjMyOTggMS43MDE2LTEuNDQ4MyAzLjU1NjEtLjc4NzcgNC43MTM1LjYwMDJoLjMxMTRjMS4xNjA2LTEuMzg4IDMuMDE3My0yLjA0NzUgNC43MTM1LS42MDAyLjgyNDQuNzU0MyAxLjE0MDEgMi4wMzc4IDEuMDcwMSAzLjMyOTgtLjA2NTYgMS4xODUzLS40NDgxIDIuMzY2NC0xLjA4NzMgMy4xNzM2bDIuMzUyNCAxLjU4NTJhOC42ODU0IDguNjg1NCAwIDAgMCAuOTIyNC0xLjcxMjNjMS40NTUxLjU3NTEgMy4xMDA5LS4xMzg0IDMuNjc2LTEuNTkzNXMtLjEzODQtMy4xMDA5LTEuNTkzNS0zLjY3NmEyLjgzNDkgMi44MzQ5IDAgMCAwLTEuMDQ0OC0uMTk4M3pNMi43ODYxIDE2Ljg0ODJhLjgzNjIuODM2MiAwIDAgMSAwLTEuNjcyNC44NDQyLjg0NDIgMCAwIDEgLjQ2ODguMTQ0NGMuMDA3MS40MzkxLjAzNjkuODc3Ni4wODk0IDEuMzEzNi0uMTQ3Mi4xMzQ2LS4zNzM4LjIzMjktLjU1ODIuMjE0NHptMTguNDI3MyAwYS44MzYxLjgzNjEgMCAwIDEtLjU1ODItLjIxNTUgMTIuNjc5IDEyLjY3OSAwIDAgMCAuMDg5NC0xLjMxMzYuODM1Mi44MzUyIDAgMCAxIDEuMzA0LjY5MjljLjAwNzguNDU3NC0uMzgyMy44NTgxLS44MzUyLjgzNjJ6Ii8+PC9zdmc+"
+}

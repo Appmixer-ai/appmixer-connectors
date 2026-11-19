@@ -1,0 +1,229 @@
+{
+    "name": "appmixer.surveymonkey.core.CreateSurvey",
+    "label": "Create Survey",
+    "description": "Create an empty survey, or a copy of an existing survey or of a SurveyMonkey template. Add pages and questions with Make API Call (POST /v3/surveys/{id}/pages).",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:surveymonkey"
+    },
+    "quota": {
+        "manager": "appmixer:surveymonkey",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "title": {
+                        "type": "string"
+                    },
+                    "nickname": {
+                        "type": "string"
+                    },
+                    "language": {
+                        "type": "string"
+                    },
+                    "folderId": {
+                        "type": "string"
+                    },
+                    "fromSurveyId": {
+                        "type": "string"
+                    },
+                    "fromTemplateId": {
+                        "type": "string"
+                    }
+                }
+            },
+            "inspector": {
+                "inputs": {
+                    "title": {
+                        "type": "text",
+                        "index": 1,
+                        "label": "Title",
+                        "tooltip": "The survey title. SurveyMonkey uses \"New Survey\" when empty."
+                    },
+                    "nickname": {
+                        "type": "text",
+                        "index": 2,
+                        "label": "Nickname",
+                        "tooltip": "An internal nickname of the survey. Ignored when copying a survey or a template."
+                    },
+                    "language": {
+                        "type": "text",
+                        "index": 3,
+                        "label": "Language",
+                        "tooltip": "ISO 639-1 code of the survey language, for example <code>en</code> or <code>de</code>. Defaults to <code>en</code>. Ignored when copying a survey or a template."
+                    },
+                    "folderId": {
+                        "type": "text",
+                        "index": 4,
+                        "label": "Folder ID",
+                        "tooltip": "Adds the survey to the folder with this ID. Ignored when copying a survey or a template."
+                    },
+                    "fromSurveyId": {
+                        "type": "text",
+                        "index": 5,
+                        "label": "Copy From Survey",
+                        "tooltip": "Create a copy of this survey (pages and questions included). Pick a survey, or type its Survey ID. Leave empty to create an empty survey.",
+                        "source": {
+                            "url": "/component/appmixer/surveymonkey/core/ListSurveys?outPort=out",
+                            "data": {
+                                "properties": {
+                                    "isSource": true
+                                },
+                                "transform": "./ListSurveys#toSelectArray"
+                            }
+                        }
+                    },
+                    "fromTemplateId": {
+                        "type": "text",
+                        "index": 6,
+                        "label": "Copy From Template ID",
+                        "tooltip": "Create the survey from this SurveyMonkey template (see GET /v3/survey_templates). Use either Copy From Survey or Copy From Template ID."
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "title": "Survey ID",
+                        "example": "405123456"
+                    },
+                    "title": {
+                        "type": "string",
+                        "title": "Title",
+                        "example": "Customer Satisfaction 2026"
+                    },
+                    "nickname": {
+                        "type": "string",
+                        "title": "Nickname",
+                        "example": "CSAT Q1"
+                    },
+                    "language": {
+                        "type": "string",
+                        "title": "Language",
+                        "example": "en"
+                    },
+                    "category": {
+                        "type": "string",
+                        "title": "Category",
+                        "example": "customer_feedback"
+                    },
+                    "question_count": {
+                        "type": "integer",
+                        "title": "Question Count",
+                        "example": 10
+                    },
+                    "page_count": {
+                        "type": "integer",
+                        "title": "Page Count",
+                        "example": 2
+                    },
+                    "response_count": {
+                        "type": "integer",
+                        "title": "Response Count",
+                        "example": 12
+                    },
+                    "date_created": {
+                        "type": "string",
+                        "title": "Date Created",
+                        "example": "2026-03-05T14:30:00"
+                    },
+                    "date_modified": {
+                        "type": "string",
+                        "title": "Date Modified",
+                        "example": "2026-03-06T09:12:00"
+                    },
+                    "folder_id": {
+                        "type": "string",
+                        "title": "Folder ID",
+                        "example": "1234"
+                    },
+                    "footer": {
+                        "type": "boolean",
+                        "title": "Footer",
+                        "example": true
+                    },
+                    "custom_variables": {
+                        "type": "object",
+                        "title": "Custom Variables",
+                        "example": {
+                            "name": "label"
+                        },
+                        "properties": {}
+                    },
+                    "buttons_text": {
+                        "type": "object",
+                        "title": "Buttons Text",
+                        "properties": {
+                            "done_button": {
+                                "type": "string",
+                                "title": "Buttons Text.Done Button",
+                                "example": "Done"
+                            },
+                            "prev_button": {
+                                "type": "string",
+                                "title": "Buttons Text.Previous Button",
+                                "example": "Prev"
+                            },
+                            "exit_button": {
+                                "type": "string",
+                                "title": "Buttons Text.Exit Button",
+                                "example": "Exit"
+                            },
+                            "next_button": {
+                                "type": "string",
+                                "title": "Buttons Text.Next Button",
+                                "example": "Next"
+                            }
+                        }
+                    },
+                    "preview": {
+                        "type": "string",
+                        "title": "Preview URL",
+                        "example": "https://www.surveymonkey.com/r/Preview/?sm=abc123"
+                    },
+                    "edit_url": {
+                        "type": "string",
+                        "title": "Edit URL",
+                        "example": "https://www.surveymonkey.com/create/?sm=abc123"
+                    },
+                    "collect_url": {
+                        "type": "string",
+                        "title": "Collect URL",
+                        "example": "https://www.surveymonkey.com/collect/list?sm=abc123"
+                    },
+                    "analyze_url": {
+                        "type": "string",
+                        "title": "Analyze URL",
+                        "example": "https://www.surveymonkey.com/analyze/abc123"
+                    },
+                    "summary_url": {
+                        "type": "string",
+                        "title": "Summary URL",
+                        "example": "https://www.surveymonkey.com/summary/abc123"
+                    },
+                    "href": {
+                        "type": "string",
+                        "title": "API URL",
+                        "example": "https://api.surveymonkey.com/v3/surveys/405123456"
+                    }
+                }
+            }
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZmlsbD0iIzAwQkY2RiIgZD0iTTIxLjE2MjcgMTMuMTg0M2EyLjg1MTcgMi44NTE3IDAgMCAwLS42Nzc4LjA4NDFjLS44NDM4LTMuMzE4MS0zLjU0NzgtNS44Mzc2LTYuOTE3Mi02LjQ0NTJhOC4zOTMzIDguMzkzMyAwIDAgMC0uNDQwNy0uMDY2OGMuMDI1OS0uODI1NS4wNjM2LTEuNzc5MSAxLjI3ODEtMi42MzY5bC0uMTkxOC0uNDgzOHMtMi4zNzA4LjczNDktMi42MzkxIDIuNzU5OGMtLjExNzUtLjU1MDctMS4yMjA5LTEuMjQwMy0xLjc2NzMtMS4zNzA3bC0uMjcxNy40Mzg0cy43MjQyLjM2MjEuOTAwOSAxLjM2MWMtMy4zNjkxLjYwNTYtNi4wNzQzIDMuMTIyOS02LjkyMDQgNi40Mzk4LTEuNTE5NC0uMzc2LTMuMDU2LjU1MDgtMy40MzIgMi4wNzAzLS4zNzYgMS41MTk0LjU1MDggMy4wNTYgMi4wNzAzIDMuNDMyYTIuODM0NiAyLjgzNDYgMCAwIDAgMS43MTk1LS4xMTQyIDguNjgyMSA4LjY4MjEgMCAwIDAgLjkyMDMgMS43MTIzbDIuMzUyNC0xLjU4NTJjLS42MzgxLS44MDcxLTEuMDIwNi0xLjk4ODQtMS4wODczLTMuMTczNi0uMDctMS4yOTMxLjI0NDYtMi41NzU1IDEuMDcwMS0zLjMyOTggMS43MDE2LTEuNDQ4MyAzLjU1NjEtLjc4NzcgNC43MTM1LjYwMDJoLjMxMTRjMS4xNjA2LTEuMzg4IDMuMDE3My0yLjA0NzUgNC43MTM1LS42MDAyLjgyNDQuNzU0MyAxLjE0MDEgMi4wMzc4IDEuMDcwMSAzLjMyOTgtLjA2NTYgMS4xODUzLS40NDgxIDIuMzY2NC0xLjA4NzMgMy4xNzM2bDIuMzUyNCAxLjU4NTJhOC42ODU0IDguNjg1NCAwIDAgMCAuOTIyNC0xLjcxMjNjMS40NTUxLjU3NTEgMy4xMDA5LS4xMzg0IDMuNjc2LTEuNTkzNXMtLjEzODQtMy4xMDA5LTEuNTkzNS0zLjY3NmEyLjgzNDkgMi44MzQ5IDAgMCAwLTEuMDQ0OC0uMTk4M3pNMi43ODYxIDE2Ljg0ODJhLjgzNjIuODM2MiAwIDAgMSAwLTEuNjcyNC44NDQyLjg0NDIgMCAwIDEgLjQ2ODguMTQ0NGMuMDA3MS40MzkxLjAzNjkuODc3Ni4wODk0IDEuMzEzNi0uMTQ3Mi4xMzQ2LS4zNzM4LjIzMjktLjU1ODIuMjE0NHptMTguNDI3MyAwYS44MzYxLjgzNjEgMCAwIDEtLjU1ODItLjIxNTUgMTIuNjc5IDEyLjY3OSAwIDAgMCAuMDg5NC0xLjMxMzYuODM1Mi44MzUyIDAgMCAxIDEuMzA0LjY5MjljLjAwNzguNDU3NC0uMzgyMy44NTgxLS44MzUyLjgzNjJ6Ii8+PC9zdmc+"
+}
