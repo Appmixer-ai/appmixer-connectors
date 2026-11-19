@@ -10,6 +10,7 @@
 const assert = require('assert');
 const path = require('path');
 const glob = require('glob');
+const sinon = require('sinon');
 const { createMockContext } = require('./utils');
 
 const ROOT = path.join(__dirname, '..');
@@ -18,12 +19,21 @@ const components = glob.sync('src/**/MakeApiCall/MakeApiCall.js', { cwd: ROOT })
 // Inputs a few components require on top of url/method; harmless for the rest.
 const EXTRA_INPUTS = { baseUrl: 'https://kv-test.example.com', tenantId: 'kv-test-tenant', companyId: 'kv-test' };
 
-// Account data a few components read before the call (DocuSign base URI, Jira cloud id).
+// Account data a few components read before the call (DocuSign base URI, Jira cloud id, SuperOffice tenant).
 const PROFILE_INFO = {
     accounts: [{ base_uri: 'https://kv-test.example.com', account_id: 'kv-test', is_default: true }],
     apiUrl: 'https://api.atlassian.com/ex/jira/kv-test',
     region: 'us',
-    accountURL: 'https://kv-test.example.com'
+    accountURL: 'https://kv-test.example.com',
+    tenantId: 'Cust12345'
+};
+
+// SuperOffice asks its state endpoint where the tenant's API lives and sends the token only there.
+const SUPEROFFICE_STATE = { IsRunning: true, Api: 'https://online.superoffice.com/Cust12345/api' };
+
+// Service config of the components that validate it instead of taking any placeholder.
+const CONFIG = {
+    'src/appmixer/superoffice/core/MakeApiCall/MakeApiCall.js': { environment: 'online' }
 };
 
 // Any auth or config field reads as a placeholder: a URL for *Url/*Uri/*Domain fields, a token otherwise.
@@ -53,7 +63,7 @@ describe('MakeApiCall: Request Headers and Query Parameters from the Designer', 
             const component = require(path.join(ROOT, file));
             const context = createMockContext();
             context.auth = auth;
-            context.config = auth;
+            context.config = CONFIG[file] || auth;
             context.profileInfo = { ...context.profileInfo, ...PROFILE_INFO };
             context.httpRequest.resolves({
                 status: 200,
@@ -61,6 +71,9 @@ describe('MakeApiCall: Request Headers and Query Parameters from the Designer', 
                 headers: { 'content-type': 'application/json' },
                 data: {}
             });
+            context.httpRequest
+                .withArgs(sinon.match({ url: sinon.match(/\/api\/state\/Cust12345$/) }))
+                .resolves({ status: 200, data: SUPEROFFICE_STATE });
             context.messages = {
                 in: {
                     content: {
