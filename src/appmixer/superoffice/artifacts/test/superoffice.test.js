@@ -13,7 +13,6 @@ class CancelError extends Error {}
 
 const TENANT = 'Cust12345';
 const API = 'https://online2.superoffice.com/Cust12345/api';
-const STATE_URL = 'https://online.superoffice.com/api/state/Cust12345';
 
 const jwt = (claims) => ['e30', Buffer.from(JSON.stringify(claims)).toString('base64url'), 'sig'].join('.');
 
@@ -97,7 +96,10 @@ describe('superoffice', () => {
 
             const context = createContext();
             context.httpRequest.resolves({ data: { IsRunning: false, State: 'Suspended' } });
-            await assert.rejects(lib.getApiBase(context), (err) => err instanceof CancelError && /Suspended/.test(err.message));
+            await assert.rejects(
+                lib.getApiBase(context),
+                (err) => err instanceof CancelError && /Suspended/.test(err.message)
+            );
         });
 
         it('reads the tenant from the access token when it was not stored', () => {
