@@ -1178,6 +1178,992 @@ const parseJsonInput = (context, value, label) => {
     }
 };
 
+// Tickets ---------------------------------------------------------------------------------
+
+// SuperOffice returns 0001-01-01 for a date that is not set (a ticket that is not closed).
+const realDate = (value) => (typeof value === 'string' && !value.startsWith('0001-') ? value : undefined);
+
+ITEM_SCHEMAS.ticket = {
+    type: 'object',
+    required: ['id'],
+    properties: {
+        id: { type: 'integer', title: 'Ticket ID', example: 4021 },
+        title: { type: 'string', title: 'Title', example: 'Cannot log in to the portal' },
+        status: { type: 'string', title: 'Base Status', example: 'Closed' },
+        statusId: { type: 'integer', title: 'Status ID', example: 2 },
+        statusName: { type: 'string', title: 'Status', example: 'Closed' },
+        categoryId: { type: 'integer', title: 'Category ID', example: 3 },
+        categoryName: { type: 'string', title: 'Category', example: 'Support/Login' },
+        priorityName: { type: 'string', title: 'Priority', example: 'Medium' },
+        origin: { type: 'string', title: 'Origin', example: 'Email' },
+        personId: { type: 'integer', title: 'Person ID', example: 342 },
+        personName: { type: 'string', title: 'Person Name', example: 'Jane Doe' },
+        companyId: { type: 'integer', title: 'Company ID', example: 125 },
+        companyName: { type: 'string', title: 'Company Name', example: 'Acme Inc.' },
+        saleId: { type: 'integer', title: 'Sale ID', example: 57 },
+        projectId: { type: 'integer', title: 'Project ID', example: 12 },
+        deadline: { type: 'string', title: 'Deadline', example: '2026-11-21T16:00:00' },
+        closedAt: { type: 'string', title: 'Closed At', example: '2026-11-18T14:05:00' },
+        createdDate: { type: 'string', title: 'Created Date', example: '2026-11-16T10:30:00' },
+        updatedDate: { type: 'string', title: 'Updated Date', example: '2026-11-18T14:05:00' }
+    }
+};
+
+ENTITIES.ticket = {
+    resource: 'Ticket',
+    label: 'Ticket',
+    primaryKey: 'ticketId',
+    select: ['ticketId', 'title', 'ticketStatusName', 'contactId', 'personId', 'createdAt', 'lastChanged'],
+    fromEntity: (e) => compact({
+        id: e.TicketId,
+        title: e.Title,
+        status: e.BaseStatus,
+        statusId: positive(ref(e.Status, 'TicketStatusId')),
+        statusName: ref(e.Status, 'Name'),
+        categoryId: positive(ref(e.Category, 'TicketCategoryId')),
+        categoryName: ref(e.Category, 'Fullname') || ref(e.Category, 'Name'),
+        priorityName: ref(e.Priority, 'Name'),
+        origin: e.Origin,
+        personId: positive(ref(e.Person, 'PersonId')),
+        personName: ref(e.Person, 'FullName'),
+        companyId: positive(ref(e.Person, 'ContactId')),
+        companyName: ref(e.Person, 'ContactName'),
+        saleId: positive(ref(e.Sale, 'SaleId')),
+        projectId: positive(ref(e.Project, 'ProjectId')),
+        deadline: realDate(e.Deadline),
+        closedAt: realDate(e.ClosedAt),
+        createdDate: realDate(e.CreatedAt),
+        updatedDate: realDate(e.LastChanged)
+    }),
+    fromRow: (r) => compact({
+        id: rowNumber(r.ticketId),
+        title: rowString(r.title),
+        statusName: rowString(r.ticketStatusName),
+        companyId: positive(rowNumber(r.contactId)),
+        personId: positive(rowNumber(r.personId)),
+        createdDate: rowString(r.createdAt),
+        updatedDate: rowString(r.lastChanged)
+    }),
+    apply: (context, entity, input) => {
+        const e = { ...entity };
+        if (!isEmpty(input.title)) e.Title = input.title;
+        const statusId = toInteger(context, input.statusId, 'Status');
+        if (statusId !== undefined) e.Status = { TicketStatusId: statusId };
+        const categoryId = toInteger(context, input.categoryId, 'Category');
+        if (categoryId !== undefined) e.Category = { TicketCategoryId: categoryId };
+        const personId = toInteger(context, input.personId, 'Person ID');
+        if (personId !== undefined) e.Person = { PersonId: personId };
+        const deadline = toIsoDate(context, input.deadline, 'Deadline');
+        if (deadline !== undefined) e.Deadline = deadline;
+        return e;
+    }
+};
+
+// Generic records -------------------------------------------------------------------------
+
+// The objects of the generic components (Get / Find / Update Record, Record Updated). The keys
+// are the ENTITIES keys; updatedColumn is the archive column Record Updated polls on, and the
+// company and person columns are the archive restrictions Find Records offers.
+const RECORD_OBJECTS = {
+    company: { label: 'Company', updatedColumn: 'updatedDate', companyColumn: 'contactId' },
+    person: { label: 'Person', updatedColumn: 'personUpdatedDate', companyColumn: 'contactId', personColumn: 'personId' },
+    sale: { label: 'Sale', updatedColumn: 'updatedDate', companyColumn: 'contact/contactId', personColumn: 'person/personId' },
+    project: { label: 'Project', updatedColumn: 'updatedDate' },
+    appointment: {
+        label: 'Follow-up (appointment or task)',
+        updatedColumn: 'updatedDate',
+        companyColumn: 'contact/contactId',
+        personColumn: 'person/personId'
+    },
+    ticket: { label: 'Ticket (request)', updatedColumn: 'lastChanged', companyColumn: 'contactId', personColumn: 'personId' }
+};
+
+const OBJECT_OPTIONS = Object.keys(RECORD_OBJECTS).map(key => ({ label: RECORD_OBJECTS[key].label, value: key }));
+
+// Find Records reads every matching record in full (custom fields included), so it stops at 100.
+const RECORD_PAGE_SIZE = 100;
+// Record Updated reads the 200 most recently updated records of the object on every tick.
+const UPDATED_PAGE_SIZE = 200;
+// Previous values Record Updated keeps for the "changes" conditions.
+const MAX_CONDITION_VALUES = 5000;
+
+const CUSTOM_FIELD_PREFIX = 'cf_';
+
+/**
+ * The output key of a custom field: "SuperOffice:1" becomes cf_SuperOffice_1, "x_score" cf_x_score.
+ * @param {string} fieldName prog-id of a user-defined field or database name of an extra field
+ * @returns {string}
+ */
+const customFieldKey = (fieldName) => CUSTOM_FIELD_PREFIX + String(fieldName).replace(/[^A-Za-z0-9_]/g, '_');
+
+const getRecordObject = (context, object) => {
+
+    if (!RECORD_OBJECTS[object]) {
+        throw cancelError(context, 'Object must be one of: ' + Object.keys(RECORD_OBJECTS).join(', ') + '.');
+    }
+    return RECORD_OBJECTS[object];
+};
+
+const pad = (value, length = 2) => String(value).padStart(length, '0');
+
+/**
+ * Decode a CustomFields value. SuperOffice encodes typed values in strings: [I:123] integer,
+ * checkbox, list item or relation; [F:3.14] decimal; [D:MM/dd/yyyy] date; [DT:MM/dd/yyyy HH:mm:ss]
+ * date and time; [T:...] time. Text is not encoded.
+ * @param {*} value
+ * @returns {*} number, ISO date string or the text
+ */
+const decodeCustomValue = (value) => {
+
+    if (typeof value !== 'string') {
+        return value;
+    }
+    const match = value.match(/^\[(I|F|D|DT|T):([\s\S]*)\]$/);
+    if (!match) {
+        return value;
+    }
+    const [, tag, raw] = match;
+    if (raw.trim() === '') {
+        return null;
+    }
+    if (tag === 'I' || tag === 'F') {
+        const number = Number(raw);
+        return Number.isFinite(number) ? number : raw;
+    }
+    const date = raw.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:\s+(\d{1,2}):(\d{2})(?::(\d{2}))?)?/);
+    if (!date) {
+        return raw;
+    }
+    const day = date[3] + '-' + pad(date[1]) + '-' + pad(date[2]);
+    if (tag === 'D') {
+        return day;
+    }
+    return day + 'T' + pad(date[4] || 0) + ':' + pad(date[5] || 0) + ':' + pad(date[6] || 0);
+};
+
+const TRUE_VALUES = ['true', '1', 'yes', 'on', 'checked'];
+
+/**
+ * Encode a value for the CustomFields dictionary according to the field type from the
+ * CustomField metadata. A value that is already encoded ([I:..], [D:..], ...) is sent as it is.
+ * @param {object} context
+ * @param {*} value
+ * @param {string} fieldType FieldInfoBase.FieldType
+ * @param {string} label for error messages
+ * @returns {string}
+ */
+const encodeCustomValue = (context, value, fieldType, label) => {
+
+    if (typeof value === 'string' && /^\[(I|F|D|DT|T):[\s\S]*\]$/.test(value.trim())) {
+        return value.trim();
+    }
+    const formatDate = (date) => pad(date.getUTCMonth() + 1) + '/' + pad(date.getUTCDate()) + '/' + date.getUTCFullYear();
+    const formatTime = (date) => pad(date.getUTCHours()) + ':' + pad(date.getUTCMinutes()) + ':' + pad(date.getUTCSeconds()) + '.00000';
+    const toDate = () => {
+        const date = new Date(value);
+        if (isNaN(date.getTime())) {
+            throw cancelError(context, label + ' is not a valid date.');
+        }
+        return date;
+    };
+
+    switch (fieldType) {
+        case 'Integer':
+        case 'MdoList':
+        case 'RelationTo':
+        case 'Attachment':
+        case 'TimeSpan':
+            return '[I:' + toInteger(context, value, label) + ']';
+        case 'Checkbox':
+            return '[I:' + (value === true || TRUE_VALUES.includes(String(value).trim().toLowerCase()) ? 1 : 0) + ']';
+        case 'Decimal':
+            return '[F:' + toNumber(context, value, label) + ']';
+        case 'Date':
+            return '[D:' + formatDate(toDate()) + ']';
+        case 'DateTime': {
+            const date = toDate();
+            return '[DT:' + formatDate(date) + ' ' + formatTime(date) + ']';
+        }
+        case 'Time': {
+            const date = toDate();
+            return '[T:' + formatDate(date) + ' ' + formatTime(date) + ']';
+        }
+        default:
+            return typeof value === 'object' ? JSON.stringify(value) : String(value);
+    }
+};
+
+// Keys next to a custom field value that describe it (original value, display text) rather than hold it.
+const CUSTOM_FIELD_DETAIL = /:(org|DisplayText|DisplayTooltip)$/;
+
+/**
+ * The custom field values of an entity (user-defined + extra fields), decoded. Older carriers
+ * have them in UserDefinedFields and ExtraFields instead of CustomFields.
+ * @param {object} entity
+ * @returns {object} field name to value
+ */
+const customFieldsOf = (entity) => {
+
+    const source = entity && entity.CustomFields && typeof entity.CustomFields === 'object'
+        ? entity.CustomFields
+        : { ...(entity && entity.UserDefinedFields), ...(entity && entity.ExtraFields) };
+    const result = {};
+    for (const [name, value] of Object.entries(source || {})) {
+        if (CUSTOM_FIELD_DETAIL.test(name)) {
+            continue;
+        }
+        result[name] = decodeCustomValue(value);
+    }
+    return result;
+};
+
+/**
+ * DisplayName may be a multi-language string such as US:"Score";NO:"Poeng"; use the first label.
+ * @param {string} value
+ * @returns {string}
+ */
+const displayLabel = (value) => {
+
+    if (typeof value !== 'string') {
+        return value;
+    }
+    const match = value.match(/^[A-Za-z]{2}:"([^"]*)"/);
+    return match ? match[1] : value;
+};
+
+/**
+ * Metadata of the published custom fields of an object: GET /{Entity}/CustomField.
+ * @param {object} context
+ * @param {string} object
+ * @returns {Promise<Array<{fieldName: string, key: string, label: string, fieldType: string, readOnly: boolean, mandatory: boolean}>>}
+ */
+const customFieldInfos = async (context, object) => {
+
+    getRecordObject(context, object);
+    const body = await request(context, { path: '/' + ENTITIES[object].resource + '/CustomField' });
+    return (Array.isArray(body) ? body : [])
+        .filter(info => info && info.FieldName)
+        .sort((a, b) => (a.Rank || 0) - (b.Rank || 0))
+        .map(info => ({
+            fieldName: info.FieldName,
+            key: customFieldKey(info.FieldName),
+            label: displayLabel(info.DisplayName) || info.FieldName,
+            fieldType: info.FieldType || 'Unknown',
+            readOnly: Boolean(info.IsReadOnly),
+            mandatory: Boolean(info.IsMandatory)
+        }));
+};
+
+const customFieldInfosCached = (context, object) => {
+
+    return callCached(context, { op: 'customFieldInfos', object }, () => customFieldInfos(context, object));
+};
+
+const ownerOf = (object, entity) => (object === 'ticket' ? entity.OwnedBy : entity.Associate);
+
+/**
+ * Map an entity of any object to the generic record: the fields of the per-object components,
+ * the object name, the owner (our contact, ticket owner) and the custom fields, both as the
+ * customFields dictionary and as one cf_* field each.
+ * @param {string} object
+ * @param {object} entity
+ * @returns {object}
+ */
+const toRecord = (object, entity) => {
+
+    const e = entity || {};
+    const owner = ownerOf(object, e);
+    const record = {
+        object,
+        ...ENTITIES[object].fromEntity(e),
+        ownerId: positive(ref(owner, 'AssociateId')),
+        ownerName: ref(owner, 'FullName') || ref(owner, 'Name')
+    };
+    if (object === 'appointment') {
+        record.ticketId = positive(ref(e.Ticket, 'TicketId'));
+    }
+    const custom = customFieldsOf(e);
+    if (Object.keys(custom).length) {
+        record.customFields = custom;
+        for (const [name, value] of Object.entries(custom)) {
+            const key = customFieldKey(name);
+            if (record[key] === undefined) {
+                record[key] = value;
+            }
+        }
+    }
+    return compact(record);
+};
+
+/**
+ * Read one entity; resolves to null when it does not exist (deleted meanwhile).
+ * @param {object} context
+ * @param {string} object
+ * @param {*} id
+ * @returns {Promise<object|null>}
+ */
+const getEntityOrNull = async (context, object, id) => {
+
+    try {
+        return await request(context, { path: entityPath(context, object, id) });
+    } catch (err) {
+        if (/\(404\)/.test(err && err.message)) {
+            return null;
+        }
+        throw err;
+    }
+};
+
+/**
+ * GET /{Entity}/{id} mapped to the generic record.
+ * @param {object} context
+ * @param {string} object
+ * @param {*} id
+ * @returns {Promise<object>}
+ */
+const getRecord = async (context, object, id) => {
+
+    getRecordObject(context, object);
+    const entity = await request(context, { path: entityPath(context, object, id) });
+    return toRecord(object, entity);
+};
+
+/**
+ * Read records one after another (the quota allows 10 requests a second), dropping records
+ * deleted since the archive listed them.
+ * @param {object} context
+ * @param {string} object
+ * @param {number[]} ids
+ * @returns {Promise<object[]>}
+ */
+const getRecords = async (context, object, ids) => {
+
+    const records = [];
+    for (const id of ids) {
+        const entity = await getEntityOrNull(context, object, id);
+        if (entity) {
+            records.push(toRecord(object, entity));
+        }
+    }
+    return records;
+};
+
+/**
+ * Archive rows of an object (GET /{Entity} with an OData query) reduced to IDs.
+ * @param {object} context
+ * @param {string} object
+ * @param {object} options
+ * @param {string[]} [options.columns] columns to read besides the primary key
+ * @param {string[]} [options.filters]
+ * @param {string} [options.orderBy]
+ * @param {number} options.top
+ * @returns {Promise<{rows: object[], truncated: boolean}>} rows with id and the raw row
+ */
+const archiveRows = async (context, object, { columns = [], filters = [], orderBy, top }) => {
+
+    const config = ENTITIES[object];
+    const params = {
+        $select: [config.primaryKey, ...columns].join(','),
+        $top: top,
+        $jsonSafe: true
+    };
+    const filter = filters.filter(Boolean).map(item => '(' + item + ')').join(' and ');
+    if (filter) {
+        params.$filter = filter;
+    }
+    if (orderBy) {
+        params.$orderBy = orderBy;
+    }
+    const body = await request(context, { path: '/' + config.resource, params });
+    const raw = body && Array.isArray(body.value) ? body.value : [];
+    const seen = new Set();
+    const rows = [];
+    for (const row of raw) {
+        const id = rowNumber(row && row[config.primaryKey]);
+        if (id === undefined || id <= 0 || seen.has(id)) {
+            continue;
+        }
+        seen.add(id);
+        rows.push({ id, row });
+    }
+    return { rows, truncated: raw.length >= top };
+};
+
+/**
+ * Find Records: archive filter, newest first, then every match read in full.
+ * @param {object} context
+ * @param {string} object
+ * @param {object} input
+ * @returns {Promise<object[]>}
+ */
+const findRecords = async (context, object, { companyId, personId, ownerId, filter } = {}) => {
+
+    const config = getRecordObject(context, object);
+    const filters = [];
+    const company = toInteger(context, companyId, 'Company ID');
+    if (company !== undefined) {
+        if (!config.companyColumn) {
+            throw cancelError(context, 'Company ID cannot filter ' + config.label + ' records. Use Additional Filter.');
+        }
+        filters.push(config.companyColumn + ' eq ' + company);
+    }
+    const person = toInteger(context, personId, 'Person ID');
+    if (person !== undefined) {
+        if (!config.personColumn) {
+            throw cancelError(context, 'Person ID cannot filter ' + config.label + ' records. Use Additional Filter.');
+        }
+        filters.push(config.personColumn + ' eq ' + person);
+    }
+    if (filter) {
+        filters.push(filter);
+    }
+    const { rows } = await archiveRows(context, object, {
+        filters,
+        orderBy: ENTITIES[object].primaryKey + ' desc',
+        top: RECORD_PAGE_SIZE
+    });
+    let records = await getRecords(context, object, rows.map(row => row.id));
+    const owner = toInteger(context, ownerId, 'Owner');
+    if (owner !== undefined) {
+        records = records.filter(record => record.ownerId === owner);
+    }
+    return records;
+};
+
+const compareUpdated = (a, b) => {
+
+    const left = Date.parse(a);
+    const right = Date.parse(b);
+    if (!isNaN(left) && !isNaN(right)) {
+        return left - right;
+    }
+    return String(a).localeCompare(String(b));
+};
+
+/**
+ * The most recently updated records of an object: [{ id, updated }], newest first.
+ * @param {object} context
+ * @param {string} object
+ * @param {number} top
+ * @returns {Promise<{rows: Array<{id: number, updated: string}>, truncated: boolean}>}
+ */
+const latestUpdates = async (context, object, top = UPDATED_PAGE_SIZE) => {
+
+    const { updatedColumn } = getRecordObject(context, object);
+    const { rows, truncated } = await archiveRows(context, object, {
+        columns: [updatedColumn],
+        orderBy: updatedColumn + ' desc,' + ENTITIES[object].primaryKey + ' desc',
+        top
+    });
+    const key = updatedColumn.replace(/\//g, '__');
+    return {
+        rows: rows
+            .map(({ id, row }) => ({ id, updated: rowString(row[key]) }))
+            .filter(row => row.updated !== undefined),
+        truncated
+    };
+};
+
+const CONDITION_OPERATORS = ['changedTo', 'equals', 'notEquals', 'changed'];
+
+const conditionText = (value) => {
+
+    if (value === undefined || value === null) {
+        return '';
+    }
+    return (typeof value === 'object' ? JSON.stringify(value) : String(value)).trim().toLowerCase();
+};
+
+/**
+ * Whether an updated record passes the trigger's condition.
+ * @param {object} condition { field, operator, value }
+ * @param {object} record
+ * @param {string|undefined} previous the field value when the trigger last saw the record
+ * @returns {boolean}
+ */
+const matchesCondition = ({ field, operator, value }, record, previous) => {
+
+    if (!field) {
+        return true;
+    }
+    const current = conditionText(record[field]);
+    const expected = conditionText(value);
+    switch (operator) {
+        case 'equals':
+            return current === expected;
+        case 'notEquals':
+            return current !== expected;
+        case 'changed':
+            // Unknown earlier value: the trigger has not seen this record since it started.
+            return previous !== undefined && previous !== current;
+        case 'changedTo':
+        default:
+            return current === expected && previous !== current;
+    }
+};
+
+/**
+ * Shared tick() of Record Updated. Every tick reads the most recently updated records (newest
+ * first) and compares their updated date with the one recorded last time: a record whose date
+ * moved fired once for that date. The first tick only records. Records pulled onto a full page
+ * because newer ones went away are not updates: they are not newer than the oldest date read
+ * (the floor). An empty answer while records are known keeps the state.
+ * @param {object} context
+ */
+const pollUpdatedRecords = async (context) => {
+
+    const { object, conditionField, conditionOperator, conditionValue } = context.properties;
+    getRecordObject(context, object);
+    const condition = {
+        field: conditionField,
+        operator: CONDITION_OPERATORS.includes(conditionOperator) ? conditionOperator : 'changedTo',
+        value: conditionValue
+    };
+
+    const state = (await context.loadState()) || {};
+    const seen = state.seen && typeof state.seen === 'object' ? state.seen : null;
+    const values = state.values && typeof state.values === 'object' ? { ...state.values } : {};
+    const { floor } = state;
+    const { rows, truncated } = await latestUpdates(context, object);
+
+    if (seen && Object.keys(seen).length && !rows.length) {
+        return;
+    }
+
+    if (seen) {
+        const changed = rows
+            .filter(row => seen[row.id] !== row.updated && (!floor || compareUpdated(row.updated, floor) > 0))
+            // Oldest first, so that downstream steps see the changes in order.
+            .reverse();
+        for (const row of changed) {
+            const entity = await getEntityOrNull(context, object, row.id);
+            if (!entity) {
+                continue;
+            }
+            const record = toRecord(object, entity);
+            const previous = values[row.id];
+            if (condition.field) {
+                delete values[row.id];
+                values[row.id] = conditionText(record[condition.field]);
+            }
+            if (matchesCondition(condition, record, previous)) {
+                await context.sendJson(record, 'out');
+            }
+        }
+    }
+
+    const keys = Object.keys(values);
+    for (const key of keys.slice(0, Math.max(0, keys.length - MAX_CONDITION_VALUES))) {
+        delete values[key];
+    }
+    const oldest = rows[rows.length - 1];
+    await context.saveState({
+        seen: rows.reduce((res, row) => {
+            res[row.id] = row.updated;
+            return res;
+        }, {}),
+        floor: oldest && truncated ? oldest.updated : null,
+        values
+    });
+};
+
+// Fields of the generic components ---------------------------------------------------------
+
+const listSource = (listName) => ({
+    url: '/component/appmixer/superoffice/core/ListListItems?outPort=out',
+    data: { properties: { isSource: true, listName }, transform: './ListListItems#toSelectArray' }
+});
+
+const USERS_SOURCE = {
+    url: '/component/appmixer/superoffice/core/ListUsers?outPort=out',
+    data: { properties: { isSource: true }, transform: './ListUsers#toSelectArray' }
+};
+
+const statusSource = (object) => ({
+    url: '/component/appmixer/superoffice/core/ListStatuses?outPort=out',
+    data: { properties: { isSource: true, object }, transform: './ListStatuses#toSelectArray' }
+});
+
+const SALE_STATUSES = ['Open', 'Sold', 'Lost', 'Stalled'];
+const APPOINTMENT_STATES = ['NotStarted', 'Started', 'Completed'];
+
+// Standard fields Update Record offers per object; the keys are those ENTITIES[object].apply reads.
+const STANDARD_FIELDS = {
+    company: [
+        { key: 'name', label: 'Name' },
+        { key: 'department', label: 'Department' },
+        { key: 'orgNr', label: 'Organization Number' },
+        { key: 'categoryId', label: 'Category', source: listSource('Category') },
+        { key: 'businessId', label: 'Business', source: listSource('Business') },
+        { key: 'countryId', label: 'Country', source: listSource('Country') },
+        { key: 'email', label: 'Email' },
+        { key: 'phone', label: 'Phone' },
+        { key: 'website', label: 'Website' },
+        { key: 'description', label: 'Description', type: 'textarea' }
+    ],
+    person: [
+        { key: 'firstName', label: 'First Name' },
+        { key: 'lastName', label: 'Last Name' },
+        { key: 'title', label: 'Title' },
+        { key: 'positionId', label: 'Position', source: listSource('Position') },
+        { key: 'companyId', label: 'Company ID' },
+        { key: 'email', label: 'Email' },
+        { key: 'mobilePhone', label: 'Mobile Phone' },
+        { key: 'officePhone', label: 'Office Phone' }
+    ],
+    sale: [
+        { key: 'heading', label: 'Heading' },
+        { key: 'status', label: 'Status', options: SALE_STATUSES },
+        { key: 'amount', label: 'Amount', type: 'number' },
+        { key: 'saleDate', label: 'Sale Date', type: 'date-time' },
+        { key: 'probability', label: 'Probability', type: 'number' },
+        { key: 'saleTypeId', label: 'Sale Type', source: listSource('SaleType') },
+        { key: 'companyId', label: 'Company ID' },
+        { key: 'personId', label: 'Person ID' },
+        { key: 'projectId', label: 'Project ID' },
+        { key: 'description', label: 'Description', type: 'textarea' }
+    ],
+    project: [
+        { key: 'name', label: 'Name' },
+        { key: 'projectStatusId', label: 'Project Status', source: listSource('ProjectStatus') },
+        { key: 'projectTypeId', label: 'Project Type', source: listSource('ProjectType') },
+        { key: 'startDate', label: 'Start Date', type: 'date-time' },
+        { key: 'endDate', label: 'End Date', type: 'date-time' },
+        { key: 'description', label: 'Description', type: 'textarea' }
+    ],
+    appointment: [
+        { key: 'title', label: 'Title' },
+        { key: 'description', label: 'Description', type: 'textarea' },
+        { key: 'completed', label: 'Completed', options: APPOINTMENT_STATES },
+        { key: 'startDate', label: 'Start Date', type: 'date-time' },
+        { key: 'endDate', label: 'End Date', type: 'date-time' },
+        { key: 'taskId', label: 'Task', source: listSource('Task') },
+        { key: 'location', label: 'Location' },
+        { key: 'companyId', label: 'Company ID' },
+        { key: 'personId', label: 'Person ID' },
+        { key: 'projectId', label: 'Project ID' },
+        { key: 'saleId', label: 'Sale ID' }
+    ],
+    ticket: [
+        { key: 'title', label: 'Title' },
+        { key: 'statusId', label: 'Status', source: statusSource('ticket') },
+        { key: 'categoryId', label: 'Category ID' },
+        { key: 'deadline', label: 'Deadline', type: 'date-time' },
+        { key: 'personId', label: 'Person ID' }
+    ]
+};
+
+const OWNER_FIELD = { key: 'ownerId', label: 'Owner', source: USERS_SOURCE };
+
+const standardFields = (object) => (STANDARD_FIELDS[object] || []).concat(OWNER_FIELD);
+
+const jsonTypeOf = (fieldType) => {
+
+    if (['Integer', 'MdoList', 'RelationTo', 'Attachment', 'TimeSpan', 'Checkbox'].includes(fieldType)) {
+        return 'integer';
+    }
+    return fieldType === 'Decimal' ? 'number' : 'string';
+};
+
+const CUSTOM_EXAMPLES = { integer: 4, number: 4.5, string: 'Promoter' };
+
+/**
+ * Output properties of a record of the object: its fixed fields plus one cf_* property per
+ * custom field. Used for the variable picker of Get Record, Find Records and Record Updated.
+ * @param {string} object
+ * @param {object[]} [infos] customFieldInfos()
+ * @returns {object}
+ */
+const recordProperties = (object, infos = []) => {
+
+    const base = RECORD_ITEM_SCHEMA.properties;
+    const properties = {
+        object: base.object,
+        ...(ITEM_SCHEMAS[object] ? ITEM_SCHEMAS[object].properties : { id: base.id }),
+        ownerId: base.ownerId,
+        ownerName: base.ownerName
+    };
+    if (object === 'appointment') {
+        properties.ticketId = { type: 'integer', title: 'Ticket ID', example: 4021 };
+    }
+    properties.customFields = base.customFields;
+    for (const info of infos) {
+        const type = jsonTypeOf(info.fieldType);
+        properties[info.key] = { type, title: info.label, example: CUSTOM_EXAMPLES[type] };
+    }
+    return properties;
+};
+
+// The record contract common to every object (the variable picker adds the object's own fields).
+const RECORD_ITEM_SCHEMA = {
+    type: 'object',
+    required: ['id', 'object'],
+    properties: {
+        id: { type: 'integer', title: 'Record ID', example: 4021 },
+        object: { type: 'string', title: 'Object', example: 'ticket' },
+        ownerId: { type: 'integer', title: 'Owner ID', example: 5 },
+        ownerName: { type: 'string', title: 'Owner Name', example: 'Anna Berg' },
+        createdDate: { type: 'string', title: 'Created Date', example: '2026-11-16T10:30:00' },
+        updatedDate: { type: 'string', title: 'Updated Date', example: '2026-11-18T14:05:00' },
+        customFields: {
+            type: 'object',
+            title: 'Custom Fields',
+            example: { 'SuperOffice:1': 'Promoter', 'x_nps_score': 9 }
+        }
+    }
+};
+
+/**
+ * recordProperties() with the tenant's custom fields when they can be read; the designer
+ * calls this while the account may still be missing, so failures fall back to fixed fields.
+ * @param {object} context
+ * @param {string} object
+ * @returns {Promise<object>}
+ */
+const recordPropertiesFor = async (context, object) => {
+
+    if (!RECORD_OBJECTS[object]) {
+        return RECORD_ITEM_SCHEMA.properties;
+    }
+    let infos = [];
+    try {
+        infos = await customFieldInfosCached(context, object);
+    } catch (err) {
+        infos = [];
+    }
+    return recordProperties(object, infos);
+};
+
+/**
+ * The output port options of a single record (Get Record, Record Updated).
+ * @param {object} properties recordProperties()
+ * @returns {object[]}
+ */
+const toOutputOptions = (properties) => {
+
+    return Object.keys(properties).map(key => {
+        const { title, ...schema } = properties[key];
+        return { label: title, value: key, schema };
+    });
+};
+
+const inspectorInput = (field, index) => {
+
+    const input = { type: field.type || 'text', index, label: field.label };
+    if (field.options) {
+        input.type = 'select';
+        input.options = field.options.map(value => ({ label: value.replace(/([a-z])([A-Z])/g, '$1 $2'), value }));
+    }
+    if (field.source) {
+        input.source = field.source;
+        input.tooltip = 'Pick a value, or type its ID.';
+    }
+    return input;
+};
+
+/**
+ * The inspector of Update Record for an object: object, record ID, the standard fields, the
+ * writable custom fields of the tenant and a JSON input for custom fields by name.
+ * @param {object} context
+ * @param {string} object
+ * @returns {Promise<object>}
+ */
+const updateRecordInspector = async (context, object) => {
+
+    const schema = {
+        type: 'object',
+        properties: {
+            object: { type: 'string', enum: Object.keys(RECORD_OBJECTS) },
+            recordId: { type: 'string' }
+        },
+        required: ['object', 'recordId']
+    };
+    const inputs = {
+        object: {
+            type: 'select',
+            index: 1,
+            label: 'Object',
+            tooltip: 'The kind of record to update.',
+            options: OBJECT_OPTIONS
+        },
+        recordId: {
+            type: 'text',
+            index: 2,
+            label: 'Record ID',
+            tooltip: 'The ID of the record, for example from Record Updated or Find Records.'
+        }
+    };
+    let index = 3;
+    if (RECORD_OBJECTS[object]) {
+        for (const field of standardFields(object)) {
+            schema.properties[field.key] = { type: field.type === 'number' ? 'number' : 'string' };
+            inputs[field.key] = inspectorInput(field, index++);
+        }
+        let infos = [];
+        try {
+            infos = await customFieldInfosCached(context, object);
+        } catch (err) {
+            infos = [];
+        }
+        for (const info of infos.filter(item => !item.readOnly)) {
+            const type = jsonTypeOf(info.fieldType);
+            schema.properties[info.key] = { type: type === 'string' ? 'string' : 'number' };
+            const input = { type: 'text', index: index++, label: info.label, tooltip: 'Custom field ' + info.fieldName + ' (' + info.fieldType + ').' };
+            if (info.fieldType === 'Date' || info.fieldType === 'DateTime') {
+                input.type = 'date-time';
+            } else if (info.fieldType === 'Checkbox') {
+                input.type = 'toggle';
+                schema.properties[info.key] = { type: 'boolean' };
+            } else if (info.fieldType === 'LongText') {
+                input.type = 'textarea';
+            } else if (type !== 'string') {
+                input.type = 'number';
+            }
+            inputs[info.key] = input;
+        }
+    }
+    schema.properties.customFieldsJson = { type: 'string' };
+    inputs.customFieldsJson = {
+        type: 'textarea',
+        index,
+        label: 'Custom Fields (JSON)',
+        tooltip: 'Optional custom field values by field name, for example <code>{"SuperOffice:1": "Promoter", "x_nps_score": 9}</code>. Use it when the object comes from a variable and the fields above cannot be listed.'
+    };
+    return { schema, inputs };
+};
+
+/**
+ * Update Record: standard fields are applied to the stored entity and saved with PUT; custom
+ * fields are written with PATCH on CustomFields (JSON Patch, as documented for user-defined fields).
+ * @param {object} context
+ * @param {string} object
+ * @param {*} id
+ * @param {object} input component inputs
+ * @returns {Promise<void>}
+ */
+const updateRecord = async (context, object, id, input) => {
+
+    getRecordObject(context, object);
+    const standard = {};
+    for (const field of standardFields(object)) {
+        if (!isEmpty(input[field.key])) {
+            standard[field.key] = input[field.key];
+        }
+    }
+    const customByKey = {};
+    for (const [key, value] of Object.entries(input)) {
+        if (key.startsWith(CUSTOM_FIELD_PREFIX) && !isEmpty(value)) {
+            customByKey[key] = value;
+        }
+    }
+    const customByName = parseJsonInput(context, input.customFieldsJson, 'Custom Fields (JSON)') || {};
+    if (typeof customByName !== 'object' || Array.isArray(customByName)) {
+        throw cancelError(context, 'Custom Fields (JSON) must be a JSON object.');
+    }
+
+    if (!Object.keys(standard).length && !Object.keys(customByKey).length && !Object.keys(customByName).length) {
+        throw cancelError(context, 'Set at least one field to update.');
+    }
+
+    const path = entityPath(context, object, id);
+
+    if (Object.keys(standard).length) {
+        const current = await request(context, { path });
+        const entity = ENTITIES[object].apply(context, current, standard);
+        const ownerId = toInteger(context, standard.ownerId, 'Owner');
+        if (ownerId !== undefined) {
+            entity[object === 'ticket' ? 'OwnedBy' : 'Associate'] = { AssociateId: ownerId };
+        }
+        await request(context, { method: 'PUT', path, data: entity });
+    }
+
+    if (Object.keys(customByKey).length || Object.keys(customByName).length) {
+        const infos = await customFieldInfos(context, object);
+        const byKey = new Map(infos.map(info => [info.key, info]));
+        const byName = new Map(infos.map(info => [info.fieldName, info]));
+        const values = {};
+        for (const [key, value] of Object.entries(customByKey)) {
+            const info = byKey.get(key);
+            if (!info) {
+                throw cancelError(context, 'Unknown custom field ' + key + ' on ' + RECORD_OBJECTS[object].label + '.');
+            }
+            values[info.fieldName] = encodeCustomValue(context, value, info.fieldType, info.label);
+        }
+        for (const [name, value] of Object.entries(customByName)) {
+            const info = byName.get(name);
+            values[name] = info
+                ? encodeCustomValue(context, value, info.fieldType, info.label)
+                : encodeCustomValue(context, value, 'Unknown', name);
+        }
+        await request(context, {
+            method: 'PATCH',
+            path,
+            data: [{ op: 'replace', path: 'CustomFields', value: values }]
+        });
+    }
+};
+
+/**
+ * Create a follow-up (appointment) as a task or as a completed activity, assigned to a user and
+ * linked to a company, person, project, sale and/or ticket (appointment.ticket_id).
+ * @param {object} context
+ * @param {object} input
+ * @param {object} [defaults] values forced by the component (type, completed)
+ * @returns {Promise<object>} the created record
+ */
+const createActivity = async (context, input, defaults = {}) => {
+
+    const template = await request(context, { path: '/Appointment/default' });
+    const entity = ENTITIES.appointment.apply(context, template || {}, { ...input, ...defaults });
+    const assigneeId = toInteger(context, input.assigneeId, 'Assigned To');
+    if (assigneeId !== undefined) {
+        entity.Associate = { AssociateId: assigneeId };
+    }
+    const ticketId = toInteger(context, input.ticketId, 'Ticket ID');
+    if (ticketId !== undefined) {
+        entity.Ticket = { TicketId: ticketId };
+    }
+    const created = await request(context, { method: 'POST', path: '/Appointment', data: entity });
+    return toRecord('appointment', created);
+};
+
+/**
+ * Items of an MDO list (GET /MDOList/{name}?flat=true), headings and deleted items left out.
+ * @param {object} context
+ * @param {string} name e.g. associate, ticketstatus
+ * @returns {Promise<object[]>}
+ */
+const mdoListItems = async (context, name) => {
+
+    const body = await request(context, { path: '/MDOList/' + encodeURIComponent(name), params: { flat: true } });
+    return flattenListItems(Array.isArray(body) ? body : []);
+};
+
+/**
+ * Status values of an object, for conditions and updates: ticket statuses, project statuses,
+ * the sale status and the completed state of a follow-up. Companies and persons have none.
+ * @param {object} context
+ * @param {string} object
+ * @returns {Promise<Array<{id: string, name: string}>>}
+ */
+const statusValues = async (context, object) => {
+
+    getRecordObject(context, object);
+    if (object === 'ticket') {
+        return (await mdoListItems(context, 'ticketstatus')).map(item => ({ id: String(item.id), name: item.name }));
+    }
+    if (object === 'project') {
+        return (await listItems(context, 'ProjectStatus')).map(item => ({ id: String(item.id), name: item.name }));
+    }
+    if (object === 'sale') {
+        return SALE_STATUSES.map(value => ({ id: value, name: value }));
+    }
+    if (object === 'appointment') {
+        return APPOINTMENT_STATES.map(value => ({ id: value, name: value.replace(/([a-z])([A-Z])/g, '$1 $2') }));
+    }
+    return [];
+};
+
 // outputType helpers --------------------------------------------------------------------
 
 // One CSV cell per RFC 4180: null/undefined → empty, objects → JSON, and a value
@@ -1235,6 +2221,34 @@ module.exports = {
     kvToObject,
     parseJsonInput,
     toCsv,
+
+    RECORD_OBJECTS,
+    OBJECT_OPTIONS,
+    RECORD_PAGE_SIZE,
+    UPDATED_PAGE_SIZE,
+    RECORD_ITEM_SCHEMA,
+    CONDITION_OPERATORS,
+    customFieldKey,
+    decodeCustomValue,
+    encodeCustomValue,
+    customFieldsOf,
+    customFieldInfos,
+    customFieldInfosCached,
+    toRecord,
+    getRecord,
+    findRecords,
+    latestUpdates,
+    matchesCondition,
+    pollUpdatedRecords,
+    standardFields,
+    recordProperties,
+    recordPropertiesFor,
+    toOutputOptions,
+    updateRecordInspector,
+    updateRecord,
+    createActivity,
+    mdoListItems,
+    statusValues,
 
     async sendArrayOutput({
         context,
