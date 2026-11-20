@@ -1,0 +1,102 @@
+{
+    "name": "appmixer.google.cloudstorage.ListBuckets",
+    "label": "List Buckets",
+    "description": "List the buckets of a Google Cloud project, sorted by name. Returns at most 1000 buckets.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:google",
+        "scope": [
+            "https://www.googleapis.com/auth/devstorage.read_write"
+        ]
+    },
+    "quota": {
+        "manager": "appmixer:google:cloudstorage",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "projectId": {
+                        "type": "string"
+                    },
+                    "outputType": {
+                        "type": "string",
+                        "default": "array"
+                    }
+                },
+                "required": [
+                    "projectId"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "projectId": {
+                        "type": "text",
+                        "index": 1,
+                        "label": "Project ID",
+                        "tooltip": "ID of the Google Cloud project, for example <code>my-project-123456</code>. Find it in the Google Cloud console project selector."
+                    },
+                    "outputType": {
+                        "type": "select",
+                        "label": "Output Type",
+                        "index": 2,
+                        "defaultValue": "array",
+                        "tooltip": "Choose whether you want to receive the result set as one complete list, or first item only or one item at a time or stream the items to a file.",
+                        "options": [
+                            {
+                                "label": "First Item Only",
+                                "value": "first"
+                            },
+                            {
+                                "label": "All items at once",
+                                "value": "array"
+                            },
+                            {
+                                "label": "One item at a time",
+                                "value": "object"
+                            },
+                            {
+                                "label": "Store to CSV file",
+                                "value": "file"
+                            }
+                        ]
+                    }
+                }
+            }
+        }
+    ],
+    "properties": {
+        "schema": {
+            "properties": {
+                "generateOutputPortOptions": {
+                    "type": "boolean"
+                }
+            }
+        }
+    },
+    "outPorts": [
+        {
+            "name": "out",
+            "source": {
+                "url": "/component/appmixer/google/cloudstorage/ListBuckets?outPort=out&ignoreAuth=true",
+                "data": {
+                    "properties": {
+                        "generateOutputPortOptions": true
+                    },
+                    "messages": {
+                        "in/projectId": "project",
+                        "in/outputType": "inputs/in/outputType"
+                    }
+                }
+            }
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0Ij48cmVjdCBmaWxsPSIjYWVjYmZhIiB4PSIyIiB5PSI0IiB3aWR0aD0iMjAiIGhlaWdodD0iNyIvPjxyZWN0IGZpbGw9IiM2NjlkZjYiIHg9IjIwIiB5PSI0IiB3aWR0aD0iMiIgaGVpZ2h0PSI3Ii8+PHBvbHlnb24gZmlsbD0iIzQyODVmNCIgcG9pbnRzPSIyMiA0IDIwIDQgMjAgMTEgMjIgNCIvPjxyZWN0IGZpbGw9IiM2NjlkZjYiIHg9IjIiIHk9IjQiIHdpZHRoPSIyIiBoZWlnaHQ9IjciLz48cmVjdCBmaWxsPSIjZmZmIiB4PSI2IiB5PSI3IiB3aWR0aD0iNiIgaGVpZ2h0PSIxIi8+PHJlY3QgZmlsbD0iI2ZmZiIgeD0iMTUiIHk9IjYiIHdpZHRoPSIzIiBoZWlnaHQ9IjMiIHJ4PSIxLjUiLz48cmVjdCBmaWxsPSIjYWVjYmZhIiB4PSIyIiB5PSIxMyIgd2lkdGg9IjIwIiBoZWlnaHQ9IjciLz48cmVjdCBmaWxsPSIjNjY5ZGY2IiB4PSIyMCIgeT0iMTMiIHdpZHRoPSIyIiBoZWlnaHQ9IjciLz48cG9seWdvbiBmaWxsPSIjNDI4NWY0IiBwb2ludHM9IjIyIDEzIDIwIDEzIDIwIDIwIDIyIDEzIi8+PHJlY3QgZmlsbD0iIzY2OWRmNiIgeD0iMiIgeT0iMTMiIHdpZHRoPSIyIiBoZWlnaHQ9IjciLz48cmVjdCBmaWxsPSIjZmZmIiB4PSI2IiB5PSIxNiIgd2lkdGg9IjYiIGhlaWdodD0iMSIvPjxyZWN0IGZpbGw9IiNmZmYiIHg9IjE1IiB5PSIxNSIgd2lkdGg9IjMiIGhlaWdodD0iMyIgcng9IjEuNSIvPjwvc3ZnPg=="
+}
