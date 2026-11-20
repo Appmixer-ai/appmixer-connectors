@@ -1,0 +1,141 @@
+{
+    "name": "appmixer.quickbooks.accounting.UpdateBill",
+    "label": "Update Bill",
+    "author": "Appmixer <info@appmixer.com>",
+    "description": "Update an existing bill. Only the fields you fill in are changed; the current Sync Token and vendor are read automatically.",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:quickbooks",
+        "scope": [
+            "com.intuit.quickbooks.accounting",
+            "openid",
+            "profile",
+            "email",
+            "phone",
+            "address"
+        ]
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "billId": {
+                        "type": "string"
+                    },
+                    "vendorId": {
+                        "type": "string"
+                    },
+                    "dueDate": {
+                        "type": "string"
+                    },
+                    "txnDate": {
+                        "type": "string"
+                    },
+                    "docNumber": {
+                        "type": "string",
+                        "maxLength": 21
+                    },
+                    "privateNote": {
+                        "type": "string",
+                        "maxLength": 4000
+                    },
+                    "apAccountId": {
+                        "type": "string"
+                    },
+                    "salesTermId": {
+                        "type": "string"
+                    },
+                    "departmentId": {
+                        "type": "string"
+                    },
+                    "lineItemsJSON": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "billId"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "billId": {
+                        "type": "text",
+                        "index": 1,
+                        "label": "Bill ID",
+                        "tooltip": "ID of the bill to update, e.g. the <b>Id</b> output of Create Bill or New Bill."
+                    },
+                    "vendorId": {
+                        "type": "text",
+                        "index": 2,
+                        "label": "Vendor ID",
+                        "tooltip": "ID of a vendor to move the bill to. Leave empty to keep the current vendor."
+                    },
+                    "dueDate": {
+                        "type": "date-time",
+                        "config": {
+                            "format": "YYYY-MM-DD",
+                            "enableTime": false
+                        },
+                        "index": 3,
+                        "label": "Due Date",
+                        "tooltip": "Date when the payment of the bill is due."
+                    },
+                    "txnDate": {
+                        "type": "date-time",
+                        "config": {
+                            "format": "YYYY-MM-DD",
+                            "enableTime": false
+                        },
+                        "index": 4,
+                        "label": "Bill Date",
+                        "tooltip": "Date of the bill (TxnDate)."
+                    },
+                    "docNumber": {
+                        "type": "text",
+                        "index": 5,
+                        "label": "Doc Number",
+                        "tooltip": "Reference number of the bill. Maximum 21 characters."
+                    },
+                    "privateNote": {
+                        "type": "textarea",
+                        "index": 6,
+                        "label": "Private Note",
+                        "tooltip": "Internal note about the bill. Maximum 4000 characters."
+                    },
+                    "apAccountId": {
+                        "type": "text",
+                        "index": 7,
+                        "label": "AP Account ID",
+                        "tooltip": "ID of the accounts payable account the bill is credited to."
+                    },
+                    "salesTermId": {
+                        "type": "text",
+                        "index": 8,
+                        "label": "Sales Term ID",
+                        "tooltip": "ID of the payment term of the bill."
+                    },
+                    "departmentId": {
+                        "type": "text",
+                        "index": 9,
+                        "label": "Department ID",
+                        "tooltip": "ID of the department (location) of the bill."
+                    },
+                    "lineItemsJSON": {
+                        "type": "textarea",
+                        "index": 10,
+                        "label": "Line Items JSON",
+                        "tooltip": "Replaces <b>all</b> lines of the bill with this JSON array. Leave empty to keep the current lines. Example: [{ \"DetailType\": \"AccountBasedExpenseLineDetail\", \"Amount\": 100, \"Description\": \"Office supplies\", \"AccountBasedExpenseLineDetail\": { \"AccountRef\": { \"value\": \"7\" } } }]. See the <a target='_blank' rel='noopener noreferrer' href='https://developer.intuit.com/app/developer/qbo/docs/api/accounting/all-entities/bill#sparse-update-a-bill'>QuickBooks documentation</a>."
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out"
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNTAwIDI1MDAiPjxjaXJjbGUgY3g9IjEyNTAiIGN5PSIxMjUwIiByPSIxMjUwIiBmaWxsPSIjMmNhMDFjIi8+PHBhdGggZmlsbD0iI2ZmZiIgZD0iTTMwMS4zIDEyNDkuNmMuMSAyODIuNiAyMjggNTEyLjQgNTEwLjYgNTE0LjloNzIuM3YtMTg4LjloLTcyLjNjLTE3NS4yIDQ3LjgtMzU1LjktNTUuNS00MDMuNi0yMzAuNy0uNC0xLjQtLjctMi44LTEuMS00LjItNDkuMS0xNzcuNSA1My43LTM2MS40IDIzMC42LTQxMi41aDM2LjFhMzIyIDMyMiAwIDAgMSAxMzcuNSAwSDk4N3YxMDAyLjljLS45IDEwNi4xIDg0LjQgMTkyLjkgMTkwLjUgMTkzLjlWNzI5LjZIODEzYy0yODQuNiAxLjUtNTE0IDIzMy40LTUxMi41IDUxOHYuMXptMTM4Ny41LTUxOS44aC03Mi4zdjE5OC45aDcyLjNjMTc0LjgtNDcuNyAzNTUuMSA1NS4zIDQwMi44IDIzMCAuNCAxLjMuNyAyLjcgMS4xIDQgNDguOCAxNzYuOS01My43IDM2MC4xLTIyOS45IDQxMS4xaC0zNi4xYTMyMiAzMjIgMCAwIDEtMTM3LjUgMGgtMTc1LjZWNTcxYy45LTEwNi4xLTg0LjQtMTkyLjktMTkwLjUtMTkzLjl2MTM5Ny40aDM2NC41YzI4Ny4xLTQuNSA1MTYuMi0yNDAuOCA1MTEuOC01MjcuOS00LjQtMjgwLjgtMjMwLjktNTA3LjQtNTExLjgtNTExLjh6Ii8+PC9zdmc+"
+}

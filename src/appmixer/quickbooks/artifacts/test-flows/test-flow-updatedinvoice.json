@@ -109,7 +109,7 @@
             }
         },
         "dc806eba-cb11-4819-8a3d-a95d9f0b86c2": {
-            "type": "appmixer.quickbooks.core.MakeApiCall",
+            "type": "appmixer.quickbooks.accounting.UpdateInvoice",
             "x": 832,
             "y": 320,
             "version": "1.0.0",
@@ -131,29 +131,24 @@
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
-                                    "url": {},
-                                    "method": {},
-                                    "body": {
+                                    "invoiceId": {
                                         "v-upd-id": {
                                             "variable": "$.d6131058-b0e8-447e-8038-f8da7c13483b.out.Id",
                                             "functions": []
-                                        },
-                                        "v-upd-token": {
-                                            "variable": "$.d6131058-b0e8-447e-8038-f8da7c13483b.out.SyncToken",
-                                            "functions": []
                                         }
-                                    }
+                                    },
+                                    "privateNote": {}
                                 },
                                 "lambda": {
-                                    "url": "/invoice",
-                                    "method": "POST",
-                                    "body": "{\"Id\":\"{{{v-upd-id}}}\",\"SyncToken\":\"{{{v-upd-token}}}\",\"sparse\":true,\"PrivateNote\":\"E2E updated note\"}"
+                                    "invoiceId": "{{{v-upd-id}}}",
+                                    "privateNote": "E2E updated note"
                                 }
                             }
                         }
                     }
                 }
-            }
+            },
+            "label": "Update invoice"
         },
         "594b3d00-bed6-4ae5-844b-57f6490a5be6": {
             "type": "appmixer.utils.test.Assert",
@@ -180,17 +175,8 @@
                                 "modifiers": {
                                     "expression": {
                                         "v-34b20375": {
-                                            "variable": "$.dc806eba-cb11-4819-8a3d-a95d9f0b86c2.out",
-                                            "functions": [
-                                                {
-                                                    "name": "g_jsonPath",
-                                                    "params": [
-                                                        {
-                                                            "value": "$.body.Invoice.Id"
-                                                        }
-                                                    ]
-                                                }
-                                            ]
+                                            "variable": "$.d6131058-b0e8-447e-8038-f8da7c13483b.out.Id",
+                                            "functions": []
                                         }
                                     }
                                 },
@@ -257,6 +243,19 @@
                                                     ]
                                                 }
                                             ]
+                                        },
+                                        "v-note-e2e": {
+                                            "variable": "$.93c767bb-4918-49f0-bd46-ee9752380ab8.out",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$.PrivateNote"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
                                         }
                                     }
                                 },
@@ -266,6 +265,11 @@
                                             {
                                                 "field": "{{{v-953c537b}}}",
                                                 "assertion": "notEmpty"
+                                            },
+                                            {
+                                                "field": "{{{v-note-e2e}}}",
+                                                "assertion": "equal",
+                                                "expected": "E2E updated note"
                                             }
                                         ]
                                     }
