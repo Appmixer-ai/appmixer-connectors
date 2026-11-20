@@ -1,6 +1,12 @@
 'use strict';
 const Hubspot = require('../../Hubspot');
+const { parseIdList, buildAssociations } = require('../../commons');
 const ITEM_SCHEMA = require('../../item-schemas.json').deal;
+
+// Default (HUBSPOT_DEFINED) association type IDs from a deal to other objects.
+// https://developers.hubspot.com/docs/api-reference/crm-associations-v4/guide#deal-to-object
+const DEAL_TO_CONTACT = 3;
+const DEAL_TO_COMPANY = 341;
 
 module.exports = {
 
@@ -14,7 +20,9 @@ module.exports = {
             pipeline,
             hubSpotOwnerId,
             closedate,
-            amount
+            amount,
+            contactIds,
+            companyIds
         } = context.messages.in.content;
 
         if (!dealname) {
@@ -44,6 +52,14 @@ module.exports = {
 
         if (closedate) {
             payload.properties.closedate = (new Date(closedate)).toISOString();
+        }
+
+        const associations = buildAssociations([
+            { ids: parseIdList(contactIds), associationTypeId: DEAL_TO_CONTACT },
+            { ids: parseIdList(companyIds), associationTypeId: DEAL_TO_COMPANY }
+        ]);
+        if (associations.length) {
+            payload.associations = associations;
         }
 
         const { data } = await hs.call('post', 'crm/v3/objects/deals', payload);
