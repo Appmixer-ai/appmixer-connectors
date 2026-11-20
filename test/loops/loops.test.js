@@ -88,6 +88,12 @@ describe('appmixer.loops', function() {
             assert.deepStrictEqual(context.sendJson.lastCall.args, [{}, 'out']);
         });
 
+        it('requires email', async () => {
+            const context = contextFor({ userId: 'u1', firstName: 'Alex' });
+            await assert.rejects(component('UpdateContact').receive(context), /Email is required/);
+            assert.strictEqual(context.httpRequest.callCount, 0);
+        });
+
         it('unsubscribes the contact', async () => {
             const context = contextFor({ email: 'alex@example.com', subscribed: 'unsubscribe' });
             await component('UpdateContact').receive(context);
@@ -183,7 +189,8 @@ describe('appmixer.loops', function() {
 
     describe('ListTransactionalEmails', () => {
 
-        it('follows the pagination cursor', async () => {
+        it('follows the pagination cursor', async function() {
+            this.timeout(5000);
             const context = contextFor({ outputType: 'array' });
             context.httpRequest.onFirstCall().resolves({ data: { data: [{ id: 't1' }], pagination: { nextCursor: 'c2' } } });
             context.httpRequest.onSecondCall().resolves({ data: { data: [{ id: 't2' }], pagination: { nextCursor: null } } });
@@ -199,6 +206,17 @@ describe('appmixer.loops', function() {
             context.httpRequest.rejects(new Error('boom'));
             await component('ListTransactionalEmails').receive(context);
             assert.deepStrictEqual(context.sendJson.lastCall.args, [{ result: [] }, 'out']);
+        });
+
+        it('flags unpublished drafts in the dropdown', () => {
+            const options = component('ListTransactionalEmails').toSelectArray({ result: [
+                { id: 't1', name: 'Welcome', publishedEmailMessageId: 'm1' },
+                { id: 't2', name: 'Reset', publishedEmailMessageId: null }
+            ] });
+            assert.deepStrictEqual(options, [
+                { label: 'Welcome', value: 't1' },
+                { label: 'Reset (draft, not published)', value: 't2' }
+            ]);
         });
     });
 
@@ -232,6 +250,18 @@ describe('appmixer.loops', function() {
             const req = lastRequest(context);
             assert.strictEqual(req.url, `${API}/v1/lists`);
             assert.deepStrictEqual(req.params, { list: 'custom' });
+        });
+
+        it('sends only the account key, whatever the case of a user Authorization header', async () => {
+            const context = contextFor({ url: '/v1/lists', method: 'GET', headers: '{"authorization":"Bearer other","X-Custom":"1"}' });
+            await component('MakeApiCall').receive(context);
+            assert.deepStrictEqual(lastRequest(context).headers, { 'X-Custom': '1', Authorization: 'Bearer test-api-key' });
+        });
+
+        it('cancels on headers that are not JSON', async () => {
+            const context = contextFor({ url: '/v1/lists', method: 'GET', headers: 'foo=bar' });
+            await assert.rejects(component('MakeApiCall').receive(context), err => err instanceof context.CancelError);
+            assert.strictEqual(context.httpRequest.callCount, 0);
         });
 
         ['https://evil.example/v1/lists', '//evil.example/x', 'https://user:pw@app.loops.so/api/v1/lists']

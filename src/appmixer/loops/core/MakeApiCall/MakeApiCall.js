@@ -23,12 +23,15 @@ module.exports = {
             method,
             url: targetUrl,
             headers: {
-                ...lib.kvToObject(headers),
+                // Drop any user-supplied Authorization header (in any letter case) so
+                // only the connected account's key is sent.
+                ...Object.fromEntries(Object.entries(lib.kvToObject(context, headers))
+                    .filter(([key]) => key.toLowerCase() !== 'authorization')),
                 ...lib.authHeaders(context)
             }
         };
 
-        const params = lib.kvToObject(parameters);
+        const params = lib.kvToObject(context, parameters);
         if (Object.keys(params).length > 0) {
             requestOptions.params = params;
         }

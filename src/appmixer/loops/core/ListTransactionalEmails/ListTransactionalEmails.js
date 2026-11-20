@@ -2,10 +2,14 @@
 
 const lib = require('../../lib');
 
-// Maximum page size of the endpoint, and a cap on the number of pages so that a
-// single call cannot exhaust the content API rate limit (60 requests per minute).
+// Maximum page size of the endpoint, and a cap on the number of pages. The quota
+// manager counts one run as one request against the content API limit (60 requests
+// per minute), so extra pages are spaced one second apart to stay within that rate.
 const PER_PAGE = 50;
-const MAX_PAGES = 20;
+const MAX_PAGES = 10;
+const PAGE_DELAY = 1000;
+
+const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 
 const ITEM_SCHEMA = {
     type: 'object',
@@ -28,6 +32,7 @@ const fetchAll = async (context, fetchPage) => {
     const records = [];
     let cursor;
     for (let page = 0; page < MAX_PAGES; page++) {
+        if (page > 0) await sleep(PAGE_DELAY);
         const params = { perPage: String(PER_PAGE) };
         if (cursor) params.cursor = cursor;
         const data = await fetchPage(params);
@@ -75,6 +80,10 @@ module.exports = {
 
     toSelectArray({ result }) {
 
-        return (result || []).map(email => ({ label: email.name, value: email.id }));
+        // Loops can only send published emails; flag drafts so they are not picked by mistake.
+        return (result || []).map(email => ({
+            label: email.publishedEmailMessageId ? email.name : `${email.name} (draft, not published)`,
+            value: email.id
+        }));
     }
 };

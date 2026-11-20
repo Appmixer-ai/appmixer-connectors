@@ -190,7 +190,7 @@ module.exports = {
      * @param {string|object|Array<{key: string, value: *}>} value
      * @returns {object}
      */
-    kvToObject(value) {
+    kvToObject(context, value) {
 
         let input = value;
         if (typeof input === 'string') {
@@ -200,7 +200,7 @@ module.exports = {
             try {
                 input = JSON.parse(input);
             } catch (error) {
-                throw new Error('Request Headers and Query Parameters must be a JSON object of key-value pairs.');
+                throw new context.CancelError('Request Headers and Query Parameters must be a JSON object of key-value pairs.');
             }
         }
         if (!input || typeof input !== 'object') {
