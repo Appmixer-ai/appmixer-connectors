@@ -1,6 +1,6 @@
 {
     "name": "E2E LinkedIn - create and delete post",
-    "description": "Creates a post as the connected member (Connections only, with an article link), checks the post URN, then deletes it with MakeApiCall and checks the 204.",
+    "description": "Creates a post as the connected member (Connections only, with an article link), checks the post URN, then deletes it with DeletePost. MakeApiCall reads the member profile (GET /v2/userinfo).",
     "flow": {
         "93e300dd-f1a8-467b-9fa7-ed4dc7247ef0": {
             "type": "appmixer.utils.controls.OnStart",
@@ -123,11 +123,11 @@
             }
         },
         "0c6e0835-12d0-4383-b157-ac0185299167": {
-            "type": "appmixer.linkedin.core.MakeApiCall",
-            "label": "Delete post (MakeApiCall)",
+            "type": "appmixer.linkedin.shares.DeletePost",
+            "label": "DeletePost",
             "x": 688,
-            "y": 144,
-            "version": "1.0.1",
+            "y": 16,
+            "version": "1.0.0",
             "source": {
                 "in": {
                     "1fe19f92-a593-45be-b269-2d90bbaf5d04": [
@@ -142,30 +142,55 @@
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
-                                    "method": {},
-                                    "headers": {},
-                                    "parameters": {},
-                                    "body": {},
-                                    "url": {
+                                    "postId": {
                                         "8ac23e30-a1ae-4c0a-b986-29c4d67ea061": {
                                             "variable": "$.0b1ffb48-b943-429a-8d0d-3bb40d8a4726.out.postId",
-                                            "functions": [
-                                                {
-                                                    "name": "g_encodeUrl",
-                                                    "params": [
-                                                        {
-                                                            "value": false
-                                                        }
-                                                    ]
-                                                }
-                                            ]
+                                            "functions": []
                                         }
                                     }
                                 },
                                 "lambda": {
-                                    "method": "DELETE",
-                                    "url": "/rest/posts/{{{8ac23e30-a1ae-4c0a-b986-29c4d67ea061}}}",
-                                    "headers": "[{\"key\": \"X-RestLi-Method\", \"value\": \"DELETE\"}]"
+                                    "postId": "{{{8ac23e30-a1ae-4c0a-b986-29c4d67ea061}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "5d2a8c41-7e3b-4f96-9a0d-c18e6b2f4a73": {
+            "type": "appmixer.linkedin.core.MakeApiCall",
+            "label": "MakeApiCall (member profile)",
+            "x": 272,
+            "y": 144,
+            "version": "1.0.1",
+            "source": {
+                "in": {
+                    "93e300dd-f1a8-467b-9fa7-ed4dc7247ef0": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "93e300dd-f1a8-467b-9fa7-ed4dc7247ef0": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "method": {},
+                                    "url": {},
+                                    "headers": {},
+                                    "parameters": {},
+                                    "body": {}
+                                },
+                                "lambda": {
+                                    "method": "GET",
+                                    "url": "/v2/userinfo"
                                 }
                             }
                         }
@@ -180,12 +205,12 @@
         "901f0020-e4da-442c-bec0-120d43f5af78": {
             "type": "appmixer.utils.test.Assert",
             "label": "Assert MakeApiCall",
-            "x": 896,
+            "x": 480,
             "y": 144,
             "version": "1.0.0",
             "source": {
                 "in": {
-                    "0c6e0835-12d0-4383-b157-ac0185299167": [
+                    "5d2a8c41-7e3b-4f96-9a0d-c18e6b2f4a73": [
                         "out"
                     ]
                 }
@@ -193,13 +218,13 @@
             "config": {
                 "transform": {
                     "in": {
-                        "0c6e0835-12d0-4383-b157-ac0185299167": {
+                        "5d2a8c41-7e3b-4f96-9a0d-c18e6b2f4a73": {
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
                                     "expression": {
                                         "33cdd36c-8102-4c79-abab-4751e6e0fd1e": {
-                                            "variable": "$.0c6e0835-12d0-4383-b157-ac0185299167.out.status",
+                                            "variable": "$.5d2a8c41-7e3b-4f96-9a0d-c18e6b2f4a73.out.status",
                                             "functions": []
                                         }
                                     }
@@ -210,7 +235,7 @@
                                             {
                                                 "field": "{{{33cdd36c-8102-4c79-abab-4751e6e0fd1e}}}",
                                                 "assertion": "equal",
-                                                "expected": "204"
+                                                "expected": "200"
                                             }
                                         ]
                                     }
@@ -228,12 +253,15 @@
         "3918bfe9-58c5-43dc-86ad-ef5b4194b016": {
             "type": "appmixer.utils.test.AfterAll",
             "label": "AfterAll",
-            "x": 1104,
+            "x": 896,
             "y": 144,
             "version": "1.0.0",
             "source": {
                 "in": {
                     "1fe19f92-a593-45be-b269-2d90bbaf5d04": [
+                        "out"
+                    ],
+                    "0c6e0835-12d0-4383-b157-ac0185299167": [
                         "out"
                     ],
                     "901f0020-e4da-442c-bec0-120d43f5af78": [
@@ -254,7 +282,7 @@
         "db8cd6fe-29a7-4a67-9c56-2c48eb5a58e7": {
             "type": "appmixer.utils.test.ProcessE2EResults",
             "label": "ProcessE2EResults",
-            "x": 1312,
+            "x": 1104,
             "y": 144,
             "version": "1.0.1",
             "source": {
@@ -303,7 +331,7 @@
             "y": 288,
             "width": 672,
             "height": 176,
-            "content": "## ⚠️ Posts to a real LinkedIn profile\n\nCreatePost publishes a post visible to the account's connections. The MakeApiCall step deletes it right after the assertion, so do not remove or reorder it. If the flow stops before the delete, remove the post by hand in LinkedIn."
+            "content": "## ⚠️ Posts to a real LinkedIn profile\n\nCreatePost publishes a post visible to the account's connections. The DeletePost step deletes it right after the assertion, so do not remove or reorder it. If the flow stops before the delete, remove the post by hand in LinkedIn."
         }
     }
 }
