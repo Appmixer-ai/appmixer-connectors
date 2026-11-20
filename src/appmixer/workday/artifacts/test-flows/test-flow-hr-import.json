@@ -1,0 +1,653 @@
+{
+    "name": "E2E Workday - HR import",
+    "description": "End-to-end test for the Workday connector - worker filters, line manager and organization hierarchy",
+    "flow": {
+        "bd644249-1c7a-451b-9ad5-3622ade6a428": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {},
+            "config": {},
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "25b8a942-48d0-4c11-a240-0a595e9da0e0": {
+            "type": "appmixer.workday.core.ListWorkers",
+            "x": 272,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "bd644249-1c7a-451b-9ad5-3622ade6a428": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "bd644249-1c7a-451b-9ad5-3622ade6a428": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "outputType": {}
+                                },
+                                "lambda": {
+                                    "outputType": "first"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "139c4608-56b7-410d-b499-620011d4bc4a": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 480,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "25b8a942-48d0-4c11-a240-0a595e9da0e0": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "25b8a942-48d0-4c11-a240-0a595e9da0e0": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "16ed09a2-39de-4c73-8293-90654d08ec6c": {
+                                            "variable": "$.25b8a942-48d0-4c11-a240-0a595e9da0e0.out.id",
+                                            "functions": []
+                                        },
+                                        "b8646f19-edbd-4c56-9f02-b2c255e1f872": {
+                                            "variable": "$.25b8a942-48d0-4c11-a240-0a595e9da0e0.out.primaryJob",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$.supervisoryOrganization.Organization_Reference_ID"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        },
+                                        "72f7006d-8b98-4ec5-9834-dee7c3d91ae0": {
+                                            "variable": "$.25b8a942-48d0-4c11-a240-0a595e9da0e0.out.primaryJob",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$.location.Location_ID"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{16ed09a2-39de-4c73-8293-90654d08ec6c}}}",
+                                                "assertion": "notEmpty"
+                                            },
+                                            {
+                                                "field": "{{{b8646f19-edbd-4c56-9f02-b2c255e1f872}}}",
+                                                "assertion": "notEmpty"
+                                            },
+                                            {
+                                                "field": "{{{72f7006d-8b98-4ec5-9834-dee7c3d91ae0}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "b25a751b-6fe6-4915-9a59-fea46d3dbc01": {
+            "type": "appmixer.workday.core.FindWorkers",
+            "x": 688,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "25b8a942-48d0-4c11-a240-0a595e9da0e0": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "25b8a942-48d0-4c11-a240-0a595e9da0e0": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "organizationId": {
+                                        "387fd577-63c9-48ca-830e-c32539431061": {
+                                            "variable": "$.25b8a942-48d0-4c11-a240-0a595e9da0e0.out.primaryJob",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$.supervisoryOrganization.Organization_Reference_ID"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "locationId": {
+                                        "7106442e-a0b1-48b7-ab45-a34bbfcf24b1": {
+                                            "variable": "$.25b8a942-48d0-4c11-a240-0a595e9da0e0.out.primaryJob",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$.location.Location_ID"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "outputType": {}
+                                },
+                                "lambda": {
+                                    "organizationId": "{{{387fd577-63c9-48ca-830e-c32539431061}}}",
+                                    "locationId": "{{{7106442e-a0b1-48b7-ab45-a34bbfcf24b1}}}",
+                                    "outputType": "first"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "b8c5a675-84a7-45e8-bdd7-82f2093c3724": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 896,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "b25a751b-6fe6-4915-9a59-fea46d3dbc01": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "b25a751b-6fe6-4915-9a59-fea46d3dbc01": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "3fb32512-5f63-4a6b-9915-b39960caad05": {
+                                            "variable": "$.b25a751b-6fe6-4915-9a59-fea46d3dbc01.out.id",
+                                            "functions": []
+                                        },
+                                        "4c1caec4-f836-4835-bf7d-a137bb6b0d0a": {
+                                            "variable": "$.b25a751b-6fe6-4915-9a59-fea46d3dbc01.out.count",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{3fb32512-5f63-4a6b-9915-b39960caad05}}}",
+                                                "assertion": "notEmpty"
+                                            },
+                                            {
+                                                "field": "{{{4c1caec4-f836-4835-bf7d-a137bb6b0d0a}}}",
+                                                "assertion": "regex",
+                                                "regex": "^[1-9][0-9]*$"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "0db3a3b9-7d46-4b74-b77d-37f2ba2c365d": {
+            "type": "appmixer.workday.core.GetWorker",
+            "x": 1104,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "b25a751b-6fe6-4915-9a59-fea46d3dbc01": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "b25a751b-6fe6-4915-9a59-fea46d3dbc01": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "workerId": {
+                                        "9d5004b8-26c4-4464-abfa-53895c6f3dca": {
+                                            "variable": "$.25b8a942-48d0-4c11-a240-0a595e9da0e0.out.id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "includeManager": {}
+                                },
+                                "lambda": {
+                                    "workerId": "{{{9d5004b8-26c4-4464-abfa-53895c6f3dca}}}",
+                                    "includeManager": true
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "ef39cd38-bf32-4b7b-85a7-abae7ed2954a": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1312,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "0db3a3b9-7d46-4b74-b77d-37f2ba2c365d": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "0db3a3b9-7d46-4b74-b77d-37f2ba2c365d": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "13145638-17b3-4766-85f2-e0d6ce9df719": {
+                                            "variable": "$.0db3a3b9-7d46-4b74-b77d-37f2ba2c365d.out.id",
+                                            "functions": []
+                                        },
+                                        "ec323f6b-17b4-4994-afc0-49a6638e0503": {
+                                            "variable": "$.0db3a3b9-7d46-4b74-b77d-37f2ba2c365d.out.manager",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$.id"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        },
+                                        "33f95895-e531-4442-b43e-3dc7de72721d": {
+                                            "variable": "$.0db3a3b9-7d46-4b74-b77d-37f2ba2c365d.out.manager",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$.descriptor"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{13145638-17b3-4766-85f2-e0d6ce9df719}}}",
+                                                "assertion": "notEmpty"
+                                            },
+                                            {
+                                                "field": "{{{ec323f6b-17b4-4994-afc0-49a6638e0503}}}",
+                                                "assertion": "notEmpty"
+                                            },
+                                            {
+                                                "field": "{{{33f95895-e531-4442-b43e-3dc7de72721d}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "dfe2595b-c433-4d83-95f2-dd773a26d61e": {
+            "type": "appmixer.workday.core.FindWorkers",
+            "x": 1520,
+            "y": 400,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "0db3a3b9-7d46-4b74-b77d-37f2ba2c365d": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "0db3a3b9-7d46-4b74-b77d-37f2ba2c365d": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "email": {
+                                        "35cdba66-20d2-4344-b06d-d388322a87b9": {
+                                            "variable": "$.0db3a3b9-7d46-4b74-b77d-37f2ba2c365d.out.person",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$.email"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "includeTerminatedWorkers": {},
+                                    "outputType": {}
+                                },
+                                "lambda": {
+                                    "email": "{{{35cdba66-20d2-4344-b06d-d388322a87b9}}}",
+                                    "includeTerminatedWorkers": true,
+                                    "outputType": "first"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "5d4bf212-4e69-44cd-9c4b-a7ea38b61e2c": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1728,
+            "y": 400,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "dfe2595b-c433-4d83-95f2-dd773a26d61e": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "dfe2595b-c433-4d83-95f2-dd773a26d61e": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "b421750e-d0ea-43db-adbc-fc5d0b4fba22": {
+                                            "variable": "$.dfe2595b-c433-4d83-95f2-dd773a26d61e.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{b421750e-d0ea-43db-adbc-fc5d0b4fba22}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "dad57b39-0616-4ee9-a226-7bdeef881a12": {
+            "type": "appmixer.workday.core.ListSupervisoryOrganizations",
+            "x": 1936,
+            "y": 528,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "dfe2595b-c433-4d83-95f2-dd773a26d61e": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "dfe2595b-c433-4d83-95f2-dd773a26d61e": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "includeHierarchy": {},
+                                    "outputType": {}
+                                },
+                                "lambda": {
+                                    "includeHierarchy": true,
+                                    "outputType": "array"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "4059d350-1ecc-4721-88c5-1ff884467b8f": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 2144,
+            "y": 528,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "dad57b39-0616-4ee9-a226-7bdeef881a12": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "dad57b39-0616-4ee9-a226-7bdeef881a12": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "32746a65-95bd-4ccd-a39a-4f6e9a7758d6": {
+                                            "variable": "$.dad57b39-0616-4ee9-a226-7bdeef881a12.out.count",
+                                            "functions": []
+                                        },
+                                        "de87a304-ae45-48f8-a2e1-47cf697377c4": {
+                                            "variable": "$.dad57b39-0616-4ee9-a226-7bdeef881a12.out.result",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$..superior.id"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{32746a65-95bd-4ccd-a39a-4f6e9a7758d6}}}",
+                                                "assertion": "regex",
+                                                "regex": "^[1-9][0-9]*$"
+                                            },
+                                            {
+                                                "field": "{{{de87a304-ae45-48f8-a2e1-47cf697377c4}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "78cdc1a7-bc42-4503-abb9-3787deee12b8": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 2352,
+            "y": 528,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "139c4608-56b7-410d-b499-620011d4bc4a": [
+                        "out"
+                    ],
+                    "b8c5a675-84a7-45e8-bdd7-82f2093c3724": [
+                        "out"
+                    ],
+                    "ef39cd38-bf32-4b7b-85a7-abae7ed2954a": [
+                        "out"
+                    ],
+                    "5d4bf212-4e69-44cd-9c4b-a7ea38b61e2c": [
+                        "out"
+                    ],
+                    "4059d350-1ecc-4721-88c5-1ff884467b8f": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 180
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "51474857-273c-4406-8652-ccc357b95fce": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 2560,
+            "y": 528,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "78cdc1a7-bc42-4503-abb9-3787deee12b8": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "successStoreId": "64f6f1f9193228000754082f",
+                    "failedStoreId": "64f6f1f0193228000754082e"
+                },
+                "transform": {
+                    "in": {
+                        "78cdc1a7-bc42-4503-abb9-3787deee12b8": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "3a9a06ed-7f25-4cf6-ac76-8a6eb84ee7ef": {
+                                            "variable": "$.78cdc1a7-bc42-4503-abb9-3787deee12b8.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E Workday - HR import",
+                                    "result": "{{{3a9a06ed-7f25-4cf6-ac76-8a6eb84ee7ef}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        }
+    }
+}

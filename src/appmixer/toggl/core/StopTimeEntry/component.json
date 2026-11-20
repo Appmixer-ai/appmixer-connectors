@@ -1,0 +1,144 @@
+{
+    "name": "appmixer.toggl.core.StopTimeEntry",
+    "label": "Stop Time Entry",
+    "description": "Stop the running timer of the connected user and return the finished time entry. Goes to the Not Found port when no timer is running.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:toggl"
+    },
+    "quota": {
+        "manager": "appmixer:toggl",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "end": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                }
+            },
+            "inspector": {
+                "inputs": {
+                    "end": {
+                        "type": "date-time",
+                        "label": "End",
+                        "tooltip": "When the timer stopped. Leave empty to stop it now. Must be after the start of the running entry.",
+                        "index": 1
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "schema": {
+                "type": "object",
+                "required": [
+                    "id",
+                    "workspace_id",
+                    "type"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "title": "Time Entry ID",
+                        "example": 247977688
+                    },
+                    "workspace_id": {
+                        "type": "integer",
+                        "title": "Workspace ID",
+                        "example": 21808213
+                    },
+                    "project_id": {
+                        "type": "integer",
+                        "title": "Project ID",
+                        "example": 5302177
+                    },
+                    "task_id": {
+                        "type": "integer",
+                        "title": "Task ID",
+                        "example": 18514337
+                    },
+                    "toggl_user_id": {
+                        "type": "integer",
+                        "title": "User ID",
+                        "example": 7987332
+                    },
+                    "type": {
+                        "type": "string",
+                        "title": "Type",
+                        "example": "activity"
+                    },
+                    "description": {
+                        "type": "string",
+                        "title": "Description",
+                        "example": "Write release notes"
+                    },
+                    "start": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Start",
+                        "example": "2026-11-18T09:00:00Z"
+                    },
+                    "stop": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Stop",
+                        "example": "2026-11-18T10:30:00.000Z"
+                    },
+                    "duration": {
+                        "type": "integer",
+                        "title": "Duration (seconds)",
+                        "example": 5400
+                    },
+                    "billable": {
+                        "type": "boolean",
+                        "title": "Billable",
+                        "example": false
+                    },
+                    "tag_ids": {
+                        "type": "array",
+                        "title": "Tag IDs",
+                        "items": {
+                            "type": "integer"
+                        },
+                        "example": [
+                            16123
+                        ]
+                    },
+                    "timezone": {
+                        "type": "string",
+                        "title": "Time Zone",
+                        "example": "Europe/Prague"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Created At",
+                        "example": "2026-11-18T10:30:05.655129Z"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Updated At",
+                        "example": "2026-11-18T10:30:05.655129Z"
+                    }
+                }
+            }
+        },
+        {
+            "name": "notFound"
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZmlsbD0iI0U1N0NEOCIgZD0iTTEyIDBhMTIgMTIgMCAxIDAgMCAyNCAxMiAxMiAwIDAgMCAwLTI0em0tLjg4MyA0LjMyMmgxLjc2NnY4Ljc1N2gtMS43NjZ6bS0uNzQgMi4wNTN2MS43ODlhNC40NDggNC40NDggMCAxIDAgMy4yNDcgMFY2LjM3NWE2LjE0NiA2LjE0NiAwIDEgMS01LjY2OSAxMC41NTIgNi4xNDUgNi4xNDUgMCAwIDEgMi40MjEtMTAuNTUyeiIvPjwvc3ZnPg=="
+}

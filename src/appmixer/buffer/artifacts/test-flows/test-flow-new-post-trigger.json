@@ -1,0 +1,350 @@
+{
+    "name": "E2E Buffer - new post trigger",
+    "description": "Creates a draft post and waits for the New Post trigger to emit it, then deletes it.",
+    "flow": {
+        "7f14886b-2986-4d49-9534-e099c3039b0b": {
+            "type": "appmixer.buffer.core.NewPost",
+            "x": 64,
+            "y": 400,
+            "source": {},
+            "version": "1.0.0",
+            "config": {
+                "properties": {
+                    "pollInterval": "5"
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "f4b1b8fa-09b8-40cd-b26a-681fcbdb8eb2": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 272,
+            "y": 400,
+            "source": {
+                "in": {
+                    "7f14886b-2986-4d49-9534-e099c3039b0b": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "7f14886b-2986-4d49-9534-e099c3039b0b": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "46294894-cce3-4a0d-a3ff-ffc314318e19": {
+                                            "variable": "$.7f14886b-2986-4d49-9534-e099c3039b0b.out.id",
+                                            "functions": []
+                                        },
+                                        "997d7c0d-9c42-403a-8100-e1eb48951b34": {
+                                            "variable": "$.7f14886b-2986-4d49-9534-e099c3039b0b.out.text",
+                                            "functions": []
+                                        },
+                                        "ba41d027-dddf-49eb-a6b6-216327c8fa68": {
+                                            "variable": "$.7f14886b-2986-4d49-9534-e099c3039b0b.out.status",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{46294894-cce3-4a0d-a3ff-ffc314318e19}}}",
+                                                "assertion": "notEmpty"
+                                            },
+                                            {
+                                                "field": "{{{997d7c0d-9c42-403a-8100-e1eb48951b34}}}",
+                                                "assertion": "regex",
+                                                "regex": "^E2E Buffer trigger post "
+                                            },
+                                            {
+                                                "field": "{{{ba41d027-dddf-49eb-a6b6-216327c8fa68}}}",
+                                                "assertion": "equal",
+                                                "expected": "draft"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "0be7f296-99ff-4a4a-b8cf-c28a5796302e": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16,
+            "source": {},
+            "version": "1.0.0",
+            "config": {},
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "e5be6965-c242-48af-87de-1c9d073e02aa": {
+            "type": "appmixer.buffer.core.ListChannels",
+            "x": 272,
+            "y": 16,
+            "source": {
+                "in": {
+                    "0be7f296-99ff-4a4a-b8cf-c28a5796302e": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "0be7f296-99ff-4a4a-b8cf-c28a5796302e": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "outputType": {}
+                                },
+                                "lambda": {
+                                    "outputType": "first"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "c503a3ad-dae8-4310-a21f-0823cb7f673f": {
+            "type": "appmixer.buffer.core.CreatePost",
+            "x": 480,
+            "y": 16,
+            "source": {
+                "in": {
+                    "e5be6965-c242-48af-87de-1c9d073e02aa": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "e5be6965-c242-48af-87de-1c9d073e02aa": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "channelId": {
+                                        "40e558ed-e91a-4ebe-80b7-db394747b5c2": {
+                                            "variable": "$.e5be6965-c242-48af-87de-1c9d073e02aa.out.id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "text": {
+                                        "cac6d2ef-e43d-496f-b57b-114080bffe40": {
+                                            "variable": "$.0be7f296-99ff-4a4a-b8cf-c28a5796302e.out.started",
+                                            "functions": []
+                                        }
+                                    },
+                                    "mode": {},
+                                    "schedulingType": {},
+                                    "saveToDraft": {}
+                                },
+                                "lambda": {
+                                    "channelId": "{{{40e558ed-e91a-4ebe-80b7-db394747b5c2}}}",
+                                    "text": "E2E Buffer trigger post {{{cac6d2ef-e43d-496f-b57b-114080bffe40}}}",
+                                    "mode": "addToQueue",
+                                    "schedulingType": "automatic",
+                                    "saveToDraft": true
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "f1d49e1a-05f6-4df8-bfc7-d8330a2b306e": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 688,
+            "y": 16,
+            "source": {
+                "in": {
+                    "c503a3ad-dae8-4310-a21f-0823cb7f673f": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "c503a3ad-dae8-4310-a21f-0823cb7f673f": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "dda82ca7-bcad-4614-bd09-8e6197aff39d": {
+                                            "variable": "$.c503a3ad-dae8-4310-a21f-0823cb7f673f.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{dda82ca7-bcad-4614-bd09-8e6197aff39d}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "0819ed10-591d-43d7-b3af-bf61ffbdde7c": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 896,
+            "y": 400,
+            "source": {
+                "in": {
+                    "f4b1b8fa-09b8-40cd-b26a-681fcbdb8eb2": [
+                        "out"
+                    ],
+                    "f1d49e1a-05f6-4df8-bfc7-d8330a2b306e": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "properties": {
+                    "timeout": 480
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "cfb189d7-ea5e-43db-b0d9-40cf7dc3d59c": {
+            "type": "appmixer.buffer.core.DeletePost",
+            "x": 1104,
+            "y": 400,
+            "source": {
+                "in": {
+                    "0819ed10-591d-43d7-b3af-bf61ffbdde7c": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "0819ed10-591d-43d7-b3af-bf61ffbdde7c": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "postId": {
+                                        "409442b3-cf73-407e-aac1-98865c4a32ce": {
+                                            "variable": "$.7f14886b-2986-4d49-9534-e099c3039b0b.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "postId": "{{{409442b3-cf73-407e-aac1-98865c4a32ce}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "407ed7ac-4ae1-4f90-9948-0b7116341499": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1312,
+            "y": 400,
+            "source": {
+                "in": {
+                    "cfb189d7-ea5e-43db-b0d9-40cf7dc3d59c": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "properties": {
+                    "successStoreId": "64f6f1f9193228000754082f",
+                    "failedStoreId": "64f6f1f0193228000754082e"
+                },
+                "transform": {
+                    "in": {
+                        "cfb189d7-ea5e-43db-b0d9-40cf7dc3d59c": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "c923904b-9922-4dd4-970c-328719fc3b96": {
+                                            "variable": "$.0819ed10-591d-43d7-b3af-bf61ffbdde7c.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E Buffer - new post trigger",
+                                    "result": "{{{c923904b-9922-4dd4-970c-328719fc3b96}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        }
+    },
+    "notes": {
+        "ef65027b-4c4b-4e37-abca-df2f567fb893": {
+            "x": 64,
+            "y": 560,
+            "width": 672,
+            "height": 224,
+            "content": "## ⚠️ Test data assumption\n\nThe trigger polls the **first organization** of the account (Organization left empty) every 5 minutes, so the run takes up to ~6 minutes. The provoking post is a **draft** on the first channel and is deleted at the end.\n\nRun this flow alone: a post created in the organization by another flow at the same time also fires the trigger and fails the assertion."
+        }
+    }
+}

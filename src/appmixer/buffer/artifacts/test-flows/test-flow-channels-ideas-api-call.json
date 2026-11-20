@@ -1,0 +1,614 @@
+{
+    "name": "E2E Buffer - channels, ideas and api call",
+    "description": "Lists channels of every organization, reads one channel, creates and lists ideas, and calls the GraphQL API through Make API Call. Covers List Channels, Get Channel, Create Idea, List Ideas and Make API Call.",
+    "flow": {
+        "d2525679-8198-4e86-9163-0d044f150bb2": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16,
+            "source": {},
+            "version": "1.0.0",
+            "config": {},
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "05a41d74-6073-40c2-84bb-2c7320e6cf2e": {
+            "type": "appmixer.buffer.core.ListChannels",
+            "x": 272,
+            "y": 16,
+            "source": {
+                "in": {
+                    "d2525679-8198-4e86-9163-0d044f150bb2": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "d2525679-8198-4e86-9163-0d044f150bb2": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "outputType": {}
+                                },
+                                "lambda": {
+                                    "outputType": "first"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "64b21bcd-507c-4921-a42f-057dd4245953": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 480,
+            "y": 16,
+            "source": {
+                "in": {
+                    "05a41d74-6073-40c2-84bb-2c7320e6cf2e": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "05a41d74-6073-40c2-84bb-2c7320e6cf2e": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "009fe915-a526-44e9-8a38-fa095c24b7e0": {
+                                            "variable": "$.05a41d74-6073-40c2-84bb-2c7320e6cf2e.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{009fe915-a526-44e9-8a38-fa095c24b7e0}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "cfbe02aa-d54a-4a24-9679-fc2cb06e6767": {
+            "type": "appmixer.buffer.core.GetChannel",
+            "x": 480,
+            "y": 144,
+            "source": {
+                "in": {
+                    "05a41d74-6073-40c2-84bb-2c7320e6cf2e": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "05a41d74-6073-40c2-84bb-2c7320e6cf2e": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "channelId": {
+                                        "fb3a9cbd-8c70-4433-974c-3bc9d1f18fb6": {
+                                            "variable": "$.05a41d74-6073-40c2-84bb-2c7320e6cf2e.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "channelId": "{{{fb3a9cbd-8c70-4433-974c-3bc9d1f18fb6}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "842f7144-ab32-4549-8535-d377943f75d9": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 688,
+            "y": 144,
+            "source": {
+                "in": {
+                    "cfbe02aa-d54a-4a24-9679-fc2cb06e6767": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "cfbe02aa-d54a-4a24-9679-fc2cb06e6767": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "6382b1c6-78b4-40a2-8efd-0fe6c46d5221": {
+                                            "variable": "$.cfbe02aa-d54a-4a24-9679-fc2cb06e6767.out.id",
+                                            "functions": []
+                                        },
+                                        "0adcbe1a-d380-4368-a796-ba1ee6074342": {
+                                            "variable": "$.05a41d74-6073-40c2-84bb-2c7320e6cf2e.out.id",
+                                            "functions": []
+                                        },
+                                        "a8955226-ae1c-4fa6-872f-2b0a0ab2cc12": {
+                                            "variable": "$.cfbe02aa-d54a-4a24-9679-fc2cb06e6767.out.service",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{6382b1c6-78b4-40a2-8efd-0fe6c46d5221}}}",
+                                                "assertion": "equal",
+                                                "expected": "{{{0adcbe1a-d380-4368-a796-ba1ee6074342}}}"
+                                            },
+                                            {
+                                                "field": "{{{a8955226-ae1c-4fa6-872f-2b0a0ab2cc12}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "471c5ef9-a469-474e-a33d-bbee7d857b2a": {
+            "type": "appmixer.buffer.core.CreateIdea",
+            "x": 688,
+            "y": 272,
+            "source": {
+                "in": {
+                    "cfbe02aa-d54a-4a24-9679-fc2cb06e6767": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "cfbe02aa-d54a-4a24-9679-fc2cb06e6767": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "organizationId": {
+                                        "3b7ebbcd-ce21-42a2-a443-4f60e96e29d6": {
+                                            "variable": "$.cfbe02aa-d54a-4a24-9679-fc2cb06e6767.out.organizationId",
+                                            "functions": []
+                                        }
+                                    },
+                                    "title": {},
+                                    "text": {
+                                        "48556525-d357-4844-8229-0ba3a0885b6d": {
+                                            "variable": "$.d2525679-8198-4e86-9163-0d044f150bb2.out.started",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "organizationId": "{{{3b7ebbcd-ce21-42a2-a443-4f60e96e29d6}}}",
+                                    "title": "E2E Buffer idea",
+                                    "text": "E2E Buffer test idea {{{48556525-d357-4844-8229-0ba3a0885b6d}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "ea299959-bd0d-4d5a-87c9-c3d7d1751ef3": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 896,
+            "y": 272,
+            "source": {
+                "in": {
+                    "471c5ef9-a469-474e-a33d-bbee7d857b2a": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "471c5ef9-a469-474e-a33d-bbee7d857b2a": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "95647086-1b6f-4e35-be7b-db0a68131d97": {
+                                            "variable": "$.471c5ef9-a469-474e-a33d-bbee7d857b2a.out.id",
+                                            "functions": []
+                                        },
+                                        "9a75e710-4390-4306-ae94-f7a1db5d6e94": {
+                                            "variable": "$.471c5ef9-a469-474e-a33d-bbee7d857b2a.out.title",
+                                            "functions": []
+                                        },
+                                        "8e41f8d4-ced0-41c6-9927-fc12a8734bb7": {
+                                            "variable": "$.471c5ef9-a469-474e-a33d-bbee7d857b2a.out.organizationId",
+                                            "functions": []
+                                        },
+                                        "73491c02-39a9-409d-b2cb-027595d5cb7b": {
+                                            "variable": "$.cfbe02aa-d54a-4a24-9679-fc2cb06e6767.out.organizationId",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{95647086-1b6f-4e35-be7b-db0a68131d97}}}",
+                                                "assertion": "notEmpty"
+                                            },
+                                            {
+                                                "field": "{{{9a75e710-4390-4306-ae94-f7a1db5d6e94}}}",
+                                                "assertion": "equal",
+                                                "expected": "E2E Buffer idea"
+                                            },
+                                            {
+                                                "field": "{{{8e41f8d4-ced0-41c6-9927-fc12a8734bb7}}}",
+                                                "assertion": "equal",
+                                                "expected": "{{{73491c02-39a9-409d-b2cb-027595d5cb7b}}}"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "3a2236df-2d5a-4bbf-99f9-fb3bac6eb6f0": {
+            "type": "appmixer.buffer.core.ListIdeas",
+            "x": 896,
+            "y": 400,
+            "source": {
+                "in": {
+                    "471c5ef9-a469-474e-a33d-bbee7d857b2a": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "471c5ef9-a469-474e-a33d-bbee7d857b2a": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "organizationId": {
+                                        "1c1ae2bf-653d-4f95-8bb7-ca7cd71016d8": {
+                                            "variable": "$.cfbe02aa-d54a-4a24-9679-fc2cb06e6767.out.organizationId",
+                                            "functions": []
+                                        }
+                                    },
+                                    "outputType": {}
+                                },
+                                "lambda": {
+                                    "organizationId": "{{{1c1ae2bf-653d-4f95-8bb7-ca7cd71016d8}}}",
+                                    "outputType": "first"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "2bebfd08-4a8a-48e0-b120-b3bb94274a2b": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1104,
+            "y": 400,
+            "source": {
+                "in": {
+                    "3a2236df-2d5a-4bbf-99f9-fb3bac6eb6f0": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "3a2236df-2d5a-4bbf-99f9-fb3bac6eb6f0": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "f9ebaa82-b586-476c-9e9b-4280992db5f2": {
+                                            "variable": "$.3a2236df-2d5a-4bbf-99f9-fb3bac6eb6f0.out.id",
+                                            "functions": []
+                                        },
+                                        "da57da39-9919-49b7-b46b-2756f59aa09c": {
+                                            "variable": "$.3a2236df-2d5a-4bbf-99f9-fb3bac6eb6f0.out.organizationId",
+                                            "functions": []
+                                        },
+                                        "0093489e-dbab-47c7-b452-2e10ad6934d9": {
+                                            "variable": "$.cfbe02aa-d54a-4a24-9679-fc2cb06e6767.out.organizationId",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{f9ebaa82-b586-476c-9e9b-4280992db5f2}}}",
+                                                "assertion": "notEmpty"
+                                            },
+                                            {
+                                                "field": "{{{da57da39-9919-49b7-b46b-2756f59aa09c}}}",
+                                                "assertion": "equal",
+                                                "expected": "{{{0093489e-dbab-47c7-b452-2e10ad6934d9}}}"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "db1efb7d-9903-4596-a930-d7c6cd3171ac": {
+            "type": "appmixer.buffer.core.MakeApiCall",
+            "x": 1104,
+            "y": 528,
+            "source": {
+                "in": {
+                    "3a2236df-2d5a-4bbf-99f9-fb3bac6eb6f0": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "3a2236df-2d5a-4bbf-99f9-fb3bac6eb6f0": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "url": {},
+                                    "method": {},
+                                    "body": {
+                                        "ebaabe10-b676-493d-8a4a-97294e9c5fc9": {
+                                            "variable": "$.05a41d74-6073-40c2-84bb-2c7320e6cf2e.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "url": "/",
+                                    "method": "POST",
+                                    "body": "{\"query\": \"query Channel($id: ChannelId!) { channel(input: { id: $id }) { id service } }\", \"variables\": {\"id\": \"{{{ebaabe10-b676-493d-8a4a-97294e9c5fc9}}}\"}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "f4fcefba-0d49-4ee6-af00-4637d2ab5fd5": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1312,
+            "y": 528,
+            "source": {
+                "in": {
+                    "db1efb7d-9903-4596-a930-d7c6cd3171ac": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "db1efb7d-9903-4596-a930-d7c6cd3171ac": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "d153af86-88a5-4b69-81c6-537a34ec084f": {
+                                            "variable": "$.db1efb7d-9903-4596-a930-d7c6cd3171ac.out.statusCode",
+                                            "functions": []
+                                        },
+                                        "208cdec5-9801-4a6f-96a0-3944bae98d15": {
+                                            "variable": "$.db1efb7d-9903-4596-a930-d7c6cd3171ac.out.body",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$.data.channel.id"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        },
+                                        "6c4ccf0a-339f-4d42-9c70-3da531ce56a4": {
+                                            "variable": "$.05a41d74-6073-40c2-84bb-2c7320e6cf2e.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{d153af86-88a5-4b69-81c6-537a34ec084f}}}",
+                                                "assertion": "regex",
+                                                "regex": "^200$"
+                                            },
+                                            {
+                                                "field": "{{{208cdec5-9801-4a6f-96a0-3944bae98d15}}}",
+                                                "assertion": "equal",
+                                                "expected": "{{{6c4ccf0a-339f-4d42-9c70-3da531ce56a4}}}"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "0e0576ea-6986-4d48-88ed-80737311565b": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 1520,
+            "y": 272,
+            "source": {
+                "in": {
+                    "64b21bcd-507c-4921-a42f-057dd4245953": [
+                        "out"
+                    ],
+                    "842f7144-ab32-4549-8535-d377943f75d9": [
+                        "out"
+                    ],
+                    "ea299959-bd0d-4d5a-87c9-c3d7d1751ef3": [
+                        "out"
+                    ],
+                    "2bebfd08-4a8a-48e0-b120-b3bb94274a2b": [
+                        "out"
+                    ],
+                    "f4fcefba-0d49-4ee6-af00-4637d2ab5fd5": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "properties": {
+                    "timeout": 180
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "6955b811-0436-40fc-92d7-d9ae106dfc01": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1728,
+            "y": 272,
+            "source": {
+                "in": {
+                    "0e0576ea-6986-4d48-88ed-80737311565b": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "properties": {
+                    "successStoreId": "64f6f1f9193228000754082f",
+                    "failedStoreId": "64f6f1f0193228000754082e"
+                },
+                "transform": {
+                    "in": {
+                        "0e0576ea-6986-4d48-88ed-80737311565b": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "5b854ce8-60f5-4fc2-ad73-fcf788a10c8c": {
+                                            "variable": "$.0e0576ea-6986-4d48-88ed-80737311565b.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E Buffer - channels, ideas and api call",
+                                    "result": "{{{5b854ce8-60f5-4fc2-ad73-fcf788a10c8c}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        }
+    },
+    "notes": {
+        "124a4976-5a61-4b93-9f89-e2d4d7ff3118": {
+            "x": 64,
+            "y": 672,
+            "width": 672,
+            "height": 224,
+            "content": "## ⚠️ Test data assumption\n\nThe connected Buffer account needs at least one organization with one connected channel.\n\nThe Buffer API has no mutation to delete an idea, so each run leaves one idea titled **E2E Buffer idea** in the organization of the first channel. Delete them in Buffer from time to time."
+        }
+    }
+}

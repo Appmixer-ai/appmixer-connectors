@@ -41,7 +41,8 @@ module.exports = [
         messageIncludes: 'exports no ITEM_SCHEMA',
         paths: [
             'ai/openai/TransformTextToJSON/component.json',
-            'ai/openai/VariableExtractor/component.json'
+            'ai/openai/VariableExtractor/component.json',
+            'ai/foundry/TransformTextToJSON/component.json'
         ],
         reason: 'The out port schema is not a fixed item contract: it is the JSON Schema the user types into the jsonSchema/outputVariables input, echoed back verbatim by getOutputPortOptions. There is no static ITEM_SCHEMA to export — every flow declares a different shape — so verify has nothing to compare against and the title rule has no fixed leaves to check.'
     },

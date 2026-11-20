@@ -1,0 +1,102 @@
+{
+    "name": "appmixer.workday.core.ListSupervisoryOrganizationWorkers",
+    "label": "List Supervisory Organization Workers",
+    "description": "Retrieve all workers of a supervisory organization. Reads every page of the result.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:workday"
+    },
+    "quota": {
+        "manager": "appmixer:workday",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "organizationId": {
+                        "type": "string"
+                    },
+                    "outputType": {
+                        "type": "string",
+                        "default": "array"
+                    }
+                },
+                "required": [
+                    "organizationId"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "organizationId": {
+                        "type": "text",
+                        "index": 1,
+                        "label": "Supervisory Organization",
+                        "tooltip": "Select the supervisory organization or enter its Workday ID (WID) or reference ID, e.g. <code>Organization_Reference_ID=SUPERVISORY_Human_Resources</code>.",
+                        "source": {
+                            "url": "/component/appmixer/workday/core/ListSupervisoryOrganizations?outPort=out",
+                            "data": {
+                                "properties": {
+                                    "isSource": true
+                                },
+                                "messages": {
+                                    "in/outputType": "array"
+                                },
+                                "transform": "./ListSupervisoryOrganizations#toSelectArray"
+                            }
+                        }
+                    },
+                    "outputType": {
+                        "type": "select",
+                        "label": "Output Type",
+                        "index": 2,
+                        "defaultValue": "array",
+                        "tooltip": "Choose whether you want to receive the result set as one complete list, or first item only or one item at a time or stream the items to a file.",
+                        "options": [
+                            {
+                                "label": "First Item Only",
+                                "value": "first"
+                            },
+                            {
+                                "label": "All items at once",
+                                "value": "array"
+                            },
+                            {
+                                "label": "One item at a time",
+                                "value": "object"
+                            },
+                            {
+                                "label": "Store to CSV file",
+                                "value": "file"
+                            }
+                        ]
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "source": {
+                "url": "/component/appmixer/workday/core/ListSupervisoryOrganizationWorkers?outPort=out&ignoreAuth=true",
+                "data": {
+                    "properties": {
+                        "generateOutputPortOptions": true
+                    },
+                    "messages": {
+                        "in/organizationId": "dummy",
+                        "in/outputType": "inputs/in/outputType"
+                    }
+                }
+            }
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgLTUwIDEyMDAgMTIwMCI+PHBhdGggdHJhbnNmb3JtPSJ0cmFuc2xhdGUoLTI0NC41IDIwKSBzY2FsZSgwLjQpIiBkPSJNMTE3Mi44IDUyMkMxNDIzLjQgMjcxIDE3NTYuOCAxMzIuOCAyMTExLjYgMTMyLjhDMjQ2NS43IDEzMi44IDI3OTguNyAyNzAuNyAzMDQ5LjEgNTIxLjFDMzE5Mi4zIDY2NC4zIDMyOTguNiA4MzQuNCAzMzYzLjUgMTAyMC4xQzMzNjYuMyAxMDI4LjEgMzM3My43IDEwMzMuNCAzMzgyLjIgMTAzMy40SDM0ODAuNkMzNDk0IDEwMzMuNCAzNTAzLjcgMTAyMC40IDM0OTkuNSAxMDA3LjZDMzQyOS40IDc5MS4xIDMzMDguNSA1OTIuOCAzMTQzIDQyNy4yQzI4NjcuNiAxNTEuNyAyNTAxLjMgMCAyMTExLjggMEMxNzIxLjYgMCAxMzU0LjYgMTUyIDEwNzguOSA0MjguMUM5MTMuNyA1OTMuNSA3OTMuMiA3OTEuNSA3MjMuMyAxMDA3LjVDNzE5LjIgMTAyMC4zIDcyOC44IDEwMzMuMyA3NDIuMyAxMDMzLjNIODQwLjdDODQ5LjIgMTAzMy4zIDg1Ni42IDEwMjcuOSA4NTkuNCAxMDIwQzkyNCA4MzQuOSAxMDMwIDY2NSAxMTcyLjggNTIyWiIgZmlsbD0iI0ZDNUIwNSIvPjxwYXRoIHRyYW5zZm9ybT0idHJhbnNsYXRlKDIwMCAtNzgzKSIgZD0iTTE2NC43IDE3ODIuOUMxNDkuNCAxNzgyLjkgMTQwLjQgMTc3Ni41IDEzNS40IDE3NjEuMUM3NS4xOTk5IDE1OTQuMSAzNC4zOTk5IDE0MjguMiAtNy4zMTk0NWUtMDUgMTI2MS4yQy0zLjkwMDA3IDEyNDQuNSAzLjc5OTkzIDEyMzIuOSAyMS41OTk5IDEyMzIuOUgxMDQuN0MxMjAuMSAxMjMyLjkgMTMwLjIgMTI0MC42IDEzMi45IDEyNTQuN0MxNTQuNSAxMzczIDE4MC4yIDE0OTUgMjE0LjcgMTYxNC42TDMxNC4zIDEyNTQuN0MzMTguMSAxMjQwLjYgMzI4LjMgMTIzMi45IDM0My42IDEyMzIuOUg0NTYuMUM0NzEuNCAxMjMyLjkgNDgxLjYgMTI0MC42IDQ4NS40IDEyNTQuN0w1ODUgMTYxNC42QzYxOS41IDE0OTUuMSA2NDUuMiAxMzczIDY2Ni44IDEyNTQuN0M2NjkuMyAxMjQwLjYgNjc5LjcgMTIzMi45IDY5NSAxMjMyLjlINzc4LjFDNzk1LjkgMTIzMi45IDgwMy41IDEyNDQuNCA3OTkuNyAxMjYxLjJDNzY1LjMgMTQyOC4yIDcyNC41IDE1OTQuMSA2NjQuMyAxNzYxLjFDNjU5LjEgMTc3Ni41IDY1MC4zIDE3ODIuOSA2MzUgMTc4Mi45SDU0MS40QzUyNy40IDE3ODIuOSA1MTUuOSAxNzc2LjUgNTEyLjEgMTc2MS4xTDM5OS43IDEzNjUuMkwyODcuMyAxNzYxLjFDMjgzLjUgMTc3Ni41IDI3MiAxNzgyLjkgMjU4IDE3ODIuOUgxNjQuN1oiIGZpbGw9IiMwRjJFNjYiLz48L3N2Zz4="
+}

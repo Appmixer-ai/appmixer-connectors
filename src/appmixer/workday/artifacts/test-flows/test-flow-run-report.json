@@ -1,0 +1,181 @@
+{
+    "name": "E2E Workday - run report",
+    "description": "End-to-end test for the Workday connector - run report",
+    "flow": {
+        "61efc2c7-afe6-43ca-a423-c3321216681a": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16,
+            "source": {},
+            "version": "1.0.0",
+            "config": {},
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "f4a071e5-01d0-444e-bbf7-3d57f0082935": {
+            "type": "appmixer.workday.core.RunReport",
+            "x": 272,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "61efc2c7-afe6-43ca-a423-c3321216681a": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "61efc2c7-afe6-43ca-a423-c3321216681a": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "reportOwner": {},
+                                    "reportName": {},
+                                    "parameters": {}
+                                },
+                                "lambda": {
+                                    "reportOwner": "lmcneil",
+                                    "reportName": "E2E_Workers",
+                                    "parameters": "{\"format\": \"json\"}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "cb34f8ef-75cd-40c2-9fac-a245212649b8": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 480,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "f4a071e5-01d0-444e-bbf7-3d57f0082935": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "f4a071e5-01d0-444e-bbf7-3d57f0082935": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "553bca40-ea1f-4f24-8fd4-99956fe1b9c4": {
+                                            "variable": "$.f4a071e5-01d0-444e-bbf7-3d57f0082935.out.count",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{553bca40-ea1f-4f24-8fd4-99956fe1b9c4}}}",
+                                                "assertion": "regex",
+                                                "regex": "^[1-9][0-9]*$"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "e35dc0a4-0bec-42ba-a32f-8fec9f6567cd": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 688,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "cb34f8ef-75cd-40c2-9fac-a245212649b8": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 180
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "5bc59a6d-3c15-41c1-b752-eff956abca97": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 896,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "e35dc0a4-0bec-42ba-a32f-8fec9f6567cd": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "successStoreId": "64f6f1f9193228000754082f",
+                    "failedStoreId": "64f6f1f0193228000754082e"
+                },
+                "transform": {
+                    "in": {
+                        "e35dc0a4-0bec-42ba-a32f-8fec9f6567cd": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "4e0a30e8-3bd2-4614-8c32-538059f37ef2": {
+                                            "variable": "$.e35dc0a4-0bec-42ba-a32f-8fec9f6567cd.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E Workday - run report",
+                                    "result": "{{{4e0a30e8-3bd2-4614-8c32-538059f37ef2}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        }
+    },
+    "notes": {
+        "8e7d866b-b313-4991-ae2c-2750c3ae9b16": {
+            "x": 64,
+            "y": 160,
+            "width": 672,
+            "height": 256,
+            "content": "## ⚠️ Test data assumption\n\nRun Report needs a custom report enabled as a web service in the test tenant:\n\n1. Create an **Advanced** custom report (e.g. on *All Workers*) named `E2E_Workers` and tick **Enable As Web Service**.\n2. Share it with the integration system user whose refresh token the test account uses.\n3. Set **Report Owner** and **Report Name** in the Run Report component to the owner username and report name from the report's web service URL (`/ccx/service/customreport2/<tenant>/<owner>/<report>`).\n\nWithout this report the flow fails with 404 or 403."
+        }
+    }
+}

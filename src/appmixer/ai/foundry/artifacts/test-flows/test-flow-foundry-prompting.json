@@ -1,0 +1,448 @@
+{
+    "name": "E2E AI Foundry - Prompting",
+    "type": "automation",
+    "flow": {
+        "3f8f5add-f966-456f-bb07-16f74fde6dc4": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 48,
+            "version": "1.0.0",
+            "source": {},
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {}
+        },
+        "8137bd78-6a78-49a9-abb2-85d1533a6b58": {
+            "type": "appmixer.utils.controls.SetVariable",
+            "x": 272,
+            "y": 48,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "3f8f5add-f966-456f-bb07-16f74fde6dc4": [
+                        "out"
+                    ]
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "3f8f5add-f966-456f-bb07-16f74fde6dc4": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "variables": {}
+                                },
+                                "lambda": {
+                                    "variables": {
+                                        "ADD": [
+                                            {
+                                                "type": "text",
+                                                "name": "promptText",
+                                                "text": "What is the capital of France? Answer with the city name only."
+                                            },
+                                            {
+                                                "type": "text",
+                                                "name": "instructions",
+                                                "text": "You are a concise geography assistant. Answer with a single word and no punctuation."
+                                            },
+                                            {
+                                                "type": "text",
+                                                "name": "agentPrompt",
+                                                "text": "What is 2 + 2? Answer with the number only."
+                                            },
+                                            {
+                                                "type": "text",
+                                                "name": "agentInstructions",
+                                                "text": "You are a calculator. Reply with the numeric result only."
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "ef339e6b-1be1-4cbf-b994-0363ca8ea582": {
+            "type": "appmixer.ai.foundry.ListModels",
+            "x": 480,
+            "y": 48,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "8137bd78-6a78-49a9-abb2-85d1533a6b58": [
+                        "out"
+                    ]
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {}
+        },
+        "b349c0cb-24d4-4606-bc8f-a76b1d8123ce": {
+            "type": "appmixer.ai.foundry.SendPrompt",
+            "x": 688,
+            "y": 48,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "ef339e6b-1be1-4cbf-b994-0363ca8ea582": [
+                        "out"
+                    ]
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "ef339e6b-1be1-4cbf-b994-0363ca8ea582": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "instructions": {},
+                                    "prompt": {},
+                                    "model": {},
+                                    "temperature": {},
+                                    "maxTokens": {},
+                                    "topP": {},
+                                    "frequencyPenalty": {},
+                                    "presencePenalty": {}
+                                },
+                                "lambda": {
+                                    "instructions": "You are a concise geography assistant. Answer with a single word and no punctuation.",
+                                    "prompt": "What is the capital of France? Answer with the city name only.",
+                                    "model": "DeepSeek-V4-Flash",
+                                    "temperature": 0,
+                                    "maxTokens": 50,
+                                    "topP": 1,
+                                    "frequencyPenalty": 0,
+                                    "presencePenalty": 0
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "dafc565f-2890-46a5-bb52-3c9ad8ff01cb": {
+            "type": "appmixer.ai.foundry.AIAgent",
+            "x": 896,
+            "y": 48,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "b349c0cb-24d4-4606-bc8f-a76b1d8123ce": [
+                        "out"
+                    ]
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "properties": {
+                    "stream": false
+                },
+                "transform": {
+                    "in": {
+                        "b349c0cb-24d4-4606-bc8f-a76b1d8123ce": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "model": {},
+                                    "instructions": {},
+                                    "prompt": {},
+                                    "threadId": {
+                                        "2258d8e1-42e1-417b-83c4-868d54d01a9a": {
+                                            "variable": "",
+                                            "functions": [
+                                                {
+                                                    "name": "g_uuid4"
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "model": "DeepSeek-V4-Flash",
+                                    "instructions": "You are a calculator. Reply with the numeric result only.",
+                                    "prompt": "What is 2 + 2? Answer with the number only.",
+                                    "threadId": "{{{2258d8e1-42e1-417b-83c4-868d54d01a9a}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "cf413f7b-96c1-4663-acd2-6296f4b03929": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1312,
+            "y": 176,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "ef339e6b-1be1-4cbf-b994-0363ca8ea582": [
+                        "out"
+                    ]
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "ef339e6b-1be1-4cbf-b994-0363ca8ea582": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "a1aa4d82-6085-485c-8d63-ebed4eda3c1e": {
+                                            "variable": "$.ef339e6b-1be1-4cbf-b994-0363ca8ea582.out.models",
+                                            "functions": []
+                                        },
+                                        "945756a8-2b85-46bd-8716-ccc28bf83fbf": {
+                                            "variable": "$.ef339e6b-1be1-4cbf-b994-0363ca8ea582.out.models",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$[0].id"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{a1aa4d82-6085-485c-8d63-ebed4eda3c1e}}}",
+                                                "assertion": "notEmpty"
+                                            },
+                                            {
+                                                "field": "{{{945756a8-2b85-46bd-8716-ccc28bf83fbf}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "84a60da7-5773-4ca7-8125-489efca63c18": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1312,
+            "y": 304,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "b349c0cb-24d4-4606-bc8f-a76b1d8123ce": [
+                        "out"
+                    ]
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "b349c0cb-24d4-4606-bc8f-a76b1d8123ce": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "816f45f2-df8c-4458-907d-ad16bb1dbb87": {
+                                            "variable": "$.b349c0cb-24d4-4606-bc8f-a76b1d8123ce.out.answer",
+                                            "functions": []
+                                        },
+                                        "5859ea8d-1adf-4011-92af-35e6821378e2": {
+                                            "variable": "$.b349c0cb-24d4-4606-bc8f-a76b1d8123ce.out.prompt",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{816f45f2-df8c-4458-907d-ad16bb1dbb87}}}",
+                                                "assertion": "regex",
+                                                "regex": "Paris"
+                                            },
+                                            {
+                                                "field": "{{{5859ea8d-1adf-4011-92af-35e6821378e2}}}",
+                                                "assertion": "equal",
+                                                "expected": "What is the capital of France? Answer with the city name only."
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "bb82f5af-6da6-4c3d-ae48-f910cc70f123": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1104,
+            "y": 48,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "dafc565f-2890-46a5-bb52-3c9ad8ff01cb": [
+                        "out"
+                    ]
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "dafc565f-2890-46a5-bb52-3c9ad8ff01cb": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "801f3c6f-fddd-4250-886a-b3e61d7d3265": {
+                                            "variable": "$.dafc565f-2890-46a5-bb52-3c9ad8ff01cb.out.answer",
+                                            "functions": []
+                                        },
+                                        "4ed560a2-b6af-4226-b648-77e651cc5e8b": {
+                                            "variable": "$.dafc565f-2890-46a5-bb52-3c9ad8ff01cb.out.prompt",
+                                            "functions": []
+                                        },
+                                        "25960023-6918-4667-bf8e-4ac1e57d619f": {
+                                            "variable": "$.dafc565f-2890-46a5-bb52-3c9ad8ff01cb.out.time",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{801f3c6f-fddd-4250-886a-b3e61d7d3265}}}",
+                                                "assertion": "regex",
+                                                "regex": "4"
+                                            },
+                                            {
+                                                "field": "{{{4ed560a2-b6af-4226-b648-77e651cc5e8b}}}",
+                                                "assertion": "equal",
+                                                "expected": "What is 2 + 2? Answer with the number only."
+                                            },
+                                            {
+                                                "field": "{{{25960023-6918-4667-bf8e-4ac1e57d619f}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "f63d57c0-b639-40ad-a7a0-2bedcd8e1539": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 1520,
+            "y": 48,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "bb82f5af-6da6-4c3d-ae48-f910cc70f123": [
+                        "out"
+                    ],
+                    "cf413f7b-96c1-4663-acd2-6296f4b03929": [
+                        "out"
+                    ],
+                    "84a60da7-5773-4ca7-8125-489efca63c18": [
+                        "out"
+                    ]
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "properties": {
+                    "timeout": 180
+                }
+            }
+        },
+        "41cfad9a-d592-4203-bcf6-6d2e939bf28f": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1728,
+            "y": 48,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "f63d57c0-b639-40ad-a7a0-2bedcd8e1539": [
+                        "out"
+                    ]
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "properties": {},
+                "transform": {
+                    "in": {
+                        "f63d57c0-b639-40ad-a7a0-2bedcd8e1539": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "834b9a77-cfb6-4f05-875b-13a0d4adb4dc": {
+                                            "variable": "$.f63d57c0-b639-40ad-a7a0-2bedcd8e1539.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.com",
+                                    "testCase": "E2E AI Foundry - Prompting",
+                                    "result": "{{{834b9a77-cfb6-4f05-875b-13a0d4adb4dc}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

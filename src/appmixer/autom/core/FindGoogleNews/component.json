@@ -1,0 +1,121 @@
+{
+    "name": "appmixer.autom.core.FindGoogleNews",
+    "label": "Find Google News",
+    "description": "Search Google News with Autom and return the articles of the first results page.",
+    "author": "Autom <josselin@autom.dev>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:autom"
+    },
+    "quota": {
+        "manager": "appmixer:autom",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "query": {
+                        "type": "string"
+                    },
+                    "country": {
+                        "type": "string"
+                    },
+                    "language": {
+                        "type": "string"
+                    },
+                    "outputType": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "query"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "query": {
+                        "type": "text",
+                        "index": 1,
+                        "label": "Query",
+                        "tooltip": "Keywords, a company or a topic to search on Google News."
+                    },
+                    "country": {
+                        "type": "text",
+                        "index": 2,
+                        "label": "Country",
+                        "tooltip": "2-letter country code the results come from, for example <code>us</code> or <code>de</code>.",
+                        "defaultValue": "us"
+                    },
+                    "language": {
+                        "type": "text",
+                        "index": 3,
+                        "label": "Language",
+                        "tooltip": "Optional language code of the results, for example <code>en</code> or <code>fr</code>."
+                    },
+                    "outputType": {
+                        "type": "select",
+                        "label": "Output Type",
+                        "index": 4,
+                        "defaultValue": "array",
+                        "tooltip": "Choose whether you want to receive the result set as one complete list, or first item only or one item at a time or stream the items to a file.",
+                        "options": [
+                            {
+                                "label": "First Item Only",
+                                "value": "first"
+                            },
+                            {
+                                "label": "All items at once",
+                                "value": "array"
+                            },
+                            {
+                                "label": "One item at a time",
+                                "value": "object"
+                            },
+                            {
+                                "label": "Store to CSV file",
+                                "value": "file"
+                            }
+                        ]
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "source": {
+                "url": "/component/appmixer/autom/core/FindGoogleNews?outPort=out&ignoreAuth=true",
+                "data": {
+                    "properties": {
+                        "generateOutputPortOptions": true
+                    },
+                    "messages": {
+                        "in/outputType": "inputs/in/outputType",
+                        "in/query": "dummy"
+                    }
+                }
+            }
+        },
+        {
+            "name": "notFound",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "query": {
+                        "type": "string",
+                        "title": "Query",
+                        "example": "example"
+                    }
+                }
+            }
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9Ii0xIDEgMjIgMjIiIGZpbGw9Im5vbmUiIHJvbGU9ImltZyIgYXJpYS1sYWJlbD0iYXV0b20iPgo8cGF0aCBkPSJNMTAgMlY4LjE4MDJDMTAgOS41NDM0OSA4LjMyODQ3IDEwLjE5OTkgNy40MDA4MSA5LjIwMDg3TDMuNSA1TTIwIDEySDEzLjgxOThDMTIuNDU2NSAxMiAxMS44MDAxIDEwLjMyODUgMTIuNzk5MSA5LjQwMDgxTDE3IDUuNU0xMCAyMlYxNS44MTk4QzEwIDE0LjQ1NjUgMTEuNjcxNSAxMy44MDAxIDEyLjU5OTIgMTQuNzk5MUwxNi41IDE5TTAgMTJMNi4xODAyIDEyQzcuNTQzNDkgMTIgOC4xOTk4OSAxMy42NzE1IDcuMjAwODcgMTQuNTk5MkwzIDE4LjUiIHN0cm9rZT0iIzI1NjNFQiIgc3Ryb2tlLXdpZHRoPSIxLjc1Ii8+Cjwvc3ZnPgo="
+}

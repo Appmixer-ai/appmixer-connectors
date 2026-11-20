@@ -1,0 +1,452 @@
+{
+    "name": "E2E Workday - workers",
+    "description": "End-to-end test for the Workday connector - workers",
+    "flow": {
+        "27292593-f156-4d77-a074-c0d19f5e43e2": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16,
+            "source": {},
+            "version": "1.0.0",
+            "config": {},
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "14f471b3-0bbe-4ad7-8ab1-9ab05625af28": {
+            "type": "appmixer.workday.core.ListWorkers",
+            "x": 272,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "27292593-f156-4d77-a074-c0d19f5e43e2": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "27292593-f156-4d77-a074-c0d19f5e43e2": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "outputType": {}
+                                },
+                                "lambda": {
+                                    "outputType": "first"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "dce333f1-ca9f-4141-aa0a-5831d91829c7": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 480,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "14f471b3-0bbe-4ad7-8ab1-9ab05625af28": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "14f471b3-0bbe-4ad7-8ab1-9ab05625af28": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "0c562f56-3386-40f4-80f5-49c64d0a16d2": {
+                                            "variable": "$.14f471b3-0bbe-4ad7-8ab1-9ab05625af28.out.id",
+                                            "functions": []
+                                        },
+                                        "a006e953-ad7e-41b8-b417-d9a3e6b975e5": {
+                                            "variable": "$.14f471b3-0bbe-4ad7-8ab1-9ab05625af28.out.descriptor",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{0c562f56-3386-40f4-80f5-49c64d0a16d2}}}",
+                                                "assertion": "notEmpty"
+                                            },
+                                            {
+                                                "field": "{{{a006e953-ad7e-41b8-b417-d9a3e6b975e5}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "e649732f-be75-49ce-b155-4dd16960f2b8": {
+            "type": "appmixer.workday.core.GetWorker",
+            "x": 688,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "14f471b3-0bbe-4ad7-8ab1-9ab05625af28": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "14f471b3-0bbe-4ad7-8ab1-9ab05625af28": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "workerId": {
+                                        "649de763-19bf-4587-835e-5e23b3ed4e1c": {
+                                            "variable": "$.14f471b3-0bbe-4ad7-8ab1-9ab05625af28.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "workerId": "{{{649de763-19bf-4587-835e-5e23b3ed4e1c}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "853a06ee-e342-4125-8d48-0e6966fa122c": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 896,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "e649732f-be75-49ce-b155-4dd16960f2b8": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "e649732f-be75-49ce-b155-4dd16960f2b8": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "8a555440-65bd-48f3-8905-1551bef4afd4": {
+                                            "variable": "$.e649732f-be75-49ce-b155-4dd16960f2b8.out.id",
+                                            "functions": []
+                                        },
+                                        "a6eeaefd-fddf-427d-ad41-ea97beb0050d": {
+                                            "variable": "$.e649732f-be75-49ce-b155-4dd16960f2b8.out.descriptor",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{8a555440-65bd-48f3-8905-1551bef4afd4}}}",
+                                                "assertion": "notEmpty"
+                                            },
+                                            {
+                                                "field": "{{{a6eeaefd-fddf-427d-ad41-ea97beb0050d}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "f7d61b5b-4be2-459e-a92d-5c988f71a48e": {
+            "type": "appmixer.workday.core.FindWorkers",
+            "x": 1104,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "e649732f-be75-49ce-b155-4dd16960f2b8": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "e649732f-be75-49ce-b155-4dd16960f2b8": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "search": {
+                                        "8f302cec-12b3-4f83-aac7-bef3b9fd9751": {
+                                            "variable": "$.e649732f-be75-49ce-b155-4dd16960f2b8.out.descriptor",
+                                            "functions": []
+                                        }
+                                    },
+                                    "outputType": {}
+                                },
+                                "lambda": {
+                                    "search": "{{{8f302cec-12b3-4f83-aac7-bef3b9fd9751}}}",
+                                    "outputType": "first"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "7bd280e2-b2da-4381-8f1d-1772be3727f3": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1312,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "f7d61b5b-4be2-459e-a92d-5c988f71a48e": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "f7d61b5b-4be2-459e-a92d-5c988f71a48e": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "3f3d1ac0-d07f-490a-a7bc-67f44a31df6d": {
+                                            "variable": "$.f7d61b5b-4be2-459e-a92d-5c988f71a48e.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{3f3d1ac0-d07f-490a-a7bc-67f44a31df6d}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "5b8f2524-fb68-4c72-b444-bfe669e0d071": {
+            "type": "appmixer.workday.core.ListDirectReports",
+            "x": 1520,
+            "y": 400,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "f7d61b5b-4be2-459e-a92d-5c988f71a48e": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "f7d61b5b-4be2-459e-a92d-5c988f71a48e": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "workerId": {
+                                        "5fdf49e6-2d6e-441a-8062-709377549cfe": {
+                                            "variable": "$.14f471b3-0bbe-4ad7-8ab1-9ab05625af28.out.id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "outputType": {}
+                                },
+                                "lambda": {
+                                    "workerId": "{{{5fdf49e6-2d6e-441a-8062-709377549cfe}}}",
+                                    "outputType": "array"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "0aa841b7-ac99-48a1-bbcc-bcc7f22bca0d": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1728,
+            "y": 400,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "5b8f2524-fb68-4c72-b444-bfe669e0d071": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "5b8f2524-fb68-4c72-b444-bfe669e0d071": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "c55deb1a-feb7-40e1-919c-cafe749034e0": {
+                                            "variable": "$.5b8f2524-fb68-4c72-b444-bfe669e0d071.out.count",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{c55deb1a-feb7-40e1-919c-cafe749034e0}}}",
+                                                "assertion": "regex",
+                                                "regex": "^[0-9]+$"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "b50e1a10-9f7e-456f-8519-dcc5e0c01e99": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 1936,
+            "y": 400,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "dce333f1-ca9f-4141-aa0a-5831d91829c7": [
+                        "out"
+                    ],
+                    "853a06ee-e342-4125-8d48-0e6966fa122c": [
+                        "out"
+                    ],
+                    "7bd280e2-b2da-4381-8f1d-1772be3727f3": [
+                        "out"
+                    ],
+                    "0aa841b7-ac99-48a1-bbcc-bcc7f22bca0d": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 180
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "613ed50f-4655-4b6e-af1a-89c3f1b241b5": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 2144,
+            "y": 400,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "b50e1a10-9f7e-456f-8519-dcc5e0c01e99": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "successStoreId": "64f6f1f9193228000754082f",
+                    "failedStoreId": "64f6f1f0193228000754082e"
+                },
+                "transform": {
+                    "in": {
+                        "b50e1a10-9f7e-456f-8519-dcc5e0c01e99": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "3047fb19-aeec-450d-b488-299378b600fa": {
+                                            "variable": "$.b50e1a10-9f7e-456f-8519-dcc5e0c01e99.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E Workday - workers",
+                                    "result": "{{{3047fb19-aeec-450d-b488-299378b600fa}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        }
+    }
+}

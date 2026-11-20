@@ -1,0 +1,117 @@
+{
+    "name": "appmixer.buffer.core.CreateIdea",
+    "label": "Create Idea",
+    "description": "Save a content idea to a Buffer organization, to turn into posts later.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:buffer"
+    },
+    "quota": {
+        "manager": "appmixer:buffer",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "organizationId": {
+                        "type": "string"
+                    },
+                    "title": {
+                        "type": "string"
+                    },
+                    "text": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "organizationId",
+                    "text"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "organizationId": {
+                        "type": "text",
+                        "index": 1,
+                        "label": "Organization",
+                        "tooltip": "Pick a Buffer organization, or type its Organization ID.",
+                        "source": {
+                            "url": "/component/appmixer/buffer/core/ListOrganizations?outPort=out",
+                            "data": {
+                                "properties": {
+                                    "isSource": true
+                                },
+                                "transform": "./ListOrganizations#toSelectArray"
+                            }
+                        }
+                    },
+                    "title": {
+                        "type": "text",
+                        "index": 2,
+                        "label": "Title",
+                        "tooltip": "A short heading for the idea."
+                    },
+                    "text": {
+                        "type": "textarea",
+                        "index": 3,
+                        "label": "Text",
+                        "tooltip": "The body of the idea."
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "title": "Idea ID",
+                        "example": "6a0b1c2d3e4f5a6b7c8d9e0f"
+                    },
+                    "organizationId": {
+                        "type": "string",
+                        "title": "Organization ID",
+                        "example": "5e7a1b2c3d4e5f6a7b8c9d0e"
+                    },
+                    "groupId": {
+                        "type": "string",
+                        "title": "Group ID",
+                        "example": "6a0b1c2d3e4f5a6b7c8d9e10"
+                    },
+                    "title": {
+                        "type": "string",
+                        "title": "Title",
+                        "example": "Blog post announcement"
+                    },
+                    "text": {
+                        "type": "string",
+                        "title": "Text",
+                        "example": "We just published our guide to social media automation."
+                    },
+                    "createdAt": {
+                        "type": "integer",
+                        "title": "Created At (Unix)",
+                        "example": 1772721000
+                    },
+                    "updatedAt": {
+                        "type": "integer",
+                        "title": "Updated At (Unix)",
+                        "example": 1772721000
+                    }
+                }
+            }
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZmlsbD0iIzIzMUYyMCIgZD0iTTEuMzcxIDUuNDc2TDExLjk0MyAwbDEwLjY4NiA1LjQ3Ni0xMC42ODYgNS40OTV6bTMuMzYgNC44MWw3LjIxMiAzLjU0NyA3LjI4OC0zLjU0NyAzLjM5OCAxLjY1NS0xMC42ODYgNS4yMDJMMS4zNzEgMTEuOTR6bTAgNi4xNzFsNy4yMTIgMy45MTEgNy4yODgtMy45MSAzLjM5OCAxLjgxNUwxMS45NDMgMjQgMS4zNzEgMTguMjczeiIvPjwvc3ZnPg=="
+}

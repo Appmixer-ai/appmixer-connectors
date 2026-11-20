@@ -1,0 +1,285 @@
+{
+    "name": "E2E Autom - Find Google Results and News",
+    "description": "End-to-end test for the Autom connector - Find Google Results with outputType first (one item with index and count) and Find Google News with outputType array (result and count).",
+    "flow": {
+        "69e60a54-bdf5-4ee3-8ab3-c3eaa8c0e9cd": {
+            "type": "appmixer.utils.controls.OnStart",
+            "label": "OnStart",
+            "x": 64,
+            "y": 16,
+            "source": {},
+            "version": "1.0.0",
+            "config": {},
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "7cca56d0-a01e-4a3b-b8b0-242750980d62": {
+            "type": "appmixer.autom.core.FindGoogleResults",
+            "label": "Find Google Results (first)",
+            "x": 272,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "69e60a54-bdf5-4ee3-8ab3-c3eaa8c0e9cd": ["out"]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "69e60a54-bdf5-4ee3-8ab3-c3eaa8c0e9cd": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "query": {},
+                                    "country": {},
+                                    "language": {},
+                                    "outputType": {}
+                                },
+                                "lambda": {
+                                    "query": "Appmixer workflow automation",
+                                    "country": "us",
+                                    "language": "en",
+                                    "outputType": "first"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "8324784e-f4ed-447e-bfe9-54e5e296e295": {
+            "type": "appmixer.utils.test.Assert",
+            "label": "Assert Google result",
+            "x": 480,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "7cca56d0-a01e-4a3b-b8b0-242750980d62": ["out"]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "7cca56d0-a01e-4a3b-b8b0-242750980d62": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "336e4812-3272-44b4-b7c6-a3e8b00b1ec2": {
+                                            "variable": "$.7cca56d0-a01e-4a3b-b8b0-242750980d62.out.link",
+                                            "functions": []
+                                        },
+                                        "0024ed71-1fae-4e22-a342-4d42f22b0b77": {
+                                            "variable": "$.7cca56d0-a01e-4a3b-b8b0-242750980d62.out.title",
+                                            "functions": []
+                                        },
+                                        "8361de3b-1467-4fd7-a8b9-0332e66fb094": {
+                                            "variable": "$.7cca56d0-a01e-4a3b-b8b0-242750980d62.out.count",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{336e4812-3272-44b4-b7c6-a3e8b00b1ec2}}}",
+                                                "assertion": "regex",
+                                                "regex": "^https?://"
+                                            },
+                                            {
+                                                "field": "{{{0024ed71-1fae-4e22-a342-4d42f22b0b77}}}",
+                                                "assertion": "notEmpty"
+                                            },
+                                            {
+                                                "field": "{{{8361de3b-1467-4fd7-a8b9-0332e66fb094}}}",
+                                                "assertion": "regex",
+                                                "regex": "^[1-9][0-9]*$"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "4e38704a-b5c6-44fa-9225-1df6e154816d": {
+            "type": "appmixer.autom.core.FindGoogleNews",
+            "label": "Find Google News (array)",
+            "x": 480,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "69e60a54-bdf5-4ee3-8ab3-c3eaa8c0e9cd": ["out"]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "69e60a54-bdf5-4ee3-8ab3-c3eaa8c0e9cd": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "query": {},
+                                    "country": {},
+                                    "language": {},
+                                    "outputType": {}
+                                },
+                                "lambda": {
+                                    "query": "technology",
+                                    "country": "us",
+                                    "language": "en",
+                                    "outputType": "array"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "5dc010a6-4488-462e-8f4d-413a6916fb73": {
+            "type": "appmixer.utils.test.Assert",
+            "label": "Assert Google News",
+            "x": 688,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "4e38704a-b5c6-44fa-9225-1df6e154816d": ["out"]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "4e38704a-b5c6-44fa-9225-1df6e154816d": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "a235d317-eb5d-4888-9043-f3787fe67041": {
+                                            "variable": "$.4e38704a-b5c6-44fa-9225-1df6e154816d.out.count",
+                                            "functions": []
+                                        },
+                                        "28579d73-46e2-4b76-a8d9-5908bef5bfe9": {
+                                            "variable": "$.4e38704a-b5c6-44fa-9225-1df6e154816d.out.result",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [{ "value": "$[0].link" }]
+                                                }
+                                            ]
+                                        },
+                                        "7f726663-7f55-453a-9dc1-42567bdf3624": {
+                                            "variable": "$.4e38704a-b5c6-44fa-9225-1df6e154816d.out.result",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [{ "value": "$[0].title" }]
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{a235d317-eb5d-4888-9043-f3787fe67041}}}",
+                                                "assertion": "regex",
+                                                "regex": "^[1-9][0-9]*$"
+                                            },
+                                            {
+                                                "field": "{{{28579d73-46e2-4b76-a8d9-5908bef5bfe9}}}",
+                                                "assertion": "regex",
+                                                "regex": "^https?://"
+                                            },
+                                            {
+                                                "field": "{{{7f726663-7f55-453a-9dc1-42567bdf3624}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "30b5c505-b12c-4c9a-bff1-86eb9ee60d3c": {
+            "type": "appmixer.utils.test.AfterAll",
+            "label": "AfterAll",
+            "x": 896,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "8324784e-f4ed-447e-bfe9-54e5e296e295": ["out"],
+                    "5dc010a6-4488-462e-8f4d-413a6916fb73": ["out"]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 180
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "cc9c8072-3bd6-4482-ad2a-5b3a44664b74": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "label": "ProcessE2EResults",
+            "x": 1104,
+            "y": 144,
+            "version": "1.0.1",
+            "source": {
+                "in": {
+                    "30b5c505-b12c-4c9a-bff1-86eb9ee60d3c": ["out"]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "30b5c505-b12c-4c9a-bff1-86eb9ee60d3c": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "afbf8ea8-a4fa-4dd5-8daa-5ee875b998dc": {
+                                            "variable": "$.30b5c505-b12c-4c9a-bff1-86eb9ee60d3c.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E Autom - Find Google Results and News",
+                                    "result": "{{{afbf8ea8-a4fa-4dd5-8daa-5ee875b998dc}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        }
+    },
+    "notes": {
+        "a9b64030-1958-487d-b354-5adcbd001d73": {
+            "x": 64,
+            "y": 304,
+            "width": 672,
+            "height": 160,
+            "content": "## ⚠️ Test data assumption\n\n- The Autom account must have **credits**: each run makes one Google search and one Google News request.\n- Both queries are broad, so Google always returns results. The `notFound` port is covered by the unit tests, not here."
+        }
+    }
+}

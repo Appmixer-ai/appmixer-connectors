@@ -1,0 +1,165 @@
+{
+    "name": "appmixer.stripe.core.CancelSubscription",
+    "description": "Cancels a subscription immediately. The customer is not charged again for it. Optionally creates a final invoice and prorates the unused time.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:stripe"
+    },
+    "quota": {
+        "manager": "appmixer:stripe",
+        "resources": "requests"
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "subscriptionId": {
+                        "type": "string"
+                    },
+                    "invoiceNow": {
+                        "type": "boolean"
+                    },
+                    "prorate": {
+                        "type": "boolean"
+                    },
+                    "cancellationComment": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "subscriptionId"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "subscriptionId": {
+                        "type": "text",
+                        "label": "Subscription ID",
+                        "index": 1,
+                        "tooltip": "The ID of the subscription to cancel, e.g. sub_1MlPf9LkdIwHu7ixB6VIYRyX."
+                    },
+                    "invoiceNow": {
+                        "type": "toggle",
+                        "label": "Invoice Now",
+                        "index": 2,
+                        "defaultValue": false,
+                        "tooltip": "Generate a final invoice for any un-invoiced metered usage and pending proration invoice items."
+                    },
+                    "prorate": {
+                        "type": "toggle",
+                        "label": "Prorate",
+                        "index": 3,
+                        "defaultValue": false,
+                        "tooltip": "Generate a proration invoice item that credits the unused time until the end of the period."
+                    },
+                    "cancellationComment": {
+                        "type": "text",
+                        "label": "Cancellation Comment",
+                        "index": 4,
+                        "tooltip": "A comment about why the subscription was canceled, stored in the subscription's cancellation details."
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "title": "Subscription ID",
+                        "example": "sub_1MlPf9LkdIwHu7ixB6VIYRyX"
+                    },
+                    "object": {
+                        "type": "string",
+                        "title": "Object",
+                        "example": "subscription"
+                    },
+                    "status": {
+                        "type": "string",
+                        "title": "Status",
+                        "example": "canceled"
+                    },
+                    "customer": {
+                        "type": "string",
+                        "title": "Customer ID",
+                        "example": "cus_NWSaVkvdacCUi4"
+                    },
+                    "canceled_at": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ],
+                        "title": "Canceled At (Unix Timestamp)",
+                        "example": 1678768842
+                    },
+                    "ended_at": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ],
+                        "title": "Ended At (Unix Timestamp)",
+                        "example": 1678768842
+                    },
+                    "latest_invoice": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "title": "Latest Invoice ID",
+                        "example": "in_1MlPf9LkdIwHu7ixEo6hdgCw"
+                    },
+                    "cancellation_details": {
+                        "type": "object",
+                        "title": "Cancellation Details",
+                        "properties": {
+                            "reason": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ],
+                                "title": "Cancellation Details.Reason",
+                                "example": "cancellation_requested"
+                            },
+                            "comment": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ],
+                                "title": "Cancellation Details.Comment",
+                                "example": "Customer closed the account"
+                            },
+                            "feedback": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ],
+                                "title": "Cancellation Details.Feedback",
+                                "example": null
+                            }
+                        }
+                    },
+                    "livemode": {
+                        "type": "boolean",
+                        "title": "Live Mode",
+                        "example": false
+                    },
+                    "metadata": {
+                        "type": "object",
+                        "title": "Metadata",
+                        "example": {
+                            "orderId": "1001"
+                        }
+                    }
+                }
+            }
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiByeD0iNiIgZmlsbD0iIzYzNUJGRiIvPjxwYXRoIHRyYW5zZm9ybT0idHJhbnNsYXRlKDQgNCkiIGZpbGw9IiNGRkZGRkYiIGQ9Ik0xMy45NzYgOS4xNWMtMi4xNzItLjgwNi0zLjM1Ni0xLjQyNi0zLjM1Ni0yLjQwOSAwLS44MzEuNjgzLTEuMzA1IDEuOTAxLTEuMzA1IDIuMjI3IDAgNC41MTUuODU4IDYuMDkgMS42MzFsLjg5LTUuNDk0QzE4LjI1Mi45NzUgMTUuNjk3IDAgMTIuMTY1IDAgOS42NjcgMCA3LjU4OS42NTQgNi4xMDQgMS44NzIgNC41NiAzLjE0NyAzLjc1NyA0Ljk5MiAzLjc1NyA3LjIxOGMwIDQuMDM5IDIuNDY3IDUuNzYgNi40NzYgNy4yMTkgMi41ODUuOTIgMy40NDUgMS41NzQgMy40NDUgMi41ODMgMCAuOTgtLjg0IDEuNTQ1LTIuMzU0IDEuNTQ1LTEuODc1IDAtNC45NjUtLjkyMS02Ljk5LTIuMTA5bC0uOSA1LjU1NUM1LjE3NSAyMi45OSA4LjM4NSAyNCAxMS43MTQgMjRjMi42NDEgMCA0Ljg0My0uNjI0IDYuMzI4LTEuODEzIDEuNjY0LTEuMzA1IDIuNTI1LTMuMjM2IDIuNTI1LTUuNzMyIDAtNC4xMjgtMi41MjQtNS44NTEtNi41OTQtNy4zMDVoLjAwM3oiLz48L3N2Zz4="
+}
