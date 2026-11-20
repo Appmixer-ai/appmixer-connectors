@@ -2,7 +2,15 @@
     "name": "E2E Google Drive - new file trigger (modified before processed)",
     "description": "Regression for https://github.com/Appmixer-ai/appmixer-components/issues/2958. The file is created with a modifiedTime later than its createdTime, which is what the change feed shows for a file another user edited right after uploading it. NewFileOrFolder must still emit it (before 2.4.3 it was silently dropped).",
     "type": "automation",
-    "notes": {},
+    "notes": {
+        "5b1f0c3e-6a2d-4c8e-9f41-3d7e2a9b8c10": {
+            "x": 624,
+            "y": 176,
+            "width": 640,
+            "height": 224,
+            "content": "## Why Make API Call here\n\nThe file is created with a raw `POST /files` that sets `modifiedTime` to 2099 at creation, so the change feed shows a file modified after it was created (what another user editing right after upload looks like). Create File From Text cannot set `modifiedTime`, and a separate update afterwards would be a second change event, not the scenario under test. Keep this node a Make API Call."
+        }
+    },
     "flow": {
         "63ecec1d-5989-4efe-be3d-c55f7105768d": {
             "type": "appmixer.utils.controls.OnStart",

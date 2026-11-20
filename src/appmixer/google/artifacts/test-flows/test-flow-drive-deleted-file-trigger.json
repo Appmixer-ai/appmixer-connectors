@@ -237,7 +237,7 @@
             }
         },
         "e7ad89b2-7def-5f29-820f-200882b76bc6": {
-            "type": "appmixer.google.drive.MakeApiCall",
+            "type": "appmixer.google.drive.DeleteFileOrFolder",
             "x": 1104,
             "y": 144,
             "version": "1.0.0",
@@ -245,7 +245,7 @@
                 "autoRetry": false,
                 "onError": "stopFlow"
             },
-            "label": "MakeApiCall (PATCH trashed=true — provokes the trigger)",
+            "label": "DeleteFileOrFolder (Move to trash — provokes the trigger)",
             "source": {
                 "in": {
                     "fcc90b9e-de8a-59ae-905d-4b8dbadd2979": [
@@ -260,83 +260,17 @@
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
-                                    "url": {
+                                    "fileId": {
                                         "294bebc4-ef90-5c42-bbeb-bd4012e9acae": {
                                             "variable": "$.0399d29b-369e-546c-a109-7171c4281da5.out.googleDriveFileMetadata.id",
                                             "functions": []
                                         }
                                     },
-                                    "method": {},
-                                    "body": {}
+                                    "moveToTrash": {}
                                 },
                                 "lambda": {
-                                    "url": "/files/{{{294bebc4-ef90-5c42-bbeb-bd4012e9acae}}}",
-                                    "method": "PATCH",
-                                    "body": "{\"trashed\": true}"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "089d19b3-910a-5549-89c8-1f23357f31a9": {
-            "type": "appmixer.utils.test.Assert",
-            "x": 1312,
-            "y": 144,
-            "version": "1.0.0",
-            "errorHandling": {
-                "autoRetry": false,
-                "onError": "stopFlow"
-            },
-            "source": {
-                "in": {
-                    "e7ad89b2-7def-5f29-820f-200882b76bc6": [
-                        "out"
-                    ]
-                }
-            },
-            "config": {
-                "transform": {
-                    "in": {
-                        "e7ad89b2-7def-5f29-820f-200882b76bc6": {
-                            "out": {
-                                "type": "json2new",
-                                "modifiers": {
-                                    "expression": {
-                                        "2cdc8a57-c65d-5b75-8577-6976d7e04d1f": {
-                                            "variable": "$.e7ad89b2-7def-5f29-820f-200882b76bc6.out.status",
-                                            "functions": []
-                                        },
-                                        "9c4c3e4f-b20e-533c-b002-1c5df717d98a": {
-                                            "variable": "$.e7ad89b2-7def-5f29-820f-200882b76bc6.out.body",
-                                            "functions": [
-                                                {
-                                                    "name": "g_jsonPath",
-                                                    "params": [
-                                                        {
-                                                            "value": "$.id"
-                                                        }
-                                                    ]
-                                                }
-                                            ]
-                                        }
-                                    }
-                                },
-                                "lambda": {
-                                    "expression": {
-                                        "AND": [
-                                            {
-                                                "field": "{{{2cdc8a57-c65d-5b75-8577-6976d7e04d1f}}}",
-                                                "assertion": "equal",
-                                                "expected": "200"
-                                            },
-                                            {
-                                                "field": "{{{9c4c3e4f-b20e-533c-b002-1c5df717d98a}}}",
-                                                "assertion": "notEmpty"
-                                            }
-                                        ]
-                                    }
+                                    "fileId": "{{{294bebc4-ef90-5c42-bbeb-bd4012e9acae}}}",
+                                    "moveToTrash": true
                                 }
                             }
                         }
@@ -517,7 +451,7 @@
                     "8a06d949-c422-50c3-8578-a69a228d6c15": [
                         "out"
                     ],
-                    "089d19b3-910a-5549-89c8-1f23357f31a9": [
+                    "e7ad89b2-7def-5f29-820f-200882b76bc6": [
                         "out"
                     ],
                     "8bdf620a-f080-5dcc-b945-3febf9902b3d": [
