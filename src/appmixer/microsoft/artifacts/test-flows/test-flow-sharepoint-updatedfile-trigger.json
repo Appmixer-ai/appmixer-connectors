@@ -190,7 +190,7 @@
             }
         },
         "91932bf2-87a7-44ce-8606-136e816137df": {
-            "type": "appmixer.microsoft.sharepoint.MakeApiCall",
+            "type": "appmixer.microsoft.sharepoint.UpdateFileOrFolder",
             "x": 1600,
             "y": 100,
             "version": "1.0.0",
@@ -208,14 +208,15 @@
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
-                                    "url": {
+                                    "siteId": {},
+                                    "driveId": {},
+                                    "itemId": {
                                         "ddaf240d-a9b2-41ad-b897-32c895882e6d": {
                                             "variable": "$.7fa16fd9-54ac-4c73-a444-aa3aedffb9f1.out.id",
                                             "functions": []
                                         }
                                     },
-                                    "method": {},
-                                    "body": {
+                                    "newName": {
                                         "7a39bca0-a745-4964-ad28-ae19e5d1918d": {
                                             "variable": "$.e150d9d1-c640-41ca-a72c-a531234e1d91.out.started",
                                             "functions": [
@@ -232,9 +233,10 @@
                                     }
                                 },
                                 "lambda": {
-                                    "url": "/drives/b!BxU-FIqjQUqH2il5TIEBG0HSUairrrVDhCbcjMh-k1HpggReNXwPS6zVg-Y8qiuC/items/{{{ddaf240d-a9b2-41ad-b897-32c895882e6d}}}",
-                                    "method": "PATCH",
-                                    "body": "{\"name\": \"e2e-sharepoint-updatedfile-{{{7a39bca0-a745-4964-ad28-ae19e5d1918d}}}-updated.txt\"}"
+                                    "siteId": "appmixer.sharepoint.com,143e1507-a38a-4a41-87da-29794c81011b,a851d241-aeab-43b5-8426-dc8cc87e9351",
+                                    "driveId": "b!BxU-FIqjQUqH2il5TIEBG0HSUairrrVDhCbcjMh-k1HpggReNXwPS6zVg-Y8qiuC",
+                                    "itemId": "{{{ddaf240d-a9b2-41ad-b897-32c895882e6d}}}",
+                                    "newName": "e2e-sharepoint-updatedfile-{{{7a39bca0-a745-4964-ad28-ae19e5d1918d}}}-updated.txt"
                                 }
                             }
                         }
@@ -345,7 +347,7 @@
             }
         },
         "ce751378-aa05-4b47-8faa-e45d7299a1c5": {
-            "type": "appmixer.microsoft.sharepoint.MakeApiCall",
+            "type": "appmixer.microsoft.sharepoint.DeleteFileOrFolder",
             "x": 1000,
             "y": 400,
             "version": "1.0.0",
@@ -363,17 +365,19 @@
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
-                                    "url": {
+                                    "siteId": {},
+                                    "driveId": {},
+                                    "itemId": {
                                         "ff54f486-7cc9-4d82-99ff-2de239005586": {
                                             "variable": "$.88baf497-d91f-45a9-90aa-5d94cb5bceb2.file.id",
                                             "functions": []
                                         }
-                                    },
-                                    "method": {}
+                                    }
                                 },
                                 "lambda": {
-                                    "url": "/drives/b!BxU-FIqjQUqH2il5TIEBG0HSUairrrVDhCbcjMh-k1HpggReNXwPS6zVg-Y8qiuC/items/{{{ff54f486-7cc9-4d82-99ff-2de239005586}}}",
-                                    "method": "DELETE"
+                                    "siteId": "appmixer.sharepoint.com,143e1507-a38a-4a41-87da-29794c81011b,a851d241-aeab-43b5-8426-dc8cc87e9351",
+                                    "driveId": "b!BxU-FIqjQUqH2il5TIEBG0HSUairrrVDhCbcjMh-k1HpggReNXwPS6zVg-Y8qiuC",
+                                    "itemId": "{{{ff54f486-7cc9-4d82-99ff-2de239005586}}}"
                                 }
                             }
                         }
@@ -436,7 +440,7 @@
             "y": 640,
             "width": 900,
             "height": 260,
-            "content": "## ⚠️ Test data assumption\n\nBoth lanes are scoped to `E2E-Delta-Triggers/UpdatedFile` in the **Documents** library of the **Stg Appmixer QA**\nSharePoint site. Create that folder with `appmixer.microsoft.sharepoint.CreateFolder`\n(parent path `E2E-Delta-Triggers`) on a fresh tenant.\n\nTiming is load-bearing and the Waits must not be removed:\n- `Wait 1m` lets the Graph subscription propagate before the file is created.\n- `Wait 3m` lets the trigger consume the *creation* delta and advance its `lastUpdated`\n  watermark. `UpdatedFile` only emits files whose `createdDateTime` is older than that\n  watermark, so renaming too early emits nothing and the flow times out.\n\nCleanup deletes the item id the trigger reported — nothing else may write text files into\nthat folder while the flow runs.\n\nThe account needs `Files.Read.All`, `Sites.Read.All`, `Subscription.Read.All` (trigger),\n`Files.ReadWrite.All` (upload) and `Sites.ReadWrite.All` (Make API Call)."
+            "content": "## ⚠️ Test data assumption\n\nBoth lanes are scoped to `E2E-Delta-Triggers/UpdatedFile` in the **Documents** library of the **Stg Appmixer QA**\nSharePoint site. Create that folder with `appmixer.microsoft.sharepoint.CreateFolder`\n(parent path `E2E-Delta-Triggers`) on a fresh tenant.\n\nTiming is load-bearing and the Waits must not be removed:\n- `Wait 1m` lets the Graph subscription propagate before the file is created.\n- `Wait 3m` lets the trigger consume the *creation* delta and advance its `lastUpdated`\n  watermark. `UpdatedFile` only emits files whose `createdDateTime` is older than that\n  watermark, so renaming too early emits nothing and the flow times out.\n\nCleanup deletes the item id the trigger reported — nothing else may write text files into\nthat folder while the flow runs.\n\nThe account needs `Files.Read.All`, `Sites.Read.All`, `Subscription.Read.All` (trigger),\n`Files.ReadWrite.All` (upload, Update File or Folder, cleanup Delete File or Folder)."
         }
     }
 }
