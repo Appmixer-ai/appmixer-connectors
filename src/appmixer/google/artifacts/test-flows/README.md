@@ -8,11 +8,12 @@ flow); the other modules keep their own flows under
 | Flow | Covers |
 |------|--------|
 | `test-flow-drive-file-lifecycle.json` | `CreateFolder`, `CreateFileFromText`, `GetFileMetadata`, `UpdateFileOrFolder`, `FindFilesOrFolders`, `DeleteFileOrFolder` |
-| `test-flow-drive-copy-move-share.json` | `CopyFile`, `MoveFileOrFolder`, `CreateShortcut`, `AddFileOrFolderPermission`, `MakeApiCall` |
+| `test-flow-drive-copy-move-share.json` | `CopyFile`, `MoveFileOrFolder`, `CreateShortcut`, `AddFileOrFolderPermission`, `GetFileMetadata` |
 | `test-flow-drive-download-upload.json` | `DownloadFile`, `UploadFile` |
 | `test-flow-drive-new-file-trigger.json` | `NewFileOrFolder` |
+| `test-flow-drive-new-file-trigger-late-change.json` | `NewFileOrFolder` (file modified before it is processed), `MakeApiCall` |
 | `test-flow-drive-updated-file-trigger.json` | `UpdatedFileOrFolder` |
-| `test-flow-drive-deleted-file-trigger.json` | `DeletedFileOrFolder` |
+| `test-flow-drive-deleted-file-trigger.json` | `DeletedFileOrFolder`, `DeleteFileOrFolder` (Move to trash) |
 
 `appmixer.google.drive.GooglePicker` is `private: true` (an inspector source
 helper) and is deliberately not a flow node.
@@ -40,11 +41,15 @@ helper) and is deliberately not a flow node.
   the `OnStart` lane; a `Wait 1m` lets the Drive change channel propagate before
   the provoking action runs. `AfterAll` uses a 420 s timeout — Drive change
   notifications routinely take minutes.
-- **The deleted-file trigger trashes via `MakeApiCall`, not `DeleteFileOrFolder`.**
+- **The deleted-file trigger trashes, it does not delete.**
   `isDeletedFileOrFolder` needs `change.file`, and a *hard* delete
   (`drive.files.delete`) drops the file object from the change feed. Trashing
-  (`PATCH /files/<id> {"trashed": true}`) keeps it, so that is the provoke; the
-  hard delete happens after `AfterAll` as cleanup.
+  keeps it, so the provoke is `DeleteFileOrFolder` with **Move to trash** on
+  (`PATCH /files/<id> {"trashed": true}`); the hard delete happens after
+  `AfterAll` as cleanup.
+- **The late-change new-file flow keeps `MakeApiCall` on purpose.** It creates
+  the file with a raw `POST /files` that sets a future `modifiedTime`, which
+  `CreateFileFromText` cannot do; the flow note says the same.
 - **Cleanup in the trigger flows consumes the trigger's output**, not the
   provoking action's. `AfterAll` forwards the scope of the message that
   completed it, which is always the trigger lane (the event arrives seconds to
