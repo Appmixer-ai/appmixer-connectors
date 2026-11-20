@@ -8,6 +8,8 @@
 // share: the request with throttle handling, error normalisation, global id
 // conversion and cursor pagination.
 
+const crypto = require('crypto');
+
 const API_VERSION = '2026-10';
 const MAX_THROTTLE_RETRIES = 5;
 
@@ -278,8 +280,26 @@ function tagString(tags) {
     return Array.isArray(tags) ? tags.join(', ') : (tags || '');
 }
 
+/**
+ * Key for the @idempotent directive that refundCreate and
+ * inventorySetQuantities require: the same message with the same inputs gets
+ * the same key, so a retried message does not refund or adjust twice.
+ * @param {Context} context component context
+ * @param {object} input the mutation input
+ * @returns {string}
+ */
+function idempotencyKey(context, input) {
+
+    const message = (context.messages && context.messages.in) || {};
+    const run = message.correlationId || message.originalCorrelationId || crypto.randomUUID();
+    return crypto.createHash('sha256')
+        .update(JSON.stringify([context.componentId, run, input]))
+        .digest('hex');
+}
+
 module.exports = {
     API_VERSION,
+    idempotencyKey,
     ShopifyError,
     gql,
     checkUserErrors,

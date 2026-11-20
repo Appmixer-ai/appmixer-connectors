@@ -137,7 +137,7 @@
             }
         },
         "ae8cc54c-7d6d-450c-907a-ccdb25776096": {
-            "type": "appmixer.shopify.core.MakeApiCall",
+            "type": "appmixer.shopify.orders.CreateRefund",
             "x": 1040,
             "y": 128,
             "source": {
@@ -154,34 +154,19 @@
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
-                                    "body": {
-                                        "a2cc7082-86c1-489d-b524-9c5cca59ba9f": {
-                                            "variable": "$.837b4ea5-0fa3-4f5e-b38b-15913d9770e1.out.legacyResourceId",
-                                            "functions": []
-                                        },
-                                        "c66efd4c-f5e9-4995-b546-db07d60ff29b": {
+                                    "orderId": {
+                                        "ba4176a8-1f77-4c07-861a-d99966636ad4": {
                                             "variable": "$.837b4ea5-0fa3-4f5e-b38b-15913d9770e1.out.id",
                                             "functions": []
-                                        },
-                                        "1ac76c12-c394-4343-8c5e-4a5a5525b59d": {
-                                            "variable": "$.837b4ea5-0fa3-4f5e-b38b-15913d9770e1.out.lineItems",
-                                            "functions": [
-                                                {
-                                                    "name": "g_jsonPath",
-                                                    "params": [
-                                                        {
-                                                            "value": "$[0].id"
-                                                        }
-                                                    ]
-                                                }
-                                            ]
                                         }
                                     }
                                 },
                                 "lambda": {
-                                    "url": "/graphql.json",
-                                    "method": "POST",
-                                    "body": "{\"query\":\"mutation Refund($input: RefundInput!, $key: String!) { refundCreate(input: $input) @idempotent(key: $key) { refund { id } userErrors { field message } } }\",\"variables\":{\"key\":\"appmixer-e2e-refund-{{{a2cc7082-86c1-489d-b524-9c5cca59ba9f}}}\",\"input\":{\"orderId\":\"{{{c66efd4c-f5e9-4995-b546-db07d60ff29b}}}\",\"note\":\"Appmixer E2E refund\",\"refundLineItems\":[{\"lineItemId\":\"{{{1ac76c12-c394-4343-8c5e-4a5a5525b59d}}}\",\"quantity\":1,\"restockType\":\"NO_RESTOCK\"}]}}}"
+                                    "note": "Appmixer E2E refund",
+                                    "refundShipping": false,
+                                    "refundPayment": true,
+                                    "notify": false,
+                                    "orderId": "{{{ba4176a8-1f77-4c07-861a-d99966636ad4}}}"
                                 }
                             }
                         }
@@ -375,7 +360,7 @@
             "y": 8,
             "width": 672,
             "height": 112,
-            "content": "## ⚠️ Self-provoking trigger flow\n\nThe top lane creates a paid test order and refunds its line item (`refundCreate` through Make API Call) one minute after the start — keep the first **Wait**: it lets the webhook subscription become active. The test order is deleted after `AfterAll`."
+            "content": "## ⚠️ Self-provoking trigger flow\n\nThe top lane creates a paid test order and refunds it with **Create Refund** (every line item, money back to the order's payment) one minute after the start — keep the first **Wait**: it lets the webhook subscription become active. The test order is deleted after `AfterAll`."
         }
     }
 }

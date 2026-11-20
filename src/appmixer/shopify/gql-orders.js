@@ -168,6 +168,62 @@ const DELETE_ORDER = `mutation DeleteOrder($orderId: ID!) {
     orderDelete(orderId: $orderId) { deletedId userErrors { field message code } }
 }`;
 
+// Cancelling runs as a background job: the order shows cancelledAt once the job is done.
+const CANCEL_ORDER = `mutation CancelOrder($orderId: ID!, $reason: OrderCancelReason!, $restock: Boolean!,
+    $notifyCustomer: Boolean, $staffNote: String, $refundMethod: OrderCancelRefundMethodInput) {
+    orderCancel(orderId: $orderId, reason: $reason, restock: $restock, notifyCustomer: $notifyCustomer,
+        staffNote: $staffNote, refundMethod: $refundMethod) {
+        job { id done }
+        orderCancelUserErrors { field message code }
+    }
+}`;
+
+const MARK_ORDER_AS_PAID = `mutation MarkOrderAsPaid($input: OrderMarkAsPaidInput!) {
+    orderMarkAsPaid(input: $input) { order { id } userErrors { field message } }
+}`;
+
+const REFUNDABLE_LINE_ITEMS = `query RefundableLineItems($id: ID!) {
+    order(id: $id) { id lineItems(first: 250) { nodes { id refundableQuantity } } }
+}`;
+
+// The payments a refund of these line items (and shipping) returns money to.
+const SUGGESTED_REFUND = `query SuggestedRefund($id: ID!, $refundLineItems: [RefundLineItemInput!], $refundShipping: Boolean) {
+    order(id: $id) {
+        suggestedRefund(refundLineItems: $refundLineItems, refundShipping: $refundShipping) {
+            suggestedTransactions { gateway amountSet { shopMoney { amount } } parentTransaction { id } }
+        }
+    }
+}`;
+
+const CREATE_REFUND = `mutation CreateRefund($input: RefundInput!, $key: String!) {
+    refundCreate(input: $input) @idempotent(key: $key) { refund { id } userErrors { field message } }
+}`;
+
+// Fulfillment orders that can still be fulfilled, with what remains of each line item.
+const OPEN_FULFILLMENT_ORDERS = `query OpenFulfillmentOrders($id: ID!) {
+    order(id: $id) {
+        id
+        fulfillmentOrders(first: 50) { nodes {
+            id status
+            lineItems(first: 250) { nodes { id remainingQuantity lineItem { id } } }
+        } }
+    }
+}`;
+
+const CREATE_FULFILLMENT = `mutation CreateFulfillment($fulfillment: FulfillmentInput!) {
+    fulfillmentCreate(fulfillment: $fulfillment) { fulfillment { id } userErrors { field message } }
+}`;
+
+const UPDATE_FULFILLMENT_TRACKING = `mutation UpdateFulfillmentTracking($fulfillmentId: ID!,
+    $trackingInfoInput: FulfillmentTrackingInput!, $notifyCustomer: Boolean) {
+    fulfillmentTrackingInfoUpdate(fulfillmentId: $fulfillmentId, trackingInfoInput: $trackingInfoInput,
+        notifyCustomer: $notifyCustomer) {
+        fulfillment { id } userErrors { field message }
+    }
+}`;
+
+const FULFILLABLE_STATUSES = ['OPEN', 'IN_PROGRESS'];
+
 // Values of the typed filters → order search syntax. 'any' (or empty) = no filter.
 const STATUS_FILTERS = ['open', 'closed', 'cancelled'];
 const FINANCIAL_FILTERS = ['authorized', 'pending', 'paid', 'partially_paid', 'refunded', 'partially_refunded', 'voided', 'expired'];
@@ -321,6 +377,111 @@ function mailingAddress(fields = {}, label = 'Address') {
     return Object.keys(input).length ? input : undefined;
 }
 
+const RESTOCK_TYPES = ['NO_RESTOCK', 'CANCEL', 'RETURN'];
+
+/**
+ * Line items to refund → [RefundLineItemInput]. No rows refund every line item
+ * that can still be refunded, in full.
+ * @param {Array} rows [{ lineItemId, quantity, restockType }]
+ * @param {Array} refundable the order's line items [{ id, refundableQuantity }]
+ * @param {string} [defaultRestock='NO_RESTOCK']
+ * @returns {Array}
+ */
+function refundLineItems(rows, refundable, defaultRestock = 'NO_RESTOCK') {
+
+    const restock = value => {
+        const type = present(value) ? String(value).trim().toUpperCase() : defaultRestock;
+        if (!RESTOCK_TYPES.includes(type)) {
+            throw new client.ShopifyError(`Unsupported restock type "${value}".`, 422);
+        }
+        return type;
+    };
+    if (!rows.length) {
+        return refundable
+            .filter(item => item.refundableQuantity > 0)
+            .map(item => ({ lineItemId: item.id, quantity: item.refundableQuantity, restockType: restock() }));
+    }
+    return rows.map((row, index) => {
+        if (!present(row.lineItemId)) {
+            throw new client.ShopifyError(`Line item ${index + 1}: the line item ID is required.`, 422);
+        }
+        const lineItemId = client.toGid('LineItem', String(row.lineItemId).trim());
+        const line = refundable.find(item => item.id === lineItemId);
+        if (!line) {
+            throw new client.ShopifyError(`Line item ${index + 1}: ${lineItemId} is not a line item of the order.`, 422);
+        }
+        const quantity = present(row.quantity) ? parseInt(row.quantity, 10) : line.refundableQuantity;
+        if (!Number.isFinite(quantity) || quantity < 1) {
+            throw new client.ShopifyError(`Line item ${index + 1}: the quantity must be a positive whole number.`, 422);
+        }
+        return { lineItemId, quantity, restockType: restock(row.restockType) };
+    });
+}
+
+/**
+ * Open fulfillment orders of an order → FulfillmentInput.lineItemsByFulfillmentOrder.
+ * No rows fulfill everything that remains; rows (order line item + quantity)
+ * fulfill just those units.
+ * @param {Array} fulfillmentOrders [{ id, status, lineItems: { nodes: [{ id, remainingQuantity, lineItem: { id } }] } }]
+ * @param {Array} rows [{ lineItemId, quantity }]
+ * @returns {Array}
+ */
+function fulfillmentLineItems(fulfillmentOrders, rows) {
+
+    const open = fulfillmentOrders.filter(order => FULFILLABLE_STATUSES.includes(order.status));
+    if (!open.length) {
+        throw new client.ShopifyError('The order has nothing left to fulfill: it has no open fulfillment orders.', 422);
+    }
+    if (!rows.length) {
+        return open.map(order => ({ fulfillmentOrderId: order.id }));
+    }
+
+    const byOrder = new Map();
+    rows.forEach((row, index) => {
+        if (!present(row.lineItemId)) {
+            throw new client.ShopifyError(`Line item ${index + 1}: the line item ID is required.`, 422);
+        }
+        const lineItemId = client.toGid('LineItem', String(row.lineItemId).trim());
+        let wanted = present(row.quantity) ? parseInt(row.quantity, 10) : Infinity;
+        if (!(wanted > 0)) {
+            throw new client.ShopifyError(`Line item ${index + 1}: the quantity must be a positive whole number.`, 422);
+        }
+        let matched = 0;
+        for (const order of open) {
+            for (const item of nodes(order.lineItems)) {
+                const sameItem = item.lineItem && item.lineItem.id === lineItemId;
+                if (wanted <= 0 || !sameItem || item.remainingQuantity < 1) continue;
+                const quantity = Math.min(wanted, item.remainingQuantity);
+                wanted -= quantity;
+                matched += quantity;
+                if (!byOrder.has(order.id)) byOrder.set(order.id, []);
+                byOrder.get(order.id).push({ id: item.id, quantity });
+            }
+        }
+        if (!matched) {
+            throw new client.ShopifyError(`Line item ${index + 1}: ${lineItemId} has nothing left to fulfill.`, 422);
+        }
+    });
+    return [...byOrder.entries()].map(([fulfillmentOrderId, fulfillmentOrderLineItems]) => ({
+        fulfillmentOrderId,
+        fulfillmentOrderLineItems
+    }));
+}
+
+/**
+ * Tracking inputs → FulfillmentTrackingInput; undefined when all are empty.
+ * @param {object} inputs { trackingCompany, trackingNumber, trackingUrl }
+ * @returns {object|undefined}
+ */
+function trackingInfo(inputs) {
+
+    const info = {};
+    if (present(inputs.trackingCompany)) info.company = String(inputs.trackingCompany).trim();
+    if (present(inputs.trackingNumber)) info.number = String(inputs.trackingNumber).trim();
+    if (present(inputs.trackingUrl)) info.url = String(inputs.trackingUrl).trim();
+    return Object.keys(info).length ? info : undefined;
+}
+
 function sortKey(value) {
 
     if (!present(value)) return 'CREATED_AT';
@@ -468,6 +629,135 @@ module.exports = (run) => {
             client.checkUserErrors(data.orderDelete, 'orderDelete');
         },
 
+        /**
+         * Cancel an order. Shopify cancels in a background job.
+         * @param {object} params
+         * @param {string} params.id order gid or numeric id
+         * @param {string} params.reason OrderCancelReason
+         * @param {boolean} params.restock
+         * @param {boolean} params.refund refund the payments to the original payment methods
+         * @param {boolean} [params.notifyCustomer]
+         * @param {string} [params.staffNote]
+         * @returns {Promise<object>} the job { id, done }
+         */
+        async cancel({ id, reason, restock, refund, notifyCustomer, staffNote }) {
+
+            const data = await run(CANCEL_ORDER, {
+                orderId: client.toGid('Order', id),
+                reason,
+                restock: !!restock,
+                notifyCustomer: !!notifyCustomer,
+                staffNote: staffNote || null,
+                refundMethod: refund ? { originalPaymentMethodsRefund: true } : null
+            });
+            const payload = data.orderCancel || {};
+            client.checkUserErrors({ userErrors: payload.orderCancelUserErrors }, 'orderCancel');
+            return payload.job || null;
+        },
+
+        // Mark an order as paid (records a manual payment of the outstanding amount) and return it.
+        async markAsPaid(id) {
+
+            const data = await run(MARK_ORDER_AS_PAID, { input: { id: client.toGid('Order', id) } });
+            const payload = client.checkUserErrors(data.orderMarkAsPaid, 'orderMarkAsPaid');
+            return get(payload.order.id);
+        },
+
+        /**
+         * Create a refund and return it (with its order).
+         * @param {object} params
+         * @param {string} params.orderId
+         * @param {Array} [params.lineItems] [{ lineItemId, quantity, restockType }]; none = everything refundable
+         * @param {boolean} [params.refundShipping]
+         * @param {boolean} [params.refundPayment] return the money to the payments Shopify suggests
+         * @param {string} [params.note]
+         * @param {boolean} [params.notify]
+         * @param {string} params.idempotencyKey
+         * @returns {Promise<object>}
+         */
+        async createRefund({ orderId, lineItems = [], refundShipping, refundPayment, note, notify, idempotencyKey }) {
+
+            const id = client.toGid('Order', orderId);
+            const context = await run(REFUNDABLE_LINE_ITEMS, { id });
+            if (!context.order) {
+                throw new client.ShopifyError(`Order ${orderId} not found.`, 404);
+            }
+            const input = { orderId: id, notify: !!notify };
+            input.refundLineItems = refundLineItems(lineItems, nodes(context.order.lineItems));
+            if (refundShipping) input.shipping = { fullRefund: true };
+            if (present(note)) input.note = String(note);
+            if (!input.refundLineItems.length && !refundShipping) {
+                throw new client.ShopifyError('The order has nothing left to refund.', 422);
+            }
+
+            if (refundPayment) {
+                const suggested = await run(SUGGESTED_REFUND, {
+                    id,
+                    refundLineItems: input.refundLineItems,
+                    refundShipping: !!refundShipping
+                });
+                const transactions = (suggested.order.suggestedRefund.suggestedTransactions || [])
+                    .filter(transaction => transaction.parentTransaction
+                        && Number(transaction.amountSet.shopMoney.amount) > 0)
+                    .map(transaction => ({
+                        orderId: id,
+                        gateway: transaction.gateway,
+                        kind: 'REFUND',
+                        amount: transaction.amountSet.shopMoney.amount,
+                        parentId: transaction.parentTransaction.id
+                    }));
+                if (transactions.length) input.transactions = transactions;
+            }
+
+            const data = await run(CREATE_REFUND, { input, key: idempotencyKey });
+            const payload = client.checkUserErrors(data.refundCreate, 'refundCreate');
+            return this.fetchRefund(payload.refund.id);
+        },
+
+        /**
+         * Fulfill an order's open fulfillment orders (or some of their line items)
+         * and return the fulfillment (with its order).
+         * @param {object} params
+         * @param {string} params.orderId
+         * @param {Array} [params.lineItems] [{ lineItemId, quantity }]; none = everything that remains
+         * @param {object} [params.trackingInfo] { company, number, url }
+         * @param {boolean} [params.notifyCustomer]
+         * @returns {Promise<object>}
+         */
+        async createFulfillment({ orderId, lineItems = [], trackingInfo, notifyCustomer }) {
+
+            const data = await run(OPEN_FULFILLMENT_ORDERS, { id: client.toGid('Order', orderId) });
+            if (!data.order) {
+                throw new client.ShopifyError(`Order ${orderId} not found.`, 404);
+            }
+            const fulfillment = {
+                lineItemsByFulfillmentOrder: fulfillmentLineItems(nodes(data.order.fulfillmentOrders), lineItems),
+                notifyCustomer: !!notifyCustomer
+            };
+            if (trackingInfo && Object.keys(trackingInfo).length) fulfillment.trackingInfo = trackingInfo;
+
+            const created = await run(CREATE_FULFILLMENT, { fulfillment });
+            const payload = client.checkUserErrors(created.fulfillmentCreate, 'fulfillmentCreate');
+            return this.fetchFulfillment(payload.fulfillment.id);
+        },
+
+        /**
+         * Replace the tracking information of a fulfillment.
+         * @param {object} params
+         * @param {string} params.fulfillmentId
+         * @param {object} params.trackingInfo { company, number, url }
+         * @param {boolean} [params.notifyCustomer]
+         */
+        async updateFulfillmentTracking({ fulfillmentId, trackingInfo, notifyCustomer }) {
+
+            const data = await run(UPDATE_FULFILLMENT_TRACKING, {
+                fulfillmentId: client.toGid('Fulfillment', fulfillmentId),
+                trackingInfoInput: trackingInfo,
+                notifyCustomer: !!notifyCustomer
+            });
+            client.checkUserErrors(data.fulfillmentTrackingInfoUpdate, 'fulfillmentTrackingInfoUpdate');
+        },
+
         // The refund (with its order), or null when there is none with that id.
         async fetchRefund(id) {
 
@@ -504,6 +794,9 @@ module.exports = (run) => {
 
 module.exports.searchQuery = searchQuery;
 module.exports.mailingAddress = mailingAddress;
+module.exports.refundLineItems = refundLineItems;
+module.exports.fulfillmentLineItems = fulfillmentLineItems;
+module.exports.trackingInfo = trackingInfo;
 module.exports.flattenOrder = flattenOrder;
 module.exports.flattenRefund = flattenRefund;
 module.exports.flattenFulfillment = flattenFulfillment;
