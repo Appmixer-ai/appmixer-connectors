@@ -577,7 +577,7 @@ const ENTITIES = {
             website: firstValue(e.Urls),
             description: e.Description,
             createdDate: e.CreatedDate,
-            updatedDate: e.UpdatedDate
+            updatedDate: realDate(e.UpdatedDate)
         }),
         fromRow: (r) => compact({
             id: rowNumber(r.contactId),
@@ -632,7 +632,7 @@ const ENTITIES = {
             mobilePhone: firstValue(e.MobilePhones),
             officePhone: firstValue(e.OfficePhones),
             createdDate: e.CreatedDate,
-            updatedDate: e.UpdatedDate
+            updatedDate: realDate(e.UpdatedDate)
         }),
         fromRow: (r) => compact({
             id: rowNumber(r.personId),
@@ -686,7 +686,7 @@ const ENTITIES = {
             projectId: positive(ref(e.Project, 'ProjectId')),
             description: e.SaleText,
             createdDate: e.CreatedDate,
-            updatedDate: e.UpdatedDate
+            updatedDate: realDate(e.UpdatedDate)
         }),
         fromRow: (r) => compact({
             id: rowNumber(r.saleId),
@@ -745,7 +745,7 @@ const ENTITIES = {
             startDate: e.StartDate,
             endDate: e.EndDate,
             createdDate: e.CreatedDate,
-            updatedDate: e.UpdatedDate
+            updatedDate: realDate(e.UpdatedDate)
         }),
         fromRow: (r) => compact({
             id: rowNumber(r.projectId),
@@ -800,7 +800,7 @@ const ENTITIES = {
             projectId: positive(ref(e.Project, 'ProjectId')),
             saleId: positive(ref(e.Sale, 'SaleId')),
             createdDate: e.CreatedDate,
-            updatedDate: e.UpdatedDate
+            updatedDate: realDate(e.UpdatedDate)
         }),
         fromRow: (r) => compact({
             id: rowNumber(r.appointmentId),
@@ -1263,19 +1263,33 @@ ENTITIES.ticket = {
 
 // The objects of the generic components (Get / Find / Update Record, Record Updated). The keys
 // are the ENTITIES keys; updatedColumn is the archive column Record Updated polls on, and the
-// company and person columns are the archive restrictions Find Records offers.
+// company, person and owner columns are the archive restrictions Find Records offers (a person
+// has no owner).
 const RECORD_OBJECTS = {
-    company: { label: 'Company', updatedColumn: 'updatedDate', companyColumn: 'contactId' },
+    company: { label: 'Company', updatedColumn: 'updatedDate', companyColumn: 'contactId', ownerColumn: 'associateId' },
     person: { label: 'Person', updatedColumn: 'personUpdatedDate', companyColumn: 'contactId', personColumn: 'personId' },
-    sale: { label: 'Sale', updatedColumn: 'updatedDate', companyColumn: 'contact/contactId', personColumn: 'person/personId' },
-    project: { label: 'Project', updatedColumn: 'updatedDate' },
+    sale: {
+        label: 'Sale',
+        updatedColumn: 'updatedDate',
+        companyColumn: 'contact/contactId',
+        personColumn: 'person/personId',
+        ownerColumn: 'associateId'
+    },
+    project: { label: 'Project', updatedColumn: 'updatedDate', ownerColumn: 'associateId' },
     appointment: {
         label: 'Follow-up (appointment or task)',
         updatedColumn: 'updatedDate',
         companyColumn: 'contact/contactId',
-        personColumn: 'person/personId'
+        personColumn: 'person/personId',
+        ownerColumn: 'associateId'
     },
-    ticket: { label: 'Ticket (request)', updatedColumn: 'lastChanged', companyColumn: 'contactId', personColumn: 'personId' }
+    ticket: {
+        label: 'Ticket (request)',
+        updatedColumn: 'lastChanged',
+        companyColumn: 'contactId',
+        personColumn: 'personId',
+        ownerColumn: 'ownedBy/associateDbId'
+    }
 };
 
 const OBJECT_OPTIONS = Object.keys(RECORD_OBJECTS).map(key => ({ label: RECORD_OBJECTS[key].label, value: key }));
@@ -1473,11 +1487,13 @@ const toRecord = (object, entity) => {
 
     const e = entity || {};
     const owner = ownerOf(object, e);
+    const ownerId = positive(ref(owner, 'AssociateId'));
     const record = {
         object,
         ...ENTITIES[object].fromEntity(e),
-        ownerId: positive(ref(owner, 'AssociateId')),
-        ownerName: ref(owner, 'FullName') || ref(owner, 'Name')
+        ownerId,
+        // An unassigned ticket carries a resource placeholder instead of a name
+        ownerName: ownerId ? ref(owner, 'FullName') || ref(owner, 'Name') : undefined
     };
     if (object === 'appointment') {
         record.ticketId = positive(ref(e.Ticket, 'TicketId'));
@@ -1614,6 +1630,15 @@ const findRecords = async (context, object, { companyId, personId, ownerId, filt
         }
         filters.push(config.personColumn + ' eq ' + person);
     }
+    // The owner restricts the archive query itself: filtering the page afterwards would miss
+    // every match older than the newest 100 records.
+    const owner = toInteger(context, ownerId, 'Owner');
+    if (owner !== undefined) {
+        if (!config.ownerColumn) {
+            throw cancelError(context, config.label + ' records have no owner to filter by.');
+        }
+        filters.push(config.ownerColumn + ' eq ' + owner);
+    }
     if (filter) {
         filters.push(filter);
     }
@@ -1622,12 +1647,7 @@ const findRecords = async (context, object, { companyId, personId, ownerId, filt
         orderBy: ENTITIES[object].primaryKey + ' desc',
         top: RECORD_PAGE_SIZE
     });
-    let records = await getRecords(context, object, rows.map(row => row.id));
-    const owner = toInteger(context, ownerId, 'Owner');
-    if (owner !== undefined) {
-        records = records.filter(record => record.ownerId === owner);
-    }
-    return records;
+    return getRecords(context, object, rows.map(row => row.id));
 };
 
 const compareUpdated = (a, b) => {
@@ -1779,9 +1799,15 @@ const USERS_SOURCE = {
     data: { properties: { isSource: true }, transform: './ListUsers#toSelectArray' }
 };
 
+// List Statuses requires the object on its in port: sent as a property only, the engine rejects the
+// call before the component runs and the dropdown stays empty.
 const statusSource = (object) => ({
     url: '/component/appmixer/superoffice/core/ListStatuses?outPort=out',
-    data: { properties: { isSource: true, object }, transform: './ListStatuses#toSelectArray' }
+    data: {
+        messages: { 'in/object': object, 'in/outputType': 'array' },
+        properties: { isSource: true },
+        transform: './ListStatuses#toSelectArray'
+    }
 });
 
 const SALE_STATUSES = ['Open', 'Sold', 'Lost', 'Stalled'];
@@ -2130,7 +2156,7 @@ const createActivity = async (context, input, defaults = {}) => {
 /**
  * Items of an MDO list (GET /MDOList/{name}?flat=true), headings and deleted items left out.
  * @param {object} context
- * @param {string} name e.g. associate, ticketstatus
+ * @param {string} name e.g. associate
  * @returns {Promise<object[]>}
  */
 const mdoListItems = async (context, name) => {
@@ -2150,7 +2176,12 @@ const statusValues = async (context, object) => {
 
     getRecordObject(context, object);
     if (object === 'ticket') {
-        return (await mdoListItems(context, 'ticketstatus')).map(item => ({ id: String(item.id), name: item.name }));
+        // The ticket statuses of the tenant (Open, Closed, Postponed, ...). The MDO list "ticketstatus"
+        // holds the base statuses under other IDs, so its IDs must not be written to a ticket.
+        const body = await request(context, { path: '/List/TicketStatus/Items' });
+        return (Array.isArray(body) ? body : [])
+            .filter(item => item && typeof item.TicketStatusId === 'number' && item.TicketStatusId > 0)
+            .map(item => ({ id: String(item.TicketStatusId), name: item.Name }));
     }
     if (object === 'project') {
         return (await listItems(context, 'ProjectStatus')).map(item => ({ id: String(item.id), name: item.name }));

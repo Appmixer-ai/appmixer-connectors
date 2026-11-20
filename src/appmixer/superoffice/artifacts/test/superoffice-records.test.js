@@ -119,6 +119,17 @@ describe('superoffice generic records', () => {
 
     describe('Get Record', () => {
 
+        it('leaves out the placeholder owner of an unassigned ticket and the 0001 date of a record never updated', () => {
+
+            const ticket = lib.toRecord('ticket', { TicketId: 1, OwnedBy: { AssociateId: 0, FullName: '[SR_CRITERION_UNASSIGNED]' } });
+            assert.strictEqual(ticket.ownerId, undefined);
+            assert.strictEqual(ticket.ownerName, undefined);
+
+            const task = lib.toRecord('appointment', { AppointmentId: 14, UpdatedDate: '0001-01-01T00:00:00Z', Associate: { AssociateId: 3, FullName: 'Anna Berg' } });
+            assert.strictEqual(task.updatedDate, undefined);
+            assert.strictEqual(task.ownerName, 'Anna Berg');
+        });
+
         it('maps a ticket with owner, status and custom fields', async () => {
 
             const context = createContext({ messages: { in: { content: { object: 'ticket', recordId: '7' } } } });
@@ -185,12 +196,24 @@ describe('superoffice generic records', () => {
             assert.strictEqual(context.sent[0].data.result[0].id, 7);
         });
 
-        it('sends notFound when nothing matches the owner', async () => {
+        it('filters by owner in the archive query, not on the page it returned', async () => {
 
             const context = createContext({ messages: { in: { content: { object: 'ticket', ownerId: '9', outputType: 'array' } } } });
-            route(context, { 'GET /Ticket': { value: [{ ticketId: 7 }] }, 'GET /Ticket/7': ticketEntity() });
+            route(context, { 'GET /Ticket': { value: [] } });
             await load('FindRecords').receive(context);
             assert.strictEqual(context.sent[0].port, 'notFound');
+            assert.strictEqual(apiCalls(context)[0].params.$filter, '(ownedBy/associateDbId eq 9)');
+
+            const companies = createContext({ messages: { in: { content: { object: 'company', ownerId: 5, outputType: 'array' } } } });
+            route(companies, { 'GET /Contact': { value: [] } });
+            await load('FindRecords').receive(companies);
+            assert.strictEqual(apiCalls(companies)[0].params.$filter, '(associateId eq 5)');
+        });
+
+        it('refuses an owner filter on persons, which have no owner', async () => {
+
+            const context = createContext({ messages: { in: { content: { object: 'person', ownerId: '9', outputType: 'array' } } } });
+            await assert.rejects(load('FindRecords').receive(context), /have no owner to filter by/);
         });
 
         it('refuses a company filter on projects', async () => {
@@ -358,6 +381,16 @@ describe('superoffice generic records', () => {
             await assert.rejects(load('UpdateRecord').receive(unknown), /Unknown custom field cf_nope/);
         });
 
+        it('offers the ticket statuses with the object on the in port of List Statuses', async () => {
+
+            const context = createContext({ properties: { generateInspector: true, object: 'ticket' } });
+            route(context, { 'GET /Ticket/CustomField': [] });
+            await load('UpdateRecord').receive(context);
+            const { source } = context.sent[0].data.inputs.statusId;
+            assert.strictEqual(source.data.messages['in/object'], 'ticket');
+            assert.strictEqual(source.data.properties.isSource, true);
+        });
+
         it('generates the inspector with the writable custom fields of the object', async () => {
 
             const context = createContext({ properties: { generateInspector: true, object: 'ticket' } });
@@ -447,9 +480,15 @@ describe('superoffice generic records', () => {
         it('lists ticket statuses and fields of an object', async () => {
 
             const statuses = createContext({ messages: { in: { content: { object: 'ticket', outputType: 'array' } } } });
-            route(statuses, { 'GET /MDOList/ticketstatus': [{ Id: 2, Name: 'Closed' }] });
+            // The tenant's ticket statuses; the MDO list "ticketstatus" holds base statuses under other IDs
+            route(statuses, {
+                'GET /List/TicketStatus/Items': [
+                    { TicketStatusId: 2, Name: 'Open', Status: 'Active' },
+                    { TicketStatusId: 3, Name: 'Closed', Status: 'Closed' }
+                ]
+            });
             await load('ListStatuses').receive(statuses);
-            assert.deepStrictEqual(statuses.sent[0].data.result, [{ id: '2', name: 'Closed' }]);
+            assert.deepStrictEqual(statuses.sent[0].data.result, [{ id: '2', name: 'Open' }, { id: '3', name: 'Closed' }]);
 
             const fields = createContext({ messages: { in: { content: { object: 'ticket', outputType: 'array' } } } });
             route(fields, { 'GET /Ticket/CustomField': [{ FieldName: 'x_score', DisplayName: 'Score', FieldType: 'Integer' }] });
