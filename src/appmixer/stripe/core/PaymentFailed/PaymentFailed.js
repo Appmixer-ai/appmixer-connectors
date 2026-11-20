@@ -6,12 +6,17 @@ const lib = require('../../lib');
 // https://docs.stripe.com/api/events/types
 const EVENT_TYPES = ['payment_intent.payment_failed', 'invoice.payment_failed'];
 
+// A failed invoice payment (e.g. a subscription renewal) emits both events, so listening
+// to both starts the flow twice for one failure. The default is the one event that
+// covers one-time and invoice payments alike.
+const DEFAULT_EVENT_TYPES = ['payment_intent.payment_failed'];
+
 function enabledEvents(context) {
 
     const { events } = context.properties;
     const selected = lib.isSet(events) && (!Array.isArray(events) || events.length)
         ? lib.normalizeMultiselectInput(events, context, 'Events')
-        : EVENT_TYPES;
+        : DEFAULT_EVENT_TYPES;
     const unsupported = selected.filter(type => !EVENT_TYPES.includes(type));
     if (unsupported.length) {
         throw new context.CancelError(`Unsupported events: ${unsupported.join(', ')}`);

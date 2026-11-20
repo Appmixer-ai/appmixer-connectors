@@ -131,6 +131,15 @@ describe('stripe actions', () => {
         assert.strictEqual(options.data, undefined);
     });
 
+    it('CancelSubscription reads toggles mapped from a variable as strings', async () => {
+
+        const context = createContext({ subscriptionId: 'sub_1', invoiceNow: 'false', prorate: 'true' });
+        await CancelSubscription.receive(context);
+        const url = new URL(context.httpRequest.firstCall.args[0].url);
+        assert.strictEqual(url.searchParams.get('invoice_now'), 'false');
+        assert.strictEqual(url.searchParams.get('prorate'), 'true');
+    });
+
     it('CreateCheckoutSession validates the mode-specific inputs', async () => {
 
         let context = createContext({ mode: 'payment', successUrl: 'https://example.com/ok' });
@@ -236,9 +245,19 @@ describe('stripe webhook triggers', () => {
         await PaymentFailed.stop(context);
     });
 
-    it('PaymentFailed defaults to both events', async () => {
+    it('PaymentFailed defaults to one event, so a failed invoice payment starts the flow once', async () => {
 
         const context = createContext({}, { events: [] });
+        context.httpRequest.resolves({ data: { id: 'we_1' } });
+        await PaymentFailed.start(context);
+        const form = new URLSearchParams(context.httpRequest.firstCall.args[0].data);
+        assert.strictEqual(form.get('enabled_events[0]'), 'payment_intent.payment_failed');
+        assert.strictEqual(form.has('enabled_events[1]'), false);
+    });
+
+    it('PaymentFailed listens to both events when both are selected', async () => {
+
+        const context = createContext({}, { events: ['payment_intent.payment_failed', 'invoice.payment_failed'] });
         context.httpRequest.resolves({ data: { id: 'we_1' } });
         await PaymentFailed.start(context);
         const form = new URLSearchParams(context.httpRequest.firstCall.args[0].data);

@@ -5,6 +5,10 @@ const STRIPE_API_BASE = 'https://api.stripe.com';
 // The subscription, checkout, payment link, invoice item and webhook components send
 // this version, so their parameters (e.g. `pricing[price]` on invoice items) and the
 // shape of the objects they return do not depend on the account's default API version.
+// Trigger output is the exception: an event read back from /v1/events is always rendered
+// in the account's default API version, whatever version the request or the webhook
+// endpoint asks for (checked live), so `data` follows the account. The fields the trigger
+// out ports declare are the ones that are stable across versions.
 // https://docs.stripe.com/api/versioning
 const STRIPE_API_VERSION = '2026-10-28.endive';
 
@@ -74,6 +78,15 @@ async function stripeRequest(context, { method = 'GET', path, data, params }) {
 function isSet(value) {
 
     return value !== undefined && value !== null && value !== '';
+}
+
+/**
+ * Read a toggle input. A value mapped from a variable can arrive as the string
+ * 'true' or 'false'; Boolean('false') would be true.
+ */
+function toBoolean(value) {
+
+    return value === true || String(value).trim().toLowerCase() === 'true';
 }
 
 /**
@@ -322,6 +335,7 @@ module.exports = {
     toFormBody,
     stripeRequest,
     isSet,
+    toBoolean,
     kvToObject,
     normalizeMultiselectInput,
     normalizeLineItems,

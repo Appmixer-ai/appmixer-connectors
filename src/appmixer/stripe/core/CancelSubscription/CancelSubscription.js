@@ -14,8 +14,8 @@ module.exports = {
         }
 
         const params = {};
-        if (lib.isSet(invoiceNow)) params.invoice_now = Boolean(invoiceNow);
-        if (lib.isSet(prorate)) params.prorate = Boolean(prorate);
+        if (lib.isSet(invoiceNow)) params.invoice_now = lib.toBoolean(invoiceNow);
+        if (lib.isSet(prorate)) params.prorate = lib.toBoolean(prorate);
         if (lib.isSet(cancellationComment)) params.cancellation_details = { comment: cancellationComment };
 
         const subscription = await lib.stripeRequest(context, {
