@@ -18,8 +18,8 @@ const ITEM_SCHEMA = {
         phone: { type: 'string', title: 'Phone', example: '+47 22 00 00 00' },
         website: { type: 'string', title: 'Website', example: 'https://acme.example' },
         description: { type: 'string', title: 'Description', example: 'Reseller for the Nordic market.' },
-        createdDate: { type: 'string', title: 'Created Date', example: '2026-11-16T10:30:00' },
-        updatedDate: { type: 'string', title: 'Updated Date', example: '2026-11-17T08:15:00' }
+        createdDate: { type: 'string', title: 'Created Date', example: '2026-11-16T10:30:00Z' },
+        updatedDate: { type: 'string', title: 'Updated Date', example: '2026-11-17T08:15:00Z' }
     }
 };
 

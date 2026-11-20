@@ -10,8 +10,8 @@ const ITEM_SCHEMA = {
         id: { type: 'integer', title: 'Follow-up ID', example: 981 },
         title: { type: 'string', title: 'Title', example: 'Kick-off meeting' },
         description: { type: 'string', title: 'Description', example: 'Agree on the project plan.' },
-        startDate: { type: 'string', title: 'Start Date', example: '2026-11-20T09:00:00' },
-        endDate: { type: 'string', title: 'End Date', example: '2026-11-20T10:00:00' },
+        startDate: { type: 'string', title: 'Start Date', example: '2026-11-20T09:00:00Z' },
+        endDate: { type: 'string', title: 'End Date', example: '2026-11-20T10:00:00Z' },
         task: { type: 'string', title: 'Task', example: 'Meeting' },
         type: { type: 'string', title: 'Type', example: 'inDiary' },
         completed: { type: 'string', title: 'Completed', example: 'NotStarted' },
@@ -22,8 +22,8 @@ const ITEM_SCHEMA = {
         personName: { type: 'string', title: 'Person Name', example: 'Jane Doe' },
         projectId: { type: 'integer', title: 'Project ID', example: 12 },
         saleId: { type: 'integer', title: 'Sale ID', example: 57 },
-        createdDate: { type: 'string', title: 'Created Date', example: '2026-11-16T10:30:00' },
-        updatedDate: { type: 'string', title: 'Updated Date', example: '2026-11-17T08:15:00' }
+        createdDate: { type: 'string', title: 'Created Date', example: '2026-11-16T10:30:00Z' },
+        updatedDate: { type: 'string', title: 'Updated Date', example: '2026-11-17T08:15:00Z' }
     }
 };
 

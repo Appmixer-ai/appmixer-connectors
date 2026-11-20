@@ -254,7 +254,7 @@ const sendWithTenant = async (context, buildOptions) => {
  * @param {*} [options.data]
  * @returns {Promise<*>} response body
  */
-const request = async (context, { method = 'GET', path, params, data }) => {
+const rawRequest = async (context, { method = 'GET', path, params, data }) => {
 
     try {
         const response = await sendWithTenant(context, (base) => {
@@ -275,6 +275,191 @@ const request = async (context, { method = 'GET', path, params, data }) => {
         }
         throw err;
     }
+};
+
+// Time zone -------------------------------------------------------------------------------
+//
+// SuperOffice returns and stores date-times as wall-clock values of the tenant (its base time
+// zone) without an offset, and ignores an offset in a value it is sent. The components speak
+// UTC instead: every date-time they return ends with Z, and a date-time they are given is an
+// instant converted to the tenant's wall clock. Nothing depends on the time zone of the server
+// Appmixer runs on.
+
+const TIME_ZONE_TTL = 60 * 60 * 1000;
+// Zones that share the European daylight saving switch; one of them matches a European offset.
+const EUROPEAN_ZONES = ['Europe/London', 'Europe/Oslo', 'Europe/Helsinki'];
+const timeZones = new WeakMap();
+const formatters = new Map();
+
+/**
+ * UTC offset of an IANA zone at an instant, in minutes east of UTC.
+ * @param {string} zone
+ * @param {number} utcMs
+ * @returns {number}
+ */
+const zoneOffset = (zone, utcMs) => {
+
+    let formatter = formatters.get(zone);
+    if (!formatter) {
+        formatter = new Intl.DateTimeFormat('en-US', {
+            timeZone: zone,
+            hourCycle: 'h23',
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit'
+        });
+        formatters.set(zone, formatter);
+    }
+    const parts = {};
+    for (const part of formatter.formatToParts(new Date(utcMs))) {
+        parts[part.type] = Number(part.value);
+    }
+    const wall = Date.UTC(parts.year, parts.month - 1, parts.day, parts.hour, parts.minute, parts.second);
+    return Math.round((wall - Math.floor(utcMs / 1000) * 1000) / 60000);
+};
+
+const offsetAt = (timeZone, utcMs) => (timeZone.zone ? zoneOffset(timeZone.zone, utcMs) : timeZone.bias);
+
+/**
+ * The time zone for the UTC offset SuperOffice reports for the tenant right now. SuperOffice gives
+ * the current offset only; a European offset is taken as the European zone that has it now, so
+ * that dates on the other side of a daylight saving switch are right too. Any other offset is
+ * used as it is, all year.
+ * @param {number} bias minutes east of UTC
+ * @param {number} [now]
+ * @returns {{zone?: string, bias?: number}}
+ */
+const timeZoneForBias = (bias, now = Date.now()) => {
+
+    const zone = EUROPEAN_ZONES.find(name => zoneOffset(name, now) === bias);
+    return zone ? { zone } : { bias };
+};
+
+/**
+ * The time zone of the tenant's date-times: the service config key timeZone (an IANA name such
+ * as Europe/Oslo) when set, otherwise what SuperOffice reports, cached for an hour.
+ * @param {object} context
+ * @returns {Promise<{zone?: string, bias?: number}>}
+ */
+const getTimeZone = async (context) => {
+
+    if (timeZones.has(context)) {
+        return timeZones.get(context);
+    }
+    let timeZone;
+    const configured = context.config && context.config.timeZone;
+    if (configured) {
+        const zone = String(configured).trim();
+        try {
+            zoneOffset(zone, Date.now());
+        } catch (err) {
+            throw new Error('Unsupported SuperOffice time zone "' + configured + '". Use an IANA name such as Europe/Oslo.');
+        }
+        timeZone = { zone };
+    } else {
+        const cache = context.staticCache;
+        const key = 'superoffice-time-zone-' + getEnvironment(context) + '-' + getTenantId(context).toLowerCase();
+        timeZone = cache ? await cache.get(key) : null;
+        if (!timeZone) {
+            const info = await rawRequest(context, { method: 'POST', path: '/Agents/TimeZone/GetDefaultTimeZoneInformation' });
+            const bias = Number(info && info.Bias);
+            if (!info || info.Bias === undefined || info.Bias === null || isNaN(bias) || Math.abs(bias) > 14 * 60) {
+                throw new Error('SuperOffice did not report the time zone of the tenant.');
+            }
+            timeZone = timeZoneForBias(bias);
+            if (cache) {
+                await cache.set(key, timeZone, TIME_ZONE_TTL);
+            }
+        }
+    }
+    timeZones.set(context, timeZone);
+    return timeZone;
+};
+
+const request = async (context, options) => {
+
+    await getTimeZone(context);
+    return rawRequest(context, options);
+};
+
+const pad2 = (value) => String(value).padStart(2, '0');
+
+const WALL_CLOCK = /^(\d{4})-(\d{2})-(\d{2})(?:[T ](\d{2}):(\d{2})(?::(\d{2})(?:\.\d+)?)?)?$/;
+
+/**
+ * A wall-clock value without an offset ("2026-12-01T12:00:00", "2026-12-01") as if it were UTC.
+ * @param {string} value
+ * @returns {number|undefined} milliseconds, undefined when the value is not such a string
+ */
+const wallClockMs = (value) => {
+
+    const match = typeof value === 'string' ? value.trim().match(WALL_CLOCK) : null;
+    if (!match) {
+        return undefined;
+    }
+    const ms = Date.UTC(Number(match[1]), Number(match[2]) - 1, Number(match[3]),
+        Number(match[4] || 0), Number(match[5] || 0), Number(match[6] || 0));
+    return isNaN(ms) ? undefined : ms;
+};
+
+const formatWallClock = (ms) => {
+
+    const date = new Date(ms);
+    return date.getUTCFullYear() + '-' + pad2(date.getUTCMonth() + 1) + '-' + pad2(date.getUTCDate())
+        + 'T' + pad2(date.getUTCHours()) + ':' + pad2(date.getUTCMinutes()) + ':' + pad2(date.getUTCSeconds());
+};
+
+/**
+ * A date-time SuperOffice returned, as UTC: "2026-12-01T13:00:00" on a UTC+1 tenant becomes
+ * "2026-12-01T12:00:00Z". A value that already carries an offset is only normalized.
+ * @param {{zone?: string, bias?: number}} timeZone
+ * @param {*} value
+ * @returns {*}
+ */
+const toUtc = (timeZone, value) => {
+
+    if (typeof value !== 'string' || !value || value.startsWith('0001-')) {
+        return value;
+    }
+    let utc;
+    const wall = wallClockMs(value);
+    if (wall !== undefined) {
+        // The offset belongs to the instant, which is not known yet: two rounds settle it
+        utc = wall - offsetAt(timeZone, wall) * 60000;
+        utc = wall - offsetAt(timeZone, utc) * 60000;
+    } else {
+        utc = new Date(value).getTime();
+        if (isNaN(utc)) {
+            return value;
+        }
+    }
+    return new Date(utc).toISOString().replace('.000Z', 'Z');
+};
+
+// The date-time fields of the items the components return
+const DATE_FIELDS = ['createdDate', 'updatedDate', 'startDate', 'endDate', 'saleDate', 'deadline', 'closedAt'];
+
+/**
+ * The item with its date-times in UTC.
+ * @param {object} context
+ * @param {object} item
+ * @returns {object}
+ */
+const withUtcDates = (context, item) => {
+
+    const timeZone = context ? timeZones.get(context) : null;
+    if (!timeZone || !item) {
+        return item;
+    }
+    for (const field of DATE_FIELDS) {
+        if (item[field] !== undefined) {
+            item[field] = toUtc(timeZone, item[field]);
+        }
+    }
+    return item;
 };
 
 // Value helpers ---------------------------------------------------------------------------
@@ -313,7 +498,9 @@ const toNumber = (context, value, label) => {
 };
 
 /**
- * Turn a date input into an ISO 8601 UTC string.
+ * Turn a date input into the wall clock of the tenant SuperOffice stores ("2026-12-01T13:00:00"):
+ * an instant (a value with Z or an offset) is converted to the tenant's time zone, a value
+ * without an offset is taken as the tenant's wall clock already.
  * @param {object} context
  * @param {*} value
  * @param {string} label
@@ -324,11 +511,20 @@ const toIsoDate = (context, value, label) => {
     if (isEmpty(value)) {
         return undefined;
     }
+    // Without an offset the value already is the tenant's wall clock (never the server's local time)
+    const wall = wallClockMs(value);
+    if (wall !== undefined) {
+        return formatWallClock(wall);
+    }
     const date = new Date(value);
     if (isNaN(date.getTime())) {
         throw cancelError(context, label + ' is not a valid date.');
     }
-    return date.toISOString();
+    const timeZone = timeZones.get(context);
+    if (!timeZone) {
+        throw new Error('The SuperOffice time zone is not loaded: read the tenant before converting ' + label + '.');
+    }
+    return formatWallClock(date.getTime() + offsetAt(timeZone, date.getTime()) * 60000);
 };
 
 /**
@@ -415,8 +611,8 @@ const ITEM_SCHEMAS = {
             phone: { type: 'string', title: 'Phone', example: '+47 22 00 00 00' },
             website: { type: 'string', title: 'Website', example: 'https://acme.example' },
             description: { type: 'string', title: 'Description', example: 'Reseller for the Nordic market.' },
-            createdDate: { type: 'string', title: 'Created Date', example: '2026-11-16T10:30:00' },
-            updatedDate: { type: 'string', title: 'Updated Date', example: '2026-11-17T08:15:00' }
+            createdDate: { type: 'string', title: 'Created Date', example: '2026-11-16T10:30:00Z' },
+            updatedDate: { type: 'string', title: 'Updated Date', example: '2026-11-17T08:15:00Z' }
         }
     },
 
@@ -435,8 +631,8 @@ const ITEM_SCHEMAS = {
             email: { type: 'string', title: 'Email', example: 'jane.doe@acme.example' },
             mobilePhone: { type: 'string', title: 'Mobile Phone', example: '+47 900 00 000' },
             officePhone: { type: 'string', title: 'Office Phone', example: '+47 22 00 00 01' },
-            createdDate: { type: 'string', title: 'Created Date', example: '2026-11-16T10:30:00' },
-            updatedDate: { type: 'string', title: 'Updated Date', example: '2026-11-17T08:15:00' }
+            createdDate: { type: 'string', title: 'Created Date', example: '2026-11-16T10:30:00Z' },
+            updatedDate: { type: 'string', title: 'Updated Date', example: '2026-11-17T08:15:00Z' }
         }
     },
 
@@ -447,7 +643,7 @@ const ITEM_SCHEMAS = {
             id: { type: 'integer', title: 'Sale ID', example: 57 },
             heading: { type: 'string', title: 'Heading', example: '50 licences' },
             amount: { type: 'number', title: 'Amount', example: 12500 },
-            saleDate: { type: 'string', title: 'Sale Date', example: '2026-12-15T00:00:00' },
+            saleDate: { type: 'string', title: 'Sale Date', example: '2026-12-15T00:00:00Z' },
             status: { type: 'string', title: 'Status', example: 'Open' },
             probability: { type: 'integer', title: 'Probability', example: 50 },
             saleType: { type: 'string', title: 'Sale Type', example: 'New business' },
@@ -457,8 +653,8 @@ const ITEM_SCHEMAS = {
             personName: { type: 'string', title: 'Person Name', example: 'Jane Doe' },
             projectId: { type: 'integer', title: 'Project ID', example: 12 },
             description: { type: 'string', title: 'Description', example: 'Renewal of the yearly licence.' },
-            createdDate: { type: 'string', title: 'Created Date', example: '2026-11-16T10:30:00' },
-            updatedDate: { type: 'string', title: 'Updated Date', example: '2026-11-17T08:15:00' }
+            createdDate: { type: 'string', title: 'Created Date', example: '2026-11-16T10:30:00Z' },
+            updatedDate: { type: 'string', title: 'Updated Date', example: '2026-11-17T08:15:00Z' }
         }
     },
 
@@ -472,10 +668,10 @@ const ITEM_SCHEMAS = {
             type: { type: 'string', title: 'Project Type', example: 'Internal' },
             status: { type: 'string', title: 'Project Status', example: 'In progress' },
             description: { type: 'string', title: 'Description', example: 'Relaunch of the public website.' },
-            startDate: { type: 'string', title: 'Start Date', example: '2026-11-16T00:00:00' },
-            endDate: { type: 'string', title: 'End Date', example: '2027-02-28T00:00:00' },
-            createdDate: { type: 'string', title: 'Created Date', example: '2026-11-16T10:30:00' },
-            updatedDate: { type: 'string', title: 'Updated Date', example: '2026-11-17T08:15:00' }
+            startDate: { type: 'string', title: 'Start Date', example: '2026-11-16T00:00:00Z' },
+            endDate: { type: 'string', title: 'End Date', example: '2027-02-28T00:00:00Z' },
+            createdDate: { type: 'string', title: 'Created Date', example: '2026-11-16T10:30:00Z' },
+            updatedDate: { type: 'string', title: 'Updated Date', example: '2026-11-17T08:15:00Z' }
         }
     },
 
@@ -486,8 +682,8 @@ const ITEM_SCHEMAS = {
             id: { type: 'integer', title: 'Follow-up ID', example: 981 },
             title: { type: 'string', title: 'Title', example: 'Kick-off meeting' },
             description: { type: 'string', title: 'Description', example: 'Agree on the project plan.' },
-            startDate: { type: 'string', title: 'Start Date', example: '2026-11-20T09:00:00' },
-            endDate: { type: 'string', title: 'End Date', example: '2026-11-20T10:00:00' },
+            startDate: { type: 'string', title: 'Start Date', example: '2026-11-20T09:00:00Z' },
+            endDate: { type: 'string', title: 'End Date', example: '2026-11-20T10:00:00Z' },
             task: { type: 'string', title: 'Task', example: 'Meeting' },
             type: { type: 'string', title: 'Type', example: 'inDiary' },
             completed: { type: 'string', title: 'Completed', example: 'NotStarted' },
@@ -498,8 +694,8 @@ const ITEM_SCHEMAS = {
             personName: { type: 'string', title: 'Person Name', example: 'Jane Doe' },
             projectId: { type: 'integer', title: 'Project ID', example: 12 },
             saleId: { type: 'integer', title: 'Sale ID', example: 57 },
-            createdDate: { type: 'string', title: 'Created Date', example: '2026-11-16T10:30:00' },
-            updatedDate: { type: 'string', title: 'Updated Date', example: '2026-11-17T08:15:00' }
+            createdDate: { type: 'string', title: 'Created Date', example: '2026-11-16T10:30:00Z' },
+            updatedDate: { type: 'string', title: 'Updated Date', example: '2026-11-17T08:15:00Z' }
         }
     }
 };
@@ -877,7 +1073,7 @@ const entityPath = (context, type, id) => {
 const getItem = async (context, type, id) => {
 
     const entity = await request(context, { path: entityPath(context, type, id) });
-    return entityConfig(type).fromEntity(entity);
+    return withUtcDates(context, entityConfig(type).fromEntity(entity));
 };
 
 /**
@@ -894,7 +1090,7 @@ const createItem = async (context, type, input) => {
     const template = await request(context, { path: '/' + config.resource + '/default' });
     const entity = config.apply(context, template || {}, input);
     const created = await request(context, { method: 'POST', path: '/' + config.resource, data: entity });
-    return config.fromEntity(created);
+    return withUtcDates(context, config.fromEntity(created));
 };
 
 /**
@@ -952,7 +1148,7 @@ const findItems = async (context, type, { filters = [], orderBy, top = PAGE_SIZE
     const seen = new Set();
     const items = [];
     for (const row of rows) {
-        const item = config.fromRow(row || {});
+        const item = withUtcDates(context, config.fromRow(row || {}));
         if (item.id === undefined || seen.has(item.id)) {
             continue;
         }
@@ -1202,10 +1398,10 @@ ITEM_SCHEMAS.ticket = {
         companyName: { type: 'string', title: 'Company Name', example: 'Acme Inc.' },
         saleId: { type: 'integer', title: 'Sale ID', example: 57 },
         projectId: { type: 'integer', title: 'Project ID', example: 12 },
-        deadline: { type: 'string', title: 'Deadline', example: '2026-11-21T16:00:00' },
-        closedAt: { type: 'string', title: 'Closed At', example: '2026-11-18T14:05:00' },
-        createdDate: { type: 'string', title: 'Created Date', example: '2026-11-16T10:30:00' },
-        updatedDate: { type: 'string', title: 'Updated Date', example: '2026-11-18T14:05:00' }
+        deadline: { type: 'string', title: 'Deadline', example: '2026-11-21T16:00:00Z' },
+        closedAt: { type: 'string', title: 'Closed At', example: '2026-11-18T14:05:00Z' },
+        createdDate: { type: 'string', title: 'Created Date', example: '2026-11-16T10:30:00Z' },
+        updatedDate: { type: 'string', title: 'Updated Date', example: '2026-11-18T14:05:00Z' }
     }
 };
 
@@ -1481,9 +1677,10 @@ const ownerOf = (object, entity) => (object === 'ticket' ? entity.OwnedBy : enti
  * customFields dictionary and as one cf_* field each.
  * @param {string} object
  * @param {object} entity
+ * @param {object} [context] with it, the date-times are converted to UTC
  * @returns {object}
  */
-const toRecord = (object, entity) => {
+const toRecord = (object, entity, context) => {
 
     const e = entity || {};
     const owner = ownerOf(object, e);
@@ -1508,7 +1705,7 @@ const toRecord = (object, entity) => {
             }
         }
     }
-    return compact(record);
+    return withUtcDates(context, compact(record));
 };
 
 /**
@@ -1541,7 +1738,7 @@ const getRecord = async (context, object, id) => {
 
     getRecordObject(context, object);
     const entity = await request(context, { path: entityPath(context, object, id) });
-    return toRecord(object, entity);
+    return toRecord(object, entity, context);
 };
 
 /**
@@ -1558,7 +1755,7 @@ const getRecords = async (context, object, ids) => {
     for (const id of ids) {
         const entity = await getEntityOrNull(context, object, id);
         if (entity) {
-            records.push(toRecord(object, entity));
+            records.push(toRecord(object, entity, context));
         }
     }
     return records;
@@ -1760,7 +1957,7 @@ const pollUpdatedRecords = async (context) => {
             if (!entity) {
                 continue;
             }
-            const record = toRecord(object, entity);
+            const record = toRecord(object, entity, context);
             const previous = values[row.id];
             if (condition.field) {
                 delete values[row.id];
@@ -1929,8 +2126,8 @@ const RECORD_ITEM_SCHEMA = {
         object: { type: 'string', title: 'Object', example: 'ticket' },
         ownerId: { type: 'integer', title: 'Owner ID', example: 5 },
         ownerName: { type: 'string', title: 'Owner Name', example: 'Anna Berg' },
-        createdDate: { type: 'string', title: 'Created Date', example: '2026-11-16T10:30:00' },
-        updatedDate: { type: 'string', title: 'Updated Date', example: '2026-11-18T14:05:00' },
+        createdDate: { type: 'string', title: 'Created Date', example: '2026-11-16T10:30:00Z' },
+        updatedDate: { type: 'string', title: 'Updated Date', example: '2026-11-18T14:05:00Z' },
         customFields: {
             type: 'object',
             title: 'Custom Fields',
@@ -2150,7 +2347,7 @@ const createActivity = async (context, input, defaults = {}) => {
         entity.Ticket = { TicketId: ticketId };
     }
     const created = await request(context, { method: 'POST', path: '/Appointment', data: entity });
-    return toRecord('appointment', created);
+    return toRecord('appointment', created, context);
 };
 
 /**
@@ -2238,6 +2435,9 @@ module.exports = {
     toInteger,
     toNumber,
     toIsoDate,
+    getTimeZone,
+    timeZoneForBias,
+    toUtc,
     quote,
     getItem,
     createItem,

@@ -46,12 +46,18 @@ const createContext = (overrides = {}) => {
     return context;
 };
 
+// The tenant time zone lookup every API call starts with; UTC unless a test routes it itself
+const TIME_ZONE_PATH = '/Agents/TimeZone/GetDefaultTimeZoneInformation';
+
 // The state endpoint answers first, then the API calls in order.
 const stubApi = (context, ...responses) => {
 
     context.httpRequest.callsFake(async (options) => {
         if (options.url.startsWith('https://online.superoffice.com/api/state/')) {
             return { data: { IsRunning: true, State: 'Running', Api: API, ValidUntil: new Date(Date.now() + 600000).toISOString() } };
+        }
+        if (options.url.endsWith(TIME_ZONE_PATH)) {
+            return { status: 200, headers: {}, data: { Bias: 0, Description: '!!!Timezones are not enabled' } };
         }
         const next = responses.shift();
         if (next instanceof Error) {
@@ -61,7 +67,8 @@ const stubApi = (context, ...responses) => {
     });
 };
 
-const apiCalls = (context) => context.httpRequest.getCalls().map(call => call.args[0]).filter(options => !options.url.includes('/api/state/'));
+const apiCalls = (context) => context.httpRequest.getCalls().map(call => call.args[0])
+    .filter(options => !options.url.includes('/api/state/') && !options.url.endsWith(TIME_ZONE_PATH));
 
 describe('superoffice', () => {
 
