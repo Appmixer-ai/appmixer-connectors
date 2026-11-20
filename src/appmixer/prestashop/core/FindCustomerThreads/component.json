@@ -1,0 +1,134 @@
+{
+    "name": "appmixer.prestashop.core.FindCustomerThreads",
+    "label": "Find Customer Threads",
+    "description": "Find customer service threads (customer messages) by customer, e-mail address, order or status. Without a filter, returns the most recently updated threads. Returns a maximum of 100 threads.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "private": false,
+    "auth": {
+        "service": "appmixer:prestashop"
+    },
+    "quota": {
+        "manager": "appmixer:prestashop",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "customerId": {
+                        "type": "string"
+                    },
+                    "email": {
+                        "type": "string"
+                    },
+                    "orderId": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "type": "string"
+                    },
+                    "outputType": {
+                        "type": "string"
+                    }
+                }
+            },
+            "inspector": {
+                "inputs": {
+                    "customerId": {
+                        "type": "text",
+                        "index": 1,
+                        "label": "Customer ID",
+                        "tooltip": "Return only threads of this customer."
+                    },
+                    "email": {
+                        "type": "text",
+                        "index": 2,
+                        "label": "Email",
+                        "tooltip": "Return only threads started from this e-mail address."
+                    },
+                    "orderId": {
+                        "type": "text",
+                        "index": 3,
+                        "label": "Order ID",
+                        "tooltip": "Return only threads about this order."
+                    },
+                    "status": {
+                        "type": "select",
+                        "index": 4,
+                        "label": "Status",
+                        "tooltip": "Return only threads with this status.",
+                        "options": [
+                            {
+                                "label": "Open",
+                                "value": "open"
+                            },
+                            {
+                                "label": "Closed",
+                                "value": "closed"
+                            },
+                            {
+                                "label": "Pending 1",
+                                "value": "pending1"
+                            },
+                            {
+                                "label": "Pending 2",
+                                "value": "pending2"
+                            }
+                        ]
+                    },
+                    "outputType": {
+                        "type": "select",
+                        "label": "Output Type",
+                        "index": 5,
+                        "defaultValue": "array",
+                        "tooltip": "Choose whether you want to receive the result set as one complete list, or first item only or one item at a time or stream the items to a file.",
+                        "options": [
+                            {
+                                "label": "First Item Only",
+                                "value": "first"
+                            },
+                            {
+                                "label": "All items at once",
+                                "value": "array"
+                            },
+                            {
+                                "label": "One item at a time",
+                                "value": "object"
+                            },
+                            {
+                                "label": "Store to CSV file",
+                                "value": "file"
+                            }
+                        ]
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "source": {
+                "url": "/component/appmixer/prestashop/core/FindCustomerThreads?outPort=out&ignoreAuth=true",
+                "data": {
+                    "properties": {
+                        "generateOutputPortOptions": true
+                    },
+                    "messages": {
+                        "in/outputType": "inputs/in/outputType"
+                    }
+                }
+            }
+        },
+        {
+            "name": "notFound"
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZmlsbD0iIzFEMUQzQyIgZD0iTTEyIDEuMiAyIDZ2MTJsMTAgNC44TDIyIDE4VjZMMTIgMS4yem0wIDIuMyA3LjYgMy42TDEyIDEwLjcgNC40IDcuMSAxMiAzLjV6TTQgOC43bDcgMy4zdjguNmwtNy0zLjNWOC43em0xNiAwdjguNmwtNyAzLjN2LTguNmw3LTMuM3oiLz48L3N2Zz4K"
+}
