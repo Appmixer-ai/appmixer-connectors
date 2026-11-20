@@ -44,6 +44,9 @@ const createContext = (overrides = {}) => {
 
 const notFound = () => Object.assign(new Error('404'), { response: { status: 404, data: { ErrorMessage: 'Not found' } } });
 
+// The tenant time zone lookup every API call starts with; UTC unless a test routes it itself
+const TIME_ZONE_PATH = '/Agents/TimeZone/GetDefaultTimeZoneInformation';
+
 // Answers API calls by "METHOD /path" (the part after /api/v1); a function gets the request options.
 const route = (context, routes) => {
 
@@ -52,6 +55,9 @@ const route = (context, routes) => {
             return { data: { IsRunning: true, State: 'Running', Api: API.replace(/\/v1$/, ''), ValidUntil: null } };
         }
         const key = (options.method || 'GET') + ' ' + options.url.slice(API.length);
+        if (!(key in routes) && options.url.endsWith(TIME_ZONE_PATH)) {
+            return { status: 200, headers: {}, data: { Bias: 0, Description: '!!!Timezones are not enabled' } };
+        }
         if (!(key in routes)) {
             throw new Error('Unexpected request ' + key);
         }
@@ -66,7 +72,7 @@ const route = (context, routes) => {
 
 const apiCalls = (context) => context.httpRequest.getCalls()
     .map(call => call.args[0])
-    .filter(options => !options.url.includes('/api/state/'));
+    .filter(options => !options.url.includes('/api/state/') && !options.url.endsWith(TIME_ZONE_PATH));
 
 const ticketEntity = (overrides = {}) => ({
     TicketId: 7,
@@ -118,6 +124,17 @@ describe('superoffice generic records', () => {
     });
 
     describe('Get Record', () => {
+
+        it('leaves out the placeholder owner of an unassigned ticket and the 0001 date of a record never updated', () => {
+
+            const ticket = lib.toRecord('ticket', { TicketId: 1, OwnedBy: { AssociateId: 0, FullName: '[SR_CRITERION_UNASSIGNED]' } });
+            assert.strictEqual(ticket.ownerId, undefined);
+            assert.strictEqual(ticket.ownerName, undefined);
+
+            const task = lib.toRecord('appointment', { AppointmentId: 14, UpdatedDate: '0001-01-01T00:00:00Z', Associate: { AssociateId: 3, FullName: 'Anna Berg' } });
+            assert.strictEqual(task.updatedDate, undefined);
+            assert.strictEqual(task.ownerName, 'Anna Berg');
+        });
 
         it('maps a ticket with owner, status and custom fields', async () => {
 
@@ -185,12 +202,24 @@ describe('superoffice generic records', () => {
             assert.strictEqual(context.sent[0].data.result[0].id, 7);
         });
 
-        it('sends notFound when nothing matches the owner', async () => {
+        it('filters by owner in the archive query, not on the page it returned', async () => {
 
             const context = createContext({ messages: { in: { content: { object: 'ticket', ownerId: '9', outputType: 'array' } } } });
-            route(context, { 'GET /Ticket': { value: [{ ticketId: 7 }] }, 'GET /Ticket/7': ticketEntity() });
+            route(context, { 'GET /Ticket': { value: [] } });
             await load('FindRecords').receive(context);
             assert.strictEqual(context.sent[0].port, 'notFound');
+            assert.strictEqual(apiCalls(context)[0].params.$filter, '(ownedBy/associateDbId eq 9)');
+
+            const companies = createContext({ messages: { in: { content: { object: 'company', ownerId: 5, outputType: 'array' } } } });
+            route(companies, { 'GET /Contact': { value: [] } });
+            await load('FindRecords').receive(companies);
+            assert.strictEqual(apiCalls(companies)[0].params.$filter, '(associateId eq 5)');
+        });
+
+        it('refuses an owner filter on persons, which have no owner', async () => {
+
+            const context = createContext({ messages: { in: { content: { object: 'person', ownerId: '9', outputType: 'array' } } } });
+            await assert.rejects(load('FindRecords').receive(context), /have no owner to filter by/);
         });
 
         it('refuses a company filter on projects', async () => {
@@ -358,6 +387,16 @@ describe('superoffice generic records', () => {
             await assert.rejects(load('UpdateRecord').receive(unknown), /Unknown custom field cf_nope/);
         });
 
+        it('offers the ticket statuses with the object on the in port of List Statuses', async () => {
+
+            const context = createContext({ properties: { generateInspector: true, object: 'ticket' } });
+            route(context, { 'GET /Ticket/CustomField': [] });
+            await load('UpdateRecord').receive(context);
+            const { source } = context.sent[0].data.inputs.statusId;
+            assert.strictEqual(source.data.messages['in/object'], 'ticket');
+            assert.strictEqual(source.data.properties.isSource, true);
+        });
+
         it('generates the inspector with the writable custom fields of the object', async () => {
 
             const context = createContext({ properties: { generateInspector: true, object: 'ticket' } });
@@ -403,8 +442,9 @@ describe('superoffice generic records', () => {
             assert.deepStrictEqual(post.data.Ticket, { TicketId: 7 });
             assert.deepStrictEqual(post.data.Contact, { ContactId: 125 });
             assert.strictEqual(post.data.Type, 'inChecklist');
-            assert.strictEqual(post.data.StartDate, '2026-11-20T09:00:00.000Z');
-            assert.strictEqual(post.data.EndDate, '2026-11-20T09:00:00.000Z');
+            // The tenant of the tests is on UTC: the wall clock SuperOffice stores equals the instant
+            assert.strictEqual(post.data.StartDate, '2026-11-20T09:00:00');
+            assert.strictEqual(post.data.EndDate, '2026-11-20T09:00:00');
             const record = context.sent[0].data;
             assert.strictEqual(record.id, 99);
             assert.strictEqual(record.ticketId, 7);
@@ -447,9 +487,15 @@ describe('superoffice generic records', () => {
         it('lists ticket statuses and fields of an object', async () => {
 
             const statuses = createContext({ messages: { in: { content: { object: 'ticket', outputType: 'array' } } } });
-            route(statuses, { 'GET /MDOList/ticketstatus': [{ Id: 2, Name: 'Closed' }] });
+            // The tenant's ticket statuses; the MDO list "ticketstatus" holds base statuses under other IDs
+            route(statuses, {
+                'GET /List/TicketStatus/Items': [
+                    { TicketStatusId: 2, Name: 'Open', Status: 'Active' },
+                    { TicketStatusId: 3, Name: 'Closed', Status: 'Closed' }
+                ]
+            });
             await load('ListStatuses').receive(statuses);
-            assert.deepStrictEqual(statuses.sent[0].data.result, [{ id: '2', name: 'Closed' }]);
+            assert.deepStrictEqual(statuses.sent[0].data.result, [{ id: '2', name: 'Open' }, { id: '3', name: 'Closed' }]);
 
             const fields = createContext({ messages: { in: { content: { object: 'ticket', outputType: 'array' } } } });
             route(fields, { 'GET /Ticket/CustomField': [{ FieldName: 'x_score', DisplayName: 'Score', FieldType: 'Integer' }] });
@@ -465,6 +511,112 @@ describe('superoffice generic records', () => {
             route(context, { 'GET /MDOList/associate': notFound() });
             await load('ListUsers').receive(context);
             assert.deepStrictEqual(context.sent[0].data, { result: [], count: 0 });
+        });
+    });
+
+    describe('time zone', () => {
+
+        const WINTER = Date.UTC(2026, 10, 20, 8, 0, 0);
+        const SUMMER = Date.UTC(2026, 6, 1, 8, 0, 0);
+        const appointment = (dates) => ({ AppointmentId: 14, Description: 'Call', Associate: { AssociateId: 3 }, ...dates });
+        // A UTC+1 tenant without time zones enabled, as SuperOffice reports it in winter
+        const tenant = (routes) => ({ 'POST /Agents/TimeZone/GetDefaultTimeZoneInformation': { Bias: 60, Description: '!!!Timezones are not enabled' }, ...routes });
+
+        it('takes a European offset as the European zone that has it now, any other offset as it is', () => {
+
+            assert.deepStrictEqual(lib.timeZoneForBias(60, WINTER), { zone: 'Europe/Oslo' });
+            assert.deepStrictEqual(lib.timeZoneForBias(60, SUMMER), { zone: 'Europe/London' });
+            assert.deepStrictEqual(lib.timeZoneForBias(120, SUMMER), { zone: 'Europe/Oslo' });
+            assert.deepStrictEqual(lib.timeZoneForBias(0, WINTER), { zone: 'Europe/London' });
+            assert.deepStrictEqual(lib.timeZoneForBias(330, WINTER), { bias: 330 });
+            assert.deepStrictEqual(lib.timeZoneForBias(-300, WINTER), { bias: -300 });
+        });
+
+        it('turns the tenant wall clock into UTC, also across the daylight saving switch', () => {
+
+            const oslo = { zone: 'Europe/Oslo' };
+            assert.strictEqual(lib.toUtc(oslo, '2026-12-01T13:00:00'), '2026-12-01T12:00:00Z');
+            assert.strictEqual(lib.toUtc(oslo, '2026-07-01T14:00:00'), '2026-07-01T12:00:00Z');
+            // The switch nights: 01:59:59 is still winter time, 03:00 already summer time
+            assert.strictEqual(lib.toUtc(oslo, '2026-03-29T01:59:59'), '2026-03-29T00:59:59Z');
+            assert.strictEqual(lib.toUtc(oslo, '2026-03-29T03:00:00'), '2026-03-29T01:00:00Z');
+            assert.strictEqual(lib.toUtc(oslo, '2026-10-25T03:00:00'), '2026-10-25T02:00:00Z');
+            assert.strictEqual(lib.toUtc({ bias: 330 }, '2026-07-01T17:30:00'), '2026-07-01T12:00:00Z');
+            // An offset in the value wins; no date and the 0001 placeholder stay as they are
+            assert.strictEqual(lib.toUtc(oslo, '2026-12-01T12:00:00+01:00'), '2026-12-01T11:00:00Z');
+            assert.strictEqual(lib.toUtc(oslo, '0001-01-01T00:00:00'), '0001-01-01T00:00:00');
+            assert.strictEqual(lib.toUtc(oslo, undefined), undefined);
+        });
+
+        it('sends an instant as the wall clock of a UTC+1 tenant and returns UTC', async () => {
+
+            const clock = sinon.useFakeTimers({ now: WINTER, toFake: ['Date'] });
+            try {
+                const context = createContext({ messages: { in: { content: {
+                    title: 'Call', dueDate: '2026-12-01T12:00:00Z', endDate: '2026-07-01T12:00:00+02:00'
+                } } } });
+                let posted;
+                route(context, tenant({
+                    'GET /Appointment/default': appointment({ AppointmentId: 0 }),
+                    'POST /Appointment': (options) => {
+                        posted = options.data;
+                        return appointment({ StartDate: options.data.StartDate, EndDate: options.data.EndDate, CreatedDate: '2026-11-20T09:00:00' });
+                    }
+                }));
+                await load('CreateTask').receive(context);
+                // 12:00 UTC is 13:00 in winter; 10:00 UTC is 12:00 in summer, although it is winter now
+                assert.strictEqual(posted.StartDate, '2026-12-01T13:00:00');
+                assert.strictEqual(posted.EndDate, '2026-07-01T12:00:00');
+                const out = context.sent[0].data;
+                assert.strictEqual(out.startDate, '2026-12-01T12:00:00Z');
+                assert.strictEqual(out.endDate, '2026-07-01T10:00:00Z');
+                assert.strictEqual(out.createdDate, '2026-11-20T08:00:00Z');
+            } finally {
+                clock.restore();
+            }
+        });
+
+        it('takes a date without an offset as the wall clock of the tenant, whatever the server time zone', async () => {
+
+            const context = createContext({ messages: { in: { content: { title: 'Call', dueDate: '2026-12-01 09:30', endDate: '2026-12-02' } } } });
+            let posted;
+            route(context, tenant({
+                'GET /Appointment/default': appointment({ AppointmentId: 0 }),
+                'POST /Appointment': (options) => {
+                    posted = options.data;
+                    return appointment({});
+                }
+            }));
+            await load('CreateTask').receive(context);
+            assert.strictEqual(posted.StartDate, '2026-12-01T09:30:00');
+            assert.strictEqual(posted.EndDate, '2026-12-02T00:00:00');
+        });
+
+        it('uses the configured time zone without asking SuperOffice, and asks once otherwise', async () => {
+
+            const lookups = (context) => context.httpRequest.getCalls()
+                .filter(call => call.args[0].url.endsWith(TIME_ZONE_PATH)).length;
+            const configured = createContext({ config: { timeZone: 'America/New_York' }, messages: { in: { content: { object: 'appointment', recordId: '14' } } } });
+            route(configured, { 'GET /Appointment/14': appointment({ StartDate: '2026-12-01T07:00:00' }) });
+            await load('GetRecord').receive(configured);
+            assert.strictEqual(configured.sent[0].data.startDate, '2026-12-01T12:00:00Z');
+            assert.strictEqual(lookups(configured), 0);
+
+            const asked = createContext({ messages: { in: { content: { object: 'appointment', recordId: '14' } } } });
+            route(asked, tenant({ 'GET /Appointment/14': appointment({ StartDate: '2026-12-01T13:00:00' }) }));
+            await load('GetRecord').receive(asked);
+            await load('GetRecord').receive(asked);
+            assert.strictEqual(lookups(asked), 1);
+
+            const wrong = createContext({ config: { timeZone: 'Mars/Olympus' }, messages: { in: { content: { object: 'appointment', recordId: '14' } } } });
+            await assert.rejects(load('GetRecord').receive(wrong), /Unsupported SuperOffice time zone/);
+        });
+
+        it('fails instead of guessing when SuperOffice does not report the time zone', async () => {
+
+            const context = createContext({ messages: { in: { content: { object: 'appointment', recordId: '14' } } } });
+            route(context, { 'POST /Agents/TimeZone/GetDefaultTimeZoneInformation': {}, 'GET /Appointment/14': appointment({}) });
+            await assert.rejects(load('GetRecord').receive(context), /did not report the time zone/);
         });
     });
 });

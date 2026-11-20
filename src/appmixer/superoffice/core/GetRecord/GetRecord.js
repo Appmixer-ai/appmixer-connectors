@@ -13,8 +13,8 @@ const ITEM_SCHEMA = {
         object: { type: 'string', title: 'Object', example: 'ticket' },
         ownerId: { type: 'integer', title: 'Owner ID', example: 5 },
         ownerName: { type: 'string', title: 'Owner Name', example: 'Anna Berg' },
-        createdDate: { type: 'string', title: 'Created Date', example: '2026-11-16T10:30:00' },
-        updatedDate: { type: 'string', title: 'Updated Date', example: '2026-11-18T14:05:00' },
+        createdDate: { type: 'string', title: 'Created Date', example: '2026-11-16T10:30:00Z' },
+        updatedDate: { type: 'string', title: 'Updated Date', example: '2026-11-18T14:05:00Z' },
         customFields: {
             type: 'object',
             title: 'Custom Fields',

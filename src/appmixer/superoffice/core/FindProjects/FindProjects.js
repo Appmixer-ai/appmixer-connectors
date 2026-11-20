@@ -13,10 +13,10 @@ const ITEM_SCHEMA = {
         type: { type: 'string', title: 'Project Type', example: 'Internal' },
         status: { type: 'string', title: 'Project Status', example: 'In progress' },
         description: { type: 'string', title: 'Description', example: 'Relaunch of the public website.' },
-        startDate: { type: 'string', title: 'Start Date', example: '2026-11-16T00:00:00' },
-        endDate: { type: 'string', title: 'End Date', example: '2027-02-28T00:00:00' },
-        createdDate: { type: 'string', title: 'Created Date', example: '2026-11-16T10:30:00' },
-        updatedDate: { type: 'string', title: 'Updated Date', example: '2026-11-17T08:15:00' }
+        startDate: { type: 'string', title: 'Start Date', example: '2026-11-16T00:00:00Z' },
+        endDate: { type: 'string', title: 'End Date', example: '2027-02-28T00:00:00Z' },
+        createdDate: { type: 'string', title: 'Created Date', example: '2026-11-16T10:30:00Z' },
+        updatedDate: { type: 'string', title: 'Updated Date', example: '2026-11-17T08:15:00Z' }
     }
 };
 

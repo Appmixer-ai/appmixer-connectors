@@ -18,8 +18,8 @@ const ITEM_SCHEMA = {
         email: { type: 'string', title: 'Email', example: 'jane.doe@acme.example' },
         mobilePhone: { type: 'string', title: 'Mobile Phone', example: '+47 900 00 000' },
         officePhone: { type: 'string', title: 'Office Phone', example: '+47 22 00 00 01' },
-        createdDate: { type: 'string', title: 'Created Date', example: '2026-11-16T10:30:00' },
-        updatedDate: { type: 'string', title: 'Updated Date', example: '2026-11-17T08:15:00' }
+        createdDate: { type: 'string', title: 'Created Date', example: '2026-11-16T10:30:00Z' },
+        updatedDate: { type: 'string', title: 'Updated Date', example: '2026-11-17T08:15:00Z' }
     }
 };
 
