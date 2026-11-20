@@ -36,11 +36,19 @@ const CONFIG = {
     'src/appmixer/superoffice/core/MakeApiCall/MakeApiCall.js': { environment: 'online' }
 };
 
+// Account fields a connector validates before any request (it refuses to send the
+// token anywhere else), keyed by the connector directory (src/appmixer/<connector>).
+const AUTH_OVERRIDES = {
+    // lib.js accepts only a *.workday.com / *.myworkday.com hostname.
+    workday: { host: 'kv-test.workday.com' }
+};
+
 // Any auth or config field reads as a placeholder: a URL for *Url/*Uri/*Domain fields, a token otherwise.
-const auth = new Proxy({}, {
+const createAuth = (overrides = {}) => new Proxy({}, {
     get: (target, prop) => {
         if (typeof prop !== 'string') return undefined;
         if (prop === 'profileInfo') return PROFILE_INFO;
+        if (Object.prototype.hasOwnProperty.call(overrides, prop)) return overrides[prop];
         // An Azure resource endpoint: ai.foundry refuses a host outside the Azure OpenAI domains.
         if (prop === 'endpoint') return 'https://kv-test.openai.azure.com';
         return /(url|uri|domain)$/i.test(prop) ? 'https://kv-test.example.com' : 'kv-test';
@@ -63,6 +71,8 @@ describe('MakeApiCall: Request Headers and Query Parameters from the Designer', 
         it(path.dirname(file).replace(/^src\//, ''), async () => {
 
             const component = require(path.join(ROOT, file));
+            const connector = file.split('/')[2];
+            const auth = createAuth(AUTH_OVERRIDES[connector]);
             const context = createMockContext();
             context.auth = auth;
             context.config = CONFIG[file] || auth;
