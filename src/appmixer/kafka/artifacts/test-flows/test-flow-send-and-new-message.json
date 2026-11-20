@@ -1,0 +1,253 @@
+{
+    "name": "E2E Kafka - SendMessage and NewMessage",
+    "description": "Sends a message with a key and headers to the topic topic-2-jirka with SendMessage and checks that NewMessage consumes it back from the same topic with the same value, key and headers.",
+    "notes": {
+        "5b295c9c-3514-4b0b-b2ba-471f4fa8fa7c": {
+            "x": 64,
+            "y": 304,
+            "width": 672,
+            "height": 256,
+            "content": "## ⚠️ Test data assumption\n\nThe topic **topic-2-jirka** must exist on the broker of the connected account. The test user can't create topics (TOPIC_AUTHORIZATION_FAILED), so the components never create it.\n\nNewMessage uses the fixed consumer group **appmixer-e2e-kafka** with **From Beginning** on. The group's committed offset is what makes the flow race-free: a message SendMessage produces before the consumer has joined the group is still delivered when it joins. Don't rename the group, and keep the topic free of other traffic: the Assert checks the first message the trigger receives.\n\nThe account should carry a **TLS CA** (the broker's self-signed certificate) next to its SASL credentials. Before 1.2.7 any TLS CA, key or certificate made every connection fail with `fs is not defined`."
+        }
+    },
+    "flow": {
+        "98ea90f0-664a-46c0-9ed8-cdf47409808b": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16,
+            "source": {},
+            "version": "1.0.0",
+            "config": {},
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "6dfd681a-2cbe-437c-b265-fed9d312cedb": {
+            "type": "appmixer.kafka.platform.SendMessage",
+            "x": 272,
+            "y": 16,
+            "source": {
+                "in": {
+                    "98ea90f0-664a-46c0-9ed8-cdf47409808b": ["out"]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "98ea90f0-664a-46c0-9ed8-cdf47409808b": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "topic": {},
+                                    "value": {},
+                                    "key": {},
+                                    "acks": {},
+                                    "headers": {}
+                                },
+                                "lambda": {
+                                    "topic": "topic-2-jirka",
+                                    "value": "{\"e2e\":\"appmixer-e2e-kafka\"}",
+                                    "key": "appmixer-e2e-key",
+                                    "acks": "-1",
+                                    "headers": "{\"source\": \"appmixer-e2e\"}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "46c9c05a-6599-45ef-befd-3cec1933b293": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 480,
+            "y": 16,
+            "source": {
+                "in": {
+                    "6dfd681a-2cbe-437c-b265-fed9d312cedb": ["out"]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "6dfd681a-2cbe-437c-b265-fed9d312cedb": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "2625711f-266e-476f-9c92-1f8ec403e073": {
+                                            "variable": "$.6dfd681a-2cbe-437c-b265-fed9d312cedb.out.topic",
+                                            "functions": []
+                                        },
+                                        "7bcae839-0551-4157-9844-c8da6590494d": {
+                                            "variable": "$.6dfd681a-2cbe-437c-b265-fed9d312cedb.out.key",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{2625711f-266e-476f-9c92-1f8ec403e073}}}",
+                                                "assertion": "equal",
+                                                "expected": "topic-2-jirka"
+                                            },
+                                            {
+                                                "field": "{{{7bcae839-0551-4157-9844-c8da6590494d}}}",
+                                                "assertion": "equal",
+                                                "expected": "appmixer-e2e-key"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "1ae7ec88-61de-4b33-a4dd-1bee4d416936": {
+            "type": "appmixer.kafka.platform.NewMessage",
+            "x": 272,
+            "y": 144,
+            "source": {},
+            "version": "1.0.0",
+            "config": {
+                "properties": {
+                    "groupId": "appmixer-e2e-kafka",
+                    "topics": {
+                        "AND": [
+                            { "topic": "topic-2-jirka" }
+                        ]
+                    },
+                    "fromBeginning": true
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "d2cff235-eaff-48ef-b26d-c8b1b9d1459f": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 480,
+            "y": 144,
+            "source": {
+                "in": {
+                    "1ae7ec88-61de-4b33-a4dd-1bee4d416936": ["out"]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "1ae7ec88-61de-4b33-a4dd-1bee4d416936": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "9131d40b-ac64-47a3-b543-0ce134bc36e9": {
+                                            "variable": "$.1ae7ec88-61de-4b33-a4dd-1bee4d416936.out.value",
+                                            "functions": []
+                                        },
+                                        "0a96d34d-2cb0-4baf-9192-4d463c48b5eb": {
+                                            "variable": "$.1ae7ec88-61de-4b33-a4dd-1bee4d416936.out.key",
+                                            "functions": []
+                                        },
+                                        "0077b91c-26dd-4155-825d-81a210e62b73": {
+                                            "variable": "$.1ae7ec88-61de-4b33-a4dd-1bee4d416936.out.headers",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [{ "value": "$.source" }]
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{9131d40b-ac64-47a3-b543-0ce134bc36e9}}}",
+                                                "assertion": "equal",
+                                                "expected": "{\"e2e\":\"appmixer-e2e-kafka\"}"
+                                            },
+                                            {
+                                                "field": "{{{0a96d34d-2cb0-4baf-9192-4d463c48b5eb}}}",
+                                                "assertion": "equal",
+                                                "expected": "appmixer-e2e-key"
+                                            },
+                                            {
+                                                "field": "{{{0077b91c-26dd-4155-825d-81a210e62b73}}}",
+                                                "assertion": "equal",
+                                                "expected": "appmixer-e2e"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "3c7259ae-0d49-4f00-a159-fa097190218c": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 688,
+            "y": 144,
+            "source": {
+                "in": {
+                    "46c9c05a-6599-45ef-befd-3cec1933b293": ["out"],
+                    "d2cff235-eaff-48ef-b26d-c8b1b9d1459f": ["out"]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "properties": {
+                    "timeout": 180
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "f0514c7f-a01d-49a2-8746-14517760a38e": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 896,
+            "y": 144,
+            "source": {
+                "in": {
+                    "3c7259ae-0d49-4f00-a159-fa097190218c": ["out"]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "properties": {
+                    "successStoreId": "64f6f1f9193228000754082f",
+                    "failedStoreId": "64f6f1f0193228000754082e"
+                },
+                "transform": {
+                    "in": {
+                        "3c7259ae-0d49-4f00-a159-fa097190218c": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "d701fa98-205a-4690-b24e-9d8b856a3b4c": {
+                                            "variable": "$.3c7259ae-0d49-4f00-a159-fa097190218c.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E Kafka - SendMessage and NewMessage",
+                                    "result": "{{{d701fa98-205a-4690-b24e-9d8b856a3b4c}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        }
+    }
+}
