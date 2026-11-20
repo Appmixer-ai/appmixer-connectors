@@ -20,7 +20,7 @@ module.exports = {
         const url = `${origin}/ccx/service/customreport2/${tenant}/`
             + `${encodeURIComponent(reportOwner)}/${encodeURIComponent(reportName)}`;
 
-        const { data } = await context.httpRequest({
+        const { data } = await lib.request(context, {
             method: 'GET',
             url,
             headers: lib.authHeaders(context),

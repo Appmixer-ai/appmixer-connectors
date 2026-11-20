@@ -13,7 +13,8 @@ const HOST_LABEL = '[a-z0-9](?:[a-z0-9-]*[a-z0-9])?';
 const HOST_PATTERN = new RegExp(`^${HOST_LABEL}(?:\\.${HOST_LABEL})*\\.(?:workday|myworkday)\\.com$`, 'i');
 const TENANT_PATTERN = /^[a-z0-9_-]+$/i;
 // A Workday ID (WID) or a reference ID such as Employee_ID=21005 (REST API Fundamentals).
-const OBJECT_ID_PATTERN = /^[a-z0-9_.-]+(?:=[a-z0-9_.-]+)?$/i;
+// It starts with a letter or a digit, so "." and ".." never become a path segment.
+const OBJECT_ID_PATTERN = /^[a-z0-9][a-z0-9_.-]*(?:=[a-z0-9_.-]+)?$/i;
 
 // REST service versions used by the components (Workday REST Services Directory).
 const COMMON_SERVICE = 'common/v1';
@@ -29,6 +30,12 @@ const DEFAULT_RETRY_DELAY = 2000;
 const MAX_RETRY_DELAY = 30000;
 // Organization chart lookups run in small batches to stay under the tenant throttle.
 const HIERARCHY_BATCH = 5;
+// Workday caps a response collection at one million instances; more pages than
+// that means the server ignores "offset" and the loop would never end.
+const MAX_PAGES = 10000;
+// How many levels up the manager lookup climbs when an organization has no manager
+// other than the worker.
+const MAX_MANAGER_LEVELS = 10;
 const SOURCE_CACHE_TTL = 2 * 60 * 1000;
 
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
@@ -140,7 +147,8 @@ const getAll = async function(context, service, path, params = {}) {
 
     const url = `${restBaseUrl(context, service)}${path}`;
     const records = [];
-    for (;;) {
+    let total = 0;
+    for (let pageNumber = 0; pageNumber < MAX_PAGES; pageNumber++) {
         const { data } = await request(context, {
             method: 'GET',
             url,
@@ -149,12 +157,18 @@ const getAll = async function(context, service, path, params = {}) {
         });
         const page = Array.isArray(data?.data) ? data.data : [];
         records.push(...page);
+        // The largest "total" seen counts: a page that reports none (or 0) must not
+        // end the loop early.
+        if (Number.isInteger(data?.total)) {
+            total = Math.max(total, data.total);
+        }
         // A short page is the last one; "total" ends the loop one request earlier
         // when the collection size is an exact multiple of the page size.
-        if (page.length < PAGE_SIZE || (Number.isInteger(data?.total) && records.length >= data.total)) {
+        if (page.length < PAGE_SIZE || (total > 0 && records.length >= total)) {
             return records;
         }
     }
+    throw new Error(`Workday returned more than ${MAX_PAGES} pages for ${path}; the result was not read to the end.`);
 };
 
 /**
@@ -188,9 +202,13 @@ const matchesReference = function(reference, referenceKey, wanted) {
         return false;
     }
     const value = String(wanted).trim();
-    const plain = value.includes('=') ? value.slice(value.indexOf('=') + 1) : value;
-    return reference.id === value
-        || (reference[referenceKey] !== undefined && String(reference[referenceKey]) === plain);
+    const referenceId = reference[referenceKey] === undefined ? undefined : String(reference[referenceKey]);
+    const separator = value.indexOf('=');
+    if (separator !== -1) {
+        // "Type=Value" names the reference type: Location_ID=X is not an organization.
+        return value.slice(0, separator) === referenceKey && referenceId === value.slice(separator + 1);
+    }
+    return reference.id === value || referenceId === value;
 };
 
 // One CSV cell per RFC 4180: null/undefined → empty, objects → JSON, and a value
@@ -206,7 +224,9 @@ const toCsv = (records) => {
     if (!records.length) return '';
     // Cells are taken by header column, not Object.values(record), so a record with
     // a different key order or a missing key stays under the right header.
-    const columns = Object.keys(records[0]);
+    // Workday leaves out fields per record, so the header is the union of all keys,
+    // not the keys of the first record.
+    const columns = [...new Set(records.flatMap(record => Object.keys(record)))];
     const rows = records.map(record => columns.map(column => csvCell(record[column])).join(','));
     return [columns.map(csvCell).join(','), ...rows].join('\n');
 };
@@ -276,9 +296,17 @@ module.exports = {
 
         const organization = await getOne(context, STAFFING_SERVICE, `/supervisoryOrganizations/${organizationId}`);
         let reference = other(organization?.managers);
-        if (!reference) {
-            const superior = await this.getSuperiorOrganization(context, organizationId);
-            reference = other(superior?.managers);
+        // Climb the hierarchy until an organization is led by somebody else.
+        const visited = new Set([organizationId]);
+        let current = organizationId;
+        while (!reference && visited.size <= MAX_MANAGER_LEVELS) {
+            const superior = await this.getSuperiorOrganization(context, current);
+            if (!superior || visited.has(superior.id)) {
+                break;
+            }
+            visited.add(superior.id);
+            reference = other(superior.managers);
+            current = superior.id;
         }
         if (!reference) {
             return null;
@@ -303,8 +331,10 @@ module.exports = {
     async getSuperiorOrganization(context, organizationId) {
 
         const nodes = await getAll(context, STAFFING_SERVICE, `/supervisoryOrganizations/${organizationId}/orgChart`);
-        const node = nodes.find(n => n?.id === organizationId) || nodes[0];
-        return node?.superior?.id ? node.superior : undefined;
+        // Only the node of this organization counts: the superior of another node is
+        // not its parent.
+        const superior = nodes.find(n => n?.id === organizationId)?.superior;
+        return superior?.id && superior.id !== organizationId ? superior : undefined;
     },
 
     /**

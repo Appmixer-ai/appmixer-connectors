@@ -125,6 +125,9 @@ describe('workday', function() {
             const context = createContext({ content: { query }, response: { data: { total: 1, data: [{ firstName: 'A' }] } } });
             await RunWQLQuery.receive(context);
             assert.strictEqual(context.requests[0].method, 'POST');
+            // The query travels in the body; only the paging goes to the query string.
+            assert.deepStrictEqual(context.requests[0].data, { query });
+            assert.deepStrictEqual(context.requests[0].params, { limit: 10000, offset: 0 });
             assert.deepStrictEqual(context.sent[0].data, { result: [{ firstName: 'A' }], count: 1, total: 1 });
         });
 
@@ -375,6 +378,68 @@ describe('workday', function() {
             assert.strictEqual(context.sent[0].data.count, 130);
         });
 
+        it('a page without "total" does not end the paging early', async function() {
+            const all = Array.from({ length: 250 }, (_, i) => worker(i));
+            const context = createContext({
+                content: { outputType: 'array' },
+                // Only the first page reports the total; later pages report 0 or nothing.
+                respond: ({ params }) => ({
+                    ...(params.offset === 0 ? { total: all.length } : params.offset === 100 ? { total: 0 } : {}),
+                    data: all.slice(params.offset, params.offset + params.limit)
+                })
+            });
+            await ListWorkers.receive(context);
+            assert.strictEqual(context.sent[0].data.count, 250);
+        });
+
+        it('a reference ID of another type does not match', async function() {
+            const all = [worker(1, 'org1', 'loc1')];
+            const context = createContext({
+                content: { organizationId: 'Location_ID=REF_org1', outputType: 'array' },
+                respond: pages(all)
+            });
+            await FindWorkers.receive(context);
+            assert.strictEqual(context.sent[0].port, 'notFound');
+        });
+
+        it('GetWorker climbs the hierarchy until somebody else leads an organization', async function() {
+            const context = createContext({
+                content: { workerId: 'w1', includeManager: true },
+                respond: ({ url }) => {
+                    if (url === `${STAFFING}/workers/w1`) return worker(1);
+                    if (url === `${STAFFING}/supervisoryOrganizations/org1`) return { id: 'org1', managers: [{ id: 'w1' }] };
+                    if (url === `${STAFFING}/supervisoryOrganizations/org1/orgChart`) {
+                        // The worker leads the superior organization too.
+                        return { total: 1, data: [{ id: 'org1', superior: { id: 'org0', managers: [{ id: 'w1' }] } }] };
+                    }
+                    if (url === `${STAFFING}/supervisoryOrganizations/org0/orgChart`) {
+                        return { total: 1, data: [{ id: 'org0', superior: { id: 'top', managers: [{ id: 'w5' }] } }] };
+                    }
+                    if (url === `${STAFFING}/workers/w5`) return worker(5);
+                    throw new Error(`unexpected ${url}`);
+                }
+            });
+            await GetWorker.receive(context);
+            assert.strictEqual(context.sent[0].data.manager.id, 'w5');
+        });
+
+        it('the organization chart of another node gives no superior', async function() {
+            const context = createContext({
+                respond: () => ({ total: 2, data: [{ id: 'other', superior: { id: 'org1' } }, { id: 'org1', superior: { id: 'org1' } }] })
+            });
+            // A node that is not this organization is ignored, and so is a superior that is the organization itself.
+            assert.strictEqual(await lib.getSuperiorOrganization(context, 'org1'), undefined);
+            assert.strictEqual(await lib.getSuperiorOrganization(context, 'org2'), undefined);
+        });
+
+        it('GetWorker rejects "." and ".." as an ID', async function() {
+            for (const workerId of ['.', '..']) {
+                const context = createContext({ content: { workerId } });
+                await assert.rejects(() => GetWorker.receive(context), /Worker ID must be/);
+                assert.strictEqual(context.requests.length, 0);
+            }
+        });
+
         it('a throttled request (429) is retried', async function() {
             const context = createContext({
                 content: { workerId: 'w1' },
@@ -414,6 +479,10 @@ describe('workday', function() {
 
         it('quotes cells per RFC 4180', function() {
             assert.strictEqual(lib.toCsv([{ a: 'x,y', b: 'say "hi"' }]), 'a,b\n"x,y","say ""hi"""');
+        });
+
+        it('takes the columns from every record, not only the first one', function() {
+            assert.strictEqual(lib.toCsv([{ a: 1 }, { a: 2, b: 'x' }]), 'a,b\n1,\n2,x');
         });
     });
 });

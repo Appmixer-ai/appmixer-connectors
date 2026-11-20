@@ -22,7 +22,7 @@ module.exports = {
         const usePost = query.length >= MAX_GET_QUERY_LENGTH;
 
         const rows = [];
-        let total;
+        let total = 0;
         for (;;) {
             const paging = { limit: PAGE_SIZE, offset: rows.length };
             const { data } = await lib.request(context, {
@@ -34,12 +34,15 @@ module.exports = {
             });
             const page = Array.isArray(data?.data) ? data.data : [];
             rows.push(...page);
-            total = data?.total;
-            if (page.length < PAGE_SIZE || (Number.isInteger(total) && rows.length >= total)) {
+            // The largest "total" seen counts: a page that reports none must not end the loop early.
+            if (Number.isInteger(data?.total)) {
+                total = Math.max(total, data.total);
+            }
+            if (page.length < PAGE_SIZE || (total > 0 && rows.length >= total)) {
                 break;
             }
         }
 
-        return context.sendJson({ result: rows, count: rows.length, total: total ?? rows.length }, 'out');
+        return context.sendJson({ result: rows, count: rows.length, total: total || rows.length }, 'out');
     }
 };
