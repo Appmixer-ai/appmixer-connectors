@@ -250,7 +250,7 @@
             }
         },
         "d136e12e-79ee-4d4a-85fb-45792e7588e3": {
-            "type": "appmixer.microsoft.sharepoint.MakeApiCall",
+            "type": "appmixer.microsoft.sharepoint.DeleteFileOrFolder",
             "x": 1000,
             "y": 400,
             "version": "1.0.0",
@@ -268,17 +268,19 @@
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
-                                    "url": {
+                                    "siteId": {},
+                                    "driveId": {},
+                                    "itemId": {
                                         "8c4100fe-44aa-4100-86fa-ff053d86555f": {
                                             "variable": "$.2c97ba35-3bea-475c-bdbd-c45eca6ed90c.out.id",
                                             "functions": []
                                         }
-                                    },
-                                    "method": {}
+                                    }
                                 },
                                 "lambda": {
-                                    "url": "/drives/b!Eto4gvCk5kGuQy-Oows-CFPOHQ5TCtFPlXQ3zGEzyRH0QXrcZ7cRTpnsUe-6sqyO/items/{{{8c4100fe-44aa-4100-86fa-ff053d86555f}}}",
-                                    "method": "DELETE"
+                                    "siteId": "appmixer.sharepoint.com,8238da12-a4f0-41e6-ae43-2f8ea30b3e08,0e1dce53-0a53-4fd1-9574-37cc6133c911",
+                                    "driveId": "b!Eto4gvCk5kGuQy-Oows-CFPOHQ5TCtFPlXQ3zGEzyRH0QXrcZ7cRTpnsUe-6sqyO",
+                                    "itemId": "{{{8c4100fe-44aa-4100-86fa-ff053d86555f}}}"
                                 }
                             }
                         }
@@ -341,7 +343,7 @@
             "y": 640,
             "width": 900,
             "height": 260,
-            "content": "## ⚠️ Test data assumption\n\n`WatchLocation` has no parent-path property — it watches an **entire drive** — and the cleanup\ndeletes whatever item id the trigger reports. This flow therefore deliberately uses the empty\n**Documents** library of the **TestSite1** SharePoint site, not the shared Stg Appmixer QA library\nthe other SharePoint E2E flows use.\n\nThe upload target folder `E2E-WatchLocation` must exist in that library — create it with\n`appmixer.microsoft.sharepoint.CreateFolder` on a fresh tenant.\n\nNothing else may write to that library while the flow runs, or the cleanup will delete a foreign\nfile. `Wait 1m` lets the Graph subscription propagate — do not remove it.\n\nThe account needs `Files.Read.All`, `Sites.Read.All` (trigger), `Files.ReadWrite.All` (upload)\nand `Sites.ReadWrite.All` (cleanup Make API Call)."
+            "content": "## ⚠️ Test data assumption\n\n`WatchLocation` has no parent-path property — it watches an **entire drive** — and the cleanup\ndeletes whatever item id the trigger reports. This flow therefore deliberately uses the empty\n**Documents** library of the **TestSite1** SharePoint site, not the shared Stg Appmixer QA library\nthe other SharePoint E2E flows use.\n\nThe upload target folder `E2E-WatchLocation` must exist in that library — create it with\n`appmixer.microsoft.sharepoint.CreateFolder` on a fresh tenant.\n\nNothing else may write to that library while the flow runs, or the cleanup will delete a foreign\nfile. `Wait 1m` lets the Graph subscription propagate — do not remove it.\n\nThe account needs `Files.Read.All`, `Sites.Read.All` (trigger), `Files.ReadWrite.All` (upload\nand cleanup Delete File or Folder)."
         }
     }
 }
