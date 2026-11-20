@@ -1,0 +1,529 @@
+{
+    "name": "E2E Stripe - checkout session and payment link",
+    "description": "Creates a one-time price, a Checkout Session (Create Checkout Session) and a payment link (Create Payment Link) for it, then expires the session, deactivates the link and archives the product.",
+    "flow": {
+        "e4c205db-afa3-4282-b6a0-0e391ecdb8f4": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {},
+            "config": {},
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "8b31eb3a-8460-4ab0-93db-677f25214967": {
+            "type": "appmixer.stripe.core.MakeApiCall",
+            "x": 272,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "e4c205db-afa3-4282-b6a0-0e391ecdb8f4": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "e4c205db-afa3-4282-b6a0-0e391ecdb8f4": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "url": {},
+                                    "method": {},
+                                    "body": {}
+                                },
+                                "lambda": {
+                                    "url": "/v1/prices",
+                                    "method": "POST",
+                                    "body": "{\"currency\":\"usd\",\"unit_amount\":2500,\"product_data[name]\":\"E2E Stripe Checkout Item\"}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "ebbde49e-e559-4991-b3da-80c08e4fa80c": {
+            "type": "appmixer.stripe.core.CreateCheckoutSession",
+            "x": 480,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "8b31eb3a-8460-4ab0-93db-677f25214967": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "8b31eb3a-8460-4ab0-93db-677f25214967": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "mode": {},
+                                    "lineItems": {
+                                        "2ba1c0e1-6186-401e-b237-c01e0aef8d58": {
+                                            "variable": "$.8b31eb3a-8460-4ab0-93db-677f25214967.out.body",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$.id"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "successUrl": {},
+                                    "cancelUrl": {},
+                                    "customerEmail": {},
+                                    "clientReferenceId": {},
+                                    "metadata": {}
+                                },
+                                "lambda": {
+                                    "mode": "payment",
+                                    "lineItems": {
+                                        "AND": [
+                                            {
+                                                "price": "{{{2ba1c0e1-6186-401e-b237-c01e0aef8d58}}}",
+                                                "quantity": 2
+                                            }
+                                        ]
+                                    },
+                                    "successUrl": "https://example.com/success",
+                                    "cancelUrl": "https://example.com/cancel",
+                                    "customerEmail": "e2e-checkout@example.com",
+                                    "clientReferenceId": "e2e-checkout-order",
+                                    "metadata": "{\"e2e\":\"checkout\"}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "ac17992a-779c-4ee2-a009-5a68a90978a7": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 688,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "ebbde49e-e559-4991-b3da-80c08e4fa80c": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "ebbde49e-e559-4991-b3da-80c08e4fa80c": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "3045d3a6-0d30-4d9f-8b3b-d8fec258e4cb": {
+                                            "variable": "$.ebbde49e-e559-4991-b3da-80c08e4fa80c.out.url",
+                                            "functions": []
+                                        },
+                                        "5829116c-c0b7-4e8e-9b9b-50632a0639c1": {
+                                            "variable": "$.ebbde49e-e559-4991-b3da-80c08e4fa80c.out.status",
+                                            "functions": []
+                                        },
+                                        "36056a7d-a845-4c52-8972-474cd51cabc3": {
+                                            "variable": "$.ebbde49e-e559-4991-b3da-80c08e4fa80c.out.mode",
+                                            "functions": []
+                                        },
+                                        "555f1284-13d6-4c26-80ef-e22150b08e1d": {
+                                            "variable": "$.ebbde49e-e559-4991-b3da-80c08e4fa80c.out.client_reference_id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{3045d3a6-0d30-4d9f-8b3b-d8fec258e4cb}}}",
+                                                "assertion": "regex",
+                                                "regex": "^https://checkout\\.stripe\\.com/"
+                                            },
+                                            {
+                                                "field": "{{{5829116c-c0b7-4e8e-9b9b-50632a0639c1}}}",
+                                                "assertion": "equal",
+                                                "expected": "open"
+                                            },
+                                            {
+                                                "field": "{{{36056a7d-a845-4c52-8972-474cd51cabc3}}}",
+                                                "assertion": "equal",
+                                                "expected": "payment"
+                                            },
+                                            {
+                                                "field": "{{{555f1284-13d6-4c26-80ef-e22150b08e1d}}}",
+                                                "assertion": "equal",
+                                                "expected": "e2e-checkout-order"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "d3c9dda7-6853-412d-9409-7347d7ab5a73": {
+            "type": "appmixer.stripe.core.CreatePaymentLink",
+            "x": 896,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "ac17992a-779c-4ee2-a009-5a68a90978a7": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "ac17992a-779c-4ee2-a009-5a68a90978a7": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "lineItems": {
+                                        "93b2080c-0e7f-4543-9bc4-5432d11a6eef": {
+                                            "variable": "$.8b31eb3a-8460-4ab0-93db-677f25214967.out.body",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$.id"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "redirectUrl": {},
+                                    "metadata": {}
+                                },
+                                "lambda": {
+                                    "lineItems": {
+                                        "AND": [
+                                            {
+                                                "price": "{{{93b2080c-0e7f-4543-9bc4-5432d11a6eef}}}",
+                                                "quantity": 1
+                                            }
+                                        ]
+                                    },
+                                    "redirectUrl": "https://example.com/thank-you",
+                                    "metadata": "{\"e2e\":\"payment-link\"}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "19e23192-1663-44b5-a88f-5db09f0a1a87": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1104,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "d3c9dda7-6853-412d-9409-7347d7ab5a73": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "d3c9dda7-6853-412d-9409-7347d7ab5a73": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "a089ec31-53a0-4f79-9c2a-bb15f3db46ec": {
+                                            "variable": "$.d3c9dda7-6853-412d-9409-7347d7ab5a73.out.id",
+                                            "functions": []
+                                        },
+                                        "da511905-eee8-48f8-8209-f24f282c57e8": {
+                                            "variable": "$.d3c9dda7-6853-412d-9409-7347d7ab5a73.out.url",
+                                            "functions": []
+                                        },
+                                        "b0c627ee-bad4-4e6d-948f-00ac12d4c11f": {
+                                            "variable": "$.d3c9dda7-6853-412d-9409-7347d7ab5a73.out.after_completion.redirect.url",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{a089ec31-53a0-4f79-9c2a-bb15f3db46ec}}}",
+                                                "assertion": "regex",
+                                                "regex": "^plink_"
+                                            },
+                                            {
+                                                "field": "{{{da511905-eee8-48f8-8209-f24f282c57e8}}}",
+                                                "assertion": "regex",
+                                                "regex": "^https://"
+                                            },
+                                            {
+                                                "field": "{{{b0c627ee-bad4-4e6d-948f-00ac12d4c11f}}}",
+                                                "assertion": "equal",
+                                                "expected": "https://example.com/thank-you"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "fd7a810d-f555-41b4-aee7-df8c256004c8": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 1312,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "ac17992a-779c-4ee2-a009-5a68a90978a7": [
+                        "out"
+                    ],
+                    "19e23192-1663-44b5-a88f-5db09f0a1a87": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 180
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "c0e2a477-15d3-4e16-9ed1-fe57aa988a7e": {
+            "type": "appmixer.stripe.core.MakeApiCall",
+            "x": 1520,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "fd7a810d-f555-41b4-aee7-df8c256004c8": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "fd7a810d-f555-41b4-aee7-df8c256004c8": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "url": {
+                                        "dfb02c4e-fd2d-49f7-8c9d-ade546118f1c": {
+                                            "variable": "$.ebbde49e-e559-4991-b3da-80c08e4fa80c.out.id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "method": {}
+                                },
+                                "lambda": {
+                                    "url": "/v1/checkout/sessions/{{{dfb02c4e-fd2d-49f7-8c9d-ade546118f1c}}}/expire",
+                                    "method": "POST"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "1f5dee2f-dc21-4722-a3f2-0d039883288f": {
+            "type": "appmixer.stripe.core.MakeApiCall",
+            "x": 1728,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "c0e2a477-15d3-4e16-9ed1-fe57aa988a7e": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "c0e2a477-15d3-4e16-9ed1-fe57aa988a7e": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "url": {
+                                        "cfc574ca-6ecc-436f-b5d5-a992f4097812": {
+                                            "variable": "$.d3c9dda7-6853-412d-9409-7347d7ab5a73.out.id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "method": {},
+                                    "body": {}
+                                },
+                                "lambda": {
+                                    "url": "/v1/payment_links/{{{cfc574ca-6ecc-436f-b5d5-a992f4097812}}}",
+                                    "method": "POST",
+                                    "body": "{\"active\":\"false\"}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "8c814057-7276-4687-ac38-e273fee1b3b3": {
+            "type": "appmixer.stripe.core.MakeApiCall",
+            "x": 1936,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "1f5dee2f-dc21-4722-a3f2-0d039883288f": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "1f5dee2f-dc21-4722-a3f2-0d039883288f": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "url": {
+                                        "1dafe0ea-a080-42f4-844c-2289086c632e": {
+                                            "variable": "$.8b31eb3a-8460-4ab0-93db-677f25214967.out.body",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$.product"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "method": {},
+                                    "body": {}
+                                },
+                                "lambda": {
+                                    "url": "/v1/products/{{{1dafe0ea-a080-42f4-844c-2289086c632e}}}",
+                                    "method": "POST",
+                                    "body": "{\"active\":\"false\"}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "ab181a1c-9a05-4467-b0db-d8c889ae447d": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 2144,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "8c814057-7276-4687-ac38-e273fee1b3b3": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "8c814057-7276-4687-ac38-e273fee1b3b3": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "c29babc0-7f73-48c7-a2f9-e8c9e019b85e": {
+                                            "variable": "$.fd7a810d-f555-41b4-aee7-df8c256004c8.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E Stripe - checkout session and payment link",
+                                    "result": "{{{c29babc0-7f73-48c7-a2f9-e8c9e019b85e}}}"
+                                }
+                            }
+                        }
+                    }
+                },
+                "properties": {
+                    "successStoreId": "64f6f1f9193228000754082f",
+                    "failedStoreId": "64f6f1f0193228000754082e"
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        }
+    }
+}

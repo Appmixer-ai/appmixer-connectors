@@ -1,0 +1,280 @@
+{
+    "name": "appmixer.stripe.core.CreateCheckoutSession",
+    "description": "Creates a Stripe-hosted Checkout Session and returns its URL. Send the URL to the customer to pay, start a subscription, or save payment details. The session expires after 24 hours.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:stripe"
+    },
+    "quota": {
+        "manager": "appmixer:stripe",
+        "resources": "requests"
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "mode": {
+                        "type": "string",
+                        "enum": [
+                            "payment",
+                            "subscription",
+                            "setup"
+                        ]
+                    },
+                    "lineItems": {
+                        "type": "object"
+                    },
+                    "successUrl": {
+                        "type": "string"
+                    },
+                    "cancelUrl": {
+                        "type": "string"
+                    },
+                    "customer": {
+                        "type": "string"
+                    },
+                    "customerEmail": {
+                        "type": "string"
+                    },
+                    "currency": {
+                        "type": "string"
+                    },
+                    "clientReferenceId": {
+                        "type": "string"
+                    },
+                    "metadata": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "mode",
+                    "successUrl"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "mode": {
+                        "type": "select",
+                        "label": "Mode",
+                        "index": 1,
+                        "defaultValue": "payment",
+                        "tooltip": "Payment accepts a one-time payment, Subscription starts a subscription (at least one recurring price), Setup saves payment details for later.",
+                        "options": [
+                            {
+                                "label": "Payment",
+                                "value": "payment"
+                            },
+                            {
+                                "label": "Subscription",
+                                "value": "subscription"
+                            },
+                            {
+                                "label": "Setup",
+                                "value": "setup"
+                            }
+                        ]
+                    },
+                    "lineItems": {
+                        "type": "expression",
+                        "label": "Line Items",
+                        "index": 2,
+                        "tooltip": "The prices the customer buys, each with a quantity. Required in Payment and Subscription mode, ignored in Setup mode.",
+                        "levels": [
+                            "AND"
+                        ],
+                        "fields": {
+                            "price": {
+                                "type": "text",
+                                "label": "Price ID",
+                                "index": 1,
+                                "tooltip": "The ID of a Stripe Price, e.g. price_1MoBy5LkdIwHu7ixZhnattbh."
+                            },
+                            "quantity": {
+                                "type": "number",
+                                "label": "Quantity",
+                                "index": 2,
+                                "defaultValue": 1,
+                                "tooltip": "The quantity of the price. Defaults to 1."
+                            }
+                        }
+                    },
+                    "successUrl": {
+                        "type": "text",
+                        "label": "Success URL",
+                        "index": 3,
+                        "tooltip": "The URL Stripe sends the customer to after the payment or setup is complete."
+                    },
+                    "cancelUrl": {
+                        "type": "text",
+                        "label": "Cancel URL",
+                        "index": 4,
+                        "tooltip": "If set, Checkout shows a back button that returns the customer to this URL."
+                    },
+                    "customer": {
+                        "type": "text",
+                        "label": "Customer ID",
+                        "index": 5,
+                        "tooltip": "ID of an existing customer, e.g. cus_NffrFeUfNV2Hib. Leave empty to let Checkout collect the customer's details."
+                    },
+                    "customerEmail": {
+                        "type": "text",
+                        "label": "Customer Email",
+                        "index": 6,
+                        "tooltip": "Prefills the customer's email address. Use either this or Customer ID."
+                    },
+                    "currency": {
+                        "type": "text",
+                        "label": "Currency",
+                        "index": 7,
+                        "tooltip": "Three-letter ISO currency code, e.g. usd. Required in Setup mode."
+                    },
+                    "clientReferenceId": {
+                        "type": "text",
+                        "label": "Client Reference ID",
+                        "index": 8,
+                        "tooltip": "Your own reference for the session, e.g. a cart or order ID (up to 200 characters)."
+                    },
+                    "metadata": {
+                        "type": "key-value",
+                        "label": "Metadata",
+                        "index": 9,
+                        "tooltip": "Optional key-value pairs to store on the object, e.g. an order ID from your system."
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "title": "Session ID",
+                        "example": "cs_test_a11YYufWQzNY63zpQ6QSNRQhkUpVph4WRmzW0zWJO2znZKdVujZ0N0S22u"
+                    },
+                    "object": {
+                        "type": "string",
+                        "title": "Object",
+                        "example": "checkout.session"
+                    },
+                    "url": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "title": "Checkout URL",
+                        "example": "https://checkout.stripe.com/c/pay/cs_test_a11YYufWQzNY63zpQ6QSNRQhkUpVph4WRmzW0zWJO2znZKdVujZ0N0S22u"
+                    },
+                    "status": {
+                        "type": "string",
+                        "title": "Status",
+                        "example": "open"
+                    },
+                    "mode": {
+                        "type": "string",
+                        "title": "Mode",
+                        "example": "payment"
+                    },
+                    "payment_status": {
+                        "type": "string",
+                        "title": "Payment Status",
+                        "example": "unpaid"
+                    },
+                    "customer": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "title": "Customer ID",
+                        "example": "cus_NffrFeUfNV2Hib"
+                    },
+                    "customer_email": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "title": "Customer Email",
+                        "example": "jenny.rosen@example.com"
+                    },
+                    "amount_subtotal": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ],
+                        "title": "Amount Subtotal",
+                        "example": 2000
+                    },
+                    "amount_total": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ],
+                        "title": "Amount Total",
+                        "example": 2000
+                    },
+                    "currency": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "title": "Currency",
+                        "example": "usd"
+                    },
+                    "expires_at": {
+                        "type": "integer",
+                        "title": "Expires At (Unix Timestamp)",
+                        "example": 1679600215
+                    },
+                    "created": {
+                        "type": "integer",
+                        "title": "Created (Unix Timestamp)",
+                        "example": 1679513815
+                    },
+                    "success_url": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "title": "Success URL",
+                        "example": "https://example.com/success"
+                    },
+                    "cancel_url": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "title": "Cancel URL",
+                        "example": "https://example.com/cancel"
+                    },
+                    "client_reference_id": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "title": "Client Reference ID",
+                        "example": "order-1001"
+                    },
+                    "livemode": {
+                        "type": "boolean",
+                        "title": "Live Mode",
+                        "example": false
+                    },
+                    "metadata": {
+                        "type": "object",
+                        "title": "Metadata",
+                        "example": {
+                            "orderId": "1001"
+                        }
+                    }
+                }
+            }
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiByeD0iNiIgZmlsbD0iIzYzNUJGRiIvPjxwYXRoIHRyYW5zZm9ybT0idHJhbnNsYXRlKDQgNCkiIGZpbGw9IiNGRkZGRkYiIGQ9Ik0xMy45NzYgOS4xNWMtMi4xNzItLjgwNi0zLjM1Ni0xLjQyNi0zLjM1Ni0yLjQwOSAwLS44MzEuNjgzLTEuMzA1IDEuOTAxLTEuMzA1IDIuMjI3IDAgNC41MTUuODU4IDYuMDkgMS42MzFsLjg5LTUuNDk0QzE4LjI1Mi45NzUgMTUuNjk3IDAgMTIuMTY1IDAgOS42NjcgMCA3LjU4OS42NTQgNi4xMDQgMS44NzIgNC41NiAzLjE0NyAzLjc1NyA0Ljk5MiAzLjc1NyA3LjIxOGMwIDQuMDM5IDIuNDY3IDUuNzYgNi40NzYgNy4yMTkgMi41ODUuOTIgMy40NDUgMS41NzQgMy40NDUgMi41ODMgMCAuOTgtLjg0IDEuNTQ1LTIuMzU0IDEuNTQ1LTEuODc1IDAtNC45NjUtLjkyMS02Ljk5LTIuMTA5bC0uOSA1LjU1NUM1LjE3NSAyMi45OSA4LjM4NSAyNCAxMS43MTQgMjRjMi42NDEgMCA0Ljg0My0uNjI0IDYuMzI4LTEuODEzIDEuNjY0LTEuMzA1IDIuNTI1LTMuMjM2IDIuNTI1LTUuNzMyIDAtNC4xMjgtMi41MjQtNS44NTEtNi41OTQtNy4zMDVoLjAwM3oiLz48L3N2Zz4="
+}
