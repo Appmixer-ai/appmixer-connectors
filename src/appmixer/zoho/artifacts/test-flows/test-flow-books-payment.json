@@ -7,7 +7,7 @@
             "y": 512,
             "width": 672,
             "height": 240,
-            "content": "## ⚠️ Test data assumption\n\n**Organization ID** `20111141498` is set on every Zoho Books component, including the MakeApiCall cleanup (Query Parameters). It must be an organization of the connected Zoho Books account — on another tenant replace it everywhere.\n\nThe invoice is marked as sent before the payment: Zoho Books does not apply payments to draft invoices. The payment is deleted before the invoice because an invoice with a payment cannot be deleted. If the flow stops half way, delete the customer *Appmixer E2E payment customer …* and its records by hand."
+            "content": "## ⚠️ Test data assumption\n\n**Organization ID** `20111141498` is set on every Zoho Books component. It must be an organization of the connected Zoho Books account — on another tenant replace it everywhere.\n\nThe invoice is marked as sent before the payment: Zoho Books does not apply payments to draft invoices. The payment is deleted before the invoice because an invoice with a payment cannot be deleted. If the flow stops half way, delete the customer *Appmixer E2E payment customer …* and its records by hand."
         }
     },
     "flow": {
@@ -441,7 +441,7 @@
             }
         },
         "f237211c-e595-4e55-be18-4060581a0bd6": {
-            "type": "appmixer.zoho.books.MakeApiCall",
+            "type": "appmixer.zoho.books.DeletePayment",
             "x": 1936,
             "y": 384,
             "version": "1.0.0",
@@ -459,19 +459,17 @@
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
-                                    "url": {
+                                    "organizationId": {},
+                                    "paymentId": {
                                         "1408f430-ef98-419f-af15-cfe0897797b7": {
                                             "variable": "$.5f6dbed2-4395-4060-87d7-0403317fc817.out.payment_id",
                                             "functions": []
                                         }
-                                    },
-                                    "method": {},
-                                    "parameters": {}
+                                    }
                                 },
                                 "lambda": {
-                                    "url": "/customerpayments/{{{1408f430-ef98-419f-af15-cfe0897797b7}}}",
-                                    "method": "DELETE",
-                                    "parameters": "{\"organization_id\":\"20111141498\"}"
+                                    "organizationId": "20111141498",
+                                    "paymentId": "{{{1408f430-ef98-419f-af15-cfe0897797b7}}}"
                                 }
                             }
                         }
