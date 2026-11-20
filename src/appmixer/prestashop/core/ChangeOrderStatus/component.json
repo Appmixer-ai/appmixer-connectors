@@ -1,0 +1,109 @@
+{
+    "name": "appmixer.prestashop.core.ChangeOrderStatus",
+    "label": "Change Order Status",
+    "description": "Change the status of an order by adding a new entry to its state history, for example to mark it as shipped, delivered or refunded. Optionally sends the customer the e-mail tied to the new status.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "private": false,
+    "auth": {
+        "service": "appmixer:prestashop"
+    },
+    "quota": {
+        "manager": "appmixer:prestashop",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "orderId": {
+                        "type": "string"
+                    },
+                    "orderStateId": {
+                        "type": "string"
+                    },
+                    "sendEmail": {
+                        "type": "boolean"
+                    }
+                },
+                "required": [
+                    "orderId",
+                    "orderStateId"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "orderId": {
+                        "type": "text",
+                        "index": 1,
+                        "label": "Order ID",
+                        "tooltip": "The ID of the order whose status to change."
+                    },
+                    "orderStateId": {
+                        "type": "text",
+                        "index": 2,
+                        "label": "Order Status",
+                        "tooltip": "The new status of the order. Pick one from the list or enter an order state ID (in a default shop for example 4 = Shipped, 5 = Delivered, 7 = Refunded).",
+                        "source": {
+                            "url": "/component/appmixer/prestashop/core/ListOrderStatuses?outPort=out",
+                            "data": {
+                                "properties": {
+                                    "isSource": true
+                                },
+                                "transform": "./ListOrderStatuses#toSelectArray"
+                            }
+                        }
+                    },
+                    "sendEmail": {
+                        "type": "toggle",
+                        "index": 3,
+                        "label": "Notify Customer",
+                        "defaultValue": false,
+                        "tooltip": "Send the customer the e-mail configured for the new status (only statuses with an e-mail template send one)."
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "title": "History ID",
+                        "example": "42"
+                    },
+                    "id_order": {
+                        "type": "string",
+                        "title": "Order ID",
+                        "example": "1"
+                    },
+                    "id_order_state": {
+                        "type": "string",
+                        "title": "Order State ID",
+                        "example": "4"
+                    },
+                    "id_employee": {
+                        "type": "string",
+                        "title": "Employee ID",
+                        "example": "0"
+                    },
+                    "date_add": {
+                        "type": "string",
+                        "title": "Created Date",
+                        "example": "2024-02-20 08:15:00"
+                    }
+                }
+            }
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZmlsbD0iIzFEMUQzQyIgZD0iTTEyIDEuMiAyIDZ2MTJsMTAgNC44TDIyIDE4VjZMMTIgMS4yem0wIDIuMyA3LjYgMy42TDEyIDEwLjcgNC40IDcuMSAxMiAzLjV6TTQgOC43bDcgMy4zdjguNmwtNy0zLjNWOC43em0xNiAwdjguNmwtNyAzLjN2LTguNmw3LTMuM3oiLz48L3N2Zz4K"
+}
