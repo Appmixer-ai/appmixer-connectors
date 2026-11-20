@@ -39,8 +39,20 @@ module.exports = {
             },
 
             accountNameFromProfileInfo: (context) => {
+                // The account name is shown in the UI: drop Basic Auth credentials embedded in the
+                // userinfo part of the URL (GHSA-hjwh-xvfw-qrwj).
                 const name = context['SEARXNG_URL'];
-                return name;
+                try {
+                    const url = new URL(name);
+                    if (!url.username && !url.password) {
+                        return name;
+                    }
+                    url.username = '';
+                    url.password = '';
+                    return url.toString();
+                } catch {
+                    return String(name || '').replace(/(\w+:\/\/)[^\s/@]+@/g, '$1');
+                }
             }
         };
     }
