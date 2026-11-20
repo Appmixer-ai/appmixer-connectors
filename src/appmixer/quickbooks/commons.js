@@ -278,5 +278,56 @@ module.exports = {
         if (minorVersion && minorVersion < 75) {
             await context.log({ message: `You specified version ${minorVersion}, but versions below 75 are no longer supported and will be ignored. The API will default to version 75. Please update to version 75 or higher. See https://developer.intuit.com/app/developer/qbo/docs/learn/explore-the-quickbooks-online-api/minor-versions for more details.` });
         }
+    },
+
+    /**
+     * Sparse update of a QuickBooks entity (Invoice, Customer, Bill, ...). Reads the current record
+     * for its SyncToken, then POSTs only `buildChanges(current)` with `sparse: true`. If the record
+     * changed between the read and the write (stale object, error 5010), reads it again and retries once.
+     * @param {Object} context - Appmixer context
+     * @param {string} entity - Entity name as in the API response, e.g. 'Invoice'
+     * @param {string} id - ID of the record
+     * @param {function(Object): Object} buildChanges - Fields to change, given the current record
+     * @return {Promise<Object>} The updated record
+     */
+    async sparseUpdate(context, entity, id, buildChanges) {
+
+        const STALE_OBJECT_ERROR = '5010';
+        const basePath = `v3/company/${context.profileInfo.companyId}/${entity.toLowerCase()}`;
+
+        const attempt = async () => {
+            const { data: current } = await module.exports.makeRequest({
+                context,
+                options: { path: `${basePath}/${encodeURIComponent(id)}?minorversion=75`, method: 'GET' }
+            });
+            if (!current?.[entity]) {
+                throw new context.CancelError(`${entity} ${id} not found.`);
+            }
+            const { data } = await module.exports.makeRequest({
+                context,
+                options: {
+                    path: `${basePath}?minorversion=75`,
+                    method: 'POST',
+                    data: {
+                        ...buildChanges(current[entity]),
+                        Id: id,
+                        SyncToken: current[entity].SyncToken,
+                        sparse: true
+                    }
+                }
+            });
+            return data?.[entity];
+        };
+
+        try {
+            return await attempt();
+        } catch (err) {
+            if (err?.Fault?.Error?.[0]?.code !== STALE_OBJECT_ERROR) {
+                throw err;
+            }
+            // Changed between our read and write: read the new SyncToken and try once more.
+            await context.log({ step: 'Stale SyncToken, retrying with a fresh one', entity, id });
+            return attempt();
+        }
     }
 };
