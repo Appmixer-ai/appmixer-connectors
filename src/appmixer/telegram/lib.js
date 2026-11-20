@@ -341,6 +341,96 @@ module.exports = {
     },
 
     /**
+     * Turns the Inline Keyboard input of SendMessage into Telegram's `inline_keyboard`
+     * (an array of button rows). Accepts the expression field value (`{ ADD: [ { row, text,
+     * callbackData, url } ] }`, also as a JSON string) or, when the whole field is mapped
+     * from a variable, a ready-made `inline_keyboard` array of arrays. Buttons with the same
+     * row number share a row; rows are ordered by their number. Fully empty rows are skipped.
+     * @param {object} context
+     * @param {object|string|Array} value
+     * @returns {Array<Array<object>>|undefined} undefined when there are no buttons
+     */
+    buildInlineKeyboard(context, value) {
+
+        const invalid = 'Inline Keyboard must be a list of buttons, each with a text and a callback data or a URL.';
+        let input = value;
+
+        if (typeof input === 'string') {
+            if (!input.trim()) {
+                return undefined;
+            }
+            try {
+                input = JSON.parse(input);
+            } catch (error) {
+                throw new context.CancelError(invalid);
+            }
+        }
+
+        if (!input) {
+            return undefined;
+        }
+
+        // A ready-made Telegram inline_keyboard mapped from a variable.
+        if (Array.isArray(input) && input.length && input.every(Array.isArray)) {
+            return input;
+        }
+
+        const items = Array.isArray(input) ? input : input.ADD;
+
+        if (!Array.isArray(items)) {
+            throw new context.CancelError(invalid);
+        }
+
+        const isSet = v => v !== undefined && v !== null && String(v).trim() !== '';
+        const rows = new Map();
+
+        items.forEach((item, index) => {
+            if (!item || typeof item !== 'object') {
+                return;
+            }
+
+            const { row, text, callbackData, url } = item;
+
+            if (![text, callbackData, url].some(isSet)) {
+                return;
+            }
+
+            const position = `Inline Keyboard button ${index + 1}`;
+
+            if (!isSet(text)) {
+                throw new context.CancelError(`${position}: Button Text is required.`);
+            }
+            if (isSet(callbackData) === isSet(url)) {
+                throw new context.CancelError(`${position} ("${text}"): set either Callback Data or URL, not both and not neither.`);
+            }
+            if (isSet(callbackData) && Buffer.byteLength(String(callbackData), 'utf8') > 64) {
+                throw new context.CancelError(`${position} ("${text}"): Callback Data can be at most 64 bytes.`);
+            }
+
+            const rowNumber = isSet(row) ? Number(row) : 1;
+
+            if (!Number.isInteger(rowNumber) || rowNumber < 1) {
+                throw new context.CancelError(`${position} ("${text}"): Row must be a whole number of at least 1.`);
+            }
+
+            const button = isSet(callbackData)
+                ? { text: String(text), callback_data: String(callbackData) }
+                : { text: String(text), url: String(url).trim() };
+
+            if (!rows.has(rowNumber)) {
+                rows.set(rowNumber, []);
+            }
+            rows.get(rowNumber).push(button);
+        });
+
+        if (!rows.size) {
+            return undefined;
+        }
+
+        return [...rows.keys()].sort((a, b) => a - b).map(key => rows.get(key));
+    },
+
+    /**
      * Drop null/undefined/empty-string values so optional inspector fields left blank are
      * not sent as empty strings - Telegram rejects several of those with a 400.
      * @param {object} source

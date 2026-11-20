@@ -59,9 +59,9 @@ document) with `--record` on a bot that has no webhook registered.
 
 ### `test-flow-callbackquery-trigger.json`
 
-1. Start the flow. `MakeApiCall` posts a message carrying an inline keyboard with a
-   **Fire E2E** button (`SendMessage` has no `reply_markup` input, so the keyboard
-   goes out through the generic call).
+1. Start the flow. `SendMessage` posts a message carrying an inline keyboard (its
+   **Inline Keyboard** input) with a **Fire E2E** button; an Assert checks the
+   message ID and the button's callback data in the SendMessage output.
 2. **Press the button.**
 3. `NewCallbackQuery` fires, `AnswerCallbackQuery` acknowledges it (the button stops
    showing its loading spinner), and the prompt message is deleted.
