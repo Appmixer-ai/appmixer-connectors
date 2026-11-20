@@ -1,0 +1,448 @@
+{
+    "name": "E2E Loops - contact lifecycle",
+    "description": "Creates a contact, updates it, finds it, sends an event for it, reads it with Make API Call and deletes it.",
+    "flow": {
+        "529c44a3-258a-437c-8691-754e2a12daf3": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16,
+            "source": {},
+            "version": "1.0.0",
+            "config": {},
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "248147f0-32bd-4ebf-9ee7-6ec7c9a0eaa2": {
+            "type": "appmixer.loops.core.CreateContact",
+            "x": 272,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "529c44a3-258a-437c-8691-754e2a12daf3": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "529c44a3-258a-437c-8691-754e2a12daf3": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "email": {
+                                        "2f3ec4cb-e90f-4d26-b2fa-45b27c96fa21": {
+                                            "functions": [
+                                                {
+                                                    "name": "g_timestamp"
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "firstName": {},
+                                    "lastName": {},
+                                    "userGroup": {},
+                                    "subscribed": {}
+                                },
+                                "lambda": {
+                                    "email": "e2e-loops-{{{2f3ec4cb-e90f-4d26-b2fa-45b27c96fa21}}}@example.com",
+                                    "firstName": "E2E",
+                                    "lastName": "Loops",
+                                    "userGroup": "e2e",
+                                    "subscribed": true
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "8ed26254-b0a6-4f6a-ab58-c3b805b97041": {
+            "type": "appmixer.loops.core.UpdateContact",
+            "x": 480,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "248147f0-32bd-4ebf-9ee7-6ec7c9a0eaa2": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "248147f0-32bd-4ebf-9ee7-6ec7c9a0eaa2": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "email": {
+                                        "d6b65ae8-eed5-48ea-94d5-34336169b2b8": {
+                                            "variable": "$.248147f0-32bd-4ebf-9ee7-6ec7c9a0eaa2.out.email",
+                                            "functions": []
+                                        }
+                                    },
+                                    "firstName": {},
+                                    "lastName": {}
+                                },
+                                "lambda": {
+                                    "email": "{{{d6b65ae8-eed5-48ea-94d5-34336169b2b8}}}",
+                                    "firstName": "E2E Updated",
+                                    "lastName": "Loops"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "c28d63d6-81fd-4a9c-80d1-e1f34c629a0d": {
+            "type": "appmixer.loops.core.FindContact",
+            "x": 688,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "8ed26254-b0a6-4f6a-ab58-c3b805b97041": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "8ed26254-b0a6-4f6a-ab58-c3b805b97041": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "email": {
+                                        "570f524d-82d8-4ff5-90d8-45d20f362d62": {
+                                            "variable": "$.248147f0-32bd-4ebf-9ee7-6ec7c9a0eaa2.out.email",
+                                            "functions": []
+                                        }
+                                    },
+                                    "outputType": {}
+                                },
+                                "lambda": {
+                                    "email": "{{{570f524d-82d8-4ff5-90d8-45d20f362d62}}}",
+                                    "outputType": "first"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "7d8e2ee0-fea6-4ff5-a64f-35928d7ced48": {
+            "type": "appmixer.loops.core.SendEvent",
+            "x": 896,
+            "y": 400,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "c28d63d6-81fd-4a9c-80d1-e1f34c629a0d": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "c28d63d6-81fd-4a9c-80d1-e1f34c629a0d": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "eventName": {},
+                                    "email": {
+                                        "22931e03-fe1b-4a7d-943e-b4e2cb0c359a": {
+                                            "variable": "$.248147f0-32bd-4ebf-9ee7-6ec7c9a0eaa2.out.email",
+                                            "functions": []
+                                        }
+                                    },
+                                    "eventProperties": {}
+                                },
+                                "lambda": {
+                                    "eventName": "e2e_test",
+                                    "email": "{{{22931e03-fe1b-4a7d-943e-b4e2cb0c359a}}}",
+                                    "eventProperties": "{\"source\": \"appmixer-e2e\"}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "5128a315-2fdb-459a-b2bd-99235cd0b3a5": {
+            "type": "appmixer.loops.core.MakeApiCall",
+            "x": 1104,
+            "y": 528,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "7d8e2ee0-fea6-4ff5-a64f-35928d7ced48": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "7d8e2ee0-fea6-4ff5-a64f-35928d7ced48": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "url": {},
+                                    "method": {},
+                                    "parameters": {
+                                        "9e4d53f0-7c87-45bc-834c-97f74d9ba182": {
+                                            "variable": "$.248147f0-32bd-4ebf-9ee7-6ec7c9a0eaa2.out.email",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "url": "/v1/contacts/find",
+                                    "method": "GET",
+                                    "parameters": "{\"email\": \"{{{9e4d53f0-7c87-45bc-834c-97f74d9ba182}}}\"}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "b2d8ddba-6455-4d9c-8990-7ad6d1a858bd": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1312,
+            "y": 528,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "5128a315-2fdb-459a-b2bd-99235cd0b3a5": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "5128a315-2fdb-459a-b2bd-99235cd0b3a5": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "564b31c8-6c0e-4018-9c8f-7a5873a78e6a": {
+                                            "variable": "$.248147f0-32bd-4ebf-9ee7-6ec7c9a0eaa2.out.id",
+                                            "functions": []
+                                        },
+                                        "4f4805b4-67f1-4c08-8c76-7c35a8f9523e": {
+                                            "variable": "$.c28d63d6-81fd-4a9c-80d1-e1f34c629a0d.out.firstName",
+                                            "functions": []
+                                        },
+                                        "47524724-1629-45c7-a37a-980a127bf726": {
+                                            "variable": "$.c28d63d6-81fd-4a9c-80d1-e1f34c629a0d.out.userGroup",
+                                            "functions": []
+                                        },
+                                        "2958209c-80d3-4014-9eea-4863c48a2312": {
+                                            "variable": "$.7d8e2ee0-fea6-4ff5-a64f-35928d7ced48.out.success",
+                                            "functions": []
+                                        },
+                                        "7e6fafd4-5b5e-4808-8f92-73b0bde24bba": {
+                                            "variable": "$.5128a315-2fdb-459a-b2bd-99235cd0b3a5.out.statusCode",
+                                            "functions": []
+                                        },
+                                        "0ca9b187-c6fa-4269-ba82-e38484e531ab": {
+                                            "variable": "$.5128a315-2fdb-459a-b2bd-99235cd0b3a5.out.body",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$[0].lastName"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{564b31c8-6c0e-4018-9c8f-7a5873a78e6a}}}",
+                                                "assertion": "notEmpty"
+                                            },
+                                            {
+                                                "field": "{{{4f4805b4-67f1-4c08-8c76-7c35a8f9523e}}}",
+                                                "assertion": "equal",
+                                                "expected": "E2E Updated"
+                                            },
+                                            {
+                                                "field": "{{{47524724-1629-45c7-a37a-980a127bf726}}}",
+                                                "assertion": "equal",
+                                                "expected": "e2e"
+                                            },
+                                            {
+                                                "field": "{{{2958209c-80d3-4014-9eea-4863c48a2312}}}",
+                                                "assertion": "equal",
+                                                "expected": "true"
+                                            },
+                                            {
+                                                "field": "{{{7e6fafd4-5b5e-4808-8f92-73b0bde24bba}}}",
+                                                "assertion": "equal",
+                                                "expected": "200"
+                                            },
+                                            {
+                                                "field": "{{{0ca9b187-c6fa-4269-ba82-e38484e531ab}}}",
+                                                "assertion": "equal",
+                                                "expected": "Loops"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "85f05bb4-2162-4d66-b43d-f05acf2747fe": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 1520,
+            "y": 528,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "b2d8ddba-6455-4d9c-8990-7ad6d1a858bd": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 180
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "dcc7bf9e-fd7f-47a7-9940-ac97a62c43ea": {
+            "type": "appmixer.loops.core.DeleteContact",
+            "x": 1728,
+            "y": 528,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "85f05bb4-2162-4d66-b43d-f05acf2747fe": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "85f05bb4-2162-4d66-b43d-f05acf2747fe": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "identifyBy": {},
+                                    "identifier": {
+                                        "6eeb26dd-ded8-45a3-b4c8-7b4677a26d2c": {
+                                            "variable": "$.248147f0-32bd-4ebf-9ee7-6ec7c9a0eaa2.out.email",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "identifyBy": "email",
+                                    "identifier": "{{{6eeb26dd-ded8-45a3-b4c8-7b4677a26d2c}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "64ff183d-2e43-4f79-b408-455e17ddf559": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1936,
+            "y": 528,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "dcc7bf9e-fd7f-47a7-9940-ac97a62c43ea": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "dcc7bf9e-fd7f-47a7-9940-ac97a62c43ea": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "83ed9c22-f775-4f26-bf9b-51a81d1d3853": {
+                                            "variable": "$.85f05bb4-2162-4d66-b43d-f05acf2747fe.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E Loops - contact lifecycle",
+                                    "result": "{{{83ed9c22-f775-4f26-bf9b-51a81d1d3853}}}"
+                                }
+                            }
+                        }
+                    }
+                },
+                "properties": {
+                    "successStoreId": "64f6f1f9193228000754082f",
+                    "failedStoreId": "64f6f1f0193228000754082e"
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        }
+    }
+}
