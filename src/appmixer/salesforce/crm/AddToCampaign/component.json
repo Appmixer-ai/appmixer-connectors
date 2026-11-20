@@ -1,0 +1,185 @@
+{
+    "name": "appmixer.salesforce.crm.AddToCampaign",
+    "author": "Appmixer <info@appmixer.ai>",
+    "description": "Add a contact or a lead to a campaign in Salesforce (creates a campaign member).",
+    "private": false,
+    "auth": {
+        "service": "appmixer:salesforce"
+    },
+    "quota": {
+        "manager": "appmixer:salesforce",
+        "resources": "requests"
+    },
+    "version": "1.0.0",
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "campaignId": {
+                        "type": "string"
+                    },
+                    "contactId": {
+                        "type": "string"
+                    },
+                    "leadId": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "campaignId"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "campaignId": {
+                        "type": "text",
+                        "label": "Campaign",
+                        "index": 1,
+                        "tooltip": "The campaign to add the member to. Select a campaign or enter a campaign ID, for example 701Dn000001AbCdIAK.",
+                        "source": {
+                            "url": "/component/appmixer/salesforce/crm/ListCampaigns?outPort=out",
+                            "data": {
+                                "transform": "./transformers#campaignsToSelectArray",
+                                "properties": {
+                                    "isSource": true
+                                }
+                            }
+                        }
+                    },
+                    "contactId": {
+                        "type": "text",
+                        "label": "Contact",
+                        "index": 2,
+                        "tooltip": "The contact to add to the campaign. Fill in either Contact or Lead.",
+                        "source": {
+                            "url": "/component/appmixer/salesforce/crm/ListContacts?outPort=contacts",
+                            "data": {
+                                "transform": "./transformers#contactsToSelectArray",
+                                "properties": {
+                                    "isSource": true
+                                }
+                            }
+                        }
+                    },
+                    "leadId": {
+                        "type": "text",
+                        "label": "Lead",
+                        "index": 3,
+                        "tooltip": "The lead to add to the campaign. Fill in either Contact or Lead.",
+                        "source": {
+                            "url": "/component/appmixer/salesforce/crm/ListLeads?outPort=leads",
+                            "data": {
+                                "transform": "./transformers#leadsToSelectArray",
+                                "properties": {
+                                    "isSource": true
+                                }
+                            }
+                        }
+                    },
+                    "status": {
+                        "type": "text",
+                        "label": "Member Status",
+                        "index": 4,
+                        "tooltip": "Optional. The campaign member status, for example <code>Sent</code> or <code>Responded</code>. Must be one of the member statuses defined on the campaign. Leave empty to use the campaign's default status."
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "Id": {
+                        "type": "string",
+                        "title": "Campaign Member ID",
+                        "example": "00vDn000002XyZaIAK"
+                    },
+                    "CampaignId": {
+                        "type": "string",
+                        "title": "Campaign ID",
+                        "example": "701Dn000001AbCdIAK"
+                    },
+                    "ContactId": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "title": "Contact ID",
+                        "example": "003Dn00000QwErTIAV"
+                    },
+                    "LeadId": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "title": "Lead ID",
+                        "example": null
+                    },
+                    "Status": {
+                        "type": "string",
+                        "title": "Status",
+                        "example": "Responded"
+                    },
+                    "HasResponded": {
+                        "type": "boolean",
+                        "title": "Has Responded",
+                        "example": true
+                    },
+                    "FirstRespondedDate": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "title": "First Responded Date",
+                        "example": "2026-11-20"
+                    },
+                    "Name": {
+                        "type": "string",
+                        "title": "Name",
+                        "example": "Appmixer Tester"
+                    },
+                    "FirstName": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "title": "First Name",
+                        "example": "Appmixer"
+                    },
+                    "LastName": {
+                        "type": "string",
+                        "title": "Last Name",
+                        "example": "Tester"
+                    },
+                    "Email": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "title": "Email",
+                        "example": "tester@example.com"
+                    },
+                    "CreatedDate": {
+                        "type": "string",
+                        "title": "Created Date",
+                        "example": "2026-11-20T10:15:30.000+0000"
+                    },
+                    "LastModifiedDate": {
+                        "type": "string",
+                        "title": "Last Modified Date",
+                        "example": "2026-11-20T10:15:30.000+0000"
+                    }
+                }
+            }
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA5OTkgNjk5LjI0MSI+PGRlZnM+PHN0eWxlPi5he2ZpbGw6IzAwYTFlMDt9PC9zdHlsZT48L2RlZnM+PHBhdGggY2xhc3M9ImEiIGQ9Ik00MTYuMjI0LDc2Ljc2M2MzMi4yMTktMzMuNTcsNzcuMDc0LTU0LjM5MSwxMjYuNjgyLTU0LjM5MSw2NS45NDYsMCwxMjMuNDgsMzYuNzcyLDE1NC4xMiw5MS4zNjFhMjEyLjk4NCwyMTIuOTg0LDAsMCwxLDg3LjEwNi0xOC41MTRjMTE4Ljk0LDAsMjE1LjM2OCw5Ny4yNjgsMjE1LjM2OCwyMTcuMjQ3UzkwMy4wNzIsNTI5LjcyNyw3ODQuMTMyLDUyOS43MjdBMjEzLjc0LDIxMy43NCwwLDAsMSw3NDEuNzEsNTI1LjVhMTU3LjQzNiwxNTcuNDM2LDAsMCwxLTIwNi4yODksNjQuNzkzLDE3OS42MjEsMTc5LjYyMSwwLDAsMS0zMzMuOTExLTguMTI2LDE2NC43NzUsMTY0Ljc3NSwwLDAsMS0zNC4yNjgsMy41NzJDNzUuMTU1LDU4NS43NC41LDUxMC4zMTcuNSw0MTcuMjYyQTE2OC43NDEsMTY4Ljc0MSwwLDAsMSw4My44NzgsMjcxLjMyNWExOTIuODY2LDE5Mi44NjYsMCwwLDEtMTUuOTY3LTc3LjA2QzY3LjkxMSw4Ny4yNSwxNTQuNzkuNSwyNjEuOTQ4LjVBMTkzLjc5MSwxOTMuNzkxLDAsMCwxLDQxNi4yMjQsNzYuNzYzIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgtMC41IC0wLjUpIi8+PC9zdmc+"
+}
