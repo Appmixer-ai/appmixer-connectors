@@ -416,7 +416,7 @@ describe('superoffice generic records', () => {
 
             const context = createContext({ properties: { generateInspector: true, object: '{{{abc}}}' } });
             await load('UpdateRecord').receive(context);
-            assert.deepStrictEqual(Object.keys(context.sent[0].data.inputs), ['object', 'recordId', 'customFieldsJson']);
+            assert.deepStrictEqual(Object.keys(context.sent[0].data.inputs), ['object', 'recordId', 'customFieldsJson', 'timeZone']);
             assert.strictEqual(context.httpRequest.callCount, 0);
         });
     });
@@ -610,6 +610,62 @@ describe('superoffice generic records', () => {
 
             const wrong = createContext({ config: { timeZone: 'Mars/Olympus' }, messages: { in: { content: { object: 'appointment', recordId: '14' } } } });
             await assert.rejects(load('GetRecord').receive(wrong), /Unsupported SuperOffice time zone/);
+        });
+
+        it('lets the Time Zone input of the component win over the config and the detected zone', async () => {
+
+            const lookups = (context) => context.httpRequest.getCalls()
+                .filter(call => call.args[0].url.endsWith(TIME_ZONE_PATH)).length;
+            const context = createContext({
+                config: { timeZone: 'Europe/Oslo' },
+                messages: { in: { content: { title: 'Call', dueDate: '2026-12-01T12:00:00Z', timeZone: 'America/New_York' } } }
+            });
+            let posted;
+            route(context, tenant({
+                'GET /Appointment/default': appointment({ AppointmentId: 0 }),
+                'POST /Appointment': (options) => {
+                    posted = options.data;
+                    return appointment({ StartDate: options.data.StartDate });
+                }
+            }));
+            await load('CreateTask').receive(context);
+            assert.strictEqual(posted.StartDate, '2026-12-01T07:00:00');
+            assert.strictEqual(posted.timeZone, undefined);
+            assert.strictEqual(context.sent[0].data.startDate, '2026-12-01T12:00:00Z');
+            assert.strictEqual(lookups(context), 0);
+
+            // A trigger takes it as a property
+            const trigger = createContext({ properties: { object: 'appointment', timeZone: 'Asia/Kolkata' } });
+            route(trigger, tenant({
+                'GET /Appointment': { value: [{ appointmentId: 14, updatedDate: '2026-12-01T17:30:00' }] },
+                'GET /Appointment/14': appointment({ StartDate: '2026-12-01T17:30:00' })
+            }));
+            await load('RecordUpdated').test(trigger);
+            assert.strictEqual(trigger.sent[0].data.startDate, '2026-12-01T12:00:00Z');
+
+            const wrong = createContext({ messages: { in: { content: { object: 'appointment', recordId: '14', timeZone: 'Oslo' } } } });
+            await assert.rejects(load('GetRecord').receive(wrong), (err) => err instanceof CancelError && /is not a time zone name/.test(err.message));
+        });
+
+        it('lists the time zones for the dropdown, UTC and Europe/Oslo among them', async () => {
+
+            const context = createContext();
+            const component = load('ListTimeZones');
+            await component.receive(context);
+            const { result, count } = context.sent[0].data;
+            assert.strictEqual(count, result.length);
+            assert.ok(count > 300);
+            const names = result.map(item => item.name);
+            assert.ok(names.includes('UTC'));
+            assert.ok(names.includes('Europe/Oslo'));
+            assert.strictEqual(new Set(names).size, names.length);
+            assert.strictEqual(result.find(item => item.name === 'UTC').label, '(UTC+00:00) UTC');
+            assert.match(result.find(item => item.name === 'America/New_York').label, /^\(UTC-0[45]:00\) America\/New_York$/);
+            // Ordered by offset: the westernmost zone first, the easternmost last
+            assert.match(result[0].label, /^\(UTC-1[12]:00\)/);
+            assert.match(result[result.length - 1].label, /^\(UTC\+1[34]:00\)/);
+            assert.deepStrictEqual(component.toSelectArray({ result: [{ name: 'UTC', label: '(UTC+00:00) UTC' }] }), [{ label: '(UTC+00:00) UTC', value: 'UTC' }]);
+            assert.strictEqual(context.httpRequest.callCount, 0);
         });
 
         it('fails instead of guessing when SuperOffice does not report the time zone', async () => {

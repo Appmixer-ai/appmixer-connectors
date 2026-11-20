@@ -339,8 +339,9 @@ const timeZoneForBias = (bias, now = Date.now()) => {
 };
 
 /**
- * The time zone of the tenant's date-times: the service config key timeZone (an IANA name such
- * as Europe/Oslo) when set, otherwise what SuperOffice reports, cached for an hour.
+ * The time zone of the tenant's date-times: the Time Zone input of the component when set, then
+ * the service config key timeZone (both IANA names such as Europe/Oslo), otherwise what
+ * SuperOffice reports, cached for an hour.
  * @param {object} context
  * @returns {Promise<{zone?: string, bias?: number}>}
  */
@@ -350,8 +351,18 @@ const getTimeZone = async (context) => {
         return timeZones.get(context);
     }
     let timeZone;
+    const content = context.messages && context.messages.in && context.messages.in.content;
+    const chosen = (content && content.timeZone) || (context.properties && context.properties.timeZone);
     const configured = context.config && context.config.timeZone;
-    if (configured) {
+    if (chosen) {
+        const zone = String(chosen).trim();
+        try {
+            zoneOffset(zone, Date.now());
+        } catch (err) {
+            throw cancelError(context, 'Time Zone "' + chosen + '" is not a time zone name. Use an IANA name such as Europe/Oslo.');
+        }
+        timeZone = { zone };
+    } else if (configured) {
         const zone = String(configured).trim();
         try {
             zoneOffset(zone, Date.now());
@@ -377,6 +388,38 @@ const getTimeZone = async (context) => {
     }
     timeZones.set(context, timeZone);
     return timeZone;
+};
+
+/**
+ * The time zones the Time Zone input offers: every IANA zone of the runtime and UTC, with the
+ * current UTC offset in the label, ordered by offset and name.
+ * @returns {Array<{name: string, label: string}>}
+ */
+const listTimeZones = () => {
+
+    const now = Date.now();
+    const names = typeof Intl.supportedValuesOf === 'function' ? Intl.supportedValuesOf('timeZone') : EUROPEAN_ZONES;
+    return [...new Set(['UTC', ...names])]
+        .map(name => {
+            const offset = zoneOffset(name, now);
+            const abs = Math.abs(offset);
+            const label = '(UTC' + (offset < 0 ? '-' : '+') + String(Math.floor(abs / 60)).padStart(2, '0')
+                + ':' + String(abs % 60).padStart(2, '0') + ') ' + name;
+            return { name, label, offset };
+        })
+        .sort((a, b) => a.offset - b.offset || a.name.localeCompare(b.name))
+        .map(({ name, label }) => ({ name, label }));
+};
+
+// The Time Zone input of the components that read or write a date-time
+const TIME_ZONE_INPUT = {
+    type: 'text',
+    label: 'Time Zone',
+    tooltip: 'Optional. The time zone of your SuperOffice tenant, for example Europe/Oslo. SuperOffice keeps date-times in the local time of the tenant; the time zone is detected automatically (reliably for European tenants) and this setting overrides it. Date-times the component returns are always in UTC.',
+    source: {
+        url: '/component/appmixer/superoffice/core/ListTimeZones?outPort=out',
+        data: { transform: './ListTimeZones#toSelectArray' }
+    }
 };
 
 const request = async (context, options) => {
@@ -2252,6 +2295,8 @@ const updateRecordInspector = async (context, object) => {
         label: 'Custom Fields (JSON)',
         tooltip: 'Optional custom field values by field name, for example <code>{"SuperOffice:1": "Promoter", "x_nps_score": 9}</code>. Use it when the object comes from a variable and the fields above cannot be listed.'
     };
+    schema.properties.timeZone = { type: 'string' };
+    inputs.timeZone = { ...TIME_ZONE_INPUT, index: index + 1 };
     return { schema, inputs };
 };
 
@@ -2436,6 +2481,7 @@ module.exports = {
     toNumber,
     toIsoDate,
     getTimeZone,
+    listTimeZones,
     timeZoneForBias,
     toUtc,
     quote,
