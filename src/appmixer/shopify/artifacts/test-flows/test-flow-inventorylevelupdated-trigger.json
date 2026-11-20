@@ -7,7 +7,7 @@
             "y": 32,
             "width": 672,
             "height": 256,
-            "content": "## ⚠️ Self-provoking trigger flow\n\nOne minute after the start (keep the **Wait**: the webhook subscription needs it to become active) the bottom lane creates a draft product with a tracked inventory item (`productSet`) and sets its available quantity at the item's location to 7 (`inventorySetQuantities`; the idempotency key is the new inventory item id, unique per run).\n\nThe trigger lane asserts the emitted inventory level belongs to that product and deletes the product after `AfterAll`. The app needs `write_products` and `write_inventory`."
+            "content": "## ⚠️ Self-provoking trigger flow\n\nOne minute after the start (keep the **Wait**: the webhook subscription needs it to become active) the bottom lane creates a draft product (**Create Product**) and sets its available quantity to 7 (**Set Inventory Quantity**, which switches inventory tracking on and stocks the item at its location first).\n\nThe trigger lane asserts the emitted inventory level belongs to that product and deletes the product after `AfterAll` (**Delete Product**). The app needs `write_products` and `write_inventory`."
         }
     },
     "flow": {
@@ -128,7 +128,7 @@
             }
         },
         "a3b064c6-b626-46a6-a32c-08ba2f661e0a": {
-            "type": "appmixer.shopify.core.MakeApiCall",
+            "type": "appmixer.shopify.products.DeleteProduct",
             "x": 688,
             "y": 320,
             "source": {
@@ -145,10 +145,8 @@
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
-                                    "url": {},
-                                    "method": {},
-                                    "body": {
-                                        "3fa0d3a9-d475-4f62-9e27-2059eeada716": {
+                                    "id": {
+                                        "05a5ac81-a31a-4a53-9b7d-b0dee66cdca3": {
                                             "variable": "$.87880b6d-4013-42ec-9457-6f6dc5311b57.out.item.variants",
                                             "functions": [
                                                 {
@@ -164,9 +162,7 @@
                                     }
                                 },
                                 "lambda": {
-                                    "url": "/graphql.json",
-                                    "method": "POST",
-                                    "body": "{\"query\": \"mutation ProductDelete($input: ProductDeleteInput!) { productDelete(input: $input) { deletedProductId userErrors { field message } } }\", \"variables\": {\"input\": {\"id\": \"{{{3fa0d3a9-d475-4f62-9e27-2059eeada716}}}\"}}}"
+                                    "id": "{{{05a5ac81-a31a-4a53-9b7d-b0dee66cdca3}}}"
                                 }
                             }
                         }
@@ -265,7 +261,7 @@
             }
         },
         "e002f7e2-70e1-4ef8-a98b-256ce65cdf06": {
-            "type": "appmixer.shopify.core.MakeApiCall",
+            "type": "appmixer.shopify.products.CreateProduct",
             "x": 480,
             "y": 576,
             "source": {
@@ -281,15 +277,10 @@
                         "17aac816-34ac-496b-b514-166c953fa50c": {
                             "out": {
                                 "type": "json2new",
-                                "modifiers": {
-                                    "url": {},
-                                    "method": {},
-                                    "body": {}
-                                },
+                                "modifiers": {},
                                 "lambda": {
-                                    "url": "/graphql.json",
-                                    "method": "POST",
-                                    "body": "{\"query\": \"mutation ProductSet($input: ProductSetInput!) { productSet(input: $input, synchronous: true) { product { id variants(first: 1) { nodes { inventoryItem { id inventoryLevels(first: 1) { nodes { location { id } } } } } } } userErrors { field message } } }\", \"variables\": {\"input\": {\"title\": \"Appmixer E2E Inventory Product\", \"status\": \"DRAFT\", \"productOptions\": [{\"name\": \"Title\", \"values\": [{\"name\": \"Default Title\"}]}], \"variants\": [{\"optionValues\": [{\"optionName\": \"Title\", \"name\": \"Default Title\"}], \"price\": \"1.00\", \"inventoryItem\": {\"tracked\": true}}]}}}"
+                                    "title": "Appmixer E2E Inventory Product",
+                                    "status": "DRAFT"
                                 }
                             }
                         }
@@ -302,7 +293,7 @@
             }
         },
         "efccab72-2187-4bbd-b966-fb4ecfc9f618": {
-            "type": "appmixer.shopify.core.MakeApiCall",
+            "type": "appmixer.shopify.inventory.SetInventoryQuantity",
             "x": 688,
             "y": 576,
             "source": {
@@ -319,43 +310,15 @@
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
-                                    "url": {},
-                                    "method": {},
-                                    "body": {
-                                        "26bbc9ca-a366-49e4-aa71-a670073f8acf": {
-                                            "variable": "$.e002f7e2-70e1-4ef8-a98b-256ce65cdf06.out.body",
+                                    "inventoryItemId": {
+                                        "a709b60d-f716-48b6-a526-6f5c6c6b0efd": {
+                                            "variable": "$.e002f7e2-70e1-4ef8-a98b-256ce65cdf06.out.variants",
                                             "functions": [
                                                 {
                                                     "name": "g_jsonPath",
                                                     "params": [
                                                         {
-                                                            "value": "$.data.productSet.product.variants.nodes[0].inventoryItem.id"
-                                                        }
-                                                    ]
-                                                }
-                                            ]
-                                        },
-                                        "025bf1dc-acd8-4f77-90b1-8c01d4c85f4f": {
-                                            "variable": "$.e002f7e2-70e1-4ef8-a98b-256ce65cdf06.out.body",
-                                            "functions": [
-                                                {
-                                                    "name": "g_jsonPath",
-                                                    "params": [
-                                                        {
-                                                            "value": "$.data.productSet.product.variants.nodes[0].inventoryItem.id"
-                                                        }
-                                                    ]
-                                                }
-                                            ]
-                                        },
-                                        "8977a987-c8ad-4d9d-953f-a1e89a464d2c": {
-                                            "variable": "$.e002f7e2-70e1-4ef8-a98b-256ce65cdf06.out.body",
-                                            "functions": [
-                                                {
-                                                    "name": "g_jsonPath",
-                                                    "params": [
-                                                        {
-                                                            "value": "$.data.productSet.product.variants.nodes[0].inventoryItem.inventoryLevels.nodes[0].location.id"
+                                                            "value": "$[0].inventoryItem.id"
                                                         }
                                                     ]
                                                 }
@@ -364,9 +327,10 @@
                                     }
                                 },
                                 "lambda": {
-                                    "url": "/graphql.json",
-                                    "method": "POST",
-                                    "body": "{\"query\": \"mutation InventorySet($input: InventorySetQuantitiesInput!, $key: String!) { inventorySetQuantities(input: $input) @idempotent(key: $key) { inventoryAdjustmentGroup { id } userErrors { field message } } }\", \"variables\": {\"key\": \"appmixer-e2e-{{{26bbc9ca-a366-49e4-aa71-a670073f8acf}}}\", \"input\": {\"name\": \"available\", \"reason\": \"correction\", \"quantities\": [{\"inventoryItemId\": \"{{{025bf1dc-acd8-4f77-90b1-8c01d4c85f4f}}}\", \"locationId\": \"{{{8977a987-c8ad-4d9d-953f-a1e89a464d2c}}}\", \"quantity\": 7, \"changeFromQuantity\": null}]}}}"
+                                    "quantity": 7,
+                                    "quantityName": "available",
+                                    "reason": "correction",
+                                    "inventoryItemId": "{{{a709b60d-f716-48b6-a526-6f5c6c6b0efd}}}"
                                 }
                             }
                         }
