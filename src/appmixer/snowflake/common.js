@@ -1,6 +1,10 @@
 const snowflake = require('snowflake-sdk');
 const { promisify } = require('util');
 
+// The 2.x driver can write auth tokens and pre-signed URLs to its diagnostic log
+// (GHSA-qqj6-54q6-cxv6, fixed only in 3.3.0, which needs Node 20). Keep the log off.
+snowflake.configure({ logLevel: 'OFF', additionalLogToConsole: false });
+
 class SnowflakeDB {
 
     async getConnection(context) {
