@@ -1,0 +1,456 @@
+{
+    "name": "appmixer.miro.core.CreateStickyNote",
+    "label": "Create Sticky Note",
+    "description": "Add a sticky note to a board.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:miro"
+    },
+    "quota": {
+        "manager": "appmixer:miro",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "boardId": {
+                        "type": "string"
+                    },
+                    "content": {
+                        "type": "string"
+                    },
+                    "shape": {
+                        "type": "string",
+                        "enum": [
+                            "square",
+                            "rectangle"
+                        ]
+                    },
+                    "fillColor": {
+                        "type": "string",
+                        "enum": [
+                            "gray",
+                            "light_yellow",
+                            "yellow",
+                            "orange",
+                            "light_green",
+                            "green",
+                            "dark_green",
+                            "cyan",
+                            "light_pink",
+                            "pink",
+                            "violet",
+                            "red",
+                            "light_blue",
+                            "blue",
+                            "dark_blue",
+                            "black"
+                        ]
+                    },
+                    "textAlign": {
+                        "type": "string",
+                        "enum": [
+                            "left",
+                            "center",
+                            "right"
+                        ]
+                    },
+                    "textAlignVertical": {
+                        "type": "string",
+                        "enum": [
+                            "top",
+                            "middle",
+                            "bottom"
+                        ]
+                    },
+                    "x": {
+                        "type": "number"
+                    },
+                    "y": {
+                        "type": "number"
+                    },
+                    "width": {
+                        "type": "number"
+                    },
+                    "parentId": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "boardId",
+                    "content"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "boardId": {
+                        "type": "text",
+                        "index": 1,
+                        "label": "Board",
+                        "tooltip": "Pick a board, or type its Board ID (the part after <code>/board/</code> in the board URL).",
+                        "source": {
+                            "url": "/component/appmixer/miro/core/FindBoards?outPort=out",
+                            "data": {
+                                "properties": {
+                                    "isSource": true
+                                },
+                                "transform": "./FindBoards#toSelectArray"
+                            }
+                        }
+                    },
+                    "content": {
+                        "type": "textarea",
+                        "index": 2,
+                        "label": "Content",
+                        "tooltip": "Text of the sticky note. Simple HTML such as <code>&lt;p&gt;</code>, <code>&lt;strong&gt;</code> and <code>&lt;a&gt;</code> is supported."
+                    },
+                    "shape": {
+                        "type": "select",
+                        "index": 3,
+                        "label": "Shape",
+                        "defaultValue": "square",
+                        "tooltip": "Square or rectangular sticky note.",
+                        "options": [
+                            {
+                                "label": "Square",
+                                "value": "square"
+                            },
+                            {
+                                "label": "Rectangle",
+                                "value": "rectangle"
+                            }
+                        ]
+                    },
+                    "fillColor": {
+                        "type": "select",
+                        "index": 4,
+                        "label": "Color",
+                        "tooltip": "Background color of the sticky note.",
+                        "options": [
+                            {
+                                "label": "Gray",
+                                "value": "gray"
+                            },
+                            {
+                                "label": "Light yellow",
+                                "value": "light_yellow"
+                            },
+                            {
+                                "label": "Yellow",
+                                "value": "yellow"
+                            },
+                            {
+                                "label": "Orange",
+                                "value": "orange"
+                            },
+                            {
+                                "label": "Light green",
+                                "value": "light_green"
+                            },
+                            {
+                                "label": "Green",
+                                "value": "green"
+                            },
+                            {
+                                "label": "Dark green",
+                                "value": "dark_green"
+                            },
+                            {
+                                "label": "Cyan",
+                                "value": "cyan"
+                            },
+                            {
+                                "label": "Light pink",
+                                "value": "light_pink"
+                            },
+                            {
+                                "label": "Pink",
+                                "value": "pink"
+                            },
+                            {
+                                "label": "Violet",
+                                "value": "violet"
+                            },
+                            {
+                                "label": "Red",
+                                "value": "red"
+                            },
+                            {
+                                "label": "Light blue",
+                                "value": "light_blue"
+                            },
+                            {
+                                "label": "Blue",
+                                "value": "blue"
+                            },
+                            {
+                                "label": "Dark blue",
+                                "value": "dark_blue"
+                            },
+                            {
+                                "label": "Black",
+                                "value": "black"
+                            }
+                        ]
+                    },
+                    "textAlign": {
+                        "type": "select",
+                        "index": 5,
+                        "label": "Text Align",
+                        "tooltip": "Horizontal alignment of the text.",
+                        "options": [
+                            {
+                                "label": "Left",
+                                "value": "left"
+                            },
+                            {
+                                "label": "Center",
+                                "value": "center"
+                            },
+                            {
+                                "label": "Right",
+                                "value": "right"
+                            }
+                        ]
+                    },
+                    "textAlignVertical": {
+                        "type": "select",
+                        "index": 6,
+                        "label": "Vertical Text Align",
+                        "tooltip": "Vertical alignment of the text.",
+                        "options": [
+                            {
+                                "label": "Top",
+                                "value": "top"
+                            },
+                            {
+                                "label": "Middle",
+                                "value": "middle"
+                            },
+                            {
+                                "label": "Bottom",
+                                "value": "bottom"
+                            }
+                        ]
+                    },
+                    "x": {
+                        "type": "number",
+                        "index": 7,
+                        "label": "X",
+                        "tooltip": "Horizontal position of the item's center on the board, in board units. 0 is the center of the board (or the top left corner of the frame when Frame ID is set)."
+                    },
+                    "y": {
+                        "type": "number",
+                        "index": 8,
+                        "label": "Y",
+                        "tooltip": "Vertical position of the item's center on the board, in board units."
+                    },
+                    "width": {
+                        "type": "number",
+                        "index": 9,
+                        "label": "Width",
+                        "tooltip": "Width of the item in board units."
+                    },
+                    "parentId": {
+                        "type": "text",
+                        "index": 10,
+                        "label": "Frame ID",
+                        "tooltip": "Optional ID of a frame to put the item in. The position is then relative to the frame's top left corner."
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "title": "Item ID",
+                        "example": "3458764517517819000"
+                    },
+                    "type": {
+                        "type": "string",
+                        "title": "Type",
+                        "example": "sticky_note"
+                    },
+                    "data": {
+                        "type": "object",
+                        "title": "Data",
+                        "properties": {
+                            "content": {
+                                "type": "string",
+                                "title": "Data.Content",
+                                "example": "<p>Ship the beta</p>"
+                            },
+                            "shape": {
+                                "type": "string",
+                                "title": "Data.Shape",
+                                "example": "square"
+                            }
+                        },
+                        "required": [
+                            "content",
+                            "shape"
+                        ]
+                    },
+                    "style": {
+                        "type": "object",
+                        "title": "Style",
+                        "properties": {
+                            "fillColor": {
+                                "type": "string",
+                                "title": "Style.Fill Color",
+                                "example": "light_yellow"
+                            },
+                            "textAlign": {
+                                "type": "string",
+                                "title": "Style.Text Align",
+                                "example": "center"
+                            },
+                            "textAlignVertical": {
+                                "type": "string",
+                                "title": "Style.Text Align Vertical",
+                                "example": "top"
+                            }
+                        },
+                        "required": [
+                            "fillColor"
+                        ]
+                    },
+                    "position": {
+                        "type": "object",
+                        "title": "Position",
+                        "properties": {
+                            "x": {
+                                "type": "number",
+                                "title": "Position.X",
+                                "example": 0
+                            },
+                            "y": {
+                                "type": "number",
+                                "title": "Position.Y",
+                                "example": 0
+                            },
+                            "origin": {
+                                "type": "string",
+                                "title": "Position.Origin",
+                                "example": "center"
+                            },
+                            "relativeTo": {
+                                "type": "string",
+                                "title": "Position.Relative To",
+                                "example": "canvas_center"
+                            }
+                        },
+                        "required": [
+                            "x",
+                            "y"
+                        ]
+                    },
+                    "geometry": {
+                        "type": "object",
+                        "title": "Geometry",
+                        "properties": {
+                            "width": {
+                                "type": "number",
+                                "title": "Geometry.Width",
+                                "example": 199.99
+                            },
+                            "height": {
+                                "type": "number",
+                                "title": "Geometry.Height",
+                                "example": 228
+                            },
+                            "rotation": {
+                                "type": "number",
+                                "title": "Geometry.Rotation",
+                                "example": 0
+                            }
+                        },
+                        "required": []
+                    },
+                    "parent": {
+                        "type": "object",
+                        "title": "Parent",
+                        "properties": {
+                            "id": {
+                                "type": "string",
+                                "title": "Parent.ID",
+                                "example": "3458764517517818000"
+                            }
+                        },
+                        "required": []
+                    },
+                    "createdAt": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Created At",
+                        "example": "2026-11-20T09:20:00Z"
+                    },
+                    "modifiedAt": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Modified At",
+                        "example": "2026-11-20T09:20:00Z"
+                    },
+                    "createdBy": {
+                        "type": "object",
+                        "title": "Created By",
+                        "properties": {
+                            "id": {
+                                "type": "string",
+                                "title": "Created By.ID",
+                                "example": "3458764512345678901"
+                            },
+                            "type": {
+                                "type": "string",
+                                "title": "Created By.Type",
+                                "example": "user"
+                            }
+                        },
+                        "required": [
+                            "id"
+                        ]
+                    },
+                    "modifiedBy": {
+                        "type": "object",
+                        "title": "Modified By",
+                        "properties": {
+                            "id": {
+                                "type": "string",
+                                "title": "Modified By.ID",
+                                "example": "3458764512345678901"
+                            },
+                            "type": {
+                                "type": "string",
+                                "title": "Modified By.Type",
+                                "example": "user"
+                            }
+                        },
+                        "required": [
+                            "id"
+                        ]
+                    }
+                },
+                "required": [
+                    "id",
+                    "type",
+                    "data",
+                    "style"
+                ]
+            }
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHJlY3Qgd2lkdGg9IjI0IiBoZWlnaHQ9IjI0IiByeD0iNSIgZmlsbD0iI0ZGREQzMyIvPjxwYXRoIHRyYW5zZm9ybT0idHJhbnNsYXRlKDQuOCA0LjgpIHNjYWxlKDAuNikiIGZpbGw9IiMwNTAwMzgiIGQ9Ik0xNy4zOTIgMEgxMy45TDE3IDQuODA4IDEwLjQ0NCAwSDYuOTQ5bDMuMTAyIDYuM0wzLjQ5NCAwSDBsMy4wNSA4LjEzMUwwIDI0aDMuNDk0TDEwLjA1IDYuOTg1IDYuOTQ5IDI0aDMuNDk0TDE3IDUuNDk0IDEzLjg5OSAyNGgzLjQ5M0wyNCAzLjY3MiAxNy4zOTIgMHoiLz48L3N2Zz4="
+}
