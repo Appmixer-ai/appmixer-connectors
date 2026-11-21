@@ -1,0 +1,262 @@
+{
+    "name": "appmixer.gorgias.core.CreateTicketMessage",
+    "label": "Create Ticket Message",
+    "description": "Add a message to a ticket: an internal note for the team, a message from the customer, or an email reply that Gorgias sends to the customer.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:gorgias"
+    },
+    "quota": {
+        "manager": "appmixer:gorgias",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "ticketId": {
+                        "type": "string"
+                    },
+                    "messageType": {
+                        "type": "string",
+                        "enum": [
+                            "internal-note",
+                            "customer-message",
+                            "email-reply"
+                        ]
+                    },
+                    "message": {
+                        "type": "string"
+                    },
+                    "messageHtml": {
+                        "type": "string"
+                    },
+                    "senderEmail": {
+                        "type": "string"
+                    },
+                    "receiverEmail": {
+                        "type": "string"
+                    },
+                    "fromAddress": {
+                        "type": "string"
+                    },
+                    "subject": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "ticketId",
+                    "messageType",
+                    "message"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "ticketId": {
+                        "type": "text",
+                        "index": 1,
+                        "label": "Ticket ID",
+                        "tooltip": "The numeric ID of the ticket, e.g. from Create Ticket or Find Tickets."
+                    },
+                    "messageType": {
+                        "type": "select",
+                        "index": 2,
+                        "label": "Message Type",
+                        "defaultValue": "internal-note",
+                        "tooltip": "Internal Note: visible to agents only. Customer Message: a message received from the customer through the API channel. Email Reply: an email Gorgias sends to the customer from one of your email integrations.",
+                        "options": [
+                            {
+                                "label": "Internal Note",
+                                "value": "internal-note"
+                            },
+                            {
+                                "label": "Customer Message",
+                                "value": "customer-message"
+                            },
+                            {
+                                "label": "Email Reply",
+                                "value": "email-reply"
+                            }
+                        ]
+                    },
+                    "message": {
+                        "type": "textarea",
+                        "index": 3,
+                        "label": "Message",
+                        "tooltip": "Plain-text body of the message."
+                    },
+                    "messageHtml": {
+                        "type": "textarea",
+                        "index": 4,
+                        "label": "Message HTML",
+                        "tooltip": "Optional HTML body of the message. When empty, the plain-text message is used."
+                    },
+                    "senderEmail": {
+                        "type": "text",
+                        "index": 5,
+                        "label": "Sender Email",
+                        "tooltip": "Internal Note and Email Reply: email of the Gorgias user who writes it; defaults to the user of the connected account. Customer Message: email of the customer (required)."
+                    },
+                    "receiverEmail": {
+                        "type": "text",
+                        "index": 6,
+                        "label": "Customer Email",
+                        "tooltip": "Email Reply only: the customer email the reply is sent to (required)."
+                    },
+                    "fromAddress": {
+                        "type": "text",
+                        "index": 7,
+                        "label": "From Address",
+                        "tooltip": "Email Reply only: the address of one of your Gorgias email integrations the reply is sent from (required)."
+                    },
+                    "subject": {
+                        "type": "text",
+                        "index": 8,
+                        "label": "Subject",
+                        "tooltip": "Optional subject of the message."
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "schema": {
+                "type": "object",
+                "required": [
+                    "id",
+                    "ticket_id",
+                    "channel",
+                    "via",
+                    "from_agent",
+                    "created_datetime"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "title": "Message ID",
+                        "example": 123456789
+                    },
+                    "uri": {
+                        "type": "string",
+                        "title": "URI",
+                        "example": "/api/tickets/98765432/messages/123456789/"
+                    },
+                    "ticket_id": {
+                        "type": "integer",
+                        "title": "Ticket ID",
+                        "example": 98765432
+                    },
+                    "channel": {
+                        "type": "string",
+                        "title": "Channel",
+                        "example": "internal-note"
+                    },
+                    "via": {
+                        "type": "string",
+                        "title": "Via",
+                        "example": "api"
+                    },
+                    "from_agent": {
+                        "type": "boolean",
+                        "title": "From Agent",
+                        "example": true
+                    },
+                    "public": {
+                        "type": "boolean",
+                        "title": "Public",
+                        "example": false
+                    },
+                    "subject": {
+                        "type": "string",
+                        "title": "Subject",
+                        "example": "Where is my order?"
+                    },
+                    "body_text": {
+                        "type": "string",
+                        "title": "Body Text",
+                        "example": "The parcel left the warehouse today."
+                    },
+                    "body_html": {
+                        "type": "string",
+                        "title": "Body HTML",
+                        "example": "<p>The parcel left the warehouse today.</p>"
+                    },
+                    "stripped_text": {
+                        "type": "string",
+                        "title": "Stripped Text",
+                        "example": "The parcel left the warehouse today."
+                    },
+                    "sender": {
+                        "type": "object",
+                        "title": "Sender",
+                        "required": [
+                            "id"
+                        ],
+                        "properties": {
+                            "id": {
+                                "type": "integer",
+                                "title": "Sender.ID",
+                                "example": 7
+                            },
+                            "email": {
+                                "type": "string",
+                                "title": "Sender.Email",
+                                "example": "agent@example.com"
+                            },
+                            "name": {
+                                "type": "string",
+                                "title": "Sender.Name",
+                                "example": "Alex Agent"
+                            }
+                        }
+                    },
+                    "receiver": {
+                        "type": "object",
+                        "title": "Receiver",
+                        "required": [
+                            "id"
+                        ],
+                        "properties": {
+                            "id": {
+                                "type": "integer",
+                                "title": "Receiver.ID",
+                                "example": 3924
+                            },
+                            "email": {
+                                "type": "string",
+                                "title": "Receiver.Email",
+                                "example": "jane.doe@example.com"
+                            },
+                            "name": {
+                                "type": "string",
+                                "title": "Receiver.Name",
+                                "example": "Jane Doe"
+                            }
+                        }
+                    },
+                    "created_datetime": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Created",
+                        "example": "2026-11-20T15:10:21.468912"
+                    },
+                    "sent_datetime": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Sent",
+                        "example": "2026-11-20T15:10:22.012345"
+                    }
+                }
+            }
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9Ii0xLjYgMC41NiAzNiAzNiI+PHBhdGggZmlsbD0iIzE2MTYxNiIgZD0iTTI5Ljk3MDMgOC43NzQzM0gyNC42MTMxVjMuNDEwMDNDMjQuNjEzMSAxLjgzNTUzIDIzLjMzOTMgMC41NjAwNTkgMjEuNzY2OSAwLjU2MDA1OUgyLjg0NjE5QzEuMjczNzggMC41NjAwNTkgMCAxLjgzNTUzIDAgMy40MTAwM1YzMC41NzAyQzAgMzIuMTQ0NyAxLjI3Mzc4IDMzLjQyMDIgMi44NDYxOSAzMy40MjAySDI3LjM0NjZMMjkuOTk3NyAzNi4wNzQ5QzMwLjMwODUgMzYuMzg2MSAzMC43MjYgMzYuNTYwMSAzMS4xNjQ4IDM2LjU2MDFDMzIuMDc2IDM2LjU2MDEgMzIuODE2NSAzNS44MjE2IDMyLjgxNjUgMzQuOTA2MlYxMS42MjQzQzMyLjgxNjUgMTAuMDQ5OCAzMS41NDI3IDguNzc0MzMgMjkuOTcwMyA4Ljc3NDMzWk0zMC4wODMgMzAuNjgwMUgyLjczMzQ0VjMuMjk3MTNIMjEuODc2NlY4Ljc3NDMzSDExLjA0OTVDOS40NzcxMyA4Ljc3NDMzIDguMjAzMzYgMTAuMDQ5OCA4LjIwMzM2IDExLjYyNDNWMjIuMzU2QzguMjAzMzYgMjMuOTMwNSA5LjQ3NzEzIDI1LjIwNTkgMTEuMDQ5NSAyNS4yMDU5SDIxLjc2NjlDMjMuMzM5MyAyNS4yMDU5IDI0LjYxMzEgMjMuOTMwNSAyNC42MTMxIDIyLjM1NlYxMS41MTQ1SDMwLjA4M1YzMC42ODMxVjMwLjY4MDFaTTIxLjg3OTcgMTEuNTExNFYyMi40NjU4SDEwLjkzOThWMTEuNTExNEgyMS44Nzk3WiIvPjwvc3ZnPg=="
+}
