@@ -1,6 +1,11 @@
 const snowflake = require('snowflake-sdk');
 const { promisify } = require('util');
 
+// Turn the driver's own logger off. snowflake-sdk before 3.3.0 can write auth tokens and other
+// secrets to its diagnostic logs (GHSA-qqj6-54q6-cxv6), and 3.3.0 needs Node 20.
+// Driver errors still reach the components through the callbacks.
+snowflake.configure({ logLevel: 'OFF' });
+
 class SnowflakeDB {
 
     async getConnection(context) {
