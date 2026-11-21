@@ -1,0 +1,591 @@
+{
+    "name": "E2E Miro - board triggers",
+    "description": "A board created and then updated after the first check fires New Board and Updated Board.",
+    "flow": {
+        "2b232f83-e44d-452b-a964-bbca03035319": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {},
+            "config": {},
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "e9e0a8ea-5d49-4bc5-abba-3b9533955a66": {
+            "type": "appmixer.utils.timers.Wait",
+            "x": 272,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "2b232f83-e44d-452b-a964-bbca03035319": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "2b232f83-e44d-452b-a964-bbca03035319": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "interval": {}
+                                },
+                                "lambda": {
+                                    "interval": "2m"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "a9e8b1ed-bc92-4fdb-a73f-dbc036e842e3": {
+            "type": "appmixer.miro.core.CreateBoard",
+            "x": 480,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "e9e0a8ea-5d49-4bc5-abba-3b9533955a66": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "e9e0a8ea-5d49-4bc5-abba-3b9533955a66": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "name": {
+                                        "f6fb4545-4fa4-492d-9576-39cb9f5e560f": {
+                                            "variable": "$.2b232f83-e44d-452b-a964-bbca03035319.out.started",
+                                            "functions": [
+                                                {
+                                                    "name": "g_formatDate",
+                                                    "params": [
+                                                        {
+                                                            "value": "YYYYMMDD-HHmmss"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "name": "E2E Miro trigger {{{f6fb4545-4fa4-492d-9576-39cb9f5e560f}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "ed98abd6-55e0-4002-a15c-60462255d903": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 688,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "a9e8b1ed-bc92-4fdb-a73f-dbc036e842e3": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "a9e8b1ed-bc92-4fdb-a73f-dbc036e842e3": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "3336b4b7-1f63-4f55-b49f-9d0657cc5869": {
+                                            "variable": "$.a9e8b1ed-bc92-4fdb-a73f-dbc036e842e3.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{3336b4b7-1f63-4f55-b49f-9d0657cc5869}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "8d96831e-7604-4454-99ae-d514240977ff": {
+            "type": "appmixer.utils.timers.Wait",
+            "x": 688,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "a9e8b1ed-bc92-4fdb-a73f-dbc036e842e3": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "a9e8b1ed-bc92-4fdb-a73f-dbc036e842e3": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "interval": {}
+                                },
+                                "lambda": {
+                                    "interval": "2m"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "3997ddf7-4f16-49cc-9d02-acfca2466f5a": {
+            "type": "appmixer.miro.core.UpdateBoard",
+            "x": 896,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "8d96831e-7604-4454-99ae-d514240977ff": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "8d96831e-7604-4454-99ae-d514240977ff": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "boardId": {
+                                        "fafe308f-8071-4257-bb7c-b857bca5d4ac": {
+                                            "variable": "$.a9e8b1ed-bc92-4fdb-a73f-dbc036e842e3.out.id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "description": {}
+                                },
+                                "lambda": {
+                                    "boardId": "{{{fafe308f-8071-4257-bb7c-b857bca5d4ac}}}",
+                                    "description": "E2E trigger update"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "818085cf-4bc1-4e90-9264-b2676bc3e2b8": {
+            "type": "appmixer.miro.core.NewBoard",
+            "x": 64,
+            "y": 336,
+            "version": "1.0.0",
+            "source": {},
+            "config": {
+                "properties": {}
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "394080bd-21be-4ec4-a46a-93e75813764c": {
+            "type": "appmixer.utils.controls.Condition",
+            "x": 272,
+            "y": 336,
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "label": "Condition (only what this test created)",
+            "source": {
+                "in": {
+                    "818085cf-4bc1-4e90-9264-b2676bc3e2b8": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "818085cf-4bc1-4e90-9264-b2676bc3e2b8": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "807f9cb9-cda8-4ff9-aabd-dbeaa580c472": {
+                                            "variable": "$.818085cf-4bc1-4e90-9264-b2676bc3e2b8.out.name",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "OR": [
+                                                    {
+                                                        "input": "{{{807f9cb9-cda8-4ff9-aabd-dbeaa580c472}}}",
+                                                        "operator": "regex",
+                                                        "regex": "^E2E Miro trigger \\d{8}-\\d{6}$"
+                                                    }
+                                                ]
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "8b87d3c5-8c63-4b08-8336-6455386650fc": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 480,
+            "y": 336,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "394080bd-21be-4ec4-a46a-93e75813764c": [
+                        "true"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "394080bd-21be-4ec4-a46a-93e75813764c": {
+                            "true": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "c7fbd45d-8a2c-400c-b79a-e64758f6243d": {
+                                            "variable": "$.818085cf-4bc1-4e90-9264-b2676bc3e2b8.out.name",
+                                            "functions": []
+                                        },
+                                        "ff68e9a9-d332-4353-8fbe-93ab976c366b": {
+                                            "variable": "$.818085cf-4bc1-4e90-9264-b2676bc3e2b8.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{c7fbd45d-8a2c-400c-b79a-e64758f6243d}}}",
+                                                "assertion": "regex",
+                                                "regex": "^E2E Miro trigger "
+                                            },
+                                            {
+                                                "field": "{{{ff68e9a9-d332-4353-8fbe-93ab976c366b}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "3833c1b2-b212-426d-91f4-a71d90b4748e": {
+            "type": "appmixer.miro.core.UpdatedBoard",
+            "x": 64,
+            "y": 464,
+            "version": "1.0.0",
+            "source": {},
+            "config": {
+                "properties": {}
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "67ab997b-2956-4743-9c10-052ef699a0b1": {
+            "type": "appmixer.utils.controls.Condition",
+            "x": 272,
+            "y": 464,
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "label": "Condition (only what this test created)",
+            "source": {
+                "in": {
+                    "3833c1b2-b212-426d-91f4-a71d90b4748e": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "3833c1b2-b212-426d-91f4-a71d90b4748e": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "7adfb427-fea1-4e93-a6dd-074540b2744f": {
+                                            "variable": "$.3833c1b2-b212-426d-91f4-a71d90b4748e.out.name",
+                                            "functions": []
+                                        },
+                                        "0a42d59b-a0b0-4d0d-b9ad-46090d2a6235": {
+                                            "variable": "$.3833c1b2-b212-426d-91f4-a71d90b4748e.out.description",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "OR": [
+                                                    {
+                                                        "input": "{{{7adfb427-fea1-4e93-a6dd-074540b2744f}}}",
+                                                        "operator": "regex",
+                                                        "regex": "^E2E Miro trigger \\d{8}-\\d{6}$"
+                                                    }
+                                                ]
+                                            },
+                                            {
+                                                "OR": [
+                                                    {
+                                                        "input": "{{{0a42d59b-a0b0-4d0d-b9ad-46090d2a6235}}}",
+                                                        "operator": "regex",
+                                                        "regex": "^E2E trigger update$"
+                                                    }
+                                                ]
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "c3b05b51-c193-40a9-ad81-0ab9e2800fea": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 480,
+            "y": 464,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "67ab997b-2956-4743-9c10-052ef699a0b1": [
+                        "true"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "67ab997b-2956-4743-9c10-052ef699a0b1": {
+                            "true": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "b075a5f7-f7dd-4360-9172-ac4f02706590": {
+                                            "variable": "$.3833c1b2-b212-426d-91f4-a71d90b4748e.out.description",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{b075a5f7-f7dd-4360-9172-ac4f02706590}}}",
+                                                "assertion": "equal",
+                                                "expected": "E2E trigger update"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "3d86f112-397c-41d2-8432-0d5f1ae6cef0": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 1104,
+            "y": 464,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "ed98abd6-55e0-4002-a15c-60462255d903": [
+                        "out"
+                    ],
+                    "8b87d3c5-8c63-4b08-8336-6455386650fc": [
+                        "out"
+                    ],
+                    "c3b05b51-c193-40a9-ad81-0ab9e2800fea": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 900
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "984ac1b7-0ecb-4225-a21e-9a5e6c9546aa": {
+            "type": "appmixer.miro.core.DeleteBoard",
+            "x": 1312,
+            "y": 464,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "3d86f112-397c-41d2-8432-0d5f1ae6cef0": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "3d86f112-397c-41d2-8432-0d5f1ae6cef0": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "boardId": {
+                                        "d3311799-5520-40b5-b5d0-128141f769d2": {
+                                            "variable": "$.a9e8b1ed-bc92-4fdb-a73f-dbc036e842e3.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "boardId": "{{{d3311799-5520-40b5-b5d0-128141f769d2}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "1ec6f762-4be3-4729-ae64-40870bf7f9be": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1520,
+            "y": 464,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "984ac1b7-0ecb-4225-a21e-9a5e6c9546aa": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "984ac1b7-0ecb-4225-a21e-9a5e6c9546aa": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "64d76fc0-4d69-40d4-9fcb-3ebcb8e2b341": {
+                                            "variable": "$.3d86f112-397c-41d2-8432-0d5f1ae6cef0.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E Miro - board triggers",
+                                    "result": "{{{64d76fc0-4d69-40d4-9fcb-3ebcb8e2b341}}}"
+                                }
+                            }
+                        }
+                    }
+                },
+                "properties": {
+                    "successStoreId": "64f6f1f9193228000754082f",
+                    "failedStoreId": "64f6f1f0193228000754082e"
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        }
+    },
+    "notes": {
+        "bcc229b2-31f7-4352-9705-be96b6454626": {
+            "x": 64,
+            "y": 592,
+            "width": 672,
+            "height": 240,
+            "content": "## ⚠️ Polling triggers\n\nMiro has no webhooks (the experimental board subscriptions were removed on 2025-12-05). Each trigger records where the team stands on its first check and then checks every minute, so the board is created after a 2-minute Wait and updated after another one. Do not remove the Waits. The flow creates one board and deletes it at the end; a Free team allows at most 3 editable boards."
+        }
+    }
+}

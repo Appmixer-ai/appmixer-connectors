@@ -1,0 +1,157 @@
+{
+    "name": "appmixer.miro.core.FindBoards",
+    "label": "Find Boards",
+    "description": "Find boards by a search text, owner, team or space. Returns up to 50 boards.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:miro"
+    },
+    "quota": {
+        "manager": "appmixer:miro",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "query": {
+                        "type": "string",
+                        "maxLength": 500
+                    },
+                    "owner": {
+                        "type": "string"
+                    },
+                    "teamId": {
+                        "type": "string"
+                    },
+                    "projectId": {
+                        "type": "string"
+                    },
+                    "sort": {
+                        "type": "string",
+                        "enum": [
+                            "default",
+                            "last_modified",
+                            "last_opened",
+                            "last_created",
+                            "alphabetically"
+                        ]
+                    },
+                    "outputType": {
+                        "type": "string",
+                        "default": "array"
+                    }
+                }
+            },
+            "inspector": {
+                "inputs": {
+                    "query": {
+                        "type": "text",
+                        "index": 1,
+                        "label": "Search Text",
+                        "tooltip": "Find boards that contain this text in their name or description. Newly created boards appear in the search after a few seconds. Ignored when Team ID or Space ID is set."
+                    },
+                    "owner": {
+                        "type": "text",
+                        "index": 2,
+                        "label": "Owner ID",
+                        "tooltip": "Find boards owned by this user ID (not the user name). Ignored when Team ID or Space ID is set."
+                    },
+                    "teamId": {
+                        "type": "text",
+                        "index": 3,
+                        "label": "Team ID",
+                        "tooltip": "Find the boards of this team. When Search Text, Owner ID, Team ID and Space ID are all empty, the boards of the team the account was connected to are returned."
+                    },
+                    "projectId": {
+                        "type": "text",
+                        "index": 4,
+                        "label": "Space ID",
+                        "tooltip": "Find the boards of this space (formerly project)."
+                    },
+                    "sort": {
+                        "type": "select",
+                        "index": 5,
+                        "label": "Sort By",
+                        "defaultValue": "default",
+                        "tooltip": "Order of the boards. Applies only when boards are listed by team or space; Default is newest created first for a team.",
+                        "options": [
+                            {
+                                "label": "Default",
+                                "value": "default"
+                            },
+                            {
+                                "label": "Last modified",
+                                "value": "last_modified"
+                            },
+                            {
+                                "label": "Last opened",
+                                "value": "last_opened"
+                            },
+                            {
+                                "label": "Last created",
+                                "value": "last_created"
+                            },
+                            {
+                                "label": "Alphabetically",
+                                "value": "alphabetically"
+                            }
+                        ]
+                    },
+                    "outputType": {
+                        "type": "select",
+                        "label": "Output Type",
+                        "index": 6,
+                        "defaultValue": "array",
+                        "tooltip": "Choose whether you want to receive the result set as one complete list, or first item only or one item at a time or stream the items to a file.",
+                        "options": [
+                            {
+                                "label": "First Item Only",
+                                "value": "first"
+                            },
+                            {
+                                "label": "All items at once",
+                                "value": "array"
+                            },
+                            {
+                                "label": "One item at a time",
+                                "value": "object"
+                            },
+                            {
+                                "label": "Store to CSV file",
+                                "value": "file"
+                            }
+                        ]
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "source": {
+                "url": "/component/appmixer/miro/core/FindBoards?outPort=out&ignoreAuth=true",
+                "data": {
+                    "properties": {
+                        "generateOutputPortOptions": true
+                    },
+                    "messages": {
+                        "in/outputType": "inputs/in/outputType"
+                    }
+                }
+            }
+        },
+        {
+            "name": "notFound",
+            "options": []
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHJlY3Qgd2lkdGg9IjI0IiBoZWlnaHQ9IjI0IiByeD0iNSIgZmlsbD0iI0ZGREQzMyIvPjxwYXRoIHRyYW5zZm9ybT0idHJhbnNsYXRlKDQuOCA0LjgpIHNjYWxlKDAuNikiIGZpbGw9IiMwNTAwMzgiIGQ9Ik0xNy4zOTIgMEgxMy45TDE3IDQuODA4IDEwLjQ0NCAwSDYuOTQ5bDMuMTAyIDYuM0wzLjQ5NCAwSDBsMy4wNSA4LjEzMUwwIDI0aDMuNDk0TDEwLjA1IDYuOTg1IDYuOTQ5IDI0aDMuNDk0TDE3IDUuNDk0IDEzLjg5OSAyNGgzLjQ5M0wyNCAzLjY3MiAxNy4zOTIgMHoiLz48L3N2Zz4="
+}

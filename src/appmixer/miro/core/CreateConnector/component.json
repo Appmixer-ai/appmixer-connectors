@@ -1,0 +1,520 @@
+{
+    "name": "appmixer.miro.core.CreateConnector",
+    "label": "Create Connector",
+    "description": "Connect two items on a board with a line.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:miro"
+    },
+    "quota": {
+        "manager": "appmixer:miro",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "boardId": {
+                        "type": "string"
+                    },
+                    "startItemId": {
+                        "type": "string"
+                    },
+                    "endItemId": {
+                        "type": "string"
+                    },
+                    "shape": {
+                        "type": "string",
+                        "enum": [
+                            "straight",
+                            "elbowed",
+                            "curved"
+                        ]
+                    },
+                    "caption": {
+                        "type": "string",
+                        "maxLength": 200
+                    },
+                    "strokeColor": {
+                        "type": "string"
+                    },
+                    "strokeStyle": {
+                        "type": "string",
+                        "enum": [
+                            "normal",
+                            "dotted",
+                            "dashed"
+                        ]
+                    },
+                    "startStrokeCap": {
+                        "type": "string",
+                        "enum": [
+                            "none",
+                            "stealth",
+                            "rounded_stealth",
+                            "diamond",
+                            "filled_diamond",
+                            "oval",
+                            "filled_oval",
+                            "arrow",
+                            "triangle",
+                            "filled_triangle",
+                            "erd_one",
+                            "erd_many",
+                            "erd_only_one",
+                            "erd_zero_or_one",
+                            "erd_one_or_many",
+                            "erd_zero_or_many"
+                        ]
+                    },
+                    "endStrokeCap": {
+                        "type": "string",
+                        "enum": [
+                            "none",
+                            "stealth",
+                            "rounded_stealth",
+                            "diamond",
+                            "filled_diamond",
+                            "oval",
+                            "filled_oval",
+                            "arrow",
+                            "triangle",
+                            "filled_triangle",
+                            "erd_one",
+                            "erd_many",
+                            "erd_only_one",
+                            "erd_zero_or_one",
+                            "erd_one_or_many",
+                            "erd_zero_or_many"
+                        ]
+                    }
+                },
+                "required": [
+                    "boardId",
+                    "startItemId",
+                    "endItemId"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "boardId": {
+                        "type": "text",
+                        "index": 1,
+                        "label": "Board",
+                        "tooltip": "Pick a board, or type its Board ID (the part after <code>/board/</code> in the board URL).",
+                        "source": {
+                            "url": "/component/appmixer/miro/core/FindBoards?outPort=out",
+                            "data": {
+                                "properties": {
+                                    "isSource": true
+                                },
+                                "transform": "./FindBoards#toSelectArray"
+                            }
+                        }
+                    },
+                    "startItemId": {
+                        "type": "text",
+                        "index": 2,
+                        "label": "Start Item",
+                        "tooltip": "The item the connector starts at. Pick an item, or type its Item ID. Connectors cannot attach to other connectors.",
+                        "source": {
+                            "url": "/component/appmixer/miro/core/ListItems?outPort=out",
+                            "data": {
+                                "messages": {
+                                    "in/boardId": "inputs/in/boardId"
+                                },
+                                "properties": {
+                                    "isSource": true
+                                },
+                                "transform": "./ListItems#toSelectArray"
+                            }
+                        }
+                    },
+                    "endItemId": {
+                        "type": "text",
+                        "index": 3,
+                        "label": "End Item",
+                        "tooltip": "The item the connector ends at. Pick an item, or type its Item ID.",
+                        "source": {
+                            "url": "/component/appmixer/miro/core/ListItems?outPort=out",
+                            "data": {
+                                "messages": {
+                                    "in/boardId": "inputs/in/boardId"
+                                },
+                                "properties": {
+                                    "isSource": true
+                                },
+                                "transform": "./ListItems#toSelectArray"
+                            }
+                        }
+                    },
+                    "shape": {
+                        "type": "select",
+                        "index": 4,
+                        "label": "Line Shape",
+                        "tooltip": "Path of the connector. Miro's default is Curved.",
+                        "options": [
+                            {
+                                "label": "Straight",
+                                "value": "straight"
+                            },
+                            {
+                                "label": "Elbowed",
+                                "value": "elbowed"
+                            },
+                            {
+                                "label": "Curved",
+                                "value": "curved"
+                            }
+                        ]
+                    },
+                    "caption": {
+                        "type": "text",
+                        "index": 5,
+                        "label": "Caption",
+                        "tooltip": "Optional text in the middle of the connector, up to 200 characters."
+                    },
+                    "strokeColor": {
+                        "type": "text",
+                        "index": 6,
+                        "label": "Line Color",
+                        "tooltip": "Line color as a hex code, for example <code>#1a1a1a</code>."
+                    },
+                    "strokeStyle": {
+                        "type": "select",
+                        "index": 7,
+                        "label": "Line Style",
+                        "tooltip": "Pattern of the line.",
+                        "options": [
+                            {
+                                "label": "Normal",
+                                "value": "normal"
+                            },
+                            {
+                                "label": "Dotted",
+                                "value": "dotted"
+                            },
+                            {
+                                "label": "Dashed",
+                                "value": "dashed"
+                            }
+                        ]
+                    },
+                    "startStrokeCap": {
+                        "type": "select",
+                        "index": 8,
+                        "label": "Start Cap",
+                        "tooltip": "Decoration at the start of the line.",
+                        "options": [
+                            {
+                                "label": "None",
+                                "value": "none"
+                            },
+                            {
+                                "label": "Stealth",
+                                "value": "stealth"
+                            },
+                            {
+                                "label": "Rounded stealth",
+                                "value": "rounded_stealth"
+                            },
+                            {
+                                "label": "Diamond",
+                                "value": "diamond"
+                            },
+                            {
+                                "label": "Filled diamond",
+                                "value": "filled_diamond"
+                            },
+                            {
+                                "label": "Oval",
+                                "value": "oval"
+                            },
+                            {
+                                "label": "Filled oval",
+                                "value": "filled_oval"
+                            },
+                            {
+                                "label": "Arrow",
+                                "value": "arrow"
+                            },
+                            {
+                                "label": "Triangle",
+                                "value": "triangle"
+                            },
+                            {
+                                "label": "Filled triangle",
+                                "value": "filled_triangle"
+                            },
+                            {
+                                "label": "Erd one",
+                                "value": "erd_one"
+                            },
+                            {
+                                "label": "Erd many",
+                                "value": "erd_many"
+                            },
+                            {
+                                "label": "Erd only one",
+                                "value": "erd_only_one"
+                            },
+                            {
+                                "label": "Erd zero or one",
+                                "value": "erd_zero_or_one"
+                            },
+                            {
+                                "label": "Erd one or many",
+                                "value": "erd_one_or_many"
+                            },
+                            {
+                                "label": "Erd zero or many",
+                                "value": "erd_zero_or_many"
+                            }
+                        ]
+                    },
+                    "endStrokeCap": {
+                        "type": "select",
+                        "index": 9,
+                        "label": "End Cap",
+                        "tooltip": "Decoration at the end of the line, for example an arrow.",
+                        "options": [
+                            {
+                                "label": "None",
+                                "value": "none"
+                            },
+                            {
+                                "label": "Stealth",
+                                "value": "stealth"
+                            },
+                            {
+                                "label": "Rounded stealth",
+                                "value": "rounded_stealth"
+                            },
+                            {
+                                "label": "Diamond",
+                                "value": "diamond"
+                            },
+                            {
+                                "label": "Filled diamond",
+                                "value": "filled_diamond"
+                            },
+                            {
+                                "label": "Oval",
+                                "value": "oval"
+                            },
+                            {
+                                "label": "Filled oval",
+                                "value": "filled_oval"
+                            },
+                            {
+                                "label": "Arrow",
+                                "value": "arrow"
+                            },
+                            {
+                                "label": "Triangle",
+                                "value": "triangle"
+                            },
+                            {
+                                "label": "Filled triangle",
+                                "value": "filled_triangle"
+                            },
+                            {
+                                "label": "Erd one",
+                                "value": "erd_one"
+                            },
+                            {
+                                "label": "Erd many",
+                                "value": "erd_many"
+                            },
+                            {
+                                "label": "Erd only one",
+                                "value": "erd_only_one"
+                            },
+                            {
+                                "label": "Erd zero or one",
+                                "value": "erd_zero_or_one"
+                            },
+                            {
+                                "label": "Erd one or many",
+                                "value": "erd_one_or_many"
+                            },
+                            {
+                                "label": "Erd zero or many",
+                                "value": "erd_zero_or_many"
+                            }
+                        ]
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "title": "Connector ID",
+                        "example": "3458764517517819100"
+                    },
+                    "type": {
+                        "type": "string",
+                        "title": "Type",
+                        "example": "connector"
+                    },
+                    "shape": {
+                        "type": "string",
+                        "title": "Shape",
+                        "example": "curved"
+                    },
+                    "startItem": {
+                        "type": "object",
+                        "title": "Start Item",
+                        "properties": {
+                            "id": {
+                                "type": "string",
+                                "title": "Start Item.Item ID",
+                                "example": "3458764517517819000"
+                            }
+                        },
+                        "required": [
+                            "id"
+                        ]
+                    },
+                    "endItem": {
+                        "type": "object",
+                        "title": "End Item",
+                        "properties": {
+                            "id": {
+                                "type": "string",
+                                "title": "End Item.Item ID",
+                                "example": "3458764517517819000"
+                            }
+                        },
+                        "required": [
+                            "id"
+                        ]
+                    },
+                    "captions": {
+                        "type": "array",
+                        "title": "Captions",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "content": {
+                                    "type": "string"
+                                },
+                                "position": {
+                                    "type": "string"
+                                }
+                            }
+                        },
+                        "example": [
+                            {
+                                "content": "depends on",
+                                "position": "50%"
+                            }
+                        ]
+                    },
+                    "style": {
+                        "type": "object",
+                        "title": "Style",
+                        "properties": {
+                            "strokeColor": {
+                                "type": "string",
+                                "title": "Style.Stroke Color",
+                                "example": "#1a1a1a"
+                            },
+                            "strokeStyle": {
+                                "type": "string",
+                                "title": "Style.Stroke Style",
+                                "example": "normal"
+                            },
+                            "strokeWidth": {
+                                "type": "string",
+                                "title": "Style.Stroke Width",
+                                "example": "2.0"
+                            },
+                            "startStrokeCap": {
+                                "type": "string",
+                                "title": "Style.Start Stroke Cap",
+                                "example": "none"
+                            },
+                            "endStrokeCap": {
+                                "type": "string",
+                                "title": "Style.End Stroke Cap",
+                                "example": "stealth"
+                            }
+                        },
+                        "required": []
+                    },
+                    "createdAt": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Created At",
+                        "example": "2026-11-20T09:25:00Z"
+                    },
+                    "modifiedAt": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Modified At",
+                        "example": "2026-11-20T09:25:00Z"
+                    },
+                    "createdBy": {
+                        "type": "object",
+                        "title": "Created By",
+                        "properties": {
+                            "id": {
+                                "type": "string",
+                                "title": "Created By.ID",
+                                "example": "3458764512345678901"
+                            },
+                            "type": {
+                                "type": "string",
+                                "title": "Created By.Type",
+                                "example": "user"
+                            }
+                        },
+                        "required": [
+                            "id"
+                        ]
+                    },
+                    "modifiedBy": {
+                        "type": "object",
+                        "title": "Modified By",
+                        "properties": {
+                            "id": {
+                                "type": "string",
+                                "title": "Modified By.ID",
+                                "example": "3458764512345678901"
+                            },
+                            "type": {
+                                "type": "string",
+                                "title": "Modified By.Type",
+                                "example": "user"
+                            }
+                        },
+                        "required": [
+                            "id"
+                        ]
+                    }
+                },
+                "required": [
+                    "id",
+                    "shape",
+                    "startItem",
+                    "endItem"
+                ]
+            }
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHJlY3Qgd2lkdGg9IjI0IiBoZWlnaHQ9IjI0IiByeD0iNSIgZmlsbD0iI0ZGREQzMyIvPjxwYXRoIHRyYW5zZm9ybT0idHJhbnNsYXRlKDQuOCA0LjgpIHNjYWxlKDAuNikiIGZpbGw9IiMwNTAwMzgiIGQ9Ik0xNy4zOTIgMEgxMy45TDE3IDQuODA4IDEwLjQ0NCAwSDYuOTQ5bDMuMTAyIDYuM0wzLjQ5NCAwSDBsMy4wNSA4LjEzMUwwIDI0aDMuNDk0TDEwLjA1IDYuOTg1IDYuOTQ5IDI0aDMuNDk0TDE3IDUuNDk0IDEzLjg5OSAyNGgzLjQ5M0wyNCAzLjY3MiAxNy4zOTIgMHoiLz48L3N2Zz4="
+}
