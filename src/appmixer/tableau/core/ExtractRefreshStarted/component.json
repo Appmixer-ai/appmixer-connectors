@@ -1,0 +1,100 @@
+{
+    "name": "appmixer.tableau.core.ExtractRefreshStarted",
+    "label": "Extract Refresh Started",
+    "description": "Triggers when an extract refresh of a workbook or a data source starts. The output carries the IDs and the name of the workbook or data source; use Get Workbook or Get Data Source for details. Registers a Tableau webhook while the flow runs, which requires a site administrator account. Tableau does not sign webhook requests; the trigger accepts only events of the connected site.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:tableau"
+    },
+    "quota": {
+        "manager": "appmixer:tableau",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "webhook": true,
+    "trigger": true,
+    "properties": {
+        "schema": {
+            "type": "object",
+            "properties": {
+                "contentType": {
+                    "type": "string"
+                }
+            }
+        },
+        "inspector": {
+            "inputs": {
+                "contentType": {
+                    "type": "select",
+                    "index": 1,
+                    "label": "Content Type",
+                    "defaultValue": "all",
+                    "tooltip": "Trigger for workbook extracts, data source extracts, or both.",
+                    "options": [
+                        {
+                            "label": "Workbooks and data sources",
+                            "value": "all"
+                        },
+                        {
+                            "label": "Workbooks",
+                            "value": "workbook"
+                        },
+                        {
+                            "label": "Data sources",
+                            "value": "datasource"
+                        }
+                    ]
+                }
+            }
+        }
+    },
+    "outPorts": [
+        {
+            "name": "out",
+            "schema": {
+                "type": "object",
+                "required": [
+                    "eventType",
+                    "resourceId"
+                ],
+                "properties": {
+                    "eventType": {
+                        "type": "string",
+                        "title": "Event Type",
+                        "example": "WorkbookRefreshStarted"
+                    },
+                    "resource": {
+                        "type": "string",
+                        "title": "Resource",
+                        "example": "WORKBOOK"
+                    },
+                    "resourceId": {
+                        "type": "string",
+                        "title": "Resource ID",
+                        "example": "5a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d"
+                    },
+                    "resourceName": {
+                        "type": "string",
+                        "title": "Resource Name",
+                        "example": "Sales Overview"
+                    },
+                    "siteId": {
+                        "type": "string",
+                        "title": "Site ID",
+                        "example": "a946d998-2ead-4894-bb50-1054a91dcab3"
+                    },
+                    "createdAt": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Event Created At",
+                        "example": "2026-11-17T10:03:10Z"
+                    }
+                }
+            }
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZmlsbD0iI0U5NzYyNyIgZD0iTTExLjY1NC4xNzRWMi4zNzdIOS42ODJ2LjU4aDEuOTcyVjUuMTZoLjY5NlYyLjk1N2gxLjk3di0uNThoLTEuOTdWLjE3NGgtLjM0OHptNi4wMyAyLjI2MmwtLjAwMiAxLjYyM3YxLjYyM2gtMi45NTd2LjkyN2gyLjk1N3YzLjE4OEgxOC43MjVsLjAxMS0xLjU4Mi4wMi0xLjU3NiAxLjQ2NS0uMDIgMS40Ni0uMDF2LS45MjdIMTguNzI4VjIuNDM2aC0uNTIyem0tMTIuNDA3LjA2VjUuNjg2SDIuMjkxdi45MjVINS4yNzdWOS44MDFoLjk4NVY2LjYxaDMuMDEzdi0uOTI1SDYuMjYyVjIuNDk2SDUuNzcwem02LjA4NiA1LjI3djMuNTkzSDguMDZ2MS4xODhoMy4zMDR2My41OTZoMS4yOHYtMy41OTZIMTUuOTUzdi0xLjE4OEgxMi42NDNWNy43NjZoLS42Mzd6bTkuNzIxIDEuNTV2Mi4yMjFoLTIuMDEydi44MTFoMi4wMTJ2Mi4yNjFoLjg4N3YtMi4yNjFIMjR2LS44MTFoLTIuMDI5VjkuMzE3aC0uNDIyem0tMTkuMTExLjEzMVYxMS42MjFIMHYuNjIxSDEuOTczdjIuMTk0SDIuNjR2LTIuMTk0aDJ2LS42MkgyLjYwOVY5LjQ0NmgtLjMxOHptMTUuNzA5IDQuNTE2djMuMjU0aC0zLjAxNnYuOTI3aDMuMDE2djMuMjE3aDEuMDcydi0zLjIxNkgyMS43NHYtLjkyOEgxOC43NTR2LTMuMjU0aC0uNTMzem0tMTIuNDYzLjAwOHYzLjI0NkgyLjI2MnYuOTI4aDIuOTU3djMuMTg5SDYuMzIwdi0zLjE4OWgyLjk1NXYtLjkyOEg2LjMyMFYxMy45N2gtLjU1em02LjMxNiA0LjU3OGwuMDAyIDEuMTAzdjEuMUg5LjU2NnYuODEyaDEuOTcxdjIuMjYyaC45MjhsLjAxMi0xLjExOS4wMTctMS4xNDNIMTQuNDYzdi0uODEyaC0yVjE4LjU0OWgtLjQ2NXoiLz48L3N2Zz4="
+}
