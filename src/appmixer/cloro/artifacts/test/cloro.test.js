@@ -5,6 +5,7 @@ const assert = require('assert');
 const auth = require('../../auth');
 const lib = require('../../lib');
 const findGoogleResults = require('../../core/FindGoogleResults/FindGoogleResults');
+const findBingResults = require('../../core/FindBingResults/FindBingResults');
 const getAIAnswer = require('../../core/GetAIAnswer/GetAIAnswer');
 const getCredits = require('../../core/GetCredits/GetCredits');
 const makeApiCall = require('../../core/MakeApiCall/MakeApiCall');
@@ -38,6 +39,21 @@ const GOOGLE_RESPONSE = {
             { position: 2, title: 'Unresolved', link: '', snippet: 'No link yet.' },
             { position: 3, title: 'Second', link: 'https://example.org/b', snippet: 'B.', date: '2 days ago' }
         ]
+    }
+};
+
+const BING_RESPONSE = {
+    success: true,
+    result: {
+        organicResults: [
+            { position: 1, title: 'First', link: 'https://example.com/a', displayedLink: 'example.com', snippet: 'A.', page: 1 },
+            { position: 2, title: 'Unresolved', link: '', snippet: 'No link yet.', page: 1 }
+        ],
+        aioverview: {
+            text: 'Plain overview.',
+            markdown: '**Overview.**',
+            sources: [{ position: 1, label: 'Source', url: 'https://example.com', description: 'Desc.' }]
+        }
     }
 };
 
@@ -135,6 +151,80 @@ describe('cloro connector', function() {
         assert.strictEqual(context.output.sent.length, 2);
         assert.strictEqual(context.output.sent[1].data.index, 1);
         assert.strictEqual(context.output.sent[1].data.count, 2);
+    });
+
+    it('searches Bing with the query and country and skips unresolved links', async function() {
+
+        let request;
+        const context = contextFor({ query: 'search engine results page', country: 'de', outputType: 'array' }, async (value) => {
+            request = value;
+            return { data: BING_RESPONSE };
+        });
+
+        await findBingResults.receive(context);
+
+        assert.strictEqual(request.method, 'POST');
+        assert.strictEqual(request.url, 'https://api.cloro.dev/v1/monitor/bing');
+        assert.strictEqual(request.timeout, 120000);
+        assert.deepStrictEqual(request.data, { query: 'search engine results page', country: 'DE' });
+        assert.strictEqual(request.headers.Authorization, 'Bearer test-api-key-material');
+        // No AI Overview was asked for, so only the results are sent.
+        assert.deepStrictEqual(context.output.sent.map(item => item.port), ['out']);
+        assert.deepStrictEqual(context.output.data, {
+            result: [{
+                position: 1,
+                title: 'First',
+                link: 'https://example.com/a',
+                displayedLink: 'example.com',
+                snippet: 'A.'
+            }],
+            count: 1
+        });
+    });
+
+    it('sends the Bing AI Overview to its own port when asked for', async function() {
+
+        let request;
+        const context = contextFor({ query: 'q', aiOverview: true, outputType: 'first' }, async (value) => {
+            request = value;
+            return { data: BING_RESPONSE };
+        });
+
+        await findBingResults.receive(context);
+
+        assert.deepStrictEqual(request.data, { query: 'q', country: 'US', include: { aioverview: { markdown: true } } });
+        assert.deepStrictEqual(context.output.sent.map(item => item.port), ['aiOverview', 'out']);
+        assert.deepStrictEqual(context.output.sent[0].data, {
+            query: 'q',
+            text: 'Plain overview.',
+            markdown: '**Overview.**',
+            sources: [{ position: 1, label: 'Source', url: 'https://example.com', description: 'Desc.' }]
+        });
+        assert.strictEqual(context.output.sent[1].data.link, 'https://example.com/a');
+    });
+
+    it('sends the Bing query to notFound when there are no results', async function() {
+
+        const context = contextFor({ query: 'nothing', aiOverview: true }, async () => ({
+            data: { success: true, result: { organicResults: [] } }
+        }));
+
+        await findBingResults.receive(context);
+
+        assert.deepStrictEqual(context.output.sent, [{ data: { query: 'nothing' }, port: 'notFound' }]);
+    });
+
+    it('rejects a Bing query that is too long after URL encoding', async function() {
+
+        let called = false;
+        // 600 CJK characters are 5,400 characters once URL-encoded.
+        const context = contextFor({ query: '中'.repeat(600) }, async () => {
+            called = true;
+            return { data: BING_RESPONSE };
+        });
+
+        await assert.rejects(findBingResults.receive(context), CancelError);
+        assert.strictEqual(called, false);
     });
 
     for (const [engine, path] of [
