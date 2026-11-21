@@ -1,0 +1,790 @@
+{
+    "name": "E2E PandaDoc - documents",
+    "description": "Create a document from a PDF URL, get it, find it by tag, send it silently, download it and delete it. Make API Call reads the connected member.",
+    "flow": {
+        "30267254-970b-4c14-81cb-39158fb50c0d": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {},
+            "config": {},
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "0f160ae5-8c83-432f-9bc3-708d1316cb41": {
+            "type": "appmixer.pandadoc.core.MakeApiCall",
+            "x": 272,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "30267254-970b-4c14-81cb-39158fb50c0d": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "30267254-970b-4c14-81cb-39158fb50c0d": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "url": {},
+                                    "method": {}
+                                },
+                                "lambda": {
+                                    "url": "/public/v1/members/current",
+                                    "method": "GET"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "6349a3a9-2e6c-4291-a1d8-c15c5d12526c": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 480,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "0f160ae5-8c83-432f-9bc3-708d1316cb41": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "0f160ae5-8c83-432f-9bc3-708d1316cb41": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "f66f5b88-2f87-43f7-b18b-83b1649aeeeb": {
+                                            "variable": "$.0f160ae5-8c83-432f-9bc3-708d1316cb41.out.statusCode",
+                                            "functions": []
+                                        },
+                                        "10e74214-514b-4d97-80be-b7be35b4c0b2": {
+                                            "variable": "$.0f160ae5-8c83-432f-9bc3-708d1316cb41.out.body",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$.email"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{f66f5b88-2f87-43f7-b18b-83b1649aeeeb}}}",
+                                                "assertion": "equal",
+                                                "expected": 200
+                                            },
+                                            {
+                                                "field": "{{{10e74214-514b-4d97-80be-b7be35b4c0b2}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "b2823731-4646-41f7-9cf5-d804113ca060": {
+            "type": "appmixer.pandadoc.core.CreateDocumentFromFileUrl",
+            "x": 480,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "0f160ae5-8c83-432f-9bc3-708d1316cb41": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "0f160ae5-8c83-432f-9bc3-708d1316cb41": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "url": {},
+                                    "name": {},
+                                    "recipientEmail": {
+                                        "73c94720-83f5-4052-927b-84cd35f18d42": {
+                                            "variable": "$.0f160ae5-8c83-432f-9bc3-708d1316cb41.out.body",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$.email"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "recipientFirstName": {},
+                                    "recipientLastName": {},
+                                    "parseFormFields": {},
+                                    "tags": {
+                                        "401bfde5-6719-4ecf-b2a8-aedcffc6c837": {
+                                            "functions": [
+                                                {
+                                                    "name": "g_timestamp"
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "metadata": {},
+                                    "waitForDraft": {}
+                                },
+                                "lambda": {
+                                    "url": "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
+                                    "name": "E2E PandaDoc Document",
+                                    "recipientEmail": "{{{73c94720-83f5-4052-927b-84cd35f18d42}}}",
+                                    "recipientFirstName": "E2E",
+                                    "recipientLastName": "Signer",
+                                    "parseFormFields": false,
+                                    "tags": "e2e-{{{401bfde5-6719-4ecf-b2a8-aedcffc6c837}}}",
+                                    "metadata": "{\"source\":\"appmixer-e2e\"}",
+                                    "waitForDraft": true
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "56098335-8689-4d19-8b51-3d843288070d": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 688,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "b2823731-4646-41f7-9cf5-d804113ca060": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "b2823731-4646-41f7-9cf5-d804113ca060": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "d5a93dbe-b999-482f-ba72-aa590b292ebb": {
+                                            "variable": "$.b2823731-4646-41f7-9cf5-d804113ca060.out.id",
+                                            "functions": []
+                                        },
+                                        "fa5e36f2-4fea-48de-b38e-99865a2a11d8": {
+                                            "variable": "$.b2823731-4646-41f7-9cf5-d804113ca060.out.status",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{d5a93dbe-b999-482f-ba72-aa590b292ebb}}}",
+                                                "assertion": "notEmpty"
+                                            },
+                                            {
+                                                "field": "{{{fa5e36f2-4fea-48de-b38e-99865a2a11d8}}}",
+                                                "assertion": "equal",
+                                                "expected": "document.draft"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "154d7757-0540-4988-a79b-9a41f1b9d8a3": {
+            "type": "appmixer.pandadoc.core.GetDocument",
+            "x": 688,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "b2823731-4646-41f7-9cf5-d804113ca060": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "b2823731-4646-41f7-9cf5-d804113ca060": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "documentId": {
+                                        "6fe34498-8afc-4518-9860-f3213ff9119b": {
+                                            "variable": "$.b2823731-4646-41f7-9cf5-d804113ca060.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "documentId": "{{{6fe34498-8afc-4518-9860-f3213ff9119b}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "1f7ab099-e355-4ffd-8ec4-05f2ef3e034c": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 896,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "154d7757-0540-4988-a79b-9a41f1b9d8a3": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "154d7757-0540-4988-a79b-9a41f1b9d8a3": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "115adc9e-b120-416f-a24c-31d4eef320a2": {
+                                            "variable": "$.154d7757-0540-4988-a79b-9a41f1b9d8a3.out.name",
+                                            "functions": []
+                                        },
+                                        "bdd43771-9be3-4654-b203-3e82ed30305b": {
+                                            "variable": "$.154d7757-0540-4988-a79b-9a41f1b9d8a3.out.metadata",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$.source"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{115adc9e-b120-416f-a24c-31d4eef320a2}}}",
+                                                "assertion": "equal",
+                                                "expected": "E2E PandaDoc Document"
+                                            },
+                                            {
+                                                "field": "{{{bdd43771-9be3-4654-b203-3e82ed30305b}}}",
+                                                "assertion": "equal",
+                                                "expected": "appmixer-e2e"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "90de8afb-9429-496f-ac46-f0404f9b4dce": {
+            "type": "appmixer.pandadoc.core.FindDocuments",
+            "x": 896,
+            "y": 400,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "154d7757-0540-4988-a79b-9a41f1b9d8a3": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "154d7757-0540-4988-a79b-9a41f1b9d8a3": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "tag": {
+                                        "b11bf64e-1c42-4aa0-bd17-62fde9d652e0": {
+                                            "variable": "$.154d7757-0540-4988-a79b-9a41f1b9d8a3.out.tags",
+                                            "functions": [
+                                                {
+                                                    "name": "g_first"
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "status": {},
+                                    "orderBy": {},
+                                    "outputType": {}
+                                },
+                                "lambda": {
+                                    "tag": "{{{b11bf64e-1c42-4aa0-bd17-62fde9d652e0}}}",
+                                    "status": "document.draft",
+                                    "orderBy": "-date_created",
+                                    "outputType": "first"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "cbd71eb5-65eb-4a82-8b14-0df9cde6328c": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1104,
+            "y": 400,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "90de8afb-9429-496f-ac46-f0404f9b4dce": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "90de8afb-9429-496f-ac46-f0404f9b4dce": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "1fb8fdce-0115-4412-893b-c0281fd2dda1": {
+                                            "variable": "$.90de8afb-9429-496f-ac46-f0404f9b4dce.out.id",
+                                            "functions": []
+                                        },
+                                        "4e2cbceb-2c54-42d5-a7d3-2604c4a724ef": {
+                                            "variable": "$.90de8afb-9429-496f-ac46-f0404f9b4dce.out.name",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{1fb8fdce-0115-4412-893b-c0281fd2dda1}}}",
+                                                "assertion": "notEmpty"
+                                            },
+                                            {
+                                                "field": "{{{4e2cbceb-2c54-42d5-a7d3-2604c4a724ef}}}",
+                                                "assertion": "equal",
+                                                "expected": "E2E PandaDoc Document"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "5aaeaa71-3782-4004-b429-a272e3b9217f": {
+            "type": "appmixer.pandadoc.core.SendDocument",
+            "x": 1104,
+            "y": 528,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "90de8afb-9429-496f-ac46-f0404f9b4dce": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "90de8afb-9429-496f-ac46-f0404f9b4dce": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "documentId": {
+                                        "78e2416e-034c-46f6-bef8-8ebfddd68810": {
+                                            "variable": "$.b2823731-4646-41f7-9cf5-d804113ca060.out.id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "subject": {},
+                                    "message": {},
+                                    "silent": {}
+                                },
+                                "lambda": {
+                                    "documentId": "{{{78e2416e-034c-46f6-bef8-8ebfddd68810}}}",
+                                    "subject": "E2E PandaDoc test",
+                                    "message": "Sent by an Appmixer E2E test.",
+                                    "silent": true
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "e31696ed-bd42-45e3-85ed-bd4f69165ef7": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1312,
+            "y": 528,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "5aaeaa71-3782-4004-b429-a272e3b9217f": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "5aaeaa71-3782-4004-b429-a272e3b9217f": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "f32574f2-6964-4c65-ab82-bf868a50efdc": {
+                                            "variable": "$.5aaeaa71-3782-4004-b429-a272e3b9217f.out.status",
+                                            "functions": []
+                                        },
+                                        "c8ef0cb8-1620-4a5e-96fb-28daebaf632c": {
+                                            "variable": "$.5aaeaa71-3782-4004-b429-a272e3b9217f.out.recipients",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$[0].email"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{f32574f2-6964-4c65-ab82-bf868a50efdc}}}",
+                                                "assertion": "equal",
+                                                "expected": "document.sent"
+                                            },
+                                            {
+                                                "field": "{{{c8ef0cb8-1620-4a5e-96fb-28daebaf632c}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "0807e683-ea25-4d65-a09c-e41485773327": {
+            "type": "appmixer.pandadoc.core.DownloadDocument",
+            "x": 1312,
+            "y": 656,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "5aaeaa71-3782-4004-b429-a272e3b9217f": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "5aaeaa71-3782-4004-b429-a272e3b9217f": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "documentId": {
+                                        "0527e1c3-28e6-4c0d-998f-3823acdf43ad": {
+                                            "variable": "$.b2823731-4646-41f7-9cf5-d804113ca060.out.id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "fileName": {}
+                                },
+                                "lambda": {
+                                    "documentId": "{{{0527e1c3-28e6-4c0d-998f-3823acdf43ad}}}",
+                                    "fileName": "e2e-pandadoc.pdf"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "5b94bc36-43d7-457e-a01f-a244f4d2485f": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1520,
+            "y": 656,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "0807e683-ea25-4d65-a09c-e41485773327": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "0807e683-ea25-4d65-a09c-e41485773327": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "1fdff42b-2b58-44af-b4f0-967673703091": {
+                                            "variable": "$.0807e683-ea25-4d65-a09c-e41485773327.out.fileId",
+                                            "functions": []
+                                        },
+                                        "478660c2-6fa2-4b8a-bbbf-f8a2ff11bccc": {
+                                            "variable": "$.0807e683-ea25-4d65-a09c-e41485773327.out.fileName",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{1fdff42b-2b58-44af-b4f0-967673703091}}}",
+                                                "assertion": "notEmpty"
+                                            },
+                                            {
+                                                "field": "{{{478660c2-6fa2-4b8a-bbbf-f8a2ff11bccc}}}",
+                                                "assertion": "equal",
+                                                "expected": "e2e-pandadoc.pdf"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "e8dd9f36-6d22-4e3a-88b5-a6090fb5a9ea": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 1728,
+            "y": 656,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "6349a3a9-2e6c-4291-a1d8-c15c5d12526c": [
+                        "out"
+                    ],
+                    "56098335-8689-4d19-8b51-3d843288070d": [
+                        "out"
+                    ],
+                    "1f7ab099-e355-4ffd-8ec4-05f2ef3e034c": [
+                        "out"
+                    ],
+                    "cbd71eb5-65eb-4a82-8b14-0df9cde6328c": [
+                        "out"
+                    ],
+                    "e31696ed-bd42-45e3-85ed-bd4f69165ef7": [
+                        "out"
+                    ],
+                    "5b94bc36-43d7-457e-a01f-a244f4d2485f": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 420
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "d791fe60-ad78-4f76-8736-b1de5cd77300": {
+            "type": "appmixer.pandadoc.core.DeleteDocument",
+            "x": 1936,
+            "y": 656,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "e8dd9f36-6d22-4e3a-88b5-a6090fb5a9ea": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "e8dd9f36-6d22-4e3a-88b5-a6090fb5a9ea": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "documentId": {
+                                        "35781c95-5938-4ff0-ab9f-3759ea2926ef": {
+                                            "variable": "$.b2823731-4646-41f7-9cf5-d804113ca060.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "documentId": "{{{35781c95-5938-4ff0-ab9f-3759ea2926ef}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "8acebb51-be50-449d-8d63-9a57cf6b278b": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 2144,
+            "y": 656,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "d791fe60-ad78-4f76-8736-b1de5cd77300": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "successStoreId": "64f6f1f9193228000754082f",
+                    "failedStoreId": "64f6f1f0193228000754082e"
+                },
+                "transform": {
+                    "in": {
+                        "d791fe60-ad78-4f76-8736-b1de5cd77300": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "17084a20-6fb5-4bd5-a65c-3fa0d5ca7f88": {
+                                            "variable": "$.e8dd9f36-6d22-4e3a-88b5-a6090fb5a9ea.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E PandaDoc - documents",
+                                    "result": "{{{17084a20-6fb5-4bd5-a65c-3fa0d5ca7f88}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        }
+    },
+    "notes": {
+        "885dd8c3-f6bb-476f-8276-894850f4f238": {
+            "x": 64,
+            "y": 912,
+            "width": 672,
+            "height": 224,
+            "content": "## ⚠️ Test data assumption\n\nThe document is created from a public sample PDF and sent **silently** to the connected PandaDoc member's own email (read by Make API Call from /public/v1/members/current): a sandbox API key may only send to emails of the sender's own domain. Wait Until Ready makes Create Document continue about a minute after the document was created (PandaDoc creates documents asynchronously). The document is deleted at the end."
+        }
+    }
+}
