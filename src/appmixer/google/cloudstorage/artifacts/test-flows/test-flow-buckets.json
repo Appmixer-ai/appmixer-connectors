@@ -1,0 +1,511 @@
+{
+    "name": "E2E Google Cloud Storage - buckets",
+    "description": "Create Bucket, List Buckets, Make API Call (query parameters), Delete Bucket.",
+    "flow": {
+        "5ecec4e7-6020-4754-8d4b-9f34f126f6db": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {},
+            "config": {},
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "ed9d83c4-a1d5-415b-a5dd-4d99d38c8913": {
+            "type": "appmixer.utils.controls.SetVariable",
+            "x": 272,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "5ecec4e7-6020-4754-8d4b-9f34f126f6db": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "5ecec4e7-6020-4754-8d4b-9f34f126f6db": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "variables": {
+                                        "cc65e2cf-95ea-463a-aec9-ae02d417a9cc": {
+                                            "functions": [
+                                                {
+                                                    "name": "g_timestamp"
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "variables": {
+                                        "ADD": [
+                                            {
+                                                "type": "text",
+                                                "name": "projectId",
+                                                "text": "appmixer-e2e-gcs"
+                                            },
+                                            {
+                                                "type": "text",
+                                                "name": "bucketName",
+                                                "text": "e2e-gcs-b-{{{cc65e2cf-95ea-463a-aec9-ae02d417a9cc}}}"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "9cca19b1-0cc2-4929-b1a0-5c1586d664a3": {
+            "type": "appmixer.google.cloudstorage.CreateBucket",
+            "x": 480,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "ed9d83c4-a1d5-415b-a5dd-4d99d38c8913": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "ed9d83c4-a1d5-415b-a5dd-4d99d38c8913": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "projectId": {
+                                        "b50790d8-19c0-4482-9ace-7f52446cf6a5": {
+                                            "variable": "$.ed9d83c4-a1d5-415b-a5dd-4d99d38c8913.out.projectId",
+                                            "functions": []
+                                        }
+                                    },
+                                    "name": {
+                                        "3266dff4-a2f7-4bde-b6f8-4cca5471c869": {
+                                            "variable": "$.ed9d83c4-a1d5-415b-a5dd-4d99d38c8913.out.bucketName",
+                                            "functions": []
+                                        }
+                                    },
+                                    "location": {},
+                                    "storageClass": {},
+                                    "uniformBucketLevelAccess": {}
+                                },
+                                "lambda": {
+                                    "projectId": "{{{b50790d8-19c0-4482-9ace-7f52446cf6a5}}}",
+                                    "name": "{{{3266dff4-a2f7-4bde-b6f8-4cca5471c869}}}",
+                                    "location": "US-CENTRAL1",
+                                    "storageClass": "STANDARD",
+                                    "uniformBucketLevelAccess": true
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "fac0b000-6de4-44ac-b475-3f07609abf35": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 688,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "9cca19b1-0cc2-4929-b1a0-5c1586d664a3": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "9cca19b1-0cc2-4929-b1a0-5c1586d664a3": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "656b0176-acb5-4e5c-aa1e-b3ca6df2a591": {
+                                            "variable": "$.9cca19b1-0cc2-4929-b1a0-5c1586d664a3.out.name",
+                                            "functions": []
+                                        },
+                                        "54cdfb88-bfb1-444b-8117-f4d12eece097": {
+                                            "variable": "$.9cca19b1-0cc2-4929-b1a0-5c1586d664a3.out.location",
+                                            "functions": []
+                                        },
+                                        "700f6d9c-8b6f-4005-b435-97b0e1f2c779": {
+                                            "variable": "$.ed9d83c4-a1d5-415b-a5dd-4d99d38c8913.out.bucketName",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{656b0176-acb5-4e5c-aa1e-b3ca6df2a591}}}",
+                                                "assertion": "equal",
+                                                "expected": "{{{700f6d9c-8b6f-4005-b435-97b0e1f2c779}}}"
+                                            },
+                                            {
+                                                "field": "{{{54cdfb88-bfb1-444b-8117-f4d12eece097}}}",
+                                                "assertion": "equal",
+                                                "expected": "US-CENTRAL1"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "4934a02f-5b01-4f4d-be85-988bee7af861": {
+            "type": "appmixer.google.cloudstorage.ListBuckets",
+            "x": 688,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "9cca19b1-0cc2-4929-b1a0-5c1586d664a3": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "9cca19b1-0cc2-4929-b1a0-5c1586d664a3": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "projectId": {
+                                        "c2edbe92-b5e0-40d8-8b5b-fa63cbe68458": {
+                                            "variable": "$.ed9d83c4-a1d5-415b-a5dd-4d99d38c8913.out.projectId",
+                                            "functions": []
+                                        }
+                                    },
+                                    "outputType": {}
+                                },
+                                "lambda": {
+                                    "projectId": "{{{c2edbe92-b5e0-40d8-8b5b-fa63cbe68458}}}",
+                                    "outputType": "first"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "45bcc3cf-7246-4571-af33-a5fab7dfca52": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 896,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "4934a02f-5b01-4f4d-be85-988bee7af861": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "4934a02f-5b01-4f4d-be85-988bee7af861": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "fd6efe7f-c5d4-409d-a80e-014e260e6d1b": {
+                                            "variable": "$.4934a02f-5b01-4f4d-be85-988bee7af861.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{fd6efe7f-c5d4-409d-a80e-014e260e6d1b}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "f5f3e5c4-35f1-47f4-b134-2331a12de118": {
+            "type": "appmixer.google.cloudstorage.MakeApiCall",
+            "x": 896,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "4934a02f-5b01-4f4d-be85-988bee7af861": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "4934a02f-5b01-4f4d-be85-988bee7af861": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "url": {},
+                                    "method": {},
+                                    "parameters": {
+                                        "5e0fbc3d-9020-41ab-bc36-2d6fa3bd7783": {
+                                            "variable": "$.ed9d83c4-a1d5-415b-a5dd-4d99d38c8913.out.projectId",
+                                            "functions": []
+                                        },
+                                        "120ea6e9-c77b-4572-a73a-e0dc47accb4f": {
+                                            "variable": "$.ed9d83c4-a1d5-415b-a5dd-4d99d38c8913.out.bucketName",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "url": "/b",
+                                    "method": "GET",
+                                    "parameters": "{\"project\": \"{{{5e0fbc3d-9020-41ab-bc36-2d6fa3bd7783}}}\", \"prefix\": \"{{{120ea6e9-c77b-4572-a73a-e0dc47accb4f}}}\"}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "322569e4-e7b9-45a1-adee-ac75af75821c": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1104,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "f5f3e5c4-35f1-47f4-b134-2331a12de118": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "f5f3e5c4-35f1-47f4-b134-2331a12de118": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "28cc8aed-1c5c-4cf6-a7e6-4bc15e8eafb7": {
+                                            "variable": "$.f5f3e5c4-35f1-47f4-b134-2331a12de118.out.statusCode",
+                                            "functions": []
+                                        },
+                                        "11779b99-4103-4ac2-8f2b-07b09b786d5b": {
+                                            "variable": "$.f5f3e5c4-35f1-47f4-b134-2331a12de118.out.body",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$.items[0].name"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        },
+                                        "249daae7-61fd-4641-bb3a-3013831ad84f": {
+                                            "variable": "$.ed9d83c4-a1d5-415b-a5dd-4d99d38c8913.out.bucketName",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{28cc8aed-1c5c-4cf6-a7e6-4bc15e8eafb7}}}",
+                                                "assertion": "equal",
+                                                "expected": "200"
+                                            },
+                                            {
+                                                "field": "{{{11779b99-4103-4ac2-8f2b-07b09b786d5b}}}",
+                                                "assertion": "equal",
+                                                "expected": "{{{249daae7-61fd-4641-bb3a-3013831ad84f}}}"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "ce3ef1b6-5cd7-43e4-a802-32d4721abe45": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 1312,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "fac0b000-6de4-44ac-b475-3f07609abf35": [
+                        "out"
+                    ],
+                    "45bcc3cf-7246-4571-af33-a5fab7dfca52": [
+                        "out"
+                    ],
+                    "322569e4-e7b9-45a1-adee-ac75af75821c": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 180
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "563898d9-9d11-4625-b97e-e6672d0d1235": {
+            "type": "appmixer.google.cloudstorage.DeleteBucket",
+            "x": 1520,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "ce3ef1b6-5cd7-43e4-a802-32d4721abe45": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "ce3ef1b6-5cd7-43e4-a802-32d4721abe45": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "bucket": {
+                                        "2203d7de-e6d1-43fd-830b-4c44239474b8": {
+                                            "variable": "$.9cca19b1-0cc2-4929-b1a0-5c1586d664a3.out.name",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "bucket": "{{{2203d7de-e6d1-43fd-830b-4c44239474b8}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "761dd654-0e6a-411d-9a6e-ab520a89f08e": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1728,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "563898d9-9d11-4625-b97e-e6672d0d1235": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "563898d9-9d11-4625-b97e-e6672d0d1235": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "00edac6f-8823-45de-b628-45de4a060c10": {
+                                            "variable": "$.ce3ef1b6-5cd7-43e4-a802-32d4721abe45.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E Google Cloud Storage - buckets",
+                                    "result": "{{{00edac6f-8823-45de-b628-45de4a060c10}}}"
+                                }
+                            }
+                        }
+                    }
+                },
+                "properties": {
+                    "successStoreId": "64f6f1f9193228000754082f",
+                    "failedStoreId": "64f6f1f0193228000754082e"
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        }
+    },
+    "notes": {
+        "5979e2eb-49ab-419b-b975-e3a35066800e": {
+            "x": 64,
+            "y": -272,
+            "width": 672,
+            "height": 224,
+            "content": "## ⚠️ Test data assumption\n\nThe SetVariable **projectId** must be the ID of a Google Cloud project the connected account can create buckets in (billing enabled, Cloud Storage JSON API enabled). The flows create their own buckets (`e2e-gcs-…`) in that project and delete them at the end. See artifacts/test-flows/README.md."
+        }
+    }
+}

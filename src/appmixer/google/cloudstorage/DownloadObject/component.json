@@ -1,0 +1,223 @@
+{
+    "name": "appmixer.google.cloudstorage.DownloadObject",
+    "label": "Download Object",
+    "description": "Download the content of an object into a file.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:google",
+        "scope": [
+            "https://www.googleapis.com/auth/devstorage.read_write"
+        ]
+    },
+    "quota": {
+        "manager": "appmixer:google:cloudstorage",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "bucket": {
+                        "type": "string"
+                    },
+                    "objectName": {
+                        "type": "string"
+                    },
+                    "fileName": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "bucket",
+                    "objectName"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "bucket": {
+                        "type": "text",
+                        "index": 1,
+                        "label": "Bucket",
+                        "tooltip": "Name of the bucket, for example <code>my-bucket</code>."
+                    },
+                    "objectName": {
+                        "type": "text",
+                        "index": 2,
+                        "label": "Object Name",
+                        "tooltip": "Full name of the object including its folder path, for example <code>reports/2026/summary.csv</code>."
+                    },
+                    "fileName": {
+                        "type": "text",
+                        "index": 3,
+                        "label": "File Name",
+                        "tooltip": "Name of the downloaded file. Defaults to the last part of the object name."
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "schema": {
+                "type": "object",
+                "required": [
+                    "fileId",
+                    "fileName",
+                    "object"
+                ],
+                "properties": {
+                    "fileId": {
+                        "type": "string",
+                        "format": "appmixer-file-id",
+                        "title": "File ID",
+                        "example": "64f1c2e8a1b2c3d4e5f60718"
+                    },
+                    "fileName": {
+                        "type": "string",
+                        "title": "File Name",
+                        "example": "summary.csv"
+                    },
+                    "fileSize": {
+                        "type": "integer",
+                        "title": "File Size (Bytes)",
+                        "example": 2048
+                    },
+                    "contentType": {
+                        "type": "string",
+                        "title": "Content Type",
+                        "example": "text/csv"
+                    },
+                    "object": {
+                        "type": "object",
+                        "title": "Object",
+                        "required": [
+                            "id",
+                            "name",
+                            "bucket",
+                            "generation",
+                            "metageneration",
+                            "size",
+                            "timeCreated",
+                            "updated"
+                        ],
+                        "properties": {
+                            "id": {
+                                "type": "string",
+                                "title": "Object.ID",
+                                "example": "my-bucket/reports/2026/summary.csv/1763635200123456"
+                            },
+                            "name": {
+                                "type": "string",
+                                "title": "Object.Name",
+                                "example": "reports/2026/summary.csv"
+                            },
+                            "bucket": {
+                                "type": "string",
+                                "title": "Object.Bucket",
+                                "example": "my-bucket"
+                            },
+                            "generation": {
+                                "type": "string",
+                                "title": "Object.Generation",
+                                "example": "1763635200123456"
+                            },
+                            "metageneration": {
+                                "type": "string",
+                                "title": "Object.Metageneration",
+                                "example": "1"
+                            },
+                            "contentType": {
+                                "type": "string",
+                                "title": "Object.Content Type",
+                                "example": "text/csv"
+                            },
+                            "size": {
+                                "type": "string",
+                                "title": "Object.Size (Bytes)",
+                                "example": "2048"
+                            },
+                            "md5Hash": {
+                                "type": "string",
+                                "title": "Object.MD5 Hash",
+                                "example": "XrY7u+Ae7tCTyyK7j1rNww=="
+                            },
+                            "crc32c": {
+                                "type": "string",
+                                "title": "Object.CRC32C",
+                                "example": "yZRlqg=="
+                            },
+                            "etag": {
+                                "type": "string",
+                                "title": "Object.ETag",
+                                "example": "CMDj8pvMm5EDEAE="
+                            },
+                            "storageClass": {
+                                "type": "string",
+                                "title": "Object.Storage Class",
+                                "example": "STANDARD"
+                            },
+                            "cacheControl": {
+                                "type": "string",
+                                "title": "Object.Cache Control",
+                                "example": "no-cache"
+                            },
+                            "contentDisposition": {
+                                "type": "string",
+                                "title": "Object.Content Disposition",
+                                "example": "attachment; filename=\"summary.csv\""
+                            },
+                            "contentEncoding": {
+                                "type": "string",
+                                "title": "Object.Content Encoding",
+                                "example": "gzip"
+                            },
+                            "contentLanguage": {
+                                "type": "string",
+                                "title": "Object.Content Language",
+                                "example": "en"
+                            },
+                            "metadata": {
+                                "type": "object",
+                                "title": "Object.Custom Metadata",
+                                "properties": {},
+                                "example": {
+                                    "department": "finance"
+                                }
+                            },
+                            "timeCreated": {
+                                "type": "string",
+                                "format": "date-time",
+                                "title": "Object.Time Created",
+                                "example": "2026-11-20T10:30:00.123Z"
+                            },
+                            "updated": {
+                                "type": "string",
+                                "format": "date-time",
+                                "title": "Object.Updated",
+                                "example": "2026-11-20T10:30:00.123Z"
+                            },
+                            "mediaLink": {
+                                "type": "string",
+                                "title": "Object.Media Link",
+                                "example": "https://storage.googleapis.com/download/storage/v1/b/my-bucket/o/reports%2F2026%2Fsummary.csv?generation=1763635200123456&alt=media"
+                            },
+                            "selfLink": {
+                                "type": "string",
+                                "title": "Object.Self Link",
+                                "example": "https://www.googleapis.com/storage/v1/b/my-bucket/o/reports%2F2026%2Fsummary.csv"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0Ij48cmVjdCBmaWxsPSIjYWVjYmZhIiB4PSIyIiB5PSI0IiB3aWR0aD0iMjAiIGhlaWdodD0iNyIvPjxyZWN0IGZpbGw9IiM2NjlkZjYiIHg9IjIwIiB5PSI0IiB3aWR0aD0iMiIgaGVpZ2h0PSI3Ii8+PHBvbHlnb24gZmlsbD0iIzQyODVmNCIgcG9pbnRzPSIyMiA0IDIwIDQgMjAgMTEgMjIgNCIvPjxyZWN0IGZpbGw9IiM2NjlkZjYiIHg9IjIiIHk9IjQiIHdpZHRoPSIyIiBoZWlnaHQ9IjciLz48cmVjdCBmaWxsPSIjZmZmIiB4PSI2IiB5PSI3IiB3aWR0aD0iNiIgaGVpZ2h0PSIxIi8+PHJlY3QgZmlsbD0iI2ZmZiIgeD0iMTUiIHk9IjYiIHdpZHRoPSIzIiBoZWlnaHQ9IjMiIHJ4PSIxLjUiLz48cmVjdCBmaWxsPSIjYWVjYmZhIiB4PSIyIiB5PSIxMyIgd2lkdGg9IjIwIiBoZWlnaHQ9IjciLz48cmVjdCBmaWxsPSIjNjY5ZGY2IiB4PSIyMCIgeT0iMTMiIHdpZHRoPSIyIiBoZWlnaHQ9IjciLz48cG9seWdvbiBmaWxsPSIjNDI4NWY0IiBwb2ludHM9IjIyIDEzIDIwIDEzIDIwIDIwIDIyIDEzIi8+PHJlY3QgZmlsbD0iIzY2OWRmNiIgeD0iMiIgeT0iMTMiIHdpZHRoPSIyIiBoZWlnaHQ9IjciLz48cmVjdCBmaWxsPSIjZmZmIiB4PSI2IiB5PSIxNiIgd2lkdGg9IjYiIGhlaWdodD0iMSIvPjxyZWN0IGZpbGw9IiNmZmYiIHg9IjE1IiB5PSIxNSIgd2lkdGg9IjMiIGhlaWdodD0iMyIgcng9IjEuNSIvPjwvc3ZnPg=="
+}
