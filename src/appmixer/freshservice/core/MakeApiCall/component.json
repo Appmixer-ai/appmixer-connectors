@@ -1,0 +1,144 @@
+{
+    "name": "appmixer.freshservice.core.MakeApiCall",
+    "label": "Make API Call",
+    "description": "Perform an arbitrary authorized call to the Freshservice API v2 of the connected account. Provide a path (or a full URL on the account's Freshservice host), method, headers, query parameters and body. The Authorization header is added automatically.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:freshservice"
+    },
+    "quota": {
+        "manager": "appmixer:freshservice",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "url": {
+                        "type": "string"
+                    },
+                    "method": {
+                        "type": "string",
+                        "enum": [
+                            "GET",
+                            "POST",
+                            "PUT",
+                            "PATCH",
+                            "DELETE"
+                        ]
+                    },
+                    "headers": {
+                        "type": "string"
+                    },
+                    "parameters": {
+                        "type": "string"
+                    },
+                    "body": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "url",
+                    "method"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "url": {
+                        "type": "text",
+                        "index": 1,
+                        "label": "API Endpoint Path",
+                        "tooltip": "A path relative to <code>https://&lt;domain&gt;.freshservice.com/api/v2</code>, for example <code>/tickets/265/conversations</code>. A full URL is accepted only when it points at your account's Freshservice host; any other host is rejected so your API key is never sent elsewhere."
+                    },
+                    "method": {
+                        "type": "select",
+                        "index": 2,
+                        "label": "HTTP Method",
+                        "defaultValue": "GET",
+                        "tooltip": "The HTTP method for the API call.",
+                        "options": [
+                            {
+                                "label": "GET",
+                                "value": "GET"
+                            },
+                            {
+                                "label": "POST",
+                                "value": "POST"
+                            },
+                            {
+                                "label": "PUT",
+                                "value": "PUT"
+                            },
+                            {
+                                "label": "PATCH",
+                                "value": "PATCH"
+                            },
+                            {
+                                "label": "DELETE",
+                                "value": "DELETE"
+                            }
+                        ]
+                    },
+                    "parameters": {
+                        "type": "key-value",
+                        "keyLabel": "Key",
+                        "valueLabel": "Value",
+                        "addLabel": "Add item",
+                        "removeLabel": "Remove item",
+                        "index": 3,
+                        "label": "Query Parameters",
+                        "tooltip": "Optional query parameters, for example <code>per_page</code>."
+                    },
+                    "body": {
+                        "type": "textarea",
+                        "index": 4,
+                        "label": "Request Body",
+                        "tooltip": "Optional JSON request body."
+                    },
+                    "headers": {
+                        "type": "key-value",
+                        "keyLabel": "Key",
+                        "valueLabel": "Value",
+                        "addLabel": "Add item",
+                        "removeLabel": "Remove item",
+                        "index": 5,
+                        "label": "Request Headers",
+                        "tooltip": "Optional additional headers. The Authorization header is set automatically."
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "statusCode": {
+                        "type": "integer",
+                        "title": "Status Code",
+                        "example": 200
+                    },
+                    "headers": {
+                        "type": "object",
+                        "title": "Response Headers",
+                        "properties": {}
+                    },
+                    "body": {
+                        "type": "object",
+                        "title": "Response Body",
+                        "properties": {}
+                    }
+                }
+            }
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB2aWV3Qm94PSItMi45NCAtMjcuNDQgNTIxLjM5IDU0OS40NCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBkPSJtMzQ5IC4wNWMzMy42NSAwIDY3LjMxLjExIDEwMSAwIDE3LS4xMyAzMi4xNCA0LjQyIDQ1IDE1LjcxIDE0LjEyIDEyLjM2IDIyLjMxIDI3LjkgMjIuMzggNDYuNjYuMjkgNjguMjEgMS4wNyAxMzYuNDQtLjIgMjA0LjYyLTEuMTUgNjEuMzktMjMuMTQgMTE1LjU4LTYzLjY2IDE2MS44MS00Mi4zNSA0OC4zNS05NS42NiA3Ny4xNS0xNTkuMzQgODYuMTUtNDkuMzUgNy05Ni45NC4wOS0xNDIuMjEtMjAuNzQtNjMuMjEtMjkuMDgtMTA3Ljg2LTc2LjM2LTEzMy44NS0xNDAuNzItMTUuNjMtMzguNzMtMjEuMDYtNzkuMjQtMTYuNjMtMTIwLjk1cTguNzMtODIuMDkgNjIuOTQtMTQ0LjI5YzM1LTM5LjkzIDc4LjMzLTY2LjQ5IDEyOS42My04MGEyNTguODQgMjU4Ljg0IDAgMCAxIDY3LTguMjJxNDMuOTQuMDMgODcuOTQtLjAzem0tNTAuMDYgMjMwLjM1Yy0xOS43NCAwLTM5LjQ4LS4wNi01OS4yMi4wNi0zLjQzIDAtNC41MS0uNTktMy4yNS00LjI3IDQuODYtMTQuMjggOS40NC0yOC42NSAxNC4xMy00M3E3LjI1LTIyLjE0IDE0LjQ4LTQ0LjI4YzEuMjUtMy44MyAwLTYuOTMtMy4zMy04Ljgxcy02LjY5LTEuMTktOS4yIDEuOTRjLTEuNCAxLjc1LTIuNjYgMy42MS00IDUuNDNxLTM0LjUyIDQ4LjA4LTY5IDk2LjEzLTEzLjczIDE5LjEyLTI3LjU1IDM4LjE2YTkuMzUgOS4zNSAwIDAgMCAtMS4xMSAxMC4xMmMxLjcxIDMuNjggNC44NiA1LjA4IDguNzEgNS4yMyAxLjY0LjA2IDMuMjkuMDUgNC45My4wNWgxMTEuMjZjNi43MiAwIDYuODQgMCA0LjcgNi42cS0xMy41NiA0MS41My0yNy4yNCA4M2MtMS42NSA1LS44NyA4LjEgMi43MyAxMC4xczYuNzMgMS4xNCAxMC0zYy40Ny0uNTguOS0xLjE5IDEuMzQtMS44cTQ5LTY3Ljc3IDk3Ljk0LTEzNS41NGMyLjQ1LTMuMzkgMy42Ny02LjkyIDEuNi0xMC44NHMtNS41OS01LjM1LTEwLjA2LTUuMzNjLTE5LjI4LjEyLTM4LjU3LjA1LTU3Ljg2LjA1eiIgZmlsbD0iIzA5YzZmYSIvPjxwYXRoIGQ9Im0yOTguOTQgMjMwLjRjMTkuMjkgMCAzOC41OC4wNyA1Ny44Ny0uMDUgNC40NyAwIDcuOTUgMS4zMyAxMC4wNiA1LjMzcy44NSA3LjQ1LTEuNiAxMC44NHEtNDkgNjcuNzUtOTcuOTQgMTM1LjU0Yy0uNDQuNjEtLjg3IDEuMjItMS4zNCAxLjgtMy4zIDQuMTItNi4zNyA1LTEwIDNzLTQuMzgtNS4wOC0yLjczLTEwLjFxMTMuNjUtNDEuNDkgMjcuMjQtODNjMi4xNC02LjU3IDItNi42LTQuNy02LjZoLTExMS4yNmMtMS42NCAwLTMuMjkgMC00LjkzLS4wNS0zLjg1LS4xNS03LTEuNTUtOC43MS01LjIzYTkuMzUgOS4zNSAwIDAgMSAxLjEtMTAuMTJxMTMuODMtMTkgMjcuNTgtMzguMTUgMzQuNTMtNDggNjktOTYuMTNjMS4zMS0xLjgyIDIuNTctMy42OCA0LTUuNDMgMi41MS0zLjEzIDUuOC0zLjg2IDkuMi0xLjk0czQuNTggNSAzLjMzIDguODFsLTE0LjQ4IDQ0LjI4Yy00LjY5IDE0LjM0LTkuMjcgMjguNzEtMTQuMTMgNDMtMS4yNiAzLjY4LS4xOCA0LjI5IDMuMjUgNC4yNyAxOS43MS0uMTMgMzkuNDUtLjA3IDU5LjE5LS4wN3oiIGZpbGw9IiNmYmZlZmUiLz48L3N2Zz4="
+}

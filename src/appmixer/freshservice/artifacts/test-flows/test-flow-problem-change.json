@@ -1,0 +1,627 @@
+{
+    "name": "E2E Freshservice - problem and change",
+    "description": "Create a problem and a change for a requester created by the flow, then delete all three.",
+    "flow": {
+        "95e97f65-c99f-497d-8343-91339285f230": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {},
+            "config": {},
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "3eb6ae7a-7cf8-4d0b-963b-5821cfa37172": {
+            "type": "appmixer.freshservice.core.CreateRequester",
+            "x": 272,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "95e97f65-c99f-497d-8343-91339285f230": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "95e97f65-c99f-497d-8343-91339285f230": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "firstName": {},
+                                    "lastName": {
+                                        "65ff41d2-f359-4042-969f-bb8a3cdcd183": {
+                                            "variable": "$.95e97f65-c99f-497d-8343-91339285f230.out.started",
+                                            "functions": [
+                                                {
+                                                    "name": "g_formatDate",
+                                                    "params": [
+                                                        {
+                                                            "value": "YYYYMMDDHHmmss"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "primaryEmail": {
+                                        "021ae612-ea5c-46f8-8fe2-2d5cffde5151": {
+                                            "variable": "$.95e97f65-c99f-497d-8343-91339285f230.out.started",
+                                            "functions": [
+                                                {
+                                                    "name": "g_formatDate",
+                                                    "params": [
+                                                        {
+                                                            "value": "YYYYMMDDHHmmss"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "firstName": "E2E",
+                                    "lastName": "Change {{{65ff41d2-f359-4042-969f-bb8a3cdcd183}}}",
+                                    "primaryEmail": "e2e.change.{{{021ae612-ea5c-46f8-8fe2-2d5cffde5151}}}@example.com"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "27015b49-46f2-4fc7-8d36-21e5ad3580d8": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 480,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "3eb6ae7a-7cf8-4d0b-963b-5821cfa37172": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "3eb6ae7a-7cf8-4d0b-963b-5821cfa37172": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "4096e916-842f-4856-9254-69717e55d76d": {
+                                            "variable": "$.3eb6ae7a-7cf8-4d0b-963b-5821cfa37172.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{4096e916-842f-4856-9254-69717e55d76d}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "0f989778-5641-43de-91e1-8255ef7eda32": {
+            "type": "appmixer.freshservice.core.CreateProblem",
+            "x": 688,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "27015b49-46f2-4fc7-8d36-21e5ad3580d8": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "27015b49-46f2-4fc7-8d36-21e5ad3580d8": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "subject": {
+                                        "3182dc10-497f-46af-bf76-b15bc8aac959": {
+                                            "variable": "$.95e97f65-c99f-497d-8343-91339285f230.out.started",
+                                            "functions": [
+                                                {
+                                                    "name": "g_formatDate",
+                                                    "params": [
+                                                        {
+                                                            "value": "YYYYMMDDHHmmss"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "description": {},
+                                    "requesterId": {
+                                        "269552eb-7e38-451e-85fa-756f0a3fe38d": {
+                                            "variable": "$.3eb6ae7a-7cf8-4d0b-963b-5821cfa37172.out.id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "dueBy": {
+                                        "c66a428c-cf54-46f5-a24b-a84374ffdb18": {
+                                            "variable": "$.95e97f65-c99f-497d-8343-91339285f230.out.started",
+                                            "functions": [
+                                                {
+                                                    "name": "g_now"
+                                                },
+                                                {
+                                                    "name": "g_addTimeSpan",
+                                                    "hashParams": {
+                                                        "days": {
+                                                            "value": 7
+                                                        }
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "status": {},
+                                    "priority": {},
+                                    "impact": {}
+                                },
+                                "lambda": {
+                                    "subject": "E2E Freshservice problem {{{3182dc10-497f-46af-bf76-b15bc8aac959}}}",
+                                    "description": "<p>Created by the Appmixer E2E test.</p>",
+                                    "requesterId": "{{{269552eb-7e38-451e-85fa-756f0a3fe38d}}}",
+                                    "dueBy": "{{{c66a428c-cf54-46f5-a24b-a84374ffdb18}}}",
+                                    "status": 1,
+                                    "priority": 2,
+                                    "impact": 1
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "6036dc5e-d4eb-4d68-807b-2f9a3496b107": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 896,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "0f989778-5641-43de-91e1-8255ef7eda32": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "0f989778-5641-43de-91e1-8255ef7eda32": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "25c88a5c-04e8-4fb4-a740-363d5a151a7b": {
+                                            "variable": "$.0f989778-5641-43de-91e1-8255ef7eda32.out.subject",
+                                            "functions": []
+                                        },
+                                        "27ff90bf-4925-41ab-8f2e-cd70a9edc7c8": {
+                                            "variable": "$.0f989778-5641-43de-91e1-8255ef7eda32.out.priority",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{25c88a5c-04e8-4fb4-a740-363d5a151a7b}}}",
+                                                "assertion": "regex",
+                                                "regex": "^E2E Freshservice problem \\d{14}$"
+                                            },
+                                            {
+                                                "field": "{{{27ff90bf-4925-41ab-8f2e-cd70a9edc7c8}}}",
+                                                "assertion": "regex",
+                                                "regex": "^2$"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "23f98ae0-4d46-4151-a51d-094faf0ddf7d": {
+            "type": "appmixer.freshservice.core.CreateChange",
+            "x": 1104,
+            "y": 400,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "6036dc5e-d4eb-4d68-807b-2f9a3496b107": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "6036dc5e-d4eb-4d68-807b-2f9a3496b107": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "subject": {
+                                        "3965b8b2-a565-4072-a968-e031c4d5f6f4": {
+                                            "variable": "$.95e97f65-c99f-497d-8343-91339285f230.out.started",
+                                            "functions": [
+                                                {
+                                                    "name": "g_formatDate",
+                                                    "params": [
+                                                        {
+                                                            "value": "YYYYMMDDHHmmss"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "description": {},
+                                    "requesterId": {
+                                        "b3731d37-1b84-4470-bab0-25f6f96f7967": {
+                                            "variable": "$.3eb6ae7a-7cf8-4d0b-963b-5821cfa37172.out.id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "status": {},
+                                    "priority": {},
+                                    "impact": {},
+                                    "risk": {},
+                                    "changeType": {},
+                                    "plannedStartDate": {
+                                        "99137ad9-fde8-4290-96bb-f5b7a6311aa7": {
+                                            "variable": "$.95e97f65-c99f-497d-8343-91339285f230.out.started",
+                                            "functions": [
+                                                {
+                                                    "name": "g_now"
+                                                },
+                                                {
+                                                    "name": "g_addTimeSpan",
+                                                    "hashParams": {
+                                                        "days": {
+                                                            "value": 1
+                                                        }
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "plannedEndDate": {
+                                        "39015998-e8c7-4bb2-962f-b04f38f7fb8b": {
+                                            "variable": "$.95e97f65-c99f-497d-8343-91339285f230.out.started",
+                                            "functions": [
+                                                {
+                                                    "name": "g_now"
+                                                },
+                                                {
+                                                    "name": "g_addTimeSpan",
+                                                    "hashParams": {
+                                                        "days": {
+                                                            "value": 2
+                                                        }
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "subject": "E2E Freshservice change {{{3965b8b2-a565-4072-a968-e031c4d5f6f4}}}",
+                                    "description": "<p>Created by the Appmixer E2E test.</p>",
+                                    "requesterId": "{{{b3731d37-1b84-4470-bab0-25f6f96f7967}}}",
+                                    "status": 1,
+                                    "priority": 1,
+                                    "impact": 1,
+                                    "risk": 2,
+                                    "changeType": 1,
+                                    "plannedStartDate": "{{{99137ad9-fde8-4290-96bb-f5b7a6311aa7}}}",
+                                    "plannedEndDate": "{{{39015998-e8c7-4bb2-962f-b04f38f7fb8b}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "bc589898-02b0-44d4-b298-f4e29926cf73": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1312,
+            "y": 400,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "23f98ae0-4d46-4151-a51d-094faf0ddf7d": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "23f98ae0-4d46-4151-a51d-094faf0ddf7d": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "70f3008f-8b3e-4a73-a8c6-d9693bdb197b": {
+                                            "variable": "$.23f98ae0-4d46-4151-a51d-094faf0ddf7d.out.subject",
+                                            "functions": []
+                                        },
+                                        "6d47d35c-8957-4cd5-8880-3afe13c695a5": {
+                                            "variable": "$.23f98ae0-4d46-4151-a51d-094faf0ddf7d.out.risk",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{70f3008f-8b3e-4a73-a8c6-d9693bdb197b}}}",
+                                                "assertion": "regex",
+                                                "regex": "^E2E Freshservice change \\d{14}$"
+                                            },
+                                            {
+                                                "field": "{{{6d47d35c-8957-4cd5-8880-3afe13c695a5}}}",
+                                                "assertion": "regex",
+                                                "regex": "^2$"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "f08f0c09-e158-4dee-9ce9-503b8121835c": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 1520,
+            "y": 400,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "27015b49-46f2-4fc7-8d36-21e5ad3580d8": [
+                        "out"
+                    ],
+                    "6036dc5e-d4eb-4d68-807b-2f9a3496b107": [
+                        "out"
+                    ],
+                    "bc589898-02b0-44d4-b298-f4e29926cf73": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 300
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "485baee2-a008-4828-b579-94705921de7d": {
+            "type": "appmixer.freshservice.core.MakeApiCall",
+            "x": 1728,
+            "y": 400,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "f08f0c09-e158-4dee-9ce9-503b8121835c": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "f08f0c09-e158-4dee-9ce9-503b8121835c": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "url": {
+                                        "61737f6a-03ec-458d-a595-b53da3620823": {
+                                            "variable": "$.0f989778-5641-43de-91e1-8255ef7eda32.out.id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "method": {}
+                                },
+                                "lambda": {
+                                    "url": "/problems/{{{61737f6a-03ec-458d-a595-b53da3620823}}}",
+                                    "method": "DELETE"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "964644dc-2f3f-441f-8807-e56170fe53a8": {
+            "type": "appmixer.freshservice.core.MakeApiCall",
+            "x": 1936,
+            "y": 400,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "485baee2-a008-4828-b579-94705921de7d": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "485baee2-a008-4828-b579-94705921de7d": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "url": {
+                                        "f528a566-2106-4fd7-ba5e-b0561419211f": {
+                                            "variable": "$.23f98ae0-4d46-4151-a51d-094faf0ddf7d.out.id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "method": {}
+                                },
+                                "lambda": {
+                                    "url": "/changes/{{{f528a566-2106-4fd7-ba5e-b0561419211f}}}",
+                                    "method": "DELETE"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "ad4dff26-7c1f-4dc7-8b04-f3652cf7dbc2": {
+            "type": "appmixer.freshservice.core.MakeApiCall",
+            "x": 2144,
+            "y": 400,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "964644dc-2f3f-441f-8807-e56170fe53a8": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "964644dc-2f3f-441f-8807-e56170fe53a8": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "url": {
+                                        "6687f417-ad04-43a5-a78d-acaecd42b04f": {
+                                            "variable": "$.3eb6ae7a-7cf8-4d0b-963b-5821cfa37172.out.id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "method": {}
+                                },
+                                "lambda": {
+                                    "url": "/requesters/{{{6687f417-ad04-43a5-a78d-acaecd42b04f}}}/forget",
+                                    "method": "DELETE"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "0a6b0e75-33a8-4df9-adf3-818f998f32c1": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 2352,
+            "y": 400,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "ad4dff26-7c1f-4dc7-8b04-f3652cf7dbc2": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "ad4dff26-7c1f-4dc7-8b04-f3652cf7dbc2": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "920e1138-2b43-4dfc-9c9f-b93d44d0594b": {
+                                            "variable": "$.f08f0c09-e158-4dee-9ce9-503b8121835c.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E Freshservice - problem and change",
+                                    "result": "{{{920e1138-2b43-4dfc-9c9f-b93d44d0594b}}}"
+                                }
+                            }
+                        }
+                    }
+                },
+                "properties": {
+                    "successStoreId": "64f6f1f9193228000754082f",
+                    "failedStoreId": "64f6f1f0193228000754082e"
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        }
+    }
+}
