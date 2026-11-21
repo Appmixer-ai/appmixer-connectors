@@ -1,0 +1,301 @@
+{
+    "name": "E2E Qlik Sense - reports",
+    "description": "Generate a PDF of a sheet and a PNG of a visualization.",
+    "flow": {
+        "96ad01da-7525-4d79-afc4-841997a9f8e3": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {},
+            "config": {},
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "fce5e40d-6591-49be-8258-caafd6b1f001": {
+            "type": "appmixer.qliksense.core.GenerateReport",
+            "x": 272,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "96ad01da-7525-4d79-afc4-841997a9f8e3": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "96ad01da-7525-4d79-afc4-841997a9f8e3": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "appId": {},
+                                    "objectType": {},
+                                    "objectId": {},
+                                    "format": {},
+                                    "fileName": {},
+                                    "timeoutMinutes": {}
+                                },
+                                "lambda": {
+                                    "appId": "REPLACE_WITH_APP_ID",
+                                    "objectType": "sheet",
+                                    "objectId": "REPLACE_WITH_SHEET_ID",
+                                    "format": "pdf",
+                                    "fileName": "e2e-sheet",
+                                    "timeoutMinutes": 15
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "fdc8e333-92ce-4e1d-9dcc-07c02cc0122a": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 480,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "fce5e40d-6591-49be-8258-caafd6b1f001": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "fce5e40d-6591-49be-8258-caafd6b1f001": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "9f27d5f3-f773-47fe-9dc1-f09dc39bce58": {
+                                            "variable": "$.fce5e40d-6591-49be-8258-caafd6b1f001.out.fileId",
+                                            "functions": []
+                                        },
+                                        "794f1b7c-ad87-4e28-9489-edf1238500ae": {
+                                            "variable": "$.fce5e40d-6591-49be-8258-caafd6b1f001.out.fileName",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{9f27d5f3-f773-47fe-9dc1-f09dc39bce58}}}",
+                                                "assertion": "notEmpty"
+                                            },
+                                            {
+                                                "field": "{{{794f1b7c-ad87-4e28-9489-edf1238500ae}}}",
+                                                "assertion": "equal",
+                                                "expected": "e2e-sheet.pdf"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "caa46856-f7ad-44c5-a94a-8fc3a6c2a67d": {
+            "type": "appmixer.qliksense.core.GenerateReport",
+            "x": 480,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "fce5e40d-6591-49be-8258-caafd6b1f001": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "fce5e40d-6591-49be-8258-caafd6b1f001": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "appId": {},
+                                    "objectType": {},
+                                    "objectId": {},
+                                    "format": {},
+                                    "widthPx": {},
+                                    "heightPx": {},
+                                    "fileName": {},
+                                    "timeoutMinutes": {}
+                                },
+                                "lambda": {
+                                    "appId": "REPLACE_WITH_APP_ID",
+                                    "objectType": "visualization",
+                                    "objectId": "REPLACE_WITH_VISUALIZATION_ID",
+                                    "format": "png",
+                                    "widthPx": 1280,
+                                    "heightPx": 720,
+                                    "fileName": "e2e-chart",
+                                    "timeoutMinutes": 15
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "36329741-16dd-44a1-bf36-5a584ed9717d": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 688,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "caa46856-f7ad-44c5-a94a-8fc3a6c2a67d": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "caa46856-f7ad-44c5-a94a-8fc3a6c2a67d": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "bce9caee-f9aa-4049-b7c7-60aa7f37fbe5": {
+                                            "variable": "$.caa46856-f7ad-44c5-a94a-8fc3a6c2a67d.out.fileId",
+                                            "functions": []
+                                        },
+                                        "1dff09b6-a3c2-4a77-ab0f-bcfeb324d8bd": {
+                                            "variable": "$.caa46856-f7ad-44c5-a94a-8fc3a6c2a67d.out.fileName",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{bce9caee-f9aa-4049-b7c7-60aa7f37fbe5}}}",
+                                                "assertion": "notEmpty"
+                                            },
+                                            {
+                                                "field": "{{{1dff09b6-a3c2-4a77-ab0f-bcfeb324d8bd}}}",
+                                                "assertion": "equal",
+                                                "expected": "e2e-chart.png"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "6a25e27f-b1da-460f-bb43-f3d95031a79f": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 896,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "fdc8e333-92ce-4e1d-9dcc-07c02cc0122a": [
+                        "out"
+                    ],
+                    "36329741-16dd-44a1-bf36-5a584ed9717d": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 1200
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "2a368f96-ffb6-417f-8c0d-19d9bd027e82": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1104,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "6a25e27f-b1da-460f-bb43-f3d95031a79f": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "successStoreId": "64f6f1f9193228000754082f",
+                    "failedStoreId": "64f6f1f0193228000754082e"
+                },
+                "transform": {
+                    "in": {
+                        "6a25e27f-b1da-460f-bb43-f3d95031a79f": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "62514c39-c47b-4ba0-9ba8-5c174b59cf74": {
+                                            "variable": "$.6a25e27f-b1da-460f-bb43-f3d95031a79f.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E Qlik Sense - reports",
+                                    "result": "{{{62514c39-c47b-4ba0-9ba8-5c174b59cf74}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        }
+    },
+    "notes": {
+        "393b7914-23fb-4b95-bd00-e6a9384a9d62": {
+            "x": 64,
+            "y": -280,
+            "width": 672,
+            "height": 224,
+            "content": "## ⚠️ Test data assumption\n\nSheets and visualizations cannot be created through the REST API, so this flow needs an **existing app with a sheet and a chart**. Before running it, replace REPLACE_WITH_APP_ID, REPLACE_WITH_SHEET_ID and REPLACE_WITH_VISUALIZATION_ID in both Generate Report components (for example with the Consumer Sales sample app). The tenant also needs the reporting entitlement."
+        }
+    }
+}

@@ -1,0 +1,571 @@
+{
+    "name": "E2E Qlik Sense - spaces",
+    "description": "Create, get, update, find and delete a shared space.",
+    "flow": {
+        "bacf2758-cafe-41ec-8fe4-e2e5da3ece27": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {},
+            "config": {},
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "d788d8f8-79e2-424c-8f86-d431c0dbd4b0": {
+            "type": "appmixer.qliksense.core.CreateSpace",
+            "x": 272,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "bacf2758-cafe-41ec-8fe4-e2e5da3ece27": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "bacf2758-cafe-41ec-8fe4-e2e5da3ece27": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "name": {
+                                        "9dd4225a-aab9-40b9-946c-3b24fc572da8": {
+                                            "variable": "$.bacf2758-cafe-41ec-8fe4-e2e5da3ece27.out.started",
+                                            "functions": []
+                                        }
+                                    },
+                                    "type": {},
+                                    "description": {}
+                                },
+                                "lambda": {
+                                    "name": "E2E Qlik space {{{9dd4225a-aab9-40b9-946c-3b24fc572da8}}}",
+                                    "type": "shared",
+                                    "description": "Created by an E2E test"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "33112436-bb0e-4d68-b7cd-805b03eddf7d": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 480,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "d788d8f8-79e2-424c-8f86-d431c0dbd4b0": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "d788d8f8-79e2-424c-8f86-d431c0dbd4b0": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "e5d70347-2913-46f6-887a-1ee50cd88262": {
+                                            "variable": "$.d788d8f8-79e2-424c-8f86-d431c0dbd4b0.out.id",
+                                            "functions": []
+                                        },
+                                        "ddf303b1-1e95-49d9-a863-7de50195ed7d": {
+                                            "variable": "$.d788d8f8-79e2-424c-8f86-d431c0dbd4b0.out.type",
+                                            "functions": []
+                                        },
+                                        "800a2704-482c-441b-8333-43589254333f": {
+                                            "variable": "$.d788d8f8-79e2-424c-8f86-d431c0dbd4b0.out.name",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{e5d70347-2913-46f6-887a-1ee50cd88262}}}",
+                                                "assertion": "notEmpty"
+                                            },
+                                            {
+                                                "field": "{{{ddf303b1-1e95-49d9-a863-7de50195ed7d}}}",
+                                                "assertion": "equal",
+                                                "expected": "shared"
+                                            },
+                                            {
+                                                "field": "{{{800a2704-482c-441b-8333-43589254333f}}}",
+                                                "assertion": "regex",
+                                                "regex": "^E2E Qlik space "
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "e0ba4f85-ab1a-4351-a7fa-924b8ea4d701": {
+            "type": "appmixer.qliksense.core.GetSpace",
+            "x": 480,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "d788d8f8-79e2-424c-8f86-d431c0dbd4b0": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "d788d8f8-79e2-424c-8f86-d431c0dbd4b0": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "spaceId": {
+                                        "d53059b1-d484-42b6-8051-12bbc9db9607": {
+                                            "variable": "$.d788d8f8-79e2-424c-8f86-d431c0dbd4b0.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "spaceId": "{{{d53059b1-d484-42b6-8051-12bbc9db9607}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "6da49732-0618-4dd5-b7a3-b0407d989294": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 688,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "e0ba4f85-ab1a-4351-a7fa-924b8ea4d701": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "e0ba4f85-ab1a-4351-a7fa-924b8ea4d701": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "26e9aae8-3239-4965-9d64-2c3f2e7396aa": {
+                                            "variable": "$.e0ba4f85-ab1a-4351-a7fa-924b8ea4d701.out.id",
+                                            "functions": []
+                                        },
+                                        "bc537413-bb1d-47f7-bf10-fd1e156e7820": {
+                                            "variable": "$.d788d8f8-79e2-424c-8f86-d431c0dbd4b0.out.id",
+                                            "functions": []
+                                        },
+                                        "b6746f48-f082-4d18-8412-b26b2e7525e2": {
+                                            "variable": "$.e0ba4f85-ab1a-4351-a7fa-924b8ea4d701.out.description",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{26e9aae8-3239-4965-9d64-2c3f2e7396aa}}}",
+                                                "assertion": "equal",
+                                                "expected": "{{{bc537413-bb1d-47f7-bf10-fd1e156e7820}}}"
+                                            },
+                                            {
+                                                "field": "{{{b6746f48-f082-4d18-8412-b26b2e7525e2}}}",
+                                                "assertion": "equal",
+                                                "expected": "Created by an E2E test"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "8a0029c2-8156-4095-b3e1-9d083ddf4baa": {
+            "type": "appmixer.qliksense.core.UpdateSpace",
+            "x": 688,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "e0ba4f85-ab1a-4351-a7fa-924b8ea4d701": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "e0ba4f85-ab1a-4351-a7fa-924b8ea4d701": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "spaceId": {
+                                        "6c33bbaa-7922-4c09-9f5f-4869aab994d4": {
+                                            "variable": "$.d788d8f8-79e2-424c-8f86-d431c0dbd4b0.out.id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "description": {}
+                                },
+                                "lambda": {
+                                    "spaceId": "{{{6c33bbaa-7922-4c09-9f5f-4869aab994d4}}}",
+                                    "description": "Updated by an E2E test"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "7156eded-214c-4b8b-acdd-0675da6e9eb0": {
+            "type": "appmixer.qliksense.core.GetSpace",
+            "x": 896,
+            "y": 400,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "8a0029c2-8156-4095-b3e1-9d083ddf4baa": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "8a0029c2-8156-4095-b3e1-9d083ddf4baa": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "spaceId": {
+                                        "82784827-8736-4f89-ad96-0e047f43b0d5": {
+                                            "variable": "$.d788d8f8-79e2-424c-8f86-d431c0dbd4b0.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "spaceId": "{{{82784827-8736-4f89-ad96-0e047f43b0d5}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "48f23090-7314-406d-a72d-31873a5c599d": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1104,
+            "y": 400,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "7156eded-214c-4b8b-acdd-0675da6e9eb0": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "7156eded-214c-4b8b-acdd-0675da6e9eb0": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "aad53835-812b-4975-ba0f-d564bfb6872f": {
+                                            "variable": "$.7156eded-214c-4b8b-acdd-0675da6e9eb0.out.description",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{aad53835-812b-4975-ba0f-d564bfb6872f}}}",
+                                                "assertion": "equal",
+                                                "expected": "Updated by an E2E test"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "87776470-8440-4fcc-a5bf-db20f8ab8418": {
+            "type": "appmixer.qliksense.core.FindSpaces",
+            "x": 1104,
+            "y": 528,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "7156eded-214c-4b8b-acdd-0675da6e9eb0": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "7156eded-214c-4b8b-acdd-0675da6e9eb0": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "name": {
+                                        "19adb467-94dd-4696-a443-9156266b41d2": {
+                                            "variable": "$.d788d8f8-79e2-424c-8f86-d431c0dbd4b0.out.name",
+                                            "functions": []
+                                        }
+                                    },
+                                    "type": {},
+                                    "outputType": {}
+                                },
+                                "lambda": {
+                                    "name": "{{{19adb467-94dd-4696-a443-9156266b41d2}}}",
+                                    "type": "shared",
+                                    "outputType": "first"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "8d4858f4-ce5d-4342-b4ec-ff2ab4ffa44f": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1312,
+            "y": 528,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "87776470-8440-4fcc-a5bf-db20f8ab8418": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "87776470-8440-4fcc-a5bf-db20f8ab8418": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "2bd24432-9696-4477-b584-cc52902dc132": {
+                                            "variable": "$.87776470-8440-4fcc-a5bf-db20f8ab8418.out.id",
+                                            "functions": []
+                                        },
+                                        "f83b8a2b-f3dc-456a-aadc-bb74e9bf53f6": {
+                                            "variable": "$.d788d8f8-79e2-424c-8f86-d431c0dbd4b0.out.id",
+                                            "functions": []
+                                        },
+                                        "a8848139-4d75-48bb-b3b7-777e01c76912": {
+                                            "variable": "$.87776470-8440-4fcc-a5bf-db20f8ab8418.out.count",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{2bd24432-9696-4477-b584-cc52902dc132}}}",
+                                                "assertion": "equal",
+                                                "expected": "{{{f83b8a2b-f3dc-456a-aadc-bb74e9bf53f6}}}"
+                                            },
+                                            {
+                                                "field": "{{{a8848139-4d75-48bb-b3b7-777e01c76912}}}",
+                                                "assertion": "equal",
+                                                "expected": "1"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "6127bdc5-ff97-4682-8967-7f2c3c9015f0": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 1520,
+            "y": 528,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "33112436-bb0e-4d68-b7cd-805b03eddf7d": [
+                        "out"
+                    ],
+                    "6da49732-0618-4dd5-b7a3-b0407d989294": [
+                        "out"
+                    ],
+                    "48f23090-7314-406d-a72d-31873a5c599d": [
+                        "out"
+                    ],
+                    "8d4858f4-ce5d-4342-b4ec-ff2ab4ffa44f": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 180
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "b5e9e298-4f2e-447f-80ac-c7a783c86676": {
+            "type": "appmixer.qliksense.core.DeleteSpace",
+            "x": 1728,
+            "y": 528,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "6127bdc5-ff97-4682-8967-7f2c3c9015f0": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "6127bdc5-ff97-4682-8967-7f2c3c9015f0": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "spaceId": {
+                                        "142de0a8-91df-43fd-9622-fe837770fd03": {
+                                            "variable": "$.d788d8f8-79e2-424c-8f86-d431c0dbd4b0.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "spaceId": "{{{142de0a8-91df-43fd-9622-fe837770fd03}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "9950b15d-dc81-4959-9dd3-1790d786164a": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1936,
+            "y": 528,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "b5e9e298-4f2e-447f-80ac-c7a783c86676": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "successStoreId": "64f6f1f9193228000754082f",
+                    "failedStoreId": "64f6f1f0193228000754082e"
+                },
+                "transform": {
+                    "in": {
+                        "b5e9e298-4f2e-447f-80ac-c7a783c86676": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "a873a049-1536-49ef-ad53-f972755d3db4": {
+                                            "variable": "$.6127bdc5-ff97-4682-8967-7f2c3c9015f0.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E Qlik Sense - spaces",
+                                    "result": "{{{a873a049-1536-49ef-ad53-f972755d3db4}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        }
+    }
+}

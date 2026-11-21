@@ -1,0 +1,439 @@
+{
+    "name": "E2E Qlik Sense - automations",
+    "description": "Find and run an automation created for the test.",
+    "flow": {
+        "7092e0ca-c9d7-4a14-863f-783bb83dbfd1": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {},
+            "config": {},
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "8de825e0-7b9c-4ca3-85ed-294f5858286f": {
+            "type": "appmixer.qliksense.core.MakeApiCall",
+            "x": 272,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "7092e0ca-c9d7-4a14-863f-783bb83dbfd1": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "7092e0ca-c9d7-4a14-863f-783bb83dbfd1": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "url": {},
+                                    "method": {},
+                                    "body": {
+                                        "1dc74660-9dcb-4ddc-bdc8-8cf04d861ffe": {
+                                            "variable": "$.7092e0ca-c9d7-4a14-863f-783bb83dbfd1.out.started",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "url": "/api/workflows/automations",
+                                    "method": "POST",
+                                    "body": "{\"name\": \"E2E Qlik automation {{{1dc74660-9dcb-4ddc-bdc8-8cf04d861ffe}}}\"}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "d50821c4-d404-4d28-bcf5-89ab99765149": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 480,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "8de825e0-7b9c-4ca3-85ed-294f5858286f": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "8de825e0-7b9c-4ca3-85ed-294f5858286f": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "26e971d0-a052-417f-b7ad-f7d852e54b4e": {
+                                            "variable": "$.8de825e0-7b9c-4ca3-85ed-294f5858286f.out.statusCode",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{26e971d0-a052-417f-b7ad-f7d852e54b4e}}}",
+                                                "assertion": "regex",
+                                                "regex": "^20[01]$"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "3751b4e6-add6-4e44-b0b4-33ef2202477c": {
+            "type": "appmixer.qliksense.core.FindAutomations",
+            "x": 480,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "8de825e0-7b9c-4ca3-85ed-294f5858286f": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "8de825e0-7b9c-4ca3-85ed-294f5858286f": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "name": {
+                                        "b754c9aa-7a6f-4098-82f4-dc44380d4464": {
+                                            "variable": "$.8de825e0-7b9c-4ca3-85ed-294f5858286f.out.body",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$.name"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "outputType": {}
+                                },
+                                "lambda": {
+                                    "name": "{{{b754c9aa-7a6f-4098-82f4-dc44380d4464}}}",
+                                    "outputType": "first"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "2939ef9b-9ffe-48cb-a4ed-1c12fe96cf26": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 688,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "3751b4e6-add6-4e44-b0b4-33ef2202477c": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "3751b4e6-add6-4e44-b0b4-33ef2202477c": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "1bb28fbd-1faf-4110-ab37-577e6522c9f4": {
+                                            "variable": "$.3751b4e6-add6-4e44-b0b4-33ef2202477c.out.id",
+                                            "functions": []
+                                        },
+                                        "d30a3654-72f4-41c9-8b21-92ab5c6c33df": {
+                                            "variable": "$.8de825e0-7b9c-4ca3-85ed-294f5858286f.out.body",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$.id"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{1bb28fbd-1faf-4110-ab37-577e6522c9f4}}}",
+                                                "assertion": "equal",
+                                                "expected": "{{{d30a3654-72f4-41c9-8b21-92ab5c6c33df}}}"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "ba813425-f81e-4c41-8660-f25aec01a9b8": {
+            "type": "appmixer.qliksense.core.RunAutomation",
+            "x": 688,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "3751b4e6-add6-4e44-b0b4-33ef2202477c": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "3751b4e6-add6-4e44-b0b4-33ef2202477c": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "automationId": {
+                                        "af872c7c-5d0c-4672-9b52-b826812fdd44": {
+                                            "variable": "$.3751b4e6-add6-4e44-b0b4-33ef2202477c.out.id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "timeoutMinutes": {}
+                                },
+                                "lambda": {
+                                    "automationId": "{{{af872c7c-5d0c-4672-9b52-b826812fdd44}}}",
+                                    "timeoutMinutes": 10
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "5f7d76f8-0e29-479e-94a2-5000bc696b35": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 896,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "ba813425-f81e-4c41-8660-f25aec01a9b8": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "ba813425-f81e-4c41-8660-f25aec01a9b8": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "42ddb431-f410-47da-b4b2-d8756a06beed": {
+                                            "variable": "$.ba813425-f81e-4c41-8660-f25aec01a9b8.out.id",
+                                            "functions": []
+                                        },
+                                        "d1617e85-4ce6-4919-881a-6a26f613dfca": {
+                                            "variable": "$.ba813425-f81e-4c41-8660-f25aec01a9b8.out.status",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{42ddb431-f410-47da-b4b2-d8756a06beed}}}",
+                                                "assertion": "notEmpty"
+                                            },
+                                            {
+                                                "field": "{{{d1617e85-4ce6-4919-881a-6a26f613dfca}}}",
+                                                "assertion": "regex",
+                                                "regex": "^(finished|finished with warnings|failed|stopped|exceeded limit|must stop)$"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "6f4eb078-33e7-4855-a3ed-f98f4c0de43b": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 1104,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "d50821c4-d404-4d28-bcf5-89ab99765149": [
+                        "out"
+                    ],
+                    "2939ef9b-9ffe-48cb-a4ed-1c12fe96cf26": [
+                        "out"
+                    ],
+                    "5f7d76f8-0e29-479e-94a2-5000bc696b35": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 180
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "87ff14f0-6222-4c70-8463-b7314b0c0b77": {
+            "type": "appmixer.qliksense.core.MakeApiCall",
+            "x": 1312,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "6f4eb078-33e7-4855-a3ed-f98f4c0de43b": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "6f4eb078-33e7-4855-a3ed-f98f4c0de43b": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "url": {
+                                        "afb09adc-f0e3-4a34-bbb0-ff85b351fa59": {
+                                            "variable": "$.3751b4e6-add6-4e44-b0b4-33ef2202477c.out.id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "method": {}
+                                },
+                                "lambda": {
+                                    "url": "/api/workflows/automations/{{{afb09adc-f0e3-4a34-bbb0-ff85b351fa59}}}",
+                                    "method": "DELETE"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "7c1c1681-3aa0-4150-bdb4-b37e099fcb86": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1520,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "87ff14f0-6222-4c70-8463-b7314b0c0b77": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "successStoreId": "64f6f1f9193228000754082f",
+                    "failedStoreId": "64f6f1f0193228000754082e"
+                },
+                "transform": {
+                    "in": {
+                        "87ff14f0-6222-4c70-8463-b7314b0c0b77": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "a2d7f9d4-ebb6-4fc0-ab8b-300ac0d4ebe5": {
+                                            "variable": "$.6f4eb078-33e7-4855-a3ed-f98f4c0de43b.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E Qlik Sense - automations",
+                                    "result": "{{{a2d7f9d4-ebb6-4fc0-ab8b-300ac0d4ebe5}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        }
+    },
+    "notes": {
+        "a6332be5-17f7-4d6e-8a74-01280ec480d9": {
+            "x": 64,
+            "y": -280,
+            "width": 672,
+            "height": 224,
+            "content": "## ⚠️ Test data assumption\n\nThe flow creates an empty automation with Make API Call (POST /api/workflows/automations), runs it with Run Automation and deletes it at the end. The connected user needs the permission to create automations. An automation without blocks ends right away; the flow only checks that the run reached a final status."
+        }
+    }
+}

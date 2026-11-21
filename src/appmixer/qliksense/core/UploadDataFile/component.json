@@ -1,0 +1,174 @@
+{
+    "name": "appmixer.qliksense.core.UploadDataFile",
+    "label": "Upload Data File",
+    "description": "Upload a file (CSV, Excel, QVD, ...) to the data files of a space, or of your personal space, so apps can load it. A file with the same name is replaced when Replace Existing File is on.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:qliksense"
+    },
+    "quota": {
+        "manager": "appmixer:qliksense",
+        "resources": "writes",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "fileId": {
+                        "type": "string"
+                    },
+                    "fileName": {
+                        "type": "string"
+                    },
+                    "spaceId": {
+                        "type": "string"
+                    },
+                    "replace": {
+                        "type": "boolean"
+                    }
+                },
+                "required": [
+                    "fileId"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "fileId": {
+                        "type": "filepicker",
+                        "index": 1,
+                        "label": "File",
+                        "tooltip": "The file to upload."
+                    },
+                    "fileName": {
+                        "type": "text",
+                        "index": 2,
+                        "label": "File Name",
+                        "tooltip": "The name of the data file in Qlik, for example <code>sales-2026.csv</code>. A <code>/</code> puts it in a folder. Leave empty to use the name of the file."
+                    },
+                    "spaceId": {
+                        "type": "text",
+                        "index": 3,
+                        "label": "Space",
+                        "tooltip": "The space to upload to. Pick a space, or type the Space ID. Leave empty for your personal space.",
+                        "source": {
+                            "url": "/component/appmixer/qliksense/core/FindSpaces?outPort=out",
+                            "data": {
+                                "messages": {
+                                    "in/outputType": "array"
+                                },
+                                "properties": {
+                                    "isSource": true
+                                },
+                                "transform": "./FindSpaces#toSelectArray"
+                            }
+                        }
+                    },
+                    "replace": {
+                        "type": "toggle",
+                        "index": 4,
+                        "label": "Replace Existing File",
+                        "defaultValue": true,
+                        "tooltip": "Replace the content of a data file of the same name instead of failing."
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "schema": {
+                "type": "object",
+                "required": [
+                    "id",
+                    "name",
+                    "size",
+                    "ownerId",
+                    "createdDate"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "title": "Data File ID",
+                        "example": "b2f1a0c3-4d5e-6f70-8192-a3b4c5d6e7f8"
+                    },
+                    "name": {
+                        "type": "string",
+                        "title": "Name",
+                        "example": "sales-2026.csv"
+                    },
+                    "baseName": {
+                        "type": "string",
+                        "title": "Base Name",
+                        "example": "sales-2026.csv"
+                    },
+                    "size": {
+                        "type": "integer",
+                        "title": "Size",
+                        "example": 20480
+                    },
+                    "spaceId": {
+                        "type": "string",
+                        "title": "Space ID",
+                        "example": "62716f4b39b865ece543cd45"
+                    },
+                    "ownerId": {
+                        "type": "string",
+                        "title": "Owner ID",
+                        "example": "5f8a1c2b3d4e5f6a7b8c9d0e"
+                    },
+                    "appId": {
+                        "type": "string",
+                        "title": "App ID",
+                        "example": "f34b2a1e-5c7d-4e8f-9a0b-1c2d3e4f5a6b"
+                    },
+                    "folder": {
+                        "type": "boolean",
+                        "title": "Folder",
+                        "example": false
+                    },
+                    "folderId": {
+                        "type": "string",
+                        "title": "Folder ID",
+                        "example": "c3d4e5f6-a7b8-4c9d-8e0f-2a3b4c5d6e7f"
+                    },
+                    "folderPath": {
+                        "type": "string",
+                        "title": "Folder Path",
+                        "example": "imports"
+                    },
+                    "createdDate": {
+                        "type": "string",
+                        "title": "Created Date",
+                        "example": "2026-11-16T09:00:00.000Z",
+                        "format": "date-time"
+                    },
+                    "modifiedDate": {
+                        "type": "string",
+                        "title": "Modified Date",
+                        "example": "2026-11-16T09:05:00.000Z",
+                        "format": "date-time"
+                    },
+                    "contentUpdatedDate": {
+                        "type": "string",
+                        "title": "Content Updated Date",
+                        "example": "2026-11-16T09:05:00.000Z",
+                        "format": "date-time"
+                    },
+                    "qri": {
+                        "type": "string",
+                        "title": "QRI",
+                        "example": "qri:qdf:space://62716f4b39b865ece543cd45#sales-2026.csv"
+                    }
+                }
+            }
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB2aWV3Qm94PSIwIDAgMjQgMjQiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZmlsbD0iIzAwOTg0NSIgZD0ibTIzLjc1MTUgMjAuMTM2Ny0zLjEzLTIuNjMyNmMxLjA4NjItMS43MzA3IDEuNzMwMy0zLjc3NDUgMS43MzAzLTUuOTY1NSAwLTYuMTY4NC01LjAwOC0xMS4xNzY0LTExLjE3Ni0xMS4xNzY0UzAgNS4zNzAyIDAgMTEuNTM4NmMwIDYuMTY4IDUuMDA4IDExLjE3NiAxMS4xNzU5IDExLjE3NiAyLjM5MzQgMCA0LjYyMTYtLjc1NTIgNi40NDQzLTIuMDQzOGwzLjMzMjQgMi43OTg4cy40OTc0LjQyMzYuOTIxLS4wNzM4bDEuOTg4NC0yLjM1NjhjLS4wMTg2IDAgLjM4NjQtLjQ5NjgtLjExMDUtLjkwMjN6bS01LjcwNzgtOC41OThjMCAzLjc5MjYtMy4wNzQ3IDYuODY3Mi02Ljg2NzggNi44NjcyLTMuNzkyNiAwLTYuODY3OC0zLjA3NDYtNi44Njc4LTYuODY3MyAwLTMuNzkzIDMuMDc1Mi02Ljg2NzggNi44Njc4LTYuODY3OCAzLjc5MzEgMCA2Ljg2NzggMy4wNzQ3IDYuODY3OCA2Ljg2Nzh6bS0xMS4yODcgMGMwLTIuNDMwNCAxLjk3MDItNC40MDA2IDQuNDAwNi00LjQwMDYgMi40MzAzIDAgNC40MDA1IDEuOTcwMiA0LjQwMDUgNC40MDA1IDAgMi40MzA0LTEuOTcwMiA0LjQwMDYtNC40MDA1IDQuNDAwNi0yLjQzMDQgMC00LjQwMDUtMS45NzAyLTQuNDAwNS00LjQwMDZ6Ii8+PC9zdmc+"
+}

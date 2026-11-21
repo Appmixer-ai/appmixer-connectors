@@ -1,0 +1,154 @@
+{
+    "name": "appmixer.qliksense.core.FindReloads",
+    "label": "Find Reloads",
+    "description": "Find the reloads of a Qlik Sense app, newest first, optionally only those with a given status. Returns at most 100 reloads.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:qliksense"
+    },
+    "quota": {
+        "manager": "appmixer:qliksense",
+        "resources": "reads",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "appId": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "type": "string"
+                    },
+                    "includeLog": {
+                        "type": "boolean"
+                    },
+                    "outputType": {
+                        "type": "string",
+                        "default": "array"
+                    }
+                },
+                "required": [
+                    "appId"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "appId": {
+                        "type": "text",
+                        "index": 1,
+                        "label": "App",
+                        "tooltip": "Pick an app, or type the App ID (a UUID, for example <code>f34b2a1e-5c7d-4e8f-9a0b-1c2d3e4f5a6b</code>). The App ID is in the app URL: <code>/sense/app/&lt;appId&gt;</code>.",
+                        "source": {
+                            "url": "/component/appmixer/qliksense/core/FindApps?outPort=out",
+                            "data": {
+                                "messages": {
+                                    "in/outputType": "array"
+                                },
+                                "properties": {
+                                    "isSource": true
+                                },
+                                "transform": "./FindApps#toSelectArray"
+                            }
+                        }
+                    },
+                    "status": {
+                        "type": "select",
+                        "index": 2,
+                        "label": "Status",
+                        "tooltip": "Only reloads with this status.",
+                        "options": [
+                            {
+                                "label": "Queued",
+                                "value": "QUEUED"
+                            },
+                            {
+                                "label": "Reloading",
+                                "value": "RELOADING"
+                            },
+                            {
+                                "label": "Canceling",
+                                "value": "CANCELING"
+                            },
+                            {
+                                "label": "Succeeded",
+                                "value": "SUCCEEDED"
+                            },
+                            {
+                                "label": "Failed",
+                                "value": "FAILED"
+                            },
+                            {
+                                "label": "Canceled",
+                                "value": "CANCELED"
+                            },
+                            {
+                                "label": "Exceeded Limit",
+                                "value": "EXCEEDED_LIMIT"
+                            }
+                        ]
+                    },
+                    "includeLog": {
+                        "type": "toggle",
+                        "index": 3,
+                        "label": "Include Log",
+                        "defaultValue": false,
+                        "tooltip": "Include the reload log of each reload."
+                    },
+                    "outputType": {
+                        "type": "select",
+                        "label": "Output Type",
+                        "index": 4,
+                        "defaultValue": "array",
+                        "tooltip": "Choose whether you want to receive the result set as one complete list, or first item only or one item at a time or stream the items to a file.",
+                        "options": [
+                            {
+                                "label": "First Item Only",
+                                "value": "first"
+                            },
+                            {
+                                "label": "All items at once",
+                                "value": "array"
+                            },
+                            {
+                                "label": "One item at a time",
+                                "value": "object"
+                            },
+                            {
+                                "label": "Store to CSV file",
+                                "value": "file"
+                            }
+                        ]
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "source": {
+                "url": "/component/appmixer/qliksense/core/FindReloads?outPort=out&ignoreAuth=true",
+                "data": {
+                    "properties": {
+                        "generateOutputPortOptions": true
+                    },
+                    "messages": {
+                        "in/outputType": "inputs/in/outputType",
+                        "in/appId": "dummy"
+                    }
+                }
+            }
+        },
+        {
+            "name": "notFound"
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB2aWV3Qm94PSIwIDAgMjQgMjQiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZmlsbD0iIzAwOTg0NSIgZD0ibTIzLjc1MTUgMjAuMTM2Ny0zLjEzLTIuNjMyNmMxLjA4NjItMS43MzA3IDEuNzMwMy0zLjc3NDUgMS43MzAzLTUuOTY1NSAwLTYuMTY4NC01LjAwOC0xMS4xNzY0LTExLjE3Ni0xMS4xNzY0UzAgNS4zNzAyIDAgMTEuNTM4NmMwIDYuMTY4IDUuMDA4IDExLjE3NiAxMS4xNzU5IDExLjE3NiAyLjM5MzQgMCA0LjYyMTYtLjc1NTIgNi40NDQzLTIuMDQzOGwzLjMzMjQgMi43OTg4cy40OTc0LjQyMzYuOTIxLS4wNzM4bDEuOTg4NC0yLjM1NjhjLS4wMTg2IDAgLjM4NjQtLjQ5NjgtLjExMDUtLjkwMjN6bS01LjcwNzgtOC41OThjMCAzLjc5MjYtMy4wNzQ3IDYuODY3Mi02Ljg2NzggNi44NjcyLTMuNzkyNiAwLTYuODY3OC0zLjA3NDYtNi44Njc4LTYuODY3MyAwLTMuNzkzIDMuMDc1Mi02Ljg2NzggNi44Njc4LTYuODY3OCAzLjc5MzEgMCA2Ljg2NzggMy4wNzQ3IDYuODY3OCA2Ljg2Nzh6bS0xMS4yODcgMGMwLTIuNDMwNCAxLjk3MDItNC40MDA2IDQuNDAwNi00LjQwMDYgMi40MzAzIDAgNC40MDA1IDEuOTcwMiA0LjQwMDUgNC40MDA1IDAgMi40MzA0LTEuOTcwMiA0LjQwMDYtNC40MDA1IDQuNDAwNi0yLjQzMDQgMC00LjQwMDUtMS45NzAyLTQuNDAwNS00LjQwMDZ6Ii8+PC9zdmc+"
+}
