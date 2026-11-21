@@ -1,0 +1,513 @@
+{
+    "name": "appmixer.freshservice.core.CreateTicket",
+    "label": "Create Ticket",
+    "description": "Create an incident ticket. Give the requester by email (a new requester is created when no user has it) or by Requester ID.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:freshservice"
+    },
+    "quota": {
+        "manager": "appmixer:freshservice",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "subject": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "email": {
+                        "type": "string"
+                    },
+                    "requesterId": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "type": "integer"
+                    },
+                    "priority": {
+                        "type": "integer"
+                    },
+                    "source": {
+                        "type": "integer"
+                    },
+                    "urgency": {
+                        "type": "integer"
+                    },
+                    "impact": {
+                        "type": "integer"
+                    },
+                    "groupId": {
+                        "type": "string"
+                    },
+                    "responderId": {
+                        "type": "string"
+                    },
+                    "departmentId": {
+                        "type": "string"
+                    },
+                    "category": {
+                        "type": "string"
+                    },
+                    "subCategory": {
+                        "type": "string"
+                    },
+                    "itemCategory": {
+                        "type": "string"
+                    },
+                    "dueBy": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "tags": {
+                        "type": "string"
+                    },
+                    "ccEmails": {
+                        "type": "string"
+                    },
+                    "workspaceId": {
+                        "type": "string"
+                    },
+                    "customFields": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "subject",
+                    "description",
+                    "status",
+                    "priority"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "subject": {
+                        "type": "text",
+                        "label": "Subject",
+                        "tooltip": "Subject of the ticket.",
+                        "index": 1
+                    },
+                    "description": {
+                        "type": "textarea",
+                        "label": "Description",
+                        "tooltip": "Content of the ticket. HTML is allowed.",
+                        "index": 2
+                    },
+                    "email": {
+                        "type": "text",
+                        "label": "Requester Email",
+                        "tooltip": "Email of the requester. Freshservice creates the requester when no user has this email. Fill in this or Requester ID.",
+                        "index": 3
+                    },
+                    "requesterId": {
+                        "type": "text",
+                        "label": "Requester ID",
+                        "tooltip": "Numeric ID of an existing requester (Find Requesters returns it). Fill in this or Requester Email.",
+                        "index": 4
+                    },
+                    "status": {
+                        "type": "select",
+                        "label": "Status",
+                        "tooltip": "Status of the ticket.",
+                        "options": [
+                            {
+                                "label": "Open",
+                                "value": 2
+                            },
+                            {
+                                "label": "Pending",
+                                "value": 3
+                            },
+                            {
+                                "label": "Resolved",
+                                "value": 4
+                            },
+                            {
+                                "label": "Closed",
+                                "value": 5
+                            }
+                        ],
+                        "defaultValue": 2,
+                        "index": 5
+                    },
+                    "priority": {
+                        "type": "select",
+                        "label": "Priority",
+                        "tooltip": "Priority of the ticket.",
+                        "options": [
+                            {
+                                "label": "Low",
+                                "value": 1
+                            },
+                            {
+                                "label": "Medium",
+                                "value": 2
+                            },
+                            {
+                                "label": "High",
+                                "value": 3
+                            },
+                            {
+                                "label": "Urgent",
+                                "value": 4
+                            }
+                        ],
+                        "defaultValue": 1,
+                        "index": 6
+                    },
+                    "source": {
+                        "type": "select",
+                        "label": "Source",
+                        "tooltip": "Optional. The channel the ticket came from. Freshservice uses Portal when it is empty.",
+                        "options": [
+                            {
+                                "label": "Email",
+                                "value": 1
+                            },
+                            {
+                                "label": "Portal",
+                                "value": 2
+                            },
+                            {
+                                "label": "Phone",
+                                "value": 3
+                            },
+                            {
+                                "label": "Chat",
+                                "value": 4
+                            },
+                            {
+                                "label": "Feedback widget",
+                                "value": 5
+                            },
+                            {
+                                "label": "Yammer",
+                                "value": 6
+                            },
+                            {
+                                "label": "AWS Cloudwatch",
+                                "value": 7
+                            },
+                            {
+                                "label": "Pagerduty",
+                                "value": 8
+                            },
+                            {
+                                "label": "Walkup",
+                                "value": 9
+                            },
+                            {
+                                "label": "Slack",
+                                "value": 10
+                            }
+                        ],
+                        "index": 7
+                    },
+                    "urgency": {
+                        "type": "select",
+                        "label": "Urgency",
+                        "tooltip": "Optional.",
+                        "options": [
+                            {
+                                "label": "Low",
+                                "value": 1
+                            },
+                            {
+                                "label": "Medium",
+                                "value": 2
+                            },
+                            {
+                                "label": "High",
+                                "value": 3
+                            }
+                        ],
+                        "index": 8
+                    },
+                    "impact": {
+                        "type": "select",
+                        "label": "Impact",
+                        "tooltip": "Optional.",
+                        "options": [
+                            {
+                                "label": "Low",
+                                "value": 1
+                            },
+                            {
+                                "label": "Medium",
+                                "value": 2
+                            },
+                            {
+                                "label": "High",
+                                "value": 3
+                            }
+                        ],
+                        "index": 9
+                    },
+                    "groupId": {
+                        "type": "text",
+                        "label": "Group ID",
+                        "tooltip": "Optional. Numeric ID of the agent group to assign the ticket to.",
+                        "index": 10
+                    },
+                    "responderId": {
+                        "type": "text",
+                        "label": "Agent ID",
+                        "tooltip": "Optional. Numeric ID of the agent to assign the ticket to.",
+                        "index": 11
+                    },
+                    "departmentId": {
+                        "type": "text",
+                        "label": "Department ID",
+                        "tooltip": "Optional. Numeric ID of the department of the ticket.",
+                        "index": 12
+                    },
+                    "category": {
+                        "type": "text",
+                        "label": "Category",
+                        "tooltip": "Optional. A category of the ticket form, e.g. Hardware.",
+                        "index": 13
+                    },
+                    "subCategory": {
+                        "type": "text",
+                        "label": "Sub Category",
+                        "tooltip": "Optional. A sub category of the chosen category.",
+                        "index": 14
+                    },
+                    "itemCategory": {
+                        "type": "text",
+                        "label": "Item Category",
+                        "tooltip": "Optional. An item of the chosen sub category.",
+                        "index": 15
+                    },
+                    "dueBy": {
+                        "type": "date-time",
+                        "label": "Due By",
+                        "tooltip": "Optional. When the ticket is due to be resolved. Freshservice computes it from the SLA when it is empty.",
+                        "index": 16
+                    },
+                    "tags": {
+                        "type": "text",
+                        "label": "Tags",
+                        "tooltip": "Optional. Comma-separated tags, e.g. laptop, hardware.",
+                        "index": 17
+                    },
+                    "ccEmails": {
+                        "type": "text",
+                        "label": "CC Emails",
+                        "tooltip": "Optional. Comma-separated email addresses to copy on the ticket.",
+                        "index": 18
+                    },
+                    "workspaceId": {
+                        "type": "text",
+                        "label": "Workspace ID",
+                        "tooltip": "Optional, for accounts with workspaces. Without it the primary workspace is used.",
+                        "index": 19
+                    },
+                    "customFields": {
+                        "type": "textarea",
+                        "label": "Custom Fields",
+                        "tooltip": "Optional. A JSON object of custom field names (as in Admin > Form Fields) and values, e.g. {\"asset_tag\": \"LAP-042\"}.",
+                        "index": 20
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "schema": {
+                "type": "object",
+                "required": [
+                    "id",
+                    "subject",
+                    "status",
+                    "priority",
+                    "created_at",
+                    "updated_at"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "title": "Ticket ID",
+                        "example": 265
+                    },
+                    "subject": {
+                        "type": "string",
+                        "title": "Subject",
+                        "example": "Laptop does not start"
+                    },
+                    "description": {
+                        "type": "string",
+                        "title": "Description (HTML)",
+                        "example": "<div>My laptop does not start since this morning.</div>"
+                    },
+                    "description_text": {
+                        "type": "string",
+                        "title": "Description",
+                        "example": "My laptop does not start since this morning."
+                    },
+                    "type": {
+                        "type": "string",
+                        "title": "Type",
+                        "example": "Incident"
+                    },
+                    "status": {
+                        "type": "integer",
+                        "title": "Status",
+                        "example": 2
+                    },
+                    "priority": {
+                        "type": "integer",
+                        "title": "Priority",
+                        "example": 1
+                    },
+                    "source": {
+                        "type": "integer",
+                        "title": "Source",
+                        "example": 2
+                    },
+                    "urgency": {
+                        "type": "integer",
+                        "title": "Urgency",
+                        "example": 1
+                    },
+                    "impact": {
+                        "type": "integer",
+                        "title": "Impact",
+                        "example": 1
+                    },
+                    "requester_id": {
+                        "type": "integer",
+                        "title": "Requester ID",
+                        "example": 1000000675
+                    },
+                    "requested_for_id": {
+                        "type": "integer",
+                        "title": "Requested For ID",
+                        "example": 1000000670
+                    },
+                    "responder_id": {
+                        "type": "integer",
+                        "title": "Agent ID",
+                        "example": 1000000493
+                    },
+                    "group_id": {
+                        "type": "integer",
+                        "title": "Group ID",
+                        "example": 1000000712
+                    },
+                    "department_id": {
+                        "type": "integer",
+                        "title": "Department ID",
+                        "example": 1000000554
+                    },
+                    "workspace_id": {
+                        "type": "integer",
+                        "title": "Workspace ID",
+                        "example": 2
+                    },
+                    "category": {
+                        "type": "string",
+                        "title": "Category",
+                        "example": "Hardware"
+                    },
+                    "sub_category": {
+                        "type": "string",
+                        "title": "Sub Category",
+                        "example": "Computer"
+                    },
+                    "item_category": {
+                        "type": "string",
+                        "title": "Item Category",
+                        "example": "Laptop"
+                    },
+                    "due_by": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Due By",
+                        "example": "2026-11-24T10:34:28Z"
+                    },
+                    "fr_due_by": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "First Response Due By",
+                        "example": "2026-11-22T10:34:28Z"
+                    },
+                    "is_escalated": {
+                        "type": "boolean",
+                        "title": "Is Escalated",
+                        "example": false
+                    },
+                    "fr_escalated": {
+                        "type": "boolean",
+                        "title": "First Response Escalated",
+                        "example": false
+                    },
+                    "spam": {
+                        "type": "boolean",
+                        "title": "Spam",
+                        "example": false
+                    },
+                    "deleted": {
+                        "type": "boolean",
+                        "title": "Deleted",
+                        "example": false
+                    },
+                    "tags": {
+                        "type": "array",
+                        "title": "Tags",
+                        "items": {
+                            "type": "string"
+                        },
+                        "example": [
+                            "laptop",
+                            "hardware"
+                        ]
+                    },
+                    "cc_emails": {
+                        "type": "array",
+                        "title": "CC Emails",
+                        "items": {
+                            "type": "string"
+                        },
+                        "example": [
+                            "ram@example.com"
+                        ]
+                    },
+                    "custom_fields": {
+                        "type": "object",
+                        "title": "Custom Fields",
+                        "properties": {},
+                        "example": {
+                            "asset_tag": "LAP-042"
+                        }
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Created At",
+                        "example": "2026-11-21T10:34:28Z"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Updated At",
+                        "example": "2026-11-21T10:34:28Z"
+                    }
+                }
+            }
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB2aWV3Qm94PSItMi45NCAtMjcuNDQgNTIxLjM5IDU0OS40NCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBkPSJtMzQ5IC4wNWMzMy42NSAwIDY3LjMxLjExIDEwMSAwIDE3LS4xMyAzMi4xNCA0LjQyIDQ1IDE1LjcxIDE0LjEyIDEyLjM2IDIyLjMxIDI3LjkgMjIuMzggNDYuNjYuMjkgNjguMjEgMS4wNyAxMzYuNDQtLjIgMjA0LjYyLTEuMTUgNjEuMzktMjMuMTQgMTE1LjU4LTYzLjY2IDE2MS44MS00Mi4zNSA0OC4zNS05NS42NiA3Ny4xNS0xNTkuMzQgODYuMTUtNDkuMzUgNy05Ni45NC4wOS0xNDIuMjEtMjAuNzQtNjMuMjEtMjkuMDgtMTA3Ljg2LTc2LjM2LTEzMy44NS0xNDAuNzItMTUuNjMtMzguNzMtMjEuMDYtNzkuMjQtMTYuNjMtMTIwLjk1cTguNzMtODIuMDkgNjIuOTQtMTQ0LjI5YzM1LTM5LjkzIDc4LjMzLTY2LjQ5IDEyOS42My04MGEyNTguODQgMjU4Ljg0IDAgMCAxIDY3LTguMjJxNDMuOTQuMDMgODcuOTQtLjAzem0tNTAuMDYgMjMwLjM1Yy0xOS43NCAwLTM5LjQ4LS4wNi01OS4yMi4wNi0zLjQzIDAtNC41MS0uNTktMy4yNS00LjI3IDQuODYtMTQuMjggOS40NC0yOC42NSAxNC4xMy00M3E3LjI1LTIyLjE0IDE0LjQ4LTQ0LjI4YzEuMjUtMy44MyAwLTYuOTMtMy4zMy04Ljgxcy02LjY5LTEuMTktOS4yIDEuOTRjLTEuNCAxLjc1LTIuNjYgMy42MS00IDUuNDNxLTM0LjUyIDQ4LjA4LTY5IDk2LjEzLTEzLjczIDE5LjEyLTI3LjU1IDM4LjE2YTkuMzUgOS4zNSAwIDAgMCAtMS4xMSAxMC4xMmMxLjcxIDMuNjggNC44NiA1LjA4IDguNzEgNS4yMyAxLjY0LjA2IDMuMjkuMDUgNC45My4wNWgxMTEuMjZjNi43MiAwIDYuODQgMCA0LjcgNi42cS0xMy41NiA0MS41My0yNy4yNCA4M2MtMS42NSA1LS44NyA4LjEgMi43MyAxMC4xczYuNzMgMS4xNCAxMC0zYy40Ny0uNTguOS0xLjE5IDEuMzQtMS44cTQ5LTY3Ljc3IDk3Ljk0LTEzNS41NGMyLjQ1LTMuMzkgMy42Ny02LjkyIDEuNi0xMC44NHMtNS41OS01LjM1LTEwLjA2LTUuMzNjLTE5LjI4LjEyLTM4LjU3LjA1LTU3Ljg2LjA1eiIgZmlsbD0iIzA5YzZmYSIvPjxwYXRoIGQ9Im0yOTguOTQgMjMwLjRjMTkuMjkgMCAzOC41OC4wNyA1Ny44Ny0uMDUgNC40NyAwIDcuOTUgMS4zMyAxMC4wNiA1LjMzcy44NSA3LjQ1LTEuNiAxMC44NHEtNDkgNjcuNzUtOTcuOTQgMTM1LjU0Yy0uNDQuNjEtLjg3IDEuMjItMS4zNCAxLjgtMy4zIDQuMTItNi4zNyA1LTEwIDNzLTQuMzgtNS4wOC0yLjczLTEwLjFxMTMuNjUtNDEuNDkgMjcuMjQtODNjMi4xNC02LjU3IDItNi42LTQuNy02LjZoLTExMS4yNmMtMS42NCAwLTMuMjkgMC00LjkzLS4wNS0zLjg1LS4xNS03LTEuNTUtOC43MS01LjIzYTkuMzUgOS4zNSAwIDAgMSAxLjEtMTAuMTJxMTMuODMtMTkgMjcuNTgtMzguMTUgMzQuNTMtNDggNjktOTYuMTNjMS4zMS0xLjgyIDIuNTctMy42OCA0LTUuNDMgMi41MS0zLjEzIDUuOC0zLjg2IDkuMi0xLjk0czQuNTggNSAzLjMzIDguODFsLTE0LjQ4IDQ0LjI4Yy00LjY5IDE0LjM0LTkuMjcgMjguNzEtMTQuMTMgNDMtMS4yNiAzLjY4LS4xOCA0LjI5IDMuMjUgNC4yNyAxOS43MS0uMTMgMzkuNDUtLjA3IDU5LjE5LS4wN3oiIGZpbGw9IiNmYmZlZmUiLz48L3N2Zz4="
+}

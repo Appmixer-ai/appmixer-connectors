@@ -39,6 +39,8 @@ const CONFIG = {
 // Account fields a connector validates before any request (it refuses to send the
 // token anywhere else), keyed by the connector directory (src/appmixer/<connector>).
 const AUTH_OVERRIDES = {
+    // lib.js accepts only a Freshservice account name ("acme" for acme.freshservice.com).
+    freshservice: { domain: 'kv-test' },
     // lib.js accepts only a *.workday.com / *.myworkday.com hostname.
     workday: { host: 'kv-test.workday.com' }
 };

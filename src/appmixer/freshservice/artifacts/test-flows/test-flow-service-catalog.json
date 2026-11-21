@@ -1,0 +1,322 @@
+{
+    "name": "E2E Freshservice - service catalog",
+    "description": "List the service items and request the first one; the service request ticket is deleted at the end.",
+    "flow": {
+        "239a54cc-c601-41db-89ae-857d05d6ea72": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 304,
+            "version": "1.0.0",
+            "source": {},
+            "config": {},
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "dab600f5-9774-440d-adf9-98ca99099356": {
+            "type": "appmixer.freshservice.core.ListServiceItems",
+            "x": 272,
+            "y": 432,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "239a54cc-c601-41db-89ae-857d05d6ea72": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "239a54cc-c601-41db-89ae-857d05d6ea72": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "outputType": {}
+                                },
+                                "lambda": {
+                                    "outputType": "first"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "c760977b-943a-4382-9bd7-cfda2dc68ab2": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 480,
+            "y": 432,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "dab600f5-9774-440d-adf9-98ca99099356": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "dab600f5-9774-440d-adf9-98ca99099356": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "c95059df-b12f-44f3-adff-ecb83b2d3bd2": {
+                                            "variable": "$.dab600f5-9774-440d-adf9-98ca99099356.out.name",
+                                            "functions": []
+                                        },
+                                        "b38cf54e-61ea-4d6c-b7d1-2865cf21c876": {
+                                            "variable": "$.dab600f5-9774-440d-adf9-98ca99099356.out.display_id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{c95059df-b12f-44f3-adff-ecb83b2d3bd2}}}",
+                                                "assertion": "notEmpty"
+                                            },
+                                            {
+                                                "field": "{{{b38cf54e-61ea-4d6c-b7d1-2865cf21c876}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "c9e4e04f-be10-4f66-b846-cfc9a4af6deb": {
+            "type": "appmixer.freshservice.core.PlaceServiceRequest",
+            "x": 688,
+            "y": 560,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "c760977b-943a-4382-9bd7-cfda2dc68ab2": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "c760977b-943a-4382-9bd7-cfda2dc68ab2": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "displayId": {
+                                        "6ee8eac7-23df-4b11-8908-cfe2dc03196c": {
+                                            "variable": "$.dab600f5-9774-440d-adf9-98ca99099356.out.display_id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "quantity": {}
+                                },
+                                "lambda": {
+                                    "displayId": "{{{6ee8eac7-23df-4b11-8908-cfe2dc03196c}}}",
+                                    "quantity": 1
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "6d199bda-d767-4351-a882-593d68e694fa": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 896,
+            "y": 560,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "c9e4e04f-be10-4f66-b846-cfc9a4af6deb": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "c9e4e04f-be10-4f66-b846-cfc9a4af6deb": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "ea2756d8-a5f3-4dca-8898-15740385b3db": {
+                                            "variable": "$.c9e4e04f-be10-4f66-b846-cfc9a4af6deb.out.type",
+                                            "functions": []
+                                        },
+                                        "c1881df1-bd7f-4576-a07f-3c708f68f90e": {
+                                            "variable": "$.c9e4e04f-be10-4f66-b846-cfc9a4af6deb.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{ea2756d8-a5f3-4dca-8898-15740385b3db}}}",
+                                                "assertion": "equal",
+                                                "expected": "Service Request"
+                                            },
+                                            {
+                                                "field": "{{{c1881df1-bd7f-4576-a07f-3c708f68f90e}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "271be8a1-80b3-4408-94c0-a4b53d9ba187": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 1104,
+            "y": 560,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "c760977b-943a-4382-9bd7-cfda2dc68ab2": [
+                        "out"
+                    ],
+                    "6d199bda-d767-4351-a882-593d68e694fa": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 300
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "4b036667-7c61-4ad5-b767-7bc0d067a199": {
+            "type": "appmixer.freshservice.core.DeleteTicket",
+            "x": 1312,
+            "y": 560,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "271be8a1-80b3-4408-94c0-a4b53d9ba187": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "271be8a1-80b3-4408-94c0-a4b53d9ba187": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "ticketId": {
+                                        "134095df-43af-4780-b6c5-89c354d05633": {
+                                            "variable": "$.c9e4e04f-be10-4f66-b846-cfc9a4af6deb.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "ticketId": "{{{134095df-43af-4780-b6c5-89c354d05633}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "e31637b0-a82d-4fc0-aed5-128e3963c480": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1520,
+            "y": 560,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "4b036667-7c61-4ad5-b767-7bc0d067a199": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "4b036667-7c61-4ad5-b767-7bc0d067a199": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "d1269c24-a072-411c-a1ba-4f1d0d617389": {
+                                            "variable": "$.271be8a1-80b3-4408-94c0-a4b53d9ba187.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E Freshservice - service catalog",
+                                    "result": "{{{d1269c24-a072-411c-a1ba-4f1d0d617389}}}"
+                                }
+                            }
+                        }
+                    }
+                },
+                "properties": {
+                    "successStoreId": "64f6f1f9193228000754082f",
+                    "failedStoreId": "64f6f1f0193228000754082e"
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        }
+    },
+    "notes": {
+        "bffdcd1a-8a07-411e-adf6-0592e236f4d0": {
+            "x": 64,
+            "y": 32,
+            "width": 672,
+            "height": 224,
+            "content": "## ⚠️ Test data assumption\n\nThe flow requests the **first item of the service catalog** (a new Freshservice account ships with sample items such as Office Desktop).\n\n1. The catalog must have at least one item in the primary workspace.\n2. The first item must not have mandatory form fields; otherwise Place Service Request fails with 400. Move an item without mandatory fields to the top, or add one in Admin > Service Catalog.\n\nThe service request ticket is deleted at the end."
+        }
+    }
+}
