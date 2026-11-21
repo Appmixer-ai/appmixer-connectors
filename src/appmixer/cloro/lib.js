@@ -5,8 +5,8 @@ const pathModule = require('path');
 const API_BASE_URL = 'https://api.cloro.dev';
 const REQUEST_TIMEOUT_MS = 120000;
 const DEFAULT_PREFIX = 'cloro-objects-export';
-// Bing AI Mode takes the prompt in a query string and accepts at most 3,500
-// characters after URL encoding, with a space counted as "+".
+// Bing AI Mode and Bing Search take the prompt or query in a query string and
+// accept at most 3,500 characters after URL encoding, with a space counted as "+".
 const BING_PROMPT_LIMIT = 3500;
 
 module.exports = {
