@@ -1,0 +1,240 @@
+{
+    "name": "appmixer.miro.core.GetItem",
+    "label": "Get Item",
+    "description": "Get an item on a board, of any type (sticky note, card, shape, text, frame and others).",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:miro"
+    },
+    "quota": {
+        "manager": "appmixer:miro",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "boardId": {
+                        "type": "string"
+                    },
+                    "itemId": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "boardId",
+                    "itemId"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "boardId": {
+                        "type": "text",
+                        "index": 1,
+                        "label": "Board",
+                        "tooltip": "Pick a board, or type its Board ID (the part after <code>/board/</code> in the board URL).",
+                        "source": {
+                            "url": "/component/appmixer/miro/core/FindBoards?outPort=out",
+                            "data": {
+                                "properties": {
+                                    "isSource": true
+                                },
+                                "transform": "./FindBoards#toSelectArray"
+                            }
+                        }
+                    },
+                    "itemId": {
+                        "type": "text",
+                        "index": 2,
+                        "label": "Item",
+                        "tooltip": "Pick an item, or type its Item ID.",
+                        "source": {
+                            "url": "/component/appmixer/miro/core/ListItems?outPort=out",
+                            "data": {
+                                "messages": {
+                                    "in/boardId": "inputs/in/boardId"
+                                },
+                                "properties": {
+                                    "isSource": true
+                                },
+                                "transform": "./ListItems#toSelectArray"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "title": "Item ID",
+                        "example": "3458764517517819000"
+                    },
+                    "type": {
+                        "type": "string",
+                        "title": "Type",
+                        "example": "sticky_note"
+                    },
+                    "data": {
+                        "type": "object",
+                        "title": "Data",
+                        "properties": {
+                            "content": {
+                                "type": "string",
+                                "title": "Data.Content",
+                                "example": "<p>Ship the beta</p>"
+                            },
+                            "title": {
+                                "type": "string",
+                                "title": "Data.Title",
+                                "example": "Release checklist"
+                            },
+                            "description": {
+                                "type": "string",
+                                "title": "Data.Description",
+                                "example": "Steps before the release"
+                            },
+                            "shape": {
+                                "type": "string",
+                                "title": "Data.Shape",
+                                "example": "square"
+                            }
+                        },
+                        "required": []
+                    },
+                    "position": {
+                        "type": "object",
+                        "title": "Position",
+                        "properties": {
+                            "x": {
+                                "type": "number",
+                                "title": "Position.X",
+                                "example": 0
+                            },
+                            "y": {
+                                "type": "number",
+                                "title": "Position.Y",
+                                "example": 0
+                            },
+                            "origin": {
+                                "type": "string",
+                                "title": "Position.Origin",
+                                "example": "center"
+                            },
+                            "relativeTo": {
+                                "type": "string",
+                                "title": "Position.Relative To",
+                                "example": "canvas_center"
+                            }
+                        },
+                        "required": [
+                            "x",
+                            "y"
+                        ]
+                    },
+                    "geometry": {
+                        "type": "object",
+                        "title": "Geometry",
+                        "properties": {
+                            "width": {
+                                "type": "number",
+                                "title": "Geometry.Width",
+                                "example": 199.99
+                            },
+                            "height": {
+                                "type": "number",
+                                "title": "Geometry.Height",
+                                "example": 228
+                            },
+                            "rotation": {
+                                "type": "number",
+                                "title": "Geometry.Rotation",
+                                "example": 0
+                            }
+                        },
+                        "required": []
+                    },
+                    "parent": {
+                        "type": "object",
+                        "title": "Parent",
+                        "properties": {
+                            "id": {
+                                "type": "string",
+                                "title": "Parent.ID",
+                                "example": "3458764517517818000"
+                            }
+                        },
+                        "required": []
+                    },
+                    "createdAt": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Created At",
+                        "example": "2026-11-20T09:20:00Z"
+                    },
+                    "modifiedAt": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Modified At",
+                        "example": "2026-11-20T09:20:00Z"
+                    },
+                    "createdBy": {
+                        "type": "object",
+                        "title": "Created By",
+                        "properties": {
+                            "id": {
+                                "type": "string",
+                                "title": "Created By.ID",
+                                "example": "3458764512345678901"
+                            },
+                            "type": {
+                                "type": "string",
+                                "title": "Created By.Type",
+                                "example": "user"
+                            }
+                        },
+                        "required": [
+                            "id"
+                        ]
+                    },
+                    "modifiedBy": {
+                        "type": "object",
+                        "title": "Modified By",
+                        "properties": {
+                            "id": {
+                                "type": "string",
+                                "title": "Modified By.ID",
+                                "example": "3458764512345678901"
+                            },
+                            "type": {
+                                "type": "string",
+                                "title": "Modified By.Type",
+                                "example": "user"
+                            }
+                        },
+                        "required": [
+                            "id"
+                        ]
+                    }
+                },
+                "required": [
+                    "id",
+                    "type"
+                ]
+            }
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHJlY3Qgd2lkdGg9IjI0IiBoZWlnaHQ9IjI0IiByeD0iNSIgZmlsbD0iI0ZGREQzMyIvPjxwYXRoIHRyYW5zZm9ybT0idHJhbnNsYXRlKDQuOCA0LjgpIHNjYWxlKDAuNikiIGZpbGw9IiMwNTAwMzgiIGQ9Ik0xNy4zOTIgMEgxMy45TDE3IDQuODA4IDEwLjQ0NCAwSDYuOTQ5bDMuMTAyIDYuM0wzLjQ5NCAwSDBsMy4wNSA4LjEzMUwwIDI0aDMuNDk0TDEwLjA1IDYuOTg1IDYuOTQ5IDI0aDMuNDk0TDE3IDUuNDk0IDEzLjg5OSAyNGgzLjQ5M0wyNCAzLjY3MiAxNy4zOTIgMHoiLz48L3N2Zz4="
+}

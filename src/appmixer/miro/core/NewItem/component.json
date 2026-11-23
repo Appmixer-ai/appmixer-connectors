@@ -1,0 +1,290 @@
+{
+    "name": "appmixer.miro.core.NewItem",
+    "label": "New Item",
+    "description": "Triggers when an item (sticky note, card, shape and others) is added to a board. Miro has no webhooks, so the trigger checks the board periodically, up to 2000 items per check.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "trigger": true,
+    "tick": true,
+    "auth": {
+        "service": "appmixer:miro"
+    },
+    "quota": {
+        "manager": "appmixer:miro",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "properties": {
+        "schema": {
+            "type": "object",
+            "properties": {
+                "boardId": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string",
+                    "enum": [
+                        "sticky_note",
+                        "card",
+                        "app_card",
+                        "shape",
+                        "text",
+                        "image",
+                        "document",
+                        "embed",
+                        "frame",
+                        "preview",
+                        "doc_format",
+                        "data_table_format"
+                    ]
+                }
+            },
+            "required": [
+                "boardId"
+            ]
+        },
+        "inspector": {
+            "inputs": {
+                "boardId": {
+                    "type": "text",
+                    "index": 1,
+                    "label": "Board",
+                    "tooltip": "The board to watch. Pick a board, or type its Board ID.",
+                    "source": {
+                        "url": "/component/appmixer/miro/core/FindBoards?outPort=out",
+                        "data": {
+                            "properties": {
+                                "isSource": true
+                            },
+                            "transform": "./FindBoards#toSelectArray"
+                        }
+                    }
+                },
+                "type": {
+                    "type": "select",
+                    "index": 2,
+                    "label": "Item Type",
+                    "tooltip": "Trigger only for items of this type. Leave empty for all items.",
+                    "options": [
+                        {
+                            "label": "Sticky note",
+                            "value": "sticky_note"
+                        },
+                        {
+                            "label": "Card",
+                            "value": "card"
+                        },
+                        {
+                            "label": "App card",
+                            "value": "app_card"
+                        },
+                        {
+                            "label": "Shape",
+                            "value": "shape"
+                        },
+                        {
+                            "label": "Text",
+                            "value": "text"
+                        },
+                        {
+                            "label": "Image",
+                            "value": "image"
+                        },
+                        {
+                            "label": "Document",
+                            "value": "document"
+                        },
+                        {
+                            "label": "Embed",
+                            "value": "embed"
+                        },
+                        {
+                            "label": "Frame",
+                            "value": "frame"
+                        },
+                        {
+                            "label": "Preview",
+                            "value": "preview"
+                        },
+                        {
+                            "label": "Doc format",
+                            "value": "doc_format"
+                        },
+                        {
+                            "label": "Data table format",
+                            "value": "data_table_format"
+                        }
+                    ]
+                }
+            }
+        }
+    },
+    "outPorts": [
+        {
+            "name": "out",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "title": "Item ID",
+                        "example": "3458764517517819000"
+                    },
+                    "type": {
+                        "type": "string",
+                        "title": "Type",
+                        "example": "sticky_note"
+                    },
+                    "data": {
+                        "type": "object",
+                        "title": "Data",
+                        "properties": {
+                            "content": {
+                                "type": "string",
+                                "title": "Data.Content",
+                                "example": "<p>Ship the beta</p>"
+                            },
+                            "title": {
+                                "type": "string",
+                                "title": "Data.Title",
+                                "example": "Release checklist"
+                            },
+                            "description": {
+                                "type": "string",
+                                "title": "Data.Description",
+                                "example": "Steps before the release"
+                            },
+                            "shape": {
+                                "type": "string",
+                                "title": "Data.Shape",
+                                "example": "square"
+                            }
+                        },
+                        "required": []
+                    },
+                    "position": {
+                        "type": "object",
+                        "title": "Position",
+                        "properties": {
+                            "x": {
+                                "type": "number",
+                                "title": "Position.X",
+                                "example": 0
+                            },
+                            "y": {
+                                "type": "number",
+                                "title": "Position.Y",
+                                "example": 0
+                            },
+                            "origin": {
+                                "type": "string",
+                                "title": "Position.Origin",
+                                "example": "center"
+                            },
+                            "relativeTo": {
+                                "type": "string",
+                                "title": "Position.Relative To",
+                                "example": "canvas_center"
+                            }
+                        },
+                        "required": [
+                            "x",
+                            "y"
+                        ]
+                    },
+                    "geometry": {
+                        "type": "object",
+                        "title": "Geometry",
+                        "properties": {
+                            "width": {
+                                "type": "number",
+                                "title": "Geometry.Width",
+                                "example": 199.99
+                            },
+                            "height": {
+                                "type": "number",
+                                "title": "Geometry.Height",
+                                "example": 228
+                            },
+                            "rotation": {
+                                "type": "number",
+                                "title": "Geometry.Rotation",
+                                "example": 0
+                            }
+                        },
+                        "required": []
+                    },
+                    "parent": {
+                        "type": "object",
+                        "title": "Parent",
+                        "properties": {
+                            "id": {
+                                "type": "string",
+                                "title": "Parent.ID",
+                                "example": "3458764517517818000"
+                            }
+                        },
+                        "required": []
+                    },
+                    "createdAt": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Created At",
+                        "example": "2026-11-20T09:20:00Z"
+                    },
+                    "modifiedAt": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Modified At",
+                        "example": "2026-11-20T09:20:00Z"
+                    },
+                    "createdBy": {
+                        "type": "object",
+                        "title": "Created By",
+                        "properties": {
+                            "id": {
+                                "type": "string",
+                                "title": "Created By.ID",
+                                "example": "3458764512345678901"
+                            },
+                            "type": {
+                                "type": "string",
+                                "title": "Created By.Type",
+                                "example": "user"
+                            }
+                        },
+                        "required": [
+                            "id"
+                        ]
+                    },
+                    "modifiedBy": {
+                        "type": "object",
+                        "title": "Modified By",
+                        "properties": {
+                            "id": {
+                                "type": "string",
+                                "title": "Modified By.ID",
+                                "example": "3458764512345678901"
+                            },
+                            "type": {
+                                "type": "string",
+                                "title": "Modified By.Type",
+                                "example": "user"
+                            }
+                        },
+                        "required": [
+                            "id"
+                        ]
+                    }
+                },
+                "required": [
+                    "id",
+                    "type"
+                ]
+            }
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHJlY3Qgd2lkdGg9IjI0IiBoZWlnaHQ9IjI0IiByeD0iNSIgZmlsbD0iI0ZGREQzMyIvPjxwYXRoIHRyYW5zZm9ybT0idHJhbnNsYXRlKDQuOCA0LjgpIHNjYWxlKDAuNikiIGZpbGw9IiMwNTAwMzgiIGQ9Ik0xNy4zOTIgMEgxMy45TDE3IDQuODA4IDEwLjQ0NCAwSDYuOTQ5bDMuMTAyIDYuM0wzLjQ5NCAwSDBsMy4wNSA4LjEzMUwwIDI0aDMuNDk0TDEwLjA1IDYuOTg1IDYuOTQ5IDI0aDMuNDk0TDE3IDUuNDk0IDEzLjg5OSAyNGgzLjQ5M0wyNCAzLjY3MiAxNy4zOTIgMHoiLz48L3N2Zz4="
+}
