@@ -1,6 +1,6 @@
 {
     "name": "E2E Miro - boards",
-    "description": "Create, get, update, find, share and delete a board.",
+    "description": "Create, get, update, find and delete a board.",
     "flow": {
         "d9d12b22-a71c-4a7f-b603-c37d3f9cfc48": {
             "type": "appmixer.utils.controls.OnStart",
@@ -432,107 +432,6 @@
                 "onError": "stopFlow"
             }
         },
-        "2dab2cf5-6ad2-466b-b2be-b37d89689a45": {
-            "type": "appmixer.miro.core.ShareBoard",
-            "x": 1312,
-            "y": 656,
-            "version": "1.0.0",
-            "source": {
-                "in": {
-                    "eed60e4a-c0f4-4503-93e3-a818e6a49f82": [
-                        "out"
-                    ]
-                }
-            },
-            "config": {
-                "transform": {
-                    "in": {
-                        "eed60e4a-c0f4-4503-93e3-a818e6a49f82": {
-                            "out": {
-                                "type": "json2new",
-                                "modifiers": {
-                                    "boardId": {
-                                        "2ce15d17-2159-4a2d-ae08-f0ce73b6a81f": {
-                                            "variable": "$.1a42f875-5de9-49b6-800d-5335330984c8.out.id",
-                                            "functions": []
-                                        }
-                                    },
-                                    "emails": {},
-                                    "role": {},
-                                    "message": {}
-                                },
-                                "lambda": {
-                                    "boardId": "{{{2ce15d17-2159-4a2d-ae08-f0ce73b6a81f}}}",
-                                    "emails": "test@appmixer.ai",
-                                    "role": "viewer",
-                                    "message": "Invitation sent by the Appmixer E2E test"
-                                }
-                            }
-                        }
-                    }
-                }
-            },
-            "errorHandling": {
-                "autoRetry": false,
-                "onError": "stopFlow"
-            }
-        },
-        "ec56456f-ec62-474d-89c8-4b8985358616": {
-            "type": "appmixer.utils.test.Assert",
-            "x": 1520,
-            "y": 656,
-            "version": "1.0.0",
-            "source": {
-                "in": {
-                    "2dab2cf5-6ad2-466b-b2be-b37d89689a45": [
-                        "out"
-                    ]
-                }
-            },
-            "config": {
-                "transform": {
-                    "in": {
-                        "2dab2cf5-6ad2-466b-b2be-b37d89689a45": {
-                            "out": {
-                                "type": "json2new",
-                                "modifiers": {
-                                    "expression": {
-                                        "c65f380c-967f-410a-967b-c53cbd9a1b28": {
-                                            "variable": "$.2dab2cf5-6ad2-466b-b2be-b37d89689a45.out.successfulCount",
-                                            "functions": []
-                                        },
-                                        "464e3e4d-d414-4bc8-b53b-ffc9df9aa4d1": {
-                                            "variable": "$.2dab2cf5-6ad2-466b-b2be-b37d89689a45.out.failedCount",
-                                            "functions": []
-                                        }
-                                    }
-                                },
-                                "lambda": {
-                                    "expression": {
-                                        "AND": [
-                                            {
-                                                "field": "{{{c65f380c-967f-410a-967b-c53cbd9a1b28}}}",
-                                                "assertion": "regex",
-                                                "regex": "^\\d+$"
-                                            },
-                                            {
-                                                "field": "{{{464e3e4d-d414-4bc8-b53b-ffc9df9aa4d1}}}",
-                                                "assertion": "regex",
-                                                "regex": "^\\d+$"
-                                            }
-                                        ]
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            },
-            "errorHandling": {
-                "autoRetry": false,
-                "onError": "stopFlow"
-            }
-        },
         "f765b9f5-0849-4000-8c84-5d565ffd45a5": {
             "type": "appmixer.utils.test.AfterAll",
             "x": 1728,
@@ -550,9 +449,6 @@
                         "out"
                     ],
                     "66b05d7d-6442-401d-aa6a-8c80fa3fdb94": [
-                        "out"
-                    ],
-                    "ec56456f-ec62-474d-89c8-4b8985358616": [
                         "out"
                     ]
                 }
@@ -660,7 +556,7 @@
             "y": 784,
             "width": 672,
             "height": 224,
-            "content": "## ⚠️ Test data assumption\n\nThe flow creates one board and deletes it at the end. On a Free plan a team can have at most 3 editable boards, so run it in the Developer team (or a team with fewer than 3 boards). Share Board sends a real invitation to test@appmixer.ai; the assertion only checks that Miro answered with the invited and failed counts, because whether the invitation succeeds depends on the board's sharing policy."
+            "content": "## ⚠️ Test data assumption\n\nThe flow creates one board and deletes it at the end. On a Free plan a team can have at most 3 editable boards, so run it in a team with fewer than 3 boards. Share Board is not part of this flow: the E2E Miro account answers every invitation with HTTP 403 (5.0514, Sharing is restricted). See README.md."
         }
     }
 }

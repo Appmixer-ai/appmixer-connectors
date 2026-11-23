@@ -353,18 +353,57 @@ describe('Miro', function() {
             assert.strictEqual(context.sent.length, 0);
         });
 
-        it('UpdatedBoard: skips boards that were only created', async function() {
-            const state = { initialized: true, lastTimestamp: Date.parse('2026-11-20T10:00:00Z'), known: [] };
+        it('UpdatedBoard: the first check only remembers the boards', async function() {
+            const context = createContext({ responses: [{ data: { data: [board('b1', '2026-11-20T11:00:00Z')], total: 1 } }] });
+            await UpdatedBoard.tick(context);
+            assert.strictEqual(context.requests[0].params.sort, 'last_modified');
+            assert.strictEqual(context.sent.length, 0);
+            assert.deepStrictEqual(Object.keys(context.state.boards), ['b1']);
+        });
+
+        it('UpdatedBoard: emits boards whose content or own fields changed, not new boards', async function() {
+            const same = board('same', '2026-11-01T11:00:00Z');
+            const renamed = board('renamed', '2026-11-01T11:00:00Z');
+            const content = board('content', '2026-11-01T11:00:00Z');
+            const state = {
+                initialized: true,
+                boards: {
+                    same: UpdatedBoard.fingerprint(same),
+                    renamed: UpdatedBoard.fingerprint(renamed),
+                    content: UpdatedBoard.fingerprint(content)
+                }
+            };
             const context = createContext({
                 state,
                 responses: [{ data: { data: [
                     board('new', '2026-11-20T11:00:00Z'),
-                    board('changed', '2026-11-01T11:00:00Z', '2026-11-20T10:30:00Z')
-                ], total: 2 } }]
+                    { ...content, modifiedAt: '2026-11-20T10:30:00Z' },
+                    // Miro keeps modifiedAt when only the description changes.
+                    { ...renamed, description: 'Changed' },
+                    same
+                ], total: 4 } }]
             });
             await UpdatedBoard.tick(context);
-            assert.strictEqual(context.requests[0].params.sort, 'last_modified');
-            assert.deepStrictEqual(context.sent.map(s => s.data.id), ['changed']);
+            assert.deepStrictEqual(context.sent.map(s => s.data.id), ['renamed', 'content']);
+            assert.deepStrictEqual(Object.keys(context.state.boards).sort(), ['content', 'new', 'renamed', 'same']);
+
+            // The next check with no further change emits nothing.
+            const next = createContext({ state: context.state, responses: [{ data: { data: [
+                board('new', '2026-11-20T11:00:00Z'),
+                { ...content, modifiedAt: '2026-11-20T10:30:00Z' },
+                { ...renamed, description: 'Changed' },
+                same
+            ], total: 4 } }] });
+            await UpdatedBoard.tick(next);
+            assert.strictEqual(next.sent.length, 0);
+        });
+
+        it('UpdatedBoard: an empty answer keeps the state', async function() {
+            const state = { initialized: true, boards: { b1: 'abc' } };
+            const context = createContext({ state, responses: [{ data: { data: [], total: 0 } }] });
+            await UpdatedBoard.tick(context);
+            assert.deepStrictEqual(context.state, state);
+            assert.strictEqual(context.sent.length, 0);
         });
 
         it('NewItem: reads every page of the board and emits new items', async function() {
