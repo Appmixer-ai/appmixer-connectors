@@ -44,6 +44,82 @@
             },
             "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
         },
+        "0b6f5d0e-5c1a-4f57-9a43-2f1e8f0c7a31": {
+            "type": "appmixer.facebook.page.MakeApiCall",
+            "label": "Get page",
+            "x": 272,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "57796d2f-3c32-41c1-94ee-3f830ac521aa": ["out"]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "57796d2f-3c32-41c1-94ee-3f830ac521aa": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "url": {},
+                                    "method": {}
+                                },
+                                "lambda": {
+                                    "url": "/1002114906324065?fields=id,name",
+                                    "method": "GET"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "c3a8e2d4-7b19-4e6a-8f25-6d0b1a9e4c72": {
+            "type": "appmixer.utils.test.Assert",
+            "label": "Assert make api call",
+            "x": 480,
+            "y": 400,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "0b6f5d0e-5c1a-4f57-9a43-2f1e8f0c7a31": ["out"]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "0b6f5d0e-5c1a-4f57-9a43-2f1e8f0c7a31": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "5f2c8a1d-9e3b-4c67-a0d4-8b1e6f3a9c25": {
+                                            "variable": "$.0b6f5d0e-5c1a-4f57-9a43-2f1e8f0c7a31.out.body",
+                                            "functions": [{ "name": "g_jsonPath", "params": [{ "value": "$.id" }] }]
+                                        },
+                                        "9a4e7c2b-1d58-4f3a-b6e0-3c9d2a8f1b74": {
+                                            "variable": "$.0b6f5d0e-5c1a-4f57-9a43-2f1e8f0c7a31.out.body",
+                                            "functions": [{ "name": "g_jsonPath", "params": [{ "value": "$.name" }] }]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            { "field": "{{{5f2c8a1d-9e3b-4c67-a0d4-8b1e6f3a9c25}}}", "assertion": "equal", "expected": "1002114906324065" },
+                                            { "field": "{{{9a4e7c2b-1d58-4f3a-b6e0-3c9d2a8f1b74}}}", "assertion": "notEmpty" }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
         "bae60beb-1ddf-4d8d-8040-de1a832052db": {
             "type": "appmixer.facebook.page.FindPagePosts",
             "label": "FindPagePosts",
@@ -237,7 +313,8 @@
             "source": {
                 "in": {
                     "8753a70d-33d6-43ed-8267-6c099f292b27": ["out"],
-                    "7fd5ae32-1518-49fe-b2e7-4ab3749bf5cb": ["out"]
+                    "7fd5ae32-1518-49fe-b2e7-4ab3749bf5cb": ["out"],
+                    "c3a8e2d4-7b19-4e6a-8f25-6d0b1a9e4c72": ["out"]
                 }
             },
             "config": {
@@ -247,9 +324,9 @@
             },
             "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
         },
-        "3f0f3693-bd05-4af0-9d3b-a20d65b4fdf2": {
-            "type": "appmixer.facebook.page.MakeApiCall",
-            "label": "Get page token",
+        "f0aec709-b244-4a63-97b5-44bb2c1bab2c": {
+            "type": "appmixer.facebook.page.DeletePagePost",
+            "label": "Delete post",
             "x": 1520,
             "y": 656,
             "version": "1.0.0",
@@ -265,56 +342,22 @@
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
-                                    "url": {},
-                                    "method": {}
-                                },
-                                "lambda": {
-                                    "url": "/1002114906324065?fields=access_token",
-                                    "method": "GET"
-                                }
-                            }
-                        }
-                    }
-                }
-            },
-            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
-        },
-        "f0aec709-b244-4a63-97b5-44bb2c1bab2c": {
-            "type": "appmixer.facebook.page.MakeApiCall",
-            "label": "Delete post",
-            "x": 1728,
-            "y": 784,
-            "version": "1.0.0",
-            "source": {
-                "in": {
-                    "3f0f3693-bd05-4af0-9d3b-a20d65b4fdf2": ["out"]
-                }
-            },
-            "config": {
-                "transform": {
-                    "in": {
-                        "3f0f3693-bd05-4af0-9d3b-a20d65b4fdf2": {
-                            "out": {
-                                "type": "json2new",
-                                "modifiers": {
-                                    "url": {
+                                    "pageId": {
+                                        "e2b9d4a6-3c71-4f08-8d5e-7a1f6c9b2d40": {
+                                            "variable": "$.401b1497-581f-41c6-8575-754ca948b829.newPost.pageId",
+                                            "functions": []
+                                        }
+                                    },
+                                    "postId": {
                                         "cc41f8fa-dc39-4a46-895e-99963fd35348": {
                                             "variable": "$.401b1497-581f-41c6-8575-754ca948b829.newPost.id",
                                             "functions": []
                                         }
-                                    },
-                                    "method": {},
-                                    "parameters": {
-                                        "01131dd3-8c72-4fdf-8273-ebb21eb5cd9d": {
-                                            "variable": "$.3f0f3693-bd05-4af0-9d3b-a20d65b4fdf2.out.body",
-                                            "functions": [{ "name": "g_jsonPath", "params": [{ "value": "$.access_token" }] }]
-                                        }
                                     }
                                 },
                                 "lambda": {
-                                    "url": "/{{{cc41f8fa-dc39-4a46-895e-99963fd35348}}}",
-                                    "method": "DELETE",
-                                    "parameters": "{\"access_token\":\"{{{01131dd3-8c72-4fdf-8273-ebb21eb5cd9d}}}\"}"
+                                    "pageId": "{{{e2b9d4a6-3c71-4f08-8d5e-7a1f6c9b2d40}}}",
+                                    "postId": "{{{cc41f8fa-dc39-4a46-895e-99963fd35348}}}"
                                 }
                             }
                         }
