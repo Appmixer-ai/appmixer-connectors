@@ -380,5 +380,15 @@ module.exports = [
         messageIncludes: 'missing "ignoreAuth=true"',
         paths: ['hubbi/core/NewHubEvent/component.json'],
         reason: 'NewHubEvent builds its output-port options from the hub\'s actual target fields: the generateOutputPortOptions branch calls lib.getFields(context, ENDPOINTS.targetFields, conversionKey), a live HubBI request that reads context.auth. Adding ignoreAuth=true would send that call unauthenticated and the picker would fail rather than degrade. Unlike the connector\'s List helpers, whose options come from a static schema, this source cannot be made auth-free.'
+    },
+    {
+        validator: 'dynamic-outport-required-inputs',
+        messageIncludes: 'ignoreAuth=true',
+        paths: [
+            'snowflake/db/AddRow/component.json',
+            'snowflake/db/NewRow/component.json',
+            'snowflake/db/DeletedRow/component.json'
+        ],
+        reason: 'The out port options list the columns of the selected table: the generateOutputPortOptions branch calls ListColumns, which runs SHOW COLUMNS against the connected Snowflake account and needs its credentials. Adding ignoreAuth=true would make the designer call it unauthenticated and fail. Same case as postgres CreateRow.'
     }
 ];

@@ -1,7 +1,18 @@
 'use strict';
 const { SnowflakeDB } = require('../../common');
 
+// The columns depend on the table, so the row is an open object with the inserted values.
+const ITEM_SCHEMA = {
+    type: 'object',
+    required: ['row'],
+    properties: {
+        row: { type: 'object', title: 'Row', example: { ID: '1', NAME: 'John Doe' } }
+    }
+};
+
 module.exports = {
+
+    ITEM_SCHEMA,
 
     async receive(context) {
 
@@ -38,7 +49,7 @@ module.exports = {
                 },
                 inputs: {
                     schema: {
-                        type: 'select',
+                        type: 'text',
                         label: 'Schema',
                         index: 1,
                         source: {
@@ -50,7 +61,7 @@ module.exports = {
                                 transform: './ListSchemas#schemasToSelectArray'
                             }
                         },
-                        tooltip: 'Select a schema.'
+                        tooltip: 'The schema of the table. Pick one or type its name.'
                     },
                     table: {
                         type: 'text',
@@ -68,7 +79,7 @@ module.exports = {
                                 transform: './ListTables#tablesToSelectArray'
                             }
                         },
-                        tooltip: 'Select a table.'
+                        tooltip: 'The table to insert the row into. Pick one or type its name; the inspector then shows a field per column.'
                     }
                 }
             };
@@ -81,6 +92,15 @@ module.exports = {
         }
 
         const { schema, table, ...columnValues } = context.messages.in.content;
+        if (!schema) {
+            throw new context.CancelError('Schema is required!');
+        }
+        if (!table) {
+            throw new context.CancelError('Table is required!');
+        }
+        if (!Object.keys(columnValues).length) {
+            throw new context.CancelError('Fill in at least one column.');
+        }
 
         const snowflake = new SnowflakeDB();
         await snowflake.addRow(context.auth, schema, table, Object.keys(columnValues), Object.values(columnValues));

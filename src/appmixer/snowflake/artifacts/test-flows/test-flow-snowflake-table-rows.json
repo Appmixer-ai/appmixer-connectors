@@ -1,6 +1,6 @@
 {
     "name": "E2E Snowflake - table rows",
-    "description": "End-to-end test for the Snowflake connector: creates a table with Query, finds it with ListSchemas, ListTables and ListColumns, inserts a row with AddRow, reads it back with Query and drops the table.",
+    "description": "End-to-end test for the Snowflake connector: creates a table with Query, finds it with ListSchemas, ListTables and ListColumns, inserts a row with AddRow, reads it back with Query and a bound parameter (a name with an apostrophe, which would break a concatenated statement) and drops the table.",
     "flow": {
         "f1e50144-c621-428f-876a-d4a2ffe15d2a": {
             "type": "appmixer.utils.controls.OnStart",
@@ -339,7 +339,7 @@
                                     "schema": "PUBLIC",
                                     "table": "APPMIXER_E2E_ROWS",
                                     "ID": "1",
-                                    "NAME": "e2e-row"
+                                    "NAME": "e2e-row O'Brien"
                                 }
                             }
                         }
@@ -379,7 +379,7 @@
                                             {
                                                 "field": "{{{69c3e809-b9ac-4aad-92cc-07b6b492acb5}}}",
                                                 "assertion": "equal",
-                                                "expected": "e2e-row"
+                                                "expected": "e2e-row O'Brien"
                                             }
                                         ]
                                     }
@@ -410,10 +410,16 @@
                                 "type": "json2new",
                                 "modifiers": {
                                     "query": {},
+                                    "parameters": {},
                                     "outputType": {}
                                 },
                                 "lambda": {
-                                    "query": "SELECT ID, NAME FROM PUBLIC.APPMIXER_E2E_ROWS WHERE ID = 1",
+                                    "query": "SELECT ID, NAME FROM PUBLIC.APPMIXER_E2E_ROWS WHERE NAME = ?",
+                                    "parameters": {
+                                        "ADD": [
+                                            { "value": "e2e-row O'Brien" }
+                                        ]
+                                    },
                                     "outputType": "rows"
                                 }
                             }
@@ -456,7 +462,7 @@
                                             {
                                                 "field": "{{{4ee7708d-fea5-4d80-b57f-65956fb7fcd9}}}",
                                                 "assertion": "equal",
-                                                "expected": "e2e-row"
+                                                "expected": "e2e-row O'Brien"
                                             }
                                         ]
                                     }
