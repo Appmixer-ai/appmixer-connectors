@@ -1,0 +1,116 @@
+{
+    "name": "appmixer.csas.accounts.GetAccountBalance",
+    "author": "Appmixer <info@appmixer.com>",
+    "label": "Get Account Balance",
+    "description": "Gets the balance of a Česká spořitelna payment account. The top-level fields hold the closing available balance (or the first balance the bank returns); all balances are in Balances.",
+    "private": false,
+    "auth": {
+        "service": "appmixer:csas",
+        "scope": ["siblings.accounts"]
+    },
+    "quota": {},
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "accountId": { "type": "string" }
+                },
+                "required": ["accountId"]
+            },
+            "inspector": {
+                "inputs": {
+                    "accountId": {
+                        "type": "text",
+                        "label": "Account ID",
+                        "tooltip": "Pick an account, or type the account ID (the <code>id</code> returned by List Accounts).",
+                        "index": 1,
+                        "source": {
+                            "url": "/component/appmixer/csas/accounts/ListAccounts?outPort=out",
+                            "data": {
+                                "properties": { "isSource": true },
+                                "transform": "./ListAccounts#toSelectOptions"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "accountId": { "type": "string", "title": "Account ID", "example": "D2C8C1DCC51A3738538A40A4863CA288E0225E52" },
+                    "type": { "type": "string", "title": "Balance Type", "example": "CLAV" },
+                    "amount": {
+                        "type": "object",
+                        "title": "Amount",
+                        "properties": {
+                            "value": { "type": "number", "title": "Amount.Value", "example": 48923.15 },
+                            "currency": { "type": "string", "title": "Amount.Currency", "example": "CZK" }
+                        }
+                    },
+                    "creditDebitIndicator": { "type": "string", "title": "Credit/Debit Indicator", "example": "CRDT" },
+                    "dateTime": { "type": "string", "title": "Date Time", "example": "2026-11-20T08:15:00.0Z" },
+                    "balances": {
+                        "type": "array",
+                        "title": "Balances",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "type": {
+                                    "type": "object",
+                                    "title": "Type",
+                                    "properties": {
+                                        "codeOrProprietary": {
+                                            "type": "object",
+                                            "title": "Type.Code Or Proprietary",
+                                            "properties": {
+                                                "code": { "type": "string", "title": "Type.Code Or Proprietary.Code", "example": "CLAV" }
+                                            }
+                                        }
+                                    }
+                                },
+                                "amount": {
+                                    "type": "object",
+                                    "title": "Amount",
+                                    "properties": {
+                                        "value": { "type": "number", "title": "Amount.Value", "example": 48923.15 },
+                                        "currency": { "type": "string", "title": "Amount.Currency", "example": "CZK" }
+                                    }
+                                },
+                                "creditDebitIndicator": { "type": "string", "title": "Credit/Debit Indicator", "example": "CRDT" },
+                                "date": {
+                                    "type": "object",
+                                    "title": "Date",
+                                    "properties": {
+                                        "dateTime": { "type": "string", "title": "Date.Date Time", "example": "2026-11-20T08:15:00.0Z" }
+                                    }
+                                }
+                            }
+                        },
+                        "example": [
+                            {
+                                "type": { "codeOrProprietary": { "code": "CLAV" } },
+                                "amount": { "value": 48923.15, "currency": "CZK" },
+                                "creditDebitIndicator": "CRDT",
+                                "date": { "dateTime": "2026-11-20T08:15:00.0Z" }
+                            },
+                            {
+                                "type": { "codeOrProprietary": { "code": "CLBD" } },
+                                "amount": { "value": 50123.15, "currency": "CZK" },
+                                "creditDebitIndicator": "CRDT",
+                                "date": { "dateTime": "2026-11-20T08:15:00.0Z" }
+                            }
+                        ]
+                    }
+                }
+            }
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0MDAgNDAwIj48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjQwMCIgZmlsbD0iIzJBNzFFRiIvPjxjaXJjbGUgY3g9IjIwMSIgY3k9IjEwMSIgcj0iMjkiIGZpbGw9IiNmZmYiLz48cGF0aCBmaWxsPSIjZmZmIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiIGQ9Ik0xMzIgMTU0aDE0MWEyMiAyMiAwIDAgMSAyMiAyMnYxMTJhMjIgMjIgMCAwIDEtMjIgMjJIMTMyYTIyIDIyIDAgMCAxLTIyLTIyVjE3NmEyMiAyMiAwIDAgMSAyMi0yMnpNMTU1IDE5NXYxOWgxNDB2LTE5ek0xMTAgMjUxdjE5aDE0MHYtMTl6Ii8+PC9zdmc+Cg=="
+}
