@@ -218,12 +218,15 @@
         },
         "6cddfdb2-ace9-4d6c-a16c-82905652319b": {
             "type": "appmixer.utils.test.AfterAll",
-            "x": 700,
+            "x": 1000,
             "y": 400,
             "version": "1.0.0",
             "source": {
                 "in": {
                     "85958a5a-faff-456f-ac2c-7870294fd53a": [
+                        "out"
+                    ],
+                    "c4e2a8f1-3b6d-4f9a-8c27-5e1d9b0a6f34": [
                         "out"
                     ]
                 }
@@ -239,8 +242,8 @@
             }
         },
         "794d71e2-80b2-4f68-926e-cde9c807fbb5": {
-            "type": "appmixer.microsoft.onedrive.MakeApiCall",
-            "x": 1000,
+            "type": "appmixer.microsoft.onedrive.DeleteFileOrFolder",
+            "x": 1300,
             "y": 400,
             "version": "1.0.0",
             "source": {
@@ -257,17 +260,17 @@
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
-                                    "url": {
+                                    "drive": {},
+                                    "itemId": {
                                         "33335177-8b6f-4731-8ed2-fe26e2f63091": {
                                             "variable": "$.501fb992-3577-4f6b-a4b7-ee857a7e8d3e.file.id",
                                             "functions": []
                                         }
-                                    },
-                                    "method": {}
+                                    }
                                 },
                                 "lambda": {
-                                    "url": "/me/drive/items/{{{33335177-8b6f-4731-8ed2-fe26e2f63091}}}",
-                                    "method": "DELETE"
+                                    "drive": "me",
+                                    "itemId": "{{{33335177-8b6f-4731-8ed2-fe26e2f63091}}}"
                                 }
                             }
                         }
@@ -281,7 +284,7 @@
         },
         "c6d3a866-27ef-45a0-b6f1-553039313c37": {
             "type": "appmixer.utils.test.ProcessE2EResults",
-            "x": 1300,
+            "x": 1600,
             "y": 400,
             "version": "1.0.0",
             "source": {
@@ -322,6 +325,97 @@
                 "autoRetry": false,
                 "onError": "stopFlow"
             }
+        },
+        "b1f0c2d4-7a3e-4c5b-9e61-2d8f4a7c3e10": {
+            "type": "appmixer.microsoft.onedrive.MakeApiCall",
+            "x": 400,
+            "y": 250,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "da26aaeb-585e-4aee-a872-3c70d33f9c06": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "da26aaeb-585e-4aee-a872-3c70d33f9c06": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "url": {},
+                                    "method": {}
+                                },
+                                "lambda": {
+                                    "url": "/me/drive",
+                                    "method": "GET"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "c4e2a8f1-3b6d-4f9a-8c27-5e1d9b0a6f34": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 700,
+            "y": 250,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "b1f0c2d4-7a3e-4c5b-9e61-2d8f4a7c3e10": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "b1f0c2d4-7a3e-4c5b-9e61-2d8f4a7c3e10": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "d3c47424-61f1-4e9e-89a1-215a25b113be": {
+                                            "variable": "$.b1f0c2d4-7a3e-4c5b-9e61-2d8f4a7c3e10.out.status",
+                                            "functions": []
+                                        },
+                                        "91af37ff-4852-40e1-8694-d61a59cece0f": {
+                                            "variable": "$.b1f0c2d4-7a3e-4c5b-9e61-2d8f4a7c3e10.out.body",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{d3c47424-61f1-4e9e-89a1-215a25b113be}}}",
+                                                "assertion": "equal",
+                                                "expected": "200"
+                                            },
+                                            {
+                                                "field": "{{{91af37ff-4852-40e1-8694-d61a59cece0f}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
         }
     },
     "notes": {
@@ -330,7 +424,7 @@
             "y": 640,
             "width": 900,
             "height": 260,
-            "content": "## ⚠️ Test data assumption\n\n`onedrive.NewFile` has no properties — it watches the whole of `/me/drive` for the connected\naccount — and the cleanup deletes whatever item id the trigger reports. The E2E account's\nOneDrive must therefore be reserved for this flow; nothing else may create files in it while\nthe flow runs.\n\nThe upload goes to the OneDrive root (no folder binding), which is exactly what the trigger's\n`/me/drive/root/delta` watches.\n\n`Wait 1m` lets the Graph subscription propagate before the file is created — do not remove it.\nGraph webhook notifications take up to ~5 minutes, hence the 600 s AfterAll timeout.\n\nThe account needs `Files.ReadWrite.All` (trigger + upload) and `Sites.Read.All` (Make API Call)."
+            "content": "## ⚠️ Test data assumption\n\n`onedrive.NewFile` has no properties — it watches the whole of `/me/drive` for the connected\naccount — and the cleanup (Delete File or Folder) deletes whatever item id the trigger reports. The E2E account's\nOneDrive must therefore be reserved for this flow; nothing else may create files in it while\nthe flow runs.\n\nThe upload goes to the OneDrive root (no folder binding), which is exactly what the trigger's\n`/me/drive/root/delta` watches.\n\n`Wait 1m` lets the Graph subscription propagate before the file is created — do not remove it.\nGraph webhook notifications take up to ~5 minutes, hence the 600 s AfterAll timeout.\n\nThe account needs `Files.ReadWrite.All` (trigger + upload) and `Sites.Read.All` (Make API Call). The Make API Call branch is a read-only `GET /me/drive` that keeps\nMake API Call covered; AfterAll waits for both asserts."
         }
     }
 }
