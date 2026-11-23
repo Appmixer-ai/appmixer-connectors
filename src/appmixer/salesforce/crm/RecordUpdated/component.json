@@ -1,0 +1,163 @@
+{
+    "name": "appmixer.salesforce.crm.RecordUpdated",
+    "label": "Record Updated",
+    "author": "Appmixer <info@appmixer.ai>",
+    "description": "Triggers when a record of any standard or custom object is updated so that a field changes, changes to a value, or equals or does not equal a value. For example, a Case is closed, an onboarding milestone is reached or a Task is completed. Changes and Changes to read the object's Field History, so Field History Tracking must be on for the field.",
+    "private": false,
+    "auth": {
+        "service": "appmixer:salesforce"
+    },
+    "quota": {
+        "manager": "appmixer:salesforce",
+        "resources": "requests"
+    },
+    "version": "1.1.2",
+    "dependencies": {
+        "service": "1.1.2"
+    },
+    "tick": true,
+    "trigger": true,
+    "properties": {
+        "schema": {
+            "type": "object",
+            "properties": {
+                "objectName": {
+                    "type": "string"
+                },
+                "fieldName": {
+                    "type": "string"
+                },
+                "operator": {
+                    "type": "string",
+                    "enum": [
+                        "changedTo",
+                        "changed",
+                        "equals",
+                        "notEquals"
+                    ]
+                },
+                "value": {
+                    "type": "string"
+                },
+                "where": {
+                    "type": "string"
+                },
+                "since": {
+                    "type": "string"
+                }
+            },
+            "required": [
+                "objectName",
+                "fieldName"
+            ]
+        },
+        "inspector": {
+            "inputs": {
+                "objectName": {
+                    "type": "text",
+                    "label": "Object Name",
+                    "index": 1,
+                    "tooltip": "The object to watch, standard or custom. For example, Case, Task, Account, Opportunity or Onboarding__c.",
+                    "source": {
+                        "url": "/component/appmixer/salesforce/crm/ListObjects?outPort=out",
+                        "data": {
+                            "transform": "./transformers#toSelectArray"
+                        }
+                    }
+                },
+                "fieldName": {
+                    "type": "text",
+                    "label": "Field Name",
+                    "index": 2,
+                    "tooltip": "The API name of the field to watch. For example, Status or StageName. Pick a field or type its API name.",
+                    "source": {
+                        "url": "/component/appmixer/salesforce/crm/GetObjectFields?outPort=out",
+                        "data": {
+                            "messages": {
+                                "in/objectName": "properties/objectName"
+                            },
+                            "properties": {
+                                "variableFetch": true
+                            },
+                            "transform": "./transformers#fieldsToSelectOptions"
+                        }
+                    }
+                },
+                "operator": {
+                    "type": "select",
+                    "label": "Condition",
+                    "index": 3,
+                    "defaultValue": "changedTo",
+                    "tooltip": "Changes to: the field changed to the value (fires once per change, again after a reopen and a new change). Changes: any change of the field. Both read the Field History of the object and need Field History Tracking on for the field. Equals / Does not equal: a record is updated and the field (does not) equal the value; it fires once and again only after the field stopped matching. These need no Field History Tracking.",
+                    "options": [
+                        {
+                            "label": "Changes to",
+                            "value": "changedTo"
+                        },
+                        {
+                            "label": "Changes",
+                            "value": "changed"
+                        },
+                        {
+                            "label": "Equals",
+                            "value": "equals"
+                        },
+                        {
+                            "label": "Does not equal",
+                            "value": "notEquals"
+                        }
+                    ]
+                },
+                "value": {
+                    "type": "text",
+                    "label": "Value",
+                    "index": 4,
+                    "tooltip": "The value to compare with, case-insensitive. Use the API value of a picklist, for example Closed, or true / false for a checkbox. Not used by the Changes condition.",
+                    "source": {
+                        "url": "/component/appmixer/salesforce/crm/GetObjectFields?outPort=out",
+                        "data": {
+                            "messages": {
+                                "in/objectName": "properties/objectName",
+                                "in/fieldName": "properties/fieldName"
+                            },
+                            "properties": {
+                                "variableFetch": true
+                            },
+                            "transform": "./transformers#picklistValuesToSelectArray"
+                        }
+                    }
+                },
+                "where": {
+                    "type": "text",
+                    "label": "Additional Filter (SOQL)",
+                    "index": 5,
+                    "tooltip": "Optional. A SOQL condition the record must also meet, for example RecordTypeId = '012000000000000AAA' or Type = 'Customer'."
+                },
+                "since": {
+                    "type": "date-time",
+                    "label": "Start From",
+                    "index": 6,
+                    "tooltip": "Optional. Emit changes made since this date when the flow starts. Leave empty to emit only changes made after the flow starts."
+                }
+            }
+        }
+    },
+    "outPorts": [
+        {
+            "name": "out",
+            "source": {
+                "url": "/component/appmixer/salesforce/crm/GetObjectFields?outPort=out",
+                "data": {
+                    "messages": {
+                        "in/objectName": "properties/objectName"
+                    },
+                    "transform": "./transformers#recordUpdatedOutputOptions",
+                    "properties": {
+                        "variableFetch": true
+                    }
+                }
+            }
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA5OTkgNjk5LjI0MSI+PGRlZnM+PHN0eWxlPi5he2ZpbGw6IzAwYTFlMDt9PC9zdHlsZT48L2RlZnM+PHBhdGggY2xhc3M9ImEiIGQ9Ik00MTYuMjI0LDc2Ljc2M2MzMi4yMTktMzMuNTcsNzcuMDc0LTU0LjM5MSwxMjYuNjgyLTU0LjM5MSw2NS45NDYsMCwxMjMuNDgsMzYuNzcyLDE1NC4xMiw5MS4zNjFhMjEyLjk4NCwyMTIuOTg0LDAsMCwxLDg3LjEwNi0xOC41MTRjMTE4Ljk0LDAsMjE1LjM2OCw5Ny4yNjgsMjE1LjM2OCwyMTcuMjQ3UzkwMy4wNzIsNTI5LjcyNyw3ODQuMTMyLDUyOS43MjdBMjEzLjc0LDIxMy43NCwwLDAsMSw3NDEuNzEsNTI1LjVhMTU3LjQzNiwxNTcuNDM2LDAsMCwxLTIwNi4yODksNjQuNzkzLDE3OS42MjEsMTc5LjYyMSwwLDAsMS0zMzMuOTExLTguMTI2LDE2NC43NzUsMTY0Ljc3NSwwLDAsMS0zNC4yNjgsMy41NzJDNzUuMTU1LDU4NS43NC41LDUxMC4zMTcuNSw0MTcuMjYyQTE2OC43NDEsMTY4Ljc0MSwwLDAsMSw4My44NzgsMjcxLjMyNWExOTIuODY2LDE5Mi44NjYsMCwwLDEtMTUuOTY3LTc3LjA2QzY3LjkxMSw4Ny4yNSwxNTQuNzkuNSwyNjEuOTQ4LjVBMTkzLjc5MSwxOTMuNzkxLDAsMCwxLDQxNi4yMjQsNzYuNzYzIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgtMC41IC0wLjUpIi8+PC9zdmc+"
+}

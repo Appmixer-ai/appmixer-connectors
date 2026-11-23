@@ -1,0 +1,353 @@
+{
+    "name": "E2E Salesforce - RecordUpdated trigger, Equals (no Field History)",
+    "flow": {
+        "4693c020-ab81-4b0e-ab78-6640e00f5168": {
+            "type": "appmixer.utils.controls.OnStart",
+            "label": "OnStart",
+            "x": 48,
+            "y": 48,
+            "source": {},
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "6dfebc5d-aee6-452a-a8f9-b18f8b608d5e": {
+            "type": "appmixer.salesforce.crm.CreateObjectRecord",
+            "label": "Create Task (test data)",
+            "x": 256,
+            "y": 48,
+            "version": "1.1.2",
+            "source": {
+                "in": {
+                    "4693c020-ab81-4b0e-ab78-6640e00f5168": [
+                        "out"
+                    ]
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "4693c020-ab81-4b0e-ab78-6640e00f5168": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {},
+                                "lambda": {
+                                    "objectName": "Task",
+                                    "rawJson": true,
+                                    "json": "{\"Subject\":\"E2E RecordUpdated Task\",\"Status\":\"Not Started\",\"Priority\":\"Normal\"}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "20469319-c6e8-49c1-b2a8-76cac6f9b8f9": {
+            "type": "appmixer.utils.test.Assert",
+            "label": "Assert: test record created",
+            "x": 464,
+            "y": 48,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "6dfebc5d-aee6-452a-a8f9-b18f8b608d5e": [
+                        "out"
+                    ]
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "6dfebc5d-aee6-452a-a8f9-b18f8b608d5e": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "060e0419-d95f-42e2-996a-65dd5907bd51": {
+                                            "variable": "$.6dfebc5d-aee6-452a-a8f9-b18f8b608d5e.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "assertion": "notEmpty",
+                                                "field": "{{{060e0419-d95f-42e2-996a-65dd5907bd51}}}"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "d9b6fa5d-87df-48f2-a986-68a2812475ce": {
+            "type": "appmixer.salesforce.crm.UpdateObjectRecord",
+            "label": "Update Task (provokes the trigger)",
+            "x": 464,
+            "y": 176,
+            "version": "1.1.2",
+            "source": {
+                "in": {
+                    "6dfebc5d-aee6-452a-a8f9-b18f8b608d5e": [
+                        "out"
+                    ]
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "6dfebc5d-aee6-452a-a8f9-b18f8b608d5e": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "id": {
+                                        "39895d19-15f8-4bb0-a30e-55220144b5ab": {
+                                            "variable": "$.6dfebc5d-aee6-452a-a8f9-b18f8b608d5e.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "objectName": "Task",
+                                    "id": "{{{39895d19-15f8-4bb0-a30e-55220144b5ab}}}",
+                                    "rawJson": true,
+                                    "json": "{\"Status\":\"Completed\"}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "1ceedee5-79e5-4678-b8b0-7022b5a54889": {
+            "type": "appmixer.salesforce.crm.RecordUpdated",
+            "label": "Record Updated (under test)",
+            "x": 48,
+            "y": 304,
+            "version": "1.1.2",
+            "source": {},
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "properties": {
+                    "objectName": "Task",
+                    "fieldName": "Status",
+                    "operator": "equals",
+                    "value": "Completed",
+                    "where": "Subject = 'E2E RecordUpdated Task'"
+                }
+            }
+        },
+        "ac885fd6-1016-43c0-b257-fc3c13ec1804": {
+            "type": "appmixer.utils.test.Assert",
+            "label": "Assert: trigger fired with the change",
+            "x": 256,
+            "y": 304,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "1ceedee5-79e5-4678-b8b0-7022b5a54889": [
+                        "out"
+                    ]
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "1ceedee5-79e5-4678-b8b0-7022b5a54889": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "6f128f06-0df7-47ba-8b3f-1a539adb4026": {
+                                            "variable": "$.1ceedee5-79e5-4678-b8b0-7022b5a54889.out.Id",
+                                            "functions": []
+                                        },
+                                        "0728169f-5d77-45cb-8a7f-7506d0ffc3cc": {
+                                            "variable": "$.1ceedee5-79e5-4678-b8b0-7022b5a54889.out.Status",
+                                            "functions": []
+                                        },
+                                        "fd521532-b657-4f1b-8610-cbdb8edf49cb": {
+                                            "variable": "$.1ceedee5-79e5-4678-b8b0-7022b5a54889.out.newValue",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "assertion": "notEmpty",
+                                                "field": "{{{6f128f06-0df7-47ba-8b3f-1a539adb4026}}}"
+                                            },
+                                            {
+                                                "assertion": "equal",
+                                                "field": "{{{0728169f-5d77-45cb-8a7f-7506d0ffc3cc}}}",
+                                                "expected": "Completed"
+                                            },
+                                            {
+                                                "assertion": "equal",
+                                                "field": "{{{fd521532-b657-4f1b-8610-cbdb8edf49cb}}}",
+                                                "expected": "Completed"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "e18e6b8c-0fee-4b01-85a7-36485ce3fffc": {
+            "type": "appmixer.utils.test.AfterAll",
+            "label": "AfterAll",
+            "x": 672,
+            "y": 304,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "20469319-c6e8-49c1-b2a8-76cac6f9b8f9": [
+                        "out"
+                    ],
+                    "ac885fd6-1016-43c0-b257-fc3c13ec1804": [
+                        "out"
+                    ]
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "properties": {
+                    "timeout": 600
+                }
+            }
+        },
+        "10b623ff-1d70-435a-8303-b4a02dcdf90a": {
+            "type": "appmixer.salesforce.crm.DeleteObjectRecord",
+            "label": "Delete Task (cleanup)",
+            "x": 880,
+            "y": 304,
+            "version": "1.1.2",
+            "source": {
+                "in": {
+                    "e18e6b8c-0fee-4b01-85a7-36485ce3fffc": [
+                        "out"
+                    ]
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "e18e6b8c-0fee-4b01-85a7-36485ce3fffc": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "id": {
+                                        "409283ed-369e-4a1a-b44b-a31d45b9d1ee": {
+                                            "variable": "$.6dfebc5d-aee6-452a-a8f9-b18f8b608d5e.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "objectName": "Task",
+                                    "id": "{{{409283ed-369e-4a1a-b44b-a31d45b9d1ee}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "7796b890-58ae-4017-b665-e146cd1bcd87": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "label": "ProcessE2EResults",
+            "x": 1088,
+            "y": 304,
+            "version": "1.0.1",
+            "source": {
+                "in": {
+                    "10b623ff-1d70-435a-8303-b4a02dcdf90a": [
+                        "out"
+                    ]
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "10b623ff-1d70-435a-8303-b4a02dcdf90a": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "12f7ccf6-753e-469a-9eff-6740b88c14f3": {
+                                            "variable": "$.e18e6b8c-0fee-4b01-85a7-36485ce3fffc.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E Salesforce - RecordUpdated trigger, Equals (no Field History)",
+                                    "result": "{{{12f7ccf6-753e-469a-9eff-6740b88c14f3}}}"
+                                }
+                            }
+                        }
+                    }
+                },
+                "properties": {}
+            }
+        }
+    },
+    "notes": {
+        "e2f7b79f-7393-43dd-bc13-cb3b615b5c71": {
+            "x": 48,
+            "y": 480,
+            "width": 720,
+            "height": 240,
+            "content": "## ⚠️ Timing\n\nThe trigger watches **Task.Status Equals Completed** (no Field History needed). The flow creates a Task (Not Started), completes it and deletes it after the trigger fired. The trigger reads changes older than 30 seconds and polls every minute, so it fires 1-2 minutes after the update; AfterAll waits up to 10 minutes. The task Subject is the filter, so older test tasks do not interfere."
+        }
+    },
+    "type": "automation",
+    "wizard": {
+        "fields": []
+    }
+}

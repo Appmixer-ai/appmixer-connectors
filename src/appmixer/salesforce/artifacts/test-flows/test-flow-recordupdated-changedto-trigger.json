@@ -1,0 +1,362 @@
+{
+    "name": "E2E Salesforce - RecordUpdated trigger, Changes to (Field History)",
+    "flow": {
+        "03c9a9d9-2ba3-47f2-9371-a9477015e3f1": {
+            "type": "appmixer.utils.controls.OnStart",
+            "label": "OnStart",
+            "x": 48,
+            "y": 48,
+            "source": {},
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "795b704a-294f-49a8-bac8-b913b9bfc57e": {
+            "type": "appmixer.salesforce.crm.CreateObjectRecord",
+            "label": "Create Case (test data)",
+            "x": 256,
+            "y": 48,
+            "version": "1.1.2",
+            "source": {
+                "in": {
+                    "03c9a9d9-2ba3-47f2-9371-a9477015e3f1": [
+                        "out"
+                    ]
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "03c9a9d9-2ba3-47f2-9371-a9477015e3f1": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {},
+                                "lambda": {
+                                    "objectName": "Case",
+                                    "rawJson": true,
+                                    "json": "{\"Subject\":\"E2E RecordUpdated Case\",\"Status\":\"New\",\"Origin\":\"Web\"}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "022dd50d-e451-40eb-86f3-28266e76fd08": {
+            "type": "appmixer.utils.test.Assert",
+            "label": "Assert: test record created",
+            "x": 464,
+            "y": 48,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "795b704a-294f-49a8-bac8-b913b9bfc57e": [
+                        "out"
+                    ]
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "795b704a-294f-49a8-bac8-b913b9bfc57e": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "078bc5be-5a9d-4005-8c7e-cafe94565d40": {
+                                            "variable": "$.795b704a-294f-49a8-bac8-b913b9bfc57e.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "assertion": "notEmpty",
+                                                "field": "{{{078bc5be-5a9d-4005-8c7e-cafe94565d40}}}"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "c7fca5bf-aa57-41d6-9421-0ed583feaef4": {
+            "type": "appmixer.salesforce.crm.UpdateObjectRecord",
+            "label": "Update Case (provokes the trigger)",
+            "x": 464,
+            "y": 176,
+            "version": "1.1.2",
+            "source": {
+                "in": {
+                    "795b704a-294f-49a8-bac8-b913b9bfc57e": [
+                        "out"
+                    ]
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "795b704a-294f-49a8-bac8-b913b9bfc57e": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "id": {
+                                        "e016a26e-25cc-46db-995b-522524cac06c": {
+                                            "variable": "$.795b704a-294f-49a8-bac8-b913b9bfc57e.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "objectName": "Case",
+                                    "id": "{{{e016a26e-25cc-46db-995b-522524cac06c}}}",
+                                    "rawJson": true,
+                                    "json": "{\"Status\":\"Closed\"}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "103fe9ee-8adc-4967-8e68-267b20297699": {
+            "type": "appmixer.salesforce.crm.RecordUpdated",
+            "label": "Record Updated (under test)",
+            "x": 48,
+            "y": 304,
+            "version": "1.1.2",
+            "source": {},
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "properties": {
+                    "objectName": "Case",
+                    "fieldName": "Status",
+                    "operator": "changedTo",
+                    "value": "Closed",
+                    "where": "Subject = 'E2E RecordUpdated Case'"
+                }
+            }
+        },
+        "e1221f7b-5f68-4a26-89e0-16cf95ad2c58": {
+            "type": "appmixer.utils.test.Assert",
+            "label": "Assert: trigger fired with the change",
+            "x": 256,
+            "y": 304,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "103fe9ee-8adc-4967-8e68-267b20297699": [
+                        "out"
+                    ]
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "103fe9ee-8adc-4967-8e68-267b20297699": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "fa135415-fe4a-4724-bb64-1243345e4520": {
+                                            "variable": "$.103fe9ee-8adc-4967-8e68-267b20297699.out.Id",
+                                            "functions": []
+                                        },
+                                        "d5aa67b2-608f-43f6-bcb0-134f030ab13b": {
+                                            "variable": "$.103fe9ee-8adc-4967-8e68-267b20297699.out.Status",
+                                            "functions": []
+                                        },
+                                        "15b97daa-45b9-4db8-8820-7aed3d7b17f3": {
+                                            "variable": "$.103fe9ee-8adc-4967-8e68-267b20297699.out.oldValue",
+                                            "functions": []
+                                        },
+                                        "8bd85485-4a33-4fd7-8ab8-739171682cb9": {
+                                            "variable": "$.103fe9ee-8adc-4967-8e68-267b20297699.out.newValue",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "assertion": "notEmpty",
+                                                "field": "{{{fa135415-fe4a-4724-bb64-1243345e4520}}}"
+                                            },
+                                            {
+                                                "assertion": "equal",
+                                                "field": "{{{d5aa67b2-608f-43f6-bcb0-134f030ab13b}}}",
+                                                "expected": "Closed"
+                                            },
+                                            {
+                                                "assertion": "equal",
+                                                "field": "{{{15b97daa-45b9-4db8-8820-7aed3d7b17f3}}}",
+                                                "expected": "New"
+                                            },
+                                            {
+                                                "assertion": "equal",
+                                                "field": "{{{8bd85485-4a33-4fd7-8ab8-739171682cb9}}}",
+                                                "expected": "Closed"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "511c80c3-af8c-425a-b694-8b465e35e241": {
+            "type": "appmixer.utils.test.AfterAll",
+            "label": "AfterAll",
+            "x": 672,
+            "y": 304,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "022dd50d-e451-40eb-86f3-28266e76fd08": [
+                        "out"
+                    ],
+                    "e1221f7b-5f68-4a26-89e0-16cf95ad2c58": [
+                        "out"
+                    ]
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "properties": {
+                    "timeout": 600
+                }
+            }
+        },
+        "876f3bfe-4549-4cef-8fab-20ff94a78038": {
+            "type": "appmixer.salesforce.crm.DeleteObjectRecord",
+            "label": "Delete Case (cleanup)",
+            "x": 880,
+            "y": 304,
+            "version": "1.1.2",
+            "source": {
+                "in": {
+                    "511c80c3-af8c-425a-b694-8b465e35e241": [
+                        "out"
+                    ]
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "511c80c3-af8c-425a-b694-8b465e35e241": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "id": {
+                                        "efc48a93-9416-4574-9b53-e718fbddb8bf": {
+                                            "variable": "$.795b704a-294f-49a8-bac8-b913b9bfc57e.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "objectName": "Case",
+                                    "id": "{{{efc48a93-9416-4574-9b53-e718fbddb8bf}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "af742815-e8e4-4050-8ada-2fd95aa8d284": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "label": "ProcessE2EResults",
+            "x": 1088,
+            "y": 304,
+            "version": "1.0.1",
+            "source": {
+                "in": {
+                    "876f3bfe-4549-4cef-8fab-20ff94a78038": [
+                        "out"
+                    ]
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "876f3bfe-4549-4cef-8fab-20ff94a78038": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "bc6ae330-c6e0-499e-a02a-c32af5eb1651": {
+                                            "variable": "$.511c80c3-af8c-425a-b694-8b465e35e241.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E Salesforce - RecordUpdated trigger, Changes to (Field History)",
+                                    "result": "{{{bc6ae330-c6e0-499e-a02a-c32af5eb1651}}}"
+                                }
+                            }
+                        }
+                    }
+                },
+                "properties": {}
+            }
+        }
+    },
+    "notes": {
+        "62f8017f-b34e-404f-8639-1f2d390fc7a7": {
+            "x": 48,
+            "y": 480,
+            "width": 720,
+            "height": 240,
+            "content": "## ⚠️ Test data assumption\n\nThe trigger watches **Case.Status** with **Changes to = Closed**, which reads the Case Field History. **Field History Tracking must be on for Case Status** in the test org (Setup > Object Manager > Case > Fields & Relationships > Set History Tracking > Status). Without it the flow fails at start with a clear error.\n\nThe flow creates a Case (Status New), closes it and deletes it after the trigger fired. The trigger reads changes older than 30 seconds and polls every minute, so it fires 1-2 minutes after the update; AfterAll waits up to 10 minutes."
+        }
+    },
+    "type": "automation",
+    "wizard": {
+        "fields": []
+    }
+}
