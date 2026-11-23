@@ -6,6 +6,7 @@
 // only reshaping is that connections become plain arrays.
 
 const client = require('./graphql-client');
+const { mailingAddress } = require('./gql-orders');
 
 const ADDRESS_FIELDS = `id firstName lastName company address1 address2 city province provinceCode
     country countryCodeV2 zip phone`;
@@ -127,6 +128,46 @@ const LATEST_INVENTORY_LEVEL = `query LatestInventoryLevel {
     }
 }`;
 
+const CREATE_DRAFT_ORDER = `mutation CreateDraftOrder($input: DraftOrderInput!) {
+    draftOrderCreate(input: $input) { draftOrder { id } userErrors { field message } }
+}`;
+
+const UPDATE_DRAFT_ORDER = `mutation UpdateDraftOrder($id: ID!, $input: DraftOrderInput!) {
+    draftOrderUpdate(id: $id, input: $input) { draftOrder { id } userErrors { field message } }
+}`;
+
+const DELETE_DRAFT_ORDER = `mutation DeleteDraftOrder($input: DraftOrderDeleteInput!) {
+    draftOrderDelete(input: $input) { deletedId userErrors { field message } }
+}`;
+
+// The inventory item of a product variant.
+const VARIANT_INVENTORY_ITEM = `query VariantInventoryItem($id: ID!) {
+    productVariant(id: $id) { inventoryItem { id } }
+}`;
+
+const INVENTORY_ITEM_LOCATIONS = `query InventoryItemLocations($id: ID!) {
+    inventoryItem(id: $id) { id tracked inventoryLevels(first: 50) { nodes { location { id } } } }
+}`;
+
+// Without an id, `location` is the shop's primary location.
+const PRIMARY_LOCATION = 'query PrimaryLocation { location { id } }';
+
+const TRACK_INVENTORY_ITEM = `mutation TrackInventoryItem($id: ID!) {
+    inventoryItemUpdate(id: $id, input: { tracked: true }) { inventoryItem { id } userErrors { field message } }
+}`;
+
+const ACTIVATE_INVENTORY = `mutation ActivateInventory($inventoryItemId: ID!, $locationId: ID!) {
+    inventoryActivate(inventoryItemId: $inventoryItemId, locationId: $locationId) {
+        inventoryLevel { id } userErrors { field message }
+    }
+}`;
+
+const SET_INVENTORY_QUANTITIES = `mutation SetInventoryQuantities($input: InventorySetQuantitiesInput!, $key: String!) {
+    inventorySetQuantities(input: $input) @idempotent(key: $key) {
+        inventoryAdjustmentGroup { id } userErrors { field message code }
+    }
+}`;
+
 const GET_RETURN = `query GetReturn($id: ID!) {
     return(id: $id) { ${RETURN_FIELDS} }
 }`;
@@ -138,6 +179,111 @@ const RECENT_RETURNS = `query RecentReturns {
         nodes { returns(first: 1, reverse: true) { nodes { id createdAt } } }
     }
 }`;
+
+function present(value) {
+
+    return value !== undefined && value !== null && String(value).trim() !== '';
+}
+
+function toBoolean(value) {
+
+    if (value === true || value === 'true') return true;
+    if (value === false || value === 'false') return false;
+    return undefined;
+}
+
+// Expression input ({ ADD: [...] }) or a plain array → array of rows.
+function rows(value) {
+
+    if (Array.isArray(value)) return value;
+    if (value && Array.isArray(value.ADD)) return value.ADD;
+    return [];
+}
+
+function isCustom(item) {
+
+    return item.itemType === 'custom' || (!item.itemType && !present(item.variantId));
+}
+
+/**
+ * Whether the line items include a custom item, whose price needs a currency.
+ * @param {object} inputs
+ * @returns {boolean}
+ */
+function draftNeedsCurrency(inputs) {
+
+    return rows(inputs.lineItems).some(isCustom);
+}
+
+/**
+ * Line item rows → [DraftOrderLineItemInput].
+ * @param {Array} items
+ * @param {string} [currency] currency of custom item prices
+ * @returns {Array}
+ */
+function lineItemsInput(items, currency) {
+
+    return items.map((item, index) => {
+        const position = `Line item ${index + 1}`;
+        const quantity = parseInt(item.quantity, 10);
+        const line = { quantity: Number.isFinite(quantity) && quantity > 0 ? quantity : 1 };
+        if (!isCustom(item)) {
+            if (!present(item.variantId)) {
+                throw new client.ShopifyError(`${position}: choose a product variant, or switch the item type to Custom.`, 422);
+            }
+            line.variantId = client.toGid('ProductVariant', String(item.variantId).trim());
+            return line;
+        }
+        if (!present(item.title)) {
+            throw new client.ShopifyError(`${position}: a custom item needs a title.`, 422);
+        }
+        const price = Number(item.price);
+        if (!present(item.price) || !Number.isFinite(price)) {
+            throw new client.ShopifyError(`${position} price must be a number, got "${item.price}".`, 422);
+        }
+        line.title = String(item.title).trim();
+        line.originalUnitPriceWithCurrency = { amount: String(price), currencyCode: currency };
+        if (present(item.sku)) line.sku = String(item.sku).trim();
+        if (toBoolean(item.taxable) !== undefined) line.taxable = toBoolean(item.taxable);
+        if (toBoolean(item.requiresShipping) !== undefined) line.requiresShipping = toBoolean(item.requiresShipping);
+        return line;
+    });
+}
+
+/**
+ * Component inputs → DraftOrderInput. Empty fields are left out.
+ * @param {object} inputs
+ * @param {string} [currency] currency of custom item prices (the shop currency)
+ * @returns {object}
+ */
+function toDraftOrderInput(inputs, currency) {
+
+    const input = {};
+    const items = rows(inputs.lineItems);
+    if (items.length) input.lineItems = lineItemsInput(items, currency);
+    for (const key of ['email', 'phone', 'note', 'poNumber']) {
+        if (present(inputs[key])) input[key] = String(inputs[key]).trim();
+    }
+    if (present(inputs.tags)) input.tags = client.tagList(inputs.tags);
+    if (present(inputs.customerId)) {
+        input.purchasingEntity = { customerId: client.toGid('Customer', String(inputs.customerId).trim()) };
+    }
+    if (toBoolean(inputs.taxExempt) !== undefined) input.taxExempt = toBoolean(inputs.taxExempt);
+    const shippingAddress = mailingAddress({
+        firstName: inputs.shippingFirstName,
+        lastName: inputs.shippingLastName,
+        company: inputs.shippingCompany,
+        address1: inputs.shippingAddress1,
+        address2: inputs.shippingAddress2,
+        city: inputs.shippingCity,
+        provinceCode: inputs.shippingProvinceCode,
+        countryCode: inputs.shippingCountryCode,
+        zip: inputs.shippingZip,
+        phone: inputs.shippingPhone
+    }, 'Shipping');
+    if (shippingAddress) input.shippingAddress = shippingAddress;
+    return input;
+}
 
 function nodes(connection) {
 
@@ -231,6 +377,91 @@ module.exports = (run) => ({
     },
 
     /**
+     * Create a draft order and return it.
+     * @param {object} input DraftOrderInput
+     * @returns {Promise<object>}
+     */
+    async createDraftOrder(input) {
+
+        const data = await run(CREATE_DRAFT_ORDER, { input });
+        const payload = client.checkUserErrors(data.draftOrderCreate, 'draftOrderCreate');
+        return this.getDraftOrder(payload.draftOrder.id);
+    },
+
+    /**
+     * @param {string|number} id DraftOrder gid or numeric id
+     * @param {object} input DraftOrderInput with the fields to change
+     */
+    async updateDraftOrder(id, input) {
+
+        const data = await run(UPDATE_DRAFT_ORDER, { id: client.toGid('DraftOrder', id), input });
+        client.checkUserErrors(data.draftOrderUpdate, 'draftOrderUpdate');
+    },
+
+    async deleteDraftOrder(id) {
+
+        const data = await run(DELETE_DRAFT_ORDER, { input: { id: client.toGid('DraftOrder', id) } });
+        client.checkUserErrors(data.draftOrderDelete, 'draftOrderDelete');
+    },
+
+    /**
+     * Set the available or on-hand quantity of an inventory item at a location
+     * and return the inventory level. The item gets inventory tracking switched
+     * on and is stocked at the location first when it is not yet.
+     * @param {object} params
+     * @param {string} params.item InventoryItem or ProductVariant gid, or a numeric inventory item id
+     * @param {string} [params.locationId] none = the location the item is stocked at, else the primary location
+     * @param {number} params.quantity
+     * @param {string} [params.name='available'] 'available' | 'on_hand'
+     * @param {string} [params.reason='correction']
+     * @param {string} params.idempotencyKey
+     * @returns {Promise<object>}
+     */
+    async setInventoryQuantity({ item, locationId, quantity, name = 'available', reason = 'correction', idempotencyKey }) {
+
+        let inventoryItemId = String(item).trim();
+        if (inventoryItemId.startsWith('gid://shopify/ProductVariant/')) {
+            const data = await run(VARIANT_INVENTORY_ITEM, { id: inventoryItemId });
+            if (!data.productVariant) {
+                throw new client.ShopifyError(`Product variant ${inventoryItemId} not found.`, 404);
+            }
+            inventoryItemId = data.productVariant.inventoryItem.id;
+        } else {
+            inventoryItemId = client.toGid('InventoryItem', inventoryItemId);
+        }
+
+        const { inventoryItem } = await run(INVENTORY_ITEM_LOCATIONS, { id: inventoryItemId });
+        if (!inventoryItem) {
+            throw new client.ShopifyError(`Inventory item ${item} not found.`, 404);
+        }
+        const stockedAt = nodes(inventoryItem.inventoryLevels).map(level => level.location.id);
+        let location = locationId ? client.toGid('Location', String(locationId).trim()) : stockedAt[0];
+        if (!location) {
+            location = (await run(PRIMARY_LOCATION)).location.id;
+        }
+
+        if (!inventoryItem.tracked) {
+            const data = await run(TRACK_INVENTORY_ITEM, { id: inventoryItemId });
+            client.checkUserErrors(data.inventoryItemUpdate, 'inventoryItemUpdate');
+        }
+        if (!stockedAt.includes(location)) {
+            const data = await run(ACTIVATE_INVENTORY, { inventoryItemId, locationId: location });
+            client.checkUserErrors(data.inventoryActivate, 'inventoryActivate');
+        }
+
+        const data = await run(SET_INVENTORY_QUANTITIES, {
+            key: idempotencyKey,
+            input: {
+                name,
+                reason,
+                quantities: [{ inventoryItemId, locationId: location, quantity, changeFromQuantity: null }]
+            }
+        });
+        client.checkUserErrors(data.inventorySetQuantities, 'inventorySetQuantities');
+        return this.getInventoryLevel({ inventoryItemId, locationId: location });
+    },
+
+    /**
      * An inventory level by its gid (gid://shopify/InventoryLevel/1?inventory_item_id=2),
      * or by inventory item and location when no gid is at hand.
      * @param {object} params
@@ -315,3 +546,5 @@ module.exports.CHECKOUT_FIELDS = CHECKOUT_FIELDS;
 module.exports.DRAFT_ORDER_FIELDS = DRAFT_ORDER_FIELDS;
 module.exports.INVENTORY_LEVEL_FIELDS = INVENTORY_LEVEL_FIELDS;
 module.exports.RETURN_FIELDS = RETURN_FIELDS;
+module.exports.toDraftOrderInput = toDraftOrderInput;
+module.exports.draftNeedsCurrency = draftNeedsCurrency;

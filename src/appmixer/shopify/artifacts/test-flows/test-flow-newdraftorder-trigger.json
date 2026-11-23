@@ -7,7 +7,7 @@
             "y": 32,
             "width": 672,
             "height": 224,
-            "content": "## ⚠️ Self-provoking trigger flow\n\nThe bottom lane creates a draft order with `draftOrderCreate` (Make API Call, GraphQL) one minute after the start — the **Wait** gives the webhook subscription registered on flow start time to become active; do not remove it.\n\nThe trigger lane asserts the emitted draft order and deletes it after `AfterAll` (`draftOrderDelete`). The app needs `read_draft_orders` and `write_draft_orders`."
+            "content": "## ⚠️ Self-provoking trigger flow\n\nThe bottom lane creates a draft order with **Create Draft Order** one minute after the start — the **Wait** gives the webhook subscription registered on flow start time to become active; do not remove it.\n\nThe trigger lane asserts the emitted draft order and deletes it after `AfterAll` (**Delete Draft Order**). The app needs `read_draft_orders` and `write_draft_orders`."
         }
     },
     "flow": {
@@ -128,7 +128,7 @@
             }
         },
         "c51ed0a4-2b63-45e9-b0f8-4cfbd4f80fac": {
-            "type": "appmixer.shopify.core.MakeApiCall",
+            "type": "appmixer.shopify.draftorders.DeleteDraftOrder",
             "x": 688,
             "y": 320,
             "source": {
@@ -145,19 +145,15 @@
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
-                                    "url": {},
-                                    "method": {},
-                                    "body": {
-                                        "7a4d4923-bb22-4cc1-b81d-7114d783624a": {
+                                    "id": {
+                                        "7a9007f3-4d8c-4d4a-bc91-3ab09e48744d": {
                                             "variable": "$.17e2011e-c08b-4459-a80d-b2debac40f4e.out.id",
                                             "functions": []
                                         }
                                     }
                                 },
                                 "lambda": {
-                                    "url": "/graphql.json",
-                                    "method": "POST",
-                                    "body": "{\"query\": \"mutation DraftOrderDelete($input: DraftOrderDeleteInput!) { draftOrderDelete(input: $input) { deletedId userErrors { field message } } }\", \"variables\": {\"input\": {\"id\": \"{{{7a4d4923-bb22-4cc1-b81d-7114d783624a}}}\"}}}"
+                                    "id": "{{{7a9007f3-4d8c-4d4a-bc91-3ab09e48744d}}}"
                                 }
                             }
                         }
@@ -256,7 +252,7 @@
             }
         },
         "1e229e41-5a35-4cc6-8bd1-fa22f6c8132d": {
-            "type": "appmixer.shopify.core.MakeApiCall",
+            "type": "appmixer.shopify.draftorders.CreateDraftOrder",
             "x": 480,
             "y": 576,
             "source": {
@@ -272,15 +268,19 @@
                         "29065999-d10b-4ea2-8c38-b219dce91461": {
                             "out": {
                                 "type": "json2new",
-                                "modifiers": {
-                                    "url": {},
-                                    "method": {},
-                                    "body": {}
-                                },
+                                "modifiers": {},
                                 "lambda": {
-                                    "url": "/graphql.json",
-                                    "method": "POST",
-                                    "body": "{\"query\": \"mutation DraftOrderCreate($input: DraftOrderInput!) { draftOrderCreate(input: $input) { draftOrder { id } userErrors { field message } } }\", \"variables\": {\"input\": {\"note\": \"Appmixer E2E draft order\", \"lineItems\": [{\"title\": \"Appmixer E2E Draft Item\", \"originalUnitPriceWithCurrency\": {\"amount\": \"9.99\", \"currencyCode\": \"USD\"}, \"quantity\": 1}]}}}"
+                                    "lineItems": {
+                                        "ADD": [
+                                            {
+                                                "itemType": "custom",
+                                                "title": "Appmixer E2E Draft Item",
+                                                "price": 9.99,
+                                                "quantity": 1
+                                            }
+                                        ]
+                                    },
+                                    "note": "Appmixer E2E draft order"
                                 }
                             }
                         }

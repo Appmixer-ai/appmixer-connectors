@@ -1,0 +1,702 @@
+{
+    "name": "appmixer.shopify.orders.CreateRefund",
+    "description": "Refund line items (and shipping) of an order. Leave the line items empty to refund everything that can still be refunded. Returns the refund.",
+    "author": "Appmixer <info@appmixer.com>",
+    "private": false,
+    "auth": {
+        "service": "appmixer:shopify",
+        "scope": [
+            "write_orders"
+        ]
+    },
+    "quota": {
+        "manager": "appmixer:shopify",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "orderId": {
+                        "type": "string"
+                    },
+                    "lineItems": {
+                        "type": "object"
+                    },
+                    "refundShipping": {
+                        "type": "boolean"
+                    },
+                    "refundPayment": {
+                        "type": "boolean"
+                    },
+                    "note": {
+                        "type": "string"
+                    },
+                    "notify": {
+                        "type": "boolean"
+                    }
+                },
+                "required": [
+                    "orderId"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "orderId": {
+                        "type": "text",
+                        "label": "Order",
+                        "index": 1,
+                        "tooltip": "Pick an order, or enter its ID: the global ID (gid://shopify/Order/450789469) or the numeric ID from the order's admin URL.",
+                        "source": {
+                            "url": "/component/appmixer/shopify/orders/FindOrders?outPort=out",
+                            "data": {
+                                "messages": {
+                                    "in/outputType": "array"
+                                },
+                                "properties": {
+                                    "isSource": true
+                                },
+                                "transform": "./FindOrders#ordersToSelectArray"
+                            }
+                        }
+                    },
+                    "lineItems": {
+                        "type": "expression",
+                        "label": "Line Items",
+                        "index": 2,
+                        "levels": [
+                            "ADD"
+                        ],
+                        "tooltip": "The line items to refund. Leave empty to refund every line item in full.",
+                        "fields": {
+                            "lineItemId": {
+                                "type": "text",
+                                "label": "Line Item ID",
+                                "index": 1,
+                                "tooltip": "The ID of the order's line item (gid://shopify/LineItem/123 or 123), for example from the lineItems of Get Order."
+                            },
+                            "quantity": {
+                                "type": "number",
+                                "label": "Quantity",
+                                "index": 2,
+                                "tooltip": "How many units to refund. Leave empty to refund all refundable units of the line item."
+                            },
+                            "restockType": {
+                                "type": "select",
+                                "label": "Restock",
+                                "index": 3,
+                                "defaultValue": "NO_RESTOCK",
+                                "options": [
+                                    {
+                                        "label": "Do not restock",
+                                        "value": "NO_RESTOCK"
+                                    },
+                                    {
+                                        "label": "Restock (item not shipped yet)",
+                                        "value": "CANCEL"
+                                    },
+                                    {
+                                        "label": "Restock (item returned)",
+                                        "value": "RETURN"
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "refundShipping": {
+                        "type": "toggle",
+                        "label": "Refund Shipping",
+                        "index": 3,
+                        "defaultValue": false,
+                        "tooltip": "Refund the full shipping cost too."
+                    },
+                    "refundPayment": {
+                        "type": "toggle",
+                        "label": "Refund Payment",
+                        "index": 4,
+                        "defaultValue": true,
+                        "tooltip": "Return the money to the payments of the order (as Shopify suggests for the refunded items). Turn off to record the refund without moving money."
+                    },
+                    "note": {
+                        "type": "textarea",
+                        "label": "Note",
+                        "index": 5,
+                        "tooltip": "The reason for the refund."
+                    },
+                    "notify": {
+                        "type": "toggle",
+                        "label": "Notify Customer",
+                        "index": 6,
+                        "defaultValue": false,
+                        "tooltip": "Send the customer the refund notification e-mail."
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "schema": {
+                "type": "object",
+                "required": [
+                    "id",
+                    "legacyResourceId",
+                    "createdAt",
+                    "updatedAt",
+                    "processedAt",
+                    "totalRefundedSet",
+                    "refundLineItems",
+                    "transactions",
+                    "orderAdjustments",
+                    "order"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "title": "ID",
+                        "example": "gid://shopify/Refund/1221986910289"
+                    },
+                    "legacyResourceId": {
+                        "type": "string",
+                        "title": "Legacy Resource ID",
+                        "example": "1221986910289"
+                    },
+                    "note": {
+                        "type": "string",
+                        "title": "Note",
+                        "example": "Damaged in transit"
+                    },
+                    "createdAt": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Created At",
+                        "example": "2026-10-05T08:25:09Z"
+                    },
+                    "updatedAt": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Updated At",
+                        "example": "2026-10-05T08:25:09Z"
+                    },
+                    "processedAt": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Processed At",
+                        "example": "2026-10-05T08:25:09Z"
+                    },
+                    "totalRefundedSet": {
+                        "type": "object",
+                        "title": "Total Refunded",
+                        "required": [
+                            "shopMoney"
+                        ],
+                        "properties": {
+                            "shopMoney": {
+                                "type": "object",
+                                "title": "Total Refunded.Shop Money",
+                                "required": [
+                                    "amount",
+                                    "currencyCode"
+                                ],
+                                "properties": {
+                                    "amount": {
+                                        "type": "string",
+                                        "title": "Total Refunded.Shop Money.Amount",
+                                        "example": "25.0"
+                                    },
+                                    "currencyCode": {
+                                        "type": "string",
+                                        "title": "Total Refunded.Shop Money.Currency Code",
+                                        "example": "USD"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "return": {
+                        "type": "object",
+                        "title": "Return",
+                        "required": [
+                            "id",
+                            "name"
+                        ],
+                        "properties": {
+                            "id": {
+                                "type": "string",
+                                "title": "Return.ID",
+                                "example": "gid://shopify/Return/945684561"
+                            },
+                            "name": {
+                                "type": "string",
+                                "title": "Return.Name",
+                                "example": "#1026-R1"
+                            }
+                        }
+                    },
+                    "refundLineItems": {
+                        "type": "array",
+                        "title": "Refund Line Items",
+                        "items": {
+                            "type": "object",
+                            "required": [
+                                "quantity",
+                                "restockType",
+                                "restocked",
+                                "priceSet",
+                                "subtotalSet",
+                                "totalTaxSet",
+                                "lineItem"
+                            ],
+                            "properties": {
+                                "id": {
+                                    "type": "string",
+                                    "title": "ID",
+                                    "example": "gid://shopify/RefundLineItem/1202700058705"
+                                },
+                                "quantity": {
+                                    "type": "integer",
+                                    "title": "Quantity",
+                                    "example": 1
+                                },
+                                "restockType": {
+                                    "type": "string",
+                                    "title": "Restock Type",
+                                    "example": "NO_RESTOCK"
+                                },
+                                "restocked": {
+                                    "type": "boolean",
+                                    "title": "Restocked",
+                                    "example": false
+                                },
+                                "location": {
+                                    "type": "object",
+                                    "title": "Location",
+                                    "required": [
+                                        "id",
+                                        "name"
+                                    ],
+                                    "properties": {
+                                        "id": {
+                                            "type": "string",
+                                            "title": "Location.ID",
+                                            "example": "gid://shopify/Location/124679880785"
+                                        },
+                                        "name": {
+                                            "type": "string",
+                                            "title": "Location.Name",
+                                            "example": "Shop location"
+                                        }
+                                    }
+                                },
+                                "priceSet": {
+                                    "type": "object",
+                                    "title": "Price",
+                                    "required": [
+                                        "shopMoney"
+                                    ],
+                                    "properties": {
+                                        "shopMoney": {
+                                            "type": "object",
+                                            "title": "Price.Shop Money",
+                                            "required": [
+                                                "amount",
+                                                "currencyCode"
+                                            ],
+                                            "properties": {
+                                                "amount": {
+                                                    "type": "string",
+                                                    "title": "Price.Shop Money.Amount",
+                                                    "example": "885.95"
+                                                },
+                                                "currencyCode": {
+                                                    "type": "string",
+                                                    "title": "Price.Shop Money.Currency Code",
+                                                    "example": "USD"
+                                                }
+                                            }
+                                        }
+                                    }
+                                },
+                                "subtotalSet": {
+                                    "type": "object",
+                                    "title": "Subtotal",
+                                    "required": [
+                                        "shopMoney"
+                                    ],
+                                    "properties": {
+                                        "shopMoney": {
+                                            "type": "object",
+                                            "title": "Subtotal.Shop Money",
+                                            "required": [
+                                                "amount",
+                                                "currencyCode"
+                                            ],
+                                            "properties": {
+                                                "amount": {
+                                                    "type": "string",
+                                                    "title": "Subtotal.Shop Money.Amount",
+                                                    "example": "881.08"
+                                                },
+                                                "currencyCode": {
+                                                    "type": "string",
+                                                    "title": "Subtotal.Shop Money.Currency Code",
+                                                    "example": "USD"
+                                                }
+                                            }
+                                        }
+                                    }
+                                },
+                                "totalTaxSet": {
+                                    "type": "object",
+                                    "title": "Total Tax",
+                                    "required": [
+                                        "shopMoney"
+                                    ],
+                                    "properties": {
+                                        "shopMoney": {
+                                            "type": "object",
+                                            "title": "Total Tax.Shop Money",
+                                            "required": [
+                                                "amount",
+                                                "currencyCode"
+                                            ],
+                                            "properties": {
+                                                "amount": {
+                                                    "type": "string",
+                                                    "title": "Total Tax.Shop Money.Amount",
+                                                    "example": "0.0"
+                                                },
+                                                "currencyCode": {
+                                                    "type": "string",
+                                                    "title": "Total Tax.Shop Money.Currency Code",
+                                                    "example": "USD"
+                                                }
+                                            }
+                                        }
+                                    }
+                                },
+                                "lineItem": {
+                                    "type": "object",
+                                    "title": "Line Item",
+                                    "required": [
+                                        "id",
+                                        "name"
+                                    ],
+                                    "properties": {
+                                        "id": {
+                                            "type": "string",
+                                            "title": "Line Item.ID",
+                                            "example": "gid://shopify/LineItem/46373199282257"
+                                        },
+                                        "name": {
+                                            "type": "string",
+                                            "title": "Line Item.Name",
+                                            "example": "The Minimal Snowboard"
+                                        },
+                                        "sku": {
+                                            "type": "string",
+                                            "title": "Line Item.SKU",
+                                            "example": "SB-MIN"
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        "example": [
+                            {
+                                "id": "gid://shopify/RefundLineItem/1202700058705",
+                                "quantity": 1,
+                                "restockType": "NO_RESTOCK",
+                                "restocked": false,
+                                "location": null,
+                                "priceSet": {
+                                    "shopMoney": {
+                                        "amount": "885.95",
+                                        "currencyCode": "USD"
+                                    }
+                                },
+                                "subtotalSet": {
+                                    "shopMoney": {
+                                        "amount": "881.08",
+                                        "currencyCode": "USD"
+                                    }
+                                },
+                                "totalTaxSet": {
+                                    "shopMoney": {
+                                        "amount": "0.0",
+                                        "currencyCode": "USD"
+                                    }
+                                },
+                                "lineItem": {
+                                    "id": "gid://shopify/LineItem/46373199282257",
+                                    "name": "The Minimal Snowboard",
+                                    "sku": null
+                                }
+                            }
+                        ]
+                    },
+                    "transactions": {
+                        "type": "array",
+                        "title": "Transactions",
+                        "items": {
+                            "type": "object",
+                            "required": [
+                                "id",
+                                "kind",
+                                "status",
+                                "test",
+                                "createdAt",
+                                "amountSet"
+                            ],
+                            "properties": {
+                                "id": {
+                                    "type": "string",
+                                    "title": "ID",
+                                    "example": "gid://shopify/OrderTransaction/9876543210"
+                                },
+                                "kind": {
+                                    "type": "string",
+                                    "title": "Kind",
+                                    "example": "SALE"
+                                },
+                                "status": {
+                                    "type": "string",
+                                    "title": "Status",
+                                    "example": "SUCCESS"
+                                },
+                                "gateway": {
+                                    "type": "string",
+                                    "title": "Gateway",
+                                    "example": "manual"
+                                },
+                                "test": {
+                                    "type": "boolean",
+                                    "title": "Test",
+                                    "example": false
+                                },
+                                "createdAt": {
+                                    "type": "string",
+                                    "format": "date-time",
+                                    "title": "Created At",
+                                    "example": "2026-10-05T08:24:35Z"
+                                },
+                                "processedAt": {
+                                    "type": "string",
+                                    "format": "date-time",
+                                    "title": "Processed At",
+                                    "example": "2026-10-05T08:24:35Z"
+                                },
+                                "errorCode": {
+                                    "type": "string",
+                                    "title": "Error Code",
+                                    "example": "CARD_DECLINED"
+                                },
+                                "paymentId": {
+                                    "type": "string",
+                                    "title": "Payment ID",
+                                    "example": "c123.1"
+                                },
+                                "amountSet": {
+                                    "type": "object",
+                                    "title": "Amount",
+                                    "required": [
+                                        "shopMoney"
+                                    ],
+                                    "properties": {
+                                        "shopMoney": {
+                                            "type": "object",
+                                            "title": "Amount.Shop Money",
+                                            "required": [
+                                                "amount",
+                                                "currencyCode"
+                                            ],
+                                            "properties": {
+                                                "amount": {
+                                                    "type": "string",
+                                                    "title": "Amount.Shop Money.Amount",
+                                                    "example": "25.0"
+                                                },
+                                                "currencyCode": {
+                                                    "type": "string",
+                                                    "title": "Amount.Shop Money.Currency Code",
+                                                    "example": "USD"
+                                                }
+                                            }
+                                        }
+                                    }
+                                },
+                                "parentTransaction": {
+                                    "type": "object",
+                                    "title": "Parent Transaction",
+                                    "required": [
+                                        "id"
+                                    ],
+                                    "properties": {
+                                        "id": {
+                                            "type": "string",
+                                            "title": "Parent Transaction.ID",
+                                            "example": "gid://shopify/OrderTransaction/9876543200"
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        "example": [
+                            {
+                                "id": "gid://shopify/OrderTransaction/9876543210",
+                                "kind": "REFUND",
+                                "status": "SUCCESS",
+                                "gateway": "manual",
+                                "test": false,
+                                "createdAt": "2026-10-05T08:24:35Z",
+                                "processedAt": "2026-10-05T08:24:35Z",
+                                "errorCode": null,
+                                "paymentId": "c123.1",
+                                "amountSet": {
+                                    "shopMoney": {
+                                        "amount": "25.0",
+                                        "currencyCode": "USD"
+                                    }
+                                },
+                                "parentTransaction": null
+                            }
+                        ]
+                    },
+                    "orderAdjustments": {
+                        "type": "array",
+                        "title": "Order Adjustments",
+                        "items": {
+                            "type": "object",
+                            "required": [
+                                "id",
+                                "amountSet",
+                                "taxAmountSet"
+                            ],
+                            "properties": {
+                                "id": {
+                                    "type": "string",
+                                    "title": "ID",
+                                    "example": "gid://shopify/OrderAdjustment/671076450385"
+                                },
+                                "reason": {
+                                    "type": "string",
+                                    "title": "Reason",
+                                    "example": "REFUND_DISCREPANCY"
+                                },
+                                "amountSet": {
+                                    "type": "object",
+                                    "title": "Amount",
+                                    "required": [
+                                        "shopMoney"
+                                    ],
+                                    "properties": {
+                                        "shopMoney": {
+                                            "type": "object",
+                                            "title": "Amount.Shop Money",
+                                            "required": [
+                                                "amount",
+                                                "currencyCode"
+                                            ],
+                                            "properties": {
+                                                "amount": {
+                                                    "type": "string",
+                                                    "title": "Amount.Shop Money.Amount",
+                                                    "example": "881.08"
+                                                },
+                                                "currencyCode": {
+                                                    "type": "string",
+                                                    "title": "Amount.Shop Money.Currency Code",
+                                                    "example": "USD"
+                                                }
+                                            }
+                                        }
+                                    }
+                                },
+                                "taxAmountSet": {
+                                    "type": "object",
+                                    "title": "Tax Amount",
+                                    "required": [
+                                        "shopMoney"
+                                    ],
+                                    "properties": {
+                                        "shopMoney": {
+                                            "type": "object",
+                                            "title": "Tax Amount.Shop Money",
+                                            "required": [
+                                                "amount",
+                                                "currencyCode"
+                                            ],
+                                            "properties": {
+                                                "amount": {
+                                                    "type": "string",
+                                                    "title": "Tax Amount.Shop Money.Amount",
+                                                    "example": "0.0"
+                                                },
+                                                "currencyCode": {
+                                                    "type": "string",
+                                                    "title": "Tax Amount.Shop Money.Currency Code",
+                                                    "example": "USD"
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        "example": [
+                            {
+                                "id": "gid://shopify/OrderAdjustment/671076450385",
+                                "reason": "REFUND_DISCREPANCY",
+                                "amountSet": {
+                                    "shopMoney": {
+                                        "amount": "881.08",
+                                        "currencyCode": "USD"
+                                    }
+                                },
+                                "taxAmountSet": {
+                                    "shopMoney": {
+                                        "amount": "0.0",
+                                        "currencyCode": "USD"
+                                    }
+                                }
+                            }
+                        ]
+                    },
+                    "order": {
+                        "type": "object",
+                        "title": "Order",
+                        "required": [
+                            "id",
+                            "legacyResourceId",
+                            "name"
+                        ],
+                        "properties": {
+                            "id": {
+                                "type": "string",
+                                "title": "Order.ID",
+                                "example": "gid://shopify/Order/17292422217809"
+                            },
+                            "legacyResourceId": {
+                                "type": "string",
+                                "title": "Order.Legacy Resource ID",
+                                "example": "17292422217809"
+                            },
+                            "name": {
+                                "type": "string",
+                                "title": "Order.Name",
+                                "example": "#1026"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiA/PjwhRE9DVFlQRSBzdmcgIFBVQkxJQyAnLS8vVzNDLy9EVEQgU1ZHIDEuMS8vRU4nICAnaHR0cDovL3d3dy53My5vcmcvR3JhcGhpY3MvU1ZHLzEuMS9EVEQvc3ZnMTEuZHRkJz48c3ZnIGVuYWJsZS1iYWNrZ3JvdW5kPSJuZXcgMCAwIDEyOCAxMjgiIGlkPSJTb2NpYWxfSWNvbnMiIHZlcnNpb249IjEuMSIgdmlld0JveD0iMCAwIDEyOCAxMjgiIHhtbDpzcGFjZT0icHJlc2VydmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiPjxnIGlkPSJfeDM3X19zdHJva2UiPjxnIGlkPSJTaG9waWZ5Ij48cmVjdCBjbGlwLXJ1bGU9ImV2ZW5vZGQiIGZpbGw9Im5vbmUiIGZpbGwtcnVsZT0iZXZlbm9kZCIgaGVpZ2h0PSIxMjgiIHdpZHRoPSIxMjgiLz48cGF0aCBjbGlwLXJ1bGU9ImV2ZW5vZGQiIGQ9Ik03MC40NSwxOS41NjhjMC0wLjQzNiwwLjAwNC0wLjg2NCwwLjAwNC0xLjMzMiAgICBjMC00LjA4LTAuNTY1LTcuMzY4LTEuNDY5LTkuOTcyYzMuNjM0LDAuNDU2LDYuMDU0LDQuNjEyLDcuNjEsOS4zOTJDNzQuNzczLDE4LjIyNCw3Mi42OTksMTguODY4LDcwLjQ1LDE5LjU2OHogTTYyLjQyNiw2MC4yNDggICAgYzAsMC00LjI1MS0yLjI4LTkuNDYxLTIuMjhjLTcuNjQyLDAtOC4wMjgsNC44Mi04LjAyOCw2LjAzMmMwLDYuNjI4LDE3LjE4Nyw5LjE2OCwxNy4xODcsMjQuNjg4ICAgIGMwLDEyLjIwOC03LjcwNiwyMC4wNzItMTguMDk4LDIwLjA3MmMtMTIuNDcsMC0xOC44NDYtNy44LTE4Ljg0Ni03LjhsMy4zMzktMTEuMDg0YzAsMCw2LjU1NSw1LjY1NiwxMi4wODgsNS42NTYgICAgYzMuNjEsMCw1LjA4My0yLjg2LDUuMDgzLTQuOTQ4YzAtOC42NDQtMTQuMTAyLTkuMDMyLTE0LjEwMi0yMy4yMzZjMC0xMS45NTIsOC41MzgtMjMuNTIsMjUuNzcyLTIzLjUyICAgIGM2LjYzOSwwLDkuOTIzLDEuOTEyLDkuOTIzLDEuOTEyTDYyLjQyNiw2MC4yNDh6IE01OS41OTYsNC40MjhjMC43MTIsMCwxLjQyNSwwLjI0NCwyLjExLDAuNzE2ICAgIGMtNS4yNjYsMi40ODgtMTAuOTA2LDguNzYtMTMuMjksMjEuMjhjLTMuNDgzLDEuMDg0LTYuODg2LDIuMTQ0LTEwLjAzNCwzLjEyNEM0MS4xNzEsMTkuOTk2LDQ3Ljc5OCw0LjQyOCw1OS41OTYsNC40Mjh6ICAgICBNNjYuMTQ3LDIwLjE5MmMwLDAuMjUyLTAuMDA0LDAuNDg0LTAuMDA0LDAuNzE2Yy00LDEuMjQ0LTguMzQzLDIuNTk2LTEyLjY5NywzLjk1MkM1NS44OSwxNS4zOCw2MC40NzIsMTAuOCw2NC40OCw5LjA3MiAgICBDNjUuNDg3LDExLjYxNiw2Ni4xNDcsMTUuMjY4LDY2LjE0NywyMC4xOTJ6IE04NS4wNTgsMTUuMDk3Yy0wLjI2LDAuMDM0LTAuNDg1LDAuMDg1LTAuNjQyLDAuMTMxICAgIGMtMC4wODQsMC4wMjQtMS40ODUsMC40Ni0zLjgwNSwxLjE4Qzc4LjMzOSw5Ljg0LDc0LjMzMSwzLjgwNCw2Ny4yODIsMy44MDRjLTAuMTk1LDAtMC4zOTgsMC4wMDgtMC41OTcsMC4wMiAgICBDNjQuNjc5LDEuMTYsNjIuMTk1LDAsNjAuMDUsMEM0My42MjMsMCwzNS43NzQsMjAuNjQsMzMuMzE0LDMxLjEyNGMtNi4zODQsMS45ODgtMTAuOTE4LDMuNC0xMS40OTUsMy41ODQgICAgYy0zLjU2NiwxLjEyNC0zLjY3OCwxLjIzNi00LjE0Myw0LjYwOEMxNy4zMjIsNDEuODcyLDgsMTE0LjMyNCw4LDExNC4zMjRMODAuNjM5LDEyOGwwLjA3Ny0wLjAxN0w4NS4wNTgsMTUuMDk3eiBNOTAuMjU5LDE4LjY1MiAgICBjMi4wOTcsMi4wOTMsNC40NzUsNC40NjQsNC40NzUsNC40NjRzOS43ODcsMC43MjgsMTAuMjQ5LDAuNzY4YzAuNDY2LDAuMDQsMS4wMjcsMC4zOTYsMS4xMTQsMS4wNCAgICBjMC4wODgsMC42NDQsMTMuOTAzLDk0LjUyLDEzLjkwMyw5NC41MmwtMzMuOTAxLDcuMzY5TDkwLjI1OSwxOC42NTJ6IiBmaWxsPSIjODFCRjM3IiBmaWxsLXJ1bGU9ImV2ZW5vZGQiIGlkPSJTaG9waWZ5XzFfIi8+PC9nPjwvZz48L3N2Zz4="
+}

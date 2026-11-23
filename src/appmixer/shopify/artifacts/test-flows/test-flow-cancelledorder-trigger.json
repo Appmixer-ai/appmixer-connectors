@@ -137,7 +137,7 @@
             }
         },
         "db2fd03b-65c2-44cd-9fbf-3204047ef6b3": {
-            "type": "appmixer.shopify.core.MakeApiCall",
+            "type": "appmixer.shopify.orders.CancelOrder",
             "x": 1040,
             "y": 128,
             "source": {
@@ -154,17 +154,19 @@
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
-                                    "body": {
-                                        "53ad6f24-40e5-4433-ac97-908f3b9abfab": {
+                                    "id": {
+                                        "902181d8-6557-4449-a269-eb275230083d": {
                                             "variable": "$.2815adf3-3330-4465-9c54-9f2df789a844.out.id",
                                             "functions": []
                                         }
                                     }
                                 },
                                 "lambda": {
-                                    "url": "/graphql.json",
-                                    "method": "POST",
-                                    "body": "{\"query\":\"mutation Cancel($id: ID!) { orderCancel(orderId: $id, reason: OTHER, restock: false, notifyCustomer: false) { orderCancelUserErrors { field message code } } }\",\"variables\":{\"id\":\"{{{53ad6f24-40e5-4433-ac97-908f3b9abfab}}}\"}}"
+                                    "reason": "OTHER",
+                                    "restock": false,
+                                    "refund": false,
+                                    "notifyCustomer": false,
+                                    "id": "{{{902181d8-6557-4449-a269-eb275230083d}}}"
                                 }
                             }
                         }
@@ -358,7 +360,7 @@
             "y": 8,
             "width": 672,
             "height": 112,
-            "content": "## ⚠️ Self-provoking trigger flow\n\nThe top lane creates a test order and cancels it (`orderCancel` through Make API Call) one minute after the start — keep the first **Wait**: it lets the webhook subscription become active. The test order is deleted after `AfterAll`."
+            "content": "## ⚠️ Self-provoking trigger flow\n\nThe top lane creates a test order and cancels it (**Cancel Order**) one minute after the start — keep the first **Wait**: it lets the webhook subscription become active. The test order is deleted after `AfterAll`."
         }
     }
 }
