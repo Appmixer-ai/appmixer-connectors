@@ -1,0 +1,360 @@
+{
+    "name": "E2E Snowflake - row triggers",
+    "description": "End-to-end test for the Snowflake triggers: NewRow, UpdatedRow and DeletedRow watch PUBLIC.APPMIXER_E2E_TRIGGERS while Query deletes the row of the previous run, inserts a new one and updates the seed row.",
+    "flow": {
+        "a08df6c6-9e83-4d11-b744-d9128437c1ef": {
+            "type": "appmixer.utils.controls.OnStart",
+            "label": "OnStart",
+            "x": 64,
+            "y": 16,
+            "source": {},
+            "version": "1.0.0",
+            "config": {},
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "87f6c260-2317-4333-9326-842f1fc26293": {
+            "type": "appmixer.snowflake.db.Query",
+            "label": "Delete Previous Row",
+            "x": 272,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "a08df6c6-9e83-4d11-b744-d9128437c1ef": ["out"]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "a08df6c6-9e83-4d11-b744-d9128437c1ef": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "query": {},
+                                    "outputType": {}
+                                },
+                                "lambda": {
+                                    "query": "DELETE FROM PUBLIC.APPMIXER_E2E_TRIGGERS WHERE NAME = 'e2e-new'",
+                                    "outputType": "rows"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "d0df765c-93c1-4d9d-ab15-a5a5534fba62": {
+            "type": "appmixer.snowflake.db.Query",
+            "label": "Insert Row",
+            "x": 480,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "87f6c260-2317-4333-9326-842f1fc26293": ["out"]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "87f6c260-2317-4333-9326-842f1fc26293": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "query": {},
+                                    "outputType": {}
+                                },
+                                "lambda": {
+                                    "query": "INSERT INTO PUBLIC.APPMIXER_E2E_TRIGGERS (ID, NAME) SELECT DATE_PART(EPOCH_MILLISECOND, CURRENT_TIMESTAMP()), 'e2e-new'",
+                                    "outputType": "rows"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "ac62608c-83ad-40a9-ab67-40d00562c7f2": {
+            "type": "appmixer.snowflake.db.Query",
+            "label": "Update Seed Row",
+            "x": 688,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "d0df765c-93c1-4d9d-ab15-a5a5534fba62": ["out"]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "d0df765c-93c1-4d9d-ab15-a5a5534fba62": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "query": {},
+                                    "outputType": {}
+                                },
+                                "lambda": {
+                                    "query": "UPDATE PUBLIC.APPMIXER_E2E_TRIGGERS SET NAME = 'e2e-updated-' || TO_VARCHAR(CURRENT_TIMESTAMP(), 'YYYYMMDDHH24MISSFF3') WHERE ID = 1",
+                                    "outputType": "rows"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "f0620b3a-fa1a-4cd7-ac04-e23ca84fa5ed": {
+            "type": "appmixer.snowflake.db.NewRow",
+            "label": "NewRow",
+            "x": 64,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {},
+            "config": {
+                "properties": {
+                    "schema": "PUBLIC",
+                    "table": "APPMIXER_E2E_TRIGGERS"
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "a362c454-7dea-4bc0-8a57-783d58ae8a26": {
+            "type": "appmixer.utils.test.Assert",
+            "label": "Assert NewRow",
+            "x": 272,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "f0620b3a-fa1a-4cd7-ac04-e23ca84fa5ed": ["out"]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "f0620b3a-fa1a-4cd7-ac04-e23ca84fa5ed": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "095fdfe0-bf92-4357-862f-18f508dea167": {
+                                            "variable": "$.f0620b3a-fa1a-4cd7-ac04-e23ca84fa5ed.out.row.NAME",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{095fdfe0-bf92-4357-862f-18f508dea167}}}",
+                                                "assertion": "equal",
+                                                "expected": "e2e-new"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "cfd4c758-bf7a-4c57-8587-fb9c64da00cf": {
+            "type": "appmixer.snowflake.db.UpdatedRow",
+            "label": "UpdatedRow",
+            "x": 64,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {},
+            "config": {
+                "properties": {
+                    "schema": "PUBLIC",
+                    "table": "APPMIXER_E2E_TRIGGERS"
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "24a66b7c-fffe-4253-af7c-60d4152dc9fb": {
+            "type": "appmixer.utils.test.Assert",
+            "label": "Assert UpdatedRow",
+            "x": 272,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "cfd4c758-bf7a-4c57-8587-fb9c64da00cf": ["out"]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "cfd4c758-bf7a-4c57-8587-fb9c64da00cf": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "40f91538-750e-4daf-a027-985349098109": {
+                                            "variable": "$.cfd4c758-bf7a-4c57-8587-fb9c64da00cf.out.updatedRow",
+                                            "functions": [
+                                                { "name": "g_jsonPath", "params": [{ "value": "$.NAME" }] }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{40f91538-750e-4daf-a027-985349098109}}}",
+                                                "assertion": "regex",
+                                                "regex": "^e2e-updated-"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "193862b2-2c9d-4640-9cdf-75acd33d2413": {
+            "type": "appmixer.snowflake.db.DeletedRow",
+            "label": "DeletedRow",
+            "x": 64,
+            "y": 400,
+            "version": "1.0.0",
+            "source": {},
+            "config": {
+                "properties": {
+                    "schema": "PUBLIC",
+                    "table": "APPMIXER_E2E_TRIGGERS"
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "dfc4c668-1585-454f-976d-5e1a1661f17f": {
+            "type": "appmixer.utils.test.Assert",
+            "label": "Assert DeletedRow",
+            "x": 272,
+            "y": 400,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "193862b2-2c9d-4640-9cdf-75acd33d2413": ["out"]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "193862b2-2c9d-4640-9cdf-75acd33d2413": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "89f78911-d2ba-43ce-a6ea-1745e95985f7": {
+                                            "variable": "$.193862b2-2c9d-4640-9cdf-75acd33d2413.out.row.NAME",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{89f78911-d2ba-43ce-a6ea-1745e95985f7}}}",
+                                                "assertion": "equal",
+                                                "expected": "e2e-new"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "6d8b19dc-84ad-4e89-a2ed-ad3a594cbf07": {
+            "type": "appmixer.utils.test.AfterAll",
+            "label": "AfterAll",
+            "x": 896,
+            "y": 400,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "a362c454-7dea-4bc0-8a57-783d58ae8a26": ["out"],
+                    "24a66b7c-fffe-4253-af7c-60d4152dc9fb": ["out"],
+                    "dfc4c668-1585-454f-976d-5e1a1661f17f": ["out"]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 300
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "e8f27541-e040-420d-b6ca-7988d2117962": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "label": "ProcessE2EResults",
+            "x": 1104,
+            "y": 400,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "6d8b19dc-84ad-4e89-a2ed-ad3a594cbf07": ["out"]
+                }
+            },
+            "config": {
+                "properties": {
+                    "successStoreId": "64f6f1f9193228000754082f",
+                    "failedStoreId": "64f6f1f0193228000754082e"
+                },
+                "transform": {
+                    "in": {
+                        "6d8b19dc-84ad-4e89-a2ed-ad3a594cbf07": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "895a5a3f-ad4f-4570-8d71-bb17fe128f98": {
+                                            "variable": "$.6d8b19dc-84ad-4e89-a2ed-ad3a594cbf07.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E Snowflake - row triggers",
+                                    "result": "{{{895a5a3f-ad4f-4570-8d71-bb17fe128f98}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        }
+    },
+    "notes": {
+        "4b2383ac-8b6b-4ef4-8014-fabbeef67fc6": {
+            "x": 480,
+            "y": 144,
+            "width": 384,
+            "height": 400,
+            "content": "## ⚠️ Test data assumption\n\nThe triggers create their change stream on flow start, so the table must exist **before** the flow starts. Run once in the account's database (it must be writable, not `SNOWFLAKE`):\n\n```sql\nCREATE TABLE PUBLIC.APPMIXER_E2E_TRIGGERS (ID NUMBER, NAME VARCHAR);\nINSERT INTO PUBLIC.APPMIXER_E2E_TRIGGERS VALUES (1, 'e2e-updated-seed'), (2, 'e2e-new');\n```\n\nEach run deletes the `e2e-new` row left by the previous run (DeletedRow), inserts a new `e2e-new` row for the next run (NewRow) and updates row `ID = 1` (UpdatedRow). A stream only shows the net change, so the deleted and updated rows must exist before the flow starts. That is why there is no cleanup."
+        }
+    }
+}
