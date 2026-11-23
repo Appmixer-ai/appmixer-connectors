@@ -113,15 +113,21 @@ module.exports = {
         const { schema, table } = context.messages.in.content;
 
         if (schema && table) {
-            subInspector = await context.componentStaticCall('appmixer.snowflake.db.ListColumns', 'out', {
-                messages: {
-                    in: {
-                        schema,
-                        table
-                    }
-                },
-                transform: './ListColumns#columnsToInspector'
-            });
+            try {
+                subInspector = await context.componentStaticCall('appmixer.snowflake.db.ListColumns', 'out', {
+                    messages: {
+                        in: {
+                            schema,
+                            table
+                        }
+                    },
+                    transform: './ListColumns#columnsToInspector'
+                });
+            } catch (err) {
+                // The table may not exist yet (a flow can create it) or the account may be missing:
+                // offer the whole row instead of failing the variable picker.
+                subInspector = {};
+            }
         }
         const options = [{
             label: 'Row',

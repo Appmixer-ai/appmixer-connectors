@@ -1,6 +1,6 @@
 {
     "name": "E2E Snowflake - row triggers",
-    "description": "End-to-end test for the Snowflake triggers: NewRow, UpdatedRow and DeletedRow watch PUBLIC.APPMIXER_E2E_TRIGGERS while Query deletes the row of the previous run, inserts a new one and updates the seed row.",
+    "description": "End-to-end test for the Snowflake triggers: NewRow, UpdatedRow and DeletedRow watch TEST.APPMIXER_E2E_TRIGGERS while Query deletes the row of the previous run, inserts a new one and updates the seed row.",
     "flow": {
         "a08df6c6-9e83-4d11-b744-d9128437c1ef": {
             "type": "appmixer.utils.controls.OnStart",
@@ -12,9 +12,9 @@
             "config": {},
             "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
         },
-        "87f6c260-2317-4333-9326-842f1fc26293": {
-            "type": "appmixer.snowflake.db.Query",
-            "label": "Delete Previous Row",
+        "6e73308f-4a19-4429-9e0e-31ca56b44b40": {
+            "type": "appmixer.utils.timers.Wait",
+            "label": "Wait For Streams",
             "x": 272,
             "y": 16,
             "version": "1.0.0",
@@ -30,11 +30,41 @@
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
+                                    "interval": {}
+                                },
+                                "lambda": {
+                                    "interval": "1m"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "87f6c260-2317-4333-9326-842f1fc26293": {
+            "type": "appmixer.snowflake.db.Query",
+            "label": "Delete Previous Row",
+            "x": 480,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "6e73308f-4a19-4429-9e0e-31ca56b44b40": ["out"]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "6e73308f-4a19-4429-9e0e-31ca56b44b40": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
                                     "query": {},
                                     "outputType": {}
                                 },
                                 "lambda": {
-                                    "query": "DELETE FROM PUBLIC.APPMIXER_E2E_TRIGGERS WHERE NAME = 'e2e-new'",
+                                    "query": "DELETE FROM TEST.APPMIXER_E2E_TRIGGERS WHERE NAME = 'e2e-new'",
                                     "outputType": "rows"
                                 }
                             }
@@ -47,7 +77,7 @@
         "d0df765c-93c1-4d9d-ab15-a5a5534fba62": {
             "type": "appmixer.snowflake.db.Query",
             "label": "Insert Row",
-            "x": 480,
+            "x": 688,
             "y": 16,
             "version": "1.0.0",
             "source": {
@@ -66,7 +96,7 @@
                                     "outputType": {}
                                 },
                                 "lambda": {
-                                    "query": "INSERT INTO PUBLIC.APPMIXER_E2E_TRIGGERS (ID, NAME) SELECT DATE_PART(EPOCH_MILLISECOND, CURRENT_TIMESTAMP()), 'e2e-new'",
+                                    "query": "INSERT INTO TEST.APPMIXER_E2E_TRIGGERS (ID, NAME) SELECT DATE_PART(EPOCH_MILLISECOND, CURRENT_TIMESTAMP()), 'e2e-new'",
                                     "outputType": "rows"
                                 }
                             }
@@ -79,7 +109,7 @@
         "ac62608c-83ad-40a9-ab67-40d00562c7f2": {
             "type": "appmixer.snowflake.db.Query",
             "label": "Update Seed Row",
-            "x": 688,
+            "x": 896,
             "y": 16,
             "version": "1.0.0",
             "source": {
@@ -98,7 +128,7 @@
                                     "outputType": {}
                                 },
                                 "lambda": {
-                                    "query": "UPDATE PUBLIC.APPMIXER_E2E_TRIGGERS SET NAME = 'e2e-updated-' || TO_VARCHAR(CURRENT_TIMESTAMP(), 'YYYYMMDDHH24MISSFF3') WHERE ID = 1",
+                                    "query": "UPDATE TEST.APPMIXER_E2E_TRIGGERS SET NAME = 'e2e-updated-' || TO_VARCHAR(CURRENT_TIMESTAMP(), 'YYYYMMDDHH24MISSFF3') WHERE ID = 1",
                                     "outputType": "rows"
                                 }
                             }
@@ -117,7 +147,7 @@
             "source": {},
             "config": {
                 "properties": {
-                    "schema": "PUBLIC",
+                    "schema": "TEST",
                     "table": "APPMIXER_E2E_TRIGGERS"
                 }
             },
@@ -175,7 +205,7 @@
             "source": {},
             "config": {
                 "properties": {
-                    "schema": "PUBLIC",
+                    "schema": "TEST",
                     "table": "APPMIXER_E2E_TRIGGERS"
                 }
             },
@@ -235,7 +265,7 @@
             "source": {},
             "config": {
                 "properties": {
-                    "schema": "PUBLIC",
+                    "schema": "TEST",
                     "table": "APPMIXER_E2E_TRIGGERS"
                 }
             },
@@ -353,8 +383,8 @@
             "x": 480,
             "y": 144,
             "width": 384,
-            "height": 400,
-            "content": "## ⚠️ Test data assumption\n\nThe triggers create their change stream on flow start, so the table must exist **before** the flow starts. Run once in the account's database (it must be writable, not `SNOWFLAKE`):\n\n```sql\nCREATE TABLE PUBLIC.APPMIXER_E2E_TRIGGERS (ID NUMBER, NAME VARCHAR);\nINSERT INTO PUBLIC.APPMIXER_E2E_TRIGGERS VALUES (1, 'e2e-updated-seed'), (2, 'e2e-new');\n```\n\nEach run deletes the `e2e-new` row left by the previous run (DeletedRow), inserts a new `e2e-new` row for the next run (NewRow) and updates row `ID = 1` (UpdatedRow). A stream only shows the net change, so the deleted and updated rows must exist before the flow starts. That is why there is no cleanup."
+            "height": 480,
+            "content": "## ⚠️ Test data assumption\n\nThe triggers create their change stream on flow start, so the table must exist **before** the flow starts. Run once in the account's database (it must be writable, not `SNOWFLAKE`):\n\n```sql\nCREATE TABLE TEST.APPMIXER_E2E_TRIGGERS (ID NUMBER, NAME VARCHAR);\nINSERT INTO TEST.APPMIXER_E2E_TRIGGERS VALUES (1, 'e2e-updated-seed'), (2, 'e2e-new');\n```\n\nEach run deletes the `e2e-new` row left by the previous run (DeletedRow), inserts a new `e2e-new` row for the next run (NewRow) and updates row `ID = 1` (UpdatedRow). A stream only shows the net change, so the deleted and updated rows must exist before the flow starts. That is why there is no cleanup.\n\nDo not remove **Wait For Streams**: the triggers create their streams in parallel with OnStart, and a change made before a stream exists is never seen (a run without the wait missed the DELETE)."
         }
     }
 }
