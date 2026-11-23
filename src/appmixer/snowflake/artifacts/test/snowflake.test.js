@@ -17,11 +17,12 @@ const auth = require('../../auth');
 class CancelError extends Error {}
 
 // Fake driver: records every statement and every destroy() call.
-function installFakeDriver({ rows = [], error = null, connectError = null } = {}) {
+function installFakeDriver({ rows = [], error = null, connectError = null, failOn = null } = {}) {
 
-    const log = { statements: [], destroyed: 0, options: null };
+    const log = { statements: [], destroyed: 0, connections: 0, options: null };
     sdk.createConnection = options => {
         log.options = options;
+        log.connections++;
         let up = false;
         return {
             connect: cb => {
@@ -36,7 +37,7 @@ function installFakeDriver({ rows = [], error = null, connectError = null } = {}
             },
             execute: ({ sqlText, binds, streamResult, complete }) => {
                 log.statements.push({ sqlText, binds });
-                if (error) return complete(error);
+                if (error && (!failOn || failOn.test(sqlText))) return complete(error);
                 if (streamResult) {
                     return complete(null, { streamRows: () => Readable.from(rows.map(r => ({ ...r }))) });
                 }
@@ -71,7 +72,9 @@ describe('snowflake common', () => {
 
     it('keeps simple identifiers and quotes the rest', () => {
 
-        assert.strictEqual(identifier('USERS'), 'USERS');
+        assert.strictEqual(identifier('USERS'), '"USERS"');
+        assert.strictEqual(identifier('ORDER'), '"ORDER"');
+        assert.strictEqual(identifier('users'), 'users');
         assert.strictEqual(identifier('my_table$1'), 'my_table$1');
         assert.strictEqual(identifier('My Table'), '"My Table"');
         assert.strictEqual(identifier('x"; DROP TABLE T; --'), '"x""; DROP TABLE T; --"');
@@ -149,7 +152,40 @@ describe('snowflake common', () => {
         const log = installFakeDriver();
         await new SnowflakeDB().createStream(contextFor({}), 'PUBLIC', 'Order Items');
         assert.strictEqual(log.statements[0].sqlText,
-            'CREATE OR REPLACE STREAM PUBLIC."Order Items_change_1234abcd" ON TABLE PUBLIC."Order Items"');
+            'CREATE OR REPLACE STREAM "PUBLIC"."Order Items_change_1234abcd" ON TABLE "PUBLIC"."Order Items"');
+        await new SnowflakeDB().createStream(contextFor({}), 'PUBLIC', 'USERS');
+        // same stream name as before 1.3.0: the lower-case part keeps it unquoted
+        assert.strictEqual(log.statements[1].sqlText,
+            'CREATE OR REPLACE STREAM "PUBLIC".USERS_change_1234abcd ON TABLE "PUBLIC"."USERS"');
+    });
+});
+
+describe('snowflake consumeStream', () => {
+
+    it('reads and advances the stream in one transaction on one connection', async () => {
+
+        const log = installFakeDriver({ rows: [] });
+        const data = await new SnowflakeDB().consumeStream(contextFor({}, {}), 'PUBLIC', 'USERS', 'insert');
+        assert.deepStrictEqual(data, []);
+        assert.deepStrictEqual(log.statements.map(s => s.sqlText), [
+            'BEGIN',
+            'SELECT * FROM "PUBLIC".USERS_change_1234abcd WHERE METADATA$ACTION = \'INSERT\' AND METADATA$ISUPDATE = FALSE',
+            'INSERT INTO "PUBLIC"."USERS" SELECT * EXCLUDE (METADATA$ACTION, METADATA$ISUPDATE, METADATA$ROW_ID) ' +
+                'FROM "PUBLIC".USERS_change_1234abcd WHERE FALSE',
+            'COMMIT'
+        ]);
+        // one login per tick, closed afterwards
+        assert.strictEqual(log.connections, 1);
+        assert.strictEqual(log.destroyed, 1);
+    });
+
+    it('rolls back and closes the connection when a statement fails', async () => {
+
+        const failure = new Error('Stream is stale');
+        const log = installFakeDriver({ failOn: /^SELECT/, error: failure });
+        await assert.rejects(new SnowflakeDB().consumeStream(contextFor({}, {}), 'PUBLIC', 'USERS', 'delete'), failure);
+        assert.deepStrictEqual(log.statements.map(s => s.sqlText.split(' ')[0]), ['BEGIN', 'SELECT', 'ROLLBACK']);
+        assert.strictEqual(log.destroyed, 1);
     });
 });
 
@@ -190,6 +226,18 @@ describe('snowflake Query', () => {
         assert.deepStrictEqual(context.sent[1], { data: { fileId: 'file-1' }, port: 'out' });
     });
 
+    it('closes the connection when saving the file fails', async () => {
+
+        const log = installFakeDriver({ rows: [{ A: 1 }] });
+        const context = contextFor({ query: 'SELECT A', outputType: 'file' });
+        context.saveFileStream = async () => {
+            throw new Error('storage full');
+        };
+        await assert.rejects(Query.receive(context), /storage full/);
+        await new Promise(resolve => setImmediate(resolve));
+        assert.strictEqual(log.destroyed, 1);
+    });
+
     it('rejects an unknown output type', async () => {
 
         installFakeDriver();
@@ -204,7 +252,7 @@ describe('snowflake AddRow', () => {
         const log = installFakeDriver();
         const context = contextFor({ schema: 'PUBLIC', table: 'USERS', NAME: 'O\'Brien\'); DROP TABLE USERS; --', 'Last Name': 'X' });
         await AddRow.receive(context);
-        assert.strictEqual(log.statements[0].sqlText, 'INSERT INTO PUBLIC.USERS (NAME, "Last Name") VALUES (?, ?)');
+        assert.strictEqual(log.statements[0].sqlText, 'INSERT INTO "PUBLIC"."USERS" ("NAME", "Last Name") VALUES (?, ?)');
         assert.deepStrictEqual(log.statements[0].binds, ['O\'Brien\'); DROP TABLE USERS; --', 'X']);
         assert.deepStrictEqual(context.sent[0].data, { row: { NAME: 'O\'Brien\'); DROP TABLE USERS; --', 'Last Name': 'X' } });
     });

@@ -49,7 +49,15 @@ module.exports = {
             const queryStream = await snowflake.getRows(context.auth, statement);
             const stringifier = stringify({ header: true });
             queryStream.on('error', err => stringifier.destroy(err));
-            const savedFile = await context.saveFileStream('result.csv', queryStream.pipe(stringifier));
+            let savedFile;
+            try {
+                savedFile = await context.saveFileStream('result.csv', queryStream.pipe(stringifier));
+            } catch (err) {
+                // pipe() does not end the source when the destination fails; destroying it closes
+                // the Snowflake connection.
+                queryStream.destroy();
+                throw err;
+            }
             return context.sendJson({ fileId: savedFile.fileId }, 'out');
         }
 

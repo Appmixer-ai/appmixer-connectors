@@ -6,9 +6,10 @@ const snowflake = require('snowflake-sdk');
 // Driver errors still reach the components through the callbacks.
 snowflake.configure({ logLevel: 'OFF' });
 
-// An unquoted Snowflake identifier. Names in this form are used as they are, so tables picked
-// from the inspector (and names typed in any case) keep resolving the way they always did.
-// Anything else is double-quoted, which makes it a single identifier and cannot break the statement.
+// Names are double-quoted, which makes each one a single identifier that cannot break the statement.
+// Snowflake stores unquoted names in upper case, so quoting an upper-case name changes nothing
+// (and makes reserved words such as ORDER usable). A plain name typed in lower or mixed case stays
+// unquoted, so it keeps resolving case-insensitively the way it always did.
 const SIMPLE_IDENTIFIER = /^[A-Za-z_][A-Za-z0-9_$]*$/;
 
 function identifier(name, label = 'Identifier') {
@@ -16,7 +17,10 @@ function identifier(name, label = 'Identifier') {
     if (typeof name !== 'string' || !name.trim()) {
         throw new Error(`${label} is required.`);
     }
-    return SIMPLE_IDENTIFIER.test(name) ? name : `"${name.replace(/"/g, '""')}"`;
+    if (SIMPLE_IDENTIFIER.test(name) && name !== name.toUpperCase()) {
+        return name;
+    }
+    return `"${name.replace(/"/g, '""')}"`;
 }
 
 // Bind values must be strings, numbers, booleans, dates or null.
@@ -58,6 +62,20 @@ function destroy(connection) {
     });
 }
 
+// Run one statement on an open connection and resolve with all its rows.
+function run(connection, { sqlText, binds }) {
+
+    return new Promise((resolve, reject) => {
+        connection.execute({
+            sqlText,
+            binds: binds && binds.length ? binds.map(bindValue) : undefined,
+            // Never throw from this callback: an exception here would end the whole process.
+            complete: (err, stmt, rows) => (err ? reject(err) : resolve(rows || []))
+        });
+    });
+}
+
+// Sessions are never kept or shared: every call opens its own connection and closes it when done.
 class SnowflakeDB {
 
     async getConnection(auth) {
@@ -70,26 +88,29 @@ class SnowflakeDB {
     }
 
     /**
+     * Open a connection, pass it to fn and close it when fn settles.
+     * @param {Object} auth
+     * @param {function(Object): Promise<*>} fn
+     */
+    async withConnection(auth, fn) {
+
+        const connection = await this.getConnection(auth);
+        try {
+            return await fn(connection);
+        } finally {
+            await destroy(connection);
+        }
+    }
+
+    /**
      * Run a statement and resolve with all its rows. The connection is closed afterwards.
      * @param {Object} auth
      * @param {{ sqlText: string, binds?: Array }} statement
      * @returns {Promise<Array<Object>>}
      */
-    async collectRows(auth, { sqlText, binds }) {
+    async collectRows(auth, statement) {
 
-        const connection = await this.getConnection(auth);
-        try {
-            return await new Promise((resolve, reject) => {
-                connection.execute({
-                    sqlText,
-                    binds: binds && binds.length ? binds.map(bindValue) : undefined,
-                    // Never throw from this callback: an exception here would end the whole process.
-                    complete: (err, stmt, rows) => (err ? reject(err) : resolve(rows || []))
-                });
-            });
-        } finally {
-            await destroy(connection);
-        }
+        return this.withConnection(auth, connection => run(connection, statement));
     }
 
     /**
@@ -180,17 +201,27 @@ class SnowflakeDB {
                 where = ' WHERE METADATA$ACTION = \'DELETE\' AND METADATA$ISUPDATE = FALSE';
                 break;
         }
-        const data = await this.collectRows(context.auth, { sqlText: `SELECT * FROM ${stream}${where}` });
-        if (data.length) {
-            // Reading a stream does not move its offset; only DML that reads the stream does.
-            // This INSERT reads the stream and inserts nothing, which advances the offset.
-            // eslint-disable-next-line no-unused-vars
-            const { METADATA$ACTION, METADATA$ISUPDATE, METADATA$ROW_ID, ...columns } = data[0];
-            const columnList = Object.keys(columns).map(column => identifier(column, 'Column')).join(', ');
-            const sqlText = `INSERT INTO ${identifier(schema, 'Schema')}.${identifier(table, 'Table')} SELECT ${columnList} FROM ${stream} WHERE FALSE`;
-            await this.collectRows(context.auth, { sqlText });
-        }
-        return data;
+        // Reading a stream does not move its offset; only DML that reads the stream does. The INSERT
+        // below reads the stream and inserts nothing, which advances the offset. Both run in one
+        // transaction: a change committed by someone else in the meantime stays in the stream for
+        // the next tick (outside a transaction the INSERT would skip it). The offset advances on
+        // every tick, also when no row matched, so changes this trigger ignores (for example
+        // deletes for New Row) do not pile up until the stream goes stale.
+        return this.withConnection(context.auth, async connection => {
+            await run(connection, { sqlText: 'BEGIN' });
+            try {
+                const data = await run(connection, { sqlText: `SELECT * FROM ${stream}${where}` });
+                await run(connection, {
+                    sqlText: `INSERT INTO ${identifier(schema, 'Schema')}.${identifier(table, 'Table')} ` +
+                        `SELECT * EXCLUDE (METADATA$ACTION, METADATA$ISUPDATE, METADATA$ROW_ID) FROM ${stream} WHERE FALSE`
+                });
+                await run(connection, { sqlText: 'COMMIT' });
+                return data;
+            } catch (err) {
+                await run(connection, { sqlText: 'ROLLBACK' }).catch(() => {});
+                throw err;
+            }
+        });
     }
 
     async dropStream(context, schema, table) {
