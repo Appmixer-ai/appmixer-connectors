@@ -110,10 +110,11 @@
                 "onError": "stopFlow"
             }
         },
-        "cbee16df-5c6a-4cb0-8b3b-e1da16d07e32": {
-            "type": "appmixer.microsoft.mail.MakeApiCall",
-            "x": 720,
-            "y": 0,
+        "a179ef44-cfa9-4711-9b36-b539f91d4dba": {
+            "type": "appmixer.utils.files.SaveFile",
+            "x": 600,
+            "y": 200,
+            "version": "1.0.3",
             "source": {
                 "in": {
                     "c536abc1-cc3f-42af-a868-ac4c7946276b": [
@@ -128,19 +129,61 @@
                             "email": {
                                 "type": "json2new",
                                 "modifiers": {
-                                    "url": {
-                                        "6fa74a5c-2465-4f89-ba68-f6dd9872ab8c": {
+                                    "filename": {},
+                                    "mimetype": {},
+                                    "content": {},
+                                    "contentEncoding": {}
+                                },
+                                "lambda": {
+                                    "filename": "e2e-test.txt",
+                                    "mimetype": "text/plain",
+                                    "content": "Hello E2E attachment",
+                                    "contentEncoding": "utf8"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "cbee16df-5c6a-4cb0-8b3b-e1da16d07e32": {
+            "type": "appmixer.microsoft.mail.AddAttachment",
+            "x": 720,
+            "y": 0,
+            "source": {
+                "in": {
+                    "a179ef44-cfa9-4711-9b36-b539f91d4dba": [
+                        "file"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "a179ef44-cfa9-4711-9b36-b539f91d4dba": {
+                            "file": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "messageId": {
+                                        "3235223c-5190-45c9-a1ee-8ac9d53bd9c4": {
                                             "variable": "$.c536abc1-cc3f-42af-a868-ac4c7946276b.email.id",
                                             "functions": []
                                         }
                                     },
-                                    "method": {},
-                                    "body": {}
+                                    "fileId": {
+                                        "462ba18f-7959-40dc-a88f-4aee1d961845": {
+                                            "variable": "$.a179ef44-cfa9-4711-9b36-b539f91d4dba.file.fileId",
+                                            "functions": []
+                                        }
+                                    }
                                 },
                                 "lambda": {
-                                    "url": "me/messages/{{{6fa74a5c-2465-4f89-ba68-f6dd9872ab8c}}}/attachments",
-                                    "method": "POST",
-                                    "body": "{\"@odata.type\":\"#microsoft.graph.fileAttachment\",\"name\":\"e2e-test.txt\",\"contentType\":\"text/plain\",\"contentBytes\":\"SGVsbG8gRTJFIGF0dGFjaG1lbnQ=\"}"
+                                    "messageId": "{{{3235223c-5190-45c9-a1ee-8ac9d53bd9c4}}}",
+                                    "fileId": "{{{462ba18f-7959-40dc-a88f-4aee1d961845}}}"
                                 }
                             }
                         }
@@ -266,8 +309,12 @@
                                 "type": "json2new",
                                 "modifiers": {
                                     "expression": {
-                                        "23a52237-4cca-49d1-ba43-80c649795e39": {
-                                            "variable": "$.cbee16df-5c6a-4cb0-8b3b-e1da16d07e32.out.status",
+                                        "cb283916-72cb-4356-9ef8-0ba83515d2ba": {
+                                            "variable": "$.cbee16df-5c6a-4cb0-8b3b-e1da16d07e32.out.id",
+                                            "functions": []
+                                        },
+                                        "d58b6187-ea3a-484d-ad05-33a6e2b3762e": {
+                                            "variable": "$.cbee16df-5c6a-4cb0-8b3b-e1da16d07e32.out.name",
                                             "functions": []
                                         }
                                     }
@@ -277,7 +324,12 @@
                                         "AND": [
                                             {
                                                 "assertion": "notEmpty",
-                                                "field": "{{{23a52237-4cca-49d1-ba43-80c649795e39}}}"
+                                                "field": "{{{cb283916-72cb-4356-9ef8-0ba83515d2ba}}}"
+                                            },
+                                            {
+                                                "assertion": "equal",
+                                                "field": "{{{d58b6187-ea3a-484d-ad05-33a6e2b3762e}}}",
+                                                "expected": "e2e-test.txt"
                                             }
                                         ]
                                     }
@@ -439,7 +491,7 @@
             }
         },
         "dc4de5d0-e160-4267-90ec-cb31178030fc": {
-            "type": "appmixer.microsoft.mail.MakeApiCall",
+            "type": "appmixer.microsoft.mail.DeleteEmail",
             "x": 1920,
             "y": 0,
             "source": {
@@ -456,17 +508,15 @@
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
-                                    "url": {
-                                        "e3757b44-1a94-4c02-9c27-624ea596ad4e": {
+                                    "messageId": {
+                                        "45928e3b-30ee-43dc-a6c8-4e1055510363": {
                                             "variable": "$.c536abc1-cc3f-42af-a868-ac4c7946276b.email.id",
                                             "functions": []
                                         }
-                                    },
-                                    "method": {}
+                                    }
                                 },
                                 "lambda": {
-                                    "url": "me/messages/{{{e3757b44-1a94-4c02-9c27-624ea596ad4e}}}",
-                                    "method": "DELETE"
+                                    "messageId": "{{{45928e3b-30ee-43dc-a6c8-4e1055510363}}}"
                                 }
                             }
                         }
@@ -502,15 +552,7 @@
                                 "type": "json2new",
                                 "modifiers": {
                                     "recipients": {},
-                                    "testCase": {
-                                        "064be9f2-fefb-4cfc-bc26-4b9bb6893b5f": {
-                                            "functions": [
-                                                {
-                                                    "name": "g_flowName"
-                                                }
-                                            ]
-                                        }
-                                    },
+                                    "testCase": {},
                                     "result": {
                                         "e71a4d42-e6a6-49f9-9131-92fe03e72d39": {
                                             "variable": "$.97650b3f-b45b-4e59-a3fc-c5216d7ca473.out",
@@ -520,7 +562,7 @@
                                 },
                                 "lambda": {
                                     "recipients": "test@appmixer.ai",
-                                    "testCase": "{{{064be9f2-fefb-4cfc-bc26-4b9bb6893b5f}}}",
+                                    "testCase": "E2E Microsoft Mail - Attachments Metadata",
                                     "result": "{{{e71a4d42-e6a6-49f9-9131-92fe03e72d39}}}"
                                 }
                             }
