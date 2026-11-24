@@ -282,11 +282,11 @@ async function acknowledge(context, id, doneIndex, entry) {
 
     const isAwaitingAck = cursor => cursor && cursor.index === doneIndex && !cursor.acked;
 
-    // Cheap check before taking the lock; repeated under it.
-    if (!isAwaitingAck(await peekCursor(context, id))) {
-        return;
-    }
-
+    // No check before taking the lock: the item goes out (sendJson) before its cursor is written, so a
+    // fast loop body can acknowledge it while the cursor still points at the previous item. Read
+    // without the lock, such an acknowledgement looked stale and was dropped, and the item waited for
+    // the item timeout (seen under load: 40 loops at once). The sender holds the lock until the cursor
+    // is written, so under the lock the cursor is always current.
     const delay = await withLock(context, id, async () => {
         const current = await loadCursor(context, id);
         if (!isAwaitingAck(current)) {

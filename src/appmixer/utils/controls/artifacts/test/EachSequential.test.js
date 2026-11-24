@@ -2,7 +2,7 @@
 
 const assert = require('assert');
 const sinon = require('sinon');
-const { createMockContext } = require('../../../../../../test/utils');
+const { createMockContext, createMutexLock } = require('../../../../../../test/utils');
 
 const Each = require('../../Each/Each');
 const ContinueEach = require('../../ContinueEach/ContinueEach');
@@ -23,6 +23,10 @@ function createHarness() {
     const timeouts = [];
     const cleared = [];
     const triggered = [];
+    // A real mutex shared by every context, like the engine's context.lock.
+    const lockFn = createMutexLock();
+    // Called (not awaited) when Each emits an item - lets a test run the loop body concurrently.
+    const hooks = { onItem: null };
 
     // The engine's POST /flows/{flowId}/components/{componentId} - the webhook URL of Each.
     const callAppmixer = async ({ endPoint, method, body }) => {
@@ -55,7 +59,15 @@ function createHarness() {
             stateSet: sinon.spy(async (key, value) => { flowState[key] = value; }),
             stateUnset: sinon.spy(async key => { delete flowState[key]; })
         };
-        context.sendJson = sinon.spy(async (content, port) => { sent.push({ content, port }); });
+        context.lock = sinon.spy(lockFn);
+        context.sendJson = sinon.spy(async (content, port) => {
+            sent.push({ content, port });
+            if (port === 'item' && hooks.onItem) {
+                hooks.onItem(content);
+                // Let the loop body run before Each goes on to write the cursor.
+                await new Promise(resolve => setImmediate(resolve));
+            }
+        });
         context.setTimeout = sinon.spy(async (content, ms) => {
             const timeoutId = `timeout-${timeouts.length}`;
             timeouts.push({ timeoutId, content, ms });
@@ -66,7 +78,7 @@ function createHarness() {
     };
 
     return {
-        state, flowState, sent, timeouts, cleared, triggered,
+        state, flowState, sent, timeouts, cleared, triggered, hooks,
         start: (content, id) => Each.receive(createContext({ in: { content } }, id)),
         // The webhook delivery runs in a NEW context (a different context.id), like in the engine.
         ack: (id, index, result) => Each.receive(
@@ -200,6 +212,24 @@ describe('Each Component - sequential mode', () => {
         assert.deepStrictEqual(h.dones()[0].result, [null, { v: 'b' }, { v: 'c' }]);
     });
 
+    it('should not drop an acknowledgement that arrives before the cursor is written', async () => {
+        const h = createHarness();
+        const pending = [];
+        // A loop body faster than the cursor write: it acknowledges the item right after sendJson.
+        h.hooks.onItem = item => pending.push(h.ack(item.correlationId, item.index, { v: item.value }));
+
+        await h.start({ list: ['a', 'b', 'c'], sequential: true });
+        for (let i = 0; i < 10 && pending.length; i++) {
+            await Promise.all(pending.splice(0));
+        }
+
+        assert.deepStrictEqual(h.items().map(i => i.value), ['a', 'b', 'c']);
+        assert.deepStrictEqual(h.dones(), [{
+            count: 3, correlationId: 'each-run-1', result: [{ v: 'a' }, { v: 'b' }, { v: 'c' }]
+        }]);
+        assert.deepStrictEqual(h.flowState, {});
+    });
+
     it('should keep many concurrent loops out of the component state (#3159)', async () => {
         const h = createHarness();
         const loops = Array.from({ length: 50 }, (_, n) => `run-${n}`);
@@ -287,15 +317,17 @@ describe('Each Component - sequential mode', () => {
             assert.deepStrictEqual(h.state, {});
         });
 
-        it('should ignore a stale acknowledgement without touching the legacy loop', async () => {
+        it('should ignore a stale acknowledgement of a legacy loop', async () => {
             const h = createHarness();
             seedLegacyLoop(h);
 
             await h.ack('each-run-1', 2);
 
+            // Moved to flow state, but still waiting for item 0.
             assert.strictEqual(h.items().length, 0);
-            assert.strictEqual(h.state['each-run-1'].index, 0);
-            assert.deepStrictEqual(h.state['items:each-run-1'], ['a', 'b', 'c']);
+            assert.deepStrictEqual(h.state, {});
+            assert.strictEqual(h.flowState['each-cursor:each-run-1'].index, 0);
+            assert.deepStrictEqual(h.flowState['each-items:each-run-1'], ['a', 'b', 'c']);
         });
 
         it('should not restart a legacy loop when the engine re-delivers `in`', async () => {
