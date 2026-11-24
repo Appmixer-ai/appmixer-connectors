@@ -1,0 +1,596 @@
+{
+    "name": "E2E Utils Controls - Each sequential concurrent loops",
+    "description": "8 sequential loops of 15 items (~1.2 KB each) run at the same time on ONE Each (started by a parallel Each), each with a loop body of varying latency. Every loop must finish with its Result complete and in item order, and with the outer item still resolvable. Regression test for components#3159 (Each kept every running loop in its single component state document).",
+    "flow": {
+        "dbf8863e-b0a8-4d2f-a9ab-524a5c91478a": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {},
+            "config": {},
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "26066687-dcb7-4fda-9f92-b522183a0f6e": {
+            "type": "appmixer.utils.controls.SetVariable",
+            "x": 288,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "dbf8863e-b0a8-4d2f-a9ab-524a5c91478a": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "dbf8863e-b0a8-4d2f-a9ab-524a5c91478a": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "variables": {}
+                                },
+                                "lambda": {
+                                    "variables": {
+                                        "ADD": [
+                                            {
+                                                "type": "text",
+                                                "name": "loops",
+                                                "text": "[1,2,3,4,5,6,7,8]"
+                                            },
+                                            {
+                                                "type": "text",
+                                                "name": "items",
+                                                "text": "15"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "0133f03d-5cab-4372-a30a-7a7d4f908318": {
+            "type": "appmixer.utils.controls.Each",
+            "label": "Each (parallel) - start loops",
+            "x": 512,
+            "y": 16,
+            "version": "1.5.2",
+            "source": {
+                "in": {
+                    "26066687-dcb7-4fda-9f92-b522183a0f6e": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "26066687-dcb7-4fda-9f92-b522183a0f6e": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "list": {
+                                        "cab69d1d-23f1-498a-9c4b-2c9c3ea0e209": {
+                                            "variable": "$.26066687-dcb7-4fda-9f92-b522183a0f6e.out.loops",
+                                            "functions": []
+                                        }
+                                    },
+                                    "sequential": {},
+                                    "itemTimeout": {}
+                                },
+                                "lambda": {
+                                    "list": "{{{cab69d1d-23f1-498a-9c4b-2c9c3ea0e209}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "cf4a1552-c990-4c58-b060-b3877f867256": {
+            "type": "appmixer.utils.controls.CodeBlock",
+            "label": "Build list (1.2 KB items)",
+            "x": 736,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "0133f03d-5cab-4372-a30a-7a7d4f908318": [
+                        "item"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "0133f03d-5cab-4372-a30a-7a7d4f908318": {
+                            "item": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "code": {},
+                                    "variables": {
+                                        "76cf9d25-abab-4aa1-9e19-564cac1d176d": {
+                                            "variable": "$.0133f03d-5cab-4372-a30a-7a7d4f908318.item.value",
+                                            "functions": []
+                                        },
+                                        "962012c8-6094-4cbc-b30f-2deaf70c8539": {
+                                            "variable": "$.26066687-dcb7-4fda-9f92-b522183a0f6e.out.items",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "code": "JSON.stringify((function () { var loop = Number($data.loop); var n = Number($data.items); var pad = new Array(1201).join(\"x\"); var list = []; for (var i = 0; i < n; i++) { list.push({ loop: loop, i: i, payload: pad }); } return list; })())",
+                                    "variables": {
+                                        "ADD": [
+                                            {
+                                                "type": "text",
+                                                "name": "loop",
+                                                "text": "{{{76cf9d25-abab-4aa1-9e19-564cac1d176d}}}"
+                                            },
+                                            {
+                                                "type": "text",
+                                                "name": "items",
+                                                "text": "{{{962012c8-6094-4cbc-b30f-2deaf70c8539}}}"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "2af48387-2435-4b9d-9317-22f70079ffc6": {
+            "type": "appmixer.utils.controls.Each",
+            "label": "Each (sequential) - concurrent loops",
+            "x": 960,
+            "y": 16,
+            "version": "1.5.2",
+            "source": {
+                "in": {
+                    "cf4a1552-c990-4c58-b060-b3877f867256": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "cf4a1552-c990-4c58-b060-b3877f867256": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "list": {
+                                        "a3ac56b7-3e9d-43a8-b551-29df1eea6e0e": {
+                                            "variable": "$.cf4a1552-c990-4c58-b060-b3877f867256.out.result",
+                                            "functions": []
+                                        }
+                                    },
+                                    "sequential": {},
+                                    "itemTimeout": {}
+                                },
+                                "lambda": {
+                                    "list": "{{{a3ac56b7-3e9d-43a8-b551-29df1eea6e0e}}}",
+                                    "sequential": true,
+                                    "itemTimeout": 120
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "dcb8589c-e75c-463b-b075-3c4c3cf07422": {
+            "type": "appmixer.utils.controls.CodeBlock",
+            "label": "Work (varying latency)",
+            "x": 1184,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "2af48387-2435-4b9d-9317-22f70079ffc6": [
+                        "item"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "2af48387-2435-4b9d-9317-22f70079ffc6": {
+                            "item": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "code": {},
+                                    "variables": {
+                                        "1640cf53-77d9-43dc-bc80-4880c20e13d5": {
+                                            "variable": "$.2af48387-2435-4b9d-9317-22f70079ffc6.item.value",
+                                            "functions": [
+                                                {
+                                                    "name": "g_stringify"
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "code": "JSON.stringify((function () { var v = JSON.parse($data.value); var loop = Number(v.loop); var i = Number(v.i); var end = Date.now() + ((loop * 7 + i * 13) % 40); while (Date.now() < end) {} return loop + \"-\" + i; })())",
+                                    "variables": {
+                                        "ADD": [
+                                            {
+                                                "type": "text",
+                                                "name": "value",
+                                                "text": "{{{1640cf53-77d9-43dc-bc80-4880c20e13d5}}}"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "7cb624be-376f-4126-8a58-be782e74b9a3": {
+            "type": "appmixer.utils.controls.ContinueEach",
+            "x": 1408,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "dcb8589c-e75c-463b-b075-3c4c3cf07422": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "dcb8589c-e75c-463b-b075-3c4c3cf07422": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "correlationId": {
+                                        "4f0579e5-2063-4eaf-8c16-4077fa0c8c86": {
+                                            "variable": "$.2af48387-2435-4b9d-9317-22f70079ffc6.item.correlationId",
+                                            "functions": []
+                                        }
+                                    },
+                                    "index": {
+                                        "4f5bb73b-efd3-447c-bd37-83d7250b5142": {
+                                            "variable": "$.2af48387-2435-4b9d-9317-22f70079ffc6.item.index",
+                                            "functions": []
+                                        }
+                                    },
+                                    "result": {
+                                        "7d9f0d76-dceb-4641-ab92-2128e34a9c52": {
+                                            "variable": "$.dcb8589c-e75c-463b-b075-3c4c3cf07422.out.result",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "correlationId": "{{{4f0579e5-2063-4eaf-8c16-4077fa0c8c86}}}",
+                                    "index": "{{{4f5bb73b-efd3-447c-bd37-83d7250b5142}}}",
+                                    "result": {
+                                        "ADD": [
+                                            {
+                                                "name": "id",
+                                                "value": "{{{7d9f0d76-dceb-4641-ab92-2128e34a9c52}}}"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "fc1e0220-4ebe-4b14-a6ff-d8f3e7a83b26": {
+            "type": "appmixer.utils.controls.CodeBlock",
+            "label": "Check loop result",
+            "x": 1184,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "2af48387-2435-4b9d-9317-22f70079ffc6": [
+                        "done"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "2af48387-2435-4b9d-9317-22f70079ffc6": {
+                            "done": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "code": {},
+                                    "variables": {
+                                        "a36785bb-d78f-4e1a-b83d-91dc68625064": {
+                                            "variable": "$.0133f03d-5cab-4372-a30a-7a7d4f908318.item.value",
+                                            "functions": []
+                                        },
+                                        "33f0f838-d37d-4ef0-b2b3-829090bd0994": {
+                                            "variable": "$.26066687-dcb7-4fda-9f92-b522183a0f6e.out.items",
+                                            "functions": []
+                                        },
+                                        "b7edf9ab-727f-4369-a0ca-7e07d1e15b53": {
+                                            "variable": "$.2af48387-2435-4b9d-9317-22f70079ffc6.done.count",
+                                            "functions": []
+                                        },
+                                        "321e2b0b-6699-47b6-81d2-cfb5e5fa4223": {
+                                            "variable": "$.2af48387-2435-4b9d-9317-22f70079ffc6.done.result",
+                                            "functions": [
+                                                {
+                                                    "name": "g_stringify"
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "code": "JSON.stringify((function () { var loop = Number($data.loop); var n = Number($data.items); var r = JSON.parse($data.result); var ok = Array.isArray(r) && r.length === n && Number($data.count) === n; for (var i = 0; ok && i < n; i++) { ok = r[i] && r[i].id === loop + \"-\" + i; } return (ok ? \"ok-\" : \"bad-\") + loop; })())",
+                                    "variables": {
+                                        "ADD": [
+                                            {
+                                                "type": "text",
+                                                "name": "loop",
+                                                "text": "{{{a36785bb-d78f-4e1a-b83d-91dc68625064}}}"
+                                            },
+                                            {
+                                                "type": "text",
+                                                "name": "items",
+                                                "text": "{{{33f0f838-d37d-4ef0-b2b3-829090bd0994}}}"
+                                            },
+                                            {
+                                                "type": "text",
+                                                "name": "count",
+                                                "text": "{{{b7edf9ab-727f-4369-a0ca-7e07d1e15b53}}}"
+                                            },
+                                            {
+                                                "type": "text",
+                                                "name": "result",
+                                                "text": "{{{321e2b0b-6699-47b6-81d2-cfb5e5fa4223}}}"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "54d40491-1a55-4c76-b388-ae07cd58861b": {
+            "type": "appmixer.utils.controls.JoinEach",
+            "label": "Join all loops",
+            "x": 1408,
+            "y": 144,
+            "version": "1.1.2",
+            "source": {
+                "in": {
+                    "fc1e0220-4ebe-4b14-a6ff-d8f3e7a83b26": [
+                        "out"
+                    ]
+                },
+                "count": {
+                    "0133f03d-5cab-4372-a30a-7a7d4f908318": [
+                        "done"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "fc1e0220-4ebe-4b14-a6ff-d8f3e7a83b26": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "correlationId": {
+                                        "351d295b-e608-4b94-9af0-130295710f5a": {
+                                            "variable": "$.0133f03d-5cab-4372-a30a-7a7d4f908318.item.correlationId",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "correlationId": "{{{351d295b-e608-4b94-9af0-130295710f5a}}}"
+                                }
+                            }
+                        }
+                    },
+                    "count": {
+                        "0133f03d-5cab-4372-a30a-7a7d4f908318": {
+                            "done": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "count": {
+                                        "794b8cde-88c2-4a34-a41f-7d5d8e24b992": {
+                                            "variable": "$.0133f03d-5cab-4372-a30a-7a7d4f908318.done.count",
+                                            "functions": []
+                                        }
+                                    },
+                                    "correlationId": {
+                                        "a356e125-3290-4a5a-8087-851a26d60033": {
+                                            "variable": "$.0133f03d-5cab-4372-a30a-7a7d4f908318.done.correlationId",
+                                            "functions": []
+                                        }
+                                    },
+                                    "timeout": {},
+                                    "timeoutValue": {}
+                                },
+                                "lambda": {
+                                    "count": "{{{794b8cde-88c2-4a34-a41f-7d5d8e24b992}}}",
+                                    "correlationId": "{{{a356e125-3290-4a5a-8087-851a26d60033}}}",
+                                    "timeout": true,
+                                    "timeoutValue": 300
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "23127cec-ea3a-431a-86dd-59db17834f70": {
+            "type": "appmixer.utils.test.Assert",
+            "label": "Assert every loop finished in order",
+            "x": 1632,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "54d40491-1a55-4c76-b388-ae07cd58861b": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "54d40491-1a55-4c76-b388-ae07cd58861b": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "c3ec5153-bf49-4431-8035-6688d96b09e9": {
+                                            "variable": "$.54d40491-1a55-4c76-b388-ae07cd58861b.out.items",
+                                            "functions": [
+                                                {
+                                                    "name": "g_stringify"
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{c3ec5153-bf49-4431-8035-6688d96b09e9}}}",
+                                                "assertion": "regex",
+                                                "regex": "^(?=[\\s\\S]*\"ok-1\")(?=[\\s\\S]*\"ok-2\")(?=[\\s\\S]*\"ok-3\")(?=[\\s\\S]*\"ok-4\")(?=[\\s\\S]*\"ok-5\")(?=[\\s\\S]*\"ok-6\")(?=[\\s\\S]*\"ok-7\")(?=[\\s\\S]*\"ok-8\")(?![\\s\\S]*\"bad-)"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "d0b74782-5214-4ed0-bc9e-be82f52b0bf8": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 1856,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "23127cec-ea3a-431a-86dd-59db17834f70": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 600
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "49220fd8-9940-4638-9188-e1cc1999abc3": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 2080,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "d0b74782-5214-4ed0-bc9e-be82f52b0bf8": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "d0b74782-5214-4ed0-bc9e-be82f52b0bf8": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "6c5e6a11-0301-4144-9b5a-10469297bee3": {
+                                            "variable": "$.d0b74782-5214-4ed0-bc9e-be82f52b0bf8.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E Utils Controls - Each sequential concurrent loops",
+                                    "result": "{{{6c5e6a11-0301-4144-9b5a-10469297bee3}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        }
+    }
+}
