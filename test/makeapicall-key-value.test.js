@@ -27,10 +27,12 @@ const PROFILE_INFO = {
 };
 
 // Any auth or config field reads as a placeholder: a URL for *Url/*Uri/*Domain fields, a token otherwise.
+// `tenant` is a hostname that Qlik Sense validates (only *.qlikcloud.com / *.qlikcloudgov.com).
 const auth = new Proxy({}, {
     get: (target, prop) => {
         if (typeof prop !== 'string') return undefined;
         if (prop === 'profileInfo') return PROFILE_INFO;
+        if (prop === 'tenant') return 'kv-test.eu.qlikcloud.com';
         return /(url|uri|domain)$/i.test(prop) ? 'https://kv-test.example.com' : 'kv-test';
     }
 });
