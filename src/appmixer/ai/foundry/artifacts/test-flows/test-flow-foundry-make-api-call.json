@@ -1,0 +1,345 @@
+{
+    "name": "E2E AI Foundry - Make API Call",
+    "type": "automation",
+    "flow": {
+        "36512d28-ebc4-4835-8bc1-4f018c891cbd": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 48,
+            "version": "1.0.0",
+            "source": {},
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {}
+        },
+        "07c77a25-b477-4033-a6cb-a8881e0cbc0a": {
+            "type": "appmixer.utils.controls.SetVariable",
+            "x": 272,
+            "y": 48,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "36512d28-ebc4-4835-8bc1-4f018c891cbd": [
+                        "out"
+                    ]
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "36512d28-ebc4-4835-8bc1-4f018c891cbd": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "variables": {}
+                                },
+                                "lambda": {
+                                    "variables": {
+                                        "ADD": [
+                                            {
+                                                "type": "text",
+                                                "name": "model",
+                                                "text": "DeepSeek-V4-Flash"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "3d34f550-5ef7-4c5d-bd08-b1cbb2934375": {
+            "type": "appmixer.ai.foundry.MakeApiCall",
+            "x": 480,
+            "y": 48,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "07c77a25-b477-4033-a6cb-a8881e0cbc0a": [
+                        "out"
+                    ]
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "07c77a25-b477-4033-a6cb-a8881e0cbc0a": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "url": {},
+                                    "method": {},
+                                    "parameters": {},
+                                    "headers": {}
+                                },
+                                "lambda": {
+                                    "url": "/models",
+                                    "method": "GET",
+                                    "parameters": "[]",
+                                    "headers": "[{\"key\":\"Accept\",\"value\":\"application/json\"}]"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "77ef1d4c-3bb3-4ee1-9d18-3aca383b8bc6": {
+            "type": "appmixer.ai.foundry.MakeApiCall",
+            "x": 480,
+            "y": 176,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "07c77a25-b477-4033-a6cb-a8881e0cbc0a": [
+                        "out"
+                    ]
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "07c77a25-b477-4033-a6cb-a8881e0cbc0a": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "url": {},
+                                    "method": {},
+                                    "parameters": {},
+                                    "headers": {},
+                                    "body": {
+                                        "b19935b8-2656-4ec7-a3b4-743f7bb6cad5": {
+                                            "variable": "$.07c77a25-b477-4033-a6cb-a8881e0cbc0a.out.model",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "url": "/chat/completions",
+                                    "method": "POST",
+                                    "parameters": "[]",
+                                    "headers": "[{\"key\":\"Content-Type\",\"value\":\"application/json\"}]",
+                                    "body": "{\"model\":\"{{{b19935b8-2656-4ec7-a3b4-743f7bb6cad5}}}\",\"messages\":[{\"role\":\"user\",\"content\":\"Reply with the single word OK.\"}],\"max_tokens\":10}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "a1266686-bbce-413c-8399-088b24676682": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 688,
+            "y": 48,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "3d34f550-5ef7-4c5d-bd08-b1cbb2934375": [
+                        "out"
+                    ]
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "3d34f550-5ef7-4c5d-bd08-b1cbb2934375": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "ce16a3ad-9e19-4c36-b2be-9b1ee96773c0": {
+                                            "variable": "$.3d34f550-5ef7-4c5d-bd08-b1cbb2934375.out.status",
+                                            "functions": []
+                                        },
+                                        "45c5aba9-bf40-436a-b003-9a7639976894": {
+                                            "variable": "$.3d34f550-5ef7-4c5d-bd08-b1cbb2934375.out.body",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$.object"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{ce16a3ad-9e19-4c36-b2be-9b1ee96773c0}}}",
+                                                "assertion": "regex",
+                                                "regex": "^200$"
+                                            },
+                                            {
+                                                "field": "{{{45c5aba9-bf40-436a-b003-9a7639976894}}}",
+                                                "assertion": "equal",
+                                                "expected": "list"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "bdbd4d49-f9d0-4afa-a7ed-7231599bfb2d": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 688,
+            "y": 176,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "77ef1d4c-3bb3-4ee1-9d18-3aca383b8bc6": [
+                        "out"
+                    ]
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "77ef1d4c-3bb3-4ee1-9d18-3aca383b8bc6": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "c41bc2f8-afe5-4f9a-8896-5fdb36bffb9f": {
+                                            "variable": "$.77ef1d4c-3bb3-4ee1-9d18-3aca383b8bc6.out.status",
+                                            "functions": []
+                                        },
+                                        "5ec21ecb-e21c-4ec0-a59e-f92d9a2b3009": {
+                                            "variable": "$.77ef1d4c-3bb3-4ee1-9d18-3aca383b8bc6.out.body",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$.choices[0].message.content"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{c41bc2f8-afe5-4f9a-8896-5fdb36bffb9f}}}",
+                                                "assertion": "regex",
+                                                "regex": "^200$"
+                                            },
+                                            {
+                                                "field": "{{{5ec21ecb-e21c-4ec0-a59e-f92d9a2b3009}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "e61124aa-df33-4ac0-bd96-a4d43524782e": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 896,
+            "y": 48,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "a1266686-bbce-413c-8399-088b24676682": [
+                        "out"
+                    ],
+                    "bdbd4d49-f9d0-4afa-a7ed-7231599bfb2d": [
+                        "out"
+                    ]
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "properties": {
+                    "timeout": 180
+                }
+            }
+        },
+        "466ef374-13b9-4716-b927-ec5c8efe5da0": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1104,
+            "y": 48,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "e61124aa-df33-4ac0-bd96-a4d43524782e": [
+                        "out"
+                    ]
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "properties": {},
+                "transform": {
+                    "in": {
+                        "e61124aa-df33-4ac0-bd96-a4d43524782e": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "9358755f-b00f-44a2-8c08-f4016f52ec41": {
+                                            "variable": "$.e61124aa-df33-4ac0-bd96-a4d43524782e.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.com",
+                                    "testCase": "E2E AI Foundry - Make API Call",
+                                    "result": "{{{9358755f-b00f-44a2-8c08-f4016f52ec41}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

@@ -1,0 +1,587 @@
+{
+    "name": "E2E Snowflake - table rows",
+    "description": "End-to-end test for the Snowflake connector: creates a table with Query, finds it with ListSchemas, ListTables and ListColumns, inserts a row with AddRow, reads it back with Query and a bound parameter (a name with an apostrophe, which would break a concatenated statement) and drops the table.",
+    "flow": {
+        "f1e50144-c621-428f-876a-d4a2ffe15d2a": {
+            "type": "appmixer.utils.controls.OnStart",
+            "label": "OnStart",
+            "x": 64,
+            "y": 16,
+            "source": {},
+            "version": "1.0.0",
+            "config": {},
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "6636d675-3074-4b59-8aae-c40331d5ed9b": {
+            "type": "appmixer.snowflake.db.Query",
+            "label": "Create Table",
+            "x": 272,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "f1e50144-c621-428f-876a-d4a2ffe15d2a": ["out"]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "f1e50144-c621-428f-876a-d4a2ffe15d2a": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "query": {},
+                                    "outputType": {}
+                                },
+                                "lambda": {
+                                    "query": "CREATE OR REPLACE TABLE TEST.APPMIXER_E2E_ROWS (ID NUMBER, NAME VARCHAR)",
+                                    "outputType": "rows"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "526d03f5-ff54-4fb3-a3bd-8246552a3d9c": {
+            "type": "appmixer.utils.test.Assert",
+            "label": "Assert Create Table",
+            "x": 480,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "6636d675-3074-4b59-8aae-c40331d5ed9b": ["out"]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "6636d675-3074-4b59-8aae-c40331d5ed9b": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "603cf98f-aac5-4a31-849b-64a2f0f25bc5": {
+                                            "variable": "$.6636d675-3074-4b59-8aae-c40331d5ed9b.out.rows",
+                                            "functions": [
+                                                { "name": "g_jsonPath", "params": [{ "value": "$[0].status" }] }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{603cf98f-aac5-4a31-849b-64a2f0f25bc5}}}",
+                                                "assertion": "regex",
+                                                "regex": "APPMIXER_E2E_ROWS successfully created"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "b5f9f27d-0dde-457b-a82e-88df4ddc4b35": {
+            "type": "appmixer.snowflake.db.ListSchemas",
+            "label": "ListSchemas",
+            "x": 480,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "6636d675-3074-4b59-8aae-c40331d5ed9b": ["out"]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "6636d675-3074-4b59-8aae-c40331d5ed9b": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {},
+                                "lambda": {}
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "b80c5925-c32c-4d60-8f28-86146f1ba2a7": {
+            "type": "appmixer.utils.test.Assert",
+            "label": "Assert ListSchemas",
+            "x": 688,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "b5f9f27d-0dde-457b-a82e-88df4ddc4b35": ["schemas"]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "b5f9f27d-0dde-457b-a82e-88df4ddc4b35": {
+                            "schemas": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "11608d2f-204d-4a0f-97f6-34a44e21921c": {
+                                            "variable": "$.b5f9f27d-0dde-457b-a82e-88df4ddc4b35.schemas.schemas",
+                                            "functions": [
+                                                { "name": "g_jsonPath", "params": [{ "value": "$[?(@.name=='TEST')].name" }] }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{11608d2f-204d-4a0f-97f6-34a44e21921c}}}",
+                                                "assertion": "equal",
+                                                "expected": "TEST"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "c67b56b9-8ac3-4094-a69d-205a4537d12f": {
+            "type": "appmixer.snowflake.db.ListTables",
+            "label": "ListTables",
+            "x": 688,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "b5f9f27d-0dde-457b-a82e-88df4ddc4b35": ["schemas"]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "b5f9f27d-0dde-457b-a82e-88df4ddc4b35": {
+                            "schemas": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "schema": {}
+                                },
+                                "lambda": {
+                                    "schema": "TEST"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "67244b5e-840f-41eb-b2a6-8a686917a2a6": {
+            "type": "appmixer.utils.test.Assert",
+            "label": "Assert ListTables",
+            "x": 896,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "c67b56b9-8ac3-4094-a69d-205a4537d12f": ["tables"]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "c67b56b9-8ac3-4094-a69d-205a4537d12f": {
+                            "tables": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "0b7e2c32-faeb-414d-8e53-13e9e299b6f7": {
+                                            "variable": "$.c67b56b9-8ac3-4094-a69d-205a4537d12f.tables.tables",
+                                            "functions": [
+                                                { "name": "g_jsonPath", "params": [{ "value": "$[?(@.name=='APPMIXER_E2E_ROWS')].name" }] }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{0b7e2c32-faeb-414d-8e53-13e9e299b6f7}}}",
+                                                "assertion": "equal",
+                                                "expected": "APPMIXER_E2E_ROWS"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "8fbab5d7-203e-49b2-8a4b-68be856e235e": {
+            "type": "appmixer.snowflake.db.ListColumns",
+            "label": "ListColumns",
+            "x": 896,
+            "y": 400,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "c67b56b9-8ac3-4094-a69d-205a4537d12f": ["tables"]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "c67b56b9-8ac3-4094-a69d-205a4537d12f": {
+                            "tables": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "schema": {},
+                                    "table": {}
+                                },
+                                "lambda": {
+                                    "schema": "TEST",
+                                    "table": "APPMIXER_E2E_ROWS"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "95375b26-b528-4220-9698-8dfabcfffb4a": {
+            "type": "appmixer.utils.test.Assert",
+            "label": "Assert ListColumns",
+            "x": 1104,
+            "y": 400,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "8fbab5d7-203e-49b2-8a4b-68be856e235e": ["out"]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "8fbab5d7-203e-49b2-8a4b-68be856e235e": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "543c30bc-772b-4940-ad04-43f6fd377dd4": {
+                                            "variable": "$.8fbab5d7-203e-49b2-8a4b-68be856e235e.out.columns",
+                                            "functions": [
+                                                { "name": "g_jsonPath", "params": [{ "value": "$[?(@.column_name=='NAME')].column_name" }] }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{543c30bc-772b-4940-ad04-43f6fd377dd4}}}",
+                                                "assertion": "equal",
+                                                "expected": "NAME"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "e962b09c-48cc-48bb-91e3-80c8b08f5447": {
+            "type": "appmixer.snowflake.db.AddRow",
+            "label": "AddRow",
+            "x": 1104,
+            "y": 528,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "8fbab5d7-203e-49b2-8a4b-68be856e235e": ["out"]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "8fbab5d7-203e-49b2-8a4b-68be856e235e": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "schema": {},
+                                    "table": {},
+                                    "ID": {},
+                                    "NAME": {}
+                                },
+                                "lambda": {
+                                    "schema": "TEST",
+                                    "table": "APPMIXER_E2E_ROWS",
+                                    "ID": "1",
+                                    "NAME": "e2e-row O'Brien"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "f7d104cb-3be9-4b20-a211-3ed43516cab0": {
+            "type": "appmixer.utils.test.Assert",
+            "label": "Assert AddRow",
+            "x": 1312,
+            "y": 528,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "e962b09c-48cc-48bb-91e3-80c8b08f5447": ["out"]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "e962b09c-48cc-48bb-91e3-80c8b08f5447": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "69c3e809-b9ac-4aad-92cc-07b6b492acb5": {
+                                            "variable": "$.e962b09c-48cc-48bb-91e3-80c8b08f5447.out.row",
+                                            "functions": [
+                                                { "name": "g_jsonPath", "params": [{ "value": "$.NAME" }] }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{69c3e809-b9ac-4aad-92cc-07b6b492acb5}}}",
+                                                "assertion": "equal",
+                                                "expected": "e2e-row O'Brien"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "373dd539-5470-4d8d-aa89-6c140797b7f3": {
+            "type": "appmixer.snowflake.db.Query",
+            "label": "Select Row",
+            "x": 1312,
+            "y": 656,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "e962b09c-48cc-48bb-91e3-80c8b08f5447": ["out"]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "e962b09c-48cc-48bb-91e3-80c8b08f5447": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "query": {},
+                                    "parameters": {},
+                                    "outputType": {}
+                                },
+                                "lambda": {
+                                    "query": "SELECT ID, NAME FROM TEST.APPMIXER_E2E_ROWS WHERE NAME = ?",
+                                    "parameters": {
+                                        "ADD": [
+                                            { "value": "e2e-row O'Brien" }
+                                        ]
+                                    },
+                                    "outputType": "rows"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "2651f40f-7787-44df-ba57-8457e6cbba50": {
+            "type": "appmixer.utils.test.Assert",
+            "label": "Assert Select Row",
+            "x": 1520,
+            "y": 656,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "373dd539-5470-4d8d-aa89-6c140797b7f3": ["out"]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "373dd539-5470-4d8d-aa89-6c140797b7f3": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "4ee7708d-fea5-4d80-b57f-65956fb7fcd9": {
+                                            "variable": "$.373dd539-5470-4d8d-aa89-6c140797b7f3.out.rows",
+                                            "functions": [
+                                                { "name": "g_jsonPath", "params": [{ "value": "$[0].NAME" }] }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{4ee7708d-fea5-4d80-b57f-65956fb7fcd9}}}",
+                                                "assertion": "equal",
+                                                "expected": "e2e-row O'Brien"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "a87609e3-edf0-4bb5-9a5e-08d4f0ba21c7": {
+            "type": "appmixer.utils.test.AfterAll",
+            "label": "AfterAll",
+            "x": 1728,
+            "y": 656,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "526d03f5-ff54-4fb3-a3bd-8246552a3d9c": ["out"],
+                    "b80c5925-c32c-4d60-8f28-86146f1ba2a7": ["out"],
+                    "67244b5e-840f-41eb-b2a6-8a686917a2a6": ["out"],
+                    "95375b26-b528-4220-9698-8dfabcfffb4a": ["out"],
+                    "f7d104cb-3be9-4b20-a211-3ed43516cab0": ["out"],
+                    "2651f40f-7787-44df-ba57-8457e6cbba50": ["out"]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 180
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "ff159424-5a5b-4554-ae85-c01176012e6a": {
+            "type": "appmixer.snowflake.db.Query",
+            "label": "Drop Table",
+            "x": 1936,
+            "y": 656,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "a87609e3-edf0-4bb5-9a5e-08d4f0ba21c7": ["out"]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "a87609e3-edf0-4bb5-9a5e-08d4f0ba21c7": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "query": {},
+                                    "outputType": {}
+                                },
+                                "lambda": {
+                                    "query": "DROP TABLE IF EXISTS TEST.APPMIXER_E2E_ROWS",
+                                    "outputType": "rows"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "4818bb94-0476-42dd-b3bc-bebbdfa81668": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "label": "ProcessE2EResults",
+            "x": 2144,
+            "y": 656,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "ff159424-5a5b-4554-ae85-c01176012e6a": ["out"]
+                }
+            },
+            "config": {
+                "properties": {
+                    "successStoreId": "64f6f1f9193228000754082f",
+                    "failedStoreId": "64f6f1f0193228000754082e"
+                },
+                "transform": {
+                    "in": {
+                        "ff159424-5a5b-4554-ae85-c01176012e6a": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "f98b280a-e1ec-47a9-8dbe-2c9f79c45532": {
+                                            "variable": "$.a87609e3-edf0-4bb5-9a5e-08d4f0ba21c7.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E Snowflake - table rows",
+                                    "result": "{{{f98b280a-e1ec-47a9-8dbe-2c9f79c45532}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        }
+    },
+    "notes": {
+        "2781b311-a4b0-4fc4-a35a-484eb8fc5a30": {
+            "x": 64,
+            "y": 208,
+            "width": 352,
+            "height": 320,
+            "content": "## ⚠️ Test data assumption\n\nThe connected account's **Database** must be writable and have a `TEST` schema. The built-in `SNOWFLAKE` database is read-only, so use your own database (for example `APPMIXER_E2E`).\n\nThe flow creates `TEST.APPMIXER_E2E_ROWS` with `CREATE OR REPLACE`, so a table left over from an aborted run is replaced, and drops it after AfterAll."
+        }
+    }
+}

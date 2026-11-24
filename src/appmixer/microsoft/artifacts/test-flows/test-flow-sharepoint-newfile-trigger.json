@@ -233,12 +233,15 @@
         },
         "d4042240-5b13-4ebc-a3b7-1d6288baac13": {
             "type": "appmixer.utils.test.AfterAll",
-            "x": 700,
+            "x": 1000,
             "y": 400,
             "version": "1.0.0",
             "source": {
                 "in": {
                     "5ea644e4-39f9-47be-b660-bd3318e6aabb": [
+                        "out"
+                    ],
+                    "a3d9e1f7-4c2b-4e8a-9f16-7b5c0d2e8a41": [
                         "out"
                     ]
                 }
@@ -254,8 +257,8 @@
             }
         },
         "e90b2c10-6434-4f59-8f5a-fecb04adaf35": {
-            "type": "appmixer.microsoft.sharepoint.MakeApiCall",
-            "x": 1000,
+            "type": "appmixer.microsoft.sharepoint.DeleteFileOrFolder",
+            "x": 1300,
             "y": 400,
             "version": "1.0.0",
             "source": {
@@ -272,17 +275,19 @@
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
-                                    "url": {
+                                    "siteId": {},
+                                    "driveId": {},
+                                    "itemId": {
                                         "a67d8a76-1f8d-4a30-bab5-f6b8e70389af": {
                                             "variable": "$.1f8a4c46-addb-4fbd-8e08-e8a11b46dd6d.file.id",
                                             "functions": []
                                         }
-                                    },
-                                    "method": {}
+                                    }
                                 },
                                 "lambda": {
-                                    "url": "/drives/b!BxU-FIqjQUqH2il5TIEBG0HSUairrrVDhCbcjMh-k1HpggReNXwPS6zVg-Y8qiuC/items/{{{a67d8a76-1f8d-4a30-bab5-f6b8e70389af}}}",
-                                    "method": "DELETE"
+                                    "siteId": "appmixer.sharepoint.com,143e1507-a38a-4a41-87da-29794c81011b,a851d241-aeab-43b5-8426-dc8cc87e9351",
+                                    "driveId": "b!BxU-FIqjQUqH2il5TIEBG0HSUairrrVDhCbcjMh-k1HpggReNXwPS6zVg-Y8qiuC",
+                                    "itemId": "{{{a67d8a76-1f8d-4a30-bab5-f6b8e70389af}}}"
                                 }
                             }
                         }
@@ -296,7 +301,7 @@
         },
         "7b282f52-6ad7-4359-a14e-1da3dd28fac3": {
             "type": "appmixer.utils.test.ProcessE2EResults",
-            "x": 1300,
+            "x": 1600,
             "y": 400,
             "version": "1.0.0",
             "source": {
@@ -337,6 +342,98 @@
                 "autoRetry": false,
                 "onError": "stopFlow"
             }
+        },
+        "5f0b7c2e-9d41-4a6b-b8e3-1c7a2d9f6e05": {
+            "type": "appmixer.microsoft.sharepoint.MakeApiCall",
+            "x": 400,
+            "y": 250,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "d098c65f-7c7d-4de2-901a-2448eb8a26ba": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "d098c65f-7c7d-4de2-901a-2448eb8a26ba": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "url": {},
+                                    "method": {}
+                                },
+                                "lambda": {
+                                    "url": "/drives/b!BxU-FIqjQUqH2il5TIEBG0HSUairrrVDhCbcjMh-k1HpggReNXwPS6zVg-Y8qiuC",
+                                    "method": "GET"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "a3d9e1f7-4c2b-4e8a-9f16-7b5c0d2e8a41": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 700,
+            "y": 250,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "5f0b7c2e-9d41-4a6b-b8e3-1c7a2d9f6e05": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "5f0b7c2e-9d41-4a6b-b8e3-1c7a2d9f6e05": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "e6b2f4a8-1d3c-4f7e-a95b-3c8d0e2f6b17": {
+                                            "variable": "$.5f0b7c2e-9d41-4a6b-b8e3-1c7a2d9f6e05.out.response",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$.id"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{e6b2f4a8-1d3c-4f7e-a95b-3c8d0e2f6b17}}}",
+                                                "assertion": "equal",
+                                                "expected": "b!BxU-FIqjQUqH2il5TIEBG0HSUairrrVDhCbcjMh-k1HpggReNXwPS6zVg-Y8qiuC"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
         }
     },
     "notes": {
@@ -345,7 +442,7 @@
             "y": 640,
             "width": 900,
             "height": 260,
-            "content": "## ⚠️ Test data assumption\n\nThe trigger and the upload are both scoped to `E2E-Delta-Triggers/NewFile` in the **Documents** library of the\n**Stg Appmixer QA** SharePoint site. That folder must exist — create it with\n`appmixer.microsoft.sharepoint.CreateFolder` (parent path `E2E-Delta-Triggers`) on a fresh tenant.\n\nScoping matters: cleanup deletes the item id the trigger reported, so nothing other than this\nflow may write text files into that folder while the flow runs.\n\n`Wait 1m` before the upload lets the Microsoft Graph subscription propagate — do not remove it.\nGraph webhook notifications take up to ~5 minutes, hence the 600 s AfterAll timeout.\n\nThe account needs `Files.Read.All`, `Sites.Read.All`, `Subscription.Read.All` (trigger),\n`Files.ReadWrite.All` (upload) and `Sites.ReadWrite.All` (cleanup Make API Call)."
+            "content": "## ⚠️ Test data assumption\n\nThe trigger and the upload are both scoped to `E2E-Delta-Triggers/NewFile` in the **Documents** library of the\n**Stg Appmixer QA** SharePoint site. That folder must exist — create it with\n`appmixer.microsoft.sharepoint.CreateFolder` (parent path `E2E-Delta-Triggers`) on a fresh tenant.\n\nScoping matters: cleanup deletes the item id the trigger reported, so nothing other than this\nflow may write text files into that folder while the flow runs.\n\n`Wait 1m` before the upload lets the Microsoft Graph subscription propagate — do not remove it.\nGraph webhook notifications take up to ~5 minutes, hence the 600 s AfterAll timeout.\n\nThe account needs `Files.Read.All`, `Sites.Read.All`, `Subscription.Read.All` (trigger),\n`Files.ReadWrite.All` (upload, cleanup Delete File or Folder). The Make API Call branch is a read-only\n`GET /drives/{id}` that keeps Make API Call covered (it declares every SharePoint scope); AfterAll waits for both asserts."
         }
     }
 }

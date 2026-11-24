@@ -8,6 +8,12 @@ module.exports = {
     async receive(context) {
 
         const { schema, table } = context.messages.in.content;
+        if (!schema) {
+            throw new context.CancelError('Schema is required!');
+        }
+        if (!table) {
+            throw new context.CancelError('Table is required!');
+        }
         const columns = await snowflake.listColumns(context.auth, schema, table);
         return context.sendJson({ columns }, 'out');
     },

@@ -1,0 +1,157 @@
+{
+    "name": "appmixer.surveymonkey.core.MakeApiCall",
+    "label": "Make API Call",
+    "description": "Perform an arbitrary authorized call to the SurveyMonkey API v3 of the connected account, for operations without a dedicated component. The Authorization header is added automatically.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:surveymonkey",
+        "scope": [
+            "users_read",
+            "surveys_read",
+            "surveys_write",
+            "collectors_read",
+            "collectors_write",
+            "contacts_read",
+            "contacts_write",
+            "responses_read",
+            "responses_read_detail",
+            "webhooks_read",
+            "webhooks_write"
+        ]
+    },
+    "quota": {
+        "manager": "appmixer:surveymonkey",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "url": {
+                        "type": "string"
+                    },
+                    "method": {
+                        "type": "string",
+                        "enum": [
+                            "GET",
+                            "POST",
+                            "PUT",
+                            "PATCH",
+                            "DELETE"
+                        ]
+                    },
+                    "headers": {
+                        "type": "string"
+                    },
+                    "parameters": {
+                        "type": "string"
+                    },
+                    "body": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "url",
+                    "method"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "url": {
+                        "type": "text",
+                        "index": 1,
+                        "label": "API Endpoint Path",
+                        "tooltip": "A path on the SurveyMonkey API host of your account, including the API version, for example <code>/v3/surveys</code>. A full URL is accepted only when it points at that host (<code>https://api.surveymonkey.com</code>, or the EU or Canadian host for accounts in those data centers); any other host is rejected so your credential is never sent elsewhere."
+                    },
+                    "method": {
+                        "type": "select",
+                        "index": 2,
+                        "label": "HTTP Method",
+                        "defaultValue": "GET",
+                        "tooltip": "The HTTP method for the API call.",
+                        "options": [
+                            {
+                                "label": "GET",
+                                "value": "GET"
+                            },
+                            {
+                                "label": "POST",
+                                "value": "POST"
+                            },
+                            {
+                                "label": "PUT",
+                                "value": "PUT"
+                            },
+                            {
+                                "label": "PATCH",
+                                "value": "PATCH"
+                            },
+                            {
+                                "label": "DELETE",
+                                "value": "DELETE"
+                            }
+                        ]
+                    },
+                    "parameters": {
+                        "type": "key-value",
+                        "keyLabel": "Key",
+                        "valueLabel": "Value",
+                        "addLabel": "Add item",
+                        "removeLabel": "Remove item",
+                        "index": 3,
+                        "label": "Query Parameters",
+                        "tooltip": "Optional query parameters, for example <code>per_page</code>."
+                    },
+                    "body": {
+                        "type": "textarea",
+                        "index": 4,
+                        "label": "Request Body",
+                        "tooltip": "Optional JSON request body, for example <code>{\"title\": \"My Survey\"}</code>."
+                    },
+                    "headers": {
+                        "type": "key-value",
+                        "keyLabel": "Key",
+                        "valueLabel": "Value",
+                        "addLabel": "Add item",
+                        "removeLabel": "Remove item",
+                        "index": 5,
+                        "label": "Request Headers",
+                        "tooltip": "Optional additional headers. The Authorization header is set automatically."
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "statusCode": {
+                        "type": "integer",
+                        "title": "Status Code",
+                        "example": 200
+                    },
+                    "headers": {
+                        "type": "object",
+                        "title": "Response Headers",
+                        "properties": {}
+                    },
+                    "body": {
+                        "type": "object",
+                        "title": "Response Body",
+                        "properties": {}
+                    }
+                }
+            }
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZmlsbD0iIzAwQkY2RiIgZD0iTTIxLjE2MjcgMTMuMTg0M2EyLjg1MTcgMi44NTE3IDAgMCAwLS42Nzc4LjA4NDFjLS44NDM4LTMuMzE4MS0zLjU0NzgtNS44Mzc2LTYuOTE3Mi02LjQ0NTJhOC4zOTMzIDguMzkzMyAwIDAgMC0uNDQwNy0uMDY2OGMuMDI1OS0uODI1NS4wNjM2LTEuNzc5MSAxLjI3ODEtMi42MzY5bC0uMTkxOC0uNDgzOHMtMi4zNzA4LjczNDktMi42MzkxIDIuNzU5OGMtLjExNzUtLjU1MDctMS4yMjA5LTEuMjQwMy0xLjc2NzMtMS4zNzA3bC0uMjcxNy40Mzg0cy43MjQyLjM2MjEuOTAwOSAxLjM2MWMtMy4zNjkxLjYwNTYtNi4wNzQzIDMuMTIyOS02LjkyMDQgNi40Mzk4LTEuNTE5NC0uMzc2LTMuMDU2LjU1MDgtMy40MzIgMi4wNzAzLS4zNzYgMS41MTk0LjU1MDggMy4wNTYgMi4wNzAzIDMuNDMyYTIuODM0NiAyLjgzNDYgMCAwIDAgMS43MTk1LS4xMTQyIDguNjgyMSA4LjY4MjEgMCAwIDAgLjkyMDMgMS43MTIzbDIuMzUyNC0xLjU4NTJjLS42MzgxLS44MDcxLTEuMDIwNi0xLjk4ODQtMS4wODczLTMuMTczNi0uMDctMS4yOTMxLjI0NDYtMi41NzU1IDEuMDcwMS0zLjMyOTggMS43MDE2LTEuNDQ4MyAzLjU1NjEtLjc4NzcgNC43MTM1LjYwMDJoLjMxMTRjMS4xNjA2LTEuMzg4IDMuMDE3My0yLjA0NzUgNC43MTM1LS42MDAyLjgyNDQuNzU0MyAxLjE0MDEgMi4wMzc4IDEuMDcwMSAzLjMyOTgtLjA2NTYgMS4xODUzLS40NDgxIDIuMzY2NC0xLjA4NzMgMy4xNzM2bDIuMzUyNCAxLjU4NTJhOC42ODU0IDguNjg1NCAwIDAgMCAuOTIyNC0xLjcxMjNjMS40NTUxLjU3NTEgMy4xMDA5LS4xMzg0IDMuNjc2LTEuNTkzNXMtLjEzODQtMy4xMDA5LTEuNTkzNS0zLjY3NmEyLjgzNDkgMi44MzQ5IDAgMCAwLTEuMDQ0OC0uMTk4M3pNMi43ODYxIDE2Ljg0ODJhLjgzNjIuODM2MiAwIDAgMSAwLTEuNjcyNC44NDQyLjg0NDIgMCAwIDEgLjQ2ODguMTQ0NGMuMDA3MS40MzkxLjAzNjkuODc3Ni4wODk0IDEuMzEzNi0uMTQ3Mi4xMzQ2LS4zNzM4LjIzMjktLjU1ODIuMjE0NHptMTguNDI3MyAwYS44MzYxLjgzNjEgMCAwIDEtLjU1ODItLjIxNTUgMTIuNjc5IDEyLjY3OSAwIDAgMCAuMDg5NC0xLjMxMzYuODM1Mi44MzUyIDAgMCAxIDEuMzA0LjY5MjljLjAwNzguNDU3NC0uMzgyMy44NTgxLS44MzUyLjgzNjJ6Ii8+PC9zdmc+"
+}

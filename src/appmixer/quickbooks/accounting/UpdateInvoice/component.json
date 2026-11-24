@@ -1,0 +1,123 @@
+{
+    "name": "appmixer.quickbooks.accounting.UpdateInvoice",
+    "label": "Update Invoice",
+    "author": "Appmixer <info@appmixer.com>",
+    "description": "Update an existing invoice. Only the fields you fill in are changed; the current Sync Token is read automatically.",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:quickbooks",
+        "scope": [
+            "com.intuit.quickbooks.accounting",
+            "openid",
+            "profile",
+            "email",
+            "phone",
+            "address"
+        ]
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "invoiceId": {
+                        "type": "string"
+                    },
+                    "dueDate": {
+                        "type": "string"
+                    },
+                    "txnDate": {
+                        "type": "string"
+                    },
+                    "docNumber": {
+                        "type": "string",
+                        "maxLength": 21
+                    },
+                    "billEmail": {
+                        "type": "string"
+                    },
+                    "customerMemo": {
+                        "type": "string"
+                    },
+                    "privateNote": {
+                        "type": "string",
+                        "maxLength": 4000
+                    },
+                    "lineItemsJSON": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "invoiceId"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "invoiceId": {
+                        "type": "text",
+                        "index": 1,
+                        "label": "Invoice ID",
+                        "tooltip": "ID of the invoice to update, e.g. the <b>Id</b> output of Create Invoice or New Invoice."
+                    },
+                    "dueDate": {
+                        "type": "date-time",
+                        "config": {
+                            "format": "YYYY-MM-DD",
+                            "enableTime": false
+                        },
+                        "index": 2,
+                        "label": "Due Date",
+                        "tooltip": "Date when the payment of the invoice is due."
+                    },
+                    "txnDate": {
+                        "type": "date-time",
+                        "config": {
+                            "format": "YYYY-MM-DD",
+                            "enableTime": false
+                        },
+                        "index": 3,
+                        "label": "Invoice Date",
+                        "tooltip": "Date of the invoice (TxnDate)."
+                    },
+                    "docNumber": {
+                        "type": "text",
+                        "index": 4,
+                        "label": "Doc Number",
+                        "tooltip": "Reference number of the invoice. Maximum 21 characters."
+                    },
+                    "billEmail": {
+                        "type": "text",
+                        "index": 5,
+                        "label": "Billing Email",
+                        "tooltip": "E-mail address the invoice is sent to."
+                    },
+                    "customerMemo": {
+                        "type": "textarea",
+                        "index": 6,
+                        "label": "Message on Invoice",
+                        "tooltip": "Message to the customer, shown on the invoice (CustomerMemo)."
+                    },
+                    "privateNote": {
+                        "type": "textarea",
+                        "index": 7,
+                        "label": "Private Note",
+                        "tooltip": "Internal note, not shown to the customer. Maximum 4000 characters."
+                    },
+                    "lineItemsJSON": {
+                        "type": "textarea",
+                        "index": 8,
+                        "label": "Line Items JSON",
+                        "tooltip": "Replaces <b>all</b> lines of the invoice with this JSON array. Leave empty to keep the current lines. Example: [{ \"DetailType\": \"SalesItemLineDetail\", \"Amount\": 50, \"Description\": \"My service\", \"SalesItemLineDetail\": { \"Qty\": 2 } }]. See the <a target='_blank' rel='noopener noreferrer' href='https://developer.intuit.com/app/developer/qbo/docs/api/accounting/most-commonly-used/invoice#sparse-update-an-invoice'>QuickBooks documentation</a>."
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out"
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNTAwIDI1MDAiPjxjaXJjbGUgY3g9IjEyNTAiIGN5PSIxMjUwIiByPSIxMjUwIiBmaWxsPSIjMmNhMDFjIi8+PHBhdGggZmlsbD0iI2ZmZiIgZD0iTTMwMS4zIDEyNDkuNmMuMSAyODIuNiAyMjggNTEyLjQgNTEwLjYgNTE0LjloNzIuM3YtMTg4LjloLTcyLjNjLTE3NS4yIDQ3LjgtMzU1LjktNTUuNS00MDMuNi0yMzAuNy0uNC0xLjQtLjctMi44LTEuMS00LjItNDkuMS0xNzcuNSA1My43LTM2MS40IDIzMC42LTQxMi41aDM2LjFhMzIyIDMyMiAwIDAgMSAxMzcuNSAwSDk4N3YxMDAyLjljLS45IDEwNi4xIDg0LjQgMTkyLjkgMTkwLjUgMTkzLjlWNzI5LjZIODEzYy0yODQuNiAxLjUtNTE0IDIzMy40LTUxMi41IDUxOHYuMXptMTM4Ny41LTUxOS44aC03Mi4zdjE5OC45aDcyLjNjMTc0LjgtNDcuNyAzNTUuMSA1NS4zIDQwMi44IDIzMCAuNCAxLjMuNyAyLjcgMS4xIDQgNDguOCAxNzYuOS01My43IDM2MC4xLTIyOS45IDQxMS4xaC0zNi4xYTMyMiAzMjIgMCAwIDEtMTM3LjUgMGgtMTc1LjZWNTcxYy45LTEwNi4xLTg0LjQtMTkyLjktMTkwLjUtMTkzLjl2MTM5Ny40aDM2NC41YzI4Ny4xLTQuNSA1MTYuMi0yNDAuOCA1MTEuOC01MjcuOS00LjQtMjgwLjgtMjMwLjktNTA3LjQtNTExLjgtNTExLjh6Ii8+PC9zdmc+"
+}

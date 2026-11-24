@@ -123,6 +123,19 @@ module.exports = {
     },
 
     /**
+     * Turn an error Shopify would answer the same way on every attempt
+     * (invalid input, missing scope, unknown object, rejected mutation) into
+     * a CancelError; other errors are returned unchanged.
+     * @param {Context} context
+     * @param {Error} err
+     * @returns {Error}
+     */
+    asCancel(context, err) {
+
+        return permanentAsCancel(context, err);
+    },
+
+    /**
      * `(query, variables) => data` bound to the context — the shape the
      * gql-*.js resource modules take.
      * @param {Context} context

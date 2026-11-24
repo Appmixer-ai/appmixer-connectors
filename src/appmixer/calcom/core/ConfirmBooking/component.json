@@ -1,0 +1,293 @@
+{
+    "name": "appmixer.calcom.core.ConfirmBooking",
+    "label": "Confirm Booking",
+    "description": "Confirm a booking that waits for the host's confirmation (status pending). Only the owner of the booking can confirm it.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:calcom"
+    },
+    "quota": {
+        "manager": "appmixer:calcom",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "bookingUid": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "bookingUid"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "bookingUid": {
+                        "type": "text",
+                        "index": 1,
+                        "label": "Booking UID",
+                        "tooltip": "The UID of the pending booking. Use Find Bookings with status Unconfirmed to look it up."
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "schema": {
+                "type": "object",
+                "required": [
+                    "id",
+                    "uid",
+                    "title",
+                    "status",
+                    "start",
+                    "end",
+                    "duration",
+                    "eventTypeId",
+                    "hosts",
+                    "attendees",
+                    "createdAt"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "title": "Booking ID",
+                        "example": 4567890
+                    },
+                    "uid": {
+                        "type": "string",
+                        "title": "Booking UID",
+                        "example": "k3b7Xq9ZpR2mN8vT4wYc1a"
+                    },
+                    "title": {
+                        "type": "string",
+                        "title": "Title",
+                        "example": "30 Min Meeting between Jane Doe and John Smith"
+                    },
+                    "description": {
+                        "type": "string",
+                        "title": "Description",
+                        "example": "Quarterly planning call."
+                    },
+                    "status": {
+                        "type": "string",
+                        "title": "Status",
+                        "example": "accepted"
+                    },
+                    "start": {
+                        "type": "string",
+                        "title": "Start",
+                        "example": "2026-12-01T09:00:00.000Z",
+                        "format": "date-time"
+                    },
+                    "end": {
+                        "type": "string",
+                        "title": "End",
+                        "example": "2026-12-01T09:30:00.000Z",
+                        "format": "date-time"
+                    },
+                    "duration": {
+                        "type": "integer",
+                        "title": "Duration (Minutes)",
+                        "example": 30
+                    },
+                    "eventTypeId": {
+                        "type": "integer",
+                        "title": "Event Type ID",
+                        "example": 1234567
+                    },
+                    "eventType": {
+                        "type": "object",
+                        "title": "Event Type",
+                        "properties": {
+                            "id": {
+                                "type": "integer",
+                                "title": "Event Type.ID",
+                                "example": 1234567
+                            },
+                            "slug": {
+                                "type": "string",
+                                "title": "Event Type.Slug",
+                                "example": "30min"
+                            }
+                        }
+                    },
+                    "location": {
+                        "type": "string",
+                        "title": "Location",
+                        "example": "https://app.cal.com/video/k3b7Xq9ZpR2mN8vT4wYc1a"
+                    },
+                    "meetingUrl": {
+                        "type": "string",
+                        "title": "Meeting URL",
+                        "example": "https://app.cal.com/video/k3b7Xq9ZpR2mN8vT4wYc1a"
+                    },
+                    "absentHost": {
+                        "type": "boolean",
+                        "title": "Absent Host",
+                        "example": false
+                    },
+                    "hosts": {
+                        "type": "array",
+                        "title": "Hosts",
+                        "example": [
+                            {
+                                "id": 112233,
+                                "name": "Jane Doe",
+                                "email": "jane@example.com",
+                                "username": "jane",
+                                "timeZone": "Europe/Prague"
+                            }
+                        ],
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "id": {
+                                    "type": "integer",
+                                    "title": "Hosts.ID",
+                                    "example": 112233
+                                },
+                                "name": {
+                                    "type": "string",
+                                    "title": "Hosts.Name",
+                                    "example": "Jane Doe"
+                                },
+                                "email": {
+                                    "type": "string",
+                                    "title": "Hosts.Email",
+                                    "example": "jane@example.com"
+                                },
+                                "username": {
+                                    "type": "string",
+                                    "title": "Hosts.Username",
+                                    "example": "jane"
+                                },
+                                "timeZone": {
+                                    "type": "string",
+                                    "title": "Hosts.Time Zone",
+                                    "example": "Europe/Prague"
+                                }
+                            }
+                        }
+                    },
+                    "attendees": {
+                        "type": "array",
+                        "title": "Attendees",
+                        "example": [
+                            {
+                                "name": "John Smith",
+                                "email": "john@example.com",
+                                "timeZone": "America/New_York",
+                                "language": "en",
+                                "absent": false
+                            }
+                        ],
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "name": {
+                                    "type": "string",
+                                    "title": "Attendees.Name",
+                                    "example": "John Smith"
+                                },
+                                "email": {
+                                    "type": "string",
+                                    "title": "Attendees.Email",
+                                    "example": "john@example.com"
+                                },
+                                "timeZone": {
+                                    "type": "string",
+                                    "title": "Attendees.Time Zone",
+                                    "example": "America/New_York"
+                                },
+                                "language": {
+                                    "type": "string",
+                                    "title": "Attendees.Language",
+                                    "example": "en"
+                                },
+                                "phoneNumber": {
+                                    "type": "string",
+                                    "title": "Attendees.Phone Number",
+                                    "example": "+14155552671"
+                                },
+                                "absent": {
+                                    "type": "boolean",
+                                    "title": "Attendees.Absent",
+                                    "example": false
+                                }
+                            }
+                        }
+                    },
+                    "guests": {
+                        "type": "array",
+                        "title": "Guests",
+                        "items": {
+                            "type": "string"
+                        },
+                        "example": [
+                            "guest@example.com"
+                        ]
+                    },
+                    "cancellationReason": {
+                        "type": "string",
+                        "title": "Cancellation Reason",
+                        "example": "The attendee can no longer attend."
+                    },
+                    "cancelledByEmail": {
+                        "type": "string",
+                        "title": "Cancelled By Email",
+                        "example": "john@example.com"
+                    },
+                    "reschedulingReason": {
+                        "type": "string",
+                        "title": "Rescheduling Reason",
+                        "example": "Moved to the afternoon."
+                    },
+                    "rescheduledByEmail": {
+                        "type": "string",
+                        "title": "Rescheduled By Email",
+                        "example": "john@example.com"
+                    },
+                    "rescheduledFromUid": {
+                        "type": "string",
+                        "title": "Rescheduled From UID",
+                        "example": "h2c6Wp8YoQ1lM7uS3vXb0z"
+                    },
+                    "rescheduledToUid": {
+                        "type": "string",
+                        "title": "Rescheduled To UID",
+                        "example": "p4d8Zr0AqS3nO9wU5xYe2b"
+                    },
+                    "recurringBookingUid": {
+                        "type": "string",
+                        "title": "Recurring Booking UID",
+                        "example": "6f1c2d3e-4a5b-4c6d-8e7f-9a0b1c2d3e4f"
+                    },
+                    "createdAt": {
+                        "type": "string",
+                        "title": "Created At",
+                        "example": "2026-11-16T10:15:00.000Z",
+                        "format": "date-time"
+                    },
+                    "updatedAt": {
+                        "type": "string",
+                        "title": "Updated At",
+                        "example": "2026-11-16T10:15:00.000Z",
+                        "format": "date-time"
+                    }
+                }
+            }
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0OCA0OCI+PHJlY3Qgd2lkdGg9IjQ4IiBoZWlnaHQ9IjQ4IiByeD0iMTAiIGZpbGw9IiMyOTI5MjkiLz48ZyB0cmFuc2Zvcm09InRyYW5zbGF0ZSg0LjUgMTMuNSkiIGZpbGw9IiNmZmYiPjxwYXRoIGQ9Ik0xMC4wNTgyIDIwLjgxN0M0LjMyMTE1IDIwLjgxNyAwIDE2LjI3NjMgMCAxMC42NzA0QzAgNS4wNDU4OSA0LjEwMDUgMC40Njc3NzMgMTAuMDU4MiAwLjQ2Nzc3M0MxMy4yMjA5IDAuNDY3NzczIDE1LjQwOSAxLjQzOTQ1IDE3LjExOTEgMy42NjMxMUwxNC4zNjA5IDUuOTYxNTFDMTMuMjAyNSA0LjcyODIyIDExLjgwNSA0LjExMTU4IDEwLjA1ODIgNC4xMTE1OEM2LjE3ODMzIDQuMTExNTggNC4wNDUzMyA3LjA4MjY4IDQuMDQ1MzMgMTAuNjcwNEM0LjA0NTMzIDE0LjI1ODIgNi4zODA1OSAxNy4xNzMyIDEwLjA1ODIgMTcuMTczMkMxMS43ODY2IDE3LjE3MzIgMTMuMjU3NyAxNi41NTY2IDE0LjQxNjEgMTUuMzIzM0wxNy4xMzc1IDE3LjcxNTFDMTUuNTAxIDE5Ljg0NTMgMTMuMjU3NyAyMC44MTcgMTAuMDU4MiAyMC44MTdaIi8+PHBhdGggZD0iTTI5LjAxNjEgNS44ODYwMUgzMi43MzA0VjIwLjQ2MTJIMjkuMDE2MVYxOC4zMzFDMjguMjQzOCAxOS44NDQ2IDI2Ljk1NjYgMjAuODUzNiAyNC40OTI3IDIwLjg1MzZDMjAuNTU3NyAyMC44NTM2IDE3LjQxMzMgMTcuNDM0MSAxNy40MTMzIDEzLjIyOTdDMTcuNDEzMyA5LjAyNTI4IDIwLjU1NzcgNS42MDU3MSAyNC40OTI3IDUuNjA1NzFDMjYuOTM4MyA1LjYwNTcxIDI4LjI0MzggNi42MTQ3NyAyOS4wMTYxIDguMTI4MzVWNS44ODYwMVpNMjkuMTI2NCAxMy4yMjk3QzI5LjEyNjQgMTAuOTUgMjcuNTYzNCA5LjA2MjY2IDI1LjA5OTUgOS4wNjI2NkMyMi43Mjc0IDkuMDYyNjYgMjEuMTgyOCAxMC45Njg2IDIxLjE4MjggMTMuMjI5N0MyMS4xODI4IDE1LjQzNDYgMjIuNzI3NCAxNy4zOTY3IDI1LjA5OTUgMTcuMzk2N0MyNy41NDUxIDE3LjM5NjcgMjkuMTI2NCAxNS40OTA3IDI5LjEyNjQgMTMuMjI5N1oiLz48cGF0aCBkPSJNMzUuMzU5OSAwSDM5LjA3NDJWMjAuNDQyN0gzNS4zNTk5VjBaIi8+PC9nPjwvc3ZnPg=="
+}

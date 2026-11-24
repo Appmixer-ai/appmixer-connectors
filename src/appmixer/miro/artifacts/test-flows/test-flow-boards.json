@@ -1,0 +1,562 @@
+{
+    "name": "E2E Miro - boards",
+    "description": "Create, get, update, find and delete a board.",
+    "flow": {
+        "d9d12b22-a71c-4a7f-b603-c37d3f9cfc48": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {},
+            "config": {},
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "1a42f875-5de9-49b6-800d-5335330984c8": {
+            "type": "appmixer.miro.core.CreateBoard",
+            "x": 272,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "d9d12b22-a71c-4a7f-b603-c37d3f9cfc48": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "d9d12b22-a71c-4a7f-b603-c37d3f9cfc48": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "name": {
+                                        "12b61dcd-2e47-417b-aba9-4221bda4037e": {
+                                            "variable": "$.d9d12b22-a71c-4a7f-b603-c37d3f9cfc48.out.started",
+                                            "functions": [
+                                                {
+                                                    "name": "g_formatDate",
+                                                    "params": [
+                                                        {
+                                                            "value": "YYYYMMDD-HHmmss"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "description": {}
+                                },
+                                "lambda": {
+                                    "name": "E2E Miro board {{{12b61dcd-2e47-417b-aba9-4221bda4037e}}}",
+                                    "description": "Created by the Appmixer E2E test"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "36fd6c28-c2ae-400e-8b8f-65a3c0355037": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 480,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "1a42f875-5de9-49b6-800d-5335330984c8": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "1a42f875-5de9-49b6-800d-5335330984c8": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "053197c4-dc0d-406f-a12f-3ecb5416a7ef": {
+                                            "variable": "$.1a42f875-5de9-49b6-800d-5335330984c8.out.name",
+                                            "functions": []
+                                        },
+                                        "eb3dffee-efe2-43ff-9332-2de436988daf": {
+                                            "variable": "$.1a42f875-5de9-49b6-800d-5335330984c8.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{053197c4-dc0d-406f-a12f-3ecb5416a7ef}}}",
+                                                "assertion": "regex",
+                                                "regex": "^E2E Miro board \\d{8}-\\d{6}$"
+                                            },
+                                            {
+                                                "field": "{{{eb3dffee-efe2-43ff-9332-2de436988daf}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "07faee0a-a2a7-4655-b4f0-d33f02414cf3": {
+            "type": "appmixer.miro.core.GetBoard",
+            "x": 480,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "1a42f875-5de9-49b6-800d-5335330984c8": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "1a42f875-5de9-49b6-800d-5335330984c8": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "boardId": {
+                                        "3a904836-539a-4ba2-9635-6c9ece923e5e": {
+                                            "variable": "$.1a42f875-5de9-49b6-800d-5335330984c8.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "boardId": "{{{3a904836-539a-4ba2-9635-6c9ece923e5e}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "cec08326-351f-48f0-a832-3463e1b0ae82": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 688,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "07faee0a-a2a7-4655-b4f0-d33f02414cf3": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "07faee0a-a2a7-4655-b4f0-d33f02414cf3": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "4f8946b8-4528-4706-8cd5-60743d4f4a73": {
+                                            "variable": "$.07faee0a-a2a7-4655-b4f0-d33f02414cf3.out.name",
+                                            "functions": []
+                                        },
+                                        "462214e4-6a1c-4738-a7e5-b57f25768a70": {
+                                            "variable": "$.07faee0a-a2a7-4655-b4f0-d33f02414cf3.out.description",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{4f8946b8-4528-4706-8cd5-60743d4f4a73}}}",
+                                                "assertion": "regex",
+                                                "regex": "^E2E Miro board "
+                                            },
+                                            {
+                                                "field": "{{{462214e4-6a1c-4738-a7e5-b57f25768a70}}}",
+                                                "assertion": "equal",
+                                                "expected": "Created by the Appmixer E2E test"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "1c2a96a7-f970-4a61-87b7-7c4edf91ec75": {
+            "type": "appmixer.miro.core.UpdateBoard",
+            "x": 688,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "07faee0a-a2a7-4655-b4f0-d33f02414cf3": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "07faee0a-a2a7-4655-b4f0-d33f02414cf3": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "boardId": {
+                                        "b9861d4a-6f34-4cbb-abed-ed22249c7247": {
+                                            "variable": "$.1a42f875-5de9-49b6-800d-5335330984c8.out.id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "description": {}
+                                },
+                                "lambda": {
+                                    "boardId": "{{{b9861d4a-6f34-4cbb-abed-ed22249c7247}}}",
+                                    "description": "Updated by the Appmixer E2E test"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "00766ab6-1c71-49b0-9b27-f8eeefab43a6": {
+            "type": "appmixer.miro.core.GetBoard",
+            "x": 896,
+            "y": 400,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "1c2a96a7-f970-4a61-87b7-7c4edf91ec75": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "1c2a96a7-f970-4a61-87b7-7c4edf91ec75": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "boardId": {
+                                        "0099b2fc-7fef-4458-81ee-61e874ffc797": {
+                                            "variable": "$.1a42f875-5de9-49b6-800d-5335330984c8.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "boardId": "{{{0099b2fc-7fef-4458-81ee-61e874ffc797}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "label": "Get Board (after update)"
+        },
+        "404a9559-b927-4777-a34d-de03645b2af9": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1104,
+            "y": 400,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "00766ab6-1c71-49b0-9b27-f8eeefab43a6": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "00766ab6-1c71-49b0-9b27-f8eeefab43a6": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "784f055c-2606-4e9f-bc83-bf8efc9faa8a": {
+                                            "variable": "$.00766ab6-1c71-49b0-9b27-f8eeefab43a6.out.description",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{784f055c-2606-4e9f-bc83-bf8efc9faa8a}}}",
+                                                "assertion": "equal",
+                                                "expected": "Updated by the Appmixer E2E test"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "eed60e4a-c0f4-4503-93e3-a818e6a49f82": {
+            "type": "appmixer.miro.core.FindBoards",
+            "x": 1104,
+            "y": 528,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "00766ab6-1c71-49b0-9b27-f8eeefab43a6": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "00766ab6-1c71-49b0-9b27-f8eeefab43a6": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "sort": {},
+                                    "outputType": {}
+                                },
+                                "lambda": {
+                                    "sort": "last_created",
+                                    "outputType": "first"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "66b05d7d-6442-401d-aa6a-8c80fa3fdb94": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1312,
+            "y": 528,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "eed60e4a-c0f4-4503-93e3-a818e6a49f82": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "eed60e4a-c0f4-4503-93e3-a818e6a49f82": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "99ea91d6-f860-4b18-9f17-75173ae7e434": {
+                                            "variable": "$.eed60e4a-c0f4-4503-93e3-a818e6a49f82.out.id",
+                                            "functions": []
+                                        },
+                                        "3b93df73-c14a-4380-ad2d-c5d635a844af": {
+                                            "variable": "$.eed60e4a-c0f4-4503-93e3-a818e6a49f82.out.name",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{99ea91d6-f860-4b18-9f17-75173ae7e434}}}",
+                                                "assertion": "notEmpty"
+                                            },
+                                            {
+                                                "field": "{{{3b93df73-c14a-4380-ad2d-c5d635a844af}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "f765b9f5-0849-4000-8c84-5d565ffd45a5": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 1728,
+            "y": 656,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "36fd6c28-c2ae-400e-8b8f-65a3c0355037": [
+                        "out"
+                    ],
+                    "cec08326-351f-48f0-a832-3463e1b0ae82": [
+                        "out"
+                    ],
+                    "404a9559-b927-4777-a34d-de03645b2af9": [
+                        "out"
+                    ],
+                    "66b05d7d-6442-401d-aa6a-8c80fa3fdb94": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 180
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "efa02a7f-cd59-4621-ae03-d1a8563edea3": {
+            "type": "appmixer.miro.core.DeleteBoard",
+            "x": 1936,
+            "y": 656,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "f765b9f5-0849-4000-8c84-5d565ffd45a5": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "f765b9f5-0849-4000-8c84-5d565ffd45a5": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "boardId": {
+                                        "0c4b6615-b7da-441b-ab6b-e1880b0eadea": {
+                                            "variable": "$.1a42f875-5de9-49b6-800d-5335330984c8.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "boardId": "{{{0c4b6615-b7da-441b-ab6b-e1880b0eadea}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "0adc42eb-849f-4122-a2ca-ce1b0330a12e": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 2144,
+            "y": 656,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "efa02a7f-cd59-4621-ae03-d1a8563edea3": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "efa02a7f-cd59-4621-ae03-d1a8563edea3": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "60934e52-ad4f-4c6a-b1cf-b8adc26ef6ba": {
+                                            "variable": "$.f765b9f5-0849-4000-8c84-5d565ffd45a5.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E Miro - boards",
+                                    "result": "{{{60934e52-ad4f-4c6a-b1cf-b8adc26ef6ba}}}"
+                                }
+                            }
+                        }
+                    }
+                },
+                "properties": {
+                    "successStoreId": "64f6f1f9193228000754082f",
+                    "failedStoreId": "64f6f1f0193228000754082e"
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        }
+    },
+    "notes": {
+        "a425a3b7-81e6-49ad-b8db-4620c58dc1ed": {
+            "x": 64,
+            "y": 784,
+            "width": 672,
+            "height": 224,
+            "content": "## ⚠️ Test data assumption\n\nThe flow creates one board and deletes it at the end. On a Free plan a team can have at most 3 editable boards, so run it in a team with fewer than 3 boards. Share Board is not part of this flow: the E2E Miro account answers every invitation with HTTP 403 (5.0514, Sharing is restricted). See README.md."
+        }
+    }
+}

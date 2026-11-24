@@ -1,0 +1,142 @@
+{
+    "name": "appmixer.toggl.core.FindReportTimeEntries",
+    "label": "Find Report Time Entries",
+    "description": "Find time entries of all workspace members you may see in reports, in a date range, newest first (up to 1,000). Filter by description, projects, clients and users. Reports follow new and changed entries with a short delay.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:toggl"
+    },
+    "quota": {
+        "manager": "appmixer:toggl",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "startDate": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "endDate": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "projectIds": {
+                        "type": "string"
+                    },
+                    "clientIds": {
+                        "type": "string"
+                    },
+                    "userIds": {
+                        "type": "string"
+                    },
+                    "outputType": {
+                        "type": "string",
+                        "default": "array"
+                    }
+                },
+                "required": [
+                    "startDate",
+                    "endDate"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "startDate": {
+                        "type": "date-time",
+                        "label": "Start Date",
+                        "tooltip": "First day of the report period.",
+                        "index": 1
+                    },
+                    "endDate": {
+                        "type": "date-time",
+                        "label": "End Date",
+                        "tooltip": "Last day of the report period.",
+                        "index": 2
+                    },
+                    "description": {
+                        "type": "text",
+                        "label": "Description Contains",
+                        "tooltip": "Return only entries whose description contains this text. Optional.",
+                        "index": 3
+                    },
+                    "projectIds": {
+                        "type": "text",
+                        "label": "Project IDs",
+                        "tooltip": "Numeric project IDs, separated by commas. Optional.",
+                        "index": 4
+                    },
+                    "clientIds": {
+                        "type": "text",
+                        "label": "Client IDs",
+                        "tooltip": "Numeric client IDs, separated by commas. Optional.",
+                        "index": 5
+                    },
+                    "userIds": {
+                        "type": "text",
+                        "label": "User IDs",
+                        "tooltip": "Numeric user IDs (the User ID of a time entry), separated by commas. Optional.",
+                        "index": 6
+                    },
+                    "outputType": {
+                        "type": "select",
+                        "label": "Output Type",
+                        "index": 7,
+                        "defaultValue": "array",
+                        "tooltip": "Choose whether you want to receive the result set as one complete list, or first item only or one item at a time or stream the items to a file.",
+                        "options": [
+                            {
+                                "label": "First Item Only",
+                                "value": "first"
+                            },
+                            {
+                                "label": "All items at once",
+                                "value": "array"
+                            },
+                            {
+                                "label": "One item at a time",
+                                "value": "object"
+                            },
+                            {
+                                "label": "Store to CSV file",
+                                "value": "file"
+                            }
+                        ]
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "source": {
+                "url": "/component/appmixer/toggl/core/FindReportTimeEntries?outPort=out&ignoreAuth=true",
+                "data": {
+                    "properties": {
+                        "generateOutputPortOptions": true
+                    },
+                    "messages": {
+                        "in/startDate": "2026-01-01T00:00:00Z",
+                        "in/endDate": "2026-01-02T00:00:00Z",
+                        "in/outputType": "inputs/in/outputType"
+                    }
+                }
+            }
+        },
+        {
+            "name": "notFound"
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZmlsbD0iI0U1N0NEOCIgZD0iTTEyIDBhMTIgMTIgMCAxIDAgMCAyNCAxMiAxMiAwIDAgMCAwLTI0em0tLjg4MyA0LjMyMmgxLjc2NnY4Ljc1N2gtMS43NjZ6bS0uNzQgMi4wNTN2MS43ODlhNC40NDggNC40NDggMCAxIDAgMy4yNDcgMFY2LjM3NWE2LjE0NiA2LjE0NiAwIDEgMS01LjY2OSAxMC41NTIgNi4xNDUgNi4xNDUgMCAwIDEgMi40MjEtMTAuNTUyeiIvPjwvc3ZnPg=="
+}

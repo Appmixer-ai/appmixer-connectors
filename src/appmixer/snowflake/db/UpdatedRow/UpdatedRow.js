@@ -1,6 +1,6 @@
 'use strict';
 
-const { SnowflakeDB } = require('../../common');
+const { SnowflakeDB, pairUpdates } = require('../../common');
 const snowflake = new SnowflakeDB();
 module.exports = {
 
@@ -20,19 +20,7 @@ module.exports = {
 
         const { schema, table } = context.properties;
         const data = await snowflake.consumeStream(context, schema, table, 'update');
-        const mid = data.length / 2;
-        for (let i = 0; i < mid; i++) {
-
-            const oldRow = { ...data[i + mid] };
-            delete oldRow.METADATA$ACTION;
-            delete oldRow.METADATA$ISUPDATE;
-            delete oldRow.METADATA$ROW_ID;
-
-            const updatedRow = { ...data[i] };
-            delete updatedRow.METADATA$ACTION;
-            delete updatedRow.METADATA$ISUPDATE;
-            delete updatedRow.METADATA$ROW_ID;
-
+        for (const { oldRow, updatedRow } of pairUpdates(data)) {
             await context.sendJson({ oldRow, updatedRow }, 'out');
         }
     },

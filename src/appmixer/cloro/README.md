@@ -9,6 +9,7 @@ Get an API key at [dashboard.cloro.dev](https://dashboard.cloro.dev?utm_source=a
 | Component | Endpoint | Output |
 | -- | -- | -- |
 | Find Google Results | `POST /v1/monitor/google` | The organic results of the first results page: position, title, link, displayed link, snippet and date. Results that have no resolved link are skipped. |
+| Find Bing Results | `POST /v1/monitor/bing` | The organic results of the first Bing results page: position, title, link, displayed link and snippet. Results that have no resolved link are skipped. If you set Include AI Overview and Bing shows one, the AI Overview (text, markdown and sources) goes to the `aiOverview` port. |
 | Get AI Answer | `POST /v1/monitor/aimode`, `/v1/monitor/bing/aimode`, `/v1/monitor/chatgpt` or `/v1/monitor/gemini` | The answer of Google AI Mode, Bing AI Mode, ChatGPT or Gemini as text and markdown, with the cited sources. |
 | Get Credits | `GET /v1/credits` | The remaining credits, the credits per cycle and the date the cycle resets. |
 | Make API Call | Any path on `https://api.cloro.dev` | The status code, headers and body. Other hosts are refused, so the key is not sent elsewhere. |
@@ -16,7 +17,8 @@ Get an API key at [dashboard.cloro.dev](https://dashboard.cloro.dev?utm_source=a
 ## Limits
 
 - Each monitor request uses cloro credits on your account. The [API reference](https://cloro.dev/docs?utm_source=appmixer&utm_medium=byok) lists the credits for each endpoint.
-- Bing AI Mode accepts prompts of up to 3,500 characters after URL encoding. Non-Latin scripts allow fewer characters. The component refuses a longer prompt before it sends the request.
+- Bing AI Mode and Bing Search accept a prompt or query of up to 3,500 characters after URL encoding. Non-Latin scripts allow fewer characters. The components refuse a longer prompt or query before they send the request.
+- Bing Search is not available for the countries `CN`, `KR` and `RU`.
 - Your plan sets how many monitor requests can run at the same time. A request sent while all slots are busy gets a `429` (`CONCURRENCY_LIMIT_EXCEEDED`). The connector quota queues requests at 60 per minute per user.
 
 ## Tests

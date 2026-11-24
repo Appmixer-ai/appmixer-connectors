@@ -1,0 +1,266 @@
+{
+    "name": "E2E Stripe - New Payment trigger",
+    "description": "Starts the New Payment trigger (payment_intent.succeeded), waits a minute, then confirms a payment intent with the pm_card_visa test card; the trigger must emit that payment.",
+    "flow": {
+        "acaa8973-fa3f-4b77-b2ec-f2df76717f19": {
+            "type": "appmixer.stripe.core.NewPayment",
+            "x": 64,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {},
+            "config": {
+                "properties": {
+                    "eventType": "payment_intent.succeeded"
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "81310685-da02-4216-8cc6-b7e83abf5df3": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {},
+            "config": {},
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "18c2bb70-c4ee-499b-8a8a-66dd398a64d8": {
+            "type": "appmixer.utils.timers.Wait",
+            "x": 272,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "81310685-da02-4216-8cc6-b7e83abf5df3": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "81310685-da02-4216-8cc6-b7e83abf5df3": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "interval": {}
+                                },
+                                "lambda": {
+                                    "interval": "1m"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "81dd7c67-e1e4-42ee-b974-1b5a52940a71": {
+            "type": "appmixer.stripe.core.CreatePaymentIntent",
+            "x": 480,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "18c2bb70-c4ee-499b-8a8a-66dd398a64d8": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "18c2bb70-c4ee-499b-8a8a-66dd398a64d8": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "amount": {},
+                                    "currency": {},
+                                    "paymentMethod": {},
+                                    "description": {},
+                                    "automaticPaymentMethodsEnabled": {},
+                                    "automaticPaymentMethodsAllowRedirects": {},
+                                    "confirm": {}
+                                },
+                                "lambda": {
+                                    "amount": 1999,
+                                    "currency": "usd",
+                                    "paymentMethod": "pm_card_visa",
+                                    "description": "E2E New Payment",
+                                    "automaticPaymentMethodsEnabled": true,
+                                    "automaticPaymentMethodsAllowRedirects": "never",
+                                    "confirm": true
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "3dd60ab6-5d39-45e4-93cb-c5ef1310d0e7": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 272,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "acaa8973-fa3f-4b77-b2ec-f2df76717f19": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "acaa8973-fa3f-4b77-b2ec-f2df76717f19": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "a95cc19b-3513-4f5b-94df-513fc2c04f8c": {
+                                            "variable": "$.acaa8973-fa3f-4b77-b2ec-f2df76717f19.out.type",
+                                            "functions": []
+                                        },
+                                        "2b4c2ed9-1978-4707-803c-7f97f7615657": {
+                                            "variable": "$.acaa8973-fa3f-4b77-b2ec-f2df76717f19.out.data.description",
+                                            "functions": []
+                                        },
+                                        "7a03836c-ce43-4e8b-a0e5-0bbfe271a45a": {
+                                            "variable": "$.acaa8973-fa3f-4b77-b2ec-f2df76717f19.out.data.status",
+                                            "functions": []
+                                        },
+                                        "6a1c70c1-2f5f-4c85-b00a-8bfefaeff044": {
+                                            "variable": "$.acaa8973-fa3f-4b77-b2ec-f2df76717f19.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{a95cc19b-3513-4f5b-94df-513fc2c04f8c}}}",
+                                                "assertion": "equal",
+                                                "expected": "payment_intent.succeeded"
+                                            },
+                                            {
+                                                "field": "{{{2b4c2ed9-1978-4707-803c-7f97f7615657}}}",
+                                                "assertion": "equal",
+                                                "expected": "E2E New Payment"
+                                            },
+                                            {
+                                                "field": "{{{7a03836c-ce43-4e8b-a0e5-0bbfe271a45a}}}",
+                                                "assertion": "equal",
+                                                "expected": "succeeded"
+                                            },
+                                            {
+                                                "field": "{{{6a1c70c1-2f5f-4c85-b00a-8bfefaeff044}}}",
+                                                "assertion": "regex",
+                                                "regex": "^evt_"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "efd9fe63-8d96-4af9-a9c2-92018b8d01e9": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 480,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "3dd60ab6-5d39-45e4-93cb-c5ef1310d0e7": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 420
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "fd07bf83-d3ba-43a5-93ba-c07b8cbf6b39": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 688,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "efd9fe63-8d96-4af9-a9c2-92018b8d01e9": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "efd9fe63-8d96-4af9-a9c2-92018b8d01e9": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "b20b75da-b4f5-4d53-84d9-0b776607c07a": {
+                                            "variable": "$.efd9fe63-8d96-4af9-a9c2-92018b8d01e9.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E Stripe - New Payment trigger",
+                                    "result": "{{{b20b75da-b4f5-4d53-84d9-0b776607c07a}}}"
+                                }
+                            }
+                        }
+                    }
+                },
+                "properties": {
+                    "successStoreId": "64f6f1f9193228000754082f",
+                    "failedStoreId": "64f6f1f0193228000754082e"
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        }
+    },
+    "notes": {
+        "be2ffd78-a6ca-4a7f-9e09-6ed67eb3faa4": {
+            "x": 64,
+            "y": 560,
+            "width": 672,
+            "height": 224,
+            "content": "## ⚠️ Trigger test assumptions\n\n- The trigger registers a Stripe webhook endpoint when the flow starts and deletes it when the flow stops. Stripe allows at most 16 endpoints per account: delete stale ones in the Dashboard (Developers → Webhooks) if the start fails.\n- **Keep the Wait 1m** before the provoking step so the endpoint is live.\n- The provoke confirms a 19.99 USD payment intent with the `pm_card_visa` test payment method (test mode only).\n- Use a test-mode secret key; other activity in the same account during the run can fire the trigger and fail the Assert."
+        }
+    }
+}

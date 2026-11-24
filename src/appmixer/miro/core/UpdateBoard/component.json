@@ -1,0 +1,142 @@
+{
+    "name": "appmixer.miro.core.UpdateBoard",
+    "label": "Update Board",
+    "description": "Update the name, description or sharing of a board. Fields left empty are not changed.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:miro"
+    },
+    "quota": {
+        "manager": "appmixer:miro",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "boardId": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string",
+                        "maxLength": 60
+                    },
+                    "description": {
+                        "type": "string",
+                        "maxLength": 300
+                    },
+                    "access": {
+                        "type": "string",
+                        "enum": [
+                            "private",
+                            "view",
+                            "comment",
+                            "edit"
+                        ]
+                    },
+                    "teamAccess": {
+                        "type": "string",
+                        "enum": [
+                            "private",
+                            "view",
+                            "comment",
+                            "edit"
+                        ]
+                    }
+                },
+                "required": [
+                    "boardId"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "boardId": {
+                        "type": "text",
+                        "index": 1,
+                        "label": "Board",
+                        "tooltip": "Pick a board, or type its Board ID (the part after <code>/board/</code> in the board URL).",
+                        "source": {
+                            "url": "/component/appmixer/miro/core/FindBoards?outPort=out",
+                            "data": {
+                                "properties": {
+                                    "isSource": true
+                                },
+                                "transform": "./FindBoards#toSelectArray"
+                            }
+                        }
+                    },
+                    "name": {
+                        "type": "text",
+                        "index": 2,
+                        "label": "Name",
+                        "tooltip": "New name of the board, up to 60 characters."
+                    },
+                    "description": {
+                        "type": "textarea",
+                        "index": 3,
+                        "label": "Description",
+                        "tooltip": "New description of the board, up to 300 characters."
+                    },
+                    "access": {
+                        "type": "select",
+                        "index": 4,
+                        "label": "Link Access",
+                        "tooltip": "Who can open the board with its link.",
+                        "options": [
+                            {
+                                "label": "Private",
+                                "value": "private"
+                            },
+                            {
+                                "label": "View",
+                                "value": "view"
+                            },
+                            {
+                                "label": "Comment",
+                                "value": "comment"
+                            },
+                            {
+                                "label": "Edit",
+                                "value": "edit"
+                            }
+                        ]
+                    },
+                    "teamAccess": {
+                        "type": "select",
+                        "index": 5,
+                        "label": "Team Access",
+                        "tooltip": "Access of the team members to the board.",
+                        "options": [
+                            {
+                                "label": "Private",
+                                "value": "private"
+                            },
+                            {
+                                "label": "View",
+                                "value": "view"
+                            },
+                            {
+                                "label": "Comment",
+                                "value": "comment"
+                            },
+                            {
+                                "label": "Edit",
+                                "value": "edit"
+                            }
+                        ]
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        "out"
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHJlY3Qgd2lkdGg9IjI0IiBoZWlnaHQ9IjI0IiByeD0iNSIgZmlsbD0iI0ZGREQzMyIvPjxwYXRoIHRyYW5zZm9ybT0idHJhbnNsYXRlKDQuOCA0LjgpIHNjYWxlKDAuNikiIGZpbGw9IiMwNTAwMzgiIGQ9Ik0xNy4zOTIgMEgxMy45TDE3IDQuODA4IDEwLjQ0NCAwSDYuOTQ5bDMuMTAyIDYuM0wzLjQ5NCAwSDBsMy4wNSA4LjEzMUwwIDI0aDMuNDk0TDEwLjA1IDYuOTg1IDYuOTQ5IDI0aDMuNDk0TDE3IDUuNDk0IDEzLjg5OSAyNGgzLjQ5M0wyNCAzLjY3MiAxNy4zOTIgMHoiLz48L3N2Zz4="
+}

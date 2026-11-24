@@ -3,6 +3,7 @@
 const assert = require('assert');
 const appmixer = require('../../../../../test/utils');
 
+const ArchivePage = require('../../core/ArchivePage/ArchivePage');
 const MakeApiCall = require('../../core/MakeApiCall/MakeApiCall');
 const UpdateDatabaseItem = require('../../core/UpdateDatabaseItem/UpdateDatabaseItem');
 const FindDatabaseItem = require('../../core/FindDatabaseItem/FindDatabaseItem');
@@ -71,6 +72,25 @@ describe('notion components', () => {
             context.messages.in.content = { method: 'GET' };
 
             await assert.rejects(() => MakeApiCall.receive(context), /API Endpoint URL is required/);
+        });
+    });
+
+    describe('ArchivePage', () => {
+
+        it('moves the page to the trash with archived: true and sends {}', async () => {
+            context.messages.in.content = { pageId: 'page-1' };
+            respond({ 'PATCH /pages/page-1': { id: 'page-1', archived: true } });
+
+            await ArchivePage.receive(context);
+
+            assert.deepStrictEqual(requests, [{ key: 'PATCH /pages/page-1', data: { archived: true } }]);
+            assert.strictEqual(context.httpRequest.firstCall.args[0].headers['Notion-Version'], '2022-06-28');
+            assert.deepStrictEqual(context.sendJson.firstCall.args, [{}, 'out']);
+        });
+
+        it('requires the page ID', async () => {
+            await assert.rejects(() => ArchivePage.receive(context), /Page ID is required/);
+            assert.strictEqual(context.httpRequest.callCount, 0);
         });
     });
 
