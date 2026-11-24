@@ -1,7 +1,7 @@
 {
     "name": "appmixer.utils.controls",
     "engine": ">=6.0",
-    "version": "1.14.7",
+    "version": "1.14.8",
     "changelog": {
         "1.0.0": [
             "Initial version"
@@ -146,6 +146,9 @@
         ],
         "1.14.7": [
             "Each: no longer keeps a continuity scope for 100 days for every message. Each declares a webhook (Continue Each wakes a sequential loop through it), so the engine stores a continuity scope for every message into Each, and that scope keeps the message scopes it refers to from being garbage collected. Only a sequential loop reads it. Each now sets its lifetime with context.setMaxWait(): a parallel or delayed loop (and an empty, invalid or rejected input) lets it go at once, a sequential loop keeps it until the loop can be over at the latest (items x (Item Timeout + Delay), plus one hour). Takes effect on engines where setMaxWait() can shorten the lifetime; older engines keep the 100-day default and work as before."
+        ],
+        "1.14.8": [
+            "Each (sequential): many loops running at once on one Each no longer slow down the whole tenant. The list and the progress of every running loop were kept in the component state of Each, which the engine stores as one document per component and reads in full for every message, so with many concurrent loops each item cost the workers megabytes of parsing. They are now kept in the flow state, one entry per loop. Loops started by the previous version continue: they are moved to the flow state when their next item is confirmed or times out."
         ]
     }
 }

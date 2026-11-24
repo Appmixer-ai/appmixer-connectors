@@ -170,6 +170,7 @@ describe('Each Component - continuity scope lifetime', () => {
             properties: {}
         });
         ack.setMaxWait = sinon.stub().resolves();
+        ack.flow = { stateGet: sinon.stub(), stateSet: sinon.stub(), stateUnset: sinon.stub() };
         ack.log = sinon.stub();
         await Each.receive(ack);
         assert.strictEqual(ack.setMaxWait.callCount, 0);
@@ -180,6 +181,7 @@ describe('Each Component - continuity scope lifetime', () => {
             properties: {}
         });
         timeout.setMaxWait = sinon.stub().resolves();
+        timeout.flow = { stateGet: sinon.stub(), stateSet: sinon.stub(), stateUnset: sinon.stub() };
         await Each.receive(timeout);
         assert.strictEqual(timeout.setMaxWait.callCount, 0);
     });

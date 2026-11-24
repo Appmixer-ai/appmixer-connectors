@@ -17,11 +17,19 @@ const continuityScope = require('./continuityScope');
 // That scope is the continuity scope the engine stores for the `in` message; handleStart keeps it for
 // as long as the loop can run, instead of the engine default of 100 days (see continuityScope.js).
 //
-// Everything is kept in engine-provided state, no plugin is involved:
-//   - component state `<id>`        the loop cursor: the item in flight, its timeout, loop metadata
+// Everything is kept in engine-provided FLOW state, no plugin is involved:
+//   - flow state `each-cursor:<id>` the loop cursor: the item in flight, its timeout, loop metadata
 //                                   and the values collected by ContinueEach so far
-//   - component state `items:<id>`  the parked list (the webhook delivery does not carry `in`)
+//   - flow state `each-items:<id>`  the parked list (the webhook delivery does not carry `in`)
 //   - flow state `each:<id>`        where ContinueEach finds the webhook target of this loop
+//
+// Not component state: the engine keeps the whole component state of a component in ONE document,
+// loads all of it for every message the component receives and returns all of it on every
+// stateSet/stateUnset. With many loops running at once on one Each, their lists add up in that one
+// document (15 MB in production), and every item of every loop then costs two full reads of it - the
+// workers spend their CPU parsing BSON. Flow state is one document per key and is read per key only.
+// Each 1.5.1 kept the cursor and the list in component state (`<id>`, `items:<id>`); such a loop is
+// moved to flow state the first time it is touched (see loadCursor), so it finishes on this version.
 //
 // An item that is never acknowledged (the body failed, or a Condition filtered the item out before
 // ContinueEach) is given up on after the item timeout, so the loop cannot hang forever.
@@ -31,10 +39,14 @@ const DEFAULT_ITEM_TIMEOUT = 300;
 // item timeout would not do what it says.
 const MIN_ITEM_TIMEOUT = 60;
 
-const itemsKey = id => `items:${id}`;
+const cursorKey = id => `each-cursor:${id}`;
+const itemsKey = id => `each-items:${id}`;
 // Read by ContinueEach - keep the two in sync.
 const targetKey = id => `each:${id}`;
 const lockName = id => `each-sequential:${id}`;
+// Where Each 1.5.1 kept the loop, in component state.
+const legacyCursorKey = id => id;
+const legacyItemsKey = id => `items:${id}`;
 
 /**
  * Normalize and validate the item timeout (seconds).
@@ -94,7 +106,49 @@ async function sendItem(context, id, cursor, index, value) {
     // than losing it.
     // eslint-disable-next-line no-unused-vars
     const { acked, ...loop } = cursor;
-    await context.stateSet(id, { ...loop, index, timeoutId, timeoutToken });
+    await context.flow.stateSet(cursorKey(id), { ...loop, index, timeoutId, timeoutToken });
+}
+
+/**
+ * The cursor of a loop, without side effects: from flow state, or where Each 1.5.1 kept it.
+ * @param {Object} context - Appmixer context
+ * @param {string} id
+ * @returns {Promise<Object|undefined>}
+ */
+async function peekCursor(context, id) {
+
+    return (await context.flow.stateGet(cursorKey(id))) || context.stateGet(legacyCursorKey(id));
+}
+
+/**
+ * The cursor of a loop. Must be called with the loop lock held. A loop started by Each 1.5.1 (cursor
+ * and list in component state) is moved to flow state first; the moved cursor is flagged `legacy` so
+ * that cleanup removes the component state keys again in case a crash interrupted the move.
+ * @param {Object} context - Appmixer context
+ * @param {string} id
+ * @returns {Promise<Object|undefined>}
+ */
+async function loadCursor(context, id) {
+
+    const cursor = await context.flow.stateGet(cursorKey(id));
+    if (cursor) {
+        return cursor;
+    }
+    const legacy = await context.stateGet(legacyCursorKey(id));
+    if (!legacy) {
+        return legacy;
+    }
+    // List first, cursor next (it is what marks the loop as running), component state last: a crash
+    // at any point leaves the loop readable.
+    const items = await context.stateGet(legacyItemsKey(id));
+    if (items != null) {
+        await context.flow.stateSet(itemsKey(id), items);
+    }
+    const moved = { ...legacy, legacy: true };
+    await context.flow.stateSet(cursorKey(id), moved);
+    await context.stateUnset(legacyItemsKey(id));
+    await context.stateUnset(legacyCursorKey(id));
+    return moved;
 }
 
 /**
@@ -118,13 +172,19 @@ async function withLock(context, id, fn) {
  * Forget everything about a finished loop.
  * @param {Object} context - Appmixer context
  * @param {string} id
+ * @param {Object} cursor
  */
-async function cleanup(context, id) {
+async function cleanup(context, id, cursor) {
 
-    await context.stateUnset(itemsKey(id));
+    await context.flow.stateUnset(itemsKey(id));
     await context.flow.stateUnset(targetKey(id));
+    if (cursor?.legacy) {
+        // Moved from component state by loadCursor - make sure nothing is left there.
+        await context.stateUnset(legacyItemsKey(id));
+        await context.stateUnset(legacyCursorKey(id));
+    }
     // The cursor goes last: it is what marks the loop as running.
-    return context.stateUnset(id);
+    return context.flow.stateUnset(cursorKey(id));
 }
 
 /**
@@ -152,7 +212,7 @@ async function handleStart(context, { list, correlationId, count, delay, itemTim
     try {
         lock = await context.lock(lockName(id));
 
-        if (await context.stateGet(id)) {
+        if (await peekCursor(context, id)) {
             // The engine re-delivered `in` for a loop that is already running. The acknowledgement /
             // timeout chain drives it from here; starting over would re-send every item.
             return;
@@ -162,7 +222,7 @@ async function handleStart(context, { list, correlationId, count, delay, itemTim
         // so this bounds the whole loop.
         await continuityScope.keepForLoop(context, { count, itemTimeout, delay });
 
-        await context.stateSet(itemsKey(id), list);
+        await context.flow.stateSet(itemsKey(id), list);
         // ContinueEach only knows the loop id (the Correlation ID mapped to it), so this is how it
         // finds which component to wake up and with which correlation, before the first item goes out.
         await context.flow.stateSet(targetKey(id), {
@@ -196,13 +256,13 @@ async function emitNext(context, id, current, doneIndex) {
     if (nextIndex >= count) {
         // `done` first, clean up after: a crash in between repeats `done` instead of losing it.
         await context.sendJson({ count, correlationId, result: results }, 'done');
-        return cleanup(context, id);
+        return cleanup(context, id, current);
     }
 
-    const items = await context.stateGet(itemsKey(id));
+    const items = await context.flow.stateGet(itemsKey(id));
     if (!Array.isArray(items)) {
         await context.log({ step: 'no-data', message: 'Each sequential: stored list is missing, nothing to continue.' });
-        return cleanup(context, id);
+        return cleanup(context, id, current);
     }
 
     return sendItem(context, id, current, nextIndex, items[nextIndex]);
@@ -223,12 +283,12 @@ async function acknowledge(context, id, doneIndex, entry) {
     const isAwaitingAck = cursor => cursor && cursor.index === doneIndex && !cursor.acked;
 
     // Cheap check before taking the lock; repeated under it.
-    if (!isAwaitingAck(await context.stateGet(id))) {
+    if (!isAwaitingAck(await peekCursor(context, id))) {
         return;
     }
 
     const delay = await withLock(context, id, async () => {
-        const current = await context.stateGet(id);
+        const current = await loadCursor(context, id);
         if (!isAwaitingAck(current)) {
             return 0;
         }
@@ -241,7 +301,7 @@ async function acknowledge(context, id, doneIndex, entry) {
         // Record the acknowledgement before the delay, so the item timeout firing meanwhile (a delay
         // close to the item timeout) cannot take the item as unacknowledged. The timeout stays set:
         // if the process waiting on the delay dies, it is what moves the loop on.
-        await context.stateSet(id, { ...cursor, acked: true });
+        await context.flow.stateSet(cursorKey(id), { ...cursor, acked: true });
         return cursor.delay;
     });
 
@@ -253,7 +313,7 @@ async function acknowledge(context, id, doneIndex, entry) {
     await new Promise(resolve => setTimeout(resolve, delay));
 
     return withLock(context, id, async () => {
-        const current = await context.stateGet(id);
+        const current = await loadCursor(context, id);
         // The item timeout already moved the loop on (or the loop is gone).
         if (!current || current.index !== doneIndex || !current.acked) {
             return;
@@ -296,7 +356,7 @@ async function handleTimeout(context) {
         (!timeoutToken || cursor.timeoutToken === timeoutToken);
 
     return withLock(context, id, async () => {
-        const current = await context.stateGet(id);
+        const current = await loadCursor(context, id);
         if (!isCurrent(current)) {
             return;
         }
