@@ -201,6 +201,9 @@ module.exports = {
         if (isSource) {
             return context.sendJson({ result: items, count: items.length }, 'out');
         }
+        if (!items.length) {
+            return context.sendJson({}, 'notFound');
+        }
         return lib.sendArrayOutput({ context, outputType, records: items });
     },
 
