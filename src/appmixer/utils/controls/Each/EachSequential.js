@@ -44,6 +44,13 @@ const itemsKey = id => `each-items:${id}`;
 // Read by ContinueEach - keep the two in sync.
 const targetKey = id => `each:${id}`;
 const lockName = id => `each-sequential:${id}`;
+// Running loops of one Each component, when the concurrency limit is configured (see claimSlot).
+const slotsKey = componentId => `each-slots:${componentId}`;
+const slotsLockName = componentId => `each-sequential-slots:${componentId}`;
+// Service configuration (Backoffice > Connector Configuration, service `appmixer:utils:controls`).
+const MAX_LOOPS_CONFIG = 'sequentialEachMaxConcurrentLoops';
+// A slot outlives its loop by this much at most when the loop never got to clean up.
+const SLOT_MARGIN = 10 * 60 * 1000;
 // Where Each 1.5.1 kept the loop, in component state.
 const legacyCursorKey = id => id;
 const legacyItemsKey = id => `items:${id}`;
@@ -191,6 +198,105 @@ async function withLock(context, id, fn) {
 }
 
 /**
+ * The configured maximum of loops one sequential Each may run at the same time, or 0 for no limit.
+ * @param {Object} context - Appmixer context
+ * @returns {number}
+ */
+function maxConcurrentLoops(context) {
+
+    const raw = context.config?.[MAX_LOOPS_CONFIG];
+    if (raw == null || raw === '') {
+        return 0;
+    }
+    const max = Number(raw);
+    // A misconfigured value must not stop every loop of every flow: it is ignored (and logged).
+    return Number.isInteger(max) && max > 0 ? max : NaN;
+}
+
+/**
+ * Run `fn` with the lock over the running-loops record of this Each component.
+ * @param {Object} context - Appmixer context
+ * @param {Function} fn
+ */
+async function withSlotsLock(context, fn) {
+
+    let lock = null;
+    try {
+        lock = await context.lock(slotsLockName(context.componentId));
+        return await fn();
+    } finally {
+        lock?.unlock();
+    }
+}
+
+/**
+ * Take a slot for a new loop, when `sequentialEachMaxConcurrentLoops` is configured. With all slots
+ * taken this throws a plain Error - NOT a CancelError: the engine logs it and retries the `in` message
+ * later, so the loop starts once another one on this Each is over. Every slot expires when its loop
+ * must be over at the latest, so a loop that never cleaned up cannot block the Each for good. A
+ * re-delivered `in` keeps the slot it already has (the loop id is retry-stable).
+ * @param {Object} context - Appmixer context
+ * @param {string} id - Loop id
+ * @param {number} loopDuration - The longest the loop can run, in milliseconds
+ */
+async function claimSlot(context, id, loopDuration) {
+
+    const max = maxConcurrentLoops(context);
+    if (Number.isNaN(max)) {
+        await context.log({
+            step: 'concurrency-limit',
+            message: `Each sequential: ignoring the invalid '${MAX_LOOPS_CONFIG}' configuration ` +
+                `(${context.config[MAX_LOOPS_CONFIG]}), it must be a positive integer.`
+        });
+        return;
+    }
+    if (!max) {
+        return;
+    }
+
+    return withSlotsLock(context, async () => {
+        const now = Date.now();
+        const slots = (await context.flow.stateGet(slotsKey(context.componentId))) || {};
+        const running = {};
+        Object.entries(slots).forEach(([loopId, expiresAt]) => {
+            if (expiresAt > now) {
+                running[loopId] = expiresAt;
+            }
+        });
+        if (!running[id] && Object.keys(running).length >= max) {
+            await flowStateSet(context, slotsKey(context.componentId), running);
+            throw new Error(
+                `Each sequential: ${Object.keys(running).length} loops are already running on this Each, ` +
+                `the limit is ${max} ('${MAX_LOOPS_CONFIG}'). The message will be retried.`
+            );
+        }
+        running[id] = running[id] || now + loopDuration + SLOT_MARGIN;
+        await flowStateSet(context, slotsKey(context.componentId), running);
+    });
+}
+
+/**
+ * Give the slot of a finished loop back. Only when the limit is configured: without it no slots are
+ * taken (and a record left from a limit that was removed later expires on its own).
+ * @param {Object} context - Appmixer context
+ * @param {string} id - Loop id
+ */
+async function releaseSlot(context, id) {
+
+    if (!(maxConcurrentLoops(context) > 0)) {
+        return;
+    }
+    return withSlotsLock(context, async () => {
+        const slots = await context.flow.stateGet(slotsKey(context.componentId));
+        if (!slots || !(id in slots)) {
+            return;
+        }
+        delete slots[id];
+        await flowStateSet(context, slotsKey(context.componentId), slots);
+    });
+}
+
+/**
  * Forget everything about a finished loop.
  * @param {Object} context - Appmixer context
  * @param {string} id
@@ -205,6 +311,7 @@ async function cleanup(context, id, cursor) {
         await context.stateUnset(legacyItemsKey(id));
         await context.stateUnset(legacyCursorKey(id));
     }
+    await releaseSlot(context, id);
     // The cursor goes last: it is what marks the loop as running.
     return context.flow.stateUnset(cursorKey(id));
 }
@@ -242,6 +349,7 @@ async function handleStart(context, { list, correlationId, count, delay, itemTim
 
         // Every item is acknowledged or given up on within the item timeout (plus the delay before it),
         // so this bounds the whole loop.
+        await claimSlot(context, id, count * (itemTimeout * 1000 + (delay || 0)));
         await continuityScope.keepForLoop(context, { count, itemTimeout, delay });
 
         await flowStateSet(context, itemsKey(id), list);
@@ -398,6 +506,7 @@ async function handleTimeout(context) {
 }
 
 module.exports = {
+    MAX_LOOPS_CONFIG,
     DEFAULT_ITEM_TIMEOUT,
     MIN_ITEM_TIMEOUT,
     handleStart,

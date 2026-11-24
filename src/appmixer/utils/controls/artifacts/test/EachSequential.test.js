@@ -15,7 +15,7 @@ const WEBHOOK_URL = 'https://api.appmixer.test/flows/flow-1/components/each-1' +
  * flow state (shared by Each and ContinueEach) and the webhook endpoint of Each are shared by every
  * receive() call, exactly like in a running flow.
  */
-function createHarness() {
+function createHarness({ config = {} } = {}) {
 
     const state = {};
     const flowState = {};
@@ -46,6 +46,7 @@ function createHarness() {
 
     const createContext = (messages, id = 'each-run-1') => {
         const context = createMockContext({ id, messages, properties: {} });
+        context.config = config;
         context.flowId = 'flow-1';
         context.componentId = 'each-1';
         context.log = sinon.stub();
@@ -277,6 +278,91 @@ describe('Each Component - sequential mode', () => {
         assert.strictEqual(h.dones().length, 0);
         assert.deepStrictEqual(h.state, {});
         assert.deepStrictEqual(h.flowState, {});
+    });
+
+    describe('concurrency limit (sequentialEachMaxConcurrentLoops)', () => {
+
+        const startLoop = (h, id, list = ['a', 'b']) => h.start({ list, sequential: true }, id);
+
+        it('should reject a loop over the limit with a plain Error (retried, not cancelled)', async () => {
+            const h = createHarness({ config: { sequentialEachMaxConcurrentLoops: '2' } });
+
+            await startLoop(h, 'run-a');
+            await startLoop(h, 'run-b');
+            let thrown = null;
+            await startLoop(h, 'run-c').catch(err => { thrown = err; });
+
+            assert.ok(thrown, 'the third loop must fail');
+            assert.ok(!(thrown instanceof h.createContext({}).CancelError), 'NOT a CancelError - the engine must retry it');
+            assert.match(thrown.message, /2 loops are already running.*limit is 2/);
+            // Nothing of the third loop was stored or sent.
+            assert.deepStrictEqual(h.items().map(i => i.correlationId), ['run-a', 'run-b']);
+            assert.strictEqual(h.flowState['each-cursor:run-c'], undefined);
+            assert.deepStrictEqual(Object.keys(h.flowState['each-slots:each-1']).sort(), ['run-a', 'run-b']);
+        });
+
+        it('should start the rejected loop on retry once another loop is over', async () => {
+            const h = createHarness({ config: { sequentialEachMaxConcurrentLoops: 1 } });
+
+            await startLoop(h, 'run-a');
+            await assert.rejects(() => startLoop(h, 'run-b'), /limit is 1/);
+            await h.ack('run-a', 0);
+            await h.ack('run-a', 1);
+            assert.deepStrictEqual(h.flowState['each-slots:each-1'], {});
+
+            // The engine re-delivers `in` of run-b.
+            await startLoop(h, 'run-b');
+            assert.deepStrictEqual(h.items().map(i => i.correlationId), ['run-a', 'run-a', 'run-b']);
+            assert.deepStrictEqual(Object.keys(h.flowState['each-slots:each-1']), ['run-b']);
+        });
+
+        it('should keep the slot of a loop whose start failed after taking it (re-delivered `in`)', async () => {
+            const h = createHarness({ config: { sequentialEachMaxConcurrentLoops: 1 } });
+            const context = h.createContext({ in: { content: { list: ['a'], sequential: true } } }, 'run-a');
+            const realSet = context.flow.stateSet;
+            context.flow.stateSet = sinon.spy(async (key, value) => {
+                if (key.startsWith('each-items:')) {
+                    throw new Error('Mongo unavailable');
+                }
+                return realSet(key, value);
+            });
+            await assert.rejects(() => Each.receive(context), /Mongo unavailable/);
+            assert.deepStrictEqual(Object.keys(h.flowState['each-slots:each-1']), ['run-a']);
+
+            // The retry of the same message is not rejected by its own slot.
+            await startLoop(h, 'run-a', ['a']);
+            assert.deepStrictEqual(h.items().map(i => i.value), ['a']);
+        });
+
+        it('should not count a slot that expired (a loop that never cleaned up)', async () => {
+            const h = createHarness({ config: { sequentialEachMaxConcurrentLoops: 1 } });
+            h.flowState['each-slots:each-1'] = { 'run-lost': Date.now() - 1000 };
+
+            await startLoop(h, 'run-a');
+
+            assert.deepStrictEqual(Object.keys(h.flowState['each-slots:each-1']), ['run-a']);
+        });
+
+        it('should take no slots without the configuration', async () => {
+            const h = createHarness();
+
+            for (let n = 0; n < 5; n++) {
+                await startLoop(h, `run-${n}`);
+            }
+
+            assert.strictEqual(h.items().length, 5);
+            assert.strictEqual(h.flowState['each-slots:each-1'], undefined);
+        });
+
+        it('should ignore (and log) an invalid configuration instead of stopping every loop', async () => {
+            const h = createHarness({ config: { sequentialEachMaxConcurrentLoops: 'abc' } });
+
+            await startLoop(h, 'run-a');
+            await startLoop(h, 'run-b');
+
+            assert.strictEqual(h.items().length, 2);
+            assert.strictEqual(h.flowState['each-slots:each-1'], undefined);
+        });
     });
 
     describe('loops started by Each 1.5.1 (cursor and list in component state)', () => {
