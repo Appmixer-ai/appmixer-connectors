@@ -96,6 +96,10 @@ const baseUrl = (context) => {
 const errorDetail = (err) => {
 
     const body = err && err.response && err.response.data;
+    // Some Qlik endpoints answer a 4xx with a plain-text (or empty) body instead of { errors }.
+    if (typeof body === 'string' && body.trim()) {
+        return body.trim().slice(0, 500);
+    }
     if (!body || typeof body !== 'object') {
         return null;
     }
