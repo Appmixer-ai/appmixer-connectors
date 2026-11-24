@@ -437,9 +437,9 @@
                 "onError": "stopFlow"
             }
         },
-        "3b9c21d6-532b-45dc-b5f9-bc86fe4305fc": {
-            "type": "appmixer.qliksense.core.FindApps",
-            "x": 1312,
+        "5d0c7a2e-3f1b-4e8a-9c6d-2b7e4f1a8c90": {
+            "type": "appmixer.utils.timers.Wait",
+            "x": 1104,
             "y": 656,
             "version": "1.0.0",
             "source": {
@@ -453,6 +453,40 @@
                 "transform": {
                     "in": {
                         "b52cf78a-b1f8-4048-9a61-62b09308ec43": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "interval": {}
+                                },
+                                "lambda": {
+                                    "interval": "1m"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "3b9c21d6-532b-45dc-b5f9-bc86fe4305fc": {
+            "type": "appmixer.qliksense.core.FindApps",
+            "x": 1312,
+            "y": 656,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "5d0c7a2e-3f1b-4e8a-9c6d-2b7e4f1a8c90": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "5d0c7a2e-3f1b-4e8a-9c6d-2b7e4f1a8c90": {
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
@@ -867,7 +901,7 @@
             },
             "config": {
                 "properties": {
-                    "timeout": 180
+                    "timeout": 300
                 }
             },
             "errorHandling": {
@@ -1124,7 +1158,7 @@
             "y": -280,
             "width": 672,
             "height": 224,
-            "content": "## ⚠️ Test data assumption\n\nPublish App needs a **managed space**: the flow creates one (Create Space, type managed) and deletes it at the end. The connected user must be allowed to create managed spaces (tenant admin or the Manage spaces permission), and the tenant must offer managed spaces.\n\nFind Apps lists the apps of the space created by this flow, so it finds exactly the app created above."
+            "content": "## ⚠️ Test data assumption\n\nPublish App needs a **managed space**: the flow creates one (Create Space, type managed) and deletes it at the end. The connected user must be allowed to create managed spaces (tenant admin or the Manage spaces permission), and the tenant must offer managed spaces.\n\nFind Apps lists the apps of the space created by this flow, so it finds exactly the app created above. The Wait before it gives the Qlik items index time to list the new app (Find Apps reads /api/v1/items, which is updated asynchronously after Create App)."
         }
     }
 }
