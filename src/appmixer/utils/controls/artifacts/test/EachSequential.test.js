@@ -585,6 +585,70 @@ describe('ContinueEach Component', () => {
         assert.ok(context.sendJson.calledOnceWith({ correlationId: 'run-1', index: 2 }, 'out'));
     });
 
+    describe('momentary rejection of the acknowledgement', () => {
+
+        // What ContinueEach gets from context.callAppmixer when the hosted ingress rejects the call
+        // (Traefik InFlightReq, HTTP 429 with a plain text body).
+        const ingress429 = () => new Error('max connections reached: 10');
+        const queueFull = () => ({ statusCode: 503, code: 'INPUT_QUEUE_CAPACITY_EXCEEDED', message: 'System at capacity' });
+
+        const run = async context => {
+            const clock = sinon.useFakeTimers();
+            try {
+                const done = ContinueEach.receive(context);
+                // Run every backoff timer as soon as it is set.
+                for (let i = 0; i < 20; i++) {
+                    await clock.tickAsync(10000);
+                }
+                return await done;
+            } finally {
+                clock.restore();
+            }
+        };
+
+        it('should retry an ingress 429 and then acknowledge', async () => {
+            const context = createContext({ correlationId: 'run-1', index: 1 });
+            context.callAppmixer = sinon.stub();
+            context.callAppmixer.onCall(0).rejects(ingress429());
+            context.callAppmixer.onCall(1).rejects(ingress429());
+            context.callAppmixer.onCall(2).resolves({ message: 'Enqueued.' });
+
+            await run(context);
+
+            assert.strictEqual(context.callAppmixer.callCount, 3);
+            assert.ok(context.sendJson.calledOnceWith({ correlationId: 'run-1', index: 1 }, 'out'));
+        });
+
+        it('should retry a full input queue (503)', async () => {
+            const context = createContext({ correlationId: 'run-1', index: 1 });
+            context.callAppmixer = sinon.stub();
+            context.callAppmixer.onCall(0).rejects(queueFull());
+            context.callAppmixer.onCall(1).resolves({ message: 'Enqueued.' });
+
+            await run(context);
+
+            assert.strictEqual(context.callAppmixer.callCount, 2);
+            assert.ok(context.sendJson.calledOnce);
+        });
+
+        it('should give up after the last attempt', async () => {
+            const context = createContext({ correlationId: 'run-1', index: 1 });
+            context.callAppmixer = sinon.stub().rejects(ingress429());
+
+            await assert.rejects(() => run(context), /max connections reached/);
+            assert.strictEqual(context.callAppmixer.callCount, 7);
+            assert.ok(context.sendJson.notCalled);
+        });
+
+        it('should not retry any other error', async () => {
+            const context = createContext({ correlationId: 'run-1', index: 1 });
+            context.callAppmixer = sinon.stub().rejects(new Error('Flow not found'));
+
+            await assert.rejects(() => run(context), /Flow not found/);
+            assert.strictEqual(context.callAppmixer.callCount, 1);
+        });
+    });
+
     it('should send the rows of "Add to Result" as one entry, null for an unresolved value', async () => {
         const context = createContext({
             correlationId: 'run-1',
