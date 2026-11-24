@@ -43,6 +43,9 @@
                     },
                     "replyToMessageId": {
                         "type": "integer"
+                    },
+                    "inlineKeyboard": {
+                        "type": "object"
                     }
                 },
                 "required": [
@@ -118,6 +121,42 @@
                         "index": 8,
                         "label": "Reply To Message ID",
                         "tooltip": "Send this message as a reply to an existing message in the same chat."
+                    },
+                    "inlineKeyboard": {
+                        "type": "expression",
+                        "index": 9,
+                        "label": "Inline Keyboard",
+                        "tooltip": "Buttons shown under the message. Each button needs a text and either a callback data (pressing it fires the <b>New Callback Query</b> trigger, answer it with <b>Answer Callback Query</b>) or a URL to open. Buttons with the same row number appear side by side; rows are ordered by their number.",
+                        "levels": [
+                            "ADD"
+                        ],
+                        "fields": {
+                            "text": {
+                                "type": "text",
+                                "index": 1,
+                                "label": "Button Text",
+                                "tooltip": "The label of the button."
+                            },
+                            "callbackData": {
+                                "type": "text",
+                                "index": 2,
+                                "label": "Callback Data",
+                                "tooltip": "Sent to the bot when the button is pressed, 1-64 bytes. The New Callback Query trigger emits it as <i>data</i> and can filter on it. Leave empty when the button opens a URL."
+                            },
+                            "url": {
+                                "type": "text",
+                                "index": 3,
+                                "label": "URL",
+                                "tooltip": "An HTTP(S) or tg:// link the button opens. Leave empty when the button sends Callback Data."
+                            },
+                            "row": {
+                                "type": "number",
+                                "index": 4,
+                                "label": "Row",
+                                "defaultValue": 1,
+                                "tooltip": "The row the button goes into, starting at 1. Buttons with the same row number share a row."
+                            }
+                        }
                     }
                 }
             }
@@ -382,6 +421,65 @@
                             "message_id": 1041,
                             "date": 1756199000,
                             "text": "What is the status?"
+                        }
+                    },
+                    "reply_markup": {
+                        "type": "object",
+                        "title": "Reply Markup",
+                        "properties": {
+                            "inline_keyboard": {
+                                "type": "array",
+                                "title": "Reply Markup.Inline Keyboard",
+                                "items": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {
+                                            "text": {
+                                                "type": "string",
+                                                "title": "Text",
+                                                "example": "Approve"
+                                            },
+                                            "callback_data": {
+                                                "type": "string",
+                                                "title": "Callback Data",
+                                                "example": "approve"
+                                            },
+                                            "url": {
+                                                "type": "string",
+                                                "title": "URL",
+                                                "example": "https://appmixer.com"
+                                            }
+                                        }
+                                    }
+                                },
+                                "example": [
+                                    [
+                                        {
+                                            "text": "Approve",
+                                            "callback_data": "approve"
+                                        },
+                                        {
+                                            "text": "Reject",
+                                            "callback_data": "reject"
+                                        }
+                                    ]
+                                ]
+                            }
+                        },
+                        "example": {
+                            "inline_keyboard": [
+                                [
+                                    {
+                                        "text": "Approve",
+                                        "callback_data": "approve"
+                                    },
+                                    {
+                                        "text": "Reject",
+                                        "callback_data": "reject"
+                                    }
+                                ]
+                            ]
                         }
                     }
                 },

@@ -14,7 +14,8 @@ module.exports = {
             disableNotification,
             protectContent,
             messageThreadId,
-            replyToMessageId
+            replyToMessageId,
+            inlineKeyboard
         } = context.messages.in.content;
 
         if (!chatId) {
@@ -25,6 +26,8 @@ module.exports = {
             throw new context.CancelError('Text is required!');
         }
 
+        const keyboard = lib.buildInlineKeyboard(context, inlineKeyboard);
+
         const message = await lib.apiRequest(context, 'sendMessage', {
             chat_id: chatId,
             text,
@@ -33,9 +36,10 @@ module.exports = {
             disable_notification: disableNotification,
             protect_content: protectContent,
             message_thread_id: messageThreadId,
-            reply_parameters: replyToMessageId ? { message_id: replyToMessageId } : undefined
+            reply_parameters: replyToMessageId ? { message_id: replyToMessageId } : undefined,
+            reply_markup: keyboard ? { inline_keyboard: keyboard } : undefined
         });
 
-        return context.sendJson(message, 'out');
+        return await context.sendJson(message, 'out');
     }
 };
