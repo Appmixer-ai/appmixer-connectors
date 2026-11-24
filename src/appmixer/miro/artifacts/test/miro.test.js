@@ -12,7 +12,7 @@ const CreateStickyNote = require('../../core/CreateStickyNote/CreateStickyNote')
 const CreateCard = require('../../core/CreateCard/CreateCard');
 const CreateShape = require('../../core/CreateShape/CreateShape');
 const CreateConnector = require('../../core/CreateConnector/CreateConnector');
-const ListItems = require('../../core/ListItems/ListItems');
+const FindItems = require('../../core/FindItems/FindItems');
 const GetItem = require('../../core/GetItem/GetItem');
 const MakeApiCall = require('../../core/MakeApiCall/MakeApiCall');
 const NewBoard = require('../../core/NewBoard/NewBoard');
@@ -261,9 +261,15 @@ describe('Miro', function() {
             });
         });
 
-        it('lists one page of items of a type', async function() {
+        it('sends notFound when the board has no matching items', async function() {
+            const context = createContext({ content: { boardId: 'b1', type: 'card', outputType: 'array' }, responses: [{ data: { data: [] } }] });
+            await FindItems.receive(context);
+            assert.deepStrictEqual(context.sent[0], { data: {}, port: 'notFound' });
+        });
+
+        it('finds one page of items of a type', async function() {
             const context = createContext({ content: { boardId: 'b1', type: 'card', outputType: 'array' }, responses: [{ data: { data: [{ id: 'i1' }], cursor: 'c2' } }] });
-            await ListItems.receive(context);
+            await FindItems.receive(context);
             assert.deepStrictEqual(context.requests[0].params, { limit: '50', type: 'card' });
             assert.strictEqual(context.requests.length, 1);
             assert.deepStrictEqual(context.sent[0].data, { result: [{ id: 'i1' }], count: 1 });
@@ -271,10 +277,10 @@ describe('Miro', function() {
 
         it('offers no item options until a board is chosen', async function() {
             const context = createContext({ properties: { isSource: true }, content: {} });
-            await ListItems.receive(context);
+            await FindItems.receive(context);
             assert.deepStrictEqual(context.sent[0].data, { result: [], count: 0 });
             assert.strictEqual(context.requests.length, 0);
-            assert.deepStrictEqual(ListItems.toSelectArray({ result: [{ id: '1', type: 'sticky_note', data: { content: '<p>Hello</p>' } }] }),
+            assert.deepStrictEqual(FindItems.toSelectArray({ result: [{ id: '1', type: 'sticky_note', data: { content: '<p>Hello</p>' } }] }),
                 [{ label: 'sticky_note: Hello', value: '1' }]);
         });
 
