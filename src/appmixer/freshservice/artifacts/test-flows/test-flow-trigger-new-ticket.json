@@ -1,0 +1,556 @@
+{
+    "name": "E2E Freshservice - New Ticket trigger",
+    "description": "A ticket created after the first check fires New Ticket.",
+    "flow": {
+        "4afb38a9-3e5a-4516-b97e-8bada91c5f4c": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {},
+            "config": {},
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "51442578-ebba-4ab7-9e07-2e106e946496": {
+            "type": "appmixer.utils.timers.Wait",
+            "x": 272,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "4afb38a9-3e5a-4516-b97e-8bada91c5f4c": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "4afb38a9-3e5a-4516-b97e-8bada91c5f4c": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "interval": {}
+                                },
+                                "lambda": {
+                                    "interval": "2m"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "ea355472-77c6-47ff-902f-9783ddac920a": {
+            "type": "appmixer.freshservice.core.CreateRequester",
+            "x": 480,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "51442578-ebba-4ab7-9e07-2e106e946496": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "51442578-ebba-4ab7-9e07-2e106e946496": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "firstName": {},
+                                    "lastName": {
+                                        "a439d9f5-457c-4671-9210-0211cd1ad912": {
+                                            "variable": "$.4afb38a9-3e5a-4516-b97e-8bada91c5f4c.out.started",
+                                            "functions": [
+                                                {
+                                                    "name": "g_formatDate",
+                                                    "params": [
+                                                        {
+                                                            "value": "YYYYMMDDHHmmss"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "primaryEmail": {
+                                        "70e4097f-566c-426f-bdcb-02c1c75e7f7a": {
+                                            "variable": "$.4afb38a9-3e5a-4516-b97e-8bada91c5f4c.out.started",
+                                            "functions": [
+                                                {
+                                                    "name": "g_formatDate",
+                                                    "params": [
+                                                        {
+                                                            "value": "YYYYMMDDHHmmss"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "firstName": "E2E",
+                                    "lastName": "New Ticket {{{a439d9f5-457c-4671-9210-0211cd1ad912}}}",
+                                    "primaryEmail": "e2e.newticket.{{{70e4097f-566c-426f-bdcb-02c1c75e7f7a}}}@example.com"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "28801f00-9440-451b-8870-f8911ef77978": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 688,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "ea355472-77c6-47ff-902f-9783ddac920a": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "ea355472-77c6-47ff-902f-9783ddac920a": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "3f598a01-4d4d-4010-b2b6-f37e256e36a8": {
+                                            "variable": "$.ea355472-77c6-47ff-902f-9783ddac920a.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{3f598a01-4d4d-4010-b2b6-f37e256e36a8}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "9ddf1e57-68a0-4d75-bb49-2f8deee1c808": {
+            "type": "appmixer.freshservice.core.CreateTicket",
+            "x": 896,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "28801f00-9440-451b-8870-f8911ef77978": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "28801f00-9440-451b-8870-f8911ef77978": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "subject": {
+                                        "4b378deb-60d2-4e08-9435-35951d796465": {
+                                            "variable": "$.4afb38a9-3e5a-4516-b97e-8bada91c5f4c.out.started",
+                                            "functions": [
+                                                {
+                                                    "name": "g_formatDate",
+                                                    "params": [
+                                                        {
+                                                            "value": "YYYYMMDDHHmmss"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "description": {},
+                                    "requesterId": {
+                                        "f7acbc2e-8c81-4661-9e28-b27468df26b5": {
+                                            "variable": "$.ea355472-77c6-47ff-902f-9783ddac920a.out.id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "status": {},
+                                    "priority": {}
+                                },
+                                "lambda": {
+                                    "subject": "E2E Freshservice new ticket trigger {{{4b378deb-60d2-4e08-9435-35951d796465}}}",
+                                    "description": "<p>Created by the Appmixer E2E test.</p>",
+                                    "requesterId": "{{{f7acbc2e-8c81-4661-9e28-b27468df26b5}}}",
+                                    "status": 2,
+                                    "priority": 1
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "e30ef6f7-d766-4746-8001-736a433c4f64": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1104,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "9ddf1e57-68a0-4d75-bb49-2f8deee1c808": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "9ddf1e57-68a0-4d75-bb49-2f8deee1c808": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "762879eb-d9da-41a3-9781-ecc2150465f8": {
+                                            "variable": "$.9ddf1e57-68a0-4d75-bb49-2f8deee1c808.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{762879eb-d9da-41a3-9781-ecc2150465f8}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "aa294d90-6ada-45d5-b07f-0a4ab8af2c81": {
+            "type": "appmixer.freshservice.core.NewTicket",
+            "x": 64,
+            "y": 400,
+            "version": "1.0.0",
+            "source": {},
+            "config": {
+                "properties": {}
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "2be306d3-c18c-4b2f-b538-33b2a54d1689": {
+            "type": "appmixer.utils.controls.Condition",
+            "x": 272,
+            "y": 400,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "aa294d90-6ada-45d5-b07f-0a4ab8af2c81": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "aa294d90-6ada-45d5-b07f-0a4ab8af2c81": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "9ed9e9e5-54a0-4e97-abae-1cd9ba1beda9": {
+                                            "variable": "$.aa294d90-6ada-45d5-b07f-0a4ab8af2c81.out.subject",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "OR": [
+                                                    {
+                                                        "input": "{{{9ed9e9e5-54a0-4e97-abae-1cd9ba1beda9}}}",
+                                                        "operator": "regex",
+                                                        "regex": "^E2E Freshservice new ticket trigger \\d{14}$"
+                                                    }
+                                                ]
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "label": "Condition (only the record this test created)"
+        },
+        "391bd95e-b9c7-4c26-b259-56cef6a580a4": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 480,
+            "y": 400,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "2be306d3-c18c-4b2f-b538-33b2a54d1689": [
+                        "true"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "2be306d3-c18c-4b2f-b538-33b2a54d1689": {
+                            "true": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "b8ee15cb-a81b-4fee-8301-274db96942dc": {
+                                            "variable": "$.aa294d90-6ada-45d5-b07f-0a4ab8af2c81.out.subject",
+                                            "functions": []
+                                        },
+                                        "305e44c7-fb95-415c-aaf8-9a67a14d600c": {
+                                            "variable": "$.aa294d90-6ada-45d5-b07f-0a4ab8af2c81.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{b8ee15cb-a81b-4fee-8301-274db96942dc}}}",
+                                                "assertion": "regex",
+                                                "regex": "^E2E Freshservice new ticket trigger "
+                                            },
+                                            {
+                                                "field": "{{{305e44c7-fb95-415c-aaf8-9a67a14d600c}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "015fb334-0c4d-49d3-a589-16713557ff8a": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 1312,
+            "y": 400,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "28801f00-9440-451b-8870-f8911ef77978": [
+                        "out"
+                    ],
+                    "e30ef6f7-d766-4746-8001-736a433c4f64": [
+                        "out"
+                    ],
+                    "391bd95e-b9c7-4c26-b259-56cef6a580a4": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 720
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "159696e6-1c0e-44ee-a504-38dce44a60b9": {
+            "type": "appmixer.freshservice.core.DeleteTicket",
+            "x": 1520,
+            "y": 400,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "015fb334-0c4d-49d3-a589-16713557ff8a": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "015fb334-0c4d-49d3-a589-16713557ff8a": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "ticketId": {
+                                        "91ee9835-120a-4f1e-8784-e7744efbd179": {
+                                            "variable": "$.aa294d90-6ada-45d5-b07f-0a4ab8af2c81.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "ticketId": "{{{91ee9835-120a-4f1e-8784-e7744efbd179}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "1d6ca23f-2384-4ed5-8db0-316ec54ce349": {
+            "type": "appmixer.freshservice.core.MakeApiCall",
+            "x": 1728,
+            "y": 400,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "159696e6-1c0e-44ee-a504-38dce44a60b9": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "159696e6-1c0e-44ee-a504-38dce44a60b9": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "url": {
+                                        "bb3b5041-921c-43e0-9519-dfb4aac952be": {
+                                            "variable": "$.aa294d90-6ada-45d5-b07f-0a4ab8af2c81.out.requester_id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "method": {}
+                                },
+                                "lambda": {
+                                    "url": "/requesters/{{{bb3b5041-921c-43e0-9519-dfb4aac952be}}}/forget",
+                                    "method": "DELETE"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "40362919-f37f-49c1-8d6a-586f9be89c4a": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1936,
+            "y": 400,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "1d6ca23f-2384-4ed5-8db0-316ec54ce349": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "1d6ca23f-2384-4ed5-8db0-316ec54ce349": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "4913966c-da99-46a5-8b8c-c139feb75e74": {
+                                            "variable": "$.015fb334-0c4d-49d3-a589-16713557ff8a.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E Freshservice - New Ticket trigger",
+                                    "result": "{{{4913966c-da99-46a5-8b8c-c139feb75e74}}}"
+                                }
+                            }
+                        }
+                    }
+                },
+                "properties": {
+                    "successStoreId": "64f6f1f9193228000754082f",
+                    "failedStoreId": "64f6f1f0193228000754082e"
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        }
+    },
+    "notes": {
+        "203a1b1b-0623-4417-a684-bca839fd9814": {
+            "x": 64,
+            "y": 176,
+            "width": 672,
+            "height": 176,
+            "content": "## ⏱ Timing\n\nThe trigger checks Freshservice every minute and its first check only records where the account stands. The **Wait 2m** lets that first check happen before the flow creates the record; do not remove it. The trigger lane cleans up what it received."
+        }
+    }
+}
