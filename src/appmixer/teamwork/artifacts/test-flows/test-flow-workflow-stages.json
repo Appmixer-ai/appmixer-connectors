@@ -1,6 +1,6 @@
 {
     "name": "E2E Teamwork - workflow stages",
-    "description": "Workflow + stage created through MakeApiCall and attached to a fresh project → ListWorkflows → ListWorkflowStages → ChangeTaskWorkflowStage; deletes project and workflow.",
+    "description": "CreateWorkflow + CreateWorkflowStage, AddWorkflowToProject on a fresh project → ListWorkflows → ListWorkflowStages → ChangeTaskWorkflowStage; DeleteProject + DeleteWorkflow cleanup.",
     "flow": {
         "afe5dde1-c84b-4ce1-ac56-bb74a4ca3f3f": {
             "type": "appmixer.utils.controls.OnStart",
@@ -365,7 +365,7 @@
             }
         },
         "b9f07047-9aa1-4ebf-988a-da3a6dd8f5e5": {
-            "type": "appmixer.teamwork.core.MakeApiCall",
+            "type": "appmixer.teamwork.core.CreateWorkflow",
             "x": 1728,
             "y": 528,
             "version": "1.0.0",
@@ -383,9 +383,7 @@
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
-                                    "url": {},
-                                    "method": {},
-                                    "body": {
+                                    "name": {
                                         "65381645-04e8-4eaa-bffc-cead75c2e1db": {
                                             "variable": "$.afe5dde1-c84b-4ce1-ac56-bb74a4ca3f3f.out.started",
                                             "functions": []
@@ -393,9 +391,7 @@
                                     }
                                 },
                                 "lambda": {
-                                    "url": "/projects/api/v3/workflows.json",
-                                    "method": "POST",
-                                    "body": "{\"workflow\": {\"name\": \"E2E workflow {{{65381645-04e8-4eaa-bffc-cead75c2e1db}}}\", \"projectSpecific\": false, \"status\": \"active\"}, \"workflowOptions\": {}}"
+                                    "name": "E2E workflow {{{65381645-04e8-4eaa-bffc-cead75c2e1db}}}"
                                 }
                             }
                         }
@@ -428,17 +424,8 @@
                                 "modifiers": {
                                     "expression": {
                                         "4c10af6c-7cc1-48bc-9616-cea025d01036": {
-                                            "variable": "$.b9f07047-9aa1-4ebf-988a-da3a6dd8f5e5.out.body",
-                                            "functions": [
-                                                {
-                                                    "name": "g_jsonPath",
-                                                    "params": [
-                                                        {
-                                                            "value": "$.workflow.id"
-                                                        }
-                                                    ]
-                                                }
-                                            ]
+                                            "variable": "$.b9f07047-9aa1-4ebf-988a-da3a6dd8f5e5.out.id",
+                                            "functions": []
                                         }
                                     }
                                 },
@@ -463,7 +450,7 @@
             }
         },
         "86d24ea0-4ad0-450f-b582-22c44dbba9b0": {
-            "type": "appmixer.teamwork.core.MakeApiCall",
+            "type": "appmixer.teamwork.core.CreateWorkflowStage",
             "x": 2144,
             "y": 656,
             "version": "1.0.0",
@@ -481,28 +468,18 @@
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
-                                    "url": {
+                                    "workflowId": {
                                         "7af2c878-6735-4ad9-abd5-6a048bc99788": {
-                                            "variable": "$.b9f07047-9aa1-4ebf-988a-da3a6dd8f5e5.out.body",
-                                            "functions": [
-                                                {
-                                                    "name": "g_jsonPath",
-                                                    "params": [
-                                                        {
-                                                            "value": "$.workflow.id"
-                                                        }
-                                                    ]
-                                                }
-                                            ]
+                                            "variable": "$.b9f07047-9aa1-4ebf-988a-da3a6dd8f5e5.out.id",
+                                            "functions": []
                                         }
-                                    },
-                                    "method": {},
-                                    "body": {}
+                                    }
                                 },
                                 "lambda": {
-                                    "url": "/projects/api/v3/workflows/{{{7af2c878-6735-4ad9-abd5-6a048bc99788}}}/stages.json",
-                                    "method": "POST",
-                                    "body": "{\"stage\": {\"name\": \"Backlog\", \"color\": \"#3B82F6\", \"showCompletedTasks\": false, \"displayOrder\": 1, \"positionAfterStage\": 0}, \"stageOptions\": {}}"
+                                    "workflowId": "{{{7af2c878-6735-4ad9-abd5-6a048bc99788}}}",
+                                    "name": "Backlog",
+                                    "color": "#3B82F6",
+                                    "showCompletedTasks": false
                                 }
                             }
                         }
@@ -535,17 +512,8 @@
                                 "modifiers": {
                                     "expression": {
                                         "64b7722d-8d16-4f5c-b6a9-fc27cc1570c9": {
-                                            "variable": "$.86d24ea0-4ad0-450f-b582-22c44dbba9b0.out.body",
-                                            "functions": [
-                                                {
-                                                    "name": "g_jsonPath",
-                                                    "params": [
-                                                        {
-                                                            "value": "$.stage.id"
-                                                        }
-                                                    ]
-                                                }
-                                            ]
+                                            "variable": "$.86d24ea0-4ad0-450f-b582-22c44dbba9b0.out.id",
+                                            "functions": []
                                         }
                                     }
                                 },
@@ -570,7 +538,7 @@
             }
         },
         "955e9fd5-44b5-453f-9fb7-c4b1077b64b7": {
-            "type": "appmixer.teamwork.core.MakeApiCall",
+            "type": "appmixer.teamwork.core.AddWorkflowToProject",
             "x": 2560,
             "y": 784,
             "version": "1.0.0",
@@ -588,80 +556,22 @@
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
-                                    "url": {
+                                    "projectId": {
                                         "24c1576b-8ff6-4f30-ac93-fa476acb22c7": {
                                             "variable": "$.729a4aa9-625c-487a-bacb-d256293cb930.project.id",
                                             "functions": []
                                         }
                                     },
-                                    "method": {},
-                                    "body": {
+                                    "workflowId": {
                                         "52e5cfb1-b05f-4dbc-a9a5-0f7a950ec98e": {
-                                            "variable": "$.b9f07047-9aa1-4ebf-988a-da3a6dd8f5e5.out.body",
-                                            "functions": [
-                                                {
-                                                    "name": "g_jsonPath",
-                                                    "params": [
-                                                        {
-                                                            "value": "$.workflow.id"
-                                                        }
-                                                    ]
-                                                }
-                                            ]
-                                        }
-                                    }
-                                },
-                                "lambda": {
-                                    "url": "/projects/api/v3/projects/{{{24c1576b-8ff6-4f30-ac93-fa476acb22c7}}}/workflows.json",
-                                    "method": "POST",
-                                    "body": "{\"workflow\": {\"id\": {{{52e5cfb1-b05f-4dbc-a9a5-0f7a950ec98e}}}}, \"workflowOptions\": {}}"
-                                }
-                            }
-                        }
-                    }
-                }
-            },
-            "errorHandling": {
-                "autoRetry": false,
-                "onError": "stopFlow"
-            }
-        },
-        "77a0f75a-245c-4850-8c8c-0136724fd883": {
-            "type": "appmixer.utils.test.Assert",
-            "x": 2768,
-            "y": 784,
-            "version": "1.0.0",
-            "source": {
-                "in": {
-                    "955e9fd5-44b5-453f-9fb7-c4b1077b64b7": [
-                        "out"
-                    ]
-                }
-            },
-            "config": {
-                "transform": {
-                    "in": {
-                        "955e9fd5-44b5-453f-9fb7-c4b1077b64b7": {
-                            "out": {
-                                "type": "json2new",
-                                "modifiers": {
-                                    "expression": {
-                                        "48211410-c515-4254-995a-b0d8c5d9b45a": {
-                                            "variable": "$.955e9fd5-44b5-453f-9fb7-c4b1077b64b7.out.status",
+                                            "variable": "$.b9f07047-9aa1-4ebf-988a-da3a6dd8f5e5.out.id",
                                             "functions": []
                                         }
                                     }
                                 },
                                 "lambda": {
-                                    "expression": {
-                                        "AND": [
-                                            {
-                                                "field": "{{{48211410-c515-4254-995a-b0d8c5d9b45a}}}",
-                                                "assertion": "regex",
-                                                "regex": "^20[0-9]$"
-                                            }
-                                        ]
-                                    }
+                                    "projectId": "{{{24c1576b-8ff6-4f30-ac93-fa476acb22c7}}}",
+                                    "workflowId": "{{{52e5cfb1-b05f-4dbc-a9a5-0f7a950ec98e}}}"
                                 }
                             }
                         }
@@ -680,7 +590,7 @@
             "version": "1.0.0",
             "source": {
                 "in": {
-                    "77a0f75a-245c-4850-8c8c-0136724fd883": [
+                    "955e9fd5-44b5-453f-9fb7-c4b1077b64b7": [
                         "out"
                     ]
                 }
@@ -688,7 +598,7 @@
             "config": {
                 "transform": {
                     "in": {
-                        "77a0f75a-245c-4850-8c8c-0136724fd883": {
+                        "955e9fd5-44b5-453f-9fb7-c4b1077b64b7": {
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
@@ -746,17 +656,25 @@
                                             ]
                                         },
                                         "64fb98da-c348-4baf-aefb-397b581da6e0": {
-                                            "variable": "$.b9f07047-9aa1-4ebf-988a-da3a6dd8f5e5.out.body",
+                                            "variable": "$.b9f07047-9aa1-4ebf-988a-da3a6dd8f5e5.out.id",
+                                            "functions": []
+                                        },
+                                        "5d0c7c1e-2f4b-4a43-9a51-0c4e7a1f3b21": {
+                                            "variable": "$.a1357d99-adbf-4ee7-a42d-8a7a4c28396c.workflows.workflows",
                                             "functions": [
                                                 {
                                                     "name": "g_jsonPath",
                                                     "params": [
                                                         {
-                                                            "value": "$.workflow.id"
+                                                            "value": "$[0].projectIds[0]"
                                                         }
                                                     ]
                                                 }
                                             ]
+                                        },
+                                        "8e2f6b4d-9c1a-4f7e-b3d5-2a6c8e0f4b17": {
+                                            "variable": "$.729a4aa9-625c-487a-bacb-d256293cb930.project.id",
+                                            "functions": []
                                         }
                                     }
                                 },
@@ -767,6 +685,11 @@
                                                 "field": "{{{4bdae828-fa34-423d-9e4a-4ab84ba3dc26}}}",
                                                 "assertion": "equal",
                                                 "expected": "{{{64fb98da-c348-4baf-aefb-397b581da6e0}}}"
+                                            },
+                                            {
+                                                "field": "{{{5d0c7c1e-2f4b-4a43-9a51-0c4e7a1f3b21}}}",
+                                                "assertion": "equal",
+                                                "expected": "{{{8e2f6b4d-9c1a-4f7e-b3d5-2a6c8e0f4b17}}}"
                                             }
                                         ]
                                     }
@@ -802,17 +725,8 @@
                                 "modifiers": {
                                     "workflowId": {
                                         "9d642471-10c7-4feb-aa25-c9bc635adce5": {
-                                            "variable": "$.b9f07047-9aa1-4ebf-988a-da3a6dd8f5e5.out.body",
-                                            "functions": [
-                                                {
-                                                    "name": "g_jsonPath",
-                                                    "params": [
-                                                        {
-                                                            "value": "$.workflow.id"
-                                                        }
-                                                    ]
-                                                }
-                                            ]
+                                            "variable": "$.b9f07047-9aa1-4ebf-988a-da3a6dd8f5e5.out.id",
+                                            "functions": []
                                         }
                                     },
                                     "searchTerm": {}
@@ -865,17 +779,8 @@
                                             ]
                                         },
                                         "2ebcb350-439a-4199-970e-58f976b0dcbc": {
-                                            "variable": "$.86d24ea0-4ad0-450f-b582-22c44dbba9b0.out.body",
-                                            "functions": [
-                                                {
-                                                    "name": "g_jsonPath",
-                                                    "params": [
-                                                        {
-                                                            "value": "$.stage.id"
-                                                        }
-                                                    ]
-                                                }
-                                            ]
+                                            "variable": "$.86d24ea0-4ad0-450f-b582-22c44dbba9b0.out.id",
+                                            "functions": []
                                         }
                                     }
                                 },
@@ -936,32 +841,14 @@
                                     },
                                     "workflowId": {
                                         "f461a3de-ef6f-405f-b24a-1da5bbcee9b3": {
-                                            "variable": "$.b9f07047-9aa1-4ebf-988a-da3a6dd8f5e5.out.body",
-                                            "functions": [
-                                                {
-                                                    "name": "g_jsonPath",
-                                                    "params": [
-                                                        {
-                                                            "value": "$.workflow.id"
-                                                        }
-                                                    ]
-                                                }
-                                            ]
+                                            "variable": "$.b9f07047-9aa1-4ebf-988a-da3a6dd8f5e5.out.id",
+                                            "functions": []
                                         }
                                     },
                                     "workflowStageId": {
                                         "fcafa45c-0175-4785-a014-b77e4607ccdb": {
-                                            "variable": "$.86d24ea0-4ad0-450f-b582-22c44dbba9b0.out.body",
-                                            "functions": [
-                                                {
-                                                    "name": "g_jsonPath",
-                                                    "params": [
-                                                        {
-                                                            "value": "$.stage.id"
-                                                        }
-                                                    ]
-                                                }
-                                            ]
+                                            "variable": "$.86d24ea0-4ad0-450f-b582-22c44dbba9b0.out.id",
+                                            "functions": []
                                         }
                                     }
                                 },
@@ -1062,9 +949,6 @@
                     "de61134b-528f-4db7-becc-ec717b0c358b": [
                         "out"
                     ],
-                    "77a0f75a-245c-4850-8c8c-0136724fd883": [
-                        "out"
-                    ],
                     "03ab0707-7665-463f-861d-52651519eaee": [
                         "out"
                     ],
@@ -1087,7 +971,7 @@
             }
         },
         "06481980-dc87-4bc8-b8d5-6c0db437e86e": {
-            "type": "appmixer.teamwork.core.MakeApiCall",
+            "type": "appmixer.teamwork.core.DeleteProject",
             "x": 4432,
             "y": 1168,
             "version": "1.0.0",
@@ -1105,17 +989,15 @@
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
-                                    "url": {
+                                    "projectId": {
                                         "8cef3002-ee41-4c13-8afe-6fc52dfddaa8": {
                                             "variable": "$.729a4aa9-625c-487a-bacb-d256293cb930.project.id",
                                             "functions": []
                                         }
-                                    },
-                                    "method": {}
+                                    }
                                 },
                                 "lambda": {
-                                    "url": "/projects/{{{8cef3002-ee41-4c13-8afe-6fc52dfddaa8}}}.json",
-                                    "method": "DELETE"
+                                    "projectId": "{{{8cef3002-ee41-4c13-8afe-6fc52dfddaa8}}}"
                                 }
                             }
                         }
@@ -1128,7 +1010,7 @@
             }
         },
         "04db2f66-1adb-4c9f-936b-ff51ee78c3f6": {
-            "type": "appmixer.teamwork.core.MakeApiCall",
+            "type": "appmixer.teamwork.core.DeleteWorkflow",
             "x": 4640,
             "y": 1168,
             "version": "1.0.0",
@@ -1146,26 +1028,15 @@
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
-                                    "url": {
+                                    "workflowId": {
                                         "885bf2b9-ae60-47a9-b810-74f1d96a3205": {
-                                            "variable": "$.b9f07047-9aa1-4ebf-988a-da3a6dd8f5e5.out.body",
-                                            "functions": [
-                                                {
-                                                    "name": "g_jsonPath",
-                                                    "params": [
-                                                        {
-                                                            "value": "$.workflow.id"
-                                                        }
-                                                    ]
-                                                }
-                                            ]
+                                            "variable": "$.b9f07047-9aa1-4ebf-988a-da3a6dd8f5e5.out.id",
+                                            "functions": []
                                         }
-                                    },
-                                    "method": {}
+                                    }
                                 },
                                 "lambda": {
-                                    "url": "/projects/api/v3/workflows/{{{885bf2b9-ae60-47a9-b810-74f1d96a3205}}}.json",
-                                    "method": "DELETE"
+                                    "workflowId": "{{{885bf2b9-ae60-47a9-b810-74f1d96a3205}}}"
                                 }
                             }
                         }
@@ -1231,7 +1102,7 @@
             "y": 1424,
             "width": 736,
             "height": 224,
-            "content": "## ℹ️ Self-contained, but needs a paid plan or trial\n\nThe flow creates its own workflow (v3 POST workflows.json — the body MUST carry `workflowOptions: {}` or Teamwork answers 500), adds a stage, attaches the workflow to the fresh project and moves the task into the stage; everything is deleted at the end. Workflows are not available on the Free plan (appmixer2.eu); verified on the trial site appmixer3.eu on 2026-10-14."
+            "content": "## ℹ️ Self-contained, but needs a paid plan or trial\n\nThe flow creates its own workflow (CreateWorkflow), adds a stage (CreateWorkflowStage), attaches the workflow to the fresh project (AddWorkflowToProject) and moves the task into the stage; everything is deleted at the end. Workflows are not available on the Free plan (appmixer2.eu); verified on the trial site appmixer3.eu on 2026-10-14."
         }
     }
 }
