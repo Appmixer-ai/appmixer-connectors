@@ -253,6 +253,19 @@ describe('Each Component - sequential mode', () => {
         assert.deepStrictEqual(h.flowState, {});
     });
 
+    it('should cancel (not retry) a list over the 16 MB document limit, like component state did', async () => {
+        const h = createHarness();
+        const context = h.createContext({ in: { content: { list: ['a'], sequential: true } } });
+        const tooBig = Object.assign(new Error('Document is larger than the maximum size 16777216'), { code: 'ERR_OUT_OF_RANGE' });
+        context.flow.stateSet = sinon.stub().rejects(tooBig);
+
+        await assert.rejects(
+            () => Each.receive(context),
+            err => err instanceof context.CancelError && /16 MB/.test(err.message)
+        );
+        assert.strictEqual(h.items().length, 0);
+    });
+
     it('should clean up the flow state when the stored list is missing', async () => {
         const h = createHarness();
 

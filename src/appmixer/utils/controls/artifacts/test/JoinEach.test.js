@@ -187,17 +187,33 @@ describe('JoinEach Component', () => {
             assert.deepStrictEqual(h.componentStates['join-1'], {});
         });
 
-        it('should remove leftovers of an interrupted move when the join ends', async () => {
+        it('should merge a message the old version stored while both versions run (upgrade window)', async () => {
             const h = createHarness();
-            seedLegacyJoin(h);
-            // The move wrote the flow state, then the process died before the component state was unset.
-            h.flowState['joineach:join-1:c1'] = { ...h.componentStates['join-1'].c1, legacy: true };
+            // New version: the join is in flow state with its count.
+            await h.count('c1', 3);
+            await h.in('c1', 'a');
+            // Old version (another worker, right after the upgrade) did not see it and stored `b`
+            // as a new join in component state.
+            h.componentStates['join-1'].c1 = { inputMessages: [{ item: 'b' }] };
 
-            await h.in('c1', 'b');
             await h.in('c1', 'c');
 
-            assert.strictEqual(h.outs('out').length, 1);
-            assert.deepStrictEqual(h.outs('out')[0].content, { items: [{ item: 'a' }, { item: 'b' }, { item: 'c' }] });
+            assert.deepStrictEqual(h.outs('out').map(m => m.content), [{ items: [{ item: 'a' }, { item: 'b' }, { item: 'c' }] }]);
+            assert.strictEqual(h.outs('timeout').length, 0);
+            assert.deepStrictEqual(h.flowState, {});
+            assert.deepStrictEqual(h.componentStates['join-1'], {});
+        });
+
+        it('should merge a count the old version stored while both versions run (upgrade window)', async () => {
+            const h = createHarness();
+            await h.in('c1', 'a');
+            // The old version handled `count` and set its timeout in component state.
+            h.componentStates['join-1'].c1 = { count: 2, timeoutId: 'timeout-legacy' };
+
+            await h.in('c1', 'b');
+
+            assert.deepStrictEqual(h.outs('out').map(m => m.content), [{ items: [{ item: 'a' }, { item: 'b' }] }]);
+            assert.deepStrictEqual(h.cleared, ['timeout-legacy']);
             assert.deepStrictEqual(h.flowState, {});
             assert.deepStrictEqual(h.componentStates['join-1'], {});
         });

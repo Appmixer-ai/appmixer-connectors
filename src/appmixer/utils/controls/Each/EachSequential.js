@@ -49,6 +49,28 @@ const legacyCursorKey = id => id;
 const legacyItemsKey = id => `items:${id}`;
 
 /**
+ * context.flow.stateSet with the 16 MB document limit reported the way context.stateSet reports it -
+ * as a CancelError (the value will never fit, retrying is pointless). The engine passes the raw Mongo
+ * error through for flow state.
+ * @param {Object} context - Appmixer context
+ * @param {string} key
+ * @param {*} value
+ */
+async function flowStateSet(context, key, value) {
+
+    try {
+        await context.flow.stateSet(key, value);
+    } catch (err) {
+        const tooBig = err?.code === 'ERR_OUT_OF_RANGE' || err?.code === 17420 || err?.code === 17419 ||
+            err?.code === 10334 || /offset is out of bounds|larger than the maximum|too large/i.test(err?.message || '');
+        if (tooBig) {
+            throw new context.CancelError(`The data is too big to be kept (16 MB limit): ${err.message}`);
+        }
+        throw err;
+    }
+}
+
+/**
  * Normalize and validate the item timeout (seconds).
  * @param {Object} context - Appmixer context
  * @param {*} rawItemTimeout
@@ -106,7 +128,7 @@ async function sendItem(context, id, cursor, index, value) {
     // than losing it.
     // eslint-disable-next-line no-unused-vars
     const { acked, ...loop } = cursor;
-    await context.flow.stateSet(cursorKey(id), { ...loop, index, timeoutId, timeoutToken });
+    await flowStateSet(context, cursorKey(id), { ...loop, index, timeoutId, timeoutToken });
 }
 
 /**
@@ -142,10 +164,10 @@ async function loadCursor(context, id) {
     // at any point leaves the loop readable.
     const items = await context.stateGet(legacyItemsKey(id));
     if (items != null) {
-        await context.flow.stateSet(itemsKey(id), items);
+        await flowStateSet(context, itemsKey(id), items);
     }
     const moved = { ...legacy, legacy: true };
-    await context.flow.stateSet(cursorKey(id), moved);
+    await flowStateSet(context, cursorKey(id), moved);
     await context.stateUnset(legacyItemsKey(id));
     await context.stateUnset(legacyCursorKey(id));
     return moved;
@@ -222,10 +244,10 @@ async function handleStart(context, { list, correlationId, count, delay, itemTim
         // so this bounds the whole loop.
         await continuityScope.keepForLoop(context, { count, itemTimeout, delay });
 
-        await context.flow.stateSet(itemsKey(id), list);
+        await flowStateSet(context, itemsKey(id), list);
         // ContinueEach only knows the loop id (the Correlation ID mapped to it), so this is how it
         // finds which component to wake up and with which correlation, before the first item goes out.
-        await context.flow.stateSet(targetKey(id), {
+        await flowStateSet(context, targetKey(id), {
             componentId: context.componentId,
             webhookQuery: getWebhookQuery(context)
         });
@@ -301,7 +323,7 @@ async function acknowledge(context, id, doneIndex, entry) {
         // Record the acknowledgement before the delay, so the item timeout firing meanwhile (a delay
         // close to the item timeout) cannot take the item as unacknowledged. The timeout stays set:
         // if the process waiting on the delay dies, it is what moves the loop on.
-        await context.flow.stateSet(cursorKey(id), { ...cursor, acked: true });
+        await flowStateSet(context, cursorKey(id), { ...cursor, acked: true });
         return cursor.delay;
     });
 

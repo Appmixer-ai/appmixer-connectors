@@ -19,8 +19,34 @@ function getCorrelationId(message) {
 const joinKey = (context, correlationId) => `joineach:${context.componentId}:${correlationId}`;
 
 /**
- * The state of a join. Must be called with the join lock held. A join started by JoinEach 1.1.2 (in
- * component state under the correlation ID) is moved to flow state first.
+ * context.flow.stateSet with the 16 MB document limit reported the way context.stateSet reports it -
+ * as a CancelError (the value will never fit, retrying is pointless). The engine passes the raw Mongo
+ * error through for flow state.
+ * @param {Object} context - Appmixer context
+ * @param {string} key
+ * @param {*} value
+ */
+async function flowStateSet(context, key, value) {
+
+    try {
+        await context.flow.stateSet(key, value);
+    } catch (err) {
+        const tooBig = err?.code === 'ERR_OUT_OF_RANGE' || err?.code === 17420 || err?.code === 17419 ||
+            err?.code === 10334 || /offset is out of bounds|larger than the maximum|too large/i.test(err?.message || '');
+        if (tooBig) {
+            throw new context.CancelError(`The data is too big to be kept (16 MB limit): ${err.message}`);
+        }
+        throw err;
+    }
+}
+
+/**
+ * The state of a join. Must be called with the join lock held.
+ *
+ * Whatever the previous version (1.1.2) keeps in component state under the correlation ID is merged in
+ * and removed: a join it started is moved to flow state, and while workers still run the previous
+ * version right after an upgrade, a message it handled for a join already in flow state lands in
+ * component state - merging both keeps such a join complete instead of splitting it in two.
  * @param {Object} context - Appmixer context
  * @param {string} correlationId
  * @returns {Promise<Object>}
@@ -29,18 +55,29 @@ async function loadJoin(context, correlationId) {
 
     const key = joinKey(context, correlationId);
     const join = await context.flow.stateGet(key);
-    if (join) {
-        return join;
-    }
     const legacy = await context.stateGet(correlationId);
     if (!legacy) {
-        return {};
+        return join || {};
     }
-    // Flow state first, component state after: a crash in between leaves the join readable (and the
-    // legacy key is unset again when the join ends).
-    await context.flow.stateSet(key, { ...legacy, legacy: true });
+    const merged = {
+        ...(join || {}),
+        inputMessages: [...(join?.inputMessages || []), ...(legacy.inputMessages || [])],
+        legacy: true
+    };
+    const count = join?.count ?? legacy.count;
+    if (count !== undefined) {
+        merged.count = count;
+    }
+    // The timeout is set by whichever version handled the (single) `count` message.
+    const timeoutId = join?.timeoutId || legacy.timeoutId;
+    if (timeoutId) {
+        merged.timeoutId = timeoutId;
+    }
+    // Flow state first, component state after: a crash in between loses nothing (the messages would be
+    // merged once more - at-least-once, like a re-delivered message).
+    await flowStateSet(context, key, merged);
     await context.stateUnset(correlationId);
-    return { ...legacy, legacy: true };
+    return merged;
 }
 
 /**
@@ -50,7 +87,7 @@ async function loadJoin(context, correlationId) {
  */
 async function saveJoin(context, correlationId, join) {
 
-    await context.flow.stateSet(joinKey(context, correlationId), join);
+    await flowStateSet(context, joinKey(context, correlationId), join);
 }
 
 /**
