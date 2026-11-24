@@ -40,7 +40,10 @@ const CONFIG = {
 // token anywhere else), keyed by the connector directory (src/appmixer/<connector>).
 const AUTH_OVERRIDES = {
     // lib.js accepts only a *.workday.com / *.myworkday.com hostname.
-    workday: { host: 'kv-test.workday.com' }
+    workday: { host: 'kv-test.workday.com' },
+    // lib.js accepts only a plain subdomain ("acme" for https://acme.gorgias.com); the placeholder
+    // above would read 'subdomain' as a URL because the name ends in "domain".
+    gorgias: { subdomain: 'kv-test' }
 };
 
 // Any auth or config field reads as a placeholder: a URL for *Url/*Uri/*Domain fields, a token otherwise.
