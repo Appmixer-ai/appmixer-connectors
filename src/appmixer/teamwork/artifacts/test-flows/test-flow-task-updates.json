@@ -365,7 +365,7 @@
             }
         },
         "3843fe67-1f6d-4f42-8f68-b1ca8b753baa": {
-            "type": "appmixer.teamwork.core.ListPeople",
+            "type": "appmixer.teamwork.core.MakeApiCall",
             "x": 1728,
             "y": 528,
             "version": "1.0.0",
@@ -383,10 +383,12 @@
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
-                                    "searchTerm": {}
+                                    "url": {},
+                                    "method": {}
                                 },
                                 "lambda": {
-                                    "searchTerm": "vladimir.talas@appmixer.ai"
+                                    "url": "/me.json",
+                                    "method": "GET"
                                 }
                             }
                         }
@@ -396,7 +398,8 @@
             "errorHandling": {
                 "autoRetry": false,
                 "onError": "stopFlow"
-            }
+            },
+            "label": "Current user (GET /me.json)"
         },
         "4403dc9f-c162-4b3c-8ba8-fc7eeb9ec508": {
             "type": "appmixer.utils.test.Assert",
@@ -406,7 +409,7 @@
             "source": {
                 "in": {
                     "3843fe67-1f6d-4f42-8f68-b1ca8b753baa": [
-                        "people"
+                        "out"
                     ]
                 }
             },
@@ -414,18 +417,18 @@
                 "transform": {
                     "in": {
                         "3843fe67-1f6d-4f42-8f68-b1ca8b753baa": {
-                            "people": {
+                            "out": {
                                 "type": "json2new",
                                 "modifiers": {
                                     "expression": {
                                         "ab2df605-fd5a-4a05-88fc-4da26b468c94": {
-                                            "variable": "$.3843fe67-1f6d-4f42-8f68-b1ca8b753baa.people.people",
+                                            "variable": "$.3843fe67-1f6d-4f42-8f68-b1ca8b753baa.out",
                                             "functions": [
                                                 {
                                                     "name": "g_jsonPath",
                                                     "params": [
                                                         {
-                                                            "value": "$[0].id"
+                                                            "value": "$.body.person.id"
                                                         }
                                                     ]
                                                 }
@@ -491,13 +494,13 @@
                                     "selectedType": {},
                                     "userIds": {
                                         "9542eeb8-8777-4647-9faa-c0aaeb1e4fac": {
-                                            "variable": "$.3843fe67-1f6d-4f42-8f68-b1ca8b753baa.people.people",
+                                            "variable": "$.3843fe67-1f6d-4f42-8f68-b1ca8b753baa.out",
                                             "functions": [
                                                 {
                                                     "name": "g_jsonPath",
                                                     "params": [
                                                         {
-                                                            "value": "$[0].id"
+                                                            "value": "$.body.person.id"
                                                         }
                                                     ]
                                                 }
