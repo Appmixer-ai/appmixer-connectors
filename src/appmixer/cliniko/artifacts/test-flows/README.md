@@ -9,7 +9,7 @@ verified against a live Cliniko account (shard `eu1`) on 2026-08-24.
 | `test-flow-patients.json` | Create / Get / Update / Find / Archive / Unarchive Patient |
 | `test-flow-appointments.json` | Create / Get / Update / Find / Cancel Appointment (+ Get Next Available Time) |
 | `test-flow-availability.json` | Find Available Times, Get Next Available Time |
-| `test-flow-contacts.json` | Create Contact, Find Contacts |
+| `test-flow-contacts.json` | Create Contact, Find Contacts, Archive Contact |
 | `test-flow-clinical.json` | Create Medical Alert, Create Treatment Note, Find Treatment Notes |
 | `test-flow-make-api-call.json` | Make API Call |
 | `test-flow-invoices.json` | Find Invoices |

@@ -2,32 +2,35 @@
 
 const lib = require('../../lib');
 
-const schema = {
-    id: { type: 'string', title: 'Contact ID' },
-    first_name: { type: 'string', title: 'First Name' },
-    last_name: { type: 'string', title: 'Last Name' },
-    preferred_name: { type: 'string', title: 'Preferred Name' },
-    company_name: { type: 'string', title: 'Company Name' },
-    email: { type: 'string', title: 'Email' },
-    type: { type: 'string', title: 'Type' },
-    type_code: { type: 'integer', title: 'Type Code' },
-    doctor_type: { type: 'string', title: 'Doctor Type' },
-    provider_number: { type: 'string', title: 'Provider Number' },
-    occupation: { type: 'string', title: 'Occupation' },
-    title: { type: 'string', title: 'Title' },
-    address_1: { type: 'string', title: 'Address Line 1' },
-    address_2: { type: 'string', title: 'Address Line 2' },
-    address_3: { type: 'string', title: 'Address Line 3' },
-    city: { type: 'string', title: 'City' },
-    state: { type: 'string', title: 'State' },
-    post_code: { type: 'string', title: 'Post Code' },
-    country: { type: 'string', title: 'Country' },
-    country_code: { type: 'string', title: 'Country Code' },
-    notes: { type: 'string', title: 'Notes' },
-    phone_numbers: { type: 'array', title: 'Phone Numbers' },
-    archived_at: { type: 'string', format: 'date-time', title: 'Archived At' },
-    created_at: { type: 'string', format: 'date-time', title: 'Created At' },
-    updated_at: { type: 'string', format: 'date-time', title: 'Updated At' }
+const ITEM_SCHEMA = {
+    type: 'object',
+    properties: {
+        id: { type: 'string', title: 'Contact ID', example: '2021659200000000001' },
+        first_name: { type: 'string', title: 'First Name', example: 'Jana' },
+        last_name: { type: 'string', title: 'Last Name', example: 'Novakova' },
+        preferred_name: { type: 'string', title: 'Preferred Name', example: 'Jana' },
+        company_name: { type: 'string', title: 'Company Name', example: 'Prague General Practice' },
+        email: { type: 'string', title: 'Email', example: 'jana.novakova@example.com' },
+        type: { type: 'string', title: 'Type', example: 'Doctor' },
+        type_code: { type: 'integer', title: 'Type Code', example: 1 },
+        doctor_type: { type: 'string', title: 'Doctor Type', example: 'general_practitioner' },
+        provider_number: { type: 'string', title: 'Provider Number', example: 'PN12345' },
+        occupation: { type: 'string', title: 'Occupation', example: 'General Practitioner' },
+        title: { type: 'string', title: 'Title', example: 'Dr' },
+        address_1: { type: 'string', title: 'Address Line 1', example: '5 Main Street' },
+        address_2: { type: 'string', title: 'Address Line 2', example: '' },
+        address_3: { type: 'string', title: 'Address Line 3', example: '' },
+        city: { type: 'string', title: 'City', example: 'Prague' },
+        state: { type: 'string', title: 'State', example: 'Praha' },
+        post_code: { type: 'string', title: 'Post Code', example: '11000' },
+        country: { type: 'string', title: 'Country', example: 'Czechia' },
+        country_code: { type: 'string', title: 'Country Code', example: 'CZ' },
+        notes: { type: 'string', title: 'Notes', example: '' },
+        phone_numbers: { type: 'array', title: 'Phone Numbers', example: [{ number: '0-123-456-78', phone_type: 'Work', normalized_number: '42012345678' }] },
+        archived_at: { type: 'string', format: 'date-time', title: 'Archived At', example: '' },
+        created_at: { type: 'string', format: 'date-time', title: 'Created At', example: '2026-08-21T09:20:00Z' },
+        updated_at: { type: 'string', format: 'date-time', title: 'Updated At', example: '2026-08-21T09:20:00Z' }
+    }
 };
 
 const RELATIONS = [];
@@ -55,26 +58,54 @@ function buildFilters(content) {
 
 module.exports = {
 
+    ITEM_SCHEMA,
+
     async receive(context) {
 
         const content = context.messages.in.content || {};
-        const { outputType = 'array' } = content;
+        const { outputType = 'array', isSource } = content;
 
         if (context.properties && context.properties.generateOutputPortOptions) {
-            return lib.getOutputPortOptions(context, outputType, schema, { label: 'Contacts' });
+            return lib.getOutputPortOptions(context, outputType, ITEM_SCHEMA.properties, { label: 'Contacts' });
         }
 
-        const records = (await lib.fetchPage(context, {
-            path: '/contacts',
-            collection: 'contacts',
-            filters: buildFilters(content),
-            params: { sort: 'updated_at:desc' }
-        })).map((record) => lib.expandIds(record, RELATIONS));
+        let records;
+        try {
+            records = (await lib.fetchPage(context, {
+                path: '/contacts',
+                collection: 'contacts',
+                filters: buildFilters(content),
+                params: { sort: 'updated_at:desc' }
+            })).map((record) => lib.expandIds(record, RELATIONS));
+        } catch (error) {
+            // Source call (Contact dropdown): a dropdown cannot do anything useful with an error.
+            if (isSource) {
+                return context.sendJson({ result: [] }, 'out');
+            }
+            throw error;
+        }
+
+        if (isSource) {
+            return context.sendJson({ result: records }, 'out');
+        }
 
         if (records.length === 0) {
             return context.sendJson({}, 'notFound');
         }
 
         return lib.sendArrayOutput({ context, records, outputType });
+    },
+
+    // Used by the Contact dropdown (source) on Archive Contact.
+    toSelectArray({ result }) {
+
+        return (result || []).map((contact) => {
+            const name = [contact.first_name, contact.last_name].filter(Boolean).join(' ');
+            const label = [name, contact.company_name].filter(Boolean).join(' - ') || contact.email || contact.id;
+            return {
+                label: contact.email && label !== contact.email ? `${label} (${contact.email})` : label,
+                value: contact.id
+            };
+        });
     }
 };
