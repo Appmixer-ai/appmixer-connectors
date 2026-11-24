@@ -49,6 +49,8 @@ const slotsKey = componentId => `each-slots:${componentId}`;
 const slotsLockName = componentId => `each-sequential-slots:${componentId}`;
 // Service configuration (Backoffice > Connector Configuration, service `appmixer:utils:controls`).
 const MAX_LOOPS_CONFIG = 'sequentialEachMaxConcurrentLoops';
+// The limit when the configuration does not set one.
+const DEFAULT_MAX_LOOPS = 100;
 // A slot outlives its loop by this much at most when the loop never got to clean up.
 const SLOT_MARGIN = 10 * 60 * 1000;
 // Where Each 1.5.1 kept the loop, in component state.
@@ -198,19 +200,20 @@ async function withLock(context, id, fn) {
 }
 
 /**
- * The configured maximum of loops one sequential Each may run at the same time, or 0 for no limit.
+ * The maximum of loops one sequential Each may run at the same time: the configured value, or
+ * DEFAULT_MAX_LOOPS when it is not set. `invalid` marks a configured value that is not a positive integer.
  * @param {Object} context - Appmixer context
- * @returns {number}
+ * @returns {{ max: number, invalid: boolean }}
  */
 function maxConcurrentLoops(context) {
 
     const raw = context.config?.[MAX_LOOPS_CONFIG];
     if (raw == null || raw === '') {
-        return 0;
+        return { max: DEFAULT_MAX_LOOPS, invalid: false };
     }
     const max = Number(raw);
-    // A misconfigured value must not stop every loop of every flow: it is ignored (and logged).
-    return Number.isInteger(max) && max > 0 ? max : NaN;
+    // A misconfigured value falls back to the default (and is logged) instead of stopping every loop.
+    return Number.isInteger(max) && max > 0 ? { max, invalid: false } : { max: DEFAULT_MAX_LOOPS, invalid: true };
 }
 
 /**
@@ -230,7 +233,8 @@ async function withSlotsLock(context, fn) {
 }
 
 /**
- * Take a slot for a new loop, when `sequentialEachMaxConcurrentLoops` is configured. With all slots
+ * Take a slot for a new loop (limit: `sequentialEachMaxConcurrentLoops`, DEFAULT_MAX_LOOPS when not
+ * configured). With all slots
  * taken this throws a plain Error - NOT a CancelError: the engine logs it and retries the `in` message
  * later, so the loop starts once another one on this Each is over. Every slot expires when its loop
  * must be over at the latest, so a loop that never cleaned up cannot block the Each for good. A
@@ -241,17 +245,13 @@ async function withSlotsLock(context, fn) {
  */
 async function claimSlot(context, id, loopDuration) {
 
-    const max = maxConcurrentLoops(context);
-    if (Number.isNaN(max)) {
+    const { max, invalid } = maxConcurrentLoops(context);
+    if (invalid) {
         await context.log({
             step: 'concurrency-limit',
-            message: `Each sequential: ignoring the invalid '${MAX_LOOPS_CONFIG}' configuration ` +
-                `(${context.config[MAX_LOOPS_CONFIG]}), it must be a positive integer.`
+            message: `Each sequential: invalid '${MAX_LOOPS_CONFIG}' configuration ` +
+                `(${context.config[MAX_LOOPS_CONFIG]}), it must be a positive integer; using ${max}.`
         });
-        return;
-    }
-    if (!max) {
-        return;
     }
 
     return withSlotsLock(context, async () => {
@@ -276,22 +276,22 @@ async function claimSlot(context, id, loopDuration) {
 }
 
 /**
- * Give the slot of a finished loop back. Only when the limit is configured: without it no slots are
- * taken (and a record left from a limit that was removed later expires on its own).
+ * Give the slot of a finished loop back.
  * @param {Object} context - Appmixer context
  * @param {string} id - Loop id
  */
 async function releaseSlot(context, id) {
 
-    if (!(maxConcurrentLoops(context) > 0)) {
-        return;
-    }
     return withSlotsLock(context, async () => {
         const slots = await context.flow.stateGet(slotsKey(context.componentId));
         if (!slots || !(id in slots)) {
             return;
         }
         delete slots[id];
+        if (Object.keys(slots).length === 0) {
+            // No loop is running: leave nothing behind.
+            return context.flow.stateUnset(slotsKey(context.componentId));
+        }
         await flowStateSet(context, slotsKey(context.componentId), slots);
     });
 }
@@ -507,6 +507,7 @@ async function handleTimeout(context) {
 
 module.exports = {
     MAX_LOOPS_CONFIG,
+    DEFAULT_MAX_LOOPS,
     DEFAULT_ITEM_TIMEOUT,
     MIN_ITEM_TIMEOUT,
     handleStart,

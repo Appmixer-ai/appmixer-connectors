@@ -308,7 +308,7 @@ describe('Each Component - sequential mode', () => {
             await assert.rejects(() => startLoop(h, 'run-b'), /limit is 1/);
             await h.ack('run-a', 0);
             await h.ack('run-a', 1);
-            assert.deepStrictEqual(h.flowState['each-slots:each-1'], {});
+            assert.strictEqual(h.flowState['each-slots:each-1'], undefined);
 
             // The engine re-delivers `in` of run-b.
             await startLoop(h, 'run-b');
@@ -343,25 +343,28 @@ describe('Each Component - sequential mode', () => {
             assert.deepStrictEqual(Object.keys(h.flowState['each-slots:each-1']), ['run-a']);
         });
 
-        it('should take no slots without the configuration', async () => {
+        it('should apply the default limit of 100 without the configuration', async () => {
             const h = createHarness();
 
-            for (let n = 0; n < 5; n++) {
+            for (let n = 0; n < 100; n++) {
                 await startLoop(h, `run-${n}`);
             }
+            await assert.rejects(() => startLoop(h, 'run-100'), /100 loops are already running.*limit is 100/);
 
-            assert.strictEqual(h.items().length, 5);
-            assert.strictEqual(h.flowState['each-slots:each-1'], undefined);
+            assert.strictEqual(Object.keys(h.flowState['each-slots:each-1']).length, 100);
+            assert.strictEqual(h.items().length, 100);
         });
 
-        it('should ignore (and log) an invalid configuration instead of stopping every loop', async () => {
-            const h = createHarness({ config: { sequentialEachMaxConcurrentLoops: 'abc' } });
+        it('should fall back to the default (and log) on an invalid configuration', async () => {
+            for (const bad of ['abc', '0', -3, 2.5]) {
+                const h = createHarness({ config: { sequentialEachMaxConcurrentLoops: bad } });
 
-            await startLoop(h, 'run-a');
-            await startLoop(h, 'run-b');
+                await startLoop(h, 'run-a');
+                await startLoop(h, 'run-b');
 
-            assert.strictEqual(h.items().length, 2);
-            assert.strictEqual(h.flowState['each-slots:each-1'], undefined);
+                assert.strictEqual(h.items().length, 2, `config ${bad}`);
+                assert.deepStrictEqual(Object.keys(h.flowState['each-slots:each-1']).sort(), ['run-a', 'run-b']);
+            }
         });
     });
 
