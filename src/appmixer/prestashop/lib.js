@@ -1,5 +1,6 @@
 'use strict';
 
+const crypto = require('crypto');
 const pathModule = require('path');
 
 const DEFAULT_PREFIX = 'prestashop-objects-export';
@@ -37,6 +38,48 @@ async function psRequest(context, { method = 'GET', path, params = {}, data, hea
 
     const response = await context.httpRequest(options);
     return response.data;
+}
+
+/**
+ * psRequest for inspector dropdown sources: the response is cached per shop + key + request
+ * for `context.config.listCacheTTL` ms (default 2 minutes), so opening the inspector repeatedly
+ * does not hit the shop every time.
+ * @param {object} context - Appmixer component context
+ * @param {object} opts - same as psRequest (GET only)
+ * @returns {Promise<object>} parsed JSON response body
+ */
+async function psRequestCached(context, opts) {
+
+    const key = 'prestashop:' + crypto.createHash('sha256')
+        .update(JSON.stringify({ shopUrl: context.auth.shopUrl, apiKey: context.auth.apiKey, opts }))
+        .digest('hex');
+    let lock;
+    try {
+        lock = await context.lock(key);
+        const cached = await context.staticCache.get(key);
+        if (cached) {
+            return cached;
+        }
+        const data = await psRequest(context, opts);
+        await context.staticCache.set(key, data, context.config.listCacheTTL || (2 * 60 * 1000));
+        return data;
+    } finally {
+        if (lock) {
+            await lock.unlock();
+        }
+    }
+}
+
+/**
+ * PrestaShop multilang fields come back as an array of { id, value }; take the first value.
+ * @param {*} field
+ * @returns {string}
+ */
+function firstValue(field) {
+    if (Array.isArray(field)) {
+        return field.length ? String(field[0].value) : '';
+    }
+    return field != null ? String(field) : '';
 }
 
 /**
@@ -180,6 +223,8 @@ const toCsv = (records) => {
 
 module.exports = {
     psRequest,
+    psRequestCached,
+    firstValue,
     buildResourceXml,
     getNewItems,
     sendArrayOutput,
