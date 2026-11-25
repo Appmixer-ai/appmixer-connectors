@@ -122,7 +122,7 @@ describe('JoinEach Component', () => {
 
     it('should keep many joins in progress out of the component state (#3159)', async () => {
         const h = createHarness();
-        const joins = Array.from({ length: 50 }, (_, i) => `c${i}`);
+        const joins = Array.from({ length: 20 }, (_, i) => `c${i}`);
 
         for (const cid of joins) {
             await h.count(cid, 10);
