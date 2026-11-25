@@ -45,8 +45,17 @@ module.exports = {
             const event = await lib.readWebhookEvent(context);
             const data = event && event.data;
             if (data && data.id && matches(context, { appId: data.appId, status: data.status })) {
-                const reload = await fetchReload(context, data.id);
-                if (matches(context, reload)) {
+                let reload;
+                try {
+                    reload = await fetchReload(context, data.id);
+                } catch (err) {
+                    // The reload (or its app) was deleted before the delivery arrived: nothing to emit.
+                    if (!lib.isNotFound(err)) {
+                        throw err;
+                    }
+                    await context.log({ step: 'Ignoring a finished reload that no longer exists.', reloadId: data.id });
+                }
+                if (reload && matches(context, reload)) {
                     await context.sendJson(reload, 'out');
                 }
             }

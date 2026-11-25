@@ -297,6 +297,23 @@ describe('appmixer.qliksense', function() {
             assert.strictEqual(real.sent[0].data.succeeded, true);
         });
 
+        it('emits nothing and does not fail when the finished reload was deleted before delivery', async function() {
+
+            const component = load('ReloadFinished');
+            const state = { webhookId: 'w1', token: 'a'.repeat(48), eventType: 'com.qlik.v1.reload.finished' };
+            const event = { type: 'com.qlik.v1.reload.finished', data: { id: 'r2', appId: 'a1', status: 'CANCELED' } };
+            const context = createContext({
+                state,
+                messages: { webhook: { content: { query: { token: state.token }, data: event } } }
+            });
+            context.httpRequest.rejects(Object.assign(new Error('Not found'), {
+                response: { status: 404, data: { errors: [{ code: 'RELOADS-004', title: 'Resource not found.' }] } }
+            }));
+            await component.receive(context);
+            assert.strictEqual(context.sent.length, 0);
+            assert.strictEqual(context.response.callCount, 1);
+        });
+
         it('filters app events by space', async function() {
 
             const component = load('AppDeleted');
