@@ -1,0 +1,110 @@
+{
+    "name": "appmixer.teamwork.core.CreateWorkflowStage",
+    "description": "Add a stage to a workflow in Teamwork.com. The stage is placed after the existing stages.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:teamwork"
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "workflowId": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "color": {
+                        "type": "string"
+                    },
+                    "showCompletedTasks": {
+                        "type": "boolean"
+                    }
+                },
+                "required": [
+                    "workflowId",
+                    "name"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "workflowId": {
+                        "type": "text",
+                        "index": 0,
+                        "label": "Workflow",
+                        "tooltip": "Select the workflow or enter its ID.",
+                        "source": {
+                            "url": "/component/appmixer/teamwork/core/ListWorkflows?outPort=workflows",
+                            "data": {
+                                "transform": "ListWorkflows#toInspector"
+                            }
+                        }
+                    },
+                    "name": {
+                        "type": "text",
+                        "index": 1,
+                        "label": "Name",
+                        "tooltip": "Name of the stage, for example \"Backlog\"."
+                    },
+                    "color": {
+                        "type": "text",
+                        "index": 2,
+                        "label": "Color",
+                        "tooltip": "Hex color of the stage, for example #3B82F6."
+                    },
+                    "showCompletedTasks": {
+                        "type": "toggle",
+                        "index": 3,
+                        "label": "Show Completed Tasks",
+                        "defaultValue": false
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "number",
+                        "title": "ID",
+                        "example": 81234
+                    },
+                    "workflowId": {
+                        "type": "number",
+                        "title": "Workflow ID",
+                        "example": 20391
+                    },
+                    "name": {
+                        "type": "string",
+                        "title": "Name",
+                        "example": "Backlog"
+                    },
+                    "color": {
+                        "type": "string",
+                        "title": "Color",
+                        "example": "#3B82F6"
+                    },
+                    "displayOrder": {
+                        "type": "number",
+                        "title": "Display Order",
+                        "example": 1
+                    },
+                    "showCompletedTasks": {
+                        "type": "boolean",
+                        "title": "Show Completed Tasks",
+                        "example": false
+                    }
+                }
+            }
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTIiIGhlaWdodD0iNTAiIHZpZXdCb3g9IjAgMCA1MiA1MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGVsbGlwc2UgY3g9IjI2LjI4NTciIGN5PSIyNSIgcng9IjI1LjcxNDMiIHJ5PSIyNSIgZmlsbD0iIzFEMUMzOSIvPgo8cGF0aCBkPSJNMjcuNzA5OSAyMC44NzQ2QzI5LjA4MzEgMjAuODc0NiAyOS44NzM3IDIwLjE0NjMgMjkuODczNyAxOC44OTIyQzI5Ljg3MzcgMTcuNzE4OSAyOS4wNDE1IDE2LjkwOTggMjcuNzUxNSAxNi45MDk4SDI0LjYzMDVWMTQuNjg0N0MyNC42MzA1IDEzLjA2NjQgMjMuNDIzNyAxMi4yMTY4IDIyLjI1ODYgMTIuMjE2OEMyMS4wOTM0IDEyLjIxNjggMTkuODg2NyAxMy4wNjY0IDE5Ljg4NjcgMTQuNjg0N1YzMC4xMzkyQzE5Ljg4NjcgMzMuODYxMiAyMS40MjYzIDM1LjUyIDI0LjgzODYgMzUuNTJDMjYuNjY5NSAzNS41MiAyNy43NTE1IDM1LjA3NDkgMjguNTQyMSAzNC41ODk1QzI5LjEyNDcgMzQuMjY1OCAyOS4zNzQ0IDMzLjU3OCAyOS4zNzQ0IDMzLjA1MjFDMjkuMzc0NCAzMi4wNDA3IDI4LjcwODYgMzAuOTQ4MyAyNy43MDk5IDMwLjk0ODNDMjcuNTg1IDMwLjk0ODMgMjcuNDE4NiAzMC45ODg4IDI3LjI5MzcgMzEuMDI5MkMyNy4yNTIxIDMxLjA2OTcgMjcuMTY4OSAzMS4wNjk3IDI3LjEyNzMgMzEuMTEwMkMyNi44Nzc2IDMxLjIzMTUgMjYuNTAzMSAzMS4zOTM0IDI2LjAwMzcgMzEuMzkzNEMyNS4zNzk1IDMxLjM5MzQgMjQuNjcyMSAzMS4xOTExIDI0LjY3MjEgMjkuNTMyM1YyMC44NzQ2SDI3LjcwOTlaIiBmaWxsPSJ3aGl0ZSIvPgo8cGF0aCBkPSJNMzcuODYzIDI3LjM4ODdDMzUuNTc0MyAyNy4zODg3IDMzLjcwMTcgMjkuMjA5MiAzMy43MDE3IDMxLjQzNDRDMzMuNzAxNyAzMy42NTk1IDM1LjU3NDMgMzUuNDggMzcuODYzIDM1LjQ4QzQwLjE1MTcgMzUuNDggNDIuMDI0MyAzMy42NTk1IDQyLjAyNDMgMzEuNDM0NEM0Mi4wMjQzIDI5LjE2ODggNDAuMTUxNyAyNy4zODg3IDM3Ljg2MyAyNy4zODg3WiIgZmlsbD0iI0ZGMjJCMSIvPgo8L3N2Zz4K"
+}

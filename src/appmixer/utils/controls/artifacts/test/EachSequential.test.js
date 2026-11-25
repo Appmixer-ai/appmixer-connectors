@@ -2,7 +2,7 @@
 
 const assert = require('assert');
 const sinon = require('sinon');
-const { createMockContext } = require('../../../../../../test/utils');
+const { createMockContext, createMutexLock } = require('../../../../../../test/utils');
 
 const Each = require('../../Each/Each');
 const ContinueEach = require('../../ContinueEach/ContinueEach');
@@ -15,7 +15,7 @@ const WEBHOOK_URL = 'https://api.appmixer.test/flows/flow-1/components/each-1' +
  * flow state (shared by Each and ContinueEach) and the webhook endpoint of Each are shared by every
  * receive() call, exactly like in a running flow.
  */
-function createHarness() {
+function createHarness({ config = {} } = {}) {
 
     const state = {};
     const flowState = {};
@@ -23,6 +23,10 @@ function createHarness() {
     const timeouts = [];
     const cleared = [];
     const triggered = [];
+    // A real mutex shared by every context, like the engine's context.lock.
+    const lockFn = createMutexLock();
+    // Called (not awaited) when Each emits an item - lets a test run the loop body concurrently.
+    const hooks = { onItem: null };
 
     // The engine's POST /flows/{flowId}/components/{componentId} - the webhook URL of Each.
     const callAppmixer = async ({ endPoint, method, body }) => {
@@ -42,6 +46,7 @@ function createHarness() {
 
     const createContext = (messages, id = 'each-run-1') => {
         const context = createMockContext({ id, messages, properties: {} });
+        context.config = config;
         context.flowId = 'flow-1';
         context.componentId = 'each-1';
         context.log = sinon.stub();
@@ -55,7 +60,15 @@ function createHarness() {
             stateSet: sinon.spy(async (key, value) => { flowState[key] = value; }),
             stateUnset: sinon.spy(async key => { delete flowState[key]; })
         };
-        context.sendJson = sinon.spy(async (content, port) => { sent.push({ content, port }); });
+        context.lock = sinon.spy(lockFn);
+        context.sendJson = sinon.spy(async (content, port) => {
+            sent.push({ content, port });
+            if (port === 'item' && hooks.onItem) {
+                hooks.onItem(content);
+                // Let the loop body run before Each goes on to write the cursor.
+                await new Promise(resolve => setImmediate(resolve));
+            }
+        });
         context.setTimeout = sinon.spy(async (content, ms) => {
             const timeoutId = `timeout-${timeouts.length}`;
             timeouts.push({ timeoutId, content, ms });
@@ -66,7 +79,7 @@ function createHarness() {
     };
 
     return {
-        state, flowState, sent, timeouts, cleared, triggered,
+        state, flowState, sent, timeouts, cleared, triggered, hooks,
         start: (content, id) => Each.receive(createContext({ in: { content } }, id)),
         // The webhook delivery runs in a NEW context (a different context.id), like in the engine.
         ack: (id, index, result) => Each.receive(
@@ -101,9 +114,10 @@ describe('Each Component - sequential mode', () => {
         ]);
         assert.strictEqual(h.dones().length, 0);
 
-        // The list is parked in the component state, the cursor points at the item in flight.
-        assert.deepStrictEqual(h.state['items:each-run-1'], ['a', 'b', 'c']);
-        const { timeoutToken, ...cursor } = h.state['each-run-1'];
+        // The list is parked in the flow state, the cursor points at the item in flight. Nothing goes to the
+        // component state: the engine keeps it in one document per component (#3159).
+        assert.deepStrictEqual(h.flowState['each-items:each-run-1'], ['a', 'b', 'c']);
+        const { timeoutToken, ...cursor } = h.flowState['each-cursor:each-run-1'];
         assert.deepStrictEqual(cursor, {
             index: 0, timeoutId: 'timeout-0', count: 3, correlationId: 'each-run-1',
             delay: 0, itemTimeout: 300, results: []
@@ -171,9 +185,9 @@ describe('Each Component - sequential mode', () => {
 
         // Still exactly one item in flight: 'b'. A second 'c' would break the ordering guarantee.
         assert.deepStrictEqual(h.items().map(i => i.value), ['a', 'b']);
-        assert.strictEqual(h.state['each-run-1'].index, 1);
+        assert.strictEqual(h.flowState['each-cursor:each-run-1'].index, 1);
         // And the duplicate did not add to the result.
-        assert.deepStrictEqual(h.state['each-run-1'].results, [{ v: 'first' }]);
+        assert.deepStrictEqual(h.flowState['each-cursor:each-run-1'].results, [{ v: 'first' }]);
     });
 
     it('should move on when an item is not acknowledged in time, and ignore its late acknowledgement', async () => {
@@ -197,6 +211,250 @@ describe('Each Component - sequential mode', () => {
         await h.ack('each-run-1', 1, { v: 'b' });
         await h.ack('each-run-1', 2, { v: 'c' });
         assert.deepStrictEqual(h.dones()[0].result, [null, { v: 'b' }, { v: 'c' }]);
+    });
+
+    it('should not drop an acknowledgement that arrives before the cursor is written', async () => {
+        const h = createHarness();
+        const pending = [];
+        // A loop body faster than the cursor write: it acknowledges the item right after sendJson.
+        h.hooks.onItem = item => pending.push(h.ack(item.correlationId, item.index, { v: item.value }));
+
+        await h.start({ list: ['a', 'b', 'c'], sequential: true });
+        for (let i = 0; i < 10 && pending.length; i++) {
+            await Promise.all(pending.splice(0));
+        }
+
+        assert.deepStrictEqual(h.items().map(i => i.value), ['a', 'b', 'c']);
+        assert.deepStrictEqual(h.dones(), [{
+            count: 3, correlationId: 'each-run-1', result: [{ v: 'a' }, { v: 'b' }, { v: 'c' }]
+        }]);
+        assert.deepStrictEqual(h.flowState, {});
+    });
+
+    it('should keep many concurrent loops out of the component state (#3159)', async () => {
+        const h = createHarness();
+        const loops = Array.from({ length: 20 }, (_, n) => `run-${n}`);
+        const list = Array.from({ length: 10 }, (_, i) => ({ i, payload: 'x'.repeat(100) }));
+
+        for (const id of loops) {
+            await h.start({ list, sequential: true }, id);
+        }
+        // Interleave the loops: every loop advances one item per round.
+        for (let index = 0; index < list.length; index++) {
+            for (const id of loops) {
+                assert.deepStrictEqual(h.state, {}, 'no list and no cursor in the component state');
+                await h.ack(id, index, { i: index });
+            }
+        }
+
+        assert.strictEqual(h.dones().length, loops.length);
+        h.dones().forEach(done => assert.strictEqual(done.result.length, list.length));
+        assert.ok(h.items().length === loops.length * list.length);
+        assert.deepStrictEqual(h.state, {});
+        assert.deepStrictEqual(h.flowState, {});
+    });
+
+    it('should cancel (not retry) a list over the 16 MB document limit, like component state did', async () => {
+        const h = createHarness();
+        const context = h.createContext({ in: { content: { list: ['a'], sequential: true } } });
+        const tooBig = Object.assign(new Error('Document is larger than the maximum size 16777216'), { code: 'ERR_OUT_OF_RANGE' });
+        context.flow.stateSet = sinon.stub().rejects(tooBig);
+
+        await assert.rejects(
+            () => Each.receive(context),
+            err => err instanceof context.CancelError && /16 MB/.test(err.message)
+        );
+        assert.strictEqual(h.items().length, 0);
+    });
+
+    it('should clean up the flow state when the stored list is missing', async () => {
+        const h = createHarness();
+
+        await h.start({ list: ['a', 'b'], sequential: true });
+        delete h.flowState['each-items:each-run-1'];
+        await h.ack('each-run-1', 0);
+
+        assert.deepStrictEqual(h.items().map(i => i.value), ['a']);
+        assert.strictEqual(h.dones().length, 0);
+        assert.deepStrictEqual(h.state, {});
+        assert.deepStrictEqual(h.flowState, {});
+    });
+
+    describe('concurrency limit (sequentialEachMaxConcurrentLoops)', () => {
+
+        const startLoop = (h, id, list = ['a', 'b']) => h.start({ list, sequential: true }, id);
+
+        it('should reject a loop over the limit with a plain Error (retried, not cancelled)', async () => {
+            const h = createHarness({ config: { sequentialEachMaxConcurrentLoops: '2' } });
+
+            await startLoop(h, 'run-a');
+            await startLoop(h, 'run-b');
+            let thrown = null;
+            await startLoop(h, 'run-c').catch(err => { thrown = err; });
+
+            assert.ok(thrown, 'the third loop must fail');
+            assert.ok(!(thrown instanceof h.createContext({}).CancelError), 'NOT a CancelError - the engine must retry it');
+            assert.match(thrown.message, /2 loops are already running.*limit is 2/);
+            // Nothing of the third loop was stored or sent.
+            assert.deepStrictEqual(h.items().map(i => i.correlationId), ['run-a', 'run-b']);
+            assert.strictEqual(h.flowState['each-cursor:run-c'], undefined);
+            assert.deepStrictEqual(Object.keys(h.flowState['each-slots:each-1']).sort(), ['run-a', 'run-b']);
+        });
+
+        it('should start the rejected loop on retry once another loop is over', async () => {
+            const h = createHarness({ config: { sequentialEachMaxConcurrentLoops: 1 } });
+
+            await startLoop(h, 'run-a');
+            await assert.rejects(() => startLoop(h, 'run-b'), /limit is 1/);
+            await h.ack('run-a', 0);
+            await h.ack('run-a', 1);
+            assert.strictEqual(h.flowState['each-slots:each-1'], undefined);
+
+            // The engine re-delivers `in` of run-b.
+            await startLoop(h, 'run-b');
+            assert.deepStrictEqual(h.items().map(i => i.correlationId), ['run-a', 'run-a', 'run-b']);
+            assert.deepStrictEqual(Object.keys(h.flowState['each-slots:each-1']), ['run-b']);
+        });
+
+        it('should keep the slot of a loop whose start failed after taking it (re-delivered `in`)', async () => {
+            const h = createHarness({ config: { sequentialEachMaxConcurrentLoops: 1 } });
+            const context = h.createContext({ in: { content: { list: ['a'], sequential: true } } }, 'run-a');
+            const realSet = context.flow.stateSet;
+            context.flow.stateSet = sinon.spy(async (key, value) => {
+                if (key.startsWith('each-items:')) {
+                    throw new Error('Mongo unavailable');
+                }
+                return realSet(key, value);
+            });
+            await assert.rejects(() => Each.receive(context), /Mongo unavailable/);
+            assert.deepStrictEqual(Object.keys(h.flowState['each-slots:each-1']), ['run-a']);
+
+            // The retry of the same message is not rejected by its own slot.
+            await startLoop(h, 'run-a', ['a']);
+            assert.deepStrictEqual(h.items().map(i => i.value), ['a']);
+        });
+
+        it('should not count a slot that expired (a loop that never cleaned up)', async () => {
+            const h = createHarness({ config: { sequentialEachMaxConcurrentLoops: 1 } });
+            h.flowState['each-slots:each-1'] = { 'run-lost': Date.now() - 1000 };
+
+            await startLoop(h, 'run-a');
+
+            assert.deepStrictEqual(Object.keys(h.flowState['each-slots:each-1']), ['run-a']);
+        });
+
+        it('should apply the default limit of 100 without the configuration', async () => {
+            const h = createHarness();
+
+            for (let n = 0; n < 100; n++) {
+                await startLoop(h, `run-${n}`);
+            }
+            await assert.rejects(() => startLoop(h, 'run-100'), /100 loops are already running.*limit is 100/);
+
+            assert.strictEqual(Object.keys(h.flowState['each-slots:each-1']).length, 100);
+            assert.strictEqual(h.items().length, 100);
+        });
+
+        it('should fall back to the default (and log) on an invalid configuration', async () => {
+            for (const bad of ['abc', '0', -3, 2.5]) {
+                const h = createHarness({ config: { sequentialEachMaxConcurrentLoops: bad } });
+
+                await startLoop(h, 'run-a');
+                await startLoop(h, 'run-b');
+
+                assert.strictEqual(h.items().length, 2, `config ${bad}`);
+                assert.deepStrictEqual(Object.keys(h.flowState['each-slots:each-1']).sort(), ['run-a', 'run-b']);
+            }
+        });
+    });
+
+    describe('loops started by Each 1.5.1 (cursor and list in component state)', () => {
+
+        // Exactly what 1.5.1 left behind after emitting item 0 of ['a', 'b', 'c'].
+        const seedLegacyLoop = h => {
+            h.state['each-run-1'] = {
+                count: 3, correlationId: 'each-run-1', delay: 0, itemTimeout: 300, results: [],
+                index: 0, timeoutId: 'timeout-legacy', timeoutToken: 'token-legacy'
+            };
+            h.state['items:each-run-1'] = ['a', 'b', 'c'];
+            h.flowState['each:each-run-1'] = {
+                componentId: 'each-1',
+                webhookQuery: { correlationId: 'corr-1', correlationInPort: 'in', messageId: 'msg-1' }
+            };
+        };
+
+        it('should move the loop to flow state on the first acknowledgement and finish it', async () => {
+            const h = createHarness();
+            seedLegacyLoop(h);
+
+            await h.ack('each-run-1', 0, { v: 'a' });
+
+            // Moved out of the component state at once - the big document shrinks loop by loop.
+            assert.deepStrictEqual(h.state, {});
+            assert.deepStrictEqual(h.flowState['each-items:each-run-1'], ['a', 'b', 'c']);
+            assert.strictEqual(h.flowState['each-cursor:each-run-1'].index, 1);
+            assert.deepStrictEqual(h.flowState['each-cursor:each-run-1'].results, [{ v: 'a' }]);
+            assert.deepStrictEqual(h.items().map(i => i.value), ['b']);
+            assert.deepStrictEqual(h.cleared, ['timeout-legacy']);
+
+            await h.ack('each-run-1', 1, { v: 'b' });
+            await h.ack('each-run-1', 2, { v: 'c' });
+
+            assert.deepStrictEqual(h.items().map(i => i.value), ['b', 'c']);
+            assert.deepStrictEqual(h.dones(), [{
+                count: 3, correlationId: 'each-run-1', result: [{ v: 'a' }, { v: 'b' }, { v: 'c' }]
+            }]);
+            assert.deepStrictEqual(h.state, {});
+            assert.deepStrictEqual(h.flowState, {});
+        });
+
+        it('should continue on the item timeout the old version set', async () => {
+            const h = createHarness();
+            seedLegacyLoop(h);
+
+            await h.timeout({ id: 'each-run-1', sequential: true, index: 0, timeoutToken: 'token-legacy' });
+
+            assert.deepStrictEqual(h.items().map(i => i.value), ['b']);
+            assert.deepStrictEqual(h.flowState['each-cursor:each-run-1'].results, [null]);
+            assert.deepStrictEqual(h.state, {});
+        });
+
+        it('should ignore a stale acknowledgement of a legacy loop', async () => {
+            const h = createHarness();
+            seedLegacyLoop(h);
+
+            await h.ack('each-run-1', 2);
+
+            // Moved to flow state, but still waiting for item 0.
+            assert.strictEqual(h.items().length, 0);
+            assert.deepStrictEqual(h.state, {});
+            assert.strictEqual(h.flowState['each-cursor:each-run-1'].index, 0);
+            assert.deepStrictEqual(h.flowState['each-items:each-run-1'], ['a', 'b', 'c']);
+        });
+
+        it('should not restart a legacy loop when the engine re-delivers `in`', async () => {
+            const h = createHarness();
+            seedLegacyLoop(h);
+
+            await h.start({ list: ['a', 'b', 'c'], sequential: true });
+
+            assert.strictEqual(h.items().length, 0);
+            assert.strictEqual(h.flowState['each-cursor:each-run-1'], undefined);
+        });
+
+        it('should remove leftovers of an interrupted move when the loop ends', async () => {
+            const h = createHarness();
+            seedLegacyLoop(h);
+            // The move wrote the flow state, then the process died before the component state was unset.
+            h.flowState['each-items:each-run-1'] = ['a', 'b', 'c'];
+            h.flowState['each-cursor:each-run-1'] = { ...h.state['each-run-1'], index: 2, legacy: true };
+
+            await h.ack('each-run-1', 2);
+
+            assert.strictEqual(h.dones().length, 1);
+            assert.deepStrictEqual(h.state, {});
+            assert.deepStrictEqual(h.flowState, {});
+        });
     });
 
     it('should send done after the last item times out', async () => {
@@ -232,7 +490,7 @@ describe('Each Component - sequential mode', () => {
         await h.start(content);
 
         assert.deepStrictEqual(h.items().map(i => i.value), ['a', 'b']);
-        assert.strictEqual(h.state['each-run-1'].index, 1);
+        assert.strictEqual(h.flowState['each-cursor:each-run-1'].index, 1);
     });
 
     it('should keep concurrent loops of the same component apart', async () => {
@@ -243,10 +501,10 @@ describe('Each Component - sequential mode', () => {
         await h.ack('run-b', 0, { v: 'b1-done' });
 
         assert.deepStrictEqual(h.items().map(i => i.value), ['a1', 'b1', 'b2']);
-        assert.strictEqual(h.state['run-a'].index, 0);
-        assert.deepStrictEqual(h.state['run-a'].results, []);
-        assert.strictEqual(h.state['run-b'].index, 1);
-        assert.deepStrictEqual(h.state['run-b'].results, [{ v: 'b1-done' }]);
+        assert.strictEqual(h.flowState['each-cursor:run-a'].index, 0);
+        assert.deepStrictEqual(h.flowState['each-cursor:run-a'].results, []);
+        assert.strictEqual(h.flowState['each-cursor:run-b'].index, 1);
+        assert.deepStrictEqual(h.flowState['each-cursor:run-b'].results, [{ v: 'b1-done' }]);
     });
 
     it('should ignore a malformed or unknown acknowledgement', async () => {
@@ -265,7 +523,7 @@ describe('Each Component - sequential mode', () => {
         await h.ack('each-run-1', 0, ['not', 'an', 'object']);
 
         assert.deepStrictEqual(h.items().map(i => i.value), ['a', 'b']);
-        assert.deepStrictEqual(h.state['each-run-1'].results, [{}]);
+        assert.deepStrictEqual(h.flowState['each-cursor:each-run-1'].results, [{}]);
     });
 
     it('should accept a numeric string index', async () => {
@@ -292,7 +550,7 @@ describe('Each Component - sequential mode', () => {
         // The orphaned timeout of the first attempt refers to the same item, but not this attempt.
         await h.timeout(h.timeouts[0].content);
         assert.deepStrictEqual(h.items().map(i => i.value), ['a']);
-        assert.strictEqual(h.state['each-run-1'].index, 0);
+        assert.strictEqual(h.flowState['each-cursor:each-run-1'].index, 0);
 
         // The timeout of the retried attempt does move the loop on.
         await h.timeout(h.timeouts[1].content);
@@ -315,15 +573,15 @@ describe('Each Component - sequential mode', () => {
         const acking = h.ack('each-run-1', 0, { ts: 'ts-a' });
         // The ack is recorded under the lock right away...
         await new Promise(resolve => setTimeout(resolve, 20));
-        assert.strictEqual(h.state['each-run-1'].acked, true);
-        assert.deepStrictEqual(h.state['each-run-1'].results, [{ ts: 'ts-a' }]);
+        assert.strictEqual(h.flowState['each-cursor:each-run-1'].acked, true);
+        assert.deepStrictEqual(h.flowState['each-cursor:each-run-1'].results, [{ ts: 'ts-a' }]);
         // ...a duplicate acknowledgement during the delay is ignored...
         await h.ack('each-run-1', 0, { ts: 'dup' });
         // ...and the item timeout firing during the delay moves on, keeping the value.
         await h.timeout(h.timeouts[0].content);
         assert.deepStrictEqual(h.items().map(i => i.value), ['a', 'b']);
-        assert.deepStrictEqual(h.state['each-run-1'].results, [{ ts: 'ts-a' }]);
-        assert.strictEqual(h.state['each-run-1'].acked, undefined);
+        assert.deepStrictEqual(h.flowState['each-cursor:each-run-1'].results, [{ ts: 'ts-a' }]);
+        assert.strictEqual(h.flowState['each-cursor:each-run-1'].acked, undefined);
 
         // The delayed acknowledgement finds the loop already moved on and does not emit 'c'.
         await acking;
@@ -378,7 +636,7 @@ describe('Each Component - sequential mode', () => {
         assert.deepStrictEqual(h.items().map(i => i.value), ['a', 'b', 'c']);
         assert.deepStrictEqual(h.dones(), [{ count: 3, correlationId: 'each-run-1', result: [] }]);
         assert.deepStrictEqual(h.flowState, {});
-        assert.strictEqual(h.state['items:each-run-1'], undefined);
+        assert.strictEqual(h.flowState['each-items:each-run-1'], undefined);
     });
 
     it('should keep the order with a loop body of random latency (the reported problem)', async () => {
@@ -459,6 +717,70 @@ describe('ContinueEach Component', () => {
             body: { id: 'run-1', index: 2, result: {} }
         });
         assert.ok(context.sendJson.calledOnceWith({ correlationId: 'run-1', index: 2 }, 'out'));
+    });
+
+    describe('momentary rejection of the acknowledgement', () => {
+
+        // What ContinueEach gets from context.callAppmixer when the hosted ingress rejects the call
+        // (Traefik InFlightReq, HTTP 429 with a plain text body).
+        const ingress429 = () => new Error('max connections reached: 10');
+        const queueFull = () => ({ statusCode: 503, code: 'INPUT_QUEUE_CAPACITY_EXCEEDED', message: 'System at capacity' });
+
+        const run = async context => {
+            const clock = sinon.useFakeTimers();
+            try {
+                const done = ContinueEach.receive(context);
+                // Run every backoff timer as soon as it is set.
+                for (let i = 0; i < 20; i++) {
+                    await clock.tickAsync(10000);
+                }
+                return await done;
+            } finally {
+                clock.restore();
+            }
+        };
+
+        it('should retry an ingress 429 and then acknowledge', async () => {
+            const context = createContext({ correlationId: 'run-1', index: 1 });
+            context.callAppmixer = sinon.stub();
+            context.callAppmixer.onCall(0).rejects(ingress429());
+            context.callAppmixer.onCall(1).rejects(ingress429());
+            context.callAppmixer.onCall(2).resolves({ message: 'Enqueued.' });
+
+            await run(context);
+
+            assert.strictEqual(context.callAppmixer.callCount, 3);
+            assert.ok(context.sendJson.calledOnceWith({ correlationId: 'run-1', index: 1 }, 'out'));
+        });
+
+        it('should retry a full input queue (503)', async () => {
+            const context = createContext({ correlationId: 'run-1', index: 1 });
+            context.callAppmixer = sinon.stub();
+            context.callAppmixer.onCall(0).rejects(queueFull());
+            context.callAppmixer.onCall(1).resolves({ message: 'Enqueued.' });
+
+            await run(context);
+
+            assert.strictEqual(context.callAppmixer.callCount, 2);
+            assert.ok(context.sendJson.calledOnce);
+        });
+
+        it('should give up after the last attempt', async () => {
+            const context = createContext({ correlationId: 'run-1', index: 1 });
+            context.callAppmixer = sinon.stub().rejects(ingress429());
+
+            await assert.rejects(() => run(context), /max connections reached/);
+            assert.strictEqual(context.callAppmixer.callCount, 7);
+            assert.ok(context.sendJson.notCalled);
+        });
+
+        it('should not retry any other error', async () => {
+            const context = createContext({ correlationId: 'run-1', index: 1 });
+            context.callAppmixer = sinon.stub().rejects(new Error('Flow not found'));
+
+            await assert.rejects(() => run(context), /Flow not found/);
+            assert.strictEqual(context.callAppmixer.callCount, 1);
+        });
     });
 
     it('should send the rows of "Add to Result" as one entry, null for an unresolved value', async () => {

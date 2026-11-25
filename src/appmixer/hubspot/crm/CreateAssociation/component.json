@@ -1,0 +1,246 @@
+{
+    "name": "appmixer.hubspot.crm.CreateAssociation",
+    "author": "Appmixer <info@appmixer.com>",
+    "icon": "data:image/svg+xml;base64,PHN2ZyBoZWlnaHQ9IjI1MDAiIHZpZXdCb3g9IjYuMjA4NTYyODMgLjY0NDk4ODI0IDI0NC4yNjk0MzcxNyAyNTEuMjQ3MDExNzYiIHdpZHRoPSIyNTAwIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxwYXRoIGQ9Im0xOTEuMzg1IDg1LjY5NHYtMjkuNTA2YTIyLjcyMiAyMi43MjIgMCAwIDAgMTMuMTAxLTIwLjQ4di0uNjc3YzAtMTIuNTQ5LTEwLjE3My0yMi43MjItMjIuNzIxLTIyLjcyMmgtLjY3OGMtMTIuNTQ5IDAtMjIuNzIyIDEwLjE3My0yMi43MjIgMjIuNzIydi42NzdhMjIuNzIyIDIyLjcyMiAwIDAgMCAxMy4xMDEgMjAuNDh2MjkuNTA2YTY0LjM0MiA2NC4zNDIgMCAwIDAgLTMwLjU5NCAxMy40N2wtODAuOTIyLTYzLjAzYy41NzctMi4wODMuODc4LTQuMjI1LjkxMi02LjM3NWEyNS42IDI1LjYgMCAxIDAgLTI1LjYzMyAyNS41NSAyNS4zMjMgMjUuMzIzIDAgMCAwIDEyLjYwNy0zLjQzbDc5LjY4NSA2Mi4wMDdjLTE0LjY1IDIyLjEzMS0xNC4yNTggNTAuOTc0Ljk4NyA3Mi43bC0yNC4yMzYgMjQuMjQzYy0xLjk2LS42MjYtNC0uOTU5LTYuMDU3LS45ODctMTEuNjA3LjAxLTIxLjAxIDkuNDIzLTIxLjAwNyAyMS4wMy4wMDMgMTEuNjA2IDkuNDEyIDIxLjAxNCAyMS4wMTggMjEuMDE3IDExLjYwNy4wMDMgMjEuMDItOS40IDIxLjAzLTIxLjAwN2EyMC43NDcgMjAuNzQ3IDAgMCAwIC0uOTg4LTYuMDU2bDIzLjk3Ni0yMy45ODVjMjEuNDIzIDE2LjQ5MiA1MC44NDYgMTcuOTEzIDczLjc1OSAzLjU2MiAyMi45MTItMTQuMzUyIDM0LjQ3NS00MS40NDYgMjguOTg1LTY3LjkxOC01LjQ5LTI2LjQ3My0yNi44NzMtNDYuNzM0LTUzLjYwMy01MC43OTJtLTkuOTM4IDk3LjA0NGEzMy4xNyAzMy4xNyAwIDEgMSAwLTY2LjMxNmMxNy44NS42MjUgMzIgMTUuMjcyIDMyLjAxIDMzLjEzNC4wMDggMTcuODYtMTQuMTI3IDMyLjUyMi0zMS45NzcgMzMuMTY1IiBmaWxsPSIjZmY3YTU5Ii8+PC9zdmc+",
+    "description": "Associate two existing CRM records, e.g. a contact with a company or a line item with a deal. Uses the default (unlabeled) association unless an association type ID is set.",
+    "version": "1.0.0",
+    "private": false,
+    "auth": {
+        "service": "appmixer:hubspot"
+    },
+    "quota": {
+        "manager": "appmixer:hubspot",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "fromObjectType": {
+                        "type": "string"
+                    },
+                    "fromObjectId": {
+                        "type": "string"
+                    },
+                    "toObjectType": {
+                        "type": "string"
+                    },
+                    "toObjectId": {
+                        "type": "string"
+                    },
+                    "associationTypeId": {
+                        "type": "string"
+                    },
+                    "associationCategory": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "fromObjectType",
+                    "fromObjectId",
+                    "toObjectType",
+                    "toObjectId"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "fromObjectType": {
+                        "type": "select",
+                        "label": "From Object Type",
+                        "tooltip": "The object type of the record to associate.",
+                        "options": [
+                            {
+                                "label": "Contact",
+                                "value": "0-1"
+                            },
+                            {
+                                "label": "Company",
+                                "value": "0-2"
+                            },
+                            {
+                                "label": "Deal",
+                                "value": "0-3"
+                            },
+                            {
+                                "label": "Ticket",
+                                "value": "0-5"
+                            },
+                            {
+                                "label": "Line Item",
+                                "value": "0-8"
+                            },
+                            {
+                                "label": "Product",
+                                "value": "0-7"
+                            },
+                            {
+                                "label": "Quote",
+                                "value": "0-14"
+                            },
+                            {
+                                "label": "Call",
+                                "value": "0-48"
+                            },
+                            {
+                                "label": "Email",
+                                "value": "0-49"
+                            },
+                            {
+                                "label": "Meeting",
+                                "value": "0-47"
+                            },
+                            {
+                                "label": "Note",
+                                "value": "0-46"
+                            },
+                            {
+                                "label": "Task",
+                                "value": "0-27"
+                            }
+                        ],
+                        "index": 1
+                    },
+                    "fromObjectId": {
+                        "type": "text",
+                        "label": "From Record ID",
+                        "tooltip": "The ID of the record to associate.",
+                        "index": 2
+                    },
+                    "toObjectType": {
+                        "type": "select",
+                        "label": "To Object Type",
+                        "tooltip": "The object type of the record to associate it with.",
+                        "options": [
+                            {
+                                "label": "Contact",
+                                "value": "0-1"
+                            },
+                            {
+                                "label": "Company",
+                                "value": "0-2"
+                            },
+                            {
+                                "label": "Deal",
+                                "value": "0-3"
+                            },
+                            {
+                                "label": "Ticket",
+                                "value": "0-5"
+                            },
+                            {
+                                "label": "Line Item",
+                                "value": "0-8"
+                            },
+                            {
+                                "label": "Product",
+                                "value": "0-7"
+                            },
+                            {
+                                "label": "Quote",
+                                "value": "0-14"
+                            },
+                            {
+                                "label": "Call",
+                                "value": "0-48"
+                            },
+                            {
+                                "label": "Email",
+                                "value": "0-49"
+                            },
+                            {
+                                "label": "Meeting",
+                                "value": "0-47"
+                            },
+                            {
+                                "label": "Note",
+                                "value": "0-46"
+                            },
+                            {
+                                "label": "Task",
+                                "value": "0-27"
+                            }
+                        ],
+                        "index": 3
+                    },
+                    "toObjectId": {
+                        "type": "text",
+                        "label": "To Record ID",
+                        "tooltip": "The ID of the record to associate it with.",
+                        "index": 4
+                    },
+                    "associationTypeId": {
+                        "type": "text",
+                        "label": "Association Type ID",
+                        "tooltip": "Optional. The ID of the association type (label) in the direction from the first record to the second, e.g. <code>1</code> for a contact's primary company. Leave empty for the default unlabeled association. See the <a href=\"https://developers.hubspot.com/docs/api-reference/crm-associations-v4/guide#association-type-id-values\" target=\"_blank\">default type IDs</a>.",
+                        "index": 5
+                    },
+                    "associationCategory": {
+                        "type": "select",
+                        "label": "Association Category",
+                        "tooltip": "The category of the association type: HubSpot defined, or a custom label of your account. Used only with an Association Type ID.",
+                        "defaultValue": "HUBSPOT_DEFINED",
+                        "options": [
+                            {
+                                "label": "HubSpot defined",
+                                "value": "HUBSPOT_DEFINED"
+                            },
+                            {
+                                "label": "User defined (custom label)",
+                                "value": "USER_DEFINED"
+                            }
+                        ],
+                        "index": 6
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "fromObjectType": {
+                        "type": "string",
+                        "title": "From Object Type",
+                        "example": "0-1"
+                    },
+                    "fromObjectId": {
+                        "type": "string",
+                        "title": "From Record ID",
+                        "example": "38533722672"
+                    },
+                    "toObjectType": {
+                        "type": "string",
+                        "title": "To Object Type",
+                        "example": "0-2"
+                    },
+                    "toObjectId": {
+                        "type": "string",
+                        "title": "To Record ID",
+                        "example": "18234567890"
+                    },
+                    "associationCategory": {
+                        "type": "string",
+                        "title": "Association Category",
+                        "example": "HUBSPOT_DEFINED"
+                    },
+                    "associationTypeId": {
+                        "type": "string",
+                        "title": "Association Type ID",
+                        "example": "1"
+                    }
+                }
+            }
+        }
+    ],
+    "dependencies": {
+        "service": "1.0.1"
+    }
+}

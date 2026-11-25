@@ -1,6 +1,6 @@
 {
     "name": "E2E Teamwork - task updates",
-    "description": "Fresh project/tasklist/task, then ChangeTaskAssignees (the connected user), ChangeTaskDueDate (+7 days), tag via MakeApiCall → ChangeTaskTags → ListTags; deletes project and tag.",
+    "description": "Fresh project/tasklist/task, then ChangeTaskAssignees (the connected user), ChangeTaskDueDate (+7 days), CreateTag → ChangeTaskTags → ListTags; DeleteProject + DeleteTag cleanup.",
     "flow": {
         "247dea3e-7042-474f-a78b-0e482a75bcb0": {
             "type": "appmixer.utils.controls.OnStart",
@@ -365,7 +365,7 @@
             }
         },
         "3843fe67-1f6d-4f42-8f68-b1ca8b753baa": {
-            "type": "appmixer.teamwork.core.ListPeople",
+            "type": "appmixer.teamwork.core.MakeApiCall",
             "x": 1728,
             "y": 528,
             "version": "1.0.0",
@@ -383,10 +383,12 @@
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
-                                    "searchTerm": {}
+                                    "url": {},
+                                    "method": {}
                                 },
                                 "lambda": {
-                                    "searchTerm": "vladimir.talas@appmixer.ai"
+                                    "url": "/me.json",
+                                    "method": "GET"
                                 }
                             }
                         }
@@ -396,7 +398,8 @@
             "errorHandling": {
                 "autoRetry": false,
                 "onError": "stopFlow"
-            }
+            },
+            "label": "Current user (GET /me.json)"
         },
         "4403dc9f-c162-4b3c-8ba8-fc7eeb9ec508": {
             "type": "appmixer.utils.test.Assert",
@@ -406,7 +409,7 @@
             "source": {
                 "in": {
                     "3843fe67-1f6d-4f42-8f68-b1ca8b753baa": [
-                        "people"
+                        "out"
                     ]
                 }
             },
@@ -414,18 +417,18 @@
                 "transform": {
                     "in": {
                         "3843fe67-1f6d-4f42-8f68-b1ca8b753baa": {
-                            "people": {
+                            "out": {
                                 "type": "json2new",
                                 "modifiers": {
                                     "expression": {
                                         "ab2df605-fd5a-4a05-88fc-4da26b468c94": {
-                                            "variable": "$.3843fe67-1f6d-4f42-8f68-b1ca8b753baa.people.people",
+                                            "variable": "$.3843fe67-1f6d-4f42-8f68-b1ca8b753baa.out",
                                             "functions": [
                                                 {
                                                     "name": "g_jsonPath",
                                                     "params": [
                                                         {
-                                                            "value": "$[0].id"
+                                                            "value": "$.body.person.id"
                                                         }
                                                     ]
                                                 }
@@ -491,13 +494,13 @@
                                     "selectedType": {},
                                     "userIds": {
                                         "9542eeb8-8777-4647-9faa-c0aaeb1e4fac": {
-                                            "variable": "$.3843fe67-1f6d-4f42-8f68-b1ca8b753baa.people.people",
+                                            "variable": "$.3843fe67-1f6d-4f42-8f68-b1ca8b753baa.out",
                                             "functions": [
                                                 {
                                                     "name": "g_jsonPath",
                                                     "params": [
                                                         {
-                                                            "value": "$[0].id"
+                                                            "value": "$.body.person.id"
                                                         }
                                                     ]
                                                 }
@@ -700,7 +703,7 @@
             }
         },
         "d7a93e95-f0e1-44fe-a5b1-b4cc29c0fb36": {
-            "type": "appmixer.teamwork.core.MakeApiCall",
+            "type": "appmixer.teamwork.core.CreateTag",
             "x": 2976,
             "y": 912,
             "version": "1.0.0",
@@ -718,9 +721,7 @@
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
-                                    "url": {},
-                                    "method": {},
-                                    "body": {
+                                    "name": {
                                         "978f2b60-7a63-46c2-b2c2-038966dc20f7": {
                                             "variable": "$.247dea3e-7042-474f-a78b-0e482a75bcb0.out.started",
                                             "functions": []
@@ -728,9 +729,8 @@
                                     }
                                 },
                                 "lambda": {
-                                    "url": "/tags.json",
-                                    "method": "POST",
-                                    "body": "{\"tag\": {\"name\": \"e2e-{{{978f2b60-7a63-46c2-b2c2-038966dc20f7}}}\", \"color\": \"#9b59b6\"}}"
+                                    "name": "e2e-{{{978f2b60-7a63-46c2-b2c2-038966dc20f7}}}",
+                                    "color": "#9b59b6"
                                 }
                             }
                         }
@@ -763,17 +763,8 @@
                                 "modifiers": {
                                     "expression": {
                                         "67abcc33-4034-401b-a9a6-6461cb1dd7b5": {
-                                            "variable": "$.d7a93e95-f0e1-44fe-a5b1-b4cc29c0fb36.out.body",
-                                            "functions": [
-                                                {
-                                                    "name": "g_jsonPath",
-                                                    "params": [
-                                                        {
-                                                            "value": "$.id"
-                                                        }
-                                                    ]
-                                                }
-                                            ]
+                                            "variable": "$.d7a93e95-f0e1-44fe-a5b1-b4cc29c0fb36.out.id",
+                                            "functions": []
                                         }
                                     }
                                 },
@@ -834,17 +825,8 @@
                                     "operation": {},
                                     "tagIds": {
                                         "36cb64ba-41cc-4818-ad39-82aeed3c13cb": {
-                                            "variable": "$.d7a93e95-f0e1-44fe-a5b1-b4cc29c0fb36.out.body",
-                                            "functions": [
-                                                {
-                                                    "name": "g_jsonPath",
-                                                    "params": [
-                                                        {
-                                                            "value": "$.id"
-                                                        }
-                                                    ]
-                                                }
-                                            ]
+                                            "variable": "$.d7a93e95-f0e1-44fe-a5b1-b4cc29c0fb36.out.id",
+                                            "functions": []
                                         }
                                     }
                                 },
@@ -998,17 +980,8 @@
                                             ]
                                         },
                                         "8babd6c5-e343-4b2f-a461-7c8d7e0446b9": {
-                                            "variable": "$.d7a93e95-f0e1-44fe-a5b1-b4cc29c0fb36.out.body",
-                                            "functions": [
-                                                {
-                                                    "name": "g_jsonPath",
-                                                    "params": [
-                                                        {
-                                                            "value": "$.id"
-                                                        }
-                                                    ]
-                                                }
-                                            ]
+                                            "variable": "$.d7a93e95-f0e1-44fe-a5b1-b4cc29c0fb36.out.id",
+                                            "functions": []
                                         }
                                     }
                                 },
@@ -1080,7 +1053,7 @@
             }
         },
         "538e83bb-68cc-4dd3-b9b0-a8377637567f": {
-            "type": "appmixer.teamwork.core.MakeApiCall",
+            "type": "appmixer.teamwork.core.DeleteProject",
             "x": 4432,
             "y": 1168,
             "version": "1.0.0",
@@ -1098,17 +1071,15 @@
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
-                                    "url": {
+                                    "projectId": {
                                         "98f1f370-5ee9-497d-924b-3838585e8ad9": {
                                             "variable": "$.d7e17796-0f23-4385-b3d3-f130613ebe34.project.id",
                                             "functions": []
                                         }
-                                    },
-                                    "method": {}
+                                    }
                                 },
                                 "lambda": {
-                                    "url": "/projects/{{{98f1f370-5ee9-497d-924b-3838585e8ad9}}}.json",
-                                    "method": "DELETE"
+                                    "projectId": "{{{98f1f370-5ee9-497d-924b-3838585e8ad9}}}"
                                 }
                             }
                         }
@@ -1121,7 +1092,7 @@
             }
         },
         "14c73ae4-3b4c-411f-a885-7bebd7a6960e": {
-            "type": "appmixer.teamwork.core.MakeApiCall",
+            "type": "appmixer.teamwork.core.DeleteTag",
             "x": 4640,
             "y": 1168,
             "version": "1.0.0",
@@ -1139,26 +1110,15 @@
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
-                                    "url": {
+                                    "tagId": {
                                         "070580a5-e20d-43a1-8803-b961d0329aa9": {
-                                            "variable": "$.d7a93e95-f0e1-44fe-a5b1-b4cc29c0fb36.out.body",
-                                            "functions": [
-                                                {
-                                                    "name": "g_jsonPath",
-                                                    "params": [
-                                                        {
-                                                            "value": "$.id"
-                                                        }
-                                                    ]
-                                                }
-                                            ]
+                                            "variable": "$.d7a93e95-f0e1-44fe-a5b1-b4cc29c0fb36.out.id",
+                                            "functions": []
                                         }
-                                    },
-                                    "method": {}
+                                    }
                                 },
                                 "lambda": {
-                                    "url": "/tags/{{{070580a5-e20d-43a1-8803-b961d0329aa9}}}.json",
-                                    "method": "DELETE"
+                                    "tagId": "{{{070580a5-e20d-43a1-8803-b961d0329aa9}}}"
                                 }
                             }
                         }

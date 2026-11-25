@@ -4,6 +4,54 @@
 // Each/EachSequential.js.
 const targetKey = id => `each:${id}`;
 
+// The acknowledgement goes through the public API. On hosted tenants the ingress caps the requests a
+// user has in flight at once (Traefik InFlightReq: HTTP 429 'max connections reached: <n>'), so many
+// sequential loops acknowledging at the same moment get rejected. The engine answers 503
+// INPUT_QUEUE_CAPACITY_EXCEEDED when the input queue is full. Both are momentary: retry a few times
+// with a jittered backoff (about 20 s at most, well below the minimal Item Timeout of 60 s) instead
+// of failing the message and leaving the item to the slower engine retry or to the item timeout.
+const ACK_ATTEMPTS = 7;
+const ACK_BACKOFF_MS = 250;
+const ACK_BACKOFF_MAX_MS = 5000;
+
+/**
+ * @param {*} err - Whatever context.callAppmixer rejected with
+ * @returns {boolean}
+ */
+function isMomentaryRejection(err) {
+
+    const status = err?.statusCode ?? err?.status ?? err?.response?.status;
+    if (status === 429 || status === 503) {
+        return true;
+    }
+    if (err?.code === 'INPUT_QUEUE_CAPACITY_EXCEEDED') {
+        return true;
+    }
+    const message = typeof err === 'string' ? err : `${err?.message || ''} ${err?.error || ''}`;
+    return /max connections reached|too many requests|at capacity/i.test(message);
+}
+
+/**
+ * context.callAppmixer, retried on a momentary rejection (see above).
+ * @param {Object} context - Appmixer context
+ * @param {Object} options - context.callAppmixer options
+ */
+async function callWithRetry(context, options) {
+
+    for (let attempt = 1; ; attempt++) {
+        try {
+            return await context.callAppmixer(options);
+        } catch (err) {
+            if (attempt >= ACK_ATTEMPTS || !isMomentaryRejection(err)) {
+                throw err;
+            }
+            const backoff = Math.min(ACK_BACKOFF_MAX_MS, ACK_BACKOFF_MS * 2 ** (attempt - 1));
+            // Full jitter: loops rejected together must not come back together.
+            await new Promise(resolve => setTimeout(resolve, Math.round(backoff * (0.5 + Math.random() / 2))));
+        }
+    }
+}
+
 /**
  * The entry this item adds to the 'Result' list that Each emits on its 'done' port once the loop is
  * over: one object per item, with a field for every row of the 'Add to Result' expression. A value
@@ -65,9 +113,9 @@ module.exports = {
         // Wake the Each up through its webhook URL. The correlation query makes the engine restore
         // the scope of the message that started the loop; enqueueOnly returns as soon as the message
         // is queued instead of waiting for a response. A late acknowledgement (the item already
-        // timed out) or a duplicate is ignored by Each itself.
+        // timed out) or a duplicate is ignored by Each itself, so a retried call is harmless.
         const query = new URLSearchParams({ ...(target.webhookQuery || {}), enqueueOnly: 'true' });
-        await context.callAppmixer({
+        await callWithRetry(context, {
             endPoint: `/flows/${context.flowId}/components/${target.componentId}?${query}`,
             method: 'POST',
             body: { id: correlationId, index, result: entry }
