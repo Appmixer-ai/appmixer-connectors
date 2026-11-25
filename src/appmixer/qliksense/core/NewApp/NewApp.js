@@ -61,6 +61,7 @@ module.exports = {
                     if (!lib.isNotFound(err)) {
                         throw err;
                     }
+                    await context.log({ step: 'Ignoring a new app that was deleted before its delivery arrived.', appId });
                 }
                 if (app) {
                     await context.sendJson(app, 'out');

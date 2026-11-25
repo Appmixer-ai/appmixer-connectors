@@ -765,12 +765,12 @@
         },
         "523d34e9-df57-4dfb-a2d4-bfadbbb647e7": {
             "type": "appmixer.qliksense.core.PublishApp",
-            "x": 1936,
-            "y": 1040,
+            "x": 2144,
+            "y": 1168,
             "version": "1.0.0",
             "source": {
                 "in": {
-                    "9f7a0f32-ae4c-4cd7-bf81-06a06eeff678": [
+                    "546e3b68-bd7e-41fe-adbf-e0bdb7dde10a": [
                         "out"
                     ]
                 }
@@ -778,7 +778,7 @@
             "config": {
                 "transform": {
                     "in": {
-                        "9f7a0f32-ae4c-4cd7-bf81-06a06eeff678": {
+                        "546e3b68-bd7e-41fe-adbf-e0bdb7dde10a": {
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
@@ -813,8 +813,8 @@
         },
         "3cfcb470-0ba5-4234-8335-4935be0887db": {
             "type": "appmixer.utils.test.Assert",
-            "x": 2144,
-            "y": 1040,
+            "x": 2352,
+            "y": 1168,
             "version": "1.0.0",
             "source": {
                 "in": {
@@ -918,7 +918,7 @@
             },
             "config": {
                 "properties": {
-                    "timeout": 300
+                    "timeout": 420
                 }
             },
             "errorHandling": {
@@ -1167,6 +1167,40 @@
                 "autoRetry": false,
                 "onError": "stopFlow"
             }
+        },
+        "546e3b68-bd7e-41fe-adbf-e0bdb7dde10a": {
+            "type": "appmixer.utils.timers.Wait",
+            "x": 1936,
+            "y": 1168,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "9f7a0f32-ae4c-4cd7-bf81-06a06eeff678": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "9f7a0f32-ae4c-4cd7-bf81-06a06eeff678": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "interval": {}
+                                },
+                                "lambda": {
+                                    "interval": "1m"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
         }
     },
     "notes": {
@@ -1175,7 +1209,7 @@
             "y": -280,
             "width": 672,
             "height": 224,
-            "content": "## ⚠️ Test data assumption\n\nPublish App needs a **managed space**: the flow creates one (Create Space, type managed) and deletes it at the end. The connected user must be allowed to create managed spaces (tenant admin or the Manage spaces permission), and the tenant must offer managed spaces.\n\nFind Apps lists the apps of the space created by this flow, so it finds exactly the app created above. The Wait before it gives the Qlik items index time to list the new app (Find Apps reads /api/v1/items, which is updated asynchronously after Create App)."
+            "content": "## ⚠️ Test data assumption\n\nPublish App needs a **managed space**: the flow creates one (Create Space, type managed) and deletes it at the end. The connected user must be allowed to create managed spaces (tenant admin or the Manage spaces permission), and the tenant must offer managed spaces.\n\nFind Apps lists the apps of the space created by this flow, so it finds exactly the app created above. The Wait before it gives the Qlik items index time to list the new app (Find Apps reads /api/v1/items, which is updated asynchronously after Create App).\n\nThe Wait before Publish App gives Qlik time to make the new managed space available: publishing into a space created a second earlier can return 404."
         }
     }
 }
