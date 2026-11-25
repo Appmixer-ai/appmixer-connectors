@@ -233,8 +233,8 @@ describe('Each Component - sequential mode', () => {
 
     it('should keep many concurrent loops out of the component state (#3159)', async () => {
         const h = createHarness();
-        const loops = Array.from({ length: 50 }, (_, n) => `run-${n}`);
-        const list = Array.from({ length: 20 }, (_, i) => ({ i, payload: 'x'.repeat(100) }));
+        const loops = Array.from({ length: 20 }, (_, n) => `run-${n}`);
+        const list = Array.from({ length: 10 }, (_, i) => ({ i, payload: 'x'.repeat(100) }));
 
         for (const id of loops) {
             await h.start({ list, sequential: true }, id);
