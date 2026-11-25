@@ -6,6 +6,7 @@ const pathModule = require('path');
 const INSPECTOR_FIELDS_CONTACT = ['email', 'firstname', 'lastname', 'phone', 'website', 'company', 'address', 'city', 'state', 'zip'];
 const INSPECTOR_FIELDS_DEAL = ['dealname', 'dealstage', 'pipeline', 'hubspot_owner_id', 'closedate', 'amount'];
 const INSPECTOR_FIELDS_COMPANY = ['domain', 'name', 'numberofemployees', 'industry', 'phone', 'website', 'city', 'state', 'country', 'address', 'zip', 'description', 'annualrevenue'];
+const INSPECTOR_FIELDS_TICKET = ['subject', 'content', 'hs_pipeline', 'hs_pipeline_stage', 'hs_ticket_priority', 'hubspot_owner_id'];
 
 module.exports = {
 
@@ -44,6 +45,7 @@ module.exports = {
     INSPECTOR_FIELDS_CONTACT,
     INSPECTOR_FIELDS_DEAL,
     INSPECTOR_FIELDS_COMPANY,
+    INSPECTOR_FIELDS_TICKET,
     // Former names of the lists above. Get*Properties versions published before the rename import them, and
     // instances keep serving those component snapshots next to this (newer) shared file.
     WATCHED_PROPERTIES_CONTACT: INSPECTOR_FIELDS_CONTACT,
@@ -73,6 +75,53 @@ module.exports = {
             return true;
         }
         return changed.some(name => watched.includes(name));
+    },
+
+    /**
+     * Normalizes a list of record IDs given as an array, a comma separated string or a single ID
+     * (a variable from another component) into an array of non-empty strings.
+     */
+    parseIdList(value) {
+
+        if (value === undefined || value === null || value === '') {
+            return [];
+        }
+        const items = Array.isArray(value) ? value : String(value).split(',');
+        return items
+            .map(item => (item && typeof item === 'object' ? item.id : item))
+            .map(item => (item === undefined || item === null ? '' : String(item).trim()))
+            .filter(Boolean);
+    },
+
+    /**
+     * Builds the `associations` array of a CRM create request: every ID linked with the default
+     * (HUBSPOT_DEFINED) association type of its target object.
+     * @param {Array<{ ids: string[], associationTypeId: number }>} targets
+     */
+    buildAssociations(targets) {
+
+        const associations = [];
+        for (const { ids, associationTypeId } of targets) {
+            for (const id of ids) {
+                associations.push({
+                    to: { id },
+                    types: [{ associationCategory: 'HUBSPOT_DEFINED', associationTypeId }]
+                });
+            }
+        }
+        return associations;
+    },
+
+    /** Turns the "additional properties" expression input ({ AND: [{ name, value }] }) into an object. */
+    additionalPropertiesToObject(additionalProperties) {
+
+        const fields = additionalProperties?.AND || [];
+        return fields.reduce((acc, field) => {
+            if (field?.name) {
+                acc[field.name] = field.value;
+            }
+            return acc;
+        }, {});
     },
 
     async getObjectProperties(context, hubspot, objectType, output = 'all') {
