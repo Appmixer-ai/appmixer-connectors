@@ -43,11 +43,16 @@ module.exports = {
         }
         try {
             const event = await lib.readWebhookEvent(context);
-            const data = (event && event.data) || {};
-            const appId = data.id || (event && event.toplevelresourceid);
-            const eventSpaceId = data.spaceId || (event && event.spaceid);
+            if (!event) {
+                return;
+            }
+            const { id: appId, spaceId: eventSpaceId } = lib.appFromEvent(event);
+            if (!appId) {
+                await context.log({ step: 'Ignoring an app event without an app ID.', event });
+                return;
+            }
             const { spaceId } = context.properties;
-            if (appId && (!spaceId || eventSpaceId === spaceId)) {
+            if (!spaceId || eventSpaceId === spaceId) {
                 let app;
                 try {
                     app = await fetchApp(context, appId, eventSpaceId);

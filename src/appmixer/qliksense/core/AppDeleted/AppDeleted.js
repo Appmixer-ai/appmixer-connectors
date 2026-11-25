@@ -12,13 +12,13 @@ const EVENT_TYPES = ['com.qlik.v1.app.deleted', 'com.qlik.app.deleted'];
  */
 const toDeletedApp = (event) => {
 
-    const data = event.data || {};
+    const app = lib.appFromEvent(event);
     return {
-        id: data.id || event.toplevelresourceid,
-        name: data.name,
-        spaceId: data.spaceId || event.spaceid,
-        usage: data.usage,
-        deleteType: data.deleteType,
+        id: app.id,
+        name: app.name,
+        spaceId: app.spaceId,
+        usage: app.usage,
+        deleteType: app.deleteType,
         deletedAt: event.time,
         deletedBy: event.userid
     };
@@ -43,12 +43,17 @@ module.exports = {
         }
         try {
             const event = await lib.readWebhookEvent(context);
-            if (event) {
-                const app = toDeletedApp(event);
-                const { spaceId } = context.properties;
-                if (app.id && (!spaceId || app.spaceId === spaceId)) {
-                    await context.sendJson(app, 'out');
-                }
+            if (!event) {
+                return;
+            }
+            const app = toDeletedApp(event);
+            if (!app.id) {
+                await context.log({ step: 'Ignoring an app event without an app ID.', event });
+                return;
+            }
+            const { spaceId } = context.properties;
+            if (!spaceId || app.spaceId === spaceId) {
+                await context.sendJson(app, 'out');
             }
         } finally {
             await context.response();

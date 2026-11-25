@@ -310,5 +310,46 @@ describe('appmixer.qliksense', function() {
             assert.strictEqual(match.sent[0].data.id, 'a1');
             assert.strictEqual(match.sent[0].data.deletedAt, '2026-11-16T12:00:00Z');
         });
+
+        // The shape Qlik Cloud delivers: the app is under data.attributes, with no toplevelresourceid.
+        const appEvent = (type) => ({
+            specversion: '1.0.2',
+            type,
+            time: '2026-11-25T12:03:13Z',
+            userid: 'u1',
+            data: { attributes: { _resourcetype: 'app', id: 'a1', name: 'E2E app', spaceId: '', usage: 'ANALYTICS', deleteType: 'HARD' } }
+        });
+
+        it('reads the app from data.attributes of a delivered app.created event', async function() {
+
+            const component = load('NewApp');
+            const state = { webhookId: 'w1', token: 't'.repeat(48), eventType: 'com.qlik.v1.app.created' };
+            const context = createContext({
+                state,
+                messages: { webhook: { content: { query: { token: state.token }, data: appEvent('com.qlik.v1.app.created') } } }
+            });
+            context.httpRequest.resolves({ data: { attributes: { id: 'a1', name: 'E2E app', spaceId: '' } } });
+            await component.receive(context);
+            assert.strictEqual(context.httpRequest.firstCall.args[0].url, ORIGIN + '/api/v1/apps/a1');
+            assert.strictEqual(context.sent.length, 1);
+            assert.strictEqual(context.sent[0].data.id, 'a1');
+            assert.strictEqual(context.response.callCount, 1);
+        });
+
+        it('reads the app from data.attributes of a delivered app.deleted event', async function() {
+
+            const component = load('AppDeleted');
+            const state = { webhookId: 'w1', token: 't'.repeat(48), eventType: 'com.qlik.v1.app.deleted' };
+            const context = createContext({
+                state,
+                messages: { webhook: { content: { query: { token: state.token }, data: appEvent('com.qlik.v1.app.deleted') } } }
+            });
+            await component.receive(context);
+            assert.strictEqual(context.sent.length, 1);
+            assert.deepStrictEqual(context.sent[0].data, {
+                id: 'a1', name: 'E2E app', spaceId: '', usage: 'ANALYTICS', deleteType: 'HARD',
+                deletedAt: '2026-11-25T12:03:13Z', deletedBy: 'u1'
+            });
+        });
     });
 });

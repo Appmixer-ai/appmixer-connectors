@@ -433,6 +433,24 @@ const readWebhookEvent = async (context) => {
     return event;
 };
 
+/**
+ * The app an app event (com.qlik.v1.app.*) is about. Qlik sends the app under data.attributes
+ * ({ data: { attributes: { id, name, spaceId, ... } } }); data itself and the CloudEvent
+ * extensions (toplevelresourceid, spaceid) are kept as fallbacks.
+ * @param {object} event
+ * @returns {object} the app attributes, with id and spaceId resolved
+ */
+const appFromEvent = (event) => {
+
+    const data = (event && event.data) || {};
+    const attributes = data.attributes || data;
+    return {
+        ...attributes,
+        id: attributes.id || data.id || (event && event.toplevelresourceid),
+        spaceId: attributes.spaceId || data.spaceId || (event && event.spaceid) || ''
+    };
+};
+
 // MakeApiCall helpers -------------------------------------------------------------------------
 
 /**
@@ -573,6 +591,7 @@ module.exports = {
     registerWebhook,
     unregisterWebhook,
     readWebhookEvent,
+    appFromEvent,
     resolveApiUrl,
     parseJsonInput,
     kvToObject,
