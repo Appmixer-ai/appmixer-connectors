@@ -1,0 +1,308 @@
+{
+    "name": "appmixer.miro.core.CreateCard",
+    "label": "Create Card",
+    "description": "Add a card (a task with a title, description, due date and assignee) to a board.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:miro"
+    },
+    "quota": {
+        "manager": "appmixer:miro",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "boardId": {
+                        "type": "string"
+                    },
+                    "title": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "dueDate": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "assigneeId": {
+                        "type": "string"
+                    },
+                    "x": {
+                        "type": "number"
+                    },
+                    "y": {
+                        "type": "number"
+                    },
+                    "width": {
+                        "type": "number"
+                    },
+                    "parentId": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "boardId",
+                    "title"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "boardId": {
+                        "type": "text",
+                        "index": 1,
+                        "label": "Board",
+                        "tooltip": "Pick a board, or type its Board ID (the part after <code>/board/</code> in the board URL).",
+                        "source": {
+                            "url": "/component/appmixer/miro/core/FindBoards?outPort=out",
+                            "data": {
+                                "properties": {
+                                    "isSource": true
+                                },
+                                "transform": "./FindBoards#toSelectArray"
+                            }
+                        }
+                    },
+                    "title": {
+                        "type": "text",
+                        "index": 2,
+                        "label": "Title",
+                        "tooltip": "Title of the card. Simple HTML is supported."
+                    },
+                    "description": {
+                        "type": "textarea",
+                        "index": 3,
+                        "label": "Description",
+                        "tooltip": "Description of the card."
+                    },
+                    "dueDate": {
+                        "type": "date-time",
+                        "index": 4,
+                        "label": "Due Date",
+                        "tooltip": "When the task of the card is due."
+                    },
+                    "assigneeId": {
+                        "type": "text",
+                        "index": 5,
+                        "label": "Assignee ID",
+                        "tooltip": "Miro user ID of the person the card is assigned to."
+                    },
+                    "x": {
+                        "type": "number",
+                        "index": 6,
+                        "label": "X",
+                        "tooltip": "Horizontal position of the item's center on the board, in board units. 0 is the center of the board (or the top left corner of the frame when Frame ID is set)."
+                    },
+                    "y": {
+                        "type": "number",
+                        "index": 7,
+                        "label": "Y",
+                        "tooltip": "Vertical position of the item's center on the board, in board units."
+                    },
+                    "width": {
+                        "type": "number",
+                        "index": 8,
+                        "label": "Width",
+                        "tooltip": "Width of the item in board units."
+                    },
+                    "parentId": {
+                        "type": "text",
+                        "index": 9,
+                        "label": "Frame ID",
+                        "tooltip": "Optional ID of a frame to put the item in. The position is then relative to the frame's top left corner."
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "title": "Item ID",
+                        "example": "3458764517517819001"
+                    },
+                    "type": {
+                        "type": "string",
+                        "title": "Type",
+                        "example": "card"
+                    },
+                    "data": {
+                        "type": "object",
+                        "title": "Data",
+                        "properties": {
+                            "title": {
+                                "type": "string",
+                                "title": "Data.Title",
+                                "example": "Write release notes"
+                            },
+                            "description": {
+                                "type": "string",
+                                "title": "Data.Description",
+                                "example": "Summarize the changes of the sprint"
+                            },
+                            "dueDate": {
+                                "type": "string",
+                                "format": "date-time",
+                                "title": "Data.Due Date",
+                                "example": "2026-12-01T10:00:00Z"
+                            },
+                            "assigneeId": {
+                                "type": "string",
+                                "title": "Data.Assignee ID",
+                                "example": "3458764512345678901"
+                            }
+                        },
+                        "required": [
+                            "title"
+                        ]
+                    },
+                    "style": {
+                        "type": "object",
+                        "title": "Style",
+                        "properties": {
+                            "cardTheme": {
+                                "type": "string",
+                                "title": "Style.Card Theme",
+                                "example": "#2d9bf0"
+                            }
+                        },
+                        "required": []
+                    },
+                    "position": {
+                        "type": "object",
+                        "title": "Position",
+                        "properties": {
+                            "x": {
+                                "type": "number",
+                                "title": "Position.X",
+                                "example": 0
+                            },
+                            "y": {
+                                "type": "number",
+                                "title": "Position.Y",
+                                "example": 0
+                            },
+                            "origin": {
+                                "type": "string",
+                                "title": "Position.Origin",
+                                "example": "center"
+                            },
+                            "relativeTo": {
+                                "type": "string",
+                                "title": "Position.Relative To",
+                                "example": "canvas_center"
+                            }
+                        },
+                        "required": [
+                            "x",
+                            "y"
+                        ]
+                    },
+                    "geometry": {
+                        "type": "object",
+                        "title": "Geometry",
+                        "properties": {
+                            "width": {
+                                "type": "number",
+                                "title": "Geometry.Width",
+                                "example": 199.99
+                            },
+                            "height": {
+                                "type": "number",
+                                "title": "Geometry.Height",
+                                "example": 228
+                            },
+                            "rotation": {
+                                "type": "number",
+                                "title": "Geometry.Rotation",
+                                "example": 0
+                            }
+                        },
+                        "required": []
+                    },
+                    "parent": {
+                        "type": "object",
+                        "title": "Parent",
+                        "properties": {
+                            "id": {
+                                "type": "string",
+                                "title": "Parent.ID",
+                                "example": "3458764517517818000"
+                            }
+                        },
+                        "required": []
+                    },
+                    "createdAt": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Created At",
+                        "example": "2026-11-20T09:20:00Z"
+                    },
+                    "modifiedAt": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Modified At",
+                        "example": "2026-11-20T09:20:00Z"
+                    },
+                    "createdBy": {
+                        "type": "object",
+                        "title": "Created By",
+                        "properties": {
+                            "id": {
+                                "type": "string",
+                                "title": "Created By.ID",
+                                "example": "3458764512345678901"
+                            },
+                            "type": {
+                                "type": "string",
+                                "title": "Created By.Type",
+                                "example": "user"
+                            }
+                        },
+                        "required": [
+                            "id"
+                        ]
+                    },
+                    "modifiedBy": {
+                        "type": "object",
+                        "title": "Modified By",
+                        "properties": {
+                            "id": {
+                                "type": "string",
+                                "title": "Modified By.ID",
+                                "example": "3458764512345678901"
+                            },
+                            "type": {
+                                "type": "string",
+                                "title": "Modified By.Type",
+                                "example": "user"
+                            }
+                        },
+                        "required": [
+                            "id"
+                        ]
+                    }
+                },
+                "required": [
+                    "id",
+                    "type",
+                    "data"
+                ]
+            }
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHJlY3Qgd2lkdGg9IjI0IiBoZWlnaHQ9IjI0IiByeD0iNSIgZmlsbD0iI0ZGREQzMyIvPjxwYXRoIHRyYW5zZm9ybT0idHJhbnNsYXRlKDQuOCA0LjgpIHNjYWxlKDAuNikiIGZpbGw9IiMwNTAwMzgiIGQ9Ik0xNy4zOTIgMEgxMy45TDE3IDQuODA4IDEwLjQ0NCAwSDYuOTQ5bDMuMTAyIDYuM0wzLjQ5NCAwSDBsMy4wNSA4LjEzMUwwIDI0aDMuNDk0TDEwLjA1IDYuOTg1IDYuOTQ5IDI0aDMuNDk0TDE3IDUuNDk0IDEzLjg5OSAyNGgzLjQ5M0wyNCAzLjY3MiAxNy4zOTIgMHoiLz48L3N2Zz4="
+}

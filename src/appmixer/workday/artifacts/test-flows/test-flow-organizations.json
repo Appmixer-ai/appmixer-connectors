@@ -1,0 +1,266 @@
+{
+    "name": "E2E Workday - supervisory organizations",
+    "description": "End-to-end test for the Workday connector - supervisory organizations",
+    "flow": {
+        "f93425df-82da-4513-965b-ca2dc6fbf701": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16,
+            "source": {},
+            "version": "1.0.0",
+            "config": {},
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "c45920aa-0b38-4a24-9287-16b3e6885dd6": {
+            "type": "appmixer.workday.core.ListSupervisoryOrganizations",
+            "x": 272,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "f93425df-82da-4513-965b-ca2dc6fbf701": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "f93425df-82da-4513-965b-ca2dc6fbf701": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "outputType": {}
+                                },
+                                "lambda": {
+                                    "outputType": "first"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "55bb97ee-9ce5-47b6-a55b-edebe0b2d409": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 480,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "c45920aa-0b38-4a24-9287-16b3e6885dd6": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "c45920aa-0b38-4a24-9287-16b3e6885dd6": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "645627f0-6ee6-471e-9b57-6b2b7e667765": {
+                                            "variable": "$.c45920aa-0b38-4a24-9287-16b3e6885dd6.out.id",
+                                            "functions": []
+                                        },
+                                        "1fed6e63-401c-44a4-a5a1-2697f076c158": {
+                                            "variable": "$.c45920aa-0b38-4a24-9287-16b3e6885dd6.out.descriptor",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{645627f0-6ee6-471e-9b57-6b2b7e667765}}}",
+                                                "assertion": "notEmpty"
+                                            },
+                                            {
+                                                "field": "{{{1fed6e63-401c-44a4-a5a1-2697f076c158}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "82e11192-0c3f-4f63-af72-390cb8717bda": {
+            "type": "appmixer.workday.core.ListSupervisoryOrganizationWorkers",
+            "x": 688,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "c45920aa-0b38-4a24-9287-16b3e6885dd6": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "c45920aa-0b38-4a24-9287-16b3e6885dd6": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "organizationId": {
+                                        "246cf66f-4a1f-4c17-b41e-f39d87e2e8a6": {
+                                            "variable": "$.c45920aa-0b38-4a24-9287-16b3e6885dd6.out.id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "outputType": {}
+                                },
+                                "lambda": {
+                                    "organizationId": "{{{246cf66f-4a1f-4c17-b41e-f39d87e2e8a6}}}",
+                                    "outputType": "array"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "6b5db4a3-5ce6-49f2-8a39-5fe7058708c9": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 896,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "82e11192-0c3f-4f63-af72-390cb8717bda": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "82e11192-0c3f-4f63-af72-390cb8717bda": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "7cada518-408e-4fc5-a620-f0ef36f9a6ec": {
+                                            "variable": "$.82e11192-0c3f-4f63-af72-390cb8717bda.out.count",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{7cada518-408e-4fc5-a620-f0ef36f9a6ec}}}",
+                                                "assertion": "regex",
+                                                "regex": "^[0-9]+$"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "b983905d-f4f7-46f5-ac09-014f2ef8f50f": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 1104,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "55bb97ee-9ce5-47b6-a55b-edebe0b2d409": [
+                        "out"
+                    ],
+                    "6b5db4a3-5ce6-49f2-8a39-5fe7058708c9": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 180
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "425ee829-8d38-454f-a5e3-a013a802bbd5": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1312,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "b983905d-f4f7-46f5-ac09-014f2ef8f50f": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "successStoreId": "64f6f1f9193228000754082f",
+                    "failedStoreId": "64f6f1f0193228000754082e"
+                },
+                "transform": {
+                    "in": {
+                        "b983905d-f4f7-46f5-ac09-014f2ef8f50f": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "5c8658a3-7809-42df-ab30-e7967d11c756": {
+                                            "variable": "$.b983905d-f4f7-46f5-ac09-014f2ef8f50f.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E Workday - supervisory organizations",
+                                    "result": "{{{5c8658a3-7809-42df-ab30-e7967d11c756}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        }
+    }
+}

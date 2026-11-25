@@ -628,6 +628,9 @@
                     ],
                     "2498aa01-e349-4411-9b98-7351c23adf75": [
                         "out"
+                    ],
+                    "9d7a4b2c-1e6f-4a83-b5c0-7f2e8d1a3c64": [
+                        "out"
                     ]
                 }
             },
@@ -643,7 +646,7 @@
             }
         },
         "53d5894c-44c9-485f-a513-4dc49994aff0": {
-            "type": "appmixer.github.list.MakeApiCall",
+            "type": "appmixer.github.list.UpdateIssue",
             "x": 2288,
             "y": 128,
             "source": {
@@ -659,29 +662,26 @@
                 "onError": "stopFlow"
             },
             "config": {
+                "properties": {
+                    "repositoryId": "apx-vero/appmixer-test"
+                },
                 "transform": {
                     "in": {
                         "b1c59277-909c-4671-a77e-b1be40af3cef": {
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
-                                    "url": {
-                                        "15e3598e-b337-4e18-9539-3e01aead164e": {
-                                            "variable": "$.f42a05d2-0741-4f24-886d-9d28968ab395.out.repositoryId",
-                                            "functions": []
-                                        },
+                                    "issue": {
                                         "7063e612-5432-4a04-ba20-eca71953f98e": {
                                             "variable": "$.52da3d21-6517-489e-9dd6-0beaf1b14007.newIssue.number",
                                             "functions": []
                                         }
                                     },
-                                    "method": {},
-                                    "body": {}
+                                    "state": {}
                                 },
                                 "lambda": {
-                                    "url": "/repos/{{{15e3598e-b337-4e18-9539-3e01aead164e}}}/issues/{{{7063e612-5432-4a04-ba20-eca71953f98e}}}",
-                                    "method": "PATCH",
-                                    "body": "{\"state\": \"closed\"}"
+                                    "issue": "{{{7063e612-5432-4a04-ba20-eca71953f98e}}}",
+                                    "state": "closed"
                                 }
                             }
                         }
@@ -726,6 +726,107 @@
                                     "recipients": "test@appmixer.com",
                                     "testCase": "E2E GitHub - Issue Comments",
                                     "result": "{{{be13abe0-e058-40ba-9333-bb26855b3790}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "6c1e2f0a-8b3d-4e7a-9f15-2d4c7b8a9e31": {
+            "type": "appmixer.github.list.MakeApiCall",
+            "x": 624,
+            "y": 896,
+            "source": {
+                "in": {
+                    "f42a05d2-0741-4f24-886d-9d28968ab395": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "label": "Get Authenticated User (Make API Call)",
+            "config": {
+                "transform": {
+                    "in": {
+                        "f42a05d2-0741-4f24-886d-9d28968ab395": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "url": {},
+                                    "method": {}
+                                },
+                                "lambda": {
+                                    "url": "/user",
+                                    "method": "GET"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "9d7a4b2c-1e6f-4a83-b5c0-7f2e8d1a3c64": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 832,
+            "y": 896,
+            "source": {
+                "in": {
+                    "6c1e2f0a-8b3d-4e7a-9f15-2d4c7b8a9e31": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "6c1e2f0a-8b3d-4e7a-9f15-2d4c7b8a9e31": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "a41c6e2d-7b3f-4d58-9e10-5c2b8f7a6d93": {
+                                            "variable": "$.6c1e2f0a-8b3d-4e7a-9f15-2d4c7b8a9e31.out.status",
+                                            "functions": []
+                                        },
+                                        "b52d7f3e-8c4a-4e69-af21-6d3c9a8b7ea4": {
+                                            "variable": "$.6c1e2f0a-8b3d-4e7a-9f15-2d4c7b8a9e31.out.body",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "login"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{a41c6e2d-7b3f-4d58-9e10-5c2b8f7a6d93}}}",
+                                                "assertion": "equal",
+                                                "expected": "200"
+                                            },
+                                            {
+                                                "field": "{{{b52d7f3e-8c4a-4e69-af21-6d3c9a8b7ea4}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
                                 }
                             }
                         }

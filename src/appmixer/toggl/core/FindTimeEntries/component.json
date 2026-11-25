@@ -1,0 +1,121 @@
+{
+    "name": "appmixer.toggl.core.FindTimeEntries",
+    "label": "Find Time Entries",
+    "description": "Find the time entries of the connected user that overlap a date range, newest first (up to 1,000). Without dates it returns the last 7 days. For the time of other workspace members use Find Report Time Entries.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:toggl"
+    },
+    "quota": {
+        "manager": "appmixer:toggl",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "startDate": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "endDate": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "projectId": {
+                        "type": "string"
+                    },
+                    "outputType": {
+                        "type": "string",
+                        "default": "array"
+                    }
+                }
+            },
+            "inspector": {
+                "inputs": {
+                    "startDate": {
+                        "type": "date-time",
+                        "label": "Start Date",
+                        "tooltip": "Start of the range. Use together with End Date. Leave both empty for the last 7 days.",
+                        "index": 1
+                    },
+                    "endDate": {
+                        "type": "date-time",
+                        "label": "End Date",
+                        "tooltip": "End of the range. Use together with Start Date.",
+                        "index": 2
+                    },
+                    "projectId": {
+                        "type": "text",
+                        "label": "Project",
+                        "tooltip": "Pick a project or type its numeric ID to return only its entries. Optional.",
+                        "source": {
+                            "url": "/component/appmixer/toggl/core/ListProjects?outPort=out",
+                            "data": {
+                                "messages": {
+                                    "in/outputType": "array"
+                                },
+                                "properties": {
+                                    "isSource": true
+                                },
+                                "transform": "./ListProjects#toSelectArray"
+                            }
+                        },
+                        "index": 3
+                    },
+                    "outputType": {
+                        "type": "select",
+                        "label": "Output Type",
+                        "index": 4,
+                        "defaultValue": "array",
+                        "tooltip": "Choose whether you want to receive the result set as one complete list, or first item only or one item at a time or stream the items to a file.",
+                        "options": [
+                            {
+                                "label": "First Item Only",
+                                "value": "first"
+                            },
+                            {
+                                "label": "All items at once",
+                                "value": "array"
+                            },
+                            {
+                                "label": "One item at a time",
+                                "value": "object"
+                            },
+                            {
+                                "label": "Store to CSV file",
+                                "value": "file"
+                            }
+                        ]
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "source": {
+                "url": "/component/appmixer/toggl/core/FindTimeEntries?outPort=out&ignoreAuth=true",
+                "data": {
+                    "properties": {
+                        "generateOutputPortOptions": true
+                    },
+                    "messages": {
+                        "in/outputType": "inputs/in/outputType"
+                    }
+                }
+            }
+        },
+        {
+            "name": "notFound"
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZmlsbD0iI0U1N0NEOCIgZD0iTTEyIDBhMTIgMTIgMCAxIDAgMCAyNCAxMiAxMiAwIDAgMCAwLTI0em0tLjg4MyA0LjMyMmgxLjc2NnY4Ljc1N2gtMS43NjZ6bS0uNzQgMi4wNTN2MS43ODlhNC40NDggNC40NDggMCAxIDAgMy4yNDcgMFY2LjM3NWE2LjE0NiA2LjE0NiAwIDEgMS01LjY2OSAxMC41NTIgNi4xNDUgNi4xNDUgMCAwIDEgMi40MjEtMTAuNTUyeiIvPjwvc3ZnPg=="
+}

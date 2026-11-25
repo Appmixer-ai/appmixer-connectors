@@ -1,0 +1,491 @@
+{
+    "name": "E2E Stripe - create and cancel subscription",
+    "description": "Creates a customer and a recurring price, subscribes the customer with a trial (Create Subscription), cancels the subscription (Cancel Subscription), then archives the product and deletes the customer.",
+    "flow": {
+        "bd4dcd5b-696a-48f0-8291-9714b53f6001": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {},
+            "config": {},
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "2863b981-9d7a-423a-9062-f57bb893f661": {
+            "type": "appmixer.stripe.core.CreateCustomer",
+            "x": 272,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "bd4dcd5b-696a-48f0-8291-9714b53f6001": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "bd4dcd5b-696a-48f0-8291-9714b53f6001": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "email": {},
+                                    "name": {}
+                                },
+                                "lambda": {
+                                    "email": "e2e-subscription@example.com",
+                                    "name": "E2E Subscription Customer"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "2fcf877a-7b00-4b36-8afb-074425c3bfde": {
+            "type": "appmixer.stripe.core.MakeApiCall",
+            "x": 480,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "2863b981-9d7a-423a-9062-f57bb893f661": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "2863b981-9d7a-423a-9062-f57bb893f661": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "url": {},
+                                    "method": {},
+                                    "body": {}
+                                },
+                                "lambda": {
+                                    "url": "/v1/prices",
+                                    "method": "POST",
+                                    "body": "{\"currency\":\"usd\",\"unit_amount\":1000,\"product_data[name]\":\"E2E Stripe Subscription Plan\",\"recurring[interval]\":\"month\"}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "fca8e31a-18b9-4a0b-a0c4-5a464e2a5352": {
+            "type": "appmixer.stripe.core.CreateSubscription",
+            "x": 688,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "2fcf877a-7b00-4b36-8afb-074425c3bfde": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "2fcf877a-7b00-4b36-8afb-074425c3bfde": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "customer": {
+                                        "9e861d47-3b2b-4f98-8de8-2a49a7eeb4a3": {
+                                            "variable": "$.2863b981-9d7a-423a-9062-f57bb893f661.out.id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "items": {
+                                        "89fe76e5-5d6b-4a75-9bb0-9ae9d7cbe571": {
+                                            "variable": "$.2fcf877a-7b00-4b36-8afb-074425c3bfde.out.body",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$.id"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "trialPeriodDays": {},
+                                    "collectionMethod": {},
+                                    "description": {},
+                                    "metadata": {}
+                                },
+                                "lambda": {
+                                    "customer": "{{{9e861d47-3b2b-4f98-8de8-2a49a7eeb4a3}}}",
+                                    "items": {
+                                        "AND": [
+                                            {
+                                                "price": "{{{89fe76e5-5d6b-4a75-9bb0-9ae9d7cbe571}}}",
+                                                "quantity": 2
+                                            }
+                                        ]
+                                    },
+                                    "trialPeriodDays": 7,
+                                    "collectionMethod": "charge_automatically",
+                                    "description": "E2E subscription",
+                                    "metadata": "{\"e2e\":\"create-subscription\"}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "3d3512e8-0f20-4a42-a54f-e3b8cc3f80cd": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 896,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "fca8e31a-18b9-4a0b-a0c4-5a464e2a5352": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "fca8e31a-18b9-4a0b-a0c4-5a464e2a5352": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "0b7ed35b-8122-44f0-9c37-29c1cfa83772": {
+                                            "variable": "$.fca8e31a-18b9-4a0b-a0c4-5a464e2a5352.out.id",
+                                            "functions": []
+                                        },
+                                        "4ffbc632-7c00-4258-805f-5d68cc242df2": {
+                                            "variable": "$.fca8e31a-18b9-4a0b-a0c4-5a464e2a5352.out.status",
+                                            "functions": []
+                                        },
+                                        "b1b36e21-5280-4e77-8fe6-8a9ebde703b0": {
+                                            "variable": "$.fca8e31a-18b9-4a0b-a0c4-5a464e2a5352.out.description",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{0b7ed35b-8122-44f0-9c37-29c1cfa83772}}}",
+                                                "assertion": "regex",
+                                                "regex": "^sub_"
+                                            },
+                                            {
+                                                "field": "{{{4ffbc632-7c00-4258-805f-5d68cc242df2}}}",
+                                                "assertion": "equal",
+                                                "expected": "trialing"
+                                            },
+                                            {
+                                                "field": "{{{b1b36e21-5280-4e77-8fe6-8a9ebde703b0}}}",
+                                                "assertion": "equal",
+                                                "expected": "E2E subscription"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "78cf930d-1a61-4717-8967-ade6a6cfa3f4": {
+            "type": "appmixer.stripe.core.CancelSubscription",
+            "x": 1104,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "3d3512e8-0f20-4a42-a54f-e3b8cc3f80cd": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "3d3512e8-0f20-4a42-a54f-e3b8cc3f80cd": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "subscriptionId": {
+                                        "17b4f442-df08-4b54-abc4-6597248fa9d6": {
+                                            "variable": "$.fca8e31a-18b9-4a0b-a0c4-5a464e2a5352.out.id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "invoiceNow": {},
+                                    "prorate": {},
+                                    "cancellationComment": {}
+                                },
+                                "lambda": {
+                                    "subscriptionId": "{{{17b4f442-df08-4b54-abc4-6597248fa9d6}}}",
+                                    "invoiceNow": false,
+                                    "prorate": false,
+                                    "cancellationComment": "E2E cleanup"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "cf8aa615-73c6-495a-8da1-6c4535a33834": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1312,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "78cf930d-1a61-4717-8967-ade6a6cfa3f4": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "78cf930d-1a61-4717-8967-ade6a6cfa3f4": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "12d56679-ad50-41d0-8ee9-89aff09891cc": {
+                                            "variable": "$.78cf930d-1a61-4717-8967-ade6a6cfa3f4.out.status",
+                                            "functions": []
+                                        },
+                                        "52a4ec93-a2c7-4f42-b3f7-711c5144390f": {
+                                            "variable": "$.78cf930d-1a61-4717-8967-ade6a6cfa3f4.out.cancellation_details.comment",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{12d56679-ad50-41d0-8ee9-89aff09891cc}}}",
+                                                "assertion": "equal",
+                                                "expected": "canceled"
+                                            },
+                                            {
+                                                "field": "{{{52a4ec93-a2c7-4f42-b3f7-711c5144390f}}}",
+                                                "assertion": "equal",
+                                                "expected": "E2E cleanup"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "55a08ea2-36f2-49ac-982a-248ba1030949": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 1520,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "3d3512e8-0f20-4a42-a54f-e3b8cc3f80cd": [
+                        "out"
+                    ],
+                    "cf8aa615-73c6-495a-8da1-6c4535a33834": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 180
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "c1516cc7-567b-4b06-8c70-b255587a37a4": {
+            "type": "appmixer.stripe.core.MakeApiCall",
+            "x": 1728,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "55a08ea2-36f2-49ac-982a-248ba1030949": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "55a08ea2-36f2-49ac-982a-248ba1030949": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "url": {
+                                        "a7d760cd-f127-40d7-aa87-6fc0888b85e5": {
+                                            "variable": "$.2fcf877a-7b00-4b36-8afb-074425c3bfde.out.body",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$.product"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "method": {},
+                                    "body": {}
+                                },
+                                "lambda": {
+                                    "url": "/v1/products/{{{a7d760cd-f127-40d7-aa87-6fc0888b85e5}}}",
+                                    "method": "POST",
+                                    "body": "{\"active\":\"false\"}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "9e18ddb3-9b5d-40c7-b31d-3804abf8d116": {
+            "type": "appmixer.stripe.core.DeleteCustomer",
+            "x": 1936,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "c1516cc7-567b-4b06-8c70-b255587a37a4": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "c1516cc7-567b-4b06-8c70-b255587a37a4": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "customerId": {
+                                        "60745c1e-4e53-464b-beee-d59b1857147d": {
+                                            "variable": "$.2863b981-9d7a-423a-9062-f57bb893f661.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "customerId": "{{{60745c1e-4e53-464b-beee-d59b1857147d}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "08db8cee-0223-4951-a3dd-e00007448a0d": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 2144,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "9e18ddb3-9b5d-40c7-b31d-3804abf8d116": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "9e18ddb3-9b5d-40c7-b31d-3804abf8d116": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "d6f0d53f-836b-4810-89b8-117923338386": {
+                                            "variable": "$.55a08ea2-36f2-49ac-982a-248ba1030949.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E Stripe - create and cancel subscription",
+                                    "result": "{{{d6f0d53f-836b-4810-89b8-117923338386}}}"
+                                }
+                            }
+                        }
+                    }
+                },
+                "properties": {
+                    "successStoreId": "64f6f1f9193228000754082f",
+                    "failedStoreId": "64f6f1f0193228000754082e"
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        }
+    }
+}

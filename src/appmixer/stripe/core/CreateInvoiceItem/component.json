@@ -1,0 +1,230 @@
+{
+    "name": "appmixer.stripe.core.CreateInvoiceItem",
+    "description": "Adds a line item to a customer's draft invoice, or to the customer's pending items that the next invoice picks up. Use either a price (with a quantity) or an amount and currency.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:stripe"
+    },
+    "quota": {
+        "manager": "appmixer:stripe",
+        "resources": "requests"
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "customer": {
+                        "type": "string"
+                    },
+                    "price": {
+                        "type": "string"
+                    },
+                    "quantity": {
+                        "type": "integer",
+                        "minimum": 0
+                    },
+                    "amount": {
+                        "type": "integer"
+                    },
+                    "currency": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "invoice": {
+                        "type": "string"
+                    },
+                    "metadata": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "customer"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "customer": {
+                        "type": "text",
+                        "label": "Customer ID",
+                        "index": 1,
+                        "tooltip": "The ID of the customer to bill, e.g. cus_NeZei8imSbMVvi."
+                    },
+                    "price": {
+                        "type": "text",
+                        "label": "Price ID",
+                        "index": 2,
+                        "tooltip": "The ID of a Stripe Price, e.g. price_1MtGUsLkdIwHu7ix1be5Ljaj. Use either a price or an amount."
+                    },
+                    "quantity": {
+                        "type": "number",
+                        "label": "Quantity",
+                        "index": 3,
+                        "tooltip": "The quantity of the price. Used with Price ID only; defaults to 1."
+                    },
+                    "amount": {
+                        "type": "number",
+                        "label": "Amount",
+                        "index": 4,
+                        "tooltip": "The amount in the smallest currency unit, e.g. 1099 for $10.99. A negative amount reduces the amount due. Use either an amount or a price."
+                    },
+                    "currency": {
+                        "type": "text",
+                        "label": "Currency",
+                        "index": 5,
+                        "tooltip": "Three-letter ISO currency code, e.g. usd. Required with Amount."
+                    },
+                    "description": {
+                        "type": "text",
+                        "label": "Description",
+                        "index": 6,
+                        "tooltip": "Text shown on the invoice for this item."
+                    },
+                    "invoice": {
+                        "type": "text",
+                        "label": "Invoice ID",
+                        "index": 7,
+                        "tooltip": "The ID of a draft invoice to add the item to, e.g. in_1MtHbELkdIwHu7ixl4OzzPMv. If empty, the item is added to the customer's next invoice."
+                    },
+                    "metadata": {
+                        "type": "key-value",
+                        "label": "Metadata",
+                        "index": 8,
+                        "tooltip": "Optional key-value pairs to store on the object, e.g. an order ID from your system."
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "title": "Invoice Item ID",
+                        "example": "ii_1MtGUtLkdIwHu7ixBYwjAM00"
+                    },
+                    "object": {
+                        "type": "string",
+                        "title": "Object",
+                        "example": "invoiceitem"
+                    },
+                    "amount": {
+                        "type": "integer",
+                        "title": "Amount",
+                        "example": 1099
+                    },
+                    "currency": {
+                        "type": "string",
+                        "title": "Currency",
+                        "example": "usd"
+                    },
+                    "customer": {
+                        "type": "string",
+                        "title": "Customer ID",
+                        "example": "cus_NeZei8imSbMVvi"
+                    },
+                    "description": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "title": "Description",
+                        "example": "T-shirt"
+                    },
+                    "invoice": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "title": "Invoice ID",
+                        "example": "in_1MtHbELkdIwHu7ixl4OzzPMv"
+                    },
+                    "quantity": {
+                        "type": "integer",
+                        "title": "Quantity",
+                        "example": 1
+                    },
+                    "date": {
+                        "type": "integer",
+                        "title": "Date (Unix Timestamp)",
+                        "example": 1680640231
+                    },
+                    "pricing": {
+                        "type": [
+                            "object",
+                            "null"
+                        ],
+                        "title": "Pricing",
+                        "properties": {
+                            "type": {
+                                "type": "string",
+                                "title": "Pricing.Type",
+                                "example": "price_details"
+                            },
+                            "unit_amount_decimal": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ],
+                                "title": "Pricing.Unit Amount Decimal",
+                                "example": "1099"
+                            },
+                            "price_details": {
+                                "type": [
+                                    "object",
+                                    "null"
+                                ],
+                                "title": "Pricing.Price Details",
+                                "properties": {
+                                    "price": {
+                                        "type": "string",
+                                        "title": "Pricing.Price Details.Price ID",
+                                        "example": "price_1MtGUsLkdIwHu7ix1be5Ljaj"
+                                    },
+                                    "product": {
+                                        "type": "string",
+                                        "title": "Pricing.Price Details.Product ID",
+                                        "example": "prod_NeZe7xbBdJT8EN"
+                                    }
+                                },
+                                "example": {
+                                    "price": "price_1MtGUsLkdIwHu7ix1be5Ljaj",
+                                    "product": "prod_NeZe7xbBdJT8EN"
+                                }
+                            }
+                        },
+                        "example": {
+                            "type": "price_details",
+                            "price_details": {
+                                "price": "price_1MtGUsLkdIwHu7ix1be5Ljaj",
+                                "product": "prod_NeZe7xbBdJT8EN"
+                            },
+                            "unit_amount_decimal": "1099"
+                        }
+                    },
+                    "livemode": {
+                        "type": "boolean",
+                        "title": "Live Mode",
+                        "example": false
+                    },
+                    "metadata": {
+                        "type": "object",
+                        "title": "Metadata",
+                        "example": {
+                            "orderId": "1001"
+                        }
+                    }
+                }
+            }
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiByeD0iNiIgZmlsbD0iIzYzNUJGRiIvPjxwYXRoIHRyYW5zZm9ybT0idHJhbnNsYXRlKDQgNCkiIGZpbGw9IiNGRkZGRkYiIGQ9Ik0xMy45NzYgOS4xNWMtMi4xNzItLjgwNi0zLjM1Ni0xLjQyNi0zLjM1Ni0yLjQwOSAwLS44MzEuNjgzLTEuMzA1IDEuOTAxLTEuMzA1IDIuMjI3IDAgNC41MTUuODU4IDYuMDkgMS42MzFsLjg5LTUuNDk0QzE4LjI1Mi45NzUgMTUuNjk3IDAgMTIuMTY1IDAgOS42NjcgMCA3LjU4OS42NTQgNi4xMDQgMS44NzIgNC41NiAzLjE0NyAzLjc1NyA0Ljk5MiAzLjc1NyA3LjIxOGMwIDQuMDM5IDIuNDY3IDUuNzYgNi40NzYgNy4yMTkgMi41ODUuOTIgMy40NDUgMS41NzQgMy40NDUgMi41ODMgMCAuOTgtLjg0IDEuNTQ1LTIuMzU0IDEuNTQ1LTEuODc1IDAtNC45NjUtLjkyMS02Ljk5LTIuMTA5bC0uOSA1LjU1NUM1LjE3NSAyMi45OSA4LjM4NSAyNCAxMS43MTQgMjRjMi42NDEgMCA0Ljg0My0uNjI0IDYuMzI4LTEuODEzIDEuNjY0LTEuMzA1IDIuNTI1LTMuMjM2IDIuNTI1LTUuNzMyIDAtNC4xMjgtMi41MjQtNS44NTEtNi41OTQtNy4zMDVoLjAwM3oiLz48L3N2Zz4="
+}

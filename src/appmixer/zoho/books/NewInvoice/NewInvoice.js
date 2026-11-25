@@ -1,5 +1,6 @@
 'use strict';
 const ZohoClient = require('../../ZohoClient');
+const lib = require('../lib');
 
 // Tolerance for the clock difference between Zoho and the engine when the baseline tick finds
 // no invoice to take the timestamp from.
@@ -11,6 +12,12 @@ const EMPTY_BASELINE_SKEW_MS = 60 * 1000;
 // pages until one reaches back before `since`, bounded so a misbehaving listing cannot spin.
 const PAGE_SIZE = 200;
 const MAX_PAGES = 25;
+
+// Value of the Events property that also fires for changed invoices.
+const EVENTS_CREATED_OR_UPDATED = 'created_or_updated';
+
+// Upper bound of the invoice keys remembered between ticks in the created-or-updated mode.
+const MAX_SEEN_KEYS = 2000;
 
 /**
  * Build the query parameters for the invoices listing based on component properties.
@@ -81,7 +88,91 @@ async function listPage(zc, params, page) {
 }
 
 /**
- * Component which triggers whenever a new invoice is created in Zoho Books.
+ * Identifies one version of an invoice: the same invoice changed again is a new key.
+ * @param {Object} invoice
+ * @returns {string}
+ */
+function versionKey(invoice) {
+
+    return `${invoice.invoice_id}@${invoice.last_modified_time || ''}`;
+}
+
+/**
+ * All invoices modified after the given time. GET /invoices filters on `last_modified_time`; the
+ * documented sort columns do not include it, so every page of the (normally short) answer is read.
+ * @param {ZohoClient} zc
+ * @param {Object} params
+ * @param {number} since epoch ms
+ * @returns {Promise<Array<Object>>}
+ */
+async function listModifiedSince(zc, params, since) {
+
+    const modifiedParams = { ...params, last_modified_time: lib.formatTime(since) };
+    const invoices = [];
+    for (let page = 1; page <= MAX_PAGES; page++) {
+        const next = await listPage(zc, modifiedParams, page);
+        invoices.push(...next);
+        if (next.length < PAGE_SIZE) break;
+    }
+    return invoices;
+}
+
+/**
+ * Created-or-updated mode: fires for every invoice whose last modification is newer than the
+ * previous tick - a new invoice, a status change (sent, paid, void, ...) or an edit.
+ * @param {*} context
+ * @param {ZohoClient} zc
+ * @param {Object} params
+ */
+async function tickCreatedOrUpdated(context, zc, params) {
+
+    const { modifiedInitialized, modifiedSince = 0, seen = [] } = context.state;
+
+    if (!modifiedInitialized) {
+        // Baseline: what changed just before the flow started must not fire.
+        const start = Date.now() - EMPTY_BASELINE_SKEW_MS;
+        const recent = await listModifiedSince(zc, params, start);
+        return context.saveState({
+            modifiedInitialized: true,
+            modifiedSince: recent.reduce(
+                (max, invoice) => Math.max(max, lib.parseTime(invoice.last_modified_time)),
+                start
+            ),
+            seen: recent.map(versionKey).slice(0, MAX_SEEN_KEYS)
+        });
+    }
+
+    const invoices = await listModifiedSince(zc, params, modifiedSince);
+    if (!invoices.length) {
+        // Nothing changed; keep the state as it is.
+        return;
+    }
+
+    const seenKeys = new Set(seen);
+    const changed = invoices
+        .filter(invoice => !seenKeys.has(versionKey(invoice))
+            && lib.parseTime(invoice.last_modified_time) >= modifiedSince)
+        .sort((a, b) => lib.parseTime(a.last_modified_time) - lib.parseTime(b.last_modified_time));
+
+    for (const summary of changed) {
+        const invoice = await getInvoice(zc, params.organization_id, summary);
+        await context.sendJson(invoice, 'out');
+    }
+
+    await context.saveState({
+        modifiedInitialized: true,
+        modifiedSince: invoices.reduce(
+            (max, invoice) => Math.max(max, lib.parseTime(invoice.last_modified_time)),
+            modifiedSince
+        ),
+        // The filter may include the boundary second; the keys keep those invoices from firing twice.
+        seen: invoices.map(versionKey).slice(0, MAX_SEEN_KEYS)
+    });
+}
+
+/**
+ * Component which triggers whenever a new invoice is created in Zoho Books (or, with the Events
+ * property set to created-or-updated, whenever an invoice is created or changed).
  * Polls the invoices endpoint sorted by creation time. An invoice is new when it has not been
  * seen yet and was created after the newest invoice of the baseline tick - the second condition
  * keeps an old invoice from firing when a status change moves it into the watched status.
@@ -99,6 +190,11 @@ module.exports = {
         }
 
         const zc = new ZohoClient(context);
+
+        if (context.properties.events === EVENTS_CREATED_OR_UPDATED) {
+            return tickCreatedOrUpdated(context, zc, params);
+        }
+
         const { initialized, known = [], since = 0 } = context.state;
 
         // The listing is newest first, so the first page always carries the newest invoice

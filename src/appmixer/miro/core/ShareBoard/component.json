@@ -1,0 +1,171 @@
+{
+    "name": "appmixer.miro.core.ShareBoard",
+    "label": "Share Board",
+    "description": "Invite people to a board by email. Miro sends each of them an invitation; depending on the board's sharing policy they may need to be members of the team.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:miro"
+    },
+    "quota": {
+        "manager": "appmixer:miro",
+        "resources": [
+            "requests",
+            "heavy"
+        ],
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "boardId": {
+                        "type": "string"
+                    },
+                    "emails": {
+                        "type": "string"
+                    },
+                    "role": {
+                        "type": "string",
+                        "enum": [
+                            "viewer",
+                            "commenter",
+                            "editor",
+                            "coowner",
+                            "owner"
+                        ]
+                    },
+                    "message": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "boardId",
+                    "emails"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "boardId": {
+                        "type": "text",
+                        "index": 1,
+                        "label": "Board",
+                        "tooltip": "Pick a board, or type its Board ID (the part after <code>/board/</code> in the board URL).",
+                        "source": {
+                            "url": "/component/appmixer/miro/core/FindBoards?outPort=out",
+                            "data": {
+                                "properties": {
+                                    "isSource": true
+                                },
+                                "transform": "./FindBoards#toSelectArray"
+                            }
+                        }
+                    },
+                    "emails": {
+                        "type": "text",
+                        "index": 2,
+                        "label": "Emails",
+                        "tooltip": "Email addresses to invite, separated by commas."
+                    },
+                    "role": {
+                        "type": "select",
+                        "index": 3,
+                        "label": "Role",
+                        "defaultValue": "commenter",
+                        "tooltip": "Role of the invited people on the board. Miro's default is Commenter.",
+                        "options": [
+                            {
+                                "label": "Viewer",
+                                "value": "viewer"
+                            },
+                            {
+                                "label": "Commenter",
+                                "value": "commenter"
+                            },
+                            {
+                                "label": "Editor",
+                                "value": "editor"
+                            },
+                            {
+                                "label": "Co-owner",
+                                "value": "coowner"
+                            },
+                            {
+                                "label": "Owner",
+                                "value": "owner"
+                            }
+                        ]
+                    },
+                    "message": {
+                        "type": "textarea",
+                        "index": 4,
+                        "label": "Message",
+                        "tooltip": "Optional message to include in the invitation email."
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "successful": {
+                        "type": "array",
+                        "title": "Invited Member IDs",
+                        "items": {
+                            "type": "integer"
+                        },
+                        "example": [
+                            3458764512345679000
+                        ]
+                    },
+                    "failed": {
+                        "type": "array",
+                        "title": "Failed Invitations",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "email": {
+                                    "type": "string"
+                                },
+                                "reason": {
+                                    "type": "string"
+                                }
+                            }
+                        },
+                        "example": [
+                            {
+                                "email": "guest@example.com",
+                                "reason": "User is not a member of the team"
+                            }
+                        ]
+                    },
+                    "successfulCount": {
+                        "type": "integer",
+                        "title": "Invited Count",
+                        "example": 1
+                    },
+                    "failedCount": {
+                        "type": "integer",
+                        "title": "Failed Count",
+                        "example": 0
+                    }
+                },
+                "required": [
+                    "successful",
+                    "failed",
+                    "successfulCount",
+                    "failedCount"
+                ]
+            }
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHJlY3Qgd2lkdGg9IjI0IiBoZWlnaHQ9IjI0IiByeD0iNSIgZmlsbD0iI0ZGREQzMyIvPjxwYXRoIHRyYW5zZm9ybT0idHJhbnNsYXRlKDQuOCA0LjgpIHNjYWxlKDAuNikiIGZpbGw9IiMwNTAwMzgiIGQ9Ik0xNy4zOTIgMEgxMy45TDE3IDQuODA4IDEwLjQ0NCAwSDYuOTQ5bDMuMTAyIDYuM0wzLjQ5NCAwSDBsMy4wNSA4LjEzMUwwIDI0aDMuNDk0TDEwLjA1IDYuOTg1IDYuOTQ5IDI0aDMuNDk0TDE3IDUuNDk0IDEzLjg5OSAyNGgzLjQ5M0wyNCAzLjY3MiAxNy4zOTIgMHoiLz48L3N2Zz4="
+}

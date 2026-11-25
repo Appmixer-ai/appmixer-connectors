@@ -1,0 +1,157 @@
+{
+    "name": "appmixer.stripe.core.CreatePaymentLink",
+    "description": "Creates a reusable payment link for one or more prices and returns its URL. Anyone with the URL can pay; the link stays active until it is deactivated.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:stripe"
+    },
+    "quota": {
+        "manager": "appmixer:stripe",
+        "resources": "requests"
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "lineItems": {
+                        "type": "object"
+                    },
+                    "redirectUrl": {
+                        "type": "string"
+                    },
+                    "metadata": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "lineItems"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "lineItems": {
+                        "type": "expression",
+                        "label": "Line Items",
+                        "index": 1,
+                        "tooltip": "Up to 20 prices to sell, each with a quantity.",
+                        "levels": [
+                            "AND"
+                        ],
+                        "fields": {
+                            "price": {
+                                "type": "text",
+                                "label": "Price ID",
+                                "index": 1,
+                                "tooltip": "The ID of a Stripe Price, e.g. price_1MoBy5LkdIwHu7ixZhnattbh."
+                            },
+                            "quantity": {
+                                "type": "number",
+                                "label": "Quantity",
+                                "index": 2,
+                                "defaultValue": 1,
+                                "tooltip": "The quantity of the price. Defaults to 1."
+                            }
+                        }
+                    },
+                    "redirectUrl": {
+                        "type": "text",
+                        "label": "Redirect URL",
+                        "index": 2,
+                        "tooltip": "Where to send the customer after a completed purchase. If empty, Stripe shows its own confirmation page."
+                    },
+                    "metadata": {
+                        "type": "key-value",
+                        "label": "Metadata",
+                        "index": 3,
+                        "tooltip": "Optional key-value pairs to store on the object, e.g. an order ID from your system."
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "title": "Payment Link ID",
+                        "example": "plink_1MoC3ULkdIwHu7ixZjtGpVl2"
+                    },
+                    "object": {
+                        "type": "string",
+                        "title": "Object",
+                        "example": "payment_link"
+                    },
+                    "url": {
+                        "type": "string",
+                        "title": "URL",
+                        "example": "https://buy.stripe.com/test_cN25nr0iZ7bUa7meUY"
+                    },
+                    "active": {
+                        "type": "boolean",
+                        "title": "Active",
+                        "example": true
+                    },
+                    "currency": {
+                        "type": "string",
+                        "title": "Currency",
+                        "example": "usd"
+                    },
+                    "after_completion": {
+                        "type": "object",
+                        "title": "After Completion",
+                        "properties": {
+                            "type": {
+                                "type": "string",
+                                "title": "After Completion.Type",
+                                "example": "redirect"
+                            },
+                            "redirect": {
+                                "type": [
+                                    "object",
+                                    "null"
+                                ],
+                                "title": "After Completion.Redirect",
+                                "properties": {
+                                    "url": {
+                                        "type": "string",
+                                        "title": "After Completion.Redirect.URL",
+                                        "example": "https://example.com/thank-you"
+                                    }
+                                },
+                                "example": {
+                                    "url": "https://example.com/thank-you"
+                                }
+                            }
+                        },
+                        "example": {
+                            "type": "redirect",
+                            "redirect": {
+                                "url": "https://example.com/thank-you"
+                            }
+                        }
+                    },
+                    "livemode": {
+                        "type": "boolean",
+                        "title": "Live Mode",
+                        "example": false
+                    },
+                    "metadata": {
+                        "type": "object",
+                        "title": "Metadata",
+                        "example": {
+                            "orderId": "1001"
+                        }
+                    }
+                }
+            }
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiByeD0iNiIgZmlsbD0iIzYzNUJGRiIvPjxwYXRoIHRyYW5zZm9ybT0idHJhbnNsYXRlKDQgNCkiIGZpbGw9IiNGRkZGRkYiIGQ9Ik0xMy45NzYgOS4xNWMtMi4xNzItLjgwNi0zLjM1Ni0xLjQyNi0zLjM1Ni0yLjQwOSAwLS44MzEuNjgzLTEuMzA1IDEuOTAxLTEuMzA1IDIuMjI3IDAgNC41MTUuODU4IDYuMDkgMS42MzFsLjg5LTUuNDk0QzE4LjI1Mi45NzUgMTUuNjk3IDAgMTIuMTY1IDAgOS42NjcgMCA3LjU4OS42NTQgNi4xMDQgMS44NzIgNC41NiAzLjE0NyAzLjc1NyA0Ljk5MiAzLjc1NyA3LjIxOGMwIDQuMDM5IDIuNDY3IDUuNzYgNi40NzYgNy4yMTkgMi41ODUuOTIgMy40NDUgMS41NzQgMy40NDUgMi41ODMgMCAuOTgtLjg0IDEuNTQ1LTIuMzU0IDEuNTQ1LTEuODc1IDAtNC45NjUtLjkyMS02Ljk5LTIuMTA5bC0uOSA1LjU1NUM1LjE3NSAyMi45OSA4LjM4NSAyNCAxMS43MTQgMjRjMi42NDEgMCA0Ljg0My0uNjI0IDYuMzI4LTEuODEzIDEuNjY0LTEuMzA1IDIuNTI1LTMuMjM2IDIuNTI1LTUuNzMyIDAtNC4xMjgtMi41MjQtNS44NTEtNi41OTQtNy4zMDVoLjAwM3oiLz48L3N2Zz4="
+}

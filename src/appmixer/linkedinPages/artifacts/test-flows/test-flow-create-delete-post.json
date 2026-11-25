@@ -1,6 +1,6 @@
 {
     "name": "E2E LinkedIn Pages - create and delete post",
-    "description": "Checks the page-admin lookup (MakeApiCall organizationAcls), publishes a link post and an image post as the configured test page (CreatePost), checks both results and deletes both posts after AfterAll.",
+    "description": "Reads the member profile (MakeApiCall GET /v2/me), publishes a link post and an image post as the configured test page (CreatePost), checks both results and deletes both posts after AfterAll (DeletePost).",
     "flow": {
         "e5e55845-3930-4d16-bda8-21c739e58f05": {
             "type": "appmixer.utils.controls.OnStart",
@@ -57,7 +57,7 @@
         },
         "9eda529f-a589-4fe1-8341-fd85739fcb9b": {
             "type": "appmixer.linkedinPages.core.MakeApiCall",
-            "label": "List page roles (MakeApiCall)",
+            "label": "Get member profile (MakeApiCall)",
             "x": 480,
             "y": 16,
             "version": "1.0.0",
@@ -80,9 +80,8 @@
                                     "body": {}
                                 },
                                 "lambda": {
-                                    "url": "/rest/organizationAcls",
-                                    "method": "GET",
-                                    "parameters": "[{\"key\": \"q\", \"value\": \"roleAssignee\"}, {\"key\": \"state\", \"value\": \"APPROVED\"}, {\"key\": \"count\", \"value\": \"10\"}]"
+                                    "url": "/v2/me",
+                                    "method": "GET"
                                 }
                             }
                         }
@@ -117,7 +116,7 @@
                                         "954ebc4a-141a-423e-9a1e-fdb91d139467": {
                                             "variable": "$.9eda529f-a589-4fe1-8341-fd85739fcb9b.out.body",
                                             "functions": [
-                                                { "name": "g_jsonPath", "params": [{ "value": "$.paging.start" }] }
+                                                { "name": "g_jsonPath", "params": [{ "value": "$.id" }] }
                                             ]
                                         }
                                     }
@@ -132,8 +131,7 @@
                                             },
                                             {
                                                 "field": "{{{954ebc4a-141a-423e-9a1e-fdb91d139467}}}",
-                                                "assertion": "equal",
-                                                "expected": "0"
+                                                "assertion": "notEmpty"
                                             }
                                         ]
                                     }
@@ -414,8 +412,8 @@
             "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
         },
         "0773e496-e8fb-4c03-b7da-bc451d1a86a5": {
-            "type": "appmixer.linkedinPages.core.MakeApiCall",
-            "label": "Delete link post (MakeApiCall)",
+            "type": "appmixer.linkedinPages.core.DeletePost",
+            "label": "Delete link post",
             "x": 2144,
             "y": 272,
             "version": "1.0.0",
@@ -431,23 +429,15 @@
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
-                                    "url": {
+                                    "postId": {
                                         "8e45ca57-e7eb-4eb1-b4f0-6ef83eebebf3": {
                                             "variable": "$.3e6197dc-31dc-401d-b52d-b6c3d0defd14.out.postId",
-                                            "functions": [
-                                                { "name": "g_encodeUrl", "params": [{ "value": false }] }
-                                            ]
+                                            "functions": []
                                         }
-                                    },
-                                    "method": {},
-                                    "parameters": {},
-                                    "headers": {},
-                                    "body": {}
+                                    }
                                 },
                                 "lambda": {
-                                    "url": "/rest/posts/{{{8e45ca57-e7eb-4eb1-b4f0-6ef83eebebf3}}}",
-                                    "method": "DELETE",
-                                    "headers": "[{\"key\": \"X-RestLi-Method\", \"value\": \"DELETE\"}]"
+                                    "postId": "{{{8e45ca57-e7eb-4eb1-b4f0-6ef83eebebf3}}}"
                                 }
                             }
                         }
@@ -457,8 +447,8 @@
             "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
         },
         "c120dc77-940f-4f28-a712-2234b418fc76": {
-            "type": "appmixer.linkedinPages.core.MakeApiCall",
-            "label": "Delete image post (MakeApiCall)",
+            "type": "appmixer.linkedinPages.core.DeletePost",
+            "label": "Delete image post",
             "x": 2352,
             "y": 272,
             "version": "1.0.0",
@@ -474,23 +464,15 @@
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
-                                    "url": {
+                                    "postId": {
                                         "d72387f7-28c2-4dd9-852b-710b9a0f9b49": {
                                             "variable": "$.c7578909-26bc-4510-b7e0-bb993e3b3395.out.postId",
-                                            "functions": [
-                                                { "name": "g_encodeUrl", "params": [{ "value": false }] }
-                                            ]
+                                            "functions": []
                                         }
-                                    },
-                                    "method": {},
-                                    "parameters": {},
-                                    "headers": {},
-                                    "body": {}
+                                    }
                                 },
                                 "lambda": {
-                                    "url": "/rest/posts/{{{d72387f7-28c2-4dd9-852b-710b9a0f9b49}}}",
-                                    "method": "DELETE",
-                                    "headers": "[{\"key\": \"X-RestLi-Method\", \"value\": \"DELETE\"}]"
+                                    "postId": "{{{d72387f7-28c2-4dd9-852b-710b9a0f9b49}}}"
                                 }
                             }
                         }

@@ -1,6 +1,6 @@
 {
     "name": "E2E Teamwork - custom fields",
-    "description": "Text custom field created through MakeApiCall → ListCustomFields → SetTaskCustomField on a fresh task; deletes project and custom field.",
+    "description": "CreateCustomField (text) → ListCustomFields → SetTaskCustomField on a fresh task; DeleteProject + DeleteCustomField cleanup.",
     "flow": {
         "797a4b9d-dc74-4aac-b475-5a3e26723df3": {
             "type": "appmixer.utils.controls.OnStart",
@@ -365,7 +365,7 @@
             }
         },
         "207148d3-fba4-4752-b873-2c87bd42613e": {
-            "type": "appmixer.teamwork.core.MakeApiCall",
+            "type": "appmixer.teamwork.core.CreateCustomField",
             "x": 1728,
             "y": 528,
             "version": "1.0.0",
@@ -383,9 +383,7 @@
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
-                                    "url": {},
-                                    "method": {},
-                                    "body": {
+                                    "name": {
                                         "d20fa432-a2b1-4808-9574-311fd940b735": {
                                             "variable": "$.797a4b9d-dc74-4aac-b475-5a3e26723df3.out.started",
                                             "functions": []
@@ -393,9 +391,9 @@
                                     }
                                 },
                                 "lambda": {
-                                    "url": "/projects/api/v3/customfields.json",
-                                    "method": "POST",
-                                    "body": "{\"customfield\": {\"name\": \"E2E text {{{d20fa432-a2b1-4808-9574-311fd940b735}}}\", \"entity\": \"task\", \"type\": \"text-short\"}}"
+                                    "name": "E2E text {{{d20fa432-a2b1-4808-9574-311fd940b735}}}",
+                                    "entity": "task",
+                                    "type": "text-short"
                                 }
                             }
                         }
@@ -428,17 +426,8 @@
                                 "modifiers": {
                                     "expression": {
                                         "3b3f8cfb-41c1-47bf-b456-eb97a0d58280": {
-                                            "variable": "$.207148d3-fba4-4752-b873-2c87bd42613e.out.body",
-                                            "functions": [
-                                                {
-                                                    "name": "g_jsonPath",
-                                                    "params": [
-                                                        {
-                                                            "value": "$.customfield.id"
-                                                        }
-                                                    ]
-                                                }
-                                            ]
+                                            "variable": "$.207148d3-fba4-4752-b873-2c87bd42613e.out.id",
+                                            "functions": []
                                         }
                                     }
                                 },
@@ -539,17 +528,8 @@
                                             ]
                                         },
                                         "b3c32d52-ceff-4cc1-9bc3-cbbf9bd9b8de": {
-                                            "variable": "$.207148d3-fba4-4752-b873-2c87bd42613e.out.body",
-                                            "functions": [
-                                                {
-                                                    "name": "g_jsonPath",
-                                                    "params": [
-                                                        {
-                                                            "value": "$.customfield.id"
-                                                        }
-                                                    ]
-                                                }
-                                            ]
+                                            "variable": "$.207148d3-fba4-4752-b873-2c87bd42613e.out.id",
+                                            "functions": []
                                         }
                                     }
                                 },
@@ -610,17 +590,8 @@
                                     },
                                     "customFieldId": {
                                         "bef3c462-5564-4ad8-b936-2ce21e426d38": {
-                                            "variable": "$.207148d3-fba4-4752-b873-2c87bd42613e.out.body",
-                                            "functions": [
-                                                {
-                                                    "name": "g_jsonPath",
-                                                    "params": [
-                                                        {
-                                                            "value": "$.customfield.id"
-                                                        }
-                                                    ]
-                                                }
-                                            ]
+                                            "variable": "$.207148d3-fba4-4752-b873-2c87bd42613e.out.id",
+                                            "functions": []
                                         }
                                     },
                                     "textValue": {}
@@ -738,7 +709,7 @@
             }
         },
         "7687e5c1-d257-48e6-9109-c2158690575e": {
-            "type": "appmixer.teamwork.core.MakeApiCall",
+            "type": "appmixer.teamwork.core.DeleteProject",
             "x": 3184,
             "y": 784,
             "version": "1.0.0",
@@ -756,17 +727,15 @@
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
-                                    "url": {
+                                    "projectId": {
                                         "99c0a957-758e-4aba-9c82-083a414685bd": {
                                             "variable": "$.5132a4f6-ec89-4712-82d7-61d2ee1b7105.project.id",
                                             "functions": []
                                         }
-                                    },
-                                    "method": {}
+                                    }
                                 },
                                 "lambda": {
-                                    "url": "/projects/{{{99c0a957-758e-4aba-9c82-083a414685bd}}}.json",
-                                    "method": "DELETE"
+                                    "projectId": "{{{99c0a957-758e-4aba-9c82-083a414685bd}}}"
                                 }
                             }
                         }
@@ -779,7 +748,7 @@
             }
         },
         "c239f3f2-d2bf-4e75-aab1-b4a0375b30e8": {
-            "type": "appmixer.teamwork.core.MakeApiCall",
+            "type": "appmixer.teamwork.core.DeleteCustomField",
             "x": 3392,
             "y": 784,
             "version": "1.0.0",
@@ -797,26 +766,15 @@
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
-                                    "url": {
+                                    "customFieldId": {
                                         "17c38704-6727-4205-977d-f70880899ce2": {
-                                            "variable": "$.207148d3-fba4-4752-b873-2c87bd42613e.out.body",
-                                            "functions": [
-                                                {
-                                                    "name": "g_jsonPath",
-                                                    "params": [
-                                                        {
-                                                            "value": "$.customfield.id"
-                                                        }
-                                                    ]
-                                                }
-                                            ]
+                                            "variable": "$.207148d3-fba4-4752-b873-2c87bd42613e.out.id",
+                                            "functions": []
                                         }
-                                    },
-                                    "method": {}
+                                    }
                                 },
                                 "lambda": {
-                                    "url": "/projects/api/v3/customfields/{{{17c38704-6727-4205-977d-f70880899ce2}}}.json",
-                                    "method": "DELETE"
+                                    "customFieldId": "{{{17c38704-6727-4205-977d-f70880899ce2}}}"
                                 }
                             }
                         }
@@ -882,7 +840,7 @@
             "y": 1040,
             "width": 736,
             "height": 224,
-            "content": "## ℹ️ Self-contained\n\nThe flow creates its own text custom field through MakeApiCall (v3 POST customfields.json, no `visibilities` key — Teamwork expects an array there) and deletes it at the end. Verified green on the Free plan (appmixer2.eu, 2026-10-14)."
+            "content": "## ℹ️ Self-contained\n\nThe flow creates its own text custom field with CreateCustomField and deletes it at the end with DeleteCustomField. Verified green on the Free plan (appmixer2.eu, 2026-10-14)."
         }
     }
 }

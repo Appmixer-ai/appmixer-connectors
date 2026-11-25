@@ -2,6 +2,7 @@
 
 const eachDelay = require('./EachDelay');
 const eachSequential = require('./EachSequential');
+const continuityScope = require('./continuityScope');
 
 function parseVariable(listVariable) {
 
@@ -111,6 +112,95 @@ const getItemsList = function(context, list) {
 };
 
 
+/**
+ * Handle the `in` message: start the loop.
+ * @param {Object} context - Appmixer context
+ */
+async function startLoop(context) {
+
+    let list = getItemsList(context, context.messages.in.content.list);
+
+    // Use context.id as the Each<->JoinEach pairing correlation ID. It is unique per Each
+    // execution (so it never collides across runs, including nested Each) yet stays identical
+    // when the engine re-delivers this `in` message after an error - so a re-delivered run reuses
+    // the SAME correlation ID without generating one or relying on persisted state. Note this is
+    // intentionally NOT the message-envelope correlationId (context.messages.in.correlationId),
+    // which can be shared across the items of a parent Each and would collide in nested loops.
+    const eachCorrelationId = context.id;
+
+    // Normalize and validate the delay. The inspector is numeric, but a transform/lambda can feed
+    // any value (a non-numeric string, an object, ...). An invalid delay must be rejected here:
+    // otherwise it flows into the delayed path as a NaN/negative batch size, producing empty
+    // batches that never advance the index and re-schedule timeouts forever.
+    const rawDelay = context.messages.in.content.delay;
+    const delay = (rawDelay == null || rawDelay === '') ? 0 : Number(rawDelay);
+    if (!Number.isFinite(delay) || delay < 0) {
+        throw new context.CancelError('Property \'delay\' must be a non-negative number (milliseconds).');
+    }
+
+    if (!Array.isArray(list)) {
+        if (context.messages.in.content.sequential) {
+            // Nothing to wait for - see continuityScope.js.
+            await continuityScope.release(context);
+        }
+        // Not an array, send empty done
+        await context.sendJson({ count: 0, correlationId: eachCorrelationId, result: [] }, 'done');
+        return;
+    }
+
+    const count = list.length;
+
+    if (context.messages.in.content.sequential) {
+        // Sequential iteration is acknowledgement-driven - see EachSequential.js.
+        return eachSequential.handleStart(context, {
+            list,
+            correlationId: eachCorrelationId,
+            count,
+            delay,
+            itemTimeout: context.messages.in.content.itemTimeout
+        });
+    }
+
+    if (delay) {
+        // Delayed iteration is batched and timeout-driven - see EachDelay.js.
+        return eachDelay.handleDelayedStart(context, {
+            list,
+            correlationId: eachCorrelationId,
+            count,
+            delay
+        });
+    }
+
+    // No delay - process all items immediately
+    const contextId = context.id;
+    const lastSentIndexCache = await context.stateGet(contextId);
+    const resumeOffset = lastSentIndexCache?.index || 0;
+    if (lastSentIndexCache) {
+        list = list.slice(resumeOffset);
+    }
+    for (let i = 0; i < list.length; i++) {
+        const absoluteIndex = i + resumeOffset;
+        const listItem = {
+            index: absoluteIndex,
+            value: list[i],
+            count,
+            correlationId: eachCorrelationId
+        };
+        await context.sendJson(listItem, 'item');
+        // Persist the ABSOLUTE index so a crash + resume continues from the right place
+        // (storing the local loop index here would re-send already-processed items).
+        await context.stateSet(contextId, {
+            index: absoluteIndex
+        });
+    }
+
+    await context.sendJson({ count, correlationId: eachCorrelationId, result: [] }, 'done');
+    // at this point we will remove the store index. Otherwise, the state would keep growing until it would
+    // reach the limit of the document
+    return context.stateUnset(contextId);
+    // if now the engine crashes, the array and all its items would be sent to the output port again
+}
+
 module.exports = {
 
     async receive(context) {
@@ -136,82 +226,22 @@ module.exports = {
             return await generateOutputPortOptions(context);
         }
 
-        let list = getItemsList(context, context.messages.in.content.list);
-
-        // Use context.id as the Each<->JoinEach pairing correlation ID. It is unique per Each
-        // execution (so it never collides across runs, including nested Each) yet stays identical
-        // when the engine re-delivers this `in` message after an error - so a re-delivered run reuses
-        // the SAME correlation ID without generating one or relying on persisted state. Note this is
-        // intentionally NOT the message-envelope correlationId (context.messages.in.correlationId),
-        // which can be shared across the items of a parent Each and would collide in nested loops.
-        const eachCorrelationId = context.id;
-
-        // Normalize and validate the delay. The inspector is numeric, but a transform/lambda can feed
-        // any value (a non-numeric string, an object, ...). An invalid delay must be rejected here:
-        // otherwise it flows into the delayed path as a NaN/negative batch size, producing empty
-        // batches that never advance the index and re-schedule timeouts forever.
-        const rawDelay = context.messages.in.content.delay;
-        const delay = (rawDelay == null || rawDelay === '') ? 0 : Number(rawDelay);
-        if (!Number.isFinite(delay) || delay < 0) {
-            throw new context.CancelError('Property \'delay\' must be a non-negative number (milliseconds).');
+        if (!context.messages.in.content.sequential) {
+            // Only a sequential loop is ever woken up on the webhook port, so the continuity scope the
+            // engine stored for this message is never read - see continuityScope.js.
+            await continuityScope.release(context);
+            return startLoop(context);
         }
 
-        if (!Array.isArray(list)) {
-            // Not an array, send empty done
-            await context.sendJson({ count: 0, correlationId: eachCorrelationId, result: [] }, 'done');
-            return;
+        try {
+            return await startLoop(context);
+        } catch (err) {
+            if (err instanceof context.CancelError) {
+                // A rejected input does not start a loop, nothing will wait for the scope. Any other
+                // error is retried by the engine and the retry needs it.
+                await continuityScope.release(context);
+            }
+            throw err;
         }
-
-        const count = list.length;
-
-        if (context.messages.in.content.sequential) {
-            // Sequential iteration is acknowledgement-driven - see EachSequential.js.
-            return eachSequential.handleStart(context, {
-                list,
-                correlationId: eachCorrelationId,
-                count,
-                delay,
-                itemTimeout: context.messages.in.content.itemTimeout
-            });
-        }
-
-        if (delay) {
-            // Delayed iteration is batched and timeout-driven - see EachDelay.js.
-            return eachDelay.handleDelayedStart(context, {
-                list,
-                correlationId: eachCorrelationId,
-                count,
-                delay
-            });
-        }
-
-        // No delay - process all items immediately
-        const contextId = context.id;
-        const lastSentIndexCache = await context.stateGet(contextId);
-        const resumeOffset = lastSentIndexCache?.index || 0;
-        if (lastSentIndexCache) {
-            list = list.slice(resumeOffset);
-        }
-        for (let i = 0; i < list.length; i++) {
-            const absoluteIndex = i + resumeOffset;
-            const listItem = {
-                index: absoluteIndex,
-                value: list[i],
-                count,
-                correlationId: eachCorrelationId
-            };
-            await context.sendJson(listItem, 'item');
-            // Persist the ABSOLUTE index so a crash + resume continues from the right place
-            // (storing the local loop index here would re-send already-processed items).
-            await context.stateSet(contextId, {
-                index: absoluteIndex
-            });
-        }
-
-        await context.sendJson({ count, correlationId: eachCorrelationId, result: [] }, 'done');
-        // at this point we will remove the store index. Otherwise, the state would keep growing until it would
-        // reach the limit of the document
-        return context.stateUnset(contextId);
-        // if now the engine crashes, the array and all its items would be sent to the output port again
     }
 };

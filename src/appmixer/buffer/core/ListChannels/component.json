@@ -1,0 +1,95 @@
+{
+    "name": "appmixer.buffer.core.ListChannels",
+    "label": "List Channels",
+    "description": "List the channels (connected social profiles) of a Buffer organization, or of every organization of the account when no organization is selected.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:buffer"
+    },
+    "quota": {
+        "manager": "appmixer:buffer",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "organizationId": {
+                        "type": "string"
+                    },
+                    "outputType": {
+                        "type": "string",
+                        "default": "array"
+                    }
+                }
+            },
+            "inspector": {
+                "inputs": {
+                    "organizationId": {
+                        "type": "text",
+                        "index": 1,
+                        "label": "Organization",
+                        "tooltip": "Pick a Buffer organization, or type its Organization ID. Leave empty to list the channels of every organization.",
+                        "source": {
+                            "url": "/component/appmixer/buffer/core/ListOrganizations?outPort=out",
+                            "data": {
+                                "properties": {
+                                    "isSource": true
+                                },
+                                "transform": "./ListOrganizations#toSelectArray"
+                            }
+                        }
+                    },
+                    "outputType": {
+                        "type": "select",
+                        "label": "Output Type",
+                        "index": 2,
+                        "defaultValue": "array",
+                        "tooltip": "Choose whether you want to receive the result set as one complete list, or first item only or one item at a time or stream the items to a file.",
+                        "options": [
+                            {
+                                "label": "First Item Only",
+                                "value": "first"
+                            },
+                            {
+                                "label": "All items at once",
+                                "value": "array"
+                            },
+                            {
+                                "label": "One item at a time",
+                                "value": "object"
+                            },
+                            {
+                                "label": "Store to CSV file",
+                                "value": "file"
+                            }
+                        ]
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "source": {
+                "url": "/component/appmixer/buffer/core/ListChannels?outPort=out&ignoreAuth=true",
+                "data": {
+                    "properties": {
+                        "generateOutputPortOptions": true
+                    },
+                    "messages": {
+                        "in/outputType": "inputs/in/outputType"
+                    }
+                }
+            }
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZmlsbD0iIzIzMUYyMCIgZD0iTTEuMzcxIDUuNDc2TDExLjk0MyAwbDEwLjY4NiA1LjQ3Ni0xMC42ODYgNS40OTV6bTMuMzYgNC44MWw3LjIxMiAzLjU0NyA3LjI4OC0zLjU0NyAzLjM5OCAxLjY1NS0xMC42ODYgNS4yMDJMMS4zNzEgMTEuOTR6bTAgNi4xNzFsNy4yMTIgMy45MTEgNy4yODgtMy45MSAzLjM5OCAxLjgxNUwxMS45NDMgMjQgMS4zNzEgMTguMjczeiIvPjwvc3ZnPg=="
+}

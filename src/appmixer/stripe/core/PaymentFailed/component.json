@@ -1,0 +1,222 @@
+{
+    "name": "appmixer.stripe.core.PaymentFailed",
+    "description": "Triggers when a payment fails: a payment intent's payment attempt (Payment Intent Payment Failed) or an invoice payment, e.g. a subscription renewal (Invoice Payment Failed). Stripe allows up to 16 webhook endpoints per account; each running flow with this trigger uses one. A restricted API key needs write access to Webhook Endpoints and read access to Events.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "trigger": true,
+    "webhook": true,
+    "auth": {
+        "service": "appmixer:stripe"
+    },
+    "quota": {
+        "manager": "appmixer:stripe",
+        "resources": "requests"
+    },
+    "properties": {
+        "schema": {
+            "type": "object",
+            "properties": {
+                "events": {
+                    "type": [
+                        "array",
+                        "string"
+                    ],
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "inspector": {
+            "inputs": {
+                "events": {
+                    "type": "multiselect",
+                    "label": "Events",
+                    "index": 1,
+                    "defaultValue": [
+                        "payment_intent.payment_failed"
+                    ],
+                    "tooltip": "The Stripe events that start the flow. If none is selected, Payment Intent Payment Failed is used. A failed invoice payment, e.g. a subscription renewal, emits both events, so selecting both starts the flow twice for it.",
+                    "options": [
+                        {
+                            "label": "Payment Intent Payment Failed",
+                            "value": "payment_intent.payment_failed"
+                        },
+                        {
+                            "label": "Invoice Payment Failed",
+                            "value": "invoice.payment_failed"
+                        }
+                    ]
+                }
+            }
+        }
+    },
+    "outPorts": [
+        {
+            "name": "out",
+            "schema": {
+                "type": "object",
+                "required": [
+                    "id",
+                    "type",
+                    "created",
+                    "data"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "title": "Event ID",
+                        "example": "evt_1NG8Du2eZvKYlo2CUI79vXWy"
+                    },
+                    "type": {
+                        "type": "string",
+                        "title": "Event Type",
+                        "example": "payment_intent.payment_failed"
+                    },
+                    "created": {
+                        "type": "integer",
+                        "title": "Created (Unix Timestamp)",
+                        "example": 1686089970
+                    },
+                    "livemode": {
+                        "type": "boolean",
+                        "title": "Live Mode",
+                        "example": false
+                    },
+                    "data": {
+                        "type": "object",
+                        "title": "Failed Payment",
+                        "required": [
+                            "id",
+                            "object",
+                            "created"
+                        ],
+                        "properties": {
+                            "id": {
+                                "type": "string",
+                                "title": "Failed Payment.ID",
+                                "example": "pi_3MtwBwLkdIwHu7ix28a3tqPa"
+                            },
+                            "object": {
+                                "type": "string",
+                                "title": "Failed Payment.Object",
+                                "example": "payment_intent"
+                            },
+                            "customer": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ],
+                                "title": "Failed Payment.Customer ID",
+                                "example": "cus_NffrFeUfNV2Hib"
+                            },
+                            "currency": {
+                                "type": "string",
+                                "title": "Failed Payment.Currency",
+                                "example": "usd"
+                            },
+                            "status": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ],
+                                "title": "Failed Payment.Status",
+                                "example": "requires_payment_method"
+                            },
+                            "amount": {
+                                "type": "integer",
+                                "title": "Failed Payment.Amount (payment intents)",
+                                "example": 2000
+                            },
+                            "amount_due": {
+                                "type": "integer",
+                                "title": "Failed Payment.Amount Due (invoices)",
+                                "example": 2000
+                            },
+                            "last_payment_error": {
+                                "type": [
+                                    "object",
+                                    "null"
+                                ],
+                                "title": "Failed Payment.Last Payment Error",
+                                "properties": {
+                                    "code": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "title": "Failed Payment.Last Payment Error.Code",
+                                        "example": "card_declined"
+                                    },
+                                    "decline_code": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "title": "Failed Payment.Last Payment Error.Decline Code",
+                                        "example": "generic_decline"
+                                    },
+                                    "message": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "title": "Failed Payment.Last Payment Error.Message",
+                                        "example": "Your card was declined."
+                                    }
+                                },
+                                "example": {
+                                    "code": "card_declined",
+                                    "decline_code": "generic_decline",
+                                    "message": "Your card was declined."
+                                }
+                            },
+                            "number": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ],
+                                "title": "Failed Payment.Invoice Number (invoices)",
+                                "example": "A1B2C3D4-0001"
+                            },
+                            "hosted_invoice_url": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ],
+                                "title": "Failed Payment.Hosted Invoice URL (invoices)",
+                                "example": "https://invoice.stripe.com/i/acct_1M2JTkLkdIwHu7ix/test_YWNjdF8xTTJKVGtMa2RJd0h1N2l4"
+                            },
+                            "description": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ],
+                                "title": "Failed Payment.Description",
+                                "example": "Order 1001"
+                            },
+                            "created": {
+                                "type": "integer",
+                                "title": "Failed Payment.Created (Unix Timestamp)",
+                                "example": 1680800504
+                            },
+                            "livemode": {
+                                "type": "boolean",
+                                "title": "Failed Payment.Live Mode",
+                                "example": false
+                            },
+                            "metadata": {
+                                "type": "object",
+                                "title": "Failed Payment.Metadata",
+                                "example": {
+                                    "orderId": "1001"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiByeD0iNiIgZmlsbD0iIzYzNUJGRiIvPjxwYXRoIHRyYW5zZm9ybT0idHJhbnNsYXRlKDQgNCkiIGZpbGw9IiNGRkZGRkYiIGQ9Ik0xMy45NzYgOS4xNWMtMi4xNzItLjgwNi0zLjM1Ni0xLjQyNi0zLjM1Ni0yLjQwOSAwLS44MzEuNjgzLTEuMzA1IDEuOTAxLTEuMzA1IDIuMjI3IDAgNC41MTUuODU4IDYuMDkgMS42MzFsLjg5LTUuNDk0QzE4LjI1Mi45NzUgMTUuNjk3IDAgMTIuMTY1IDAgOS42NjcgMCA3LjU4OS42NTQgNi4xMDQgMS44NzIgNC41NiAzLjE0NyAzLjc1NyA0Ljk5MiAzLjc1NyA3LjIxOGMwIDQuMDM5IDIuNDY3IDUuNzYgNi40NzYgNy4yMTkgMi41ODUuOTIgMy40NDUgMS41NzQgMy40NDUgMi41ODMgMCAuOTgtLjg0IDEuNTQ1LTIuMzU0IDEuNTQ1LTEuODc1IDAtNC45NjUtLjkyMS02Ljk5LTIuMTA5bC0uOSA1LjU1NUM1LjE3NSAyMi45OSA4LjM4NSAyNCAxMS43MTQgMjRjMi42NDEgMCA0Ljg0My0uNjI0IDYuMzI4LTEuODEzIDEuNjY0LTEuMzA1IDIuNTI1LTMuMjM2IDIuNTI1LTUuNzMyIDAtNC4xMjgtMi41MjQtNS44NTEtNi41OTQtNy4zMDVoLjAwM3oiLz48L3N2Zz4="
+}

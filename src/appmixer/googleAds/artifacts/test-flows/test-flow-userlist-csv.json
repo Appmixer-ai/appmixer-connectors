@@ -1,0 +1,628 @@
+{
+    "name": "E2E Google Ads - user list members from CSV (csv-parse)",
+    "description": "Creates a two-row CSV (Email, Phone) and a Customer Match user list, uploads the CSV with AddUsersFromCSVToUserList and removes the same members with RemoveUsersInCSVFromUserList (both parse the file with csv-parse), then deletes the list and the file.",
+    "flow": {
+        "3b4cec6d-acbf-516a-99c6-ba263a184fed": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {},
+            "config": {},
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "12300911-42ba-5288-b02b-aeda8e057059": {
+            "type": "appmixer.utils.controls.SetVariable",
+            "x": 256,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "3b4cec6d-acbf-516a-99c6-ba263a184fed": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "3b4cec6d-acbf-516a-99c6-ba263a184fed": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "variables": {
+                                        "377c1fda-570a-5acc-b7fc-a70f9767d780": {
+                                            "functions": [
+                                                {
+                                                    "name": "g_timestamp"
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "variables": {
+                                        "ADD": [
+                                            {
+                                                "name": "customerId",
+                                                "type": "text",
+                                                "text": "8856263535"
+                                            },
+                                            {
+                                                "name": "userListName",
+                                                "type": "text",
+                                                "text": "E2E CSV Audience - {{{377c1fda-570a-5acc-b7fc-a70f9767d780}}}"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "b4e953a7-e064-57c4-a41c-2a459d79d4d2": {
+            "type": "appmixer.utils.csv.CreateCSV",
+            "x": 448,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "12300911-42ba-5288-b02b-aeda8e057059": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "12300911-42ba-5288-b02b-aeda8e057059": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "filename": {},
+                                    "delimiter": {},
+                                    "initialContent": {}
+                                },
+                                "lambda": {
+                                    "filename": "e2e-googleads-users.csv",
+                                    "delimiter": ",",
+                                    "initialContent": "Email,Phone\ne2e-csv-one@example.com,+420601000001\ne2e-csv-two@example.com,+420601000002"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "d63cacc4-af0c-53a7-9d19-757cba1b8012": {
+            "type": "appmixer.googleAds.core.CreateUserList",
+            "x": 640,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "b4e953a7-e064-57c4-a41c-2a459d79d4d2": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "b4e953a7-e064-57c4-a41c-2a459d79d4d2": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "customerId": {
+                                        "c4d84de2-5af1-53c0-978a-8839fd350efb": {
+                                            "variable": "$.12300911-42ba-5288-b02b-aeda8e057059.out.customerId",
+                                            "functions": []
+                                        }
+                                    },
+                                    "name": {
+                                        "3a6f7c11-2bd6-51ef-8f2e-69617a665925": {
+                                            "variable": "$.12300911-42ba-5288-b02b-aeda8e057059.out.userListName",
+                                            "functions": []
+                                        }
+                                    },
+                                    "description": {},
+                                    "membershipLifeSpan": {}
+                                },
+                                "lambda": {
+                                    "customerId": "{{{c4d84de2-5af1-53c0-978a-8839fd350efb}}}",
+                                    "name": "{{{3a6f7c11-2bd6-51ef-8f2e-69617a665925}}}",
+                                    "description": "E2E csv-parse test list - safe to delete",
+                                    "membershipLifeSpan": 30
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "39465e61-5eaa-55d9-baa9-41053af662e9": {
+            "type": "appmixer.googleAds.core.AddUsersFromCSVToUserList",
+            "x": 832,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "d63cacc4-af0c-53a7-9d19-757cba1b8012": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "d63cacc4-af0c-53a7-9d19-757cba1b8012": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "fileId": {
+                                        "f1a087eb-ba92-5846-b5d5-b9c43122122b": {
+                                            "variable": "$.b4e953a7-e064-57c4-a41c-2a459d79d4d2.out.fileId",
+                                            "functions": []
+                                        }
+                                    },
+                                    "customerId": {
+                                        "40b38f6c-1942-55fb-b9ab-16a07b37bf01": {
+                                            "variable": "$.12300911-42ba-5288-b02b-aeda8e057059.out.customerId",
+                                            "functions": []
+                                        }
+                                    },
+                                    "userListId": {
+                                        "99fd196c-e467-5e8a-8bbc-787dffac1a8d": {
+                                            "variable": "$.d63cacc4-af0c-53a7-9d19-757cba1b8012.out.id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "schema": {},
+                                    "columnSeparator": {},
+                                    "adPersonalization": {},
+                                    "adUserData": {},
+                                    "uploadMode": {}
+                                },
+                                "lambda": {
+                                    "fileId": "{{{f1a087eb-ba92-5846-b5d5-b9c43122122b}}}",
+                                    "customerId": "{{{40b38f6c-1942-55fb-b9ab-16a07b37bf01}}}",
+                                    "userListId": "{{{99fd196c-e467-5e8a-8bbc-787dffac1a8d}}}",
+                                    "schema": {
+                                        "ADD": [
+                                            {
+                                                "csvHeader": "Email",
+                                                "googleAdsType": "email"
+                                            },
+                                            {
+                                                "csvHeader": "Phone",
+                                                "googleAdsType": "phoneNumber"
+                                            }
+                                        ]
+                                    },
+                                    "columnSeparator": ",",
+                                    "adPersonalization": "GRANTED",
+                                    "adUserData": "GRANTED",
+                                    "uploadMode": "ADD"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "37fd5ae5-e9a9-5e5d-9bd3-37c61eb4d204": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1024,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "39465e61-5eaa-55d9-baa9-41053af662e9": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "39465e61-5eaa-55d9-baa9-41053af662e9": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "973737ff-3f47-5f5b-ac23-21af5555a64a": {
+                                            "variable": "$.39465e61-5eaa-55d9-baa9-41053af662e9.out.success",
+                                            "functions": []
+                                        },
+                                        "42418e71-efc8-50b1-b0c8-5177a4c18cd0": {
+                                            "variable": "$.39465e61-5eaa-55d9-baa9-41053af662e9.out.totalRows",
+                                            "functions": []
+                                        },
+                                        "c50c098a-d084-5018-a361-3630e1d0bbce": {
+                                            "variable": "$.39465e61-5eaa-55d9-baa9-41053af662e9.out.totalUsers",
+                                            "functions": []
+                                        },
+                                        "998d7533-75a7-5290-966d-7613ec10743f": {
+                                            "variable": "$.39465e61-5eaa-55d9-baa9-41053af662e9.out.totalSkipped",
+                                            "functions": []
+                                        },
+                                        "15ca342f-c8b5-549b-9f05-31b7b789366a": {
+                                            "variable": "$.39465e61-5eaa-55d9-baa9-41053af662e9.out.jobResourceName",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{973737ff-3f47-5f5b-ac23-21af5555a64a}}}",
+                                                "assertion": "equal",
+                                                "expected": "true"
+                                            },
+                                            {
+                                                "field": "{{{42418e71-efc8-50b1-b0c8-5177a4c18cd0}}}",
+                                                "assertion": "equal",
+                                                "expected": "2"
+                                            },
+                                            {
+                                                "field": "{{{c50c098a-d084-5018-a361-3630e1d0bbce}}}",
+                                                "assertion": "equal",
+                                                "expected": "2"
+                                            },
+                                            {
+                                                "field": "{{{998d7533-75a7-5290-966d-7613ec10743f}}}",
+                                                "assertion": "equal",
+                                                "expected": "0"
+                                            },
+                                            {
+                                                "field": "{{{15ca342f-c8b5-549b-9f05-31b7b789366a}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "e22e00c9-4dd7-5f9f-aaff-5838fc820f4e": {
+            "type": "appmixer.googleAds.core.RemoveUsersInCSVFromUserList",
+            "x": 1024,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "39465e61-5eaa-55d9-baa9-41053af662e9": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "39465e61-5eaa-55d9-baa9-41053af662e9": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "fileId": {
+                                        "4a0e86d3-3111-5f57-8a8d-02d167bfdf66": {
+                                            "variable": "$.b4e953a7-e064-57c4-a41c-2a459d79d4d2.out.fileId",
+                                            "functions": []
+                                        }
+                                    },
+                                    "customerId": {
+                                        "749a56a1-488a-5eaa-a38e-b44ac207d45e": {
+                                            "variable": "$.12300911-42ba-5288-b02b-aeda8e057059.out.customerId",
+                                            "functions": []
+                                        }
+                                    },
+                                    "userListId": {
+                                        "a8e55b1b-ba0e-533c-8539-c1085be721b0": {
+                                            "variable": "$.d63cacc4-af0c-53a7-9d19-757cba1b8012.out.id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "schema": {},
+                                    "columnSeparator": {},
+                                    "adPersonalization": {},
+                                    "adUserData": {}
+                                },
+                                "lambda": {
+                                    "fileId": "{{{4a0e86d3-3111-5f57-8a8d-02d167bfdf66}}}",
+                                    "customerId": "{{{749a56a1-488a-5eaa-a38e-b44ac207d45e}}}",
+                                    "userListId": "{{{a8e55b1b-ba0e-533c-8539-c1085be721b0}}}",
+                                    "schema": {
+                                        "ADD": [
+                                            {
+                                                "csvHeader": "Email",
+                                                "googleAdsType": "email"
+                                            },
+                                            {
+                                                "csvHeader": "Phone",
+                                                "googleAdsType": "phoneNumber"
+                                            }
+                                        ]
+                                    },
+                                    "columnSeparator": ",",
+                                    "adPersonalization": "GRANTED",
+                                    "adUserData": "GRANTED"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "c30401fa-71f2-5a19-b4e9-75a26b1e3618": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1216,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "e22e00c9-4dd7-5f9f-aaff-5838fc820f4e": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "e22e00c9-4dd7-5f9f-aaff-5838fc820f4e": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "9393d55c-1afc-57f8-afcc-814dc088ebf1": {
+                                            "variable": "$.e22e00c9-4dd7-5f9f-aaff-5838fc820f4e.out.success",
+                                            "functions": []
+                                        },
+                                        "21432d91-1dec-5c80-80b9-d4154944deec": {
+                                            "variable": "$.e22e00c9-4dd7-5f9f-aaff-5838fc820f4e.out.totalRows",
+                                            "functions": []
+                                        },
+                                        "b7e40337-a823-5997-9656-28eeaaa45311": {
+                                            "variable": "$.e22e00c9-4dd7-5f9f-aaff-5838fc820f4e.out.totalUsers",
+                                            "functions": []
+                                        },
+                                        "ba5ebd2c-917a-566c-8f6f-3475c16b0849": {
+                                            "variable": "$.e22e00c9-4dd7-5f9f-aaff-5838fc820f4e.out.totalSkipped",
+                                            "functions": []
+                                        },
+                                        "966138c2-e481-571d-9521-298fcb01cdbd": {
+                                            "variable": "$.e22e00c9-4dd7-5f9f-aaff-5838fc820f4e.out.jobResourceName",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{9393d55c-1afc-57f8-afcc-814dc088ebf1}}}",
+                                                "assertion": "equal",
+                                                "expected": "true"
+                                            },
+                                            {
+                                                "field": "{{{21432d91-1dec-5c80-80b9-d4154944deec}}}",
+                                                "assertion": "equal",
+                                                "expected": "2"
+                                            },
+                                            {
+                                                "field": "{{{b7e40337-a823-5997-9656-28eeaaa45311}}}",
+                                                "assertion": "equal",
+                                                "expected": "2"
+                                            },
+                                            {
+                                                "field": "{{{ba5ebd2c-917a-566c-8f6f-3475c16b0849}}}",
+                                                "assertion": "equal",
+                                                "expected": "0"
+                                            },
+                                            {
+                                                "field": "{{{966138c2-e481-571d-9521-298fcb01cdbd}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "81100dc1-1b0a-5cbe-acb1-942e284d7ce8": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 1408,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "37fd5ae5-e9a9-5e5d-9bd3-37c61eb4d204": [
+                        "out"
+                    ],
+                    "c30401fa-71f2-5a19-b4e9-75a26b1e3618": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 120
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "9c683f73-70b9-5781-a34b-7b7e96304f5a": {
+            "type": "appmixer.googleAds.core.DeleteUserList",
+            "x": 1600,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "81100dc1-1b0a-5cbe-acb1-942e284d7ce8": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "81100dc1-1b0a-5cbe-acb1-942e284d7ce8": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "customerId": {
+                                        "d843728e-ef33-583a-92fd-15b1b2cd3a72": {
+                                            "variable": "$.12300911-42ba-5288-b02b-aeda8e057059.out.customerId",
+                                            "functions": []
+                                        }
+                                    },
+                                    "userListId": {
+                                        "2a5bfa6e-3b22-5425-b680-383e9f933fb2": {
+                                            "variable": "$.d63cacc4-af0c-53a7-9d19-757cba1b8012.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "customerId": "{{{d843728e-ef33-583a-92fd-15b1b2cd3a72}}}",
+                                    "userListId": "{{{2a5bfa6e-3b22-5425-b680-383e9f933fb2}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "f8b6af48-9967-5f7e-a360-8373b96c33bc": {
+            "type": "appmixer.utils.files.RemoveFile",
+            "x": 1792,
+            "y": 16,
+            "version": "1.1.0",
+            "source": {
+                "in": {
+                    "9c683f73-70b9-5781-a34b-7b7e96304f5a": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "9c683f73-70b9-5781-a34b-7b7e96304f5a": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "fileId": {
+                                        "d63380cb-1a36-596f-b99e-feb51095d173": {
+                                            "variable": "$.b4e953a7-e064-57c4-a41c-2a459d79d4d2.out.fileId",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "fileId": "{{{d63380cb-1a36-596f-b99e-feb51095d173}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "a94ef0ea-8cd6-5785-b714-aaefd9468306": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1984,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "f8b6af48-9967-5f7e-a360-8373b96c33bc": [
+                        "deleted"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "successStoreId": "64f6f1f9193228000754082f",
+                    "failedStoreId": "64f6f1f0193228000754082e"
+                },
+                "transform": {
+                    "in": {
+                        "f8b6af48-9967-5f7e-a360-8373b96c33bc": {
+                            "deleted": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "6da0fdb9-2360-5a19-b386-6d43b96ff6a8": {
+                                            "variable": "$.81100dc1-1b0a-5cbe-acb1-942e284d7ce8.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E Google Ads - user list members from CSV (csv-parse)",
+                                    "result": "{{{6da0fdb9-2360-5a19-b386-6d43b96ff6a8}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        }
+    }
+}

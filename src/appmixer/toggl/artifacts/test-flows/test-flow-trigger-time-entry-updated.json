@@ -1,0 +1,421 @@
+{
+    "name": "E2E Toggl - Time Entry Updated trigger",
+    "description": "Updating a time entry after the first check fires Time Entry Updated.",
+    "flow": {
+        "1fd40f4d-6f46-464a-99ff-9def7d4e915c": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {},
+            "config": {},
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "bafd9963-e5d2-49ed-a2d2-6fe8bc7a82dd": {
+            "type": "appmixer.toggl.core.CreateTimeEntry",
+            "x": 272,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "1fd40f4d-6f46-464a-99ff-9def7d4e915c": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "1fd40f4d-6f46-464a-99ff-9def7d4e915c": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "description": {
+                                        "e4cb851f-e994-403d-9472-9952c397136b": {
+                                            "functions": [
+                                                {
+                                                    "name": "g_formatDate",
+                                                    "params": [
+                                                        {
+                                                            "value": "YYYYMMDD-HHmmss"
+                                                        }
+                                                    ]
+                                                }
+                                            ],
+                                            "variable": "$.1fd40f4d-6f46-464a-99ff-9def7d4e915c.out.started"
+                                        }
+                                    },
+                                    "start": {
+                                        "b3fa9059-c2ef-4443-9b21-5c5a7626ef5e": {
+                                            "functions": [
+                                                {
+                                                    "name": "g_now"
+                                                },
+                                                {
+                                                    "name": "g_addTimeSpan",
+                                                    "hashParams": {
+                                                        "minutes": {
+                                                            "value": -10
+                                                        }
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "stop": {
+                                        "1bdd10a6-8dc0-4ea1-8b42-0552eb232cca": {
+                                            "functions": [
+                                                {
+                                                    "name": "g_now"
+                                                },
+                                                {
+                                                    "name": "g_addTimeSpan",
+                                                    "hashParams": {
+                                                        "minutes": {
+                                                            "value": -5
+                                                        }
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "description": "E2E Toggl trigger {{{e4cb851f-e994-403d-9472-9952c397136b}}}",
+                                    "start": "{{{b3fa9059-c2ef-4443-9b21-5c5a7626ef5e}}}",
+                                    "stop": "{{{1bdd10a6-8dc0-4ea1-8b42-0552eb232cca}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "9811a448-2406-4076-a6f6-4cfba8cf5ac6": {
+            "type": "appmixer.utils.timers.Wait",
+            "x": 480,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "bafd9963-e5d2-49ed-a2d2-6fe8bc7a82dd": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "bafd9963-e5d2-49ed-a2d2-6fe8bc7a82dd": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "interval": {}
+                                },
+                                "lambda": {
+                                    "interval": "2m"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "8980f2aa-922d-4ae0-bca9-e75c7b79a35d": {
+            "type": "appmixer.toggl.core.UpdateTimeEntry",
+            "x": 688,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "9811a448-2406-4076-a6f6-4cfba8cf5ac6": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "9811a448-2406-4076-a6f6-4cfba8cf5ac6": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "timeEntryId": {
+                                        "ccc9d298-6032-498b-a423-58551f2ebc69": {
+                                            "functions": [],
+                                            "variable": "$.bafd9963-e5d2-49ed-a2d2-6fe8bc7a82dd.out.id"
+                                        }
+                                    },
+                                    "description": {
+                                        "6a6ff1a8-877c-4f41-9439-677796aaa3cc": {
+                                            "functions": [
+                                                {
+                                                    "name": "g_formatDate",
+                                                    "params": [
+                                                        {
+                                                            "value": "YYYYMMDD-HHmmss"
+                                                        }
+                                                    ]
+                                                }
+                                            ],
+                                            "variable": "$.1fd40f4d-6f46-464a-99ff-9def7d4e915c.out.started"
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "timeEntryId": "{{{ccc9d298-6032-498b-a423-58551f2ebc69}}}",
+                                    "description": "E2E Toggl trigger updated {{{6a6ff1a8-877c-4f41-9439-677796aaa3cc}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "79b421e2-cf5c-4e82-b6ff-f8b93d84a8c3": {
+            "type": "appmixer.toggl.core.TimeEntryUpdated",
+            "x": 64,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {},
+            "config": {
+                "properties": {}
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "9b3c7e52-4d18-4a2f-b6c9-1e0f5d8a3b03": {
+            "type": "appmixer.utils.controls.Condition",
+            "x": 272,
+            "y": 272,
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "label": "Condition (only the entry this test updated)",
+            "source": {
+                "in": {
+                    "79b421e2-cf5c-4e82-b6ff-f8b93d84a8c3": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "79b421e2-cf5c-4e82-b6ff-f8b93d84a8c3": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "5f1d2c84-7a39-4e6b-9c02-84b6e3a1d703": {
+                                            "variable": "$.79b421e2-cf5c-4e82-b6ff-f8b93d84a8c3.out.description",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "OR": [
+                                                    {
+                                                        "input": "{{{5f1d2c84-7a39-4e6b-9c02-84b6e3a1d703}}}",
+                                                        "operator": "regex",
+                                                        "regex": "^E2E Toggl trigger updated \\d{8}-\\d{6}$"
+                                                    }
+                                                ]
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "cf95df58-59b8-4c25-8b12-be1ee0ce2d99": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 480,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "9b3c7e52-4d18-4a2f-b6c9-1e0f5d8a3b03": [
+                        "true"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "9b3c7e52-4d18-4a2f-b6c9-1e0f5d8a3b03": {
+                            "true": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "7702d1c3-c759-4ce9-8a35-dc7b706f5599": {
+                                            "variable": "$.79b421e2-cf5c-4e82-b6ff-f8b93d84a8c3.out.description",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{7702d1c3-c759-4ce9-8a35-dc7b706f5599}}}",
+                                                "assertion": "regex",
+                                                "regex": "^E2E Toggl trigger updated "
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "d12b2565-af32-4e22-9ee5-2796cd8ab1af": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 688,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "cf95df58-59b8-4c25-8b12-be1ee0ce2d99": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 720
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "6137c2dc-3a41-4323-866b-eca292e0ef19": {
+            "type": "appmixer.toggl.core.DeleteTimeEntry",
+            "x": 896,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "d12b2565-af32-4e22-9ee5-2796cd8ab1af": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "d12b2565-af32-4e22-9ee5-2796cd8ab1af": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "timeEntryId": {
+                                        "7bc23016-9fb1-4151-893e-cd2693c6e443": {
+                                            "functions": [],
+                                            "variable": "$.79b421e2-cf5c-4e82-b6ff-f8b93d84a8c3.out.id"
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "timeEntryId": "{{{7bc23016-9fb1-4151-893e-cd2693c6e443}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "45c01fe1-dcc5-4f40-a28d-243885732a05": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1104,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "6137c2dc-3a41-4323-866b-eca292e0ef19": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "6137c2dc-3a41-4323-866b-eca292e0ef19": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "2dec3bcc-76f3-4fcd-b6fc-c77700b9b559": {
+                                            "functions": [],
+                                            "variable": "$.d12b2565-af32-4e22-9ee5-2796cd8ab1af.out"
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E Toggl - Time Entry Updated trigger",
+                                    "result": "{{{2dec3bcc-76f3-4fcd-b6fc-c77700b9b559}}}"
+                                }
+                            }
+                        }
+                    }
+                },
+                "properties": {
+                    "successStoreId": "64f6f1f9193228000754082f",
+                    "failedStoreId": "64f6f1f0193228000754082e"
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        }
+    },
+    "notes": {
+        "03fc431d-1cb7-43ff-97d0-41e0a172efc6": {
+            "x": 64,
+            "y": 400,
+            "width": 672,
+            "height": 240,
+            "content": "## ⚠️ Polling trigger\n\nToggl has no webhooks. The trigger records where the account stands on its first check and then checks every 5 minutes, so the provoking action runs after a 2-minute Wait (after the first check) and the event can take up to about 7 minutes. Do not remove the Wait."
+        }
+    }
+}

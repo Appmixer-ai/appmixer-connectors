@@ -1,7 +1,7 @@
 {
     "name": "appmixer.zoho.books.NewInvoice",
     "author": "Appmixer <info@appmixer.com>",
-    "description": "Triggers when a new invoice is created in Zoho Books.",
+    "description": "Triggers when a new invoice is created in Zoho Books, or optionally when an invoice is created or updated (e.g. sent, paid or voided).",
     "version": "1.0.0",
     "tick": true,
     "auth": {
@@ -22,6 +22,7 @@
             "type": "object",
             "properties": {
                 "organizationId": { "type": "string" },
+                "events": { "type": "string" },
                 "status": { "type": "string" }
             },
             "required": [
@@ -42,10 +43,21 @@
                         }
                     }
                 },
+                "events": {
+                    "type": "select",
+                    "label": "Events",
+                    "index": 1,
+                    "defaultValue": "created",
+                    "tooltip": "Trigger for new invoices only, or also every time an invoice changes: status changes such as sent, paid, overdue or void, and edits.",
+                    "options": [
+                        { "label": "Created", "value": "created" },
+                        { "label": "Created or updated", "value": "created_or_updated" }
+                    ]
+                },
                 "status": {
                     "type": "select",
                     "label": "Status",
-                    "index": 1,
+                    "index": 2,
                     "tooltip": "Optionally only trigger for invoices with the selected status.",
                     "options": [
                         { "label": "Draft", "value": "Status.Draft" },
@@ -112,7 +124,8 @@
                             }
                         }
                     },
-                    "created_time": { "type": "string", "title": "Created Time", "example": "2026-06-20T10:30:00+0000" }
+                    "created_time": { "type": "string", "title": "Created Time", "example": "2026-06-20T10:30:00+0000" },
+                    "last_modified_time": { "type": "string", "title": "Last Modified Time", "example": "2026-06-21T08:12:44+0000" }
                 }
             }
         }

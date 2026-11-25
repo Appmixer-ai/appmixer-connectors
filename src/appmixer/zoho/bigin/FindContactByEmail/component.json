@@ -1,0 +1,101 @@
+{
+    "name": "appmixer.zoho.bigin.FindContactByEmail",
+    "label": "Find Contact By Email",
+    "description": "Find Bigin contacts by email address. Searches all email fields of the contacts.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:zoho:bigin"
+    },
+    "quota": {
+        "manager": "appmixer:zoho:bigin",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "properties": {
+        "schema": {
+            "properties": {
+                "generateOutputPortOptions": {
+                    "type": "boolean"
+                }
+            }
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "email": {
+                        "type": "string"
+                    },
+                    "outputType": {
+                        "type": "string",
+                        "default": "array"
+                    }
+                },
+                "required": [
+                    "email"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "email": {
+                        "type": "text",
+                        "index": 1,
+                        "label": "Email"
+                    },
+                    "outputType": {
+                        "type": "select",
+                        "label": "Output Type",
+                        "index": 2,
+                        "defaultValue": "array",
+                        "tooltip": "Choose whether you want to receive the result set as one complete list, or first item only or one item at a time or stream the items to a file.",
+                        "options": [
+                            {
+                                "label": "First Item Only",
+                                "value": "first"
+                            },
+                            {
+                                "label": "All items at once",
+                                "value": "array"
+                            },
+                            {
+                                "label": "One item at a time",
+                                "value": "object"
+                            },
+                            {
+                                "label": "Store to CSV file",
+                                "value": "file"
+                            }
+                        ]
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "source": {
+                "url": "/component/appmixer/zoho/bigin/FindContactByEmail?outPort=out&ignoreAuth=true",
+                "data": {
+                    "properties": {
+                        "generateOutputPortOptions": true
+                    },
+                    "messages": {
+                        "in/email": "dummy",
+                        "in/outputType": "inputs/in/outputType"
+                    }
+                }
+            }
+        },
+        {
+            "name": "notFound"
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyMS45ODgiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyMS45ODggMjQiPgogIDxwYXRoIGlkPSJQYXRoXzY4OCIgZGF0YS1uYW1lPSJQYXRoIDY4OCIgZD0iTTE0Ljg4NCwyOS42ODZhMS41MDYsMS41MDYsMCwwLDEtMS41LTEuNVYyMy4yNzVMNC42OTQsNy45MzFhMS40ODYsMS40ODYsMCwwLDEsLjAwOC0xLjVBMS41MDksMS41MDksMCwwLDEsNiw1LjY4NkgyMi43QTEuNSwxLjUsMCwwLDEsMjQsNy45NDNMMjIuNjA3LDEwLjM2SDI0Ljk4YTEuNSwxLjUsMCwwLDEsMS4zLDIuMjY5TDIwLDIzLjI4M3Y0YTEuNSwxLjUsMCwwLDEtMS4xMzksMS40NTlsLTMuNjEzLjlBMS41MjYsMS41MjYsMCwwLDEsMTQuODg0LDI5LjY4NlpNNi43NjEsNy42MzJsOC4zNzMsMTQuNzg2YTEuNTEsMS41MSwwLDAsMSwuMi43NDF2NC40NTdsMi43MjktLjY4MlYyMy4xNjRhMS41MDcsMS41MDcsMCwwLDEsLjIwNy0uNzYzbDUuOTQzLTEwLjFIMTVMMTcuMTM5LDE2bDEuMzc4LTIuMTU1YS45NzMuOTczLDAsMCwxLDEuNjQsMS4wNDhMMTguNDA5LDE3LjYzYTEuNSwxLjUsMCwwLDEtMi41OTEtLjAyM2wtMi44ODItNC45OWExLjUwNSwxLjUwNSwwLDAsMSwxLjMtMi4yNTdIMjAuMzZsMS41NzQtMi43MjhaIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgtNC40OTYgLTUuNjg2KSIgZmlsbD0iIzIzYWU3MyIvPgo8L3N2Zz4="
+}

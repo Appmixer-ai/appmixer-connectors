@@ -1,0 +1,334 @@
+{
+    "name": "E2E Piloterr - Get Website HTML",
+    "description": "End-to-end test for the Piloterr connector - Get Website HTML with the crawler engine (HTML output) and the rendering engine with Save HTML as File (file output, content checked with Load File, file removed afterwards).",
+    "flow": {
+        "2dddf2d1-1616-47f6-9e6b-a3fddc203548": {
+            "type": "appmixer.utils.controls.OnStart",
+            "label": "OnStart",
+            "x": 64,
+            "y": 16,
+            "source": {},
+            "version": "1.0.0",
+            "config": {},
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "23c7fe6b-7e2c-41d6-ba22-7dee226b2d10": {
+            "type": "appmixer.piloterr.core.GetWebsiteHtml",
+            "label": "Get Website HTML (crawler)",
+            "x": 272,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "2dddf2d1-1616-47f6-9e6b-a3fddc203548": ["out"]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "2dddf2d1-1616-47f6-9e6b-a3fddc203548": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "url": {},
+                                    "engine": {},
+                                    "saveAsFile": {}
+                                },
+                                "lambda": {
+                                    "url": "https://example.com",
+                                    "engine": "crawler",
+                                    "saveAsFile": false
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "50ddfb70-d68b-4a19-9efc-05706b7ad910": {
+            "type": "appmixer.utils.test.Assert",
+            "label": "Assert HTML",
+            "x": 480,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "23c7fe6b-7e2c-41d6-ba22-7dee226b2d10": ["out"]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "23c7fe6b-7e2c-41d6-ba22-7dee226b2d10": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "923dc58c-3af1-4571-8b95-55c97778429e": {
+                                            "variable": "$.23c7fe6b-7e2c-41d6-ba22-7dee226b2d10.out.html",
+                                            "functions": []
+                                        },
+                                        "ef2cd061-5c50-4f9d-83ab-2ee233a5ef73": {
+                                            "variable": "$.23c7fe6b-7e2c-41d6-ba22-7dee226b2d10.out.engine",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{923dc58c-3af1-4571-8b95-55c97778429e}}}",
+                                                "assertion": "regex",
+                                                "regex": "<[hH][tT][mM][lL][\\s\\S]*Example Domain"
+                                            },
+                                            {
+                                                "field": "{{{ef2cd061-5c50-4f9d-83ab-2ee233a5ef73}}}",
+                                                "assertion": "equal",
+                                                "expected": "crawler"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "703d7832-009a-47d8-b843-c2eac2d7375f": {
+            "type": "appmixer.piloterr.core.GetWebsiteHtml",
+            "label": "Get Website HTML (rendering, as file)",
+            "x": 480,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "2dddf2d1-1616-47f6-9e6b-a3fddc203548": ["out"]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "2dddf2d1-1616-47f6-9e6b-a3fddc203548": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "url": {},
+                                    "engine": {},
+                                    "saveAsFile": {}
+                                },
+                                "lambda": {
+                                    "url": "https://example.com",
+                                    "engine": "rendering",
+                                    "saveAsFile": true
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "290bb3a9-431d-423e-81c2-3f27343076ad": {
+            "type": "appmixer.utils.files.LoadFile",
+            "label": "Load the saved HTML",
+            "x": 688,
+            "y": 144,
+            "version": "1.1.0",
+            "source": {
+                "in": {
+                    "703d7832-009a-47d8-b843-c2eac2d7375f": ["out"]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "703d7832-009a-47d8-b843-c2eac2d7375f": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "fileId": {
+                                        "07a042a9-6b4e-4b78-8c3e-701d183d89a5": {
+                                            "variable": "$.703d7832-009a-47d8-b843-c2eac2d7375f.out.fileId",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "fileId": "{{{07a042a9-6b4e-4b78-8c3e-701d183d89a5}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "4461d7f1-03ae-4815-8a22-3b0227ed9f6c": {
+            "type": "appmixer.utils.test.Assert",
+            "label": "Assert HTML file",
+            "x": 896,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "290bb3a9-431d-423e-81c2-3f27343076ad": ["content"]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "290bb3a9-431d-423e-81c2-3f27343076ad": {
+                            "content": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "f8ea8187-449a-4e8d-8492-5ea24ef5d1b9": {
+                                            "variable": "$.290bb3a9-431d-423e-81c2-3f27343076ad.content.content",
+                                            "functions": []
+                                        },
+                                        "8b9df4c9-6a18-401a-af91-e488b5a0fae8": {
+                                            "variable": "$.703d7832-009a-47d8-b843-c2eac2d7375f.out.filename",
+                                            "functions": []
+                                        },
+                                        "9fd6be93-581c-416e-a0c2-bc0f02bc005d": {
+                                            "variable": "$.703d7832-009a-47d8-b843-c2eac2d7375f.out.fileSize",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{f8ea8187-449a-4e8d-8492-5ea24ef5d1b9}}}",
+                                                "assertion": "regex",
+                                                "regex": "<[hH][tT][mM][lL][\\s\\S]*Example Domain"
+                                            },
+                                            {
+                                                "field": "{{{8b9df4c9-6a18-401a-af91-e488b5a0fae8}}}",
+                                                "assertion": "regex",
+                                                "regex": "^piloterr-rendering-[0-9]+\\.html$"
+                                            },
+                                            {
+                                                "field": "{{{9fd6be93-581c-416e-a0c2-bc0f02bc005d}}}",
+                                                "assertion": "regex",
+                                                "regex": "^[1-9][0-9]*$"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "028e9567-6ffd-4315-a7ae-366d76bb13c8": {
+            "type": "appmixer.utils.test.AfterAll",
+            "label": "AfterAll",
+            "x": 1104,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "50ddfb70-d68b-4a19-9efc-05706b7ad910": ["out"],
+                    "4461d7f1-03ae-4815-8a22-3b0227ed9f6c": ["out"]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 240
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "b54b5b20-0475-400b-827a-dde109fb30c4": {
+            "type": "appmixer.utils.files.RemoveFile",
+            "label": "Remove the saved HTML",
+            "x": 1312,
+            "y": 144,
+            "version": "1.1.0",
+            "source": {
+                "in": {
+                    "028e9567-6ffd-4315-a7ae-366d76bb13c8": ["out"]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "028e9567-6ffd-4315-a7ae-366d76bb13c8": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "fileId": {
+                                        "5cb7d760-926c-48c8-ab5a-7761f4309420": {
+                                            "variable": "$.703d7832-009a-47d8-b843-c2eac2d7375f.out.fileId",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "fileId": "{{{5cb7d760-926c-48c8-ab5a-7761f4309420}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "23e644d7-7652-4ba5-bd9c-140fd03fbc1d": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "label": "ProcessE2EResults",
+            "x": 1520,
+            "y": 144,
+            "version": "1.0.1",
+            "source": {
+                "in": {
+                    "b54b5b20-0475-400b-827a-dde109fb30c4": ["deleted"]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "b54b5b20-0475-400b-827a-dde109fb30c4": {
+                            "deleted": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "2202189a-3fc9-4376-b869-4cab67e4e7f3": {
+                                            "variable": "$.028e9567-6ffd-4315-a7ae-366d76bb13c8.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E Piloterr - Get Website HTML",
+                                    "result": "{{{2202189a-3fc9-4376-b869-4cab67e4e7f3}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        }
+    },
+    "notes": {
+        "23bf203b-f3b0-401c-8e48-fd86c856162a": {
+            "x": 64,
+            "y": 304,
+            "width": 672,
+            "height": 192,
+            "content": "## ⚠️ Test data assumption\n\n- The Piloterr account must have **credits**: each run uses one crawler request and one rendering request (rendering costs more than crawler). `GET /v2/usage` (Get Usage) is free.\n- The page under test is `https://example.com`; both branches expect its `Example Domain` heading.\n- The Web Unlocker engine is not run here (the most expensive engine); it uses the same code path with another path segment."
+        }
+    }
+}

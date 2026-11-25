@@ -1,0 +1,642 @@
+{
+    "name": "E2E Facebook Business - custom audience members from CSV (csv-parse)",
+    "description": "Creates a two-row CSV (Email, Phone) and a custom audience in the test ad account, then runs ReplaceMembersFromCSVInAudience, AddMembersFromCSVToAudience and RemoveMembersInCSVFromAudience (all parse the file with csv-parse in lib.js), then deletes the audience and the file.",
+    "flow": {
+        "b62fffe0-9f22-5da4-afdf-268a0bdbc7c2": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {},
+            "config": {},
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "93dbb841-abee-58ab-b46f-e58ac7516abc": {
+            "type": "appmixer.utils.csv.CreateCSV",
+            "x": 256,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "b62fffe0-9f22-5da4-afdf-268a0bdbc7c2": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "b62fffe0-9f22-5da4-afdf-268a0bdbc7c2": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "filename": {},
+                                    "delimiter": {},
+                                    "initialContent": {}
+                                },
+                                "lambda": {
+                                    "filename": "e2e-facebook-audience.csv",
+                                    "delimiter": ",",
+                                    "initialContent": "Email,Phone\ne2e-csv-one@example.com,+420601000001\ne2e-csv-two@example.com,+420601000002"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "8c57b5c0-5846-5674-9d74-66c17a564331": {
+            "type": "appmixer.facebookbusiness.marketing.CreateAudience",
+            "x": 448,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "93dbb841-abee-58ab-b46f-e58ac7516abc": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "93dbb841-abee-58ab-b46f-e58ac7516abc": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "accountId": {},
+                                    "name": {
+                                        "c2c1dd9b-8ab1-5fb1-ae8f-d1a905488659": {
+                                            "functions": [
+                                                {
+                                                    "name": "g_timestamp"
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "description": {},
+                                    "customer_file_source": {},
+                                    "subtype": {}
+                                },
+                                "lambda": {
+                                    "accountId": "1163919515709231",
+                                    "name": "E2E CSV Audience - {{{c2c1dd9b-8ab1-5fb1-ae8f-d1a905488659}}}",
+                                    "description": "E2E csv-parse test audience - safe to delete",
+                                    "customer_file_source": "USER_PROVIDED_ONLY",
+                                    "subtype": "CUSTOM"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "47cc2430-8ce0-551b-b785-1fe6edb4a1c4": {
+            "type": "appmixer.facebookbusiness.marketing.ReplaceMembersFromCSVInAudience",
+            "x": 640,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "8c57b5c0-5846-5674-9d74-66c17a564331": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "8c57b5c0-5846-5674-9d74-66c17a564331": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "accountId": {},
+                                    "audienceId": {
+                                        "fa7ac71a-93ee-5365-8b0c-e00815ebebfd": {
+                                            "variable": "$.8c57b5c0-5846-5674-9d74-66c17a564331.out.id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "fileId": {
+                                        "f74b0c02-5dea-51b5-98b9-4d3207912db6": {
+                                            "variable": "$.93dbb841-abee-58ab-b46f-e58ac7516abc.out.fileId",
+                                            "functions": []
+                                        }
+                                    },
+                                    "schema": {},
+                                    "delimiter": {}
+                                },
+                                "lambda": {
+                                    "accountId": "1163919515709231",
+                                    "audienceId": "{{{fa7ac71a-93ee-5365-8b0c-e00815ebebfd}}}",
+                                    "fileId": "{{{f74b0c02-5dea-51b5-98b9-4d3207912db6}}}",
+                                    "schema": {
+                                        "ADD": [
+                                            {
+                                                "csvHeader": "Email",
+                                                "fbType": "EMAIL"
+                                            },
+                                            {
+                                                "csvHeader": "Phone",
+                                                "fbType": "PHONE"
+                                            }
+                                        ]
+                                    },
+                                    "delimiter": ","
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "cb42d3eb-f0d1-5402-89ed-7ec591779c7a": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 832,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "47cc2430-8ce0-551b-b785-1fe6edb4a1c4": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "47cc2430-8ce0-551b-b785-1fe6edb4a1c4": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "7fa1012e-786e-5ed3-bd06-7f664ac50f68": {
+                                            "variable": "$.47cc2430-8ce0-551b-b785-1fe6edb4a1c4.out.audience_id",
+                                            "functions": []
+                                        },
+                                        "591dff16-4185-57da-88b7-e21fd6ced10e": {
+                                            "variable": "$.47cc2430-8ce0-551b-b785-1fe6edb4a1c4.out.num_total_entries",
+                                            "functions": []
+                                        },
+                                        "5e1106c3-e7a8-5429-b27f-94545d6d9431": {
+                                            "variable": "$.47cc2430-8ce0-551b-b785-1fe6edb4a1c4.out.num_invalid_entries",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{7fa1012e-786e-5ed3-bd06-7f664ac50f68}}}",
+                                                "assertion": "notEmpty"
+                                            },
+                                            {
+                                                "field": "{{{591dff16-4185-57da-88b7-e21fd6ced10e}}}",
+                                                "assertion": "equal",
+                                                "expected": "2"
+                                            },
+                                            {
+                                                "field": "{{{5e1106c3-e7a8-5429-b27f-94545d6d9431}}}",
+                                                "assertion": "equal",
+                                                "expected": "0"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "f5a579f2-9106-5cb7-a904-bfcb9aa8f7ae": {
+            "type": "appmixer.facebookbusiness.marketing.AddMembersFromCSVToAudience",
+            "x": 832,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "47cc2430-8ce0-551b-b785-1fe6edb4a1c4": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "47cc2430-8ce0-551b-b785-1fe6edb4a1c4": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "accountId": {},
+                                    "audienceId": {
+                                        "35c4e7dc-9405-571d-b04a-34a0fc6a1e60": {
+                                            "variable": "$.8c57b5c0-5846-5674-9d74-66c17a564331.out.id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "fileId": {
+                                        "e76ca042-d225-5cc8-8536-deb4d619cef5": {
+                                            "variable": "$.93dbb841-abee-58ab-b46f-e58ac7516abc.out.fileId",
+                                            "functions": []
+                                        }
+                                    },
+                                    "schema": {},
+                                    "delimiter": {}
+                                },
+                                "lambda": {
+                                    "accountId": "1163919515709231",
+                                    "audienceId": "{{{35c4e7dc-9405-571d-b04a-34a0fc6a1e60}}}",
+                                    "fileId": "{{{e76ca042-d225-5cc8-8536-deb4d619cef5}}}",
+                                    "schema": {
+                                        "ADD": [
+                                            {
+                                                "csvHeader": "Email",
+                                                "fbType": "EMAIL"
+                                            },
+                                            {
+                                                "csvHeader": "Phone",
+                                                "fbType": "PHONE"
+                                            }
+                                        ]
+                                    },
+                                    "delimiter": ","
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "23ba8323-c262-5e40-98dd-0deb8576cd78": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1024,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "f5a579f2-9106-5cb7-a904-bfcb9aa8f7ae": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "f5a579f2-9106-5cb7-a904-bfcb9aa8f7ae": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "cf46c966-556a-5367-9f62-4095d7948a96": {
+                                            "variable": "$.f5a579f2-9106-5cb7-a904-bfcb9aa8f7ae.out.audience_id",
+                                            "functions": []
+                                        },
+                                        "a2b7c307-4a32-5d33-a410-f2a80b47f72b": {
+                                            "variable": "$.f5a579f2-9106-5cb7-a904-bfcb9aa8f7ae.out.num_total_entries",
+                                            "functions": []
+                                        },
+                                        "9d8677f7-1395-5d06-ae1d-6e88fa5fa8f5": {
+                                            "variable": "$.f5a579f2-9106-5cb7-a904-bfcb9aa8f7ae.out.num_invalid_entries",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{cf46c966-556a-5367-9f62-4095d7948a96}}}",
+                                                "assertion": "notEmpty"
+                                            },
+                                            {
+                                                "field": "{{{a2b7c307-4a32-5d33-a410-f2a80b47f72b}}}",
+                                                "assertion": "equal",
+                                                "expected": "2"
+                                            },
+                                            {
+                                                "field": "{{{9d8677f7-1395-5d06-ae1d-6e88fa5fa8f5}}}",
+                                                "assertion": "equal",
+                                                "expected": "0"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "c8591397-8bc1-50da-8cea-dba6958e9226": {
+            "type": "appmixer.facebookbusiness.marketing.RemoveMembersInCSVFromAudience",
+            "x": 1024,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "f5a579f2-9106-5cb7-a904-bfcb9aa8f7ae": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "f5a579f2-9106-5cb7-a904-bfcb9aa8f7ae": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "accountId": {},
+                                    "audienceId": {
+                                        "6fd128b5-0cba-5a6d-a275-37fd694207d0": {
+                                            "variable": "$.8c57b5c0-5846-5674-9d74-66c17a564331.out.id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "fileId": {
+                                        "e46736bc-fb34-5d8c-94f0-eaa33d26ecb4": {
+                                            "variable": "$.93dbb841-abee-58ab-b46f-e58ac7516abc.out.fileId",
+                                            "functions": []
+                                        }
+                                    },
+                                    "schema": {},
+                                    "delimiter": {}
+                                },
+                                "lambda": {
+                                    "accountId": "1163919515709231",
+                                    "audienceId": "{{{6fd128b5-0cba-5a6d-a275-37fd694207d0}}}",
+                                    "fileId": "{{{e46736bc-fb34-5d8c-94f0-eaa33d26ecb4}}}",
+                                    "schema": {
+                                        "ADD": [
+                                            {
+                                                "csvHeader": "Email",
+                                                "fbType": "EMAIL"
+                                            },
+                                            {
+                                                "csvHeader": "Phone",
+                                                "fbType": "PHONE"
+                                            }
+                                        ]
+                                    },
+                                    "delimiter": ","
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "6c89150e-6f9b-5401-aa6c-eddb035cf279": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1216,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "c8591397-8bc1-50da-8cea-dba6958e9226": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "c8591397-8bc1-50da-8cea-dba6958e9226": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "e5de55b9-0e3b-5a2a-9ddc-c643cc10e844": {
+                                            "variable": "$.c8591397-8bc1-50da-8cea-dba6958e9226.out.audience_id",
+                                            "functions": []
+                                        },
+                                        "2a40ab01-267e-583f-abaf-9671af5bc7ad": {
+                                            "variable": "$.c8591397-8bc1-50da-8cea-dba6958e9226.out.num_total_entries",
+                                            "functions": []
+                                        },
+                                        "bbffce9c-2b00-5a02-9baf-fc0371222122": {
+                                            "variable": "$.c8591397-8bc1-50da-8cea-dba6958e9226.out.num_invalid_entries",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{e5de55b9-0e3b-5a2a-9ddc-c643cc10e844}}}",
+                                                "assertion": "notEmpty"
+                                            },
+                                            {
+                                                "field": "{{{2a40ab01-267e-583f-abaf-9671af5bc7ad}}}",
+                                                "assertion": "equal",
+                                                "expected": "2"
+                                            },
+                                            {
+                                                "field": "{{{bbffce9c-2b00-5a02-9baf-fc0371222122}}}",
+                                                "assertion": "equal",
+                                                "expected": "0"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "e446d855-ef0d-5a6d-b0f9-93557457b466": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 1408,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "23ba8323-c262-5e40-98dd-0deb8576cd78": [
+                        "out"
+                    ],
+                    "cb42d3eb-f0d1-5402-89ed-7ec591779c7a": [
+                        "out"
+                    ],
+                    "6c89150e-6f9b-5401-aa6c-eddb035cf279": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 120
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "16cddb99-c662-5d28-acce-63fe3051bc30": {
+            "type": "appmixer.facebookbusiness.marketing.DeleteAudience",
+            "x": 1600,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "e446d855-ef0d-5a6d-b0f9-93557457b466": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "e446d855-ef0d-5a6d-b0f9-93557457b466": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "accountId": {},
+                                    "audienceId": {
+                                        "aa967099-a9ef-529e-a91e-9eadb3610305": {
+                                            "variable": "$.8c57b5c0-5846-5674-9d74-66c17a564331.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "accountId": "1163919515709231",
+                                    "audienceId": "{{{aa967099-a9ef-529e-a91e-9eadb3610305}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "f801db17-2378-564e-905b-61d2db33de11": {
+            "type": "appmixer.utils.files.RemoveFile",
+            "x": 1792,
+            "y": 16,
+            "version": "1.1.0",
+            "source": {
+                "in": {
+                    "16cddb99-c662-5d28-acce-63fe3051bc30": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "16cddb99-c662-5d28-acce-63fe3051bc30": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "fileId": {
+                                        "b53369c5-2882-5704-a002-3416862d8a76": {
+                                            "variable": "$.93dbb841-abee-58ab-b46f-e58ac7516abc.out.fileId",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "fileId": "{{{b53369c5-2882-5704-a002-3416862d8a76}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "8352c2d4-d5c2-5f1f-85ad-56b80e5f98f5": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1984,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "f801db17-2378-564e-905b-61d2db33de11": [
+                        "deleted"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "successStoreId": "64f6f1f9193228000754082f",
+                    "failedStoreId": "64f6f1f0193228000754082e"
+                },
+                "transform": {
+                    "in": {
+                        "f801db17-2378-564e-905b-61d2db33de11": {
+                            "deleted": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "dc864437-2602-5eba-a884-ea8f176ae09b": {
+                                            "variable": "$.e446d855-ef0d-5a6d-b0f9-93557457b466.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E Facebook Business - custom audience members from CSV (csv-parse)",
+                                    "result": "{{{dc864437-2602-5eba-a884-ea8f176ae09b}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        }
+    }
+}
