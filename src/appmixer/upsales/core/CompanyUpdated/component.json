@@ -1,7 +1,7 @@
 {
     "name": "appmixer.upsales.core.CompanyUpdated",
     "label": "Updated Company",
-    "description": "Triggers when a company is created or modified. Fires again on every later change.",
+    "description": "Triggers when a company is created or modified. Fires again on every later change. Each emitted record carries the changed fields and their previous values; set Field (and Changed To) to fire only on a specific change.",
     "author": "Appmixer <info@appmixer.com>",
     "version": "1.0.0",
     "trigger": true,
@@ -16,13 +16,45 @@
             "userId": "{{userId}}"
         }
     },
+    "properties": {
+        "schema": {
+            "type": "object",
+            "properties": {
+                "watchField": {
+                    "type": "string"
+                },
+                "watchValue": {
+                    "type": "string"
+                }
+            }
+        },
+        "inspector": {
+            "inputs": {
+                "watchField": {
+                    "type": "text",
+                    "index": 1,
+                    "label": "Field",
+                    "tooltip": "Optional. Fire only when this field changes. Use a field name (<code>closeDate</code>), a nested field (<code>status.id</code>) or a custom field as <code>custom.&lt;field ID&gt;</code> (<code>custom.3</code>). Leave empty to fire on every change."
+                },
+                "watchValue": {
+                    "type": "text",
+                    "index": 2,
+                    "label": "Changed To",
+                    "tooltip": "Optional, used with Field. Fire only when the field changes to this value, e.g. <code>3</code> for <code>status.id</code>. Values are compared as text. A record the trigger has not seen before fires when the field already has this value, because its previous value is not known."
+                }
+            }
+        }
+    },
     "outPorts": [
         {
             "name": "out",
             "schema": {
                 "type": "object",
                 "required": [
-                    "id"
+                    "id",
+                    "changedFields",
+                    "previous",
+                    "previousKnown"
                 ],
                 "properties": {
                     "id": {
@@ -172,6 +204,39 @@
                         "format": "date-time",
                         "title": "Modified At",
                         "example": "2021-09-29T05:59:05.000Z"
+                    },
+                    "changedFields": {
+                        "type": "array",
+                        "title": "Changed Fields",
+                        "items": {
+                            "type": "string"
+                        },
+                        "example": [
+                            "status",
+                            "custom",
+                            "custom.3"
+                        ]
+                    },
+                    "previous": {
+                        "type": "object",
+                        "title": "Previous Values",
+                        "example": {
+                            "status": {
+                                "id": 1,
+                                "name": "Open"
+                            },
+                            "custom": [
+                                {
+                                    "fieldId": 3,
+                                    "value": "Invited"
+                                }
+                            ]
+                        }
+                    },
+                    "previousKnown": {
+                        "type": "boolean",
+                        "title": "Previous Values Known",
+                        "example": true
                     }
                 }
             }

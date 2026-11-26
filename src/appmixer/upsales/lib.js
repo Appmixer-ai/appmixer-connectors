@@ -23,6 +23,15 @@ const MAX_RETRY_DELAY_MS = 10000;
 // Polling triggers remember the ids they emitted (NewOrder) - bounded.
 const MAX_EMITTED_IDS = 2000;
 
+// The Updated triggers keep the last seen values of the records they reported, so they
+// can tell which fields changed. Bounded: the records changed longest ago are dropped
+// first, and a dropped record counts as not seen before.
+const MAX_SNAPSHOTS = 300;
+
+// Fields that are not compared: modDate changes with every save, and a ticket's
+// conversation (comments) can be long and is not a field of the ticket itself.
+const UNTRACKED_FIELDS = ['modDate', 'comments'];
+
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 
 const retryDelay = (error, attempt) => {
@@ -104,6 +113,109 @@ const toCsv = (records) => {
 };
 
 const changeKey = item => `${item.id}:${item.modDate}`;
+
+const sameValue = (a, b) => JSON.stringify(a === undefined ? null : a) === JSON.stringify(b === undefined ? null : b);
+
+// The values of a record that are kept to compare with its next change.
+const snapshotOf = (item) => Object.fromEntries(Object.entries(item)
+    .filter(([key]) => !UNTRACKED_FIELDS.includes(key)));
+
+const customValues = (custom) => {
+    const values = {};
+    for (const entry of Array.isArray(custom) ? custom : []) {
+        if (entry && entry.fieldId !== undefined && entry.fieldId !== null) {
+            values[String(entry.fieldId)] = entry.value;
+        }
+    }
+    return values;
+};
+
+/**
+ * What changed between the last seen values of a record and the record now.
+ * `changedFields` lists top-level fields, plus `custom.<fieldId>` for each changed
+ * custom field value. `previous` holds the earlier values of the changed top-level fields.
+ * @param {object|undefined} before snapshot from the trigger state, undefined when not seen
+ * @param {object} item the record now
+ * @returns {{changedFields: string[], previous: object, previousKnown: boolean}}
+ */
+const describeChange = (before, item) => {
+
+    if (!before) {
+        return { changedFields: [], previous: {}, previousKnown: false };
+    }
+    const changedFields = [];
+    const previous = {};
+    const keys = new Set([...Object.keys(before), ...Object.keys(item)]);
+    for (const key of keys) {
+        if (UNTRACKED_FIELDS.includes(key) || sameValue(before[key], item[key])) {
+            continue;
+        }
+        changedFields.push(key);
+        previous[key] = before[key] === undefined ? null : before[key];
+        if (key === 'custom') {
+            const oldValues = customValues(before.custom);
+            const newValues = customValues(item.custom);
+            for (const fieldId of new Set([...Object.keys(oldValues), ...Object.keys(newValues)])) {
+                if (!sameValue(oldValues[fieldId], newValues[fieldId])) {
+                    changedFields.push(`custom.${fieldId}`);
+                }
+            }
+        }
+    }
+    return { changedFields, previous, previousKnown: true };
+};
+
+/**
+ * A field of a record by path: `closeDate`, `status.id`, or `custom.<fieldId>` for the
+ * value of a custom field.
+ * @param {object} record
+ * @param {string} path
+ * @returns {*}
+ */
+const fieldValue = (record, path) => {
+
+    if (!record) {
+        return undefined;
+    }
+    const custom = /^custom\.(\d+)$/.exec(path);
+    if (custom) {
+        return customValues(record.custom)[custom[1]];
+    }
+    return path.split('.').reduce((value, key) => (value === undefined || value === null ? undefined : value[key]), record);
+};
+
+const valueText = (value) => {
+    if (value === undefined || value === null) return '';
+    return typeof value === 'object' ? JSON.stringify(value) : String(value);
+};
+
+/**
+ * Whether a change passes the trigger's optional Field / Changed To properties.
+ * - No field: every change passes.
+ * - Field only: passes when that field changed (or the record was not seen before).
+ * - Field and value: passes when the field has that value now and did not have it before
+ *   (a record not seen before passes when the field has the value).
+ * @param {object} properties trigger properties { watchField, watchValue }
+ * @param {object|undefined} before
+ * @param {object} item
+ * @returns {boolean}
+ */
+const passesWatch = (properties = {}, before, item) => {
+
+    const field = typeof properties.watchField === 'string' ? properties.watchField.trim() : '';
+    if (!field) {
+        return true;
+    }
+    const now = valueText(fieldValue(item, field));
+    const then = before ? valueText(fieldValue(before, field)) : undefined;
+    const target = properties.watchValue === undefined || properties.watchValue === null
+        ? ''
+        : String(properties.watchValue).trim();
+    if (!target) {
+        return then === undefined || now !== then;
+    }
+    return now === target && then !== target;
+};
 
 module.exports = {
 
@@ -261,16 +373,19 @@ module.exports = {
      * identified by id + modDate, so a record that changes again fires again; the records
      * at the cursor's exact timestamp are remembered so they do not fire twice.
      * With `onceById` a record fires only the first time it matches (NewOrder).
+     * With `track` (the Updated triggers) the last seen values of each record are kept,
+     * every emitted record carries `changedFields`, `previous` and `previousKnown`, and
+     * the trigger properties `watchField` / `watchValue` filter the changes.
      * @param {object} context trigger context
      * @param {string} path
      * @param {object} [query] extra filters
-     * @param {object} [options] { onceById }
+     * @param {object} [options] { onceById, track }
      */
-    async pollChangedRecords(context, path, query = {}, { onceById = false } = {}) {
+    async pollChangedRecords(context, path, query = {}, { onceById = false, track = false } = {}) {
 
         const { since, boundary = [], emitted = [] } = context.state;
         if (!since) {
-            return context.saveState({ since: new Date().toISOString(), boundary: [], emitted: [] });
+            return context.saveState({ since: new Date().toISOString(), boundary: [], emitted: [], snapshots: {} });
         }
 
         const { items } = await module.exports.list(context, path, {
@@ -293,18 +408,53 @@ module.exports = {
             .filter(item => !onceById || !emittedIds.has(String(item.id)))
             .sort((a, b) => (a.modDate < b.modDate ? -1 : a.modDate > b.modDate ? 1 : 0));
 
+        const snapshots = track ? { ...(context.state.snapshots || {}) } : undefined;
         for (const item of changed) {
-            await context.sendJson(item, 'out');
+            if (!track) {
+                await context.sendJson(item, 'out');
+                continue;
+            }
+            const key = String(item.id);
+            const before = snapshots[key];
+            if (passesWatch(context.properties, before, item)) {
+                await context.sendJson({ ...item, ...describeChange(before, item) }, 'out');
+            }
+            // Re-inserted, so the most recently changed records are the last keys.
+            delete snapshots[key];
+            snapshots[key] = snapshotOf(item);
         }
 
         const atNewest = withDate.filter(item => item.modDate === newest).map(changeKey);
         const nextBoundary = newest === since ? [...new Set([...boundary, ...atNewest])] : atNewest;
-        return context.saveState({
+        const nextState = {
             since: newest,
             boundary: nextBoundary,
             emitted: onceById ? [...emitted, ...changed.map(item => String(item.id))].slice(-MAX_EMITTED_IDS) : []
-        });
+        };
+        if (track) {
+            const keys = Object.keys(snapshots);
+            for (const key of keys.slice(0, Math.max(0, keys.length - MAX_SNAPSHOTS))) {
+                delete snapshots[key];
+            }
+            nextState.snapshots = snapshots;
+        }
+        return context.saveState(nextState);
     },
+
+    /**
+     * A record in the shape an Updated trigger emits it when no previous values are known
+     * (Flow Test Mode, a record not seen before).
+     * @param {object} record
+     * @returns {object}
+     */
+    withChangeInfo(record) {
+
+        return { ...record, ...describeChange(undefined, record) };
+    },
+
+    describeChange,
+    passesWatch,
+    fieldValue,
 
     /**
      * Upsales ids are integers; inputs may arrive as strings from the inspector or variables.

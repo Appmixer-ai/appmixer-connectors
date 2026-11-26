@@ -14,7 +14,8 @@ module.exports = {
             contactId,
             date,
             priority,
-            notes
+            notes,
+            customFields
         } = context.messages.in.content;
 
         if (!type) {
@@ -41,7 +42,8 @@ module.exports = {
             users: [lib.ref(userId)],
             activityType: { id: activityTypeId },
             priority: priority === undefined || priority === '' ? undefined : Number(priority),
-            isAppointment: 0
+            isAppointment: 0,
+            custom: lib.parseCustomFields(context, customFields)
         });
 
         // https://api.upsales.com/ - Tasks: POST /activities

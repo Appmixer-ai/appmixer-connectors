@@ -10,7 +10,7 @@ module.exports = {
 
     async tick(context) {
 
-        return lib.pollChangedRecords(context, PATH, QUERY);
+        return lib.pollChangedRecords(context, PATH, QUERY, { track: true });
     },
 
     // Flow Test Mode: the most recently modified matching record, read-only.
@@ -20,6 +20,6 @@ module.exports = {
         if (!record) {
             throw new context.CancelError('No company records in Upsales to use as test data.');
         }
-        return context.sendJson(record, 'out');
+        return context.sendJson(lib.withChangeInfo(record), 'out');
     }
 };
