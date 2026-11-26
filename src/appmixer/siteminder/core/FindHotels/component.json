@@ -1,0 +1,108 @@
+{
+    "name": "appmixer.siteminder.core.FindHotels",
+    "label": "Find Hotels",
+    "description": "Find the hotels connected to your SiteMinder Exchange application through one publisher, optionally by a part of the name. Returns each hotel's code, currency, time zone and the message types it supports. SiteMinder returns the whole list in one answer; the API has no paging and no filters.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:siteminder"
+    },
+    "quota": {
+        "manager": "appmixer:siteminder",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "publisherCode": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "outputType": {
+                        "type": "string",
+                        "default": "array"
+                    }
+                }
+            },
+            "inspector": {
+                "inputs": {
+                    "publisherCode": {
+                        "type": "text",
+                        "index": 1,
+                        "label": "Publisher",
+                        "tooltip": "The property publisher (the hotel's PMS) the data comes from. Pick one, or type its publisher code.",
+                        "source": {
+                            "url": "/component/appmixer/siteminder/core/FindPublishers?outPort=out",
+                            "data": {
+                                "properties": {
+                                    "isSource": true
+                                },
+                                "transform": "./FindPublishers#toSelectArray"
+                            }
+                        }
+                    },
+                    "name": {
+                        "type": "text",
+                        "index": 2,
+                        "label": "Name Contains",
+                        "tooltip": "Find only hotels whose name or code contains this text (case-insensitive). The API has no filter, so the text is matched within the list SiteMinder returns. Leave empty for all hotels of the publisher."
+                    },
+                    "outputType": {
+                        "type": "select",
+                        "index": 3,
+                        "label": "Output Type",
+                        "defaultValue": "array",
+                        "tooltip": "Choose whether you want to receive the result set as one complete list, or first item only or one item at a time or stream the items to a file.",
+                        "options": [
+                            {
+                                "label": "First Item Only",
+                                "value": "first"
+                            },
+                            {
+                                "label": "All items at once",
+                                "value": "array"
+                            },
+                            {
+                                "label": "One item at a time",
+                                "value": "object"
+                            },
+                            {
+                                "label": "Store to CSV file",
+                                "value": "file"
+                            }
+                        ]
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "source": {
+                "url": "/component/appmixer/siteminder/core/FindHotels?outPort=out&ignoreAuth=true",
+                "data": {
+                    "properties": {
+                        "generateOutputPortOptions": true
+                    },
+                    "messages": {
+                        "in/outputType": "inputs/in/outputType"
+                    }
+                }
+            }
+        },
+        {
+            "name": "notFound",
+            "options": []
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA5NjggOTY4IiByb2xlPSJpbWciIGFyaWEtbGFiZWw9IlNpdGVNaW5kZXIiPjxkZWZzPjxsaW5lYXJHcmFkaWVudCBpZD0iZyIgeDE9IjAiIHkxPSIwIiB4Mj0iMSIgeTI9IjAuNSI+PHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjQkNGRkYwIi8+PHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjQ0FGRkJGIi8+PC9saW5lYXJHcmFkaWVudD48L2RlZnM+PHJlY3Qgd2lkdGg9Ijk2OCIgaGVpZ2h0PSI5NjgiIHJ4PSIxMzYiIGZpbGw9IiMwMDZERkYiLz48cGF0aCB0cmFuc2Zvcm09InRyYW5zbGF0ZSgwLDk2OCkgc2NhbGUoMC4xLC0wLjEpIiBmaWxsPSJ1cmwoI2cpIiBkPSJNNjgyNSA3NzI4IGMtMzMgLTUgLTk5IC0xOCAtMTQ3IC0yOSAtNDggLTEwIC0xMDAgLTE5IC0xMTcgLTE5IC0xNyAwIC02OCAtOSAtMTEzIC0xOSAtNzggLTE4IC0xMzYgLTI5IC0yODMgLTUzIC0zMyAtNSAtMTAwIC0xOCAtMTUwIC0yOCAtNDkgLTEwIC0xMTcgLTIzIC0xNTAgLTI4IC0xNzAgLTI4IC0yMDcgLTM1IC0yOTAgLTUyIC04NyAtMTggLTE2NSAtMzEgLTI5MCAtNTIgLTMzIC01IC0xMDAgLTE3IC0xNTAgLTI4IC04NyAtMTggLTE2NCAtMzEgLTI5MCAtNTIgLTMzIC01IC0xMDAgLTE3IC0xNTAgLTI4IC04NyAtMTggLTE2NCAtMzEgLTI5MCAtNTIgLTMzIC01IC0xMDAgLTE3IC0xNTAgLTI4IC04NyAtMTggLTE2NCAtMzEgLTI5MCAtNTIgLTMzIC01IC0xMDAgLTE3IC0xNTAgLTI4IC04NSAtMTcgLTE1MyAtMjkgLTI5MCAtNTIgLTMxNSAtNTEgLTU0MSAtMjExIC02NzggLTQ3OCAtNTYgLTExMiAtODQgLTIwMyAtOTYgLTMxOCAtNyAtNjggLTExIC01NzcgLTExIC0xNTEyIDAgLTE1NDggLTQgLTE0NTEgNTcgLTE0MzUgMTMgMyA1NiAxMCA5NiAxNSA0MCA1IDk5IDE2IDEzMiAyNCAzMiA5IDc0IDE2IDkyIDE2IDE4IDAgNzAgOSAxMTUgMTkgNDYgMTEgMTEwIDI0IDE0MyAyOSAxNjggMjggMjA3IDM1IDI4NiA1MyA0NyAxMCA5OSAxOSAxMTUgMTkgMTcgMCA1NyA3IDg5IDE2IDMzIDggOTUgMTkgMTM5IDI0IDQzIDUgOTIgMTggMTEwIDI4IGwzMSAxOCA1IDE0MjggYzQgMTI1NyA3IDE0MzAgMjAgMTQzNiAxOCA5IDk5IDI2IDE5NSA0MSAzOSA2IDk3IDE3IDEzMCAyNSAzMyA4IDk0IDE5IDEzNiAyNCA0MSA1IDg3IDEzIDEwMSAxOSAxNCA1IDU1IDEzIDkwIDE2IDM0IDQgODYgMTMgMTEzIDIwIDI4IDggODYgMTggMTMwIDI0IDQ1IDUgOTMgMTQgMTA3IDIwIDE0IDUgNTUgMTMgOTAgMTYgMzQgNCA4NiAxMyAxMTMgMjAgMjggOCA4NyAxOSAxMzMgMjQgNDYgNiA4OCAxMyA5NCAxNyA1IDQgNDcgMTIgOTIgMTkgOTQgMTUgMjMxIDQwIDMzMSA2MCAzOSA4IDk3IDE5IDEzMCAyNCA2OCA5IDIwNSAzNSAzMTAgNTYgMzkgOCA5OSAxOSAxMzUgMjQgMzYgNiA5OSAxNyAxNDAgMjUgNDEgOCA5NiAxOCAxMjMgMjEgNzcgMTAgNzcgMTEgNzcgMzgwIDAgMTk5IC00IDMyMyAtMTAgMzM2IC0xMiAyMSAtMTUgMjEgLTEwNSA3eiBNNjgyNSA2Mjg4IGMtMzMgLTUgLTk5IC0xOCAtMTQ3IC0yOSAtNDggLTEwIC0xMDAgLTE5IC0xMTcgLTE5IC0xNyAwIC02OCAtOSAtMTEzIC0xOSAtNzggLTE4IC0xMzkgLTMwIC0yODMgLTUyIC0zMyAtNiAtOTkgLTE5IC0xNDYgLTMwIC00NyAtMTAgLTk5IC0xOSAtMTE1IC0xOSAtMTcgMCAtNTcgLTcgLTg5IC0xNiAtMzMgLTggLTk1IC0xOSAtMTM5IC0yNCAtNDMgLTUgLTkyIC0xOCAtMTEwIC0yOCBsLTMxIC0xOCAtNSAtMTQyOCBjLTQgLTEyNTcgLTcgLTE0MzAgLTIwIC0xNDM2IC0xOCAtOSAtOTkgLTI2IC0xOTUgLTQxIC0zOCAtNiAtOTcgLTE3IC0xMzAgLTI1IC0zMyAtOCAtOTQgLTE5IC0xMzYgLTI0IC00MSAtNSAtODcgLTEzIC0xMDEgLTE5IC0xNCAtNSAtNTUgLTEzIC05MCAtMTYgLTM0IC00IC04NSAtMTMgLTExMyAtMjAgLTI3IC04IC04NiAtMTggLTEzMCAtMjQgLTQ1IC01IC05MyAtMTQgLTEwNyAtMjAgLTE0IC01IC01NSAtMTMgLTkwIC0xNiAtMzQgLTQgLTg1IC0xMyAtMTEzIC0yMCAtMjcgLTggLTg2IC0xOCAtMTMwIC0yNCAtNDUgLTUgLTkzIC0xNCAtMTA3IC0yMCAtMTQgLTUgLTU1IC0xMyAtOTAgLTE2IC0zNCAtNCAtODUgLTEzIC0xMTMgLTIwIC0yNyAtOCAtODYgLTE4IC0xMzAgLTI0IC00NSAtNSAtOTMgLTE0IC0xMDcgLTIwIC0xNCAtNSAtNTUgLTEzIC05MCAtMTYgLTM0IC00IC04NSAtMTMgLTExMyAtMjAgLTI3IC04IC04MSAtMTggLTEyMCAtMjMgLTc2IC0xMCAtMjExIC0zNSAtMzE1IC01OCAtMzYgLTggLTk4IC0xOCAtMTM5IC0yMyAtMTEzIC0xNCAtMTA2IDEyIC0xMDkgLTM3NSAtMyAtMzY2IC0yIC0zNzYgNTUgLTM2MSAxMyAzIDU2IDEwIDk2IDE1IDQwIDUgOTkgMTYgMTMyIDI0IDMyIDkgNzQgMTYgOTIgMTYgMTggMCA3MCA5IDExNSAxOSA3OCAxOCAxMzYgMjkgMjgzIDUzIDMzIDUgMTAxIDE3IDE1MCAyOCA4NyAxOCAxNjQgMzEgMjkwIDUyIDMzIDUgMTAxIDE3IDE1MCAyOCA4NCAxNyAxMzcgMjYgMjkwIDUyIDMzIDUgMTAxIDE4IDE1MCAyOCA1MCAxMCAxMTkgMjMgMTU1IDI5IDEyNSAyMSAxODUgMzIgMjM1IDQyIDI4IDUgNzcgMTQgMTEwIDIwIDMzIDUgODkgMTYgMTI1IDI0IDM2IDggOTkgMTkgMTQxIDI1IDQxIDUgODcgMTMgMTAxIDE5IDE0IDUgNTUgMTMgOTAgMTYgMzQgNCA4NiAxMyAxMTMgMjAgMjggOCA4NiAxOCAxMzAgMjQgNDQgNiA5NCAxNSAxMTAgMjAgMTcgNiA2NiAxNSAxMTAgMjAgNDUgNiA5MyAxNCAxMDcgMjAgMTQgNSA1NSAxMyA5MCAxNiAyMTMgMjIgNDQ1IDE1NSA1ODIgMzMzIDQ1IDYwIDEzNiAyMjMgMTM2IDI0NiAwIDcgMTAgMzUgMjMgNjIgbDIyIDQ5IDMgMTUxNCBjMyAxNTMzIDIgMTU0NCAtMzIgMTU0MCAtNiAtMSAtMzggLTYgLTcxIC0xMXoiLz48L3N2Zz4="
+}
