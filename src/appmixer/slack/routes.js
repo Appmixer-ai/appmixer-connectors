@@ -79,6 +79,12 @@ module.exports = async context => {
                     case 'team_join':
                         await processNewUsers(context, req);
                         break;
+                    case 'app_mention':
+                        await processWorkspaceEvent(context, req, 'slack_app_mention');
+                        break;
+                    case 'reaction_added':
+                        await processWorkspaceEvent(context, req, 'slack_reaction_added');
+                        break;
                     default:
                         context.log('error', 'slack-plugin-route-webhook-event-event-type-unsupported', { type: event.type });
                         break;
@@ -191,6 +197,28 @@ module.exports = async context => {
             filter: listener => {
                 return authorizedUsers.indexOf(listener.params.userId) !== -1;
             }
+        });
+    }
+
+    /**
+     * Deliver an event (app_mention, reaction_added) to the listeners of the Slack users who can see it -
+     * the same authorization filter as messages, so a mention or a reaction in a channel reaches only the
+     * flows of users of that workspace who are allowed to see that channel.
+     * @param {Object} context
+     * @param {Object} req
+     * @param {string} eventName listener name the trigger registers in start()
+     */
+    async function processWorkspaceEvent(context, req, eventName) {
+
+        const { event } = req.payload;
+        const authorizedUsers = await getAuthorizedUserIds(context, req);
+        if (!authorizedUsers?.length) {
+            return;
+        }
+        await context.triggerListeners({
+            eventName,
+            payload: event,
+            filter: listener => authorizedUsers.indexOf(listener.params?.userId) !== -1
         });
     }
 

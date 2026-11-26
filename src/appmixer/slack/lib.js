@@ -31,6 +31,65 @@ module.exports = {
     },
 
     /**
+     * Block Kit input of the message components. The Designer sends the textarea as a JSON string;
+     * a variable may carry an array already. A Block Kit Builder payload ({ "blocks": [...] }) is
+     * accepted too.
+     * @param {string|Array|Object} blocks
+     * @param {Object} context
+     * @returns {Array|undefined} undefined when no blocks were given
+     */
+    parseBlocks(blocks, context) {
+
+        if (blocks === undefined || blocks === null) {
+            return undefined;
+        }
+        let value = blocks;
+        if (typeof value === 'string') {
+            if (!value.trim()) {
+                return undefined;
+            }
+            try {
+                value = JSON.parse(value);
+            } catch (err) {
+                throw new context.CancelError('Blocks must be a valid JSON array of Block Kit blocks.');
+            }
+        }
+        if (value && !Array.isArray(value) && Array.isArray(value.blocks)) {
+            value = value.blocks;
+        }
+        if (!Array.isArray(value)) {
+            throw new context.CancelError('Blocks must be a JSON array of Block Kit blocks.');
+        }
+        return value.length ? value : undefined;
+    },
+
+    /**
+     * Convert a date input to a Slack timestamp in seconds. A Slack `ts` or a Unix timestamp
+     * ("1737024600.000100", 1737024600) is kept, anything else is parsed as a date.
+     * @param {string|number|Date} value
+     * @param {Object} context
+     * @param {string} fieldName
+     * @returns {string|undefined}
+     */
+    toSlackTimestamp(value, context, fieldName) {
+
+        if (value === undefined || value === null || value === '') {
+            return undefined;
+        }
+        if (typeof value === 'number') {
+            return String(value);
+        }
+        if (typeof value === 'string' && /^\d+(\.\d+)?$/.test(value.trim())) {
+            return value.trim();
+        }
+        const millis = new Date(value).getTime();
+        if (Number.isNaN(millis)) {
+            throw new context.CancelError(`${fieldName} must be a date or a Unix timestamp.`);
+        }
+        return String(Math.floor(millis / 1000));
+    },
+
+    /**
      * Thread inputs of Send*ChannelMessage. The inputs were renamed to camelCase
      * (threadTs, replyBroadcast) in 5.5.1; flows saved earlier still carry the
      * original Slack names (thread_ts, reply_broadcast), so both are honoured.

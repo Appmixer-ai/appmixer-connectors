@@ -1,5 +1,18 @@
 # Slack Connector
 
+## Event triggers: Slack app setup
+
+The realtime triggers receive Slack Events API callbacks on `/plugins/appmixer/slack/events` (signed with the app's `signingSecret`) and fan them out to the flows of the Slack users who can see the event (`apps.event.authorizations.list`, needs the app-level `authToken`). Each trigger needs its event in the Slack app's **Event Subscriptions**:
+
+| Trigger | Slack event | Subscribe as | Scope |
+|---------|-------------|--------------|-------|
+| New Channel Message | `message.channels`, `message.groups` | events on behalf of users | `channels:history`, `groups:history` |
+| New User | `team_join` | events on behalf of users | `users:read` |
+| New Mention | `app_mention` | bot events | `app_mentions:read` (bot scope; `auth.js` requests it in the bot `scope`, never in `user_scope`) |
+| New Reaction | `reaction_added` | events on behalf of users | `reactions:read` |
+
+New Mention fires only in channels the app's bot user is a member of (invite the app to the channel). Find Channel Messages and Find Thread Replies call `conversations.history` / `conversations.replies`: for commercially distributed apps that are not approved for the Slack Marketplace, Slack returns at most 15 messages per call and allows one call per minute.
+
 This connector integrates Slack APIs (events, interactive components, file upload, reactions, messaging) with Appmixer. This README focuses on the Task Approval feature ("Request Approval" flow) implemented in the `tasks` subsystem.
 
 ## Overview: Task Approval Flow

@@ -2,6 +2,7 @@
 
 const { WebClient } = require('@slack/web-api');
 const Entities = require('html-entities').AllHtmlEntities;
+const lib = require('../../lib');
 
 module.exports = {
 
@@ -17,7 +18,8 @@ module.exports = {
             throw new context.CancelError('Message Timestamp is required!');
         }
 
-        const { channel, text, ts } = context.messages.in.content;
+        const { channel, text, ts, blocks } = context.messages.in.content;
+        const parsedBlocks = lib.parseBlocks(blocks, context);
 
         let entities = new Entities();
         const web = new WebClient(context.auth.accessToken);
@@ -25,7 +27,8 @@ module.exports = {
         const result = await web.chat.update({
             channel,
             text: entities.decode(text),
-            ts
+            ts,
+            ...(parsedBlocks ? { blocks: parsedBlocks } : {})
         });
 
         return context.sendJson(result, 'out');

@@ -26,6 +26,12 @@ module.exports = {
                 const BOT_SCOPE_FOR_USER_SCOPE = {
                     'channels:write': 'channels:manage'
                 };
+                // Scopes Slack grants to the bot only (no user-token counterpart). In `user_scope` they make
+                // Slack reject the consent, so they are requested in the bot `scope` only (NewMention).
+                const BOT_ONLY_SCOPES = ['app_mentions:read'];
+                const requestedScopes = Array.isArray(context.scope) ? context.scope : [];
+                const userScopes = requestedScopes.filter(scope => !BOT_ONLY_SCOPES.includes(scope));
+                const needsBot = requestedScopes.some(scope => scope === 'chat:write' || BOT_ONLY_SCOPES.includes(scope));
                 const botScopes = [...new Set([
                     // Join public channels in a workspace
                     'channels:join',
@@ -34,7 +40,7 @@ module.exports = {
                     'chat:write.public',
                     'chat:write.customize',
                     // Include any additional scopes requested by the component
-                    ...(context.scope || []).map(scope => BOT_SCOPE_FOR_USER_SCOPE[scope] || scope)
+                    ...requestedScopes.map(scope => BOT_SCOPE_FOR_USER_SCOPE[scope] || scope)
                 ])];
 
                 let urlObject = new URL('https://slack.com/oauth/v2/authorize');
@@ -43,15 +49,15 @@ module.exports = {
                     ['redirect_uri', context.callbackUrl],
                     ['state', context.ticket]
                 ]);
-                if (Array.isArray(context.scope) && context.scope.length > 0) {
+                if (requestedScopes.length > 0) {
                     // this is the reason, why 'authUrl' is implemented in this auth.js module, in order to
                     // get user token and not a bot token, the scope has to be in the 'user_scope' param and
                     // not in the default Oauth2 'scope' param.
-                    context.scope.push('groups:history');
-                    params.append('user_scope', context.scope.join(','));
+                    userScopes.push('groups:history');
+                    params.append('user_scope', userScopes.join(','));
 
-                    if (context.scope.includes('chat:write')) {
-                        // When sending messages, we need to add the bot scopes as well.
+                    if (needsBot) {
+                        // When sending messages (or receiving app mentions), we need to add the bot scopes as well.
                         params.append('scope', botScopes.join(','));
                     }
                 }

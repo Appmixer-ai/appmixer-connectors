@@ -12,6 +12,7 @@ module.exports = {
         const {
             channelId,
             text,
+            blocks,
             asBot,
             username,
             iconUrl
@@ -28,6 +29,8 @@ module.exports = {
         const options = {};
         if (username) options.username = username;
         if (iconUrl) options.iconUrl = iconUrl;
+        const parsedBlocks = lib.parseBlocks(blocks, context);
+        if (parsedBlocks) options.blocks = parsedBlocks;
 
         const message = await lib.sendMessage(
             context,
