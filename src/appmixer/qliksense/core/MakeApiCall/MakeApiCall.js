@@ -15,7 +15,7 @@ module.exports = {
             throw new context.CancelError('HTTP Method is required!');
         }
 
-        // The account's API key is attached to every request below, so the target has to be
+        // The account's API key (or OAuth access token) is attached to every request below, so the target has to be
         // pinned to the connected tenant. Without this an absolute URL pointing at a third-party
         // host would leak the key.
         const targetUrl = lib.resolveApiUrl(context, url);
@@ -25,7 +25,7 @@ module.exports = {
             url: targetUrl,
             headers: {
                 ...lib.kvToObject(headers),
-                ...lib.authHeaders(context)
+                ...(await lib.authHeaders(context))
             }
         };
 

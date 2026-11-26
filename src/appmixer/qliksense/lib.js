@@ -55,26 +55,108 @@ const tenantOrigin = (tenant) => {
 };
 
 /**
- * The tenant and API key of the account. Components read them from context.auth,
- * auth.js callbacks from the context itself.
+ * The tenant and credentials of the account. Components read them from context.auth,
+ * auth.js callbacks from the context itself. An account authenticates either with an API key
+ * or with a Qlik Cloud OAuth client (machine-to-machine, client credentials); the API key wins
+ * when both are present (auth.js refuses that combination when the account is connected).
  * @param {object} context
- * @returns {{tenant: string, apiKey: string}}
+ * @returns {{tenant: string, apiKey: string, clientId: string, clientSecret: string}}
  */
 const credentials = (context) => {
 
-    const source = context.auth && context.auth.apiKey ? context.auth : context;
-    return { tenant: source.tenant, apiKey: source.apiKey };
+    const source = context.auth && (context.auth.apiKey || context.auth.clientId) ? context.auth : context;
+    return {
+        tenant: source.tenant,
+        apiKey: source.apiKey,
+        clientId: source.clientId,
+        clientSecret: source.clientSecret
+    };
+};
+
+/**
+ * True when the account uses an OAuth client instead of an API key.
+ * @param {object} context
+ * @returns {boolean}
+ */
+const usesOAuthClient = (context) => {
+
+    const { apiKey, clientId } = credentials(context);
+    return !apiKey && Boolean(clientId);
+};
+
+// Access tokens of OAuth clients, per worker process: key → { token, expiresAt }.
+// The key is a hash of tenant + client ID + secret, so a changed secret never reuses a token.
+const tokenCache = new Map();
+// Renew a token this long before Qlik expires it (tokens live 6 hours by default).
+const TOKEN_RENEW_MARGIN_MS = 5 * 60 * 1000;
+
+const tokenCacheKey = (origin, clientId, clientSecret) => crypto.createHash('sha256')
+    .update(origin + '\n' + clientId + '\n' + clientSecret).digest('hex');
+
+/**
+ * An access token of the account's OAuth client (client credentials grant, POST /oauth/token on
+ * the tenant). No scope is requested, so the token gets the scopes allowed on the OAuth client.
+ * Cached in memory until shortly before it expires.
+ * @param {object} context
+ * @param {object} [options] { force: true } skips the cache
+ * @returns {Promise<string>}
+ */
+const getAccessToken = async (context, { force = false } = {}) => {
+
+    const { clientId, clientSecret } = credentials(context);
+    const origin = baseUrl(context);
+    if (!clientId || !clientSecret) {
+        throw cancelError(context, 'The Qlik Cloud account needs a Client ID and a Client Secret of an OAuth client.');
+    }
+    const key = tokenCacheKey(origin, clientId, clientSecret);
+    const cached = tokenCache.get(key);
+    if (!force && cached && cached.expiresAt - TOKEN_RENEW_MARGIN_MS > Date.now()) {
+        return cached.token;
+    }
+    let response;
+    try {
+        response = await context.httpRequest({
+            method: 'POST',
+            url: origin + '/oauth/token',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            data: { client_id: clientId, client_secret: clientSecret, grant_type: 'client_credentials' }
+        });
+    } catch (err) {
+        const status = err && err.response && err.response.status;
+        const body = err && err.response && err.response.data;
+        const detail = (body && typeof body === 'object' && (body.error_description || body.error)) || errorDetail(err) || err.message;
+        const message = 'Qlik Cloud OAuth token request failed' + (status ? ' (' + status + ')' : '') + ': ' + detail
+            + '. Check the Client ID and Client Secret, and that the OAuth client allows machine-to-machine access.';
+        const retryable = !status || status >= 500 || status === 429;
+        const error = retryable ? new Error(message) : cancelError(context, message);
+        error.status = status;
+        error.qlikAuth = true;
+        throw error;
+    }
+    const data = (response && response.data) || {};
+    if (!data.access_token) {
+        const error = cancelError(context, 'Qlik Cloud returned no access token for the OAuth client.');
+        error.qlikAuth = true;
+        throw error;
+    }
+    const lifetimeMs = Number(data.expires_in) > 0 ? Number(data.expires_in) * 1000 : 60 * 60 * 1000;
+    tokenCache.set(key, { token: data.access_token, expiresAt: Date.now() + lifetimeMs });
+    return data.access_token;
 };
 
 /**
  * The one place that turns the connected account into request headers.
  * @param {object} context
- * @returns {object}
+ * @param {object} [options] { forceToken: true } requests a new OAuth access token
+ * @returns {Promise<object>}
  */
-const authHeaders = (context) => {
+const authHeaders = async (context, { forceToken = false } = {}) => {
 
+    const bearer = usesOAuthClient(context)
+        ? await getAccessToken(context, { force: forceToken })
+        : credentials(context).apiKey;
     return {
-        'Authorization': 'Bearer ' + credentials(context).apiKey,
+        'Authorization': 'Bearer ' + bearer,
         'qlik-api-version': API_VERSION
     };
 };
@@ -121,17 +203,27 @@ const errorDetail = (err) => {
  * Client errors (400, 401, 403, 404, 409, ...) become a CancelError with Qlik's own message,
  * since retrying cannot fix them; 429 and 5xx stay retryable.
  * @param {object} context
- * @param {object} options { method, path, params, data, headers, responseType }
+ * With an OAuth client, a 401 renews the access token once and repeats the request (unless the
+ * body is a stream, which cannot be sent twice).
+ * @param {object} context
+ * @param {object} options { method, path, params, data, headers, responseType, maxBodyLength }
  * @returns {Promise<object>} the axios-like response
  */
-const apiRequest = async (context, { method = 'GET', path, url, params, data, headers = {}, responseType } = {}) => {
+const apiRequest = async (context, {
+    method = 'GET', path, url, params, data, headers = {}, responseType, maxBodyLength
+} = {}) => {
 
     const requestUrl = url || (baseUrl(context) + path);
     const options = {
         method,
         url: requestUrl,
-        headers: { ...headers, ...authHeaders(context) }
+        headers: { ...headers, ...(await authHeaders(context)) }
     };
+    if (maxBodyLength) {
+        // A streamed upload: no client-side cap on the body (axios defaults to 10 MB in Node.js).
+        options.maxBodyLength = maxBodyLength;
+        options.maxContentLength = maxBodyLength;
+    }
     if (params && Object.keys(params).length) {
         options.params = params;
     }
@@ -142,8 +234,23 @@ const apiRequest = async (context, { method = 'GET', path, url, params, data, he
         options.responseType = responseType;
     }
     try {
-        return await context.httpRequest(options);
+        try {
+            return await context.httpRequest(options);
+        } catch (err) {
+            const unauthorized = err && err.response && err.response.status === 401;
+            const replayable = !(data && typeof data.pipe === 'function');
+            if (!unauthorized || !replayable || !usesOAuthClient(context)) {
+                throw err;
+            }
+            // The cached access token was revoked or expired early: get a new one and retry once.
+            options.headers = { ...headers, ...(await authHeaders(context, { forceToken: true })) };
+            return await context.httpRequest(options);
+        }
     } catch (err) {
+        if (err && err.qlikAuth) {
+            // Already a readable error of the OAuth token request.
+            throw err;
+        }
         const status = err && err.response && err.response.status;
         const detail = errorDetail(err);
         const message = 'Qlik Cloud API error' + (status ? ' (' + status + ')' : '') + ': '
@@ -302,8 +409,8 @@ const getCacheKey = (obj) => {
  */
 const callCached = async (context, keyParts, fn) => {
 
-    const { tenant, apiKey } = credentials(context);
-    const key = 'qliksense-' + getCacheKey({ ...keyParts, tenant, apiKey });
+    const { tenant, apiKey, clientId, clientSecret } = credentials(context);
+    const key = 'qliksense-' + getCacheKey({ ...keyParts, tenant, apiKey, clientId, clientSecret });
     let lock;
     try {
         lock = await context.lock(key);
@@ -569,6 +676,9 @@ module.exports = {
     POLL_INTERVAL_MS,
 
     tenantOrigin,
+    credentials,
+    usesOAuthClient,
+    getAccessToken,
     authHeaders,
     baseUrl,
     apiRequest,

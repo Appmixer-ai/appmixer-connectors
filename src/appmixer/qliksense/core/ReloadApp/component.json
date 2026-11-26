@@ -1,7 +1,7 @@
 {
     "name": "appmixer.qliksense.core.ReloadApp",
     "label": "Reload App",
-    "description": "Reload the data of a Qlik Sense app and wait until the reload finishes. Qlik is checked once a minute; the reload is sent on when it reaches a final status (succeeded, failed, canceled or exceeded limit), so check Succeeded or Status in the next step. If the reload does not finish within the timeout, the component fails.",
+    "description": "Reload the data of a Qlik Sense app and wait until the reload finishes. Qlik is checked once a minute. By default the component fails when the reload ends with any status other than succeeded (failed, canceled or exceeded limit); turn off Fail If the Reload Doesn't Succeed to get every final status on the output. If the reload does not finish within the timeout, the component fails.",
     "author": "Appmixer <info@appmixer.com>",
     "version": "1.0.0",
     "auth": {
@@ -32,6 +32,10 @@
                     "timeoutMinutes": {
                         "type": "integer",
                         "default": 60
+                    },
+                    "failIfNotSucceeded": {
+                        "type": "boolean",
+                        "default": true
                     }
                 },
                 "required": [
@@ -83,6 +87,13 @@
                         "min": 2,
                         "max": 1440,
                         "tooltip": "How long to wait for the reload to finish, in minutes (2 to 1440)."
+                    },
+                    "failIfNotSucceeded": {
+                        "type": "toggle",
+                        "index": 5,
+                        "label": "Fail If the Reload Doesn't Succeed",
+                        "defaultValue": true,
+                        "tooltip": "On (default): the component fails when the reload ends with FAILED, CANCELED or EXCEEDED_LIMIT, with the reload ID, Qlik's error code and the end of the reload log in the error. Off: every final status is sent to the output; check <b>Succeeded</b> or <b>Status</b> in the next step."
                     }
                 }
             }

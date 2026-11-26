@@ -44,6 +44,15 @@ const createContext = (overrides = {}) => {
     return context;
 };
 
+const readAll = async (stream) => {
+
+    const chunks = [];
+    for await (const chunk of stream) {
+        chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+    }
+    return Buffer.concat(chunks).toString();
+};
+
 const httpError = (status, data) => Object.assign(new Error('Request failed with status code ' + status), {
     response: { status, data }
 });
@@ -116,6 +125,63 @@ describe('appmixer.qliksense', function() {
             assert.strictEqual(context.httpRequest.firstCall.args[0].url, ORIGIN + '/api/v1/users/me');
             assert.strictEqual(auth.definition.accountNameFromProfileInfo({ profileInfo: profile }), 'jane@example.com (acme.eu.qlikcloud.com)');
         });
+
+        it('connects with an OAuth client (M2M) and caches the access token', async function() {
+
+            const context = createContext({ auth: undefined, tenant: TENANT, clientId: 'c1', clientSecret: 'secret-validate' });
+            context.httpRequest.withArgs(sinon.match({ url: ORIGIN + '/oauth/token' }))
+                .resolves({ data: { access_token: 'tok-1', token_type: 'bearer', expires_in: 21600 } });
+            context.httpRequest.withArgs(sinon.match({ url: ORIGIN + '/api/v1/users/me' }))
+                .resolves({ data: { id: 'bot', name: 'Bot' } });
+            assert.strictEqual(await auth.definition.validate(context), true);
+            await auth.definition.requestProfileInfo(context);
+            const calls = context.httpRequest.getCalls().map(call => call.args[0]);
+            const tokenCalls = calls.filter(options => options.url === ORIGIN + '/oauth/token');
+            assert.strictEqual(tokenCalls.length, 1, 'the token is requested once and cached');
+            assert.deepStrictEqual(tokenCalls[0].data, { client_id: 'c1', client_secret: 'secret-validate', grant_type: 'client_credentials' });
+            const apiCalls = calls.filter(options => options.url === ORIGIN + '/api/v1/users/me');
+            assert.strictEqual(apiCalls.length, 2);
+            apiCalls.forEach(options => assert.strictEqual(options.headers.Authorization, 'Bearer tok-1'));
+        });
+
+        it('refuses an account with both an API key and an OAuth client, or a half OAuth client', async function() {
+
+            for (const fields of [
+                { apiKey: 'key-1', clientId: 'c1', clientSecret: 's1' },
+                { clientId: 'c1' },
+                {}
+            ]) {
+                const context = createContext({ auth: undefined, tenant: TENANT, ...fields });
+                await assert.rejects(auth.definition.validate(context), Error, JSON.stringify(fields));
+                assert.strictEqual(context.httpRequest.callCount, 0);
+            }
+        });
+
+        it('components renew a rejected OAuth token once', async function() {
+
+            const context = createContext({ auth: { tenant: TENANT, clientId: 'c2', clientSecret: 'secret-renew' } });
+            let token = 0;
+            context.httpRequest.withArgs(sinon.match({ url: ORIGIN + '/oauth/token' }))
+                .callsFake(async () => ({ data: { access_token: 'tok-' + (++token), expires_in: 21600 } }));
+            context.httpRequest.withArgs(sinon.match({ url: ORIGIN + '/api/v1/spaces', headers: { Authorization: 'Bearer tok-1' } }))
+                .rejects(httpError(401, { errors: [{ code: 'AUTH-1', title: 'Unauthorized' }] }));
+            context.httpRequest.withArgs(sinon.match({ url: ORIGIN + '/api/v1/spaces', headers: { Authorization: 'Bearer tok-2' } }))
+                .resolves({ data: { data: [] } });
+            const { data } = await lib.apiRequest(context, { path: '/api/v1/spaces' });
+            assert.deepStrictEqual(data, { data: [] });
+            assert.strictEqual(token, 2);
+        });
+
+        it('reports a rejected OAuth client as a CancelError', async function() {
+
+            const context = createContext({ auth: { tenant: TENANT, clientId: 'c3', clientSecret: 'secret-bad' } });
+            context.httpRequest.rejects(httpError(401, { error: 'invalid_client', error_description: 'client authentication failed' }));
+            await assert.rejects(lib.apiRequest(context, { path: '/api/v1/spaces' }), (err) => {
+                return err instanceof CancelError
+                    && /OAuth token request failed \(401\): client authentication failed/.test(err.message);
+            });
+            assert.strictEqual(context.httpRequest.callCount, 1, 'no API request without a token');
+        });
     });
 
     describe('MakeApiCall', function() {
@@ -155,11 +221,54 @@ describe('appmixer.qliksense', function() {
 
             const component = load('ReloadApp');
             const content = { reloadId: 'r1', appId: 'a1', deadline: Date.now() + 60000, timeoutMinutes: 5 };
-            const context = createContext({ messages: { timeout: { content } } });
+            const off = { ...content, failIfNotSucceeded: false };
+            const context = createContext({ messages: { timeout: { content: off } } });
             context.httpRequest.resolves({ data: { id: 'r1', appId: 'a1', status: 'FAILED', errorCode: 'X' } });
             await component.receive(context);
             assert.strictEqual(context.sent[0].data.status, 'FAILED');
             assert.strictEqual(context.sent[0].data.succeeded, false);
+
+            const ok = createContext({ messages: { timeout: { content: { ...content, failIfNotSucceeded: true } } } });
+            ok.httpRequest.resolves({ data: { id: 'r1', appId: 'a1', status: 'SUCCEEDED' } });
+            await component.receive(ok);
+            assert.strictEqual(ok.sent[0].data.succeeded, true);
+        });
+
+        it('fails on a reload that does not succeed (default on), with the reload ID, error code and log', async function() {
+
+            const component = load('ReloadApp');
+            const log = 'x'.repeat(2000) + '\nThe following error occurred: Field not found <Region>';
+            for (const status of ['FAILED', 'CANCELED', 'EXCEEDED_LIMIT']) {
+                // A job scheduled before the option existed carries no flag: the default applies.
+                const content = { reloadId: 'r9', appId: 'a1', deadline: Date.now() + 60000, timeoutMinutes: 5 };
+                const context = createContext({ messages: { timeout: { content } } });
+                context.httpRequest.resolves({ data: { id: 'r9', appId: 'a1', status, errorCode: 'EngineReloadScriptError', errorMessage: 'Script error', log } });
+                await assert.rejects(component.receive(context), (err) => {
+                    return err instanceof CancelError
+                        && err.message.includes('r9') && err.message.includes(status)
+                        && err.message.includes('EngineReloadScriptError') && err.message.includes('Field not found <Region>')
+                        && err.message.length < 1500;
+                }, status);
+                assert.strictEqual(context.sent.length, 0);
+            }
+        });
+
+        it('passes the option to the poll and fails on an immediate final status', async function() {
+
+            const component = load('ReloadApp');
+            const queued = createContext({ messages: { in: { content: { appId: 'a1' } } } });
+            queued.httpRequest.resolves({ data: { id: 'r1', appId: 'a1', status: 'QUEUED' } });
+            await component.receive(queued);
+            assert.strictEqual(queued.setTimeout.firstCall.args[0].failIfNotSucceeded, true);
+
+            const off = createContext({ messages: { in: { content: { appId: 'a1', failIfNotSucceeded: false } } } });
+            off.httpRequest.resolves({ data: { id: 'r1', appId: 'a1', status: 'QUEUED' } });
+            await component.receive(off);
+            assert.strictEqual(off.setTimeout.firstCall.args[0].failIfNotSucceeded, false);
+
+            const failed = createContext({ messages: { in: { content: { appId: 'a1' } } } });
+            failed.httpRequest.resolves({ data: { id: 'r2', appId: 'a1', status: 'FAILED', errorCode: 'E1' } });
+            await assert.rejects(component.receive(failed), /r2[\s\S]*FAILED[\s\S]*E1/);
         });
 
         it('polls again while running and fails after the deadline', async function() {
@@ -225,19 +334,71 @@ describe('appmixer.qliksense', function() {
             const component = load('UploadDataFile');
             const context = createContext({
                 messages: { in: { content: { fileId: 'f1', fileName: 'sales.csv' } } },
-                getFileInfo: async () => ({ filename: 'x.csv' }),
+                getFileInfo: async () => ({ filename: 'x.csv', length: 8 }),
                 getFileReadStream: async () => Readable.from([Buffer.from('a,b\n1,2\n')])
             });
-            context.httpRequest.onCall(0).resolves({ data: { data: [{ id: 'd1', name: 'sales.csv' }] } });
-            context.httpRequest.onCall(1).resolves({ data: { id: 'd1', name: 'sales.csv', size: 8 } });
+            context.httpRequest.onCall(0).resolves({ data: { data: [{ id: 'd1', name: 'sales.csv', size: 8 }] } });
+            context.httpRequest.onCall(1).resolves({ data: { maxFileSize: 500 * 1024 * 1024 } });
+            context.httpRequest.onCall(2).resolves({ data: { id: 'd1', name: 'sales.csv', size: 8 } });
             await component.receive(context);
-            const upload = context.httpRequest.secondCall.args[0];
+            assert.strictEqual(context.httpRequest.secondCall.args[0].url, ORIGIN + '/api/v1/data-files/quotas');
+            const upload = context.httpRequest.thirdCall.args[0];
             assert.strictEqual(upload.method, 'PUT');
             assert.strictEqual(upload.url, ORIGIN + '/api/v1/data-files/d1');
             assert.match(upload.headers['Content-Type'], /^multipart\/form-data; boundary=/);
-            const sentBody = upload.data.toString();
+            assert.strictEqual(upload.maxBodyLength, Infinity);
+            assert.strictEqual(typeof upload.data.pipe, 'function', 'the body is a stream, not a buffer');
+            const sentBody = await readAll(upload.data);
+            assert.strictEqual(upload.headers['Content-Length'], Buffer.byteLength(sentBody));
             assert.match(sentBody, /name="Json"[\s\S]*"name":"sales.csv"/);
-            assert.match(sentBody, /name="File"; filename="sales.csv"[\s\S]*a,b/);
+            assert.match(sentBody, /name="File"; filename="sales.csv"[\s\S]*a,b\n1,2\n\r\n--/);
+        });
+
+        it('fails before uploading a file over the user\'s limits', async function() {
+
+            const component = load('UploadDataFile');
+            const MB = 1024 * 1024;
+            for (const quotas of [
+                { maxFileSize: 500 * MB, maxLargeFileSize: 50 * MB },
+                { maxSize: 100 * MB, size: 90 * MB }
+            ]) {
+                const context = createContext({
+                    messages: { in: { content: { fileId: 'f1', fileName: 'big.csv', replace: false } } },
+                    getFileInfo: async () => ({ filename: 'big.csv', length: 60 * MB }),
+                    getFileReadStream: sinon.stub()
+                });
+                context.httpRequest.onCall(0).resolves({ data: quotas });
+                await assert.rejects(component.receive(context), (err) => {
+                    return err instanceof CancelError && /60 MB/.test(err.message);
+                });
+                assert.strictEqual(context.httpRequest.callCount, 1, 'only the quotas were read');
+                assert.strictEqual(context.getFileReadStream.callCount, 0);
+            }
+        });
+
+        it('uploads a file over the direct limit through temp-contents', async function() {
+
+            const component = load('UploadDataFile');
+            const context = createContext({
+                messages: { in: { content: { fileId: 'f1', fileName: 'folder/big.csv', replace: false } } },
+                getFileInfo: async () => ({ filename: 'big.csv', length: 20 }),
+                getFileReadStream: async () => Readable.from([Buffer.from('0123456789'), Buffer.from('0123456789')])
+            });
+            context.httpRequest.onCall(0).resolves({ data: { maxFileSize: 10, maxLargeFileSize: 1000 } });
+            context.httpRequest.onCall(1).resolves({ status: 201, headers: { location: '/api/v1/temp-contents/tmp-7' }, data: {} });
+            context.httpRequest.onCall(2).resolves({ data: { id: 'd2', name: 'folder/big.csv', size: 20 } });
+            await component.receive(context);
+            const temp = context.httpRequest.secondCall.args[0];
+            assert.strictEqual(temp.url, ORIGIN + '/api/v1/temp-contents');
+            assert.strictEqual(temp.params.filename, 'big.csv');
+            assert.strictEqual(temp.headers['Content-Length'], 20);
+            assert.strictEqual(await readAll(temp.data), '01234567890123456789');
+            const upload = context.httpRequest.thirdCall.args[0];
+            assert.strictEqual(upload.method, 'POST');
+            const sentBody = await readAll(upload.data);
+            assert.match(sentBody, /"tempContentFileId":"tmp-7"/);
+            assert.doesNotMatch(sentBody, /name="File"/);
+            assert.strictEqual(context.sent[0].data.id, 'd2');
         });
     });
 
