@@ -1,0 +1,65 @@
+{
+    "name": "appmixer.limecrm.core.NewObject",
+    "label": "New Object",
+    "description": "Triggers when an object of the selected limetype is created. Needs Lime Webhooks on the Lime CRM server (included in Lime CRM Cloud) and an API user that is an administrator or a member of the Webhook Users group.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:limecrm"
+    },
+    "quota": {
+        "manager": "appmixer:limecrm",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "trigger": true,
+    "webhook": true,
+    "properties": {
+        "schema": {
+            "type": "object",
+            "properties": {
+                "limetype": {
+                    "type": "string"
+                }
+            },
+            "required": [
+                "limetype"
+            ]
+        },
+        "inspector": {
+            "inputs": {
+                "limetype": {
+                    "type": "text",
+                    "label": "Limetype",
+                    "index": 1,
+                    "tooltip": "Pick a limetype or type its API name, e.g. <code>company</code>, <code>person</code> or <code>deal</code>.",
+                    "source": {
+                        "url": "/component/appmixer/limecrm/core/ListLimetypes?outPort=out",
+                        "data": {
+                            "properties": {
+                                "isSource": true
+                            },
+                            "transform": "./ListLimetypes#toSelectArray"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "outPorts": [
+        {
+            "name": "out",
+            "source": {
+                "url": "/component/appmixer/limecrm/core/GetObjectSchema?outPort=out",
+                "data": {
+                    "messages": {
+                        "in/limetype": "properties/limetype"
+                    }
+                }
+            }
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiIgZmlsbC1ydWxlPSJldmVub2RkIiBjbGlwLXJ1bGU9ImV2ZW5vZGQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIHN0cm9rZS1taXRlcmxpbWl0PSIyIj48cGF0aCBmaWxsPSIjOERDNjNGIiBkPSJNNS4yMjcgMTUuMjdjMC02LjAyNSA0Ljg5Mi0xMC45MTcgMTAuOTE3LTEwLjkxNyA2LjAyNiAwIDEwLjkxOCA0Ljg5MiAxMC45MTggMTAuOTE3IDAgMy4xMzQtMS4zMDggNi4zNTUtNC41MzMgOS4wMzItMy45MDkgMy4yNDUtOS4xNSAzLjY4OC0xNy4yNTQgMy4xNTMtMi40MDYtLjE1OS0yLjc1NC0uNTctMS41MTEtMS40ODcgMy45MDctMi44ODQgMS40NjMtNS4wOSAxLjQ2My0xMC42OTh6Ii8+PC9zdmc+"
+}

@@ -1,0 +1,102 @@
+{
+    "name": "appmixer.limecrm.core.CreateObject",
+    "label": "Create Object",
+    "description": "Create an object (company, person, deal or any other limetype). The property fields are generated from the limetype; properties can also be given as JSON.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:limecrm"
+    },
+    "quota": {
+        "manager": "appmixer:limecrm",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "source": {
+                "url": "/component/appmixer/limecrm/core/CreateObject?outPort=out",
+                "data": {
+                    "properties": {
+                        "generateInspector": true,
+                        "limetype": "properties/limetype"
+                    }
+                }
+            },
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "values": {
+                        "type": "string"
+                    }
+                }
+            },
+            "inspector": {
+                "inputs": {
+                    "values": {
+                        "type": "textarea",
+                        "label": "Values (JSON)",
+                        "index": 1,
+                        "group": "options",
+                        "tooltip": "Optional JSON object of property values, e.g. <code>{\"name\": \"Acme Inc.\", \"buyingstatus\": \"prospect\"}</code>. Use the API names of the properties (see Get Limetype); option properties take the option key, relations the ID of the related object, <code>null</code> clears a value. Values in the property fields below take precedence."
+                    }
+                },
+                "groups": {
+                    "options": {
+                        "label": "Options",
+                        "index": 1
+                    }
+                }
+            }
+        }
+    ],
+    "properties": {
+        "schema": {
+            "type": "object",
+            "properties": {
+                "limetype": {
+                    "type": "string"
+                }
+            },
+            "required": [
+                "limetype"
+            ]
+        },
+        "inspector": {
+            "inputs": {
+                "limetype": {
+                    "type": "text",
+                    "label": "Limetype",
+                    "index": 1,
+                    "tooltip": "Pick a limetype or type its API name, e.g. <code>company</code>, <code>person</code> or <code>deal</code>.",
+                    "source": {
+                        "url": "/component/appmixer/limecrm/core/ListLimetypes?outPort=out",
+                        "data": {
+                            "properties": {
+                                "isSource": true
+                            },
+                            "transform": "./ListLimetypes#toSelectArray"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "outPorts": [
+        {
+            "name": "out",
+            "source": {
+                "url": "/component/appmixer/limecrm/core/GetObjectSchema?outPort=out",
+                "data": {
+                    "messages": {
+                        "in/limetype": "properties/limetype"
+                    }
+                }
+            }
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiIgZmlsbC1ydWxlPSJldmVub2RkIiBjbGlwLXJ1bGU9ImV2ZW5vZGQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIHN0cm9rZS1taXRlcmxpbWl0PSIyIj48cGF0aCBmaWxsPSIjOERDNjNGIiBkPSJNNS4yMjcgMTUuMjdjMC02LjAyNSA0Ljg5Mi0xMC45MTcgMTAuOTE3LTEwLjkxNyA2LjAyNiAwIDEwLjkxOCA0Ljg5MiAxMC45MTggMTAuOTE3IDAgMy4xMzQtMS4zMDggNi4zNTUtNC41MzMgOS4wMzItMy45MDkgMy4yNDUtOS4xNSAzLjY4OC0xNy4yNTQgMy4xNTMtMi40MDYtLjE1OS0yLjc1NC0uNTctMS41MTEtMS40ODcgMy45MDctMi44ODQgMS40NjMtNS4wOSAxLjQ2My0xMC42OTh6Ii8+PC9zdmc+"
+}

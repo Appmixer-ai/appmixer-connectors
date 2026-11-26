@@ -1,0 +1,460 @@
+{
+    "name": "E2E Lime CRM - related objects",
+    "description": "Create a company and a person of it, find the persons of the company, delete both.",
+    "flow": {
+        "d273a14a-5e0f-4143-b645-36a47a3baf67": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {},
+            "config": {},
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "571bd6e4-0146-483e-bd84-986553fc3d17": {
+            "type": "appmixer.limecrm.core.CreateObject",
+            "x": 272,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "d273a14a-5e0f-4143-b645-36a47a3baf67": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "limetype": "company"
+                },
+                "transform": {
+                    "in": {
+                        "d273a14a-5e0f-4143-b645-36a47a3baf67": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "values": {
+                                        "66631051-81f5-4927-9e4a-ead9d2e59b66": {
+                                            "variable": "$.d273a14a-5e0f-4143-b645-36a47a3baf67.out.started",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "values": "{\"name\": \"E2E Lime CRM related {{{66631051-81f5-4927-9e4a-ead9d2e59b66}}}\"}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "a9f6da92-3a51-4143-b1b9-8dcfca3b35a3": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 480,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "571bd6e4-0146-483e-bd84-986553fc3d17": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "571bd6e4-0146-483e-bd84-986553fc3d17": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "26d5043e-8a22-4b73-b763-5610a73d9ad8": {
+                                            "variable": "$.571bd6e4-0146-483e-bd84-986553fc3d17.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{26d5043e-8a22-4b73-b763-5610a73d9ad8}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "d13f6f1c-3a86-4f4f-b5bb-f21814d5acb1": {
+            "type": "appmixer.limecrm.core.CreateObject",
+            "x": 688,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "a9f6da92-3a51-4143-b1b9-8dcfca3b35a3": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "limetype": "person"
+                },
+                "transform": {
+                    "in": {
+                        "a9f6da92-3a51-4143-b1b9-8dcfca3b35a3": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "values": {
+                                        "97c8060d-bedb-420b-8f96-dff5989fd2f3": {
+                                            "variable": "$.571bd6e4-0146-483e-bd84-986553fc3d17.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "values": "{\"firstname\": \"E2E\", \"lastname\": \"Related\", \"company\": {{{97c8060d-bedb-420b-8f96-dff5989fd2f3}}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "1357266b-b41c-410e-a19f-0950369fee9c": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 896,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "d13f6f1c-3a86-4f4f-b5bb-f21814d5acb1": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "d13f6f1c-3a86-4f4f-b5bb-f21814d5acb1": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "20bc2ee2-d50a-4237-9cd0-e1afc74dd7b6": {
+                                            "variable": "$.d13f6f1c-3a86-4f4f-b5bb-f21814d5acb1.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{20bc2ee2-d50a-4237-9cd0-e1afc74dd7b6}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "f80e13fe-97a3-477f-a836-e121040e7429": {
+            "type": "appmixer.limecrm.core.FindRelatedObjects",
+            "x": 1104,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "1357266b-b41c-410e-a19f-0950369fee9c": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "1357266b-b41c-410e-a19f-0950369fee9c": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "limetype": {},
+                                    "objectId": {
+                                        "3dea4214-30b2-4236-9733-e2fd720e10bf": {
+                                            "variable": "$.571bd6e4-0146-483e-bd84-986553fc3d17.out.id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "relation": {},
+                                    "outputType": {}
+                                },
+                                "lambda": {
+                                    "limetype": "company",
+                                    "objectId": "{{{3dea4214-30b2-4236-9733-e2fd720e10bf}}}",
+                                    "relation": "person",
+                                    "outputType": "first"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "19e5db3d-69c6-4402-988b-bf1b00e532ec": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1312,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "f80e13fe-97a3-477f-a836-e121040e7429": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "f80e13fe-97a3-477f-a836-e121040e7429": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "6a7e2377-b0e3-42cd-a4d9-5918c420df5d": {
+                                            "variable": "$.f80e13fe-97a3-477f-a836-e121040e7429.out.id",
+                                            "functions": []
+                                        },
+                                        "baba8bfc-5169-4317-96a7-0fa44b0dd1e1": {
+                                            "variable": "$.f80e13fe-97a3-477f-a836-e121040e7429.out.count",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{6a7e2377-b0e3-42cd-a4d9-5918c420df5d}}}",
+                                                "assertion": "notEmpty"
+                                            },
+                                            {
+                                                "field": "{{{baba8bfc-5169-4317-96a7-0fa44b0dd1e1}}}",
+                                                "assertion": "equal",
+                                                "expected": "1"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "ba92eb29-03df-4dd2-836c-b3c1996a0200": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 1520,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "19e5db3d-69c6-4402-988b-bf1b00e532ec": [
+                        "out"
+                    ],
+                    "a9f6da92-3a51-4143-b1b9-8dcfca3b35a3": [
+                        "out"
+                    ],
+                    "1357266b-b41c-410e-a19f-0950369fee9c": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 180
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "e93698f2-1afa-4a8c-bf6a-6b470a78969e": {
+            "type": "appmixer.limecrm.core.DeleteObject",
+            "x": 1728,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "ba92eb29-03df-4dd2-836c-b3c1996a0200": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "ba92eb29-03df-4dd2-836c-b3c1996a0200": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "limetype": {},
+                                    "objectId": {
+                                        "1cf86b27-480b-42dc-b690-9a7079582aca": {
+                                            "variable": "$.d13f6f1c-3a86-4f4f-b5bb-f21814d5acb1.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "limetype": "person",
+                                    "objectId": "{{{1cf86b27-480b-42dc-b690-9a7079582aca}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "ae43b9ba-9573-4408-ad0b-ac4d4e0fac31": {
+            "type": "appmixer.limecrm.core.DeleteObject",
+            "x": 1936,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "e93698f2-1afa-4a8c-bf6a-6b470a78969e": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "e93698f2-1afa-4a8c-bf6a-6b470a78969e": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "limetype": {},
+                                    "objectId": {
+                                        "910c0490-a12d-4597-bfb3-3aeb82076e6f": {
+                                            "variable": "$.571bd6e4-0146-483e-bd84-986553fc3d17.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "limetype": "company",
+                                    "objectId": "{{{910c0490-a12d-4597-bfb3-3aeb82076e6f}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "00924b06-d8fe-4e57-80e2-1ddc7ab27e7d": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 2144,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "ae43b9ba-9573-4408-ad0b-ac4d4e0fac31": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "successStoreId": "64f6f1f9193228000754082f",
+                    "failedStoreId": "64f6f1f0193228000754082e"
+                },
+                "transform": {
+                    "in": {
+                        "ae43b9ba-9573-4408-ad0b-ac4d4e0fac31": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "49658938-efeb-4508-afd1-cd31d88bf507": {
+                                            "variable": "$.ba92eb29-03df-4dd2-836c-b3c1996a0200.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E Lime CRM - related objects",
+                                    "result": "{{{49658938-efeb-4508-afd1-cd31d88bf507}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        }
+    },
+    "notes": {
+        "370affc0-9eb8-4803-bc2a-cff864495ccb": {
+            "x": 64,
+            "y": -224,
+            "width": 672,
+            "height": 192,
+            "content": "## ⚠️ Test data assumption\n\nThe flow uses the standard Lime CRM data model: limetypes `company` and `person`, the person's relation `company` and the company's relation `person` (persons of a company). Adjust the names on an application with another data model."
+        }
+    }
+}

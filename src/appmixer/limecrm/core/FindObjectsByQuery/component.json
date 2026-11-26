@@ -1,0 +1,93 @@
+{
+    "name": "appmixer.limecrm.core.FindObjectsByQuery",
+    "label": "Find Objects By Query",
+    "description": "Find objects with a Lime query: comparisons, begins-with and contains filters, AND/OR, properties of related objects and sorting. Returns as many objects as the query's limit allows (100 when the query sets none).",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:limecrm"
+    },
+    "quota": {
+        "manager": "appmixer:limecrm",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "query": {
+                        "type": "string"
+                    },
+                    "outputType": {
+                        "type": "string",
+                        "default": "array"
+                    }
+                },
+                "required": [
+                    "query"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "query": {
+                        "type": "textarea",
+                        "label": "Query (JSON)",
+                        "index": 1,
+                        "tooltip": "A Lime query, e.g. <code>{\"limetype\": \"company\", \"responseFormat\": {\"object\": {\"_id\": \"\", \"name\": \"\", \"city\": \"\"}}, \"filter\": {\"key\": \"name\", \"op\": \"=?\", \"exp\": \"Acme\"}, \"orderBy\": [{\"name\": \"ASC\"}], \"limit\": 100}</code>. <code>limetype</code> and <code>responseFormat.object</code> are required; the properties listed there become the output variables. Operators: <code>=</code>, <code>!=</code>, <code>&gt;</code>, <code>&gt;=</code>, <code>&lt;</code>, <code>&lt;=</code>, <code>IN</code>, <code>?</code> (contains), <code>=?</code> (begins with), <code>!</code>; combine with <code>{\"op\": \"AND\", \"exp\": [...]}</code>. <code>offset</code> needs <code>orderBy</code>. See <a href=\"https://platform.docs.lime-crm.com/en/latest/development/lime-query/\" target=\"_blank\">Lime query</a>."
+                    },
+                    "outputType": {
+                        "type": "select",
+                        "label": "Output Type",
+                        "index": 2,
+                        "defaultValue": "array",
+                        "tooltip": "Choose whether you want to receive the result set as one complete list, or first item only or one item at a time or stream the items to a file.",
+                        "options": [
+                            {
+                                "label": "First Item Only",
+                                "value": "first"
+                            },
+                            {
+                                "label": "All items at once",
+                                "value": "array"
+                            },
+                            {
+                                "label": "One item at a time",
+                                "value": "object"
+                            },
+                            {
+                                "label": "Store to CSV file",
+                                "value": "file"
+                            }
+                        ]
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "source": {
+                "url": "/component/appmixer/limecrm/core/FindObjectsByQuery?outPort=out&ignoreAuth=true",
+                "data": {
+                    "properties": {
+                        "generateOutputPortOptions": true
+                    },
+                    "messages": {
+                        "in/query": "inputs/in/query",
+                        "in/outputType": "inputs/in/outputType"
+                    }
+                }
+            }
+        },
+        {
+            "name": "notFound"
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiIgZmlsbC1ydWxlPSJldmVub2RkIiBjbGlwLXJ1bGU9ImV2ZW5vZGQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIHN0cm9rZS1taXRlcmxpbWl0PSIyIj48cGF0aCBmaWxsPSIjOERDNjNGIiBkPSJNNS4yMjcgMTUuMjdjMC02LjAyNSA0Ljg5Mi0xMC45MTcgMTAuOTE3LTEwLjkxNyA2LjAyNiAwIDEwLjkxOCA0Ljg5MiAxMC45MTggMTAuOTE3IDAgMy4xMzQtMS4zMDggNi4zNTUtNC41MzMgOS4wMzItMy45MDkgMy4yNDUtOS4xNSAzLjY4OC0xNy4yNTQgMy4xNTMtMi40MDYtLjE1OS0yLjc1NC0uNTctMS41MTEtMS40ODcgMy45MDctMi44ODQgMS40NjMtNS4wOSAxLjQ2My0xMC42OTh6Ii8+PC9zdmc+"
+}

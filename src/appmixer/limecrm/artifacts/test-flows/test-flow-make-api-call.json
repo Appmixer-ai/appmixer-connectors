@@ -1,0 +1,389 @@
+{
+    "name": "E2E Lime CRM - make api call",
+    "description": "Read a company through Make API Call, with a query parameter and a header.",
+    "flow": {
+        "221d2a93-8009-4061-92e8-823ca317cc5b": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {},
+            "config": {},
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "fae28597-1ced-4449-8e08-f2b404f300fa": {
+            "type": "appmixer.limecrm.core.CreateObject",
+            "x": 272,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "221d2a93-8009-4061-92e8-823ca317cc5b": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "limetype": "company"
+                },
+                "transform": {
+                    "in": {
+                        "221d2a93-8009-4061-92e8-823ca317cc5b": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "values": {
+                                        "ef583bce-11bf-4c65-84df-510dff22c9ab": {
+                                            "variable": "$.221d2a93-8009-4061-92e8-823ca317cc5b.out.started",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "values": "{\"name\": \"E2E Lime CRM api call {{{ef583bce-11bf-4c65-84df-510dff22c9ab}}}\"}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "aaeaa8d2-7c77-412e-bf30-dc5a900050c7": {
+            "type": "appmixer.limecrm.core.MakeApiCall",
+            "x": 480,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "fae28597-1ced-4449-8e08-f2b404f300fa": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "fae28597-1ced-4449-8e08-f2b404f300fa": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "url": {
+                                        "26972fd8-fc52-4f1c-9144-2729b72124c9": {
+                                            "variable": "$.fae28597-1ced-4449-8e08-f2b404f300fa.out.id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "method": {},
+                                    "headers": {}
+                                },
+                                "lambda": {
+                                    "url": "/limeobject/company/{{{26972fd8-fc52-4f1c-9144-2729b72124c9}}}/",
+                                    "method": "GET",
+                                    "headers": "{\"Accept-Language\": \"en\"}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "7a48f053-40c8-484c-8ba8-a69962811672": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 688,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "aaeaa8d2-7c77-412e-bf30-dc5a900050c7": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "aaeaa8d2-7c77-412e-bf30-dc5a900050c7": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "4481504c-3e9b-4130-9cbf-353d13482bd4": {
+                                            "variable": "$.aaeaa8d2-7c77-412e-bf30-dc5a900050c7.out.statusCode",
+                                            "functions": []
+                                        },
+                                        "21130459-285f-421b-b5e5-d0d0dd465c16": {
+                                            "variable": "$.aaeaa8d2-7c77-412e-bf30-dc5a900050c7.out.body",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$.name"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{4481504c-3e9b-4130-9cbf-353d13482bd4}}}",
+                                                "assertion": "equal",
+                                                "expected": "200"
+                                            },
+                                            {
+                                                "field": "{{{21130459-285f-421b-b5e5-d0d0dd465c16}}}",
+                                                "assertion": "regex",
+                                                "regex": "^E2E Lime CRM api call "
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "8221133e-2e38-4cce-9ada-2296527bfd78": {
+            "type": "appmixer.limecrm.core.MakeApiCall",
+            "x": 896,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "7a48f053-40c8-484c-8ba8-a69962811672": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "7a48f053-40c8-484c-8ba8-a69962811672": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "url": {},
+                                    "method": {},
+                                    "parameters": {
+                                        "dbe017fa-0e82-4826-84f1-5b380e6d0133": {
+                                            "variable": "$.fae28597-1ced-4449-8e08-f2b404f300fa.out.name",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "url": "/limeobject/company/",
+                                    "method": "GET",
+                                    "parameters": "{\"name\": \"{{{dbe017fa-0e82-4826-84f1-5b380e6d0133}}}\", \"_limit\": \"1\"}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "e3ac5665-e791-46b8-9527-79c4e205c6ea": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1104,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "8221133e-2e38-4cce-9ada-2296527bfd78": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "8221133e-2e38-4cce-9ada-2296527bfd78": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "4fe4dd41-237e-4ee6-aaa0-c96844dee32f": {
+                                            "variable": "$.8221133e-2e38-4cce-9ada-2296527bfd78.out.statusCode",
+                                            "functions": []
+                                        },
+                                        "7b1ca3b3-d2c4-4b87-89f9-f6559ee36689": {
+                                            "variable": "$.8221133e-2e38-4cce-9ada-2296527bfd78.out.body",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$..name"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{4fe4dd41-237e-4ee6-aaa0-c96844dee32f}}}",
+                                                "assertion": "equal",
+                                                "expected": "200"
+                                            },
+                                            {
+                                                "field": "{{{7b1ca3b3-d2c4-4b87-89f9-f6559ee36689}}}",
+                                                "assertion": "regex",
+                                                "regex": "E2E Lime CRM api call "
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "c711872a-06c2-476d-8452-1bf5a88f2ab5": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 1312,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "e3ac5665-e791-46b8-9527-79c4e205c6ea": [
+                        "out"
+                    ],
+                    "7a48f053-40c8-484c-8ba8-a69962811672": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 180
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "b631d69e-e7b6-4556-b882-d3d9f1b1e698": {
+            "type": "appmixer.limecrm.core.DeleteObject",
+            "x": 1520,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "c711872a-06c2-476d-8452-1bf5a88f2ab5": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "c711872a-06c2-476d-8452-1bf5a88f2ab5": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "limetype": {},
+                                    "objectId": {
+                                        "70230ab3-2370-4480-b0e6-c19e176fe290": {
+                                            "variable": "$.fae28597-1ced-4449-8e08-f2b404f300fa.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "limetype": "company",
+                                    "objectId": "{{{70230ab3-2370-4480-b0e6-c19e176fe290}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "26fe9381-950d-419c-b865-2cdc17b341e6": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1728,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "b631d69e-e7b6-4556-b882-d3d9f1b1e698": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "successStoreId": "64f6f1f9193228000754082f",
+                    "failedStoreId": "64f6f1f0193228000754082e"
+                },
+                "transform": {
+                    "in": {
+                        "b631d69e-e7b6-4556-b882-d3d9f1b1e698": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "538b6db2-7b9b-4fae-8805-7beb26814a5f": {
+                                            "variable": "$.c711872a-06c2-476d-8452-1bf5a88f2ab5.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E Lime CRM - make api call",
+                                    "result": "{{{538b6db2-7b9b-4fae-8805-7beb26814a5f}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        }
+    }
+}
