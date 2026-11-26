@@ -1,0 +1,242 @@
+{
+    "name": "E2E RoomPriceGenie - create account",
+    "description": "Asks RoomPriceGenie for a new pending account with Create Account and checks that credentials come back.",
+    "notes": {
+        "13e7eeaf-668e-4d4e-a65b-62364b7f1ff2": {
+            "x": 64,
+            "y": 208,
+            "width": 880,
+            "height": 320,
+            "content": "## Never run\n\nThis flow was written from RoomPriceGenie's documentation and has only passed `appmixer e2e validate`. No RoomPriceGenie test account existed when it was written. See README.md in this folder for what a run needs.\n\n## ⚠️ Every run creates a real pending account\n\nCreate Account asks RoomPriceGenie for a new account and RoomPriceGenie emails an activation link to the owner address in the flow (`test@appmixer.ai`). There is no API to delete the request; it expires when nobody activates it within 48 hours. Run this flow only against RoomPriceGenie's **development** environment, only when the component changed, and tell RoomPriceGenie that accounts named \"Appmixer E2E Test Hotel\" are test data.\n\nThe component uses the Partner API Key of the connector configuration and needs no connected account."
+        }
+    },
+    "flow": {
+        "2b12e65d-dfa8-4c41-b214-c2e341632eca": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {},
+            "config": {},
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "75d9f901-591f-4901-ba8b-2deae470382b": {
+            "type": "appmixer.roompricegenie.core.CreateAccount",
+            "x": 272,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "2b12e65d-dfa8-4c41-b214-c2e341632eca": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "2b12e65d-dfa8-4c41-b214-c2e341632eca": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "propertyCode": {
+                                        "201fc550-f925-4798-97a3-b9e29274f1d2": {
+                                            "functions": [
+                                                {
+                                                    "name": "g_now"
+                                                },
+                                                {
+                                                    "name": "g_formatDate",
+                                                    "params": [
+                                                        {
+                                                            "value": "YYYYMMDDHHmmss"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "hotelName": {},
+                                    "hotelCountryCode": {},
+                                    "ownerEmail": {},
+                                    "ownerFirstName": {},
+                                    "ownerLastName": {},
+                                    "ownerLanguage": {},
+                                    "hotelAddress": {},
+                                    "hotelPostcode": {},
+                                    "latitude": {},
+                                    "longitude": {},
+                                    "hotelTimezone": {},
+                                    "hotelCurrencyCode": {}
+                                },
+                                "lambda": {
+                                    "propertyCode": "appmixer-e2e-{{{201fc550-f925-4798-97a3-b9e29274f1d2}}}",
+                                    "hotelName": "Appmixer E2E Test Hotel",
+                                    "hotelCountryCode": "CH",
+                                    "ownerEmail": "test@appmixer.ai",
+                                    "ownerFirstName": "Appmixer",
+                                    "ownerLastName": "E2E",
+                                    "ownerLanguage": "en",
+                                    "hotelAddress": "Sumpfstrasse 18, Steinhausen",
+                                    "hotelPostcode": "6312",
+                                    "latitude": 47.1957,
+                                    "longitude": 8.4858,
+                                    "hotelTimezone": "Europe/Zurich",
+                                    "hotelCurrencyCode": "CHF"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "531d83d9-8101-41d3-b8d7-712008d73c6d": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 480,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "75d9f901-591f-4901-ba8b-2deae470382b": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "75d9f901-591f-4901-ba8b-2deae470382b": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "c2230e10-9140-44c7-bfcb-a7a79c900aa9": {
+                                            "functions": [],
+                                            "variable": "$.75d9f901-591f-4901-ba8b-2deae470382b.out.event"
+                                        },
+                                        "a2c3af7d-7f4f-4205-8d98-132223afbc58": {
+                                            "functions": [],
+                                            "variable": "$.75d9f901-591f-4901-ba8b-2deae470382b.out.property_code"
+                                        },
+                                        "ae9f4b5b-2472-41f9-b99e-6a7a8fece3f5": {
+                                            "functions": [],
+                                            "variable": "$.75d9f901-591f-4901-ba8b-2deae470382b.out.client_id"
+                                        },
+                                        "077a03ac-5b8d-411d-8720-1d4cf8c9ad87": {
+                                            "functions": [],
+                                            "variable": "$.75d9f901-591f-4901-ba8b-2deae470382b.out.client_secret"
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{c2230e10-9140-44c7-bfcb-a7a79c900aa9}}}",
+                                                "assertion": "equal",
+                                                "expected": "account.create"
+                                            },
+                                            {
+                                                "field": "{{{a2c3af7d-7f4f-4205-8d98-132223afbc58}}}",
+                                                "assertion": "regex",
+                                                "regex": "^appmixer-e2e-[0-9]{14}$"
+                                            },
+                                            {
+                                                "field": "{{{ae9f4b5b-2472-41f9-b99e-6a7a8fece3f5}}}",
+                                                "assertion": "notEmpty"
+                                            },
+                                            {
+                                                "field": "{{{077a03ac-5b8d-411d-8720-1d4cf8c9ad87}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "2807a851-968c-467f-8eee-1dce12fa5123": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 688,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "531d83d9-8101-41d3-b8d7-712008d73c6d": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 180
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "2e5702dc-c9ca-44a7-8f01-dd7a7a2f1ae6": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 896,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "2807a851-968c-467f-8eee-1dce12fa5123": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "2807a851-968c-467f-8eee-1dce12fa5123": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "aaf902f9-72c7-4d54-bb95-1eb1a1416704": {
+                                            "functions": [],
+                                            "variable": "$.2807a851-968c-467f-8eee-1dce12fa5123.out"
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E RoomPriceGenie - create account",
+                                    "result": "{{{aaf902f9-72c7-4d54-bb95-1eb1a1416704}}}"
+                                }
+                            }
+                        }
+                    }
+                },
+                "properties": {
+                    "successStoreId": "64f6f1f9193228000754082f",
+                    "failedStoreId": "64f6f1f0193228000754082e"
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        }
+    }
+}
