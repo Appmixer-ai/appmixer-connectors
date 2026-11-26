@@ -1,0 +1,277 @@
+{
+    "name": "E2E Lime CRM - New Object trigger (polling)",
+    "description": "Provoke the New Object trigger in Polling mode on a company and check its output.",
+    "flow": {
+        "d427ebd3-5822-4cab-96be-eba03e663534": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {},
+            "config": {},
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "f8e06eff-6d6b-4c36-8e27-e60697bf58af": {
+            "type": "appmixer.utils.timers.Wait",
+            "x": 272,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "d427ebd3-5822-4cab-96be-eba03e663534": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "d427ebd3-5822-4cab-96be-eba03e663534": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "interval": {}
+                                },
+                                "lambda": {
+                                    "interval": "1m"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "443c28f0-6281-4a0e-b17e-b3b0b7c1965e": {
+            "type": "appmixer.limecrm.core.CreateObject",
+            "x": 480,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "f8e06eff-6d6b-4c36-8e27-e60697bf58af": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "limetype": "company"
+                },
+                "transform": {
+                    "in": {
+                        "f8e06eff-6d6b-4c36-8e27-e60697bf58af": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "values": {
+                                        "8f8341bc-4207-4ce0-8e43-d262d364d2ce": {
+                                            "variable": "$.d427ebd3-5822-4cab-96be-eba03e663534.out.started",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "values": "{\"name\": \"E2E Lime CRM New Object {{{8f8341bc-4207-4ce0-8e43-d262d364d2ce}}}\"}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "0dfe1ed3-d50a-4b9b-a401-022cd9b9e7e3": {
+            "type": "appmixer.limecrm.core.NewObject",
+            "x": 64,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {},
+            "config": {
+                "properties": {
+                    "limetype": "company",
+                    "mode": "polling"
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "7459be81-8dd8-4155-92aa-b05faacda7b1": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 272,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "0dfe1ed3-d50a-4b9b-a401-022cd9b9e7e3": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "0dfe1ed3-d50a-4b9b-a401-022cd9b9e7e3": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "95e12f2e-d712-4f87-bff7-d2ef6648b2d8": {
+                                            "variable": "$.0dfe1ed3-d50a-4b9b-a401-022cd9b9e7e3.out.name",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{95e12f2e-d712-4f87-bff7-d2ef6648b2d8}}}",
+                                                "assertion": "regex",
+                                                "regex": "^E2E Lime CRM New Object "
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "c3e12c7e-ee48-4901-98e4-3267c1855ee1": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 480,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "7459be81-8dd8-4155-92aa-b05faacda7b1": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 420
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "a62126c7-2224-4f39-ad28-ae92b992d948": {
+            "type": "appmixer.limecrm.core.DeleteObject",
+            "x": 688,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "c3e12c7e-ee48-4901-98e4-3267c1855ee1": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "c3e12c7e-ee48-4901-98e4-3267c1855ee1": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "limetype": {},
+                                    "objectId": {
+                                        "cf2b7792-80ad-4169-828f-6bd8dc8f5bcc": {
+                                            "variable": "$.0dfe1ed3-d50a-4b9b-a401-022cd9b9e7e3.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "limetype": "company",
+                                    "objectId": "{{{cf2b7792-80ad-4169-828f-6bd8dc8f5bcc}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "bd8e3542-62f6-42c3-904e-b5da40c4b954": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 896,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "a62126c7-2224-4f39-ad28-ae92b992d948": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "successStoreId": "64f6f1f9193228000754082f",
+                    "failedStoreId": "64f6f1f0193228000754082e"
+                },
+                "transform": {
+                    "in": {
+                        "a62126c7-2224-4f39-ad28-ae92b992d948": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "0bd8045c-f934-47ba-8006-321bbd2d3666": {
+                                            "variable": "$.c3e12c7e-ee48-4901-98e4-3267c1855ee1.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E Lime CRM - New Object trigger (polling)",
+                                    "result": "{{{0bd8045c-f934-47ba-8006-321bbd2d3666}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        }
+    },
+    "notes": {
+        "abaa154c-cf7a-4aa7-93c9-b4044d6cc502": {
+            "x": 64,
+            "y": -224,
+            "width": 672,
+            "height": 192,
+            "content": "## ⚠️ Test data assumption\n\nPolling mode: no Lime Webhooks needed. The trigger remembers the newest company id when the flow starts and asks the API for newer ones every minute; the Wait keeps the provoking company out of that starting point. Do not remove it."
+        }
+    }
+}

@@ -1,0 +1,415 @@
+{
+    "name": "E2E Lime CRM - Updated Object trigger (polling, condition)",
+    "description": "Updated Object in Polling mode with Only When Property = phone: renaming a company must not fire, changing its phone must fire with the new phone.",
+    "flow": {
+        "6dfeae54-4789-4017-b155-8bc0cf0e8b33": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {},
+            "config": {},
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "448e5bfd-bc58-4a6f-b63a-a858fa653646": {
+            "type": "appmixer.limecrm.core.CreateObject",
+            "x": 272,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "6dfeae54-4789-4017-b155-8bc0cf0e8b33": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "limetype": "company"
+                },
+                "transform": {
+                    "in": {
+                        "6dfeae54-4789-4017-b155-8bc0cf0e8b33": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "values": {
+                                        "334ccac5-8833-416f-86fa-96a81d210764": {
+                                            "variable": "$.6dfeae54-4789-4017-b155-8bc0cf0e8b33.out.started",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "values": "{\"name\": \"E2E Lime CRM Updated Object {{{334ccac5-8833-416f-86fa-96a81d210764}}}\"}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "01f3f4e4-3dde-47b5-9d5c-a2345d2a8db8": {
+            "type": "appmixer.utils.timers.Wait",
+            "x": 480,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "448e5bfd-bc58-4a6f-b63a-a858fa653646": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "448e5bfd-bc58-4a6f-b63a-a858fa653646": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "interval": {}
+                                },
+                                "lambda": {
+                                    "interval": "1m"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "fd9753a5-914e-48dd-85df-8c2af4666d72": {
+            "type": "appmixer.limecrm.core.UpdateObject",
+            "x": 688,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "01f3f4e4-3dde-47b5-9d5c-a2345d2a8db8": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "limetype": "company"
+                },
+                "transform": {
+                    "in": {
+                        "01f3f4e4-3dde-47b5-9d5c-a2345d2a8db8": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "objectId": {
+                                        "ec30c1f0-a6ce-45b6-823a-b3bb7b356ed6": {
+                                            "variable": "$.448e5bfd-bc58-4a6f-b63a-a858fa653646.out.id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "values": {
+                                        "2be6307c-1b9c-470e-a759-2308da227880": {
+                                            "variable": "$.6dfeae54-4789-4017-b155-8bc0cf0e8b33.out.started",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "objectId": "{{{ec30c1f0-a6ce-45b6-823a-b3bb7b356ed6}}}",
+                                    "values": "{\"name\": \"E2E Lime CRM Updated Object {{{2be6307c-1b9c-470e-a759-2308da227880}}} renamed\"}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "d4bfd2a5-5507-4ef8-b4eb-7ded51175b45": {
+            "type": "appmixer.utils.timers.Wait",
+            "x": 896,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "fd9753a5-914e-48dd-85df-8c2af4666d72": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "fd9753a5-914e-48dd-85df-8c2af4666d72": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "interval": {}
+                                },
+                                "lambda": {
+                                    "interval": "2m"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "1ea8c29b-6bb6-4dec-ae8c-d8bc764ad058": {
+            "type": "appmixer.limecrm.core.UpdateObject",
+            "x": 1104,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "d4bfd2a5-5507-4ef8-b4eb-7ded51175b45": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "limetype": "company"
+                },
+                "transform": {
+                    "in": {
+                        "d4bfd2a5-5507-4ef8-b4eb-7ded51175b45": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "objectId": {
+                                        "7281e53f-8f61-41a7-a9b0-fb8c39bbb014": {
+                                            "variable": "$.448e5bfd-bc58-4a6f-b63a-a858fa653646.out.id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "values": {}
+                                },
+                                "lambda": {
+                                    "objectId": "{{{7281e53f-8f61-41a7-a9b0-fb8c39bbb014}}}",
+                                    "values": "{\"phone\": \"+46 46 555 0199\"}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "3800c21a-b749-4a19-8d83-853c83a156db": {
+            "type": "appmixer.limecrm.core.UpdatedObject",
+            "x": 64,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {},
+            "config": {
+                "properties": {
+                    "limetype": "company",
+                    "mode": "polling",
+                    "conditionProperty": "phone",
+                    "conditionValue": "+46 46 555 0199"
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "941ebf72-2e53-4435-9837-ff2aedf04e3f": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 272,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "3800c21a-b749-4a19-8d83-853c83a156db": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "3800c21a-b749-4a19-8d83-853c83a156db": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "fa792a5e-0341-4a51-a6bb-b058b921c22f": {
+                                            "variable": "$.3800c21a-b749-4a19-8d83-853c83a156db.out.name",
+                                            "functions": []
+                                        },
+                                        "5901f4d7-b089-42c7-9c3f-433ebe29001d": {
+                                            "variable": "$.3800c21a-b749-4a19-8d83-853c83a156db.out.phone",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{fa792a5e-0341-4a51-a6bb-b058b921c22f}}}",
+                                                "assertion": "regex",
+                                                "regex": "^E2E Lime CRM Updated Object .* renamed$"
+                                            },
+                                            {
+                                                "field": "{{{5901f4d7-b089-42c7-9c3f-433ebe29001d}}}",
+                                                "assertion": "equal",
+                                                "expected": "+46 46 555 0199"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "2add37a4-7d8f-448b-ad48-23d65f9588be": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 480,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "941ebf72-2e53-4435-9837-ff2aedf04e3f": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 420
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "cee45c8f-d5ee-4f4d-9c37-17ce3bf99147": {
+            "type": "appmixer.limecrm.core.DeleteObject",
+            "x": 688,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "2add37a4-7d8f-448b-ad48-23d65f9588be": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "2add37a4-7d8f-448b-ad48-23d65f9588be": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "limetype": {},
+                                    "objectId": {
+                                        "f441e132-a141-4fcb-a0c4-330e72da9629": {
+                                            "variable": "$.3800c21a-b749-4a19-8d83-853c83a156db.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "limetype": "company",
+                                    "objectId": "{{{f441e132-a141-4fcb-a0c4-330e72da9629}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "8554611c-06af-45c2-8212-ea9d9554333f": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 896,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "cee45c8f-d5ee-4f4d-9c37-17ce3bf99147": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "successStoreId": "64f6f1f9193228000754082f",
+                    "failedStoreId": "64f6f1f0193228000754082e"
+                },
+                "transform": {
+                    "in": {
+                        "cee45c8f-d5ee-4f4d-9c37-17ce3bf99147": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "7c290d2e-3a8a-4f1a-84cb-fbea2fd72a2d": {
+                                            "variable": "$.2add37a4-7d8f-448b-ad48-23d65f9588be.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E Lime CRM - Updated Object trigger (polling, condition)",
+                                    "result": "{{{7c290d2e-3a8a-4f1a-84cb-fbea2fd72a2d}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        }
+    },
+    "notes": {
+        "f8622172-fa41-4cbb-ad4b-06a944dd330d": {
+            "x": 64,
+            "y": -224,
+            "width": 672,
+            "height": 192,
+            "content": "## ⚠️ Test data assumption\n\nPolling mode: no Lime Webhooks needed. The trigger checks the API every minute. The rename must not fire (the condition watches phone); the 2 minute Wait puts the rename and the phone change into different checks. If the trigger fires for the rename, its phone is empty and the Assert fails."
+        }
+    }
+}

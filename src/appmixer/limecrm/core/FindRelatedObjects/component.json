@@ -1,0 +1,133 @@
+{
+    "name": "appmixer.limecrm.core.FindRelatedObjects",
+    "label": "Find Related Objects",
+    "description": "Find the objects related to an object through one of its relations, e.g. the persons of a company. Returns at most 50 objects (one page).",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:limecrm"
+    },
+    "quota": {
+        "manager": "appmixer:limecrm",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "limetype": {
+                        "type": "string"
+                    },
+                    "objectId": {
+                        "type": "integer"
+                    },
+                    "relation": {
+                        "type": "string"
+                    },
+                    "sort": {
+                        "type": "string"
+                    },
+                    "outputType": {
+                        "type": "string",
+                        "default": "array"
+                    }
+                },
+                "required": [
+                    "limetype",
+                    "objectId",
+                    "relation"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "limetype": {
+                        "type": "text",
+                        "label": "Limetype",
+                        "index": 1,
+                        "tooltip": "Pick a limetype or type its API name, e.g. <code>company</code>, <code>person</code> or <code>deal</code>.",
+                        "source": {
+                            "url": "/component/appmixer/limecrm/core/ListLimetypes?outPort=out",
+                            "data": {
+                                "properties": {
+                                    "isSource": true
+                                },
+                                "transform": "./ListLimetypes#toSelectArray"
+                            }
+                        }
+                    },
+                    "objectId": {
+                        "type": "number",
+                        "label": "Object ID",
+                        "index": 2,
+                        "tooltip": "The ID of the object whose related objects you want."
+                    },
+                    "relation": {
+                        "type": "text",
+                        "label": "Relation",
+                        "index": 3,
+                        "tooltip": "The API name of the relation property, e.g. <code>person</code> or <code>deal</code> for a company. A relation to one object (e.g. <code>company</code> of a person) returns that object."
+                    },
+                    "sort": {
+                        "type": "text",
+                        "label": "Sort By",
+                        "index": 4,
+                        "tooltip": "The API name of one property to sort by. Prefix with <code>-</code> for descending order."
+                    },
+                    "outputType": {
+                        "type": "select",
+                        "label": "Output Type",
+                        "index": 5,
+                        "defaultValue": "array",
+                        "tooltip": "Choose whether you want to receive the result set as one complete list, or first item only or one item at a time or stream the items to a file.",
+                        "options": [
+                            {
+                                "label": "First Item Only",
+                                "value": "first"
+                            },
+                            {
+                                "label": "All items at once",
+                                "value": "array"
+                            },
+                            {
+                                "label": "One item at a time",
+                                "value": "object"
+                            },
+                            {
+                                "label": "Store to CSV file",
+                                "value": "file"
+                            }
+                        ]
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "source": {
+                "url": "/component/appmixer/limecrm/core/FindRelatedObjects?outPort=out&ignoreAuth=true",
+                "data": {
+                    "properties": {
+                        "generateOutputPortOptions": true
+                    },
+                    "messages": {
+                        "in/outputType": "inputs/in/outputType",
+                        "in/limetype": "dummy",
+                        "in/objectId": "dummy",
+                        "in/relation": "dummy"
+                    }
+                }
+            }
+        },
+        {
+            "name": "notFound"
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiIgZmlsbC1ydWxlPSJldmVub2RkIiBjbGlwLXJ1bGU9ImV2ZW5vZGQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIHN0cm9rZS1taXRlcmxpbWl0PSIyIj48cGF0aCBmaWxsPSIjOERDNjNGIiBkPSJNNS4yMjcgMTUuMjdjMC02LjAyNSA0Ljg5Mi0xMC45MTcgMTAuOTE3LTEwLjkxNyA2LjAyNiAwIDEwLjkxOCA0Ljg5MiAxMC45MTggMTAuOTE3IDAgMy4xMzQtMS4zMDggNi4zNTUtNC41MzMgOS4wMzItMy45MDkgMy4yNDUtOS4xNSAzLjY4OC0xNy4yNTQgMy4xNTMtMi40MDYtLjE1OS0yLjc1NC0uNTctMS41MTEtMS40ODcgMy45MDctMi44ODQgMS40NjMtNS4wOSAxLjQ2My0xMC42OTh6Ii8+PC9zdmc+"
+}

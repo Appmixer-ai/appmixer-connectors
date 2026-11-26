@@ -1,0 +1,524 @@
+{
+    "name": "E2E Lime CRM - files",
+    "description": "Upload a file, read its metadata, download it and delete it.",
+    "flow": {
+        "824ae18d-0539-41ba-824f-325b380d8954": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {},
+            "config": {},
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "55b50975-7b11-45d0-b823-7e552d8064e7": {
+            "type": "appmixer.utils.files.SaveFile",
+            "x": 272,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "824ae18d-0539-41ba-824f-325b380d8954": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "824ae18d-0539-41ba-824f-325b380d8954": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "filename": {},
+                                    "mimetype": {},
+                                    "content": {},
+                                    "contentEncoding": {}
+                                },
+                                "lambda": {
+                                    "filename": "e2e-limecrm-upload.txt",
+                                    "mimetype": "text/plain",
+                                    "content": "Appmixer E2E fixture for Lime CRM.",
+                                    "contentEncoding": "utf8"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "0dd39b82-3a08-44f1-97bf-4dd6173d27e2": {
+            "type": "appmixer.limecrm.core.UploadFile",
+            "x": 480,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "55b50975-7b11-45d0-b823-7e552d8064e7": [
+                        "file"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "55b50975-7b11-45d0-b823-7e552d8064e7": {
+                            "file": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "fileId": {
+                                        "8110a87a-3bd8-4a8b-bb0e-a40fc5276fa8": {
+                                            "variable": "$.55b50975-7b11-45d0-b823-7e552d8064e7.file.fileId",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "fileId": "{{{8110a87a-3bd8-4a8b-bb0e-a40fc5276fa8}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "56fdf6e8-6939-43f6-879e-4ba23ddde119": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 688,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "0dd39b82-3a08-44f1-97bf-4dd6173d27e2": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "0dd39b82-3a08-44f1-97bf-4dd6173d27e2": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "dc52f313-e8d9-4602-bfc2-8c633daae730": {
+                                            "variable": "$.0dd39b82-3a08-44f1-97bf-4dd6173d27e2.out.id",
+                                            "functions": []
+                                        },
+                                        "87138236-cd64-4c26-8a6d-a36f97f037dd": {
+                                            "variable": "$.0dd39b82-3a08-44f1-97bf-4dd6173d27e2.out.filename",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{dc52f313-e8d9-4602-bfc2-8c633daae730}}}",
+                                                "assertion": "notEmpty"
+                                            },
+                                            {
+                                                "field": "{{{87138236-cd64-4c26-8a6d-a36f97f037dd}}}",
+                                                "assertion": "equal",
+                                                "expected": "e2e-limecrm-upload.txt"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "e1518d2a-c483-40d0-ae20-a70e8382494f": {
+            "type": "appmixer.limecrm.core.GetFile",
+            "x": 896,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "56fdf6e8-6939-43f6-879e-4ba23ddde119": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "56fdf6e8-6939-43f6-879e-4ba23ddde119": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "limeFileId": {
+                                        "7bb8b9de-c787-4315-831c-2f7bf1cdc5a5": {
+                                            "variable": "$.0dd39b82-3a08-44f1-97bf-4dd6173d27e2.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "limeFileId": "{{{7bb8b9de-c787-4315-831c-2f7bf1cdc5a5}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "cf9d1fc0-2943-43d0-ac83-67d68a2905aa": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1104,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "e1518d2a-c483-40d0-ae20-a70e8382494f": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "e1518d2a-c483-40d0-ae20-a70e8382494f": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "8ec3d0ae-2c9b-483d-b3f8-3d6c82ba7600": {
+                                            "variable": "$.e1518d2a-c483-40d0-ae20-a70e8382494f.out.size",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{8ec3d0ae-2c9b-483d-b3f8-3d6c82ba7600}}}",
+                                                "assertion": "equal",
+                                                "expected": "34"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "68ee8e36-82bf-48fc-ba85-ae97f0679383": {
+            "type": "appmixer.limecrm.core.DownloadFile",
+            "x": 1312,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "cf9d1fc0-2943-43d0-ac83-67d68a2905aa": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "cf9d1fc0-2943-43d0-ac83-67d68a2905aa": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "limeFileId": {
+                                        "0506bffc-768e-437b-87e6-b9f92f2bb696": {
+                                            "variable": "$.0dd39b82-3a08-44f1-97bf-4dd6173d27e2.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "limeFileId": "{{{0506bffc-768e-437b-87e6-b9f92f2bb696}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "aee48625-013b-4f80-a5d7-c676e99f24cc": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1520,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "68ee8e36-82bf-48fc-ba85-ae97f0679383": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "68ee8e36-82bf-48fc-ba85-ae97f0679383": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "0efa9892-2d6c-4fab-ba87-89512a85acf2": {
+                                            "variable": "$.68ee8e36-82bf-48fc-ba85-ae97f0679383.out.fileId",
+                                            "functions": []
+                                        },
+                                        "e374e3bb-3fb1-407c-85c3-56f6014db54c": {
+                                            "variable": "$.68ee8e36-82bf-48fc-ba85-ae97f0679383.out.fileSize",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{0efa9892-2d6c-4fab-ba87-89512a85acf2}}}",
+                                                "assertion": "notEmpty"
+                                            },
+                                            {
+                                                "field": "{{{e374e3bb-3fb1-407c-85c3-56f6014db54c}}}",
+                                                "assertion": "equal",
+                                                "expected": "34"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "e8152083-f57b-4ef9-a7cb-86c465d5a509": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 1728,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "aee48625-013b-4f80-a5d7-c676e99f24cc": [
+                        "out"
+                    ],
+                    "56fdf6e8-6939-43f6-879e-4ba23ddde119": [
+                        "out"
+                    ],
+                    "cf9d1fc0-2943-43d0-ac83-67d68a2905aa": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 180
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "79d67c26-4b3d-4f71-bed1-3e5000efed26": {
+            "type": "appmixer.limecrm.core.DeleteFile",
+            "x": 1936,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "e8152083-f57b-4ef9-a7cb-86c465d5a509": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "e8152083-f57b-4ef9-a7cb-86c465d5a509": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "limeFileId": {
+                                        "b9f3e2cd-ec10-4cee-981a-d92a781d5a7c": {
+                                            "variable": "$.0dd39b82-3a08-44f1-97bf-4dd6173d27e2.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "limeFileId": "{{{b9f3e2cd-ec10-4cee-981a-d92a781d5a7c}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "14920cce-e60f-48cd-b0d4-aa199919f104": {
+            "type": "appmixer.utils.files.RemoveFile",
+            "x": 2144,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "79d67c26-4b3d-4f71-bed1-3e5000efed26": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "79d67c26-4b3d-4f71-bed1-3e5000efed26": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "fileId": {
+                                        "f222039c-7c38-470b-95f5-352e03fcda1e": {
+                                            "variable": "$.55b50975-7b11-45d0-b823-7e552d8064e7.file.fileId",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "fileId": "{{{f222039c-7c38-470b-95f5-352e03fcda1e}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "3ea456d6-69f7-4db4-83da-df3dc8cca203": {
+            "type": "appmixer.utils.files.RemoveFile",
+            "x": 2352,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "14920cce-e60f-48cd-b0d4-aa199919f104": [
+                        "deleted"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "14920cce-e60f-48cd-b0d4-aa199919f104": {
+                            "deleted": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "fileId": {
+                                        "663c6f5c-87b9-48a7-93d1-7b3309820b2e": {
+                                            "variable": "$.68ee8e36-82bf-48fc-ba85-ae97f0679383.out.fileId",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "fileId": "{{{663c6f5c-87b9-48a7-93d1-7b3309820b2e}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "5c5d306a-ed3b-4bb1-931e-c1de83abbcf4": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 2560,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "3ea456d6-69f7-4db4-83da-df3dc8cca203": [
+                        "deleted"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "successStoreId": "64f6f1f9193228000754082f",
+                    "failedStoreId": "64f6f1f0193228000754082e"
+                },
+                "transform": {
+                    "in": {
+                        "3ea456d6-69f7-4db4-83da-df3dc8cca203": {
+                            "deleted": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "089bcf2d-abda-4981-a6d4-d148b562fbd6": {
+                                            "variable": "$.e8152083-f57b-4ef9-a7cb-86c465d5a509.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E Lime CRM - files",
+                                    "result": "{{{089bcf2d-abda-4981-a6d4-d148b562fbd6}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        }
+    }
+}

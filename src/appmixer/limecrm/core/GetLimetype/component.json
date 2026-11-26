@@ -1,0 +1,137 @@
+{
+    "name": "appmixer.limecrm.core.GetLimetype",
+    "label": "Get Limetype",
+    "description": "Get a limetype of the Lime CRM data model with its properties (API name, type, local name, required flag and the keys of option properties). Use it to find the property names for Create Object, Update Object, Find Objects and queries.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:limecrm"
+    },
+    "quota": {
+        "manager": "appmixer:limecrm",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "limetype": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "limetype"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "limetype": {
+                        "type": "text",
+                        "label": "Limetype",
+                        "index": 1,
+                        "tooltip": "Pick a limetype or type its API name, e.g. <code>company</code>, <code>person</code> or <code>deal</code>.",
+                        "source": {
+                            "url": "/component/appmixer/limecrm/core/ListLimetypes?outPort=out",
+                            "data": {
+                                "properties": {
+                                    "isSource": true
+                                },
+                                "transform": "./ListLimetypes#toSelectArray"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "title": "Name",
+                        "example": "company"
+                    },
+                    "label": {
+                        "type": "string",
+                        "title": "Label",
+                        "example": "company"
+                    },
+                    "localNameSingular": {
+                        "type": "string",
+                        "title": "Local Name (Singular)",
+                        "example": "Company"
+                    },
+                    "localNamePlural": {
+                        "type": "string",
+                        "title": "Local Name (Plural)",
+                        "example": "Companies"
+                    },
+                    "properties": {
+                        "type": "array",
+                        "title": "Properties",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "name": {
+                                    "type": "string"
+                                },
+                                "type": {
+                                    "type": "string"
+                                },
+                                "label": {
+                                    "type": "string"
+                                },
+                                "required": {
+                                    "type": "boolean"
+                                },
+                                "readonly": {
+                                    "type": "boolean"
+                                },
+                                "options": {
+                                    "type": "array"
+                                }
+                            }
+                        },
+                        "example": [
+                            {
+                                "name": "name",
+                                "type": "string",
+                                "label": "Company name",
+                                "required": true,
+                                "readonly": false,
+                                "options": []
+                            },
+                            {
+                                "name": "buyingstatus",
+                                "type": "option",
+                                "label": "Buying status",
+                                "required": false,
+                                "readonly": false,
+                                "options": [
+                                    {
+                                        "key": "prospect",
+                                        "text": "Prospect"
+                                    },
+                                    {
+                                        "key": "active",
+                                        "text": "Active"
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                }
+            }
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiIgZmlsbC1ydWxlPSJldmVub2RkIiBjbGlwLXJ1bGU9ImV2ZW5vZGQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIHN0cm9rZS1taXRlcmxpbWl0PSIyIj48cGF0aCBmaWxsPSIjOERDNjNGIiBkPSJNNS4yMjcgMTUuMjdjMC02LjAyNSA0Ljg5Mi0xMC45MTcgMTAuOTE3LTEwLjkxNyA2LjAyNiAwIDEwLjkxOCA0Ljg5MiAxMC45MTggMTAuOTE3IDAgMy4xMzQtMS4zMDggNi4zNTUtNC41MzMgOS4wMzItMy45MDkgMy4yNDUtOS4xNSAzLjY4OC0xNy4yNTQgMy4xNTMtMi40MDYtLjE1OS0yLjc1NC0uNTctMS41MTEtMS40ODcgMy45MDctMi44ODQgMS40NjMtNS4wOSAxLjQ2My0xMC42OTh6Ii8+PC9zdmc+"
+}

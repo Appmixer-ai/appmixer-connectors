@@ -1,0 +1,132 @@
+{
+    "name": "appmixer.limecrm.core.FindObjects",
+    "label": "Find Objects",
+    "description": "Find objects of a limetype by exact property values. Returns at most 50 objects (one page); narrow the filters if the object you need is not among them. Use Find Objects By Query for comparisons, text search and more results.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:limecrm"
+    },
+    "quota": {
+        "manager": "appmixer:limecrm",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "filters": {
+                        "type": "string"
+                    },
+                    "sort": {
+                        "type": "string"
+                    },
+                    "outputType": {
+                        "type": "string",
+                        "default": "array"
+                    }
+                }
+            },
+            "inspector": {
+                "inputs": {
+                    "filters": {
+                        "type": "key-value",
+                        "keyLabel": "Property",
+                        "valueLabel": "Value",
+                        "addLabel": "Add filter",
+                        "removeLabel": "Remove filter",
+                        "index": 1,
+                        "label": "Filters",
+                        "tooltip": "Property API names and the values they must equal, e.g. <code>city</code> = <code>Lund</code>. Option properties take the option key, relations the ID. Prefix the property with <code>not-</code>, <code>min-</code> or <code>max-</code> to exclude a value or set a range, e.g. <code>max-quotationdate</code> = <code>2026-12-31T23:59Z</code>. Comparisons are case-insensitive; different properties are combined with AND."
+                    },
+                    "sort": {
+                        "type": "text",
+                        "label": "Sort By",
+                        "index": 2,
+                        "tooltip": "The API name of one property to sort by, e.g. <code>name</code>. Prefix with <code>-</code> for descending order, e.g. <code>-_timestamp</code>."
+                    },
+                    "outputType": {
+                        "type": "select",
+                        "label": "Output Type",
+                        "index": 3,
+                        "defaultValue": "array",
+                        "tooltip": "Choose whether you want to receive the result set as one complete list, or first item only or one item at a time or stream the items to a file.",
+                        "options": [
+                            {
+                                "label": "First Item Only",
+                                "value": "first"
+                            },
+                            {
+                                "label": "All items at once",
+                                "value": "array"
+                            },
+                            {
+                                "label": "One item at a time",
+                                "value": "object"
+                            },
+                            {
+                                "label": "Store to CSV file",
+                                "value": "file"
+                            }
+                        ]
+                    }
+                }
+            }
+        }
+    ],
+    "properties": {
+        "schema": {
+            "type": "object",
+            "properties": {
+                "limetype": {
+                    "type": "string"
+                }
+            },
+            "required": [
+                "limetype"
+            ]
+        },
+        "inspector": {
+            "inputs": {
+                "limetype": {
+                    "type": "text",
+                    "label": "Limetype",
+                    "index": 1,
+                    "tooltip": "Pick a limetype or type its API name, e.g. <code>company</code>, <code>person</code> or <code>deal</code>.",
+                    "source": {
+                        "url": "/component/appmixer/limecrm/core/ListLimetypes?outPort=out",
+                        "data": {
+                            "properties": {
+                                "isSource": true
+                            },
+                            "transform": "./ListLimetypes#toSelectArray"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "outPorts": [
+        {
+            "name": "out",
+            "source": {
+                "url": "/component/appmixer/limecrm/core/GetObjectSchema?outPort=out",
+                "data": {
+                    "messages": {
+                        "in/limetype": "properties/limetype",
+                        "in/outputType": "inputs/in/outputType"
+                    }
+                }
+            }
+        },
+        {
+            "name": "notFound"
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiIgZmlsbC1ydWxlPSJldmVub2RkIiBjbGlwLXJ1bGU9ImV2ZW5vZGQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIHN0cm9rZS1taXRlcmxpbWl0PSIyIj48cGF0aCBmaWxsPSIjOERDNjNGIiBkPSJNNS4yMjcgMTUuMjdjMC02LjAyNSA0Ljg5Mi0xMC45MTcgMTAuOTE3LTEwLjkxNyA2LjAyNiAwIDEwLjkxOCA0Ljg5MiAxMC45MTggMTAuOTE3IDAgMy4xMzQtMS4zMDggNi4zNTUtNC41MzMgOS4wMzItMy45MDkgMy4yNDUtOS4xNSAzLjY4OC0xNy4yNTQgMy4xNTMtMi40MDYtLjE1OS0yLjc1NC0uNTctMS41MTEtMS40ODcgMy45MDctMi44ODQgMS40NjMtNS4wOSAxLjQ2My0xMC42OTh6Ii8+PC9zdmc+"
+}
