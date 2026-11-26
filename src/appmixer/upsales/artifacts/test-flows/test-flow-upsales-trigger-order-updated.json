@@ -1,0 +1,654 @@
+{
+    "name": "E2E Upsales - Updated Order trigger",
+    "description": "Polling trigger OrderUpdated reports a record created by the flow.",
+    "notes": {
+        "7b9b8162-908d-4500-ac8a-5dc588890051": {
+            "x": 64,
+            "y": 900,
+            "width": 672,
+            "height": 180,
+            "content": "## Polling trigger\n\nThe trigger polls every minute and its first tick only records where it starts. The flow waits 2 minutes, then creates the record the trigger must report on a later tick; a Condition keeps only the record of this run. AfterAll timeout is 420 s. Do not remove the Wait."
+        }
+    },
+    "flow": {
+        "bb4a55c0-7d8e-4e74-aa1f-d2bfb1f55ea2": {
+            "type": "appmixer.upsales.core.OrderUpdated",
+            "x": 64,
+            "y": 528,
+            "version": "1.0.0",
+            "source": {},
+            "config": {},
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "2d4a381e-0bd1-4f0b-b1f4-9013ad26bf8b": {
+            "type": "appmixer.utils.controls.Condition",
+            "x": 272,
+            "y": 528,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "bb4a55c0-7d8e-4e74-aa1f-d2bfb1f55ea2": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "bb4a55c0-7d8e-4e74-aa1f-d2bfb1f55ea2": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "12c88ab8-14c8-48cf-ba7a-a0859e2fbf5c": {
+                                            "variable": "$.bb4a55c0-7d8e-4e74-aa1f-d2bfb1f55ea2.out.description",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "OR": [
+                                                    {
+                                                        "input": "{{{12c88ab8-14c8-48cf-ba7a-a0859e2fbf5c}}}",
+                                                        "operator": "regex",
+                                                        "regex": "^E2E OrderUpdated \\d+$"
+                                                    }
+                                                ]
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "0db6ca56-8157-459a-9a21-2b7a3229ee1c": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 480,
+            "y": 528,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "2d4a381e-0bd1-4f0b-b1f4-9013ad26bf8b": [
+                        "true"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "2d4a381e-0bd1-4f0b-b1f4-9013ad26bf8b": {
+                            "true": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "bfd71004-1411-43ac-be08-539ad3764e83": {
+                                            "variable": "$.bb4a55c0-7d8e-4e74-aa1f-d2bfb1f55ea2.out.id",
+                                            "functions": []
+                                        },
+                                        "0fcf8ed7-aaf3-48c6-96b0-135d549e7b48": {
+                                            "variable": "$.bb4a55c0-7d8e-4e74-aa1f-d2bfb1f55ea2.out.description",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{bfd71004-1411-43ac-be08-539ad3764e83}}}",
+                                                "assertion": "notEmpty"
+                                            },
+                                            {
+                                                "field": "{{{0fcf8ed7-aaf3-48c6-96b0-135d549e7b48}}}",
+                                                "assertion": "regex",
+                                                "regex": "^E2E OrderUpdated \\d+$"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "fe1ab283-434b-43ac-b2a1-e596c435f926": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {},
+            "config": {},
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "601cab46-6485-4731-b268-9de639fd0177": {
+            "type": "appmixer.utils.timers.Wait",
+            "x": 272,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "fe1ab283-434b-43ac-b2a1-e596c435f926": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "fe1ab283-434b-43ac-b2a1-e596c435f926": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "interval": {}
+                                },
+                                "lambda": {
+                                    "interval": "2m"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "786b5a7d-7813-4f9c-b3fd-397097d86a08": {
+            "type": "appmixer.upsales.core.FindUsers",
+            "x": 480,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "601cab46-6485-4731-b268-9de639fd0177": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "601cab46-6485-4731-b268-9de639fd0177": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "outputType": {}
+                                },
+                                "lambda": {
+                                    "outputType": "first"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "841bbfee-65ca-4e41-99f1-9ab716a2979f": {
+            "type": "appmixer.upsales.core.FindOrderStages",
+            "x": 688,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "786b5a7d-7813-4f9c-b3fd-397097d86a08": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "786b5a7d-7813-4f9c-b3fd-397097d86a08": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "outputType": {}
+                                },
+                                "lambda": {
+                                    "outputType": "first"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "0f553eba-1951-4d27-932a-2c9c41e847da": {
+            "type": "appmixer.upsales.core.CreateCompany",
+            "x": 896,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "841bbfee-65ca-4e41-99f1-9ab716a2979f": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "841bbfee-65ca-4e41-99f1-9ab716a2979f": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "name": {
+                                        "deb5761d-24f7-4cb0-9b06-73d526187f56": {
+                                            "functions": [
+                                                {
+                                                    "name": "g_timestamp"
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "name": "E2E Upsales Trigger Co {{{deb5761d-24f7-4cb0-9b06-73d526187f56}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "c751b8a0-6462-4932-9e97-b451d8f0ac13": {
+            "type": "appmixer.upsales.core.CreateProduct",
+            "x": 1104,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "0f553eba-1951-4d27-932a-2c9c41e847da": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "0f553eba-1951-4d27-932a-2c9c41e847da": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "name": {
+                                        "bb89a502-5a8b-45c5-942e-c744beac9e96": {
+                                            "functions": [
+                                                {
+                                                    "name": "g_timestamp"
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "listPrice": {}
+                                },
+                                "lambda": {
+                                    "name": "E2E Upsales Trigger Product {{{bb89a502-5a8b-45c5-942e-c744beac9e96}}}",
+                                    "listPrice": 100
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "113a74e5-f1cd-4657-bd96-47a71c5cfb5e": {
+            "type": "appmixer.upsales.core.CreateOpportunity",
+            "x": 1312,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "c751b8a0-6462-4932-9e97-b451d8f0ac13": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "c751b8a0-6462-4932-9e97-b451d8f0ac13": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "companyId": {
+                                        "9bc7fa2a-8149-4beb-a0d5-4692ca46a61f": {
+                                            "functions": [],
+                                            "variable": "$.0f553eba-1951-4d27-932a-2c9c41e847da.out.id"
+                                        }
+                                    },
+                                    "userId": {
+                                        "3ae51608-67be-4f66-8c7c-63563c83032a": {
+                                            "functions": [],
+                                            "variable": "$.786b5a7d-7813-4f9c-b3fd-397097d86a08.out.id"
+                                        }
+                                    },
+                                    "stageId": {
+                                        "46e859ba-162f-4fb2-8d22-0f823a4f205b": {
+                                            "functions": [],
+                                            "variable": "$.841bbfee-65ca-4e41-99f1-9ab716a2979f.out.id"
+                                        }
+                                    },
+                                    "description": {
+                                        "0ad9ed59-ed4e-4451-806d-40077730ad65": {
+                                            "functions": [
+                                                {
+                                                    "name": "g_timestamp"
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "date": {
+                                        "eada29f2-47c4-491f-8f7c-aff879c5082b": {
+                                            "functions": [
+                                                {
+                                                    "name": "g_now"
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "productId": {
+                                        "79e1da0f-e27b-43de-8fef-c96552a17066": {
+                                            "functions": [],
+                                            "variable": "$.c751b8a0-6462-4932-9e97-b451d8f0ac13.out.id"
+                                        }
+                                    },
+                                    "price": {},
+                                    "probability": {}
+                                },
+                                "lambda": {
+                                    "companyId": "{{{9bc7fa2a-8149-4beb-a0d5-4692ca46a61f}}}",
+                                    "userId": "{{{3ae51608-67be-4f66-8c7c-63563c83032a}}}",
+                                    "stageId": "{{{46e859ba-162f-4fb2-8d22-0f823a4f205b}}}",
+                                    "description": "E2E OrderUpdated {{{0ad9ed59-ed4e-4451-806d-40077730ad65}}}",
+                                    "date": "{{{eada29f2-47c4-491f-8f7c-aff879c5082b}}}",
+                                    "productId": "{{{79e1da0f-e27b-43de-8fef-c96552a17066}}}",
+                                    "price": 100,
+                                    "probability": 40
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "8a5b2ac3-bdac-469d-a944-9da82b715f65": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1520,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "113a74e5-f1cd-4657-bd96-47a71c5cfb5e": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "113a74e5-f1cd-4657-bd96-47a71c5cfb5e": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "f2c5cbdf-d632-414c-bc6b-e808fa71eef5": {
+                                            "variable": "$.113a74e5-f1cd-4657-bd96-47a71c5cfb5e.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{f2c5cbdf-d632-414c-bc6b-e808fa71eef5}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "7ef08701-b84d-4713-8587-59251c6eea0f": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 1728,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "8a5b2ac3-bdac-469d-a944-9da82b715f65": [
+                        "out"
+                    ],
+                    "0db6ca56-8157-459a-9a21-2b7a3229ee1c": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 420
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "99d5801e-5b42-4ed0-b233-44e7c213fbf4": {
+            "type": "appmixer.upsales.core.DeleteOrder",
+            "x": 1936,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "7ef08701-b84d-4713-8587-59251c6eea0f": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "7ef08701-b84d-4713-8587-59251c6eea0f": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "orderId": {
+                                        "9741a2e7-c590-4dcd-9e26-13abe9dcaf0b": {
+                                            "functions": [],
+                                            "variable": "$.113a74e5-f1cd-4657-bd96-47a71c5cfb5e.out.id"
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "orderId": "{{{9741a2e7-c590-4dcd-9e26-13abe9dcaf0b}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "a3c56733-0a43-460e-95f1-65b7b3874311": {
+            "type": "appmixer.upsales.core.UpdateProduct",
+            "x": 2144,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "99d5801e-5b42-4ed0-b233-44e7c213fbf4": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "99d5801e-5b42-4ed0-b233-44e7c213fbf4": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "productId": {
+                                        "15dcb402-5e6d-461c-b501-e3d682ed6628": {
+                                            "functions": [],
+                                            "variable": "$.c751b8a0-6462-4932-9e97-b451d8f0ac13.out.id"
+                                        }
+                                    },
+                                    "active": {}
+                                },
+                                "lambda": {
+                                    "productId": "{{{15dcb402-5e6d-461c-b501-e3d682ed6628}}}",
+                                    "active": "0"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "c2cb38c1-5bd6-4306-b6a0-885e8ab7efef": {
+            "type": "appmixer.upsales.core.DeleteCompany",
+            "x": 2352,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "a3c56733-0a43-460e-95f1-65b7b3874311": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "a3c56733-0a43-460e-95f1-65b7b3874311": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "companyId": {
+                                        "a2c22615-315a-44a8-9ce7-3e6970b2d22d": {
+                                            "functions": [],
+                                            "variable": "$.0f553eba-1951-4d27-932a-2c9c41e847da.out.id"
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "companyId": "{{{a2c22615-315a-44a8-9ce7-3e6970b2d22d}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "0b8919ac-62b3-4d13-a714-9537bd67e47a": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 2560,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "c2cb38c1-5bd6-4306-b6a0-885e8ab7efef": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "successStoreId": "64f6f1f9193228000754082f",
+                    "failedStoreId": "64f6f1f0193228000754082e"
+                },
+                "transform": {
+                    "in": {
+                        "c2cb38c1-5bd6-4306-b6a0-885e8ab7efef": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "c2820838-086f-4e38-aecf-fc442a3d31a2": {
+                                            "functions": [],
+                                            "variable": "$.7ef08701-b84d-4713-8587-59251c6eea0f.out"
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E Upsales - Updated Order trigger",
+                                    "result": "{{{c2820838-086f-4e38-aecf-fc442a3d31a2}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        }
+    }
+}

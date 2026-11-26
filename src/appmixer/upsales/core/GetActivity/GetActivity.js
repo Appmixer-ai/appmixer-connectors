@@ -1,0 +1,19 @@
+'use strict';
+
+const lib = require('../../lib');
+
+module.exports = {
+
+    async receive(context) {
+
+        const { activityId } = context.messages.in.content;
+
+        if (!activityId) {
+            throw new context.CancelError('Task ID is required!');
+        }
+
+        // https://api.upsales.com/ - Tasks: GET /activities/{id}
+        const { data } = await lib.request(context, { path: '/activities/' + encodeURIComponent(activityId) });
+        return context.sendJson(data.data, 'out');
+    }
+};
