@@ -11,18 +11,14 @@ module.exports = {
             return lib.continueJobWait(context);
         }
 
-        const { datasourceId, timeout } = context.messages.in.content;
+        const { datasourceId, timeout, incremental, failOnUnsuccessfulJob } = context.messages.in.content;
 
         if (!datasourceId) {
             throw new context.CancelError('Data Source ID is required!');
         }
 
-        const { data } = await lib.apiRequest(context, {
-            method: 'POST',
-            path: '/datasources/' + lib.encodeId(datasourceId) + '/refresh',
-            data: {}
-        });
+        const { data } = await lib.startExtractRefresh(context, '/datasources/' + lib.encodeId(datasourceId) + '/refresh', incremental);
 
-        return lib.waitForJob(context, data.job, timeout);
+        return lib.waitForJob(context, data.job, timeout, { failOnUnsuccessful: failOnUnsuccessfulJob });
     }
 };

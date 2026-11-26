@@ -6,6 +6,8 @@ const auth = require('../../auth');
 const FindWorkbooks = require('../../core/FindWorkbooks/FindWorkbooks');
 const MakeApiCall = require('../../core/MakeApiCall/MakeApiCall');
 const RefreshWorkbookExtract = require('../../core/RefreshWorkbookExtract/RefreshWorkbookExtract');
+const RefreshDataSourceExtract = require('../../core/RefreshDataSourceExtract/RefreshDataSourceExtract');
+const RunExtractRefreshTask = require('../../core/RunExtractRefreshTask/RunExtractRefreshTask');
 const JobFinished = require('../../core/JobFinished/JobFinished');
 const NewWorkbook = require('../../core/NewWorkbook/NewWorkbook');
 
@@ -206,6 +208,164 @@ describe('tableau', function() {
             assert.strictEqual(context.sent.length, 1);
             assert.strictEqual(context.sent[0].data.status, 'Success');
             assert.strictEqual(context.sent[0].data.finishCode, 0);
+        });
+    });
+
+    describe('extract refresh options', function() {
+
+        const finishedJob = (finishCode, notes) => ({ data: { job: {
+            id: 'job-1', type: 'RefreshExtract', progress: '100', finishCode: String(finishCode),
+            completedAt: '2026-11-17T10:03:00Z',
+            statusNotes: notes ? { statusNote: [{ type: 'ErrorInfo', text: notes }] } : undefined
+        } } });
+
+        async function runRefresh(Component, content, finishCode, notes) {
+
+            const handler = options => {
+                if (options.url.endsWith('/auth/signin')) return signInResponse('token-1');
+                if (options.method === 'POST') return { data: { job: { id: 'job-1', type: 'RefreshExtract' } } };
+                return finishedJob(finishCode, notes);
+            };
+            const context = createContext({ handler, content });
+            await Component.receive(context);
+            context.messages = { timeout: { content: context.timeouts[0].data } };
+            return context;
+        }
+
+        it('fails with the job ID and the notes when the job did not succeed (default)', async function() {
+
+            const context = await runRefresh(RefreshDataSourceExtract, { datasourceId: 'ds-1' }, 1, 'Database login failed.');
+            await assert.rejects(RefreshDataSourceExtract.receive(context), err => {
+                assert(!(err instanceof context.CancelError), 'a failed job must be a retryable error');
+                assert.match(err.message, /job-1/);
+                assert.match(err.message, /Failed/);
+                assert.match(err.message, /Database login failed\./);
+                return true;
+            });
+            assert.strictEqual(context.sent.length, 0);
+        });
+
+        it('fails on a cancelled task run too', async function() {
+
+            const context = await runRefresh(RunExtractRefreshTask, { taskId: 't-1', failOnUnsuccessfulJob: true }, 2);
+            await assert.rejects(RunExtractRefreshTask.receive(context), /job-1 finished with status Cancelled/);
+        });
+
+        it('outputs the unsuccessful job when the option is off', async function() {
+
+            const context = await runRefresh(RefreshWorkbookExtract, { workbookId: 'wb-1', failOnUnsuccessfulJob: false }, 1);
+            await RefreshWorkbookExtract.receive(context);
+            assert.strictEqual(context.sent.length, 1);
+            assert.strictEqual(context.sent[0].data.status, 'Failed');
+        });
+
+        it('outputs a successful job with the option on', async function() {
+
+            const context = await runRefresh(RefreshDataSourceExtract, { datasourceId: 'ds-1', failOnUnsuccessfulJob: true }, 0);
+            await RefreshDataSourceExtract.receive(context);
+            assert.strictEqual(context.sent[0].data.status, 'Success');
+        });
+
+        it('sends a full refresh with an empty body by default', async function() {
+
+            const context = await runRefresh(RefreshDataSourceExtract, { datasourceId: 'ds-1' }, 0);
+            const post = context.requests.find(r => r.method === 'POST' && r.url.endsWith('/refresh'));
+            assert.strictEqual(post.url, 'https://10ay.online.tableau.com/api/3.19/sites/site-1/datasources/ds-1/refresh');
+            assert.deepStrictEqual(post.data, {});
+        });
+
+        it('sends incremental="true" with API 3.28 for an incremental refresh', async function() {
+
+            for (const [Component, content, url] of [
+                [RefreshDataSourceExtract, { datasourceId: 'ds-1', incremental: true }, '/api/3.28/sites/site-1/datasources/ds-1/refresh'],
+                [RefreshWorkbookExtract, { workbookId: 'wb-1', incremental: true }, '/api/3.28/sites/site-1/workbooks/wb-1/refresh']
+            ]) {
+                const context = await runRefresh(Component, content, 0);
+                const post = context.requests.find(r => r.method === 'POST' && r.url.endsWith('/refresh'));
+                assert.strictEqual(post.url, 'https://10ay.online.tableau.com' + url);
+                assert.strictEqual(post.headers['Content-Type'], 'application/xml');
+                assert.strictEqual(post.data, '<tsRequest><extractRefresh incremental="true" /></tsRequest>');
+                assert.strictEqual(post.headers['X-Tableau-Auth'], 'token-1');
+            }
+        });
+    });
+
+    describe('Connected App authentication', function() {
+
+        const CONNECTED_APP = {
+            serverUrl: 'https://10ay.online.tableau.com',
+            siteContentUrl: 'mysite',
+            authMethod: 'connectedApp',
+            clientId: 'client-1',
+            secretId: 'secret-id-1',
+            secretValue: 'secret-value-1',
+            username: 'appmixer@example.com'
+        };
+
+        const decode = part => JSON.parse(Buffer.from(part.replace(/-/g, '+').replace(/_/g, '/'), 'base64').toString('utf8'));
+
+        it('signs in with an HS256 JWT of the connected app', async function() {
+
+            const context = createContext({ handler: () => signInResponse('token-1') });
+            const session = await lib.signIn(context, CONNECTED_APP);
+            assert.strictEqual(session.token, 'token-1');
+            const [request] = context.requests;
+            assert.strictEqual(request.url, 'https://10ay.online.tableau.com/api/3.19/auth/signin');
+            const { jwt, site } = request.data.credentials;
+            assert.deepStrictEqual(site, { contentUrl: 'mysite' });
+            assert.strictEqual(request.data.credentials.personalAccessTokenName, undefined);
+
+            const [header, payload, signature] = jwt.split('.');
+            assert.deepStrictEqual(decode(header), { alg: 'HS256', typ: 'JWT', kid: 'secret-id-1', iss: 'client-1' });
+            const claims = decode(payload);
+            assert.strictEqual(claims.iss, 'client-1');
+            assert.strictEqual(claims.aud, 'tableau');
+            assert.strictEqual(claims.sub, 'appmixer@example.com');
+            assert(claims.jti);
+            const ttl = claims.exp - Math.floor(Date.now() / 1000);
+            assert(ttl > 0 && ttl <= 600, 'a connected app JWT is valid for 10 minutes at most');
+            for (const scope of ['tableau:content:read', 'tableau:tasks:run', 'tableau:jobs:read', 'tableau:views:download']) {
+                assert(claims.scp.includes(scope), scope);
+            }
+            const expected = require('crypto').createHmac('sha256', 'secret-value-1').update(header + '.' + payload)
+                .digest('base64').replace(/=+$/, '').replace(/\+/g, '-').replace(/\//g, '_');
+            assert.strictEqual(signature, expected);
+        });
+
+        it('uses a new jti on every sign-in', async function() {
+
+            const first = decode(lib.connectedAppJwt(CONNECTED_APP).split('.')[1]);
+            const second = decode(lib.connectedAppJwt(CONNECTED_APP).split('.')[1]);
+            assert.notStrictEqual(first.jti, second.jti);
+        });
+
+        it('makes no request when a connected app field is missing', async function() {
+
+            const context = createContext({ handler: () => assert.fail('no request expected') });
+            await assert.rejects(auth.definition.validate({ ...context, ...CONNECTED_APP, secretValue: '' }), /Secret Value/);
+            assert.strictEqual(context.requests.length, 0);
+        });
+
+        it('runs the components with the connected app session', async function() {
+
+            const handler = options => {
+                if (options.url.endsWith('/auth/signin')) {
+                    assert(options.data.credentials.jwt);
+                    return signInResponse('jwt-token');
+                }
+                assert.strictEqual(options.headers['X-Tableau-Auth'], 'jwt-token');
+                return { data: { workbook: { id: 'wb-1' } } };
+            };
+            const context = createContext({ handler });
+            context.auth = { ...CONNECTED_APP };
+            const { data } = await lib.apiRequest(context, { path: '/workbooks/wb-1' });
+            assert.strictEqual(data.workbook.id, 'wb-1');
+        });
+
+        it('keeps accounts without an authentication method on the Personal Access Token', function() {
+
+            assert.strictEqual(lib.authMethod(AUTH), 'pat');
+            assert.strictEqual(lib.authMethod({ ...CONNECTED_APP, authMethod: undefined }), 'connectedApp');
         });
     });
 

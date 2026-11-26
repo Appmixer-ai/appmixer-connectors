@@ -1,7 +1,7 @@
 {
     "name": "appmixer.tableau.core.RefreshWorkbookExtract",
     "label": "Refresh Workbook Extract",
-    "description": "Refresh the extracts of a workbook now (\"Refresh Extracts\" in Tableau). The component waits until Tableau finishes the job (it checks once a minute) and then outputs the job: check Status (Success, Failed or Cancelled). Requires the owner of the content, its project leader or a site administrator.",
+    "description": "Refresh the extracts of a workbook now (\"Refresh Extracts\" in Tableau). The component waits until Tableau finishes the job (it checks once a minute). With Fail if the job doesn't succeed on (default), a job that ends Failed or Cancelled makes the component fail with the job ID and Tableau's notes, so the step can be retried; with it off, every finished job is output: check Status (Success, Failed or Cancelled). Requires the owner of the content, its project leader or a site administrator.",
     "author": "Appmixer <info@appmixer.com>",
     "version": "1.0.0",
     "auth": {
@@ -27,6 +27,14 @@
                         "type": "integer",
                         "minimum": 1,
                         "default": 120
+                    },
+                    "incremental": {
+                        "type": "boolean",
+                        "default": false
+                    },
+                    "failOnUnsuccessfulJob": {
+                        "type": "boolean",
+                        "default": true
                     }
                 },
                 "required": [
@@ -47,6 +55,20 @@
                         "label": "Timeout (minutes)",
                         "tooltip": "How long to wait for the job to finish before the component fails. A single Tableau Cloud refresh is stopped after 120 minutes. Default: 120.",
                         "defaultValue": 120
+                    },
+                    "incremental": {
+                        "type": "toggle",
+                        "index": 3,
+                        "label": "Incremental",
+                        "tooltip": "Run an incremental refresh instead of a full one. Applies only to extracts configured for incremental refresh in Tableau. Off: a full refresh, whatever refresh type the extract is configured for. Requires Tableau Cloud or Tableau Server 2026.1 or later (REST API 3.28). Default: off.",
+                        "defaultValue": false
+                    },
+                    "failOnUnsuccessfulJob": {
+                        "type": "toggle",
+                        "index": 4,
+                        "label": "Fail if the job doesn't succeed",
+                        "tooltip": "On: the component fails when the job ends with another status than Success (Failed or Cancelled); the error contains the job ID and Tableau's notes. Off: the finished job is output whatever its status. Default: on.",
+                        "defaultValue": true
                     }
                 }
             }

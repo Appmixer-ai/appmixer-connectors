@@ -11,7 +11,7 @@ module.exports = {
             return lib.continueJobWait(context);
         }
 
-        const { taskId, timeout } = context.messages.in.content;
+        const { taskId, timeout, failOnUnsuccessfulJob } = context.messages.in.content;
 
         if (!taskId) {
             throw new context.CancelError('Task ID is required!');
@@ -23,6 +23,6 @@ module.exports = {
             data: {}
         });
 
-        return lib.waitForJob(context, data.job, timeout);
+        return lib.waitForJob(context, data.job, timeout, { failOnUnsuccessful: failOnUnsuccessfulJob });
     }
 };

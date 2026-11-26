@@ -7,6 +7,38 @@ const pathModule = require('path');
 // A server rejects a version newer than its own, so the connector pins a conservative one.
 const API_VERSION = '3.19';
 
+// The "incremental" attribute of Update Data Source Now / Update Workbook Now exists since 3.28;
+// only an incremental refresh request is sent with this version.
+const INCREMENTAL_API_VERSION = '3.28';
+
+const AUTH_PAT = 'pat';
+const AUTH_CONNECTED_APP = 'connectedApp';
+
+// Scopes of the REST methods the components call (Tableau REST API reference, "Access Scope" of each
+// method). Sign in and sign out need no scope.
+const CONNECTED_APP_SCOPES = [
+    'tableau:content:read',
+    'tableau:views:download',
+    'tableau:workbooks:download',
+    'tableau:tasks:read',
+    'tableau:tasks:run',
+    'tableau:jobs:read',
+    'tableau:users:read',
+    'tableau:users:create',
+    'tableau:users:update',
+    'tableau:users:delete',
+    'tableau:groups:read',
+    'tableau:groups:create',
+    'tableau:groups:update',
+    'tableau:groups:delete',
+    'tableau:webhooks:read',
+    'tableau:webhooks:create',
+    'tableau:webhooks:delete'
+];
+
+// A connected app JWT may be valid for 10 minutes at most; it is used once, right away.
+const JWT_TTL_SECONDS = 5 * 60;
+
 // The Cloud credentials token lives 120 minutes (30 minutes idle per the UAT docs), the Server one
 // 240 minutes idle. A cached session older than this is signed in again before it is used.
 const SESSION_TTL_MS = 25 * 60 * 1000;
@@ -68,31 +100,90 @@ function tableauErrorMessage(err) {
 }
 
 /**
- * Sign in with the Personal Access Token. Used by auth.js and by the session cache.
+ * The authentication method of an account. Accounts without the field use a Personal Access Token;
+ * an account with only Connected App fields filled in uses the Connected App.
+ */
+function authMethod(auth = {}) {
+
+    if (auth.authMethod === AUTH_CONNECTED_APP || auth.authMethod === AUTH_PAT) {
+        return auth.authMethod;
+    }
+    return !auth.tokenName && auth.clientId ? AUTH_CONNECTED_APP : AUTH_PAT;
+}
+
+function base64url(value) {
+
+    return Buffer.from(value).toString('base64').replace(/=+$/, '').replace(/\+/g, '-').replace(/\//g, '_');
+}
+
+/**
+ * The JWT of a connected app with direct trust: HS256, signed with the secret value, `kid` is the
+ * secret ID, `iss` the client ID, `aud` "tableau", `sub` the Tableau user name, `scp` the scopes.
+ */
+function connectedAppJwt(auth, now = Date.now()) {
+
+    const clientId = String(auth.clientId || '').trim();
+    const secretId = String(auth.secretId || '').trim();
+    const secretValue = String(auth.secretValue || '').trim();
+    const username = String(auth.username || '').trim();
+    if (!clientId || !secretId || !secretValue || !username) {
+        throw new Error('Connected App authentication needs the Client ID, the Secret ID, the Secret Value and the Username.');
+    }
+    const header = { alg: 'HS256', typ: 'JWT', kid: secretId, iss: clientId };
+    const payload = {
+        iss: clientId,
+        aud: 'tableau',
+        sub: username,
+        jti: crypto.randomUUID(),
+        exp: Math.floor(now / 1000) + JWT_TTL_SECONDS,
+        scp: CONNECTED_APP_SCOPES
+    };
+    const unsigned = base64url(JSON.stringify(header)) + '.' + base64url(JSON.stringify(payload));
+    const signature = crypto.createHmac('sha256', secretValue).update(unsigned).digest('base64')
+        .replace(/=+$/, '').replace(/\+/g, '-').replace(/\//g, '_');
+    return unsigned + '.' + signature;
+}
+
+function signInCredentials(auth, contentUrl) {
+
+    if (authMethod(auth) === AUTH_CONNECTED_APP) {
+        return { jwt: connectedAppJwt(auth), site: { contentUrl } };
+    }
+    return {
+        personalAccessTokenName: auth.tokenName,
+        personalAccessTokenSecret: auth.tokenSecret,
+        site: { contentUrl }
+    };
+}
+
+/**
+ * Sign in with the Personal Access Token or with a Connected App JWT. Used by auth.js and by the
+ * session cache.
  * @param {object} context any context that has httpRequest
- * @param {object} auth { serverUrl, siteContentUrl, tokenName, tokenSecret }
+ * @param {object} auth { serverUrl, siteContentUrl, authMethod, tokenName, tokenSecret, clientId,
+ *  secretId, secretValue, username }
  */
 async function signIn(context, auth) {
 
     const origin = serverOrigin(auth.serverUrl);
     const contentUrl = siteContentUrl(auth.siteContentUrl);
+    const signInBody = signInCredentials(auth, contentUrl);
     let response;
     try {
         response = await context.httpRequest({
             method: 'POST',
             url: origin + '/api/' + API_VERSION + '/auth/signin',
             headers: { 'Accept': 'application/json' },
-            data: {
-                credentials: {
-                    personalAccessTokenName: auth.tokenName,
-                    personalAccessTokenSecret: auth.tokenSecret,
-                    site: { contentUrl }
-                }
-            }
+            data: { credentials: signInBody }
         });
     } catch (err) {
         const message = tableauErrorMessage(err);
         if (err.response && err.response.status === 401) {
+            if (signInBody.jwt) {
+                throw new Error((message || 'Tableau rejected the sign-in.')
+                    + ' Check that the connected app is enabled, the Client ID, the Secret ID, the Secret Value,'
+                    + ' the Username (a user of the site) and the site.');
+            }
             throw new Error((message || 'Tableau rejected the sign-in.')
                 + ' Check the token name, the token secret and the site. Personal access tokens expire after 15 days'
                 + ' without use, and on Tableau Cloud a site administrator must enable them.');
@@ -115,7 +206,10 @@ async function signIn(context, auth) {
 function sessionKey(auth) {
 
     const hash = crypto.createHash('sha256')
-        .update(JSON.stringify([auth.serverUrl, auth.siteContentUrl, auth.tokenName, auth.tokenSecret]))
+        .update(JSON.stringify([
+            auth.serverUrl, auth.siteContentUrl, authMethod(auth),
+            auth.tokenName, auth.tokenSecret, auth.clientId, auth.secretId, auth.secretValue, auth.username
+        ]))
         .digest('hex');
     return 'tableau-session-' + hash;
 }
@@ -123,7 +217,8 @@ function sessionKey(auth) {
 /**
  * One cached session per connected account, shared by every component of the account.
  * Each sign-in with a PAT ends the previous session of the same PAT, so components must not sign in
- * per request: the session is cached and a new sign-in happens under a lock, once.
+ * per request: the session is cached and a new sign-in happens under a lock, once. A Connected App
+ * signs in with a new JWT each time and has no such limit; it shares the same cache.
  * @param {object} context component context
  * @param {string} [staleToken] the token a request was rejected with; forces a new sign-in unless
  *  another component already replaced it
@@ -154,20 +249,20 @@ async function getSession(context, staleToken) {
     }
 }
 
-function siteUrl(context, session, path) {
+function siteUrl(context, session, path, apiVersion = API_VERSION) {
 
-    return serverOrigin(context.auth.serverUrl) + '/api/' + API_VERSION + '/sites/' + session.siteId + path;
+    return serverOrigin(context.auth.serverUrl) + '/api/' + apiVersion + '/sites/' + session.siteId + path;
 }
 
 /**
  * Authorized request to a site-scoped endpoint; "path" is relative to /api/{version}/sites/{site-id}.
  * Signs in again once when the session was ended (401), e.g. by another sign-in with the same PAT.
  */
-async function apiRequest(context, { method = 'GET', path, params, data, headers = {}, responseType }) {
+async function apiRequest(context, { method = 'GET', path, params, data, headers = {}, responseType, apiVersion }) {
 
     const send = async (session) => context.httpRequest({
         method,
-        url: siteUrl(context, session, path),
+        url: siteUrl(context, session, path, apiVersion),
         headers: { 'Accept': 'application/json', ...headers, 'X-Tableau-Auth': session.token },
         params,
         data,
@@ -409,32 +504,78 @@ const JOB_POLL_INTERVAL_MS = 60 * 1000;
 const DEFAULT_JOB_TIMEOUT_MINUTES = 120;
 
 /**
+ * Starts an extract refresh of a data source or workbook ("Update Data Source Now" / "Update
+ * Workbook Now"). Without "incremental" the request body stays empty (a full refresh on every API
+ * version); with it, the documented 3.28 body is sent: <extractRefresh incremental="true"/>.
+ * @param {string} path e.g. /datasources/{id}/refresh
+ */
+async function startExtractRefresh(context, path, incremental) {
+
+    if (!toBool(incremental)) {
+        return apiRequest(context, { method: 'POST', path, data: {} });
+    }
+    return apiRequest(context, {
+        method: 'POST',
+        path,
+        apiVersion: INCREMENTAL_API_VERSION,
+        headers: { 'Content-Type': 'application/xml' },
+        data: '<tsRequest><extractRefresh incremental="true" /></tsRequest>'
+    });
+}
+
+/**
  * Waits for a job that Tableau just accepted (refresh, run now): schedules a continuation that checks
  * the job once a minute until it finishes or the timeout passes. The scheduled message keeps the
  * scope of the input message, so the result continues the branch that started the job.
+ * @param {object} [options]
+ * @param {boolean} [options.failOnUnsuccessful=true] fail the component when the job ends with
+ *  another status than Success
  */
-async function waitForJob(context, job, timeoutMinutes) {
+async function waitForJob(context, job, timeoutMinutes, { failOnUnsuccessful = true } = {}) {
 
     const jobId = job && job.id;
     if (!jobId) {
         throw new context.CancelError('Tableau accepted the request but returned no job ID.');
     }
     const minutes = Number(timeoutMinutes) > 0 ? Number(timeoutMinutes) : DEFAULT_JOB_TIMEOUT_MINUTES;
-    return context.setTimeout({ jobId, deadline: Date.now() + minutes * 60 * 1000, minutes }, JOB_POLL_INTERVAL_MS);
+    return context.setTimeout({
+        jobId,
+        deadline: Date.now() + minutes * 60 * 1000,
+        minutes,
+        failOnUnsuccessful: failOnUnsuccessful !== false && failOnUnsuccessful !== 'false'
+    }, JOB_POLL_INTERVAL_MS);
+}
+
+/**
+ * The error of a finished job that did not succeed: the job ID, the status, the finish code and
+ * Tableau's status notes.
+ */
+function unsuccessfulJobError(job) {
+
+    const error = new Error('Tableau job ' + job.id + ' finished with status ' + job.status
+        + (job.finishCode !== undefined ? ' (finish code ' + job.finishCode + ')' : '') + '.'
+        + (job.notes ? ' Notes: ' + job.notes : ''));
+    error.job = job;
+    return error;
 }
 
 async function continueJobWait(context) {
 
-    const { jobId, deadline, minutes } = context.messages.timeout.content;
+    const { jobId, deadline, minutes, failOnUnsuccessful } = context.messages.timeout.content;
     const { data } = await apiRequest(context, { path: '/jobs/' + encodeId(jobId) });
     const job = mapJob(data.job);
     if (isJobFinished(job)) {
+        if (failOnUnsuccessful !== false && (job.status !== 'Success' || job.finishCode !== 0)) {
+            // A plain Error, not a CancelError: the step fails and Appmixer retries it. A retry checks
+            // the same job again; it never starts another refresh.
+            throw unsuccessfulJobError(job);
+        }
         return context.sendJson(job, 'out');
     }
     if (Date.now() > deadline) {
         throw new context.CancelError('Tableau job ' + jobId + ' did not finish within ' + minutes + ' minutes.');
     }
-    return context.setTimeout({ jobId, deadline, minutes }, JOB_POLL_INTERVAL_MS);
+    return context.setTimeout({ jobId, deadline, minutes, failOnUnsuccessful }, JOB_POLL_INTERVAL_MS);
 }
 
 function mapBackgroundJob(j = {}) {
@@ -676,8 +817,14 @@ function kvToObject(value) {
 module.exports = {
 
     API_VERSION,
+    INCREMENTAL_API_VERSION,
+    AUTH_PAT,
+    AUTH_CONNECTED_APP,
+    CONNECTED_APP_SCOPES,
     serverOrigin,
     siteContentUrl,
+    authMethod,
+    connectedAppJwt,
     signIn,
     getSession,
     apiRequest,
@@ -693,6 +840,7 @@ module.exports = {
     mapGroup,
     mapJob,
     isJobFinished,
+    startExtractRefresh,
     waitForJob,
     continueJobWait,
     mapBackgroundJob,

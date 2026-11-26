@@ -11,18 +11,14 @@ module.exports = {
             return lib.continueJobWait(context);
         }
 
-        const { workbookId, timeout } = context.messages.in.content;
+        const { workbookId, timeout, incremental, failOnUnsuccessfulJob } = context.messages.in.content;
 
         if (!workbookId) {
             throw new context.CancelError('Workbook ID is required!');
         }
 
-        const { data } = await lib.apiRequest(context, {
-            method: 'POST',
-            path: '/workbooks/' + lib.encodeId(workbookId) + '/refresh',
-            data: {}
-        });
+        const { data } = await lib.startExtractRefresh(context, '/workbooks/' + lib.encodeId(workbookId) + '/refresh', incremental);
 
-        return lib.waitForJob(context, data.job, timeout);
+        return lib.waitForJob(context, data.job, timeout, { failOnUnsuccessful: failOnUnsuccessfulJob });
     }
 };
