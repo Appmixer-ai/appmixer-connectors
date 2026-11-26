@@ -1,0 +1,141 @@
+{
+    "name": "appmixer.google.cloudstorage.FindObjects",
+    "label": "Find Objects",
+    "description": "Find the objects of a bucket by name prefix, glob pattern or name range, sorted by name. Returns at most 1000 objects.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:google",
+        "scope": [
+            "https://www.googleapis.com/auth/devstorage.read_write"
+        ]
+    },
+    "quota": {
+        "manager": "appmixer:google:cloudstorage",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "bucket": {
+                        "type": "string"
+                    },
+                    "prefix": {
+                        "type": "string"
+                    },
+                    "matchGlob": {
+                        "type": "string"
+                    },
+                    "startOffset": {
+                        "type": "string"
+                    },
+                    "endOffset": {
+                        "type": "string"
+                    },
+                    "outputType": {
+                        "type": "string",
+                        "default": "array"
+                    }
+                },
+                "required": [
+                    "bucket"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "bucket": {
+                        "type": "text",
+                        "index": 1,
+                        "label": "Bucket",
+                        "tooltip": "Name of the bucket, for example <code>my-bucket</code>."
+                    },
+                    "prefix": {
+                        "type": "text",
+                        "index": 2,
+                        "label": "Prefix",
+                        "tooltip": "Only objects whose names start with this prefix, for example <code>reports/2026/</code>."
+                    },
+                    "matchGlob": {
+                        "type": "text",
+                        "index": 3,
+                        "label": "Match Glob",
+                        "tooltip": "Only objects whose names match this glob pattern, for example <code>**/*.csv</code>."
+                    },
+                    "startOffset": {
+                        "type": "text",
+                        "index": 4,
+                        "label": "Start Offset",
+                        "tooltip": "Only objects whose names are lexicographically equal to or after this value."
+                    },
+                    "endOffset": {
+                        "type": "text",
+                        "index": 5,
+                        "label": "End Offset",
+                        "tooltip": "Only objects whose names are lexicographically before this value."
+                    },
+                    "outputType": {
+                        "type": "select",
+                        "label": "Output Type",
+                        "index": 6,
+                        "defaultValue": "array",
+                        "tooltip": "Choose whether you want to receive the result set as one complete list, or first item only or one item at a time or stream the items to a file.",
+                        "options": [
+                            {
+                                "label": "First Item Only",
+                                "value": "first"
+                            },
+                            {
+                                "label": "All items at once",
+                                "value": "array"
+                            },
+                            {
+                                "label": "One item at a time",
+                                "value": "object"
+                            },
+                            {
+                                "label": "Store to CSV file",
+                                "value": "file"
+                            }
+                        ]
+                    }
+                }
+            }
+        }
+    ],
+    "properties": {
+        "schema": {
+            "properties": {
+                "generateOutputPortOptions": {
+                    "type": "boolean"
+                }
+            }
+        }
+    },
+    "outPorts": [
+        {
+            "name": "out",
+            "source": {
+                "url": "/component/appmixer/google/cloudstorage/FindObjects?outPort=out&ignoreAuth=true",
+                "data": {
+                    "properties": {
+                        "generateOutputPortOptions": true
+                    },
+                    "messages": {
+                        "in/bucket": "bucket",
+                        "in/outputType": "inputs/in/outputType"
+                    }
+                }
+            }
+        },
+        {
+            "name": "notFound"
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0Ij48cmVjdCBmaWxsPSIjYWVjYmZhIiB4PSIyIiB5PSI0IiB3aWR0aD0iMjAiIGhlaWdodD0iNyIvPjxyZWN0IGZpbGw9IiM2NjlkZjYiIHg9IjIwIiB5PSI0IiB3aWR0aD0iMiIgaGVpZ2h0PSI3Ii8+PHBvbHlnb24gZmlsbD0iIzQyODVmNCIgcG9pbnRzPSIyMiA0IDIwIDQgMjAgMTEgMjIgNCIvPjxyZWN0IGZpbGw9IiM2NjlkZjYiIHg9IjIiIHk9IjQiIHdpZHRoPSIyIiBoZWlnaHQ9IjciLz48cmVjdCBmaWxsPSIjZmZmIiB4PSI2IiB5PSI3IiB3aWR0aD0iNiIgaGVpZ2h0PSIxIi8+PHJlY3QgZmlsbD0iI2ZmZiIgeD0iMTUiIHk9IjYiIHdpZHRoPSIzIiBoZWlnaHQ9IjMiIHJ4PSIxLjUiLz48cmVjdCBmaWxsPSIjYWVjYmZhIiB4PSIyIiB5PSIxMyIgd2lkdGg9IjIwIiBoZWlnaHQ9IjciLz48cmVjdCBmaWxsPSIjNjY5ZGY2IiB4PSIyMCIgeT0iMTMiIHdpZHRoPSIyIiBoZWlnaHQ9IjciLz48cG9seWdvbiBmaWxsPSIjNDI4NWY0IiBwb2ludHM9IjIyIDEzIDIwIDEzIDIwIDIwIDIyIDEzIi8+PHJlY3QgZmlsbD0iIzY2OWRmNiIgeD0iMiIgeT0iMTMiIHdpZHRoPSIyIiBoZWlnaHQ9IjciLz48cmVjdCBmaWxsPSIjZmZmIiB4PSI2IiB5PSIxNiIgd2lkdGg9IjYiIGhlaWdodD0iMSIvPjxyZWN0IGZpbGw9IiNmZmYiIHg9IjE1IiB5PSIxNSIgd2lkdGg9IjMiIGhlaWdodD0iMyIgcng9IjEuNSIvPjwvc3ZnPg=="
+}

@@ -1,0 +1,186 @@
+{
+    "name": "appmixer.google.cloudstorage.CreateBucket",
+    "label": "Create Bucket",
+    "description": "Create a bucket in a Google Cloud project. Bucket names are globally unique across Cloud Storage.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:google",
+        "scope": [
+            "https://www.googleapis.com/auth/devstorage.read_write"
+        ]
+    },
+    "quota": {
+        "manager": "appmixer:google:cloudstorage",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "projectId": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "location": {
+                        "type": "string"
+                    },
+                    "storageClass": {
+                        "type": "string",
+                        "enum": [
+                            "STANDARD",
+                            "NEARLINE",
+                            "COLDLINE",
+                            "ARCHIVE"
+                        ]
+                    },
+                    "uniformBucketLevelAccess": {
+                        "type": "boolean"
+                    }
+                },
+                "required": [
+                    "projectId",
+                    "name"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "projectId": {
+                        "type": "text",
+                        "index": 1,
+                        "label": "Project ID",
+                        "tooltip": "ID of the Google Cloud project, for example <code>my-project-123456</code>. Find it in the Google Cloud console project selector."
+                    },
+                    "name": {
+                        "type": "text",
+                        "index": 2,
+                        "label": "Bucket Name",
+                        "tooltip": "Globally unique name: 3-63 characters, lowercase letters, digits, dashes, underscores and dots, starting and ending with a letter or digit."
+                    },
+                    "location": {
+                        "type": "text",
+                        "index": 3,
+                        "label": "Location",
+                        "defaultValue": "US",
+                        "tooltip": "A region (<code>US-CENTRAL1</code>), dual-region (<code>NAM4</code>) or multi-region (<code>US</code>, <code>EU</code>, <code>ASIA</code>). Defaults to <code>US</code>."
+                    },
+                    "storageClass": {
+                        "type": "select",
+                        "index": 4,
+                        "label": "Storage Class",
+                        "defaultValue": "STANDARD",
+                        "tooltip": "Default storage class of the objects in the bucket.",
+                        "options": [
+                            {
+                                "label": "Standard",
+                                "value": "STANDARD"
+                            },
+                            {
+                                "label": "Nearline",
+                                "value": "NEARLINE"
+                            },
+                            {
+                                "label": "Coldline",
+                                "value": "COLDLINE"
+                            },
+                            {
+                                "label": "Archive",
+                                "value": "ARCHIVE"
+                            }
+                        ]
+                    },
+                    "uniformBucketLevelAccess": {
+                        "type": "toggle",
+                        "index": 5,
+                        "label": "Uniform Bucket-Level Access",
+                        "defaultValue": true,
+                        "tooltip": "Control access with IAM only (recommended by Google). When off, object ACLs apply as well."
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "schema": {
+                "type": "object",
+                "required": [
+                    "id",
+                    "name",
+                    "location",
+                    "storageClass",
+                    "timeCreated",
+                    "updated"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "title": "ID",
+                        "example": "my-bucket"
+                    },
+                    "name": {
+                        "type": "string",
+                        "title": "Name",
+                        "example": "my-bucket"
+                    },
+                    "projectNumber": {
+                        "type": "string",
+                        "title": "Project Number",
+                        "example": "123456789012"
+                    },
+                    "location": {
+                        "type": "string",
+                        "title": "Location",
+                        "example": "US-CENTRAL1"
+                    },
+                    "locationType": {
+                        "type": "string",
+                        "title": "Location Type",
+                        "example": "region"
+                    },
+                    "storageClass": {
+                        "type": "string",
+                        "title": "Storage Class",
+                        "example": "STANDARD"
+                    },
+                    "metageneration": {
+                        "type": "string",
+                        "title": "Metageneration",
+                        "example": "1"
+                    },
+                    "etag": {
+                        "type": "string",
+                        "title": "ETag",
+                        "example": "CAE="
+                    },
+                    "timeCreated": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Time Created",
+                        "example": "2026-11-20T10:30:00.123Z"
+                    },
+                    "updated": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Updated",
+                        "example": "2026-11-20T10:30:00.123Z"
+                    },
+                    "selfLink": {
+                        "type": "string",
+                        "title": "Self Link",
+                        "example": "https://www.googleapis.com/storage/v1/b/my-bucket"
+                    }
+                }
+            }
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0Ij48cmVjdCBmaWxsPSIjYWVjYmZhIiB4PSIyIiB5PSI0IiB3aWR0aD0iMjAiIGhlaWdodD0iNyIvPjxyZWN0IGZpbGw9IiM2NjlkZjYiIHg9IjIwIiB5PSI0IiB3aWR0aD0iMiIgaGVpZ2h0PSI3Ii8+PHBvbHlnb24gZmlsbD0iIzQyODVmNCIgcG9pbnRzPSIyMiA0IDIwIDQgMjAgMTEgMjIgNCIvPjxyZWN0IGZpbGw9IiM2NjlkZjYiIHg9IjIiIHk9IjQiIHdpZHRoPSIyIiBoZWlnaHQ9IjciLz48cmVjdCBmaWxsPSIjZmZmIiB4PSI2IiB5PSI3IiB3aWR0aD0iNiIgaGVpZ2h0PSIxIi8+PHJlY3QgZmlsbD0iI2ZmZiIgeD0iMTUiIHk9IjYiIHdpZHRoPSIzIiBoZWlnaHQ9IjMiIHJ4PSIxLjUiLz48cmVjdCBmaWxsPSIjYWVjYmZhIiB4PSIyIiB5PSIxMyIgd2lkdGg9IjIwIiBoZWlnaHQ9IjciLz48cmVjdCBmaWxsPSIjNjY5ZGY2IiB4PSIyMCIgeT0iMTMiIHdpZHRoPSIyIiBoZWlnaHQ9IjciLz48cG9seWdvbiBmaWxsPSIjNDI4NWY0IiBwb2ludHM9IjIyIDEzIDIwIDEzIDIwIDIwIDIyIDEzIi8+PHJlY3QgZmlsbD0iIzY2OWRmNiIgeD0iMiIgeT0iMTMiIHdpZHRoPSIyIiBoZWlnaHQ9IjciLz48cmVjdCBmaWxsPSIjZmZmIiB4PSI2IiB5PSIxNiIgd2lkdGg9IjYiIGhlaWdodD0iMSIvPjxyZWN0IGZpbGw9IiNmZmYiIHg9IjE1IiB5PSIxNSIgd2lkdGg9IjMiIGhlaWdodD0iMyIgcng9IjEuNSIvPjwvc3ZnPg=="
+}

@@ -1,0 +1,148 @@
+{
+    "name": "appmixer.google.cloudstorage.MakeApiCall",
+    "label": "Make API Call",
+    "description": "Perform an arbitrary authorized call to the Cloud Storage JSON API. Provide a path (or full URL on https://storage.googleapis.com), method, headers, query parameters and body. The Authorization header is added automatically.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:google",
+        "scope": [
+            "https://www.googleapis.com/auth/devstorage.full_control",
+            "https://www.googleapis.com/auth/devstorage.read_write"
+        ]
+    },
+    "quota": {
+        "manager": "appmixer:google:cloudstorage",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "url": {
+                        "type": "string"
+                    },
+                    "method": {
+                        "type": "string",
+                        "enum": [
+                            "GET",
+                            "POST",
+                            "PUT",
+                            "PATCH",
+                            "DELETE"
+                        ]
+                    },
+                    "headers": {
+                        "type": "string"
+                    },
+                    "parameters": {
+                        "type": "string"
+                    },
+                    "body": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "url",
+                    "method"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "url": {
+                        "type": "text",
+                        "index": 1,
+                        "label": "API Endpoint Path",
+                        "tooltip": "A path relative to <code>https://storage.googleapis.com/storage/v1</code>, for example <code>/b/my-bucket/iam</code>. A full URL is accepted only when it points at <code>https://storage.googleapis.com</code>; any other host is rejected so your credential is never sent elsewhere."
+                    },
+                    "method": {
+                        "type": "select",
+                        "index": 2,
+                        "label": "HTTP Method",
+                        "defaultValue": "GET",
+                        "tooltip": "The HTTP method for the API call.",
+                        "options": [
+                            {
+                                "label": "GET",
+                                "value": "GET"
+                            },
+                            {
+                                "label": "POST",
+                                "value": "POST"
+                            },
+                            {
+                                "label": "PUT",
+                                "value": "PUT"
+                            },
+                            {
+                                "label": "PATCH",
+                                "value": "PATCH"
+                            },
+                            {
+                                "label": "DELETE",
+                                "value": "DELETE"
+                            }
+                        ]
+                    },
+                    "parameters": {
+                        "type": "key-value",
+                        "keyLabel": "Key",
+                        "valueLabel": "Value",
+                        "addLabel": "Add item",
+                        "removeLabel": "Remove item",
+                        "index": 3,
+                        "label": "Query Parameters",
+                        "tooltip": "Optional query parameters, for example <code>project</code> or <code>prefix</code>."
+                    },
+                    "body": {
+                        "type": "textarea",
+                        "index": 4,
+                        "label": "Request Body",
+                        "tooltip": "Optional JSON request body."
+                    },
+                    "headers": {
+                        "type": "key-value",
+                        "keyLabel": "Key",
+                        "valueLabel": "Value",
+                        "addLabel": "Add item",
+                        "removeLabel": "Remove item",
+                        "index": 5,
+                        "label": "Request Headers",
+                        "tooltip": "Optional additional headers. The Authorization header is set automatically."
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "statusCode": {
+                        "type": "integer",
+                        "title": "Status Code",
+                        "example": 200
+                    },
+                    "headers": {
+                        "type": "object",
+                        "title": "Response Headers",
+                        "properties": {}
+                    },
+                    "body": {
+                        "type": "object",
+                        "title": "Response Body",
+                        "properties": {}
+                    }
+                }
+            }
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0Ij48cmVjdCBmaWxsPSIjYWVjYmZhIiB4PSIyIiB5PSI0IiB3aWR0aD0iMjAiIGhlaWdodD0iNyIvPjxyZWN0IGZpbGw9IiM2NjlkZjYiIHg9IjIwIiB5PSI0IiB3aWR0aD0iMiIgaGVpZ2h0PSI3Ii8+PHBvbHlnb24gZmlsbD0iIzQyODVmNCIgcG9pbnRzPSIyMiA0IDIwIDQgMjAgMTEgMjIgNCIvPjxyZWN0IGZpbGw9IiM2NjlkZjYiIHg9IjIiIHk9IjQiIHdpZHRoPSIyIiBoZWlnaHQ9IjciLz48cmVjdCBmaWxsPSIjZmZmIiB4PSI2IiB5PSI3IiB3aWR0aD0iNiIgaGVpZ2h0PSIxIi8+PHJlY3QgZmlsbD0iI2ZmZiIgeD0iMTUiIHk9IjYiIHdpZHRoPSIzIiBoZWlnaHQ9IjMiIHJ4PSIxLjUiLz48cmVjdCBmaWxsPSIjYWVjYmZhIiB4PSIyIiB5PSIxMyIgd2lkdGg9IjIwIiBoZWlnaHQ9IjciLz48cmVjdCBmaWxsPSIjNjY5ZGY2IiB4PSIyMCIgeT0iMTMiIHdpZHRoPSIyIiBoZWlnaHQ9IjciLz48cG9seWdvbiBmaWxsPSIjNDI4NWY0IiBwb2ludHM9IjIyIDEzIDIwIDEzIDIwIDIwIDIyIDEzIi8+PHJlY3QgZmlsbD0iIzY2OWRmNiIgeD0iMiIgeT0iMTMiIHdpZHRoPSIyIiBoZWlnaHQ9IjciLz48cmVjdCBmaWxsPSIjZmZmIiB4PSI2IiB5PSIxNiIgd2lkdGg9IjYiIGhlaWdodD0iMSIvPjxyZWN0IGZpbGw9IiNmZmYiIHg9IjE1IiB5PSIxNSIgd2lkdGg9IjMiIGhlaWdodD0iMyIgcng9IjEuNSIvPjwvc3ZnPg=="
+}
