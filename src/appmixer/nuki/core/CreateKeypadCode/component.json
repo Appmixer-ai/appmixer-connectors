@@ -1,0 +1,324 @@
+{
+    "name": "appmixer.nuki.core.CreateKeypadCode",
+    "label": "Create Keypad Code",
+    "description": "Create a 6-digit code for the Nuki Keypad of a device, optionally valid only between two moments (for example check-in and check-out). Nuki does not e-mail keypad codes, so send the code from the output to the guest yourself. Nuki answers a create request before the device has stored the access and returns no ID, so the component looks the new authorization up in the list of the device: within a few seconds, then once a minute for up to 5 minutes. The \"out\" port fires when Nuki Web lists the authorization and carries its ID, which you need to update or delete it later. It does not prove that the device has stored it. The \"notConfirmed\" port fires when the authorization has not appeared after 5 minutes; check the device before trying again. An offline device is refused with an error before anything is sent. Short-term rental use needs a Nuki Smart Hosting subscription on the device. Needs the token scopes smartlock.readOnly and smartlock.auth.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:nuki"
+    },
+    "quota": {
+        "manager": "appmixer:nuki",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "smartlockId": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string",
+                        "maxLength": 32
+                    },
+                    "code": {
+                        "type": "string"
+                    },
+                    "allowedFromDate": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "allowedUntilDate": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "allowedWeekDays": {
+                        "type": [
+                            "array",
+                            "string"
+                        ],
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "allowedFromTime": {
+                        "type": "string"
+                    },
+                    "allowedUntilTime": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "smartlockId",
+                    "name"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "smartlockId": {
+                        "type": "text",
+                        "index": 1,
+                        "label": "Smartlock",
+                        "tooltip": "The device the Keypad is paired with. Pick a device, or type its Smartlock ID.",
+                        "source": {
+                            "url": "/component/appmixer/nuki/core/FindSmartlocks?outPort=out",
+                            "data": {
+                                "properties": {
+                                    "isSource": true
+                                },
+                                "transform": "./FindSmartlocks#toSelectArray"
+                            }
+                        }
+                    },
+                    "name": {
+                        "type": "text",
+                        "index": 2,
+                        "label": "Name",
+                        "tooltip": "The name of the code, at most 32 characters. It appears in the activity log. Use something unique such as the reservation number, so that the code can be found again."
+                    },
+                    "code": {
+                        "type": "text",
+                        "index": 3,
+                        "label": "Keypad Code",
+                        "tooltip": "Exactly 6 digits, using the digits 1-9 only (no 0), not starting with 12, and not used by another code on the same Keypad. Leave empty to have a random code generated; the output contains it."
+                    },
+                    "allowedFromDate": {
+                        "type": "date-time",
+                        "index": 4,
+                        "label": "Allowed From",
+                        "tooltip": "The moment from which the code works, for example the check-in time. Sent to Nuki in UTC. Leave empty for no start limit."
+                    },
+                    "allowedUntilDate": {
+                        "type": "date-time",
+                        "index": 5,
+                        "label": "Allowed Until",
+                        "tooltip": "The moment after which the code stops working, for example the check-out time. Sent to Nuki in UTC. Leave empty for no end limit."
+                    },
+                    "allowedWeekDays": {
+                        "type": "multiselect",
+                        "index": 6,
+                        "label": "Allowed Weekdays",
+                        "tooltip": "The days of the week on which the code works. Leave empty for every day.",
+                        "options": [
+                            {
+                                "label": "Monday",
+                                "value": "monday"
+                            },
+                            {
+                                "label": "Tuesday",
+                                "value": "tuesday"
+                            },
+                            {
+                                "label": "Wednesday",
+                                "value": "wednesday"
+                            },
+                            {
+                                "label": "Thursday",
+                                "value": "thursday"
+                            },
+                            {
+                                "label": "Friday",
+                                "value": "friday"
+                            },
+                            {
+                                "label": "Saturday",
+                                "value": "saturday"
+                            },
+                            {
+                                "label": "Sunday",
+                                "value": "sunday"
+                            }
+                        ]
+                    },
+                    "allowedFromTime": {
+                        "type": "text",
+                        "index": 7,
+                        "label": "Allowed From Time",
+                        "tooltip": "Start of the daily time window as <code>HH:mm</code> (for example <code>09:00</code>) or as minutes from midnight. Leave empty for the whole day. Set it together with Allowed Until Time."
+                    },
+                    "allowedUntilTime": {
+                        "type": "text",
+                        "index": 8,
+                        "label": "Allowed Until Time",
+                        "tooltip": "End of the daily time window as <code>HH:mm</code> (for example <code>17:00</code>) or as minutes from midnight. Leave empty for the whole day."
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "schema": {
+                "type": "object",
+                "required": [
+                    "id",
+                    "smartlockId",
+                    "type",
+                    "name",
+                    "enabled",
+                    "remoteAllowed",
+                    "lockCount"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "title": "Authorization ID",
+                        "example": "68b1422f9c3a4e17a584f104"
+                    },
+                    "smartlockId": {
+                        "type": "integer",
+                        "title": "Smartlock ID",
+                        "example": 21913877581
+                    },
+                    "type": {
+                        "type": "integer",
+                        "title": "Type",
+                        "example": 13
+                    },
+                    "name": {
+                        "type": "string",
+                        "title": "Name",
+                        "example": "Reservation 48213"
+                    },
+                    "code": {
+                        "type": "integer",
+                        "title": "Keypad Code",
+                        "example": 352961
+                    },
+                    "accountUserId": {
+                        "type": "integer",
+                        "title": "Account User ID",
+                        "example": 1284511
+                    },
+                    "authId": {
+                        "type": "integer",
+                        "title": "Device Authorization ID",
+                        "example": 23
+                    },
+                    "enabled": {
+                        "type": "boolean",
+                        "title": "Enabled",
+                        "example": true
+                    },
+                    "remoteAllowed": {
+                        "type": "boolean",
+                        "title": "Remote Allowed",
+                        "example": false
+                    },
+                    "lockCount": {
+                        "type": "integer",
+                        "title": "Lock Count",
+                        "example": 0
+                    },
+                    "allowedFromDate": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Allowed From",
+                        "example": "2026-12-12T14:00:00.000Z"
+                    },
+                    "allowedUntilDate": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Allowed Until",
+                        "example": "2026-12-15T10:00:00.000Z"
+                    },
+                    "allowedWeekDays": {
+                        "type": "integer",
+                        "title": "Allowed Weekdays Bitmask",
+                        "example": 127
+                    },
+                    "allowedFromTime": {
+                        "type": "integer",
+                        "title": "Allowed From Time",
+                        "example": 0
+                    },
+                    "allowedUntilTime": {
+                        "type": "integer",
+                        "title": "Allowed Until Time",
+                        "example": 0
+                    },
+                    "lastActiveDate": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Last Active Date",
+                        "example": "2026-12-12T15:04:11.000Z"
+                    },
+                    "creationDate": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Creation Date",
+                        "example": "2026-12-01T09:30:00.000Z"
+                    },
+                    "updateDate": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Update Date",
+                        "example": "2026-12-01T09:30:05.000Z"
+                    },
+                    "operationId": {
+                        "type": "string",
+                        "title": "Operation ID",
+                        "example": "68b1422f9c3a4e17a584f1aa"
+                    },
+                    "error": {
+                        "type": "string",
+                        "title": "Error",
+                        "example": ""
+                    }
+                }
+            }
+        },
+        {
+            "name": "notConfirmed",
+            "schema": {
+                "type": "object",
+                "required": [
+                    "smartlockId",
+                    "type",
+                    "name",
+                    "waitedMinutes"
+                ],
+                "properties": {
+                    "smartlockId": {
+                        "type": "integer",
+                        "title": "Smartlock ID",
+                        "example": 21913877581
+                    },
+                    "type": {
+                        "type": "integer",
+                        "title": "Type",
+                        "example": 13
+                    },
+                    "name": {
+                        "type": "string",
+                        "title": "Name",
+                        "example": "Reservation 48213"
+                    },
+                    "code": {
+                        "type": "integer",
+                        "title": "Keypad Code",
+                        "example": 352961
+                    },
+                    "accountUserId": {
+                        "type": "integer",
+                        "title": "Account User ID",
+                        "example": 1284511
+                    },
+                    "waitedMinutes": {
+                        "type": "integer",
+                        "title": "Waited Minutes",
+                        "example": 5
+                    }
+                }
+            }
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9Ii0xMCAtMzcuNSAxMjAgMTIwIiByb2xlPSJpbWciIGFyaWEtbGFiZWw9Ik51a2kiPjxyZWN0IHg9Ii0xMCIgeT0iLTM3LjUiIHdpZHRoPSIxMjAiIGhlaWdodD0iMTIwIiBmaWxsPSIjRkZGRkZGIi8+PHBhdGggZD0iTTkyLjUwNzIgMy44MDc5M0M5Mi40OTM4IDMuMzE1MDkgOTIuNTc4OSAyLjgyNDUzIDkyLjc1NzQgMi4zNjQ5NkM5Mi45MzU5IDEuOTA1MzkgOTMuMjA0MyAxLjQ4NjA0IDkzLjU0NjkgMS4xMzE0NkM5My44ODk0IDAuNzc2ODg0IDk0LjI5OTMgMC40OTQxOTggOTQuNzUyNCAwLjI5OTk1MUM5NS4yMDU2IDAuMTA1NzA0IDk1LjY5MjkgMC4wMDM3OTcyNSA5Ni4xODU5IDAuMDAwMTk0OTAzQzk2LjY4NSAtMC4wMDQ4NzU3MiA5Ny4xODAxIDAuMDg5MDM4NyA5Ny42NDI2IDAuMjc2NTA2Qzk4LjEwNTEgMC40NjM5NzIgOTguNTI1OSAwLjc0MTI3MiA5OC44ODA2IDEuMDkyMzdDOTkuMjM1MyAxLjQ0MzQ3IDk5LjUxNjggMS44NjE0IDk5LjcwOSAyLjMyMTk5Qzk5LjkwMTIgMi43ODI1OSAxMDAgMy4yNzY3MSAxMDAgMy43NzU3OEMxMDAgNC4yNzQ4NSA5OS45MDEyIDQuNzY4OTcgOTkuNzA5IDUuMjI5NTZDOTkuNTE2OCA1LjY5MDE2IDk5LjIzNTMgNi4xMDgwOSA5OC44ODA2IDYuNDU5MThDOTguNTI1OSA2LjgxMDI4IDk4LjEwNTEgNy4wODc1OCA5Ny42NDI2IDcuMjc1MDVDOTcuMTgwMSA3LjQ2MjUyIDk2LjY4NSA3LjU1NjQzIDk2LjE4NTkgNy41NTEzNkM5NS42OTggNy41NDk3NiA5NS4yMTUyIDcuNDUxNDEgOTQuNzY1NCA3LjI2MjAxQzk0LjMxNTcgNy4wNzI2MiA5My45MDggNi43OTU5MyA5My41NjU5IDYuNDQ3OTVDOTMuMjIzOCA2LjA5OTk3IDkyLjk1NDEgNS42ODc2MiA5Mi43NzIzIDUuMjM0NzNDOTIuNTkwNiA0Ljc4MTg1IDkyLjUwMDUgNC4yOTc0MyA5Mi41MDcyIDMuODA5NDkiIGZpbGw9IiNGRUNCM0YiLz48cGF0aCBkPSJNMCAxOC45MjI2QzAuMDA3NTg0NzkgMTguNzQ0NSAwLjA4NDIwODEgMTguNTc2MyAwLjIxMzY0MSAxOC40NTM4QzAuMzQzMDc1IDE4LjMzMTIgMC41MTUxNTQgMTguMjYzOCAwLjY5MzQxNyAxOC4yNjU5SDEuNjA1ODlMMTYuMTY5MiAzMi4yODE5SDE2LjIwNjJWMTkuMzI0MUMxNi4yMDYxIDE5LjIzMyAxNi4yMjQgMTkuMTQyNyAxNi4yNTg5IDE5LjA1ODVDMTYuMjkzNyAxOC45NzQzIDE2LjM0NDggMTguODk3OCAxNi40MDkzIDE4LjgzMzRDMTYuNDczNyAxOC43NjkgMTYuNTUwMiAxOC43MTc5IDE2LjYzNDQgMTguNjgzQzE2LjcxODYgMTguNjQ4MiAxNi44MDg5IDE4LjYzMDIgMTYuOSAxOC42MzAzSDIxLjI3OTlDMjEuNDYxOSAxOC42MzY0IDIxLjYzNDggMTguNzExNSAyMS43NjM2IDE4Ljg0MDNDMjEuODkyMyAxOC45NjkxIDIxLjk2NzMgMTkuMTQyMSAyMS45NzMzIDE5LjMyNDFWNDMuODg4N0MyMS45NjU5IDQ0LjA2NjkgMjEuODg5MyA0NC4yMzUxIDIxLjc1OTggNDQuMzU3OEMyMS42MzA0IDQ0LjQ4MDUgMjEuNDU4MiA0NC41NDc5IDIxLjI3OTkgNDQuNTQ1OEgyMC42OTUzQzIwLjUyNDggNDQuNTIzOSAyMC4zNjIxIDQ0LjQ2MTMgMjAuMjIwOSA0NC4zNjM0TDUuODAzNCAyOS44NzMxSDUuNzY2NzZWNDMuNDg3MkM1Ljc2NjgxIDQzLjU3ODMgNS43NDg5MSA0My42Njg1IDUuNzE0MDggNDMuNzUyNkM1LjY3OTI2IDQzLjgzNjggNS42MjgxOCA0My45MTMyIDUuNTYzNzggNDMuOTc3NkM1LjQ5OTM4IDQ0LjA0MiA1LjQyMjkyIDQ0LjA5MzEgNS4zMzg3NyA0NC4xMjc5QzUuMjU0NjEgNDQuMTYyOCA1LjE2NDQzIDQ0LjE4MDcgNS4wNzMzNSA0NC4xODA2SDAuNzMwMDU0QzAuNTQ4MDk2IDQ0LjE3NDUgMC4zNzUyNjIgNDQuMDk5NSAwLjI0NjUyNSA0My45NzA3QzAuMTE3Nzg5IDQzLjg0MiAwLjA0Mjc2NjYgNDMuNjY5MiAwLjAzNjY0MjggNDMuNDg3MkwwIDE4LjkyMjZaIiBmaWxsPSJibGFjayIvPjxwYXRoIGQ9Ik0zMi41NTg2IDE5LjMyNDJDMzIuNTY0NyAxOS4xNDIyIDMyLjYzOTcgMTguOTY5NCAzMi43Njg1IDE4Ljg0MDZDMzIuODk3MiAxOC43MTE5IDMzLjA3IDE4LjYzNjkgMzMuMjUyIDE4LjYzMDdIMzcuNzQxNUMzNy44MzI2IDE4LjYzMDcgMzcuOTIyOCAxOC42NDg2IDM4LjAwNjkgMTguNjgzNEMzOC4wOTExIDE4LjcxODIgMzguMTY3NiAxOC43NjkzIDM4LjIzMiAxOC44MzM3QzM4LjI5NjUgMTguODk4MSAzOC4zNDc2IDE4Ljk3NDYgMzguMzgyNSAxOS4wNTg3QzM4LjQxNzMgMTkuMTQyOSAzOC40MzUzIDE5LjIzMzEgMzguNDM1MyAxOS4zMjQyVjM0LjEwNjVDMzguNDI1NiAzNC43MDcgMzguNTM1NiAzNS4zMDMzIDM4Ljc1ODcgMzUuODYwOUMzOC45ODE4IDM2LjQxODUgMzkuMzEzNiAzNi45MjYxIDM5LjczNDggMzcuMzU0MUM0MC4xNTYxIDM3Ljc4MjIgNDAuNjU4MyAzOC4xMjIxIDQxLjIxMjIgMzguMzU0MkM0MS43NjYxIDM4LjU4NjIgNDIuMzYwNiAzOC43MDU3IDQyLjk2MTIgMzguNzA1N0M0My41NjE3IDM4LjcwNTcgNDQuMTU2MyAzOC41ODYyIDQ0LjcxMDIgMzguMzU0MkM0NS4yNjQxIDM4LjEyMjEgNDUuNzY2MyAzNy43ODIyIDQ2LjE4NzUgMzcuMzU0MUM0Ni42MDg3IDM2LjkyNjEgNDYuOTQwNiAzNi40MTg1IDQ3LjE2MzcgMzUuODYwOUM0Ny4zODY4IDM1LjMwMzMgNDcuNDk2NyAzNC43MDcgNDcuNDg3MSAzNC4xMDY1VjE5LjMyNDJDNDcuNDg3IDE5LjIzMzEgNDcuNTA0OSAxOS4xNDI5IDQ3LjUzOTggMTkuMDU4N0M0Ny41NzQ2IDE4Ljk3NDYgNDcuNjI1NyAxOC44OTgxIDQ3LjY5MDEgMTguODMzN0M0Ny43NTQ1IDE4Ljc2OTMgNDcuODMwOSAxOC43MTgyIDQ3LjkxNTEgMTguNjgzNEM0Ny45OTkyIDE4LjY0ODYgNDguMDg5NCAxOC42MzA3IDQ4LjE4MDUgMTguNjMwN0g1Mi42NzAzQzUyLjg1MjMgMTguNjM2OSA1My4wMjUxIDE4LjcxMTkgNTMuMTUzOSAxOC44NDA2QzUzLjI4MjYgMTguOTY5NCA1My4zNTc2IDE5LjE0MjIgNTMuMzYzOCAxOS4zMjQyVjM0LjM5NzNDNTMuMzYzOCAzOS45NDU0IDQ4LjY5MTkgNDQuNTQ0MyA0Mi45MjQ3IDQ0LjU0NDNDMzcuMTk1IDQ0LjU0NDMgMzIuNTU4NiAzOS45NDUgMzIuNTU4NiAzNC4zOTczVjE5LjMyNDJaIiBmaWxsPSJibGFjayIvPjxwYXRoIGQ9Ik02NC4wMjE2IDE5LjUwNzhDNjQuMDIgMTkuMzkyMyA2NC4wNDE2IDE5LjI3NzYgNjQuMDg1IDE5LjE3MDZDNjQuMTI4NSAxOS4wNjM2IDY0LjE5MyAxOC45NjY0IDY0LjI3NDcgMTguODg0N0M2NC4zNTY0IDE4LjgwMyA2NC40NTM2IDE4LjczODUgNjQuNTYwNiAxOC42OTVDNjQuNjY3NiAxOC42NTE2IDY0Ljc4MjMgMTguNjMgNjQuODk3OCAxOC42MzE1SDY5LjE2ODJDNjkuMzk5NSAxOC42MzQ4IDY5LjYyMDUgMTguNzI4MSA2OS43ODQxIDE4Ljg5MThDNjkuOTQ3NiAxOS4wNTU0IDcwLjA0MDkgMTkuMjc2NCA3MC4wNDQgMTkuNTA3OFYyOS4xMDcyTDc4LjE0NzEgMTguOTk2OEM3OC4zMjQ2IDE4Ljc5MjggNzguNTcxOSAxOC42NjI1IDc4Ljg0MDUgMTguNjMxNUg4My40Mzk5QzgzLjU5NTEgMTguNjM0OCA4My43NDY1IDE4LjY4MDggODMuODc3MyAxOC43NjQ1Qzg0LjAwODEgMTguODQ4MiA4NC4xMTMzIDE4Ljk2NjQgODQuMTgxMiAxOS4xMDZDODQuMjQ5MiAxOS4yNDU3IDg0LjI3NzMgMTkuNDAxMyA4NC4yNjI0IDE5LjU1NTlDODQuMjQ3NiAxOS43MTA1IDg0LjE5MDQgMTkuODU4IDg0LjA5NzEgMTkuOTgyMUw3NS41NTU5IDMwLjY3NjVMODQuODYzNCA0Mi43OTQzQzg0Ljk1MzMgNDIuOTIyMiA4NS4wMDY1IDQzLjA3MjIgODUuMDE3MyA0My4yMjgxQzg1LjAyODEgNDMuMzg0MSA4NC45OTYxIDQzLjU0IDg0LjkyNDcgNDMuNjc5Qzg0Ljg1MzMgNDMuODE4MSA4NC43NDUyIDQzLjkzNSA4NC42MTIyIDQ0LjAxNzFDODQuNDc5MiA0NC4wOTkyIDg0LjMyNjMgNDQuMTQzNCA4NC4xNyA0NC4xNDQ5SDc5LjEzMjVDNzguODg5OCA0NC4xNDI0IDc4LjY1NjMgNDQuMDUxNiA3OC40NzU3IDQzLjg4OTVMNzAuMDQ0IDMyLjQzMDFWNDMuMzA3MkM3MC4wNDA4IDQzLjUzODUgNjkuOTQ3NSA0My43NTk0IDY5Ljc4MzkgNDMuOTIzQzY5LjYyMDQgNDQuMDg2NSA2OS4zOTk1IDQ0LjE3OTggNjkuMTY4MiA0NC4xODNINjQuODk3OEM2NC43ODIzIDQ0LjE4NDYgNjQuNjY3NyA0NC4xNjMgNjQuNTYwNyA0NC4xMTk2QzY0LjQ1MzcgNDQuMDc2MSA2NC4zNTY1IDQ0LjAxMTcgNjQuMjc0OCA0My45M0M2NC4xOTMyIDQzLjg0ODQgNjQuMTI4NyA0My43NTEyIDY0LjA4NTIgNDMuNjQ0M0M2NC4wNDE3IDQzLjUzNzMgNjQuMDIgNDMuNDIyNyA2NC4wMjE2IDQzLjMwNzJWMTkuNTA3OFoiIGZpbGw9ImJsYWNrIi8+PHBhdGggZD0iTTk3Ljc1NzEgMTguNjMwN0g5NC43NDIxQzkzLjk4MjIgMTguNjMwNyA5My4zNjYyIDE5LjI0NjggOTMuMzY2MiAyMC4wMDY3VjQyLjgwNDhDOTMuMzY2MiA0My41NjQ3IDkzLjk4MjIgNDQuMTgwNyA5NC43NDIxIDQ0LjE4MDdIOTcuNzU3MUM5OC41MTcgNDQuMTgwNyA5OS4xMzMgNDMuNTY0NyA5OS4xMzMgNDIuODA0OFYyMC4wMDY3Qzk5LjEzMyAxOS4yNDY4IDk4LjUxNyAxOC42MzA3IDk3Ljc1NzEgMTguNjMwN1oiIGZpbGw9ImJsYWNrIi8+PC9zdmc+Cg=="
+}

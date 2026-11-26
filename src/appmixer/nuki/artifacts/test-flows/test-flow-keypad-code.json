@@ -1,0 +1,666 @@
+{
+    "name": "E2E Nuki - keypad code",
+    "description": "Create Keypad Code (time-limited, generated code), Get, Update and Find the authorization, then delete it.",
+    "flow": {
+        "28eee37f-6ac7-4804-844f-d657f303c676": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {},
+            "config": {},
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "1526f2fc-1190-411e-8f10-e177869363c7": {
+            "type": "appmixer.nuki.core.FindSmartlocks",
+            "x": 272,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "28eee37f-6ac7-4804-844f-d657f303c676": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "28eee37f-6ac7-4804-844f-d657f303c676": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "outputType": {}
+                                },
+                                "lambda": {
+                                    "outputType": "first"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "691ddd83-d445-407f-a79a-ec7ebbb29ddc": {
+            "type": "appmixer.nuki.core.CreateKeypadCode",
+            "x": 480,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "1526f2fc-1190-411e-8f10-e177869363c7": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "1526f2fc-1190-411e-8f10-e177869363c7": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "smartlockId": {
+                                        "fc84d43b-f0c0-47d9-9252-0d705189e6ea": {
+                                            "variable": "$.1526f2fc-1190-411e-8f10-e177869363c7.out.smartlockId",
+                                            "functions": []
+                                        }
+                                    },
+                                    "name": {
+                                        "9a2fcfc3-cf9a-435f-b9c7-d93ce6f681ca": {
+                                            "variable": "$.28eee37f-6ac7-4804-844f-d657f303c676.out.started",
+                                            "functions": []
+                                        }
+                                    },
+                                    "allowedFromDate": {
+                                        "0236896d-d272-4569-8431-5c228160a7e0": {
+                                            "functions": [
+                                                {
+                                                    "name": "g_now"
+                                                },
+                                                {
+                                                    "name": "g_addTimeSpan",
+                                                    "hashParams": {
+                                                        "minutes": {
+                                                            "value": 0
+                                                        }
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "allowedUntilDate": {
+                                        "d71d2544-e6fa-4c0f-aa7e-7244c7d1a93b": {
+                                            "functions": [
+                                                {
+                                                    "name": "g_now"
+                                                },
+                                                {
+                                                    "name": "g_addTimeSpan",
+                                                    "hashParams": {
+                                                        "minutes": {
+                                                            "value": 1440
+                                                        }
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "smartlockId": "{{{fc84d43b-f0c0-47d9-9252-0d705189e6ea}}}",
+                                    "name": "E2E {{{9a2fcfc3-cf9a-435f-b9c7-d93ce6f681ca}}}",
+                                    "allowedFromDate": "{{{0236896d-d272-4569-8431-5c228160a7e0}}}",
+                                    "allowedUntilDate": "{{{d71d2544-e6fa-4c0f-aa7e-7244c7d1a93b}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "8b453c37-0827-4df6-b53e-55b8fd561275": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 688,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "691ddd83-d445-407f-a79a-ec7ebbb29ddc": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "691ddd83-d445-407f-a79a-ec7ebbb29ddc": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "938a8ea4-c76d-4da1-921f-a9179870b0d8": {
+                                            "variable": "$.691ddd83-d445-407f-a79a-ec7ebbb29ddc.out.id",
+                                            "functions": []
+                                        },
+                                        "fdc0494a-de4b-443a-8eb7-e4f2de076bbe": {
+                                            "variable": "$.691ddd83-d445-407f-a79a-ec7ebbb29ddc.out.type",
+                                            "functions": []
+                                        },
+                                        "99e95e48-0bd5-4b59-985a-b97497f39634": {
+                                            "variable": "$.691ddd83-d445-407f-a79a-ec7ebbb29ddc.out.code",
+                                            "functions": []
+                                        },
+                                        "8d0df1ea-f738-4b8d-88df-3696330af529": {
+                                            "variable": "$.691ddd83-d445-407f-a79a-ec7ebbb29ddc.out.enabled",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{938a8ea4-c76d-4da1-921f-a9179870b0d8}}}",
+                                                "assertion": "notEmpty"
+                                            },
+                                            {
+                                                "field": "{{{fdc0494a-de4b-443a-8eb7-e4f2de076bbe}}}",
+                                                "assertion": "equal",
+                                                "expected": 13
+                                            },
+                                            {
+                                                "field": "{{{99e95e48-0bd5-4b59-985a-b97497f39634}}}",
+                                                "assertion": "regex",
+                                                "regex": "^[1-9]{6}$"
+                                            },
+                                            {
+                                                "field": "{{{8d0df1ea-f738-4b8d-88df-3696330af529}}}",
+                                                "assertion": "equal",
+                                                "expected": true
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "b682a7a0-6ea5-47e8-a56e-3cc2cd7ac032": {
+            "type": "appmixer.nuki.core.GetSmartlockAuthorization",
+            "x": 688,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "691ddd83-d445-407f-a79a-ec7ebbb29ddc": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "691ddd83-d445-407f-a79a-ec7ebbb29ddc": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "smartlockId": {
+                                        "8188f96d-b084-4494-a315-811299c6c53a": {
+                                            "variable": "$.1526f2fc-1190-411e-8f10-e177869363c7.out.smartlockId",
+                                            "functions": []
+                                        }
+                                    },
+                                    "authorizationId": {
+                                        "f287624d-57ed-4aa0-aa71-735b59be87ef": {
+                                            "variable": "$.691ddd83-d445-407f-a79a-ec7ebbb29ddc.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "smartlockId": "{{{8188f96d-b084-4494-a315-811299c6c53a}}}",
+                                    "authorizationId": "{{{f287624d-57ed-4aa0-aa71-735b59be87ef}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "7dd124a2-422b-4bb3-b4c8-9a4068565a3a": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 896,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "b682a7a0-6ea5-47e8-a56e-3cc2cd7ac032": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "b682a7a0-6ea5-47e8-a56e-3cc2cd7ac032": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "11ae9bfc-4711-4349-a245-371741e3f178": {
+                                            "variable": "$.b682a7a0-6ea5-47e8-a56e-3cc2cd7ac032.out.id",
+                                            "functions": []
+                                        },
+                                        "0a9d7241-fb7c-4baa-b0b0-5fc37d353b8b": {
+                                            "variable": "$.691ddd83-d445-407f-a79a-ec7ebbb29ddc.out.id",
+                                            "functions": []
+                                        },
+                                        "97f7c4c6-7b9e-4ce4-8a95-ae550d0ef083": {
+                                            "variable": "$.b682a7a0-6ea5-47e8-a56e-3cc2cd7ac032.out.code",
+                                            "functions": []
+                                        },
+                                        "38884092-fdcd-4ba8-a4dc-3b0f15127dcc": {
+                                            "variable": "$.691ddd83-d445-407f-a79a-ec7ebbb29ddc.out.code",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{11ae9bfc-4711-4349-a245-371741e3f178}}}",
+                                                "assertion": "equal",
+                                                "expected": "{{{0a9d7241-fb7c-4baa-b0b0-5fc37d353b8b}}}"
+                                            },
+                                            {
+                                                "field": "{{{97f7c4c6-7b9e-4ce4-8a95-ae550d0ef083}}}",
+                                                "assertion": "equal",
+                                                "expected": "{{{38884092-fdcd-4ba8-a4dc-3b0f15127dcc}}}"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "aa5ab1f1-c390-4ee6-b2c4-d98635051800": {
+            "type": "appmixer.nuki.core.UpdateSmartlockAuthorization",
+            "x": 896,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "b682a7a0-6ea5-47e8-a56e-3cc2cd7ac032": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "b682a7a0-6ea5-47e8-a56e-3cc2cd7ac032": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "smartlockId": {
+                                        "704b1ac5-0098-4292-b8f0-3e1f24fa3514": {
+                                            "variable": "$.1526f2fc-1190-411e-8f10-e177869363c7.out.smartlockId",
+                                            "functions": []
+                                        }
+                                    },
+                                    "authorizationId": {
+                                        "eac95444-74bf-4ddc-a8ac-8dc2eca2e0c1": {
+                                            "variable": "$.691ddd83-d445-407f-a79a-ec7ebbb29ddc.out.id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "allowedUntilDate": {
+                                        "513b4d2e-ad14-4622-8850-40d9139ffa17": {
+                                            "functions": [
+                                                {
+                                                    "name": "g_now"
+                                                },
+                                                {
+                                                    "name": "g_addTimeSpan",
+                                                    "hashParams": {
+                                                        "minutes": {
+                                                            "value": 2880
+                                                        }
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "smartlockId": "{{{704b1ac5-0098-4292-b8f0-3e1f24fa3514}}}",
+                                    "authorizationId": "{{{eac95444-74bf-4ddc-a8ac-8dc2eca2e0c1}}}",
+                                    "allowedUntilDate": "{{{513b4d2e-ad14-4622-8850-40d9139ffa17}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "173e6419-67ff-4ad6-b930-f56d7e3b5196": {
+            "type": "appmixer.utils.timers.Wait",
+            "x": 1104,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "aa5ab1f1-c390-4ee6-b2c4-d98635051800": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "aa5ab1f1-c390-4ee6-b2c4-d98635051800": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "interval": {}
+                                },
+                                "lambda": {
+                                    "interval": "1m"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "720eb27b-7f0a-41b1-8d17-0e846f3c4eed": {
+            "type": "appmixer.nuki.core.FindSmartlockAuthorizations",
+            "x": 1312,
+            "y": 400,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "173e6419-67ff-4ad6-b930-f56d7e3b5196": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "173e6419-67ff-4ad6-b930-f56d7e3b5196": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "smartlockId": {
+                                        "3e6f8696-89d5-44e3-9487-28c34d6aa2c0": {
+                                            "variable": "$.1526f2fc-1190-411e-8f10-e177869363c7.out.smartlockId",
+                                            "functions": []
+                                        }
+                                    },
+                                    "types": {},
+                                    "name": {
+                                        "2d623e2d-7d12-45cd-9703-36e37d7f4308": {
+                                            "variable": "$.28eee37f-6ac7-4804-844f-d657f303c676.out.started",
+                                            "functions": []
+                                        }
+                                    },
+                                    "outputType": {}
+                                },
+                                "lambda": {
+                                    "smartlockId": "{{{3e6f8696-89d5-44e3-9487-28c34d6aa2c0}}}",
+                                    "types": [
+                                        "13"
+                                    ],
+                                    "name": "E2E {{{2d623e2d-7d12-45cd-9703-36e37d7f4308}}}",
+                                    "outputType": "first"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "39b16920-39e5-4031-9d71-a8c8374fcfcd": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1520,
+            "y": 400,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "720eb27b-7f0a-41b1-8d17-0e846f3c4eed": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "720eb27b-7f0a-41b1-8d17-0e846f3c4eed": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "e7402bde-a7f7-444b-a5e8-44b5d11c50cc": {
+                                            "variable": "$.720eb27b-7f0a-41b1-8d17-0e846f3c4eed.out.id",
+                                            "functions": []
+                                        },
+                                        "8c6fddb8-fa17-464d-8a05-3a3d5d04d1a6": {
+                                            "variable": "$.691ddd83-d445-407f-a79a-ec7ebbb29ddc.out.id",
+                                            "functions": []
+                                        },
+                                        "6f338d35-22a3-444d-97ad-b48b6ec98f80": {
+                                            "variable": "$.720eb27b-7f0a-41b1-8d17-0e846f3c4eed.out.count",
+                                            "functions": []
+                                        },
+                                        "a808fb62-83e8-43ef-af8a-605c592c3e25": {
+                                            "variable": "$.720eb27b-7f0a-41b1-8d17-0e846f3c4eed.out.enabled",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{e7402bde-a7f7-444b-a5e8-44b5d11c50cc}}}",
+                                                "assertion": "equal",
+                                                "expected": "{{{8c6fddb8-fa17-464d-8a05-3a3d5d04d1a6}}}"
+                                            },
+                                            {
+                                                "field": "{{{6f338d35-22a3-444d-97ad-b48b6ec98f80}}}",
+                                                "assertion": "equal",
+                                                "expected": 1
+                                            },
+                                            {
+                                                "field": "{{{a808fb62-83e8-43ef-af8a-605c592c3e25}}}",
+                                                "assertion": "equal",
+                                                "expected": true
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "cc3276e0-fc56-4b71-b17c-eb74655873f6": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 1728,
+            "y": 400,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "8b453c37-0827-4df6-b53e-55b8fd561275": [
+                        "out"
+                    ],
+                    "7dd124a2-422b-4bb3-b4c8-9a4068565a3a": [
+                        "out"
+                    ],
+                    "39b16920-39e5-4031-9d71-a8c8374fcfcd": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 480
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "2cbc65c4-7de9-4f26-bd26-cee93b0c40d9": {
+            "type": "appmixer.nuki.core.DeleteSmartlockAuthorization",
+            "x": 1936,
+            "y": 400,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "cc3276e0-fc56-4b71-b17c-eb74655873f6": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "cc3276e0-fc56-4b71-b17c-eb74655873f6": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "smartlockId": {
+                                        "e87284ff-8fd0-4e6b-8060-2fc8893530d4": {
+                                            "variable": "$.1526f2fc-1190-411e-8f10-e177869363c7.out.smartlockId",
+                                            "functions": []
+                                        }
+                                    },
+                                    "authorizationId": {
+                                        "b9e3ec76-d593-40bf-832c-29d484a66bcf": {
+                                            "variable": "$.691ddd83-d445-407f-a79a-ec7ebbb29ddc.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "smartlockId": "{{{e87284ff-8fd0-4e6b-8060-2fc8893530d4}}}",
+                                    "authorizationId": "{{{b9e3ec76-d593-40bf-832c-29d484a66bcf}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "b154934d-11c7-43a8-849d-3cb434bc8271": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 2144,
+            "y": 400,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "2cbc65c4-7de9-4f26-bd26-cee93b0c40d9": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "successStoreId": "64f6f1f9193228000754082f",
+                    "failedStoreId": "64f6f1f0193228000754082e"
+                },
+                "transform": {
+                    "in": {
+                        "2cbc65c4-7de9-4f26-bd26-cee93b0c40d9": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "4302d8c4-294c-4eaa-85f1-d165eae51d4a": {
+                                            "variable": "$.cc3276e0-fc56-4b71-b17c-eb74655873f6.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E Nuki - keypad code",
+                                    "result": "{{{4302d8c4-294c-4eaa-85f1-d165eae51d4a}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        }
+    },
+    "notes": {
+        "6bec247e-d0ef-4332-9383-93dce671e010": {
+            "x": 64,
+            "y": 560,
+            "width": 736,
+            "height": 320,
+            "content": "## Test data assumption: one real Nuki device\n\nNuki has no sandbox. The connected account (API token with the scopes smartlock.readOnly, smartlock.action, smartlock.auth and smartlock.log) must hold at least one Smart Lock that is online. The flow takes the first device Find Smartlocks returns, so no device ID is hardcoded.\n\nA **Nuki Keypad** must be paired with that device, and for short-term rental accounts the device needs an active Smart Hosting subscription (otherwise Nuki answers 402).\n\nCreate Keypad Code waits until Nuki Web lists the new code (up to 5 minutes), so the After All timeout is 480 s. The \"notConfirmed\" port is left open on purpose: when the code never appears the flow times out and fails. The 1-minute Wait gives the device time to take the update; do not remove it. Delete Smartlock Authorization removes the code again. If a run is aborted, delete the authorization named \"E2E <timestamp>\" in Nuki Web."
+        }
+    }
+}

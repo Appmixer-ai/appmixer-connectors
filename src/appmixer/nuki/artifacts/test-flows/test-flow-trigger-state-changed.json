@@ -1,0 +1,474 @@
+{
+    "name": "E2E Nuki - trigger state changed",
+    "description": "Smartlock State Changed trigger, provoked by Unlock Smartlock and Lock Smartlock on the first device of the account.",
+    "flow": {
+        "ddeb80d2-5aef-4156-9e1d-789ce0c7e840": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {},
+            "config": {},
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "54ae1e8f-c928-4b8c-86f4-afcb7c98a303": {
+            "type": "appmixer.utils.timers.Wait",
+            "x": 272,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "ddeb80d2-5aef-4156-9e1d-789ce0c7e840": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "ddeb80d2-5aef-4156-9e1d-789ce0c7e840": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "interval": {}
+                                },
+                                "lambda": {
+                                    "interval": "2m"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "5f32bc32-9f3d-43e1-9a99-1de623d330c1": {
+            "type": "appmixer.nuki.core.FindSmartlocks",
+            "x": 480,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "54ae1e8f-c928-4b8c-86f4-afcb7c98a303": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "54ae1e8f-c928-4b8c-86f4-afcb7c98a303": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "outputType": {}
+                                },
+                                "lambda": {
+                                    "outputType": "first"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "dbb15352-e264-4564-bd8f-3ab44740939e": {
+            "type": "appmixer.nuki.core.UnlockSmartlock",
+            "x": 688,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "5f32bc32-9f3d-43e1-9a99-1de623d330c1": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "5f32bc32-9f3d-43e1-9a99-1de623d330c1": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "smartlockId": {
+                                        "28639591-c1aa-4789-97f7-e79e5985a2f2": {
+                                            "variable": "$.5f32bc32-9f3d-43e1-9a99-1de623d330c1.out.smartlockId",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "smartlockId": "{{{28639591-c1aa-4789-97f7-e79e5985a2f2}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "f4e10d38-3de3-4c05-baf0-f8728b62bb74": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 896,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "dbb15352-e264-4564-bd8f-3ab44740939e": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "dbb15352-e264-4564-bd8f-3ab44740939e": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "2f2b6fbb-2552-4604-a845-eb3d1592acf8": {
+                                            "variable": "$.dbb15352-e264-4564-bd8f-3ab44740939e.out.smartlockId",
+                                            "functions": []
+                                        },
+                                        "c22e4173-286f-4355-8628-a48d6721c542": {
+                                            "variable": "$.5f32bc32-9f3d-43e1-9a99-1de623d330c1.out.smartlockId",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{2f2b6fbb-2552-4604-a845-eb3d1592acf8}}}",
+                                                "assertion": "equal",
+                                                "expected": "{{{c22e4173-286f-4355-8628-a48d6721c542}}}"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "924bbfa7-1ef9-4b90-840d-9221bdda8876": {
+            "type": "appmixer.utils.timers.Wait",
+            "x": 896,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "dbb15352-e264-4564-bd8f-3ab44740939e": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "dbb15352-e264-4564-bd8f-3ab44740939e": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "interval": {}
+                                },
+                                "lambda": {
+                                    "interval": "2m"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "cb76751e-c1f2-4fd1-9d17-512cba84e250": {
+            "type": "appmixer.nuki.core.LockSmartlock",
+            "x": 1104,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "924bbfa7-1ef9-4b90-840d-9221bdda8876": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "924bbfa7-1ef9-4b90-840d-9221bdda8876": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "smartlockId": {
+                                        "2349dfc8-a2e6-41fe-b6cd-313a657630bf": {
+                                            "variable": "$.5f32bc32-9f3d-43e1-9a99-1de623d330c1.out.smartlockId",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "smartlockId": "{{{2349dfc8-a2e6-41fe-b6cd-313a657630bf}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "a699c9e5-0646-4ac9-864f-17eb4236a430": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1312,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "cb76751e-c1f2-4fd1-9d17-512cba84e250": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "cb76751e-c1f2-4fd1-9d17-512cba84e250": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "515f0eb8-3835-4310-bdf3-78e0f56ca98f": {
+                                            "variable": "$.cb76751e-c1f2-4fd1-9d17-512cba84e250.out.smartlockId",
+                                            "functions": []
+                                        },
+                                        "55b85c3f-b31c-409b-a5b2-765133b5d0e3": {
+                                            "variable": "$.5f32bc32-9f3d-43e1-9a99-1de623d330c1.out.smartlockId",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{515f0eb8-3835-4310-bdf3-78e0f56ca98f}}}",
+                                                "assertion": "equal",
+                                                "expected": "{{{55b85c3f-b31c-409b-a5b2-765133b5d0e3}}}"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "46587fe5-6ae1-4670-8156-debf444e6d4f": {
+            "type": "appmixer.nuki.core.SmartlockStateChanged",
+            "x": 64,
+            "y": 400,
+            "version": "1.0.0",
+            "source": {},
+            "config": {
+                "properties": {
+                    "watch": [
+                        "lockState"
+                    ]
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "5a9ffdda-aef1-41a8-a481-b61c3ac3c7d9": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 272,
+            "y": 400,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "46587fe5-6ae1-4670-8156-debf444e6d4f": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "46587fe5-6ae1-4670-8156-debf444e6d4f": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "0cd3679f-218a-4de0-a5b0-04834355fbae": {
+                                            "variable": "$.46587fe5-6ae1-4670-8156-debf444e6d4f.out.smartlockId",
+                                            "functions": []
+                                        },
+                                        "4c703150-9b0a-4d28-91f1-0e9042227ce4": {
+                                            "variable": "$.46587fe5-6ae1-4670-8156-debf444e6d4f.out.changedFields",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$[0]"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        },
+                                        "0bec44f6-053b-4dd4-8365-4a034f129a9f": {
+                                            "variable": "$.46587fe5-6ae1-4670-8156-debf444e6d4f.out.previous.lockState",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{0cd3679f-218a-4de0-a5b0-04834355fbae}}}",
+                                                "assertion": "notEmpty"
+                                            },
+                                            {
+                                                "field": "{{{4c703150-9b0a-4d28-91f1-0e9042227ce4}}}",
+                                                "assertion": "equal",
+                                                "expected": "lockState"
+                                            },
+                                            {
+                                                "field": "{{{0bec44f6-053b-4dd4-8365-4a034f129a9f}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "f1c3a45b-b347-48d1-a87d-336321c9479c": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 1520,
+            "y": 400,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "f4e10d38-3de3-4c05-baf0-f8728b62bb74": [
+                        "out"
+                    ],
+                    "a699c9e5-0646-4ac9-864f-17eb4236a430": [
+                        "out"
+                    ],
+                    "5a9ffdda-aef1-41a8-a481-b61c3ac3c7d9": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 600
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "0743b517-3f45-4942-a061-4387d1763254": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1728,
+            "y": 400,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "f1c3a45b-b347-48d1-a87d-336321c9479c": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "successStoreId": "64f6f1f9193228000754082f",
+                    "failedStoreId": "64f6f1f0193228000754082e"
+                },
+                "transform": {
+                    "in": {
+                        "f1c3a45b-b347-48d1-a87d-336321c9479c": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "bd92f79f-383b-4150-8ad1-a685169c7ff7": {
+                                            "variable": "$.f1c3a45b-b347-48d1-a87d-336321c9479c.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E Nuki - trigger state changed",
+                                    "result": "{{{bd92f79f-383b-4150-8ad1-a685169c7ff7}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        }
+    },
+    "notes": {
+        "4941a94c-6b2c-4ace-adab-b2b0704b50e5": {
+            "x": 64,
+            "y": 560,
+            "width": 736,
+            "height": 288,
+            "content": "## Test data assumption: one real Nuki device\n\nNuki has no sandbox. The connected account (API token with the scopes smartlock.readOnly, smartlock.action, smartlock.auth and smartlock.log) must hold at least one Smart Lock that is online. The flow takes the first device Find Smartlocks returns, so no device ID is hardcoded.\n\n**The flow physically unlocks the device and locks it again two minutes later.** Run it only on a test lock, not on a door somebody depends on.\n\nThe trigger polls and records the state of the devices on its first check, so the first command is sent after a 2-minute Wait. Do not remove the Waits: the second one lets a check see the unlocked state before the device is locked again. Whatever state the device starts in, one of the two commands changes it."
+        }
+    }
+}
