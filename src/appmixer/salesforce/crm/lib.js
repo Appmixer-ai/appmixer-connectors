@@ -505,6 +505,599 @@ module.exports = {
         await context.saveState({ known: newKnown, since });
     },
 
+    // Record Updated trigger -----------------------------------------------------------------
+
+    /**
+     * Conditions of the Record Updated trigger. 'changed' and 'changedTo' read the
+     * object's Field History (old and new value of every change); 'equals' and
+     * 'notEquals' compare the current value of records modified since the last poll.
+     */
+    RECORD_UPDATED_OPERATORS: ['changedTo', 'changed', 'equals', 'notEquals'],
+    RECORD_UPDATED_HISTORY_OPERATORS: ['changedTo', 'changed'],
+
+    // Changes processed in one tick; the rest is picked up by the next tick, in order.
+    RECORD_UPDATED_MAX_PER_TICK: 2000,
+
+    // Ids remembered by the Equals / Does not equal conditions to emit a record only once
+    // while its field keeps the value.
+    RECORD_UPDATED_MAX_EMITTED: 1000,
+
+    // A poll only reads changes older than this, so that a change whose transaction commits
+    // a few seconds after its timestamp is not skipped by the watermark.
+    RECORD_UPDATED_LAG_MS: 30 * 1000,
+
+    // Records fetched per sObject Collections request (the API allows 2000).
+    RECORD_UPDATED_FETCH_CHUNK: 200,
+
+    // Ids per "Id IN (...)" filter query, keeps the query URL short.
+    RECORD_UPDATED_FILTER_CHUNK: 100,
+
+    /**
+     * Read and validate the Record Updated trigger properties.
+     * @param {Object} context
+     * @return {{objectName: string, fieldName: string, operator: string, value: string, where: string, since: string}}
+     */
+    getRecordUpdatedConfig(context) {
+
+        const { objectName, fieldName, value, where, since } = context.properties;
+        const operator = context.properties.operator || 'changedTo';
+        if (!objectName) {
+            throw new context.CancelError('Object Name is required!');
+        }
+        if (!fieldName) {
+            throw new context.CancelError('Field Name is required!');
+        }
+        if (!this.RECORD_UPDATED_OPERATORS.includes(operator)) {
+            throw new context.CancelError(`Unsupported condition: ${operator}.`);
+        }
+        if (operator !== 'changed' && (value === undefined || value === null || value === '')) {
+            throw new context.CancelError('Value is required for this condition!');
+        }
+        try {
+            this.assertSafeIdentifier(objectName, 'object name');
+            this.assertSafeIdentifier(fieldName, 'field name');
+        } catch (err) {
+            throw new context.CancelError(err.message);
+        }
+        if (since && isNaN(new Date(since).getTime())) {
+            throw new context.CancelError(`Invalid Start From date: ${since}.`);
+        }
+        return {
+            objectName,
+            fieldName,
+            operator,
+            value: value === undefined || value === null ? '' : String(value),
+            where: where && String(where).trim() ? String(where).trim() : '',
+            since: since || ''
+        };
+    },
+
+    /**
+     * Whether the condition is evaluated on Field History (old and new value).
+     * @param {string} operator
+     * @return {boolean}
+     */
+    isHistoryOperator(operator) {
+
+        return this.RECORD_UPDATED_HISTORY_OPERATORS.includes(operator);
+    },
+
+    /**
+     * Compare a Salesforce field value with the value of the condition: as text, trimmed and
+     * case-insensitive (picklist API values, true/false, numbers). An empty condition value
+     * matches an empty field.
+     * @param {*} actual
+     * @param {*} expected
+     * @return {boolean}
+     */
+    valueMatches(actual, expected) {
+
+        const normalize = (v) => (v === undefined || v === null ? '' : String(v)).trim().toLowerCase();
+        return normalize(actual) === normalize(expected);
+    },
+
+    /**
+     * Whether the current value of a field meets an Equals / Does not equal condition.
+     * @param {Object} config - getRecordUpdatedConfig() result
+     * @param {*} actual
+     * @return {boolean}
+     */
+    currentValueMatches(config, actual) {
+
+        const equal = this.valueMatches(actual, config.value);
+        return config.operator === 'notEquals' ? !equal : equal;
+    },
+
+    /**
+     * A date as a SOQL datetime literal, in whole seconds (Salesforce keeps record and history
+     * timestamps in whole seconds).
+     * @param {Date|string} date
+     * @return {string} e.g. 2026-11-23T17:43:12Z
+     */
+    toSoqlSecond(date) {
+
+        return new Date(date).toISOString().slice(0, 19) + 'Z';
+    },
+
+    /**
+     * Values of the Field column of the History object that belong to a field. A standard
+     * lookup (OwnerId) is tracked under the relationship name (Owner).
+     * @param {string} fieldName
+     * @return {Array<string>}
+     */
+    historyFieldNames(fieldName) {
+
+        const names = [fieldName];
+        if (!fieldName.endsWith('__c') && /^.+Id$/.test(fieldName)) {
+            names.push(fieldName.slice(0, -2));
+        }
+        return names;
+    },
+
+    /**
+     * The History object Salesforce keeps for an object: CaseHistory, AccountHistory, …,
+     * OpportunityFieldHistory for Opportunity, <Name>__History for a custom object.
+     * @param {string} objectName
+     * @return {string}
+     */
+    historyObjectName(objectName) {
+
+        if (objectName === 'Opportunity') {
+            return 'OpportunityFieldHistory';
+        }
+        if (objectName.endsWith('__c')) {
+            return objectName.slice(0, -3) + '__History';
+        }
+        return objectName + 'History';
+    },
+
+    /**
+     * Check that Field History Tracking is on for the field and find the History object and
+     * its field that points to the record. Throws a CancelError that says what to do when it
+     * is not.
+     * @param {Object} context
+     * @param {Object} config - getRecordUpdatedConfig() result
+     * @return {Promise<{historyObject: string, parentField: string}>}
+     */
+    async resolveHistorySource(context, { objectName, fieldName }) {
+
+        const soql = 'SELECT QualifiedApiName, IsFieldHistoryTracked FROM FieldDefinition' +
+            ` WHERE EntityDefinition.QualifiedApiName = '${this.escapeSoql(objectName)}'` +
+            ` AND QualifiedApiName = '${this.escapeSoql(fieldName)}'`;
+        const [definition] = await this.queryAll(context, soql);
+        if (!definition) {
+            throw new context.CancelError(`Field ${fieldName} was not found on ${objectName}.`);
+        }
+        const hint = 'Enable it in Salesforce Setup (Object Manager > ' + objectName +
+            ' > Fields & Relationships > Set History Tracking) or use the Equals / Does not equal condition.';
+        if (!definition.IsFieldHistoryTracked) {
+            throw new context.CancelError(
+                `The Changes and Changes to conditions need Field History Tracking on ${objectName}.${fieldName}, which is off. ${hint}`
+            );
+        }
+
+        const historyObject = this.historyObjectName(objectName);
+        let fields;
+        try {
+            fields = await this.describeFieldsCached(context, historyObject);
+        } catch (err) {
+            if (err.response && [400, 404].includes(err.response.status)) {
+                throw new context.CancelError(
+                    `Field history of ${objectName} cannot be read through the API (${historyObject} is not available). ${hint}`
+                );
+            }
+            throw err;
+        }
+        const parent = fields.find(field => field.name === 'ParentId') ||
+            fields.find(field => {
+                return field.type === 'reference' &&
+                    field.name !== 'CreatedById' &&
+                    (field.referenceTo || []).includes(objectName);
+            });
+        if (!parent) {
+            throw new context.CancelError(`Cannot find the record reference on ${historyObject}.`);
+        }
+        return { historyObject, parentField: parent.name };
+    },
+
+    /**
+     * SOQL of Field History rows of the watched field in a time window.
+     * @param {Object} params
+     * @return {string}
+     */
+    buildHistorySoql({ historyObject, parentField, fieldName, from, to, descending = false, limit }) {
+
+        const fields = this.historyFieldNames(fieldName).map(name => `'${this.escapeSoql(name)}'`).join(', ');
+        const conditions = [`Field IN (${fields})`];
+        if (from) conditions.push(`CreatedDate >= ${this.toSoqlSecond(from)}`);
+        if (to) conditions.push(`CreatedDate <= ${this.toSoqlSecond(to)}`);
+        const direction = descending ? 'DESC' : 'ASC';
+        let soql = `SELECT Id, ${parentField}, Field, DataType, OldValue, NewValue, CreatedDate FROM ${historyObject}` +
+            ` WHERE ${conditions.join(' AND ')} ORDER BY CreatedDate ${direction}, Id ${direction}`;
+        if (limit) soql += ` LIMIT ${limit}`;
+        return soql;
+    },
+
+    /**
+     * SOQL of records modified in a time window, with the watched field: no FIELDS(ALL), so
+     * the result pages and is not capped at 200.
+     * @param {Object} params
+     * @return {string}
+     */
+    buildModifiedSoql({ objectName, fieldName, where, from, to, descending = false, limit }) {
+
+        const conditions = [];
+        if (from) conditions.push(`SystemModstamp >= ${this.toSoqlSecond(from)}`);
+        if (to) conditions.push(`SystemModstamp <= ${this.toSoqlSecond(to)}`);
+        if (where) conditions.push(`(${where})`);
+        const select = fieldName === 'SystemModstamp' ? 'Id, SystemModstamp' : `Id, SystemModstamp, ${fieldName}`;
+        const direction = descending ? 'DESC' : 'ASC';
+        let soql = `SELECT ${select} FROM ${objectName}`;
+        if (conditions.length) soql += ` WHERE ${conditions.join(' AND ')}`;
+        soql += ` ORDER BY SystemModstamp ${direction}, Id ${direction}`;
+        if (limit) soql += ` LIMIT ${limit}`;
+        return soql;
+    },
+
+    /**
+     * Run a SOQL query and yield its result page by page (following nextRecordsUrl), so a
+     * caller can stop reading early.
+     * @param {Object} context
+     * @param {string} soql
+     */
+    async *queryPages(context, soql) {
+
+        let { data } = await this.api.salesForceRq(context, {
+            action: `query?q=${encodeURIComponent(soql)}`
+        });
+        yield (data && data.records) || [];
+        while (data && data.done === false && data.nextRecordsUrl) {
+            const action = 'query' + data.nextRecordsUrl.split('/query')[1];
+            ({ data } = await this.api.salesForceRq(context, { action }));
+            yield (data && data.records) || [];
+        }
+    },
+
+    /**
+     * Read the rows after the watermark, oldest first: rows at the watermark second that were
+     * already processed are skipped; reading stops after about maxRows rows, never in the
+     * middle of a second, so the next tick continues exactly where this one stopped.
+     * @param {Object} context
+     * @param {Object} params - { soql, timestampField, watermark, seen, maxRows }
+     * @return {Promise<Array>}
+     */
+    async readAfterWatermark(context, { soql, timestampField, watermark, seen = [], maxRows }) {
+
+        const seenIds = new Set(seen);
+        const rows = [];
+        for await (const page of this.queryPages(context, soql)) {
+            for (const row of page) {
+                const second = this.toSoqlSecond(row[timestampField]);
+                if (second === watermark && seenIds.has(row.Id)) {
+                    continue;
+                }
+                if (rows.length >= maxRows && second !== this.toSoqlSecond(rows[rows.length - 1][timestampField])) {
+                    return rows;
+                }
+                rows.push(row);
+            }
+        }
+        return rows;
+    },
+
+    /**
+     * The watermark after processing rows: the second of the last row and the ids processed
+     * at that second (kept so rows with an equal timestamp are neither lost nor repeated).
+     * @param {Object} state - { watermark, seen }
+     * @param {Array} rows - processed rows, oldest first
+     * @param {string} timestampField
+     * @return {{watermark: string, seen: Array<string>}}
+     */
+    advanceWatermark({ watermark, seen = [] }, rows, timestampField) {
+
+        if (!rows.length) {
+            return { watermark, seen };
+        }
+        const last = this.toSoqlSecond(rows[rows.length - 1][timestampField]);
+        const ids = last === watermark ? new Set(seen) : new Set();
+        rows.forEach(row => {
+            if (this.toSoqlSecond(row[timestampField]) === last) ids.add(row.Id);
+        });
+        return { watermark: last, seen: Array.from(ids) };
+    },
+
+    /**
+     * Group Field History rows into changes: one change of a field on a record at one moment
+     * (a lookup change writes two rows, the id and the name).
+     * @param {Array} rows
+     * @param {string} parentField
+     * @return {Array<{recordId: string, changedDate: string, rows: Array}>}
+     */
+    groupHistoryRows(rows, parentField) {
+
+        const groups = new Map();
+        rows.forEach(row => {
+            const key = row[parentField] + '|' + this.toSoqlSecond(row.CreatedDate);
+            if (!groups.has(key)) {
+                groups.set(key, { recordId: row[parentField], changedDate: row.CreatedDate, rows: [] });
+            }
+            groups.get(key).rows.push(row);
+        });
+        return Array.from(groups.values());
+    },
+
+    /**
+     * The old and new value of a change when it meets a Changes / Changes to condition,
+     * null when it does not.
+     * @param {Object} config - getRecordUpdatedConfig() result
+     * @param {Object} change - groupHistoryRows() item
+     * @return {{oldValue: *, newValue: *}|null}
+     */
+    historyChangeMatches(config, change) {
+
+        let row;
+        if (config.operator === 'changedTo') {
+            row = change.rows.find(r => this.valueMatches(r.NewValue, config.value) &&
+                !this.valueMatches(r.OldValue, config.value));
+        } else {
+            row = change.rows.find(r => r.DataType !== 'EntityId') || change.rows[0];
+        }
+        if (!row) {
+            return null;
+        }
+        return {
+            oldValue: row.OldValue === undefined ? null : row.OldValue,
+            newValue: row.NewValue === undefined ? null : row.NewValue
+        };
+    },
+
+    /**
+     * Keep only the ids of records that meet the additional SOQL filter.
+     * @param {Object} context
+     * @param {Object} params - { objectName, where, ids }
+     * @return {Promise<Set<string>>}
+     */
+    async filterIdsByWhere(context, { objectName, where, ids }) {
+
+        const unique = Array.from(new Set(ids));
+        if (!where) {
+            return new Set(unique);
+        }
+        const result = new Set();
+        for (let i = 0; i < unique.length; i += this.RECORD_UPDATED_FILTER_CHUNK) {
+            const chunk = unique.slice(i, i + this.RECORD_UPDATED_FILTER_CHUNK);
+            const list = chunk.map(id => `'${this.escapeSoql(id)}'`).join(', ');
+            const records = await this.queryAll(context, `SELECT Id FROM ${objectName} WHERE Id IN (${list}) AND (${where})`);
+            records.forEach(record => result.add(record.Id));
+        }
+        return result;
+    },
+
+    /**
+     * The describe fields of an object, cached per access token (TTL objectPropertiesCacheTTL,
+     * default 5 minutes) so a poll does not describe the object every minute.
+     * @param {Object} context
+     * @param {string} objectName
+     * @return {Promise<Array>}
+     */
+    describeFieldsCached(context, objectName) {
+
+        return this.cachedSource(context, {
+            resource: 'describe:' + objectName,
+            ttlConfigKey: 'objectPropertiesCacheTTL',
+            fetch: () => this.api.getObjectFields(context, { objectName })
+        });
+    },
+
+    /**
+     * Fetch whole records by id with sObject Collections (POST, so a long field list does not
+     * hit the URL length limit). Date-time fields are reformatted to ISO; deleted records
+     * are missing from the result.
+     * @param {Object} context
+     * @param {Object} params - { objectName, ids }
+     * @return {Promise<Map<string, Object>>}
+     */
+    async fetchRecordsById(context, { objectName, ids }) {
+
+        const records = new Map();
+        const unique = Array.from(new Set(ids));
+        if (!unique.length) {
+            return records;
+        }
+        const described = await this.describeFieldsCached(context, objectName);
+        // Binary and compound (address, geolocation) fields are left out; the parts of a
+        // compound field are fields of their own.
+        const fields = described.filter(field => !['base64', 'address', 'location'].includes(field.type));
+        const fieldNames = fields.map(field => field.name);
+        const dateTimeFields = fields.filter(field => field.type === 'datetime').map(field => field.name);
+
+        for (let i = 0; i < unique.length; i += this.RECORD_UPDATED_FETCH_CHUNK) {
+            const chunk = unique.slice(i, i + this.RECORD_UPDATED_FETCH_CHUNK);
+            const { data } = await this.api.salesForceRq(context, {
+                method: 'POST',
+                action: `composite/sobjects/${objectName}`,
+                data: JSON.stringify({ ids: chunk, fields: fieldNames }),
+                headers: { 'Content-Type': 'application/json' }
+            });
+            (Array.isArray(data) ? data : []).forEach(record => {
+                if (!record || !record.Id) return;
+                // eslint-disable-next-line no-unused-vars
+                const { attributes, ...rest } = record;
+                dateTimeFields.forEach(field => {
+                    if (rest[field]) rest[field] = this.formatDate(rest[field]);
+                });
+                records.set(rest.Id, rest);
+            });
+        }
+        return records;
+    },
+
+    /**
+     * start() of the Record Updated trigger: check the configuration (Field History Tracking
+     * for Changes / Changes to) and set the watermark to now or to Start From.
+     * @param {Object} context
+     */
+    async startRecordUpdated(context) {
+
+        const config = this.getRecordUpdatedConfig(context);
+        const state = { watermark: this.toSoqlSecond(config.since || new Date()), seen: [] };
+        if (this.isHistoryOperator(config.operator)) {
+            Object.assign(state, await this.resolveHistorySource(context, config));
+        } else {
+            state.emitted = [];
+        }
+        await context.saveState(state);
+    },
+
+    /**
+     * tick() of the Record Updated trigger: emit the changes since the watermark, oldest
+     * first, each once. The state holds only the watermark, the ids at the watermark second
+     * and (Equals / Does not equal) a bounded list of emitted ids.
+     * @param {Object} context
+     * @param {string} outputPortName
+     */
+    async tickRecordUpdated(context, outputPortName = 'out') {
+
+        const config = this.getRecordUpdatedConfig(context);
+        const state = context.state || {};
+        if (!state.watermark) {
+            // No state (the flow was started before the component existed or the state was
+            // cleared): start watching from now.
+            return this.startRecordUpdated(context);
+        }
+        const to = new Date(Date.now() - this.RECORD_UPDATED_LAG_MS);
+
+        if (this.isHistoryOperator(config.operator)) {
+            const source = state.historyObject && state.parentField ?
+                { historyObject: state.historyObject, parentField: state.parentField } :
+                await this.resolveHistorySource(context, config);
+            const rows = await this.readAfterWatermark(context, {
+                soql: this.buildHistorySoql({ ...source, fieldName: config.fieldName, from: state.watermark, to }),
+                timestampField: 'CreatedDate',
+                watermark: state.watermark,
+                seen: state.seen,
+                maxRows: this.RECORD_UPDATED_MAX_PER_TICK
+            });
+
+            const changes = this.groupHistoryRows(rows, source.parentField)
+                .map(change => ({ change, values: this.historyChangeMatches(config, change) }))
+                .filter(item => item.values);
+            const allowed = await this.filterIdsByWhere(context, {
+                objectName: config.objectName,
+                where: config.where,
+                ids: changes.map(item => item.change.recordId)
+            });
+            const matching = changes.filter(item => allowed.has(item.change.recordId));
+            const records = await this.fetchRecordsById(context, {
+                objectName: config.objectName,
+                ids: matching.map(item => item.change.recordId)
+            });
+            for (const item of matching) {
+                const record = records.get(item.change.recordId);
+                if (record) {
+                    await context.sendJson({ ...record, ...item.values }, outputPortName);
+                }
+            }
+            await context.saveState({
+                ...source,
+                ...this.advanceWatermark(state, rows, 'CreatedDate')
+            });
+            return;
+        }
+
+        const rows = await this.readAfterWatermark(context, {
+            soql: this.buildModifiedSoql({ ...config, from: state.watermark, to }),
+            timestampField: 'SystemModstamp',
+            watermark: state.watermark,
+            seen: state.seen,
+            maxRows: this.RECORD_UPDATED_MAX_PER_TICK
+        });
+        // Insertion order = recency; re-inserting moves an id to the end.
+        const emitted = new Set(Array.isArray(state.emitted) ? state.emitted : []);
+        const toEmit = [];
+        rows.forEach(row => {
+            if (!this.currentValueMatches(config, row[config.fieldName])) {
+                emitted.delete(row.Id);
+                return;
+            }
+            if (emitted.has(row.Id)) {
+                emitted.delete(row.Id);
+                emitted.add(row.Id);
+                return;
+            }
+            emitted.add(row.Id);
+            toEmit.push(row);
+        });
+        const records = await this.fetchRecordsById(context, {
+            objectName: config.objectName,
+            ids: toEmit.map(row => row.Id)
+        });
+        for (const row of toEmit) {
+            const record = records.get(row.Id);
+            if (record) {
+                await context.sendJson({ ...record, newValue: row[config.fieldName] }, outputPortName);
+            }
+        }
+        const emittedList = Array.from(emitted);
+        await context.saveState({
+            ...this.advanceWatermark(state, rows, 'SystemModstamp'),
+            emitted: emittedList.slice(Math.max(0, emittedList.length - this.RECORD_UPDATED_MAX_EMITTED))
+        });
+    },
+
+    /**
+     * Example for the Record Updated trigger's test(): the latest change (Changes / Changes to)
+     * or the latest modified record (Equals / Does not equal) that meets the condition, in the
+     * shape tick() emits. Read-only, no state.
+     * @param {Object} context
+     * @return {Promise<Object|null>} null when no recent change meets the condition
+     */
+    async findRecordUpdatedExample(context) {
+
+        const config = this.getRecordUpdatedConfig(context);
+        const sampleSize = 200;
+        let recordId;
+        let values;
+
+        if (this.isHistoryOperator(config.operator)) {
+            const source = await this.resolveHistorySource(context, config);
+            const rows = await this.queryAll(context, this.buildHistorySoql({
+                ...source,
+                fieldName: config.fieldName,
+                descending: true,
+                limit: sampleSize
+            }));
+            const changes = this.groupHistoryRows(rows, source.parentField)
+                .map(change => ({ change, values: this.historyChangeMatches(config, change) }))
+                .filter(item => item.values);
+            const allowed = await this.filterIdsByWhere(context, {
+                objectName: config.objectName,
+                where: config.where,
+                ids: changes.map(item => item.change.recordId)
+            });
+            const latest = changes.find(item => allowed.has(item.change.recordId));
+            if (latest) {
+                recordId = latest.change.recordId;
+                values = latest.values;
+            }
+        } else {
+            const rows = await this.queryAll(context, this.buildModifiedSoql({
+                ...config,
+                descending: true,
+                limit: sampleSize
+            }));
+            const latest = rows.find(row => this.currentValueMatches(config, row[config.fieldName]));
+            if (latest) {
+                recordId = latest.Id;
+                values = { newValue: latest[config.fieldName] };
+            }
+        }
+
+        const record = recordId &&
+            (await this.fetchRecordsById(context, { objectName: config.objectName, ids: [recordId] })).get(recordId);
+        return record ? { ...record, ...values } : null;
+    },
+
     // API
     api: {
         async getObjectFields(context, { objectName, cache = false }) {
