@@ -1,0 +1,380 @@
+{
+    "name": "E2E Hugging Face - Translation and Datasets",
+    "description": "End-to-end test for Hugging Face Translate Text (a language-pair model and a multi-language model with source and target language codes) and Find Datasets (Hub search filtered by keyword, author and tag).",
+    "flow": {
+        "b50a1bac-e0f3-4b54-a9ed-0b8c2d813d09": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16,
+            "source": {},
+            "version": "1.0.0",
+            "config": {},
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "ea4ecb1c-e8dd-4588-b48e-6c290c6b474a": {
+            "type": "appmixer.ai.huggingface.TranslateText",
+            "x": 272,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "b50a1bac-e0f3-4b54-a9ed-0b8c2d813d09": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "b50a1bac-e0f3-4b54-a9ed-0b8c2d813d09": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "model": {},
+                                    "text": {}
+                                },
+                                "lambda": {
+                                    "model": "Helsinki-NLP/opus-mt-en-fr",
+                                    "text": "Good morning, everyone."
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "07c6e972-82c3-4452-b6fa-e4bea19d74ba": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 480,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "ea4ecb1c-e8dd-4588-b48e-6c290c6b474a": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "ea4ecb1c-e8dd-4588-b48e-6c290c6b474a": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "a49a474e-d21d-45e1-9eaf-c39efb9107d8": {
+                                            "variable": "$.ea4ecb1c-e8dd-4588-b48e-6c290c6b474a.out.translation",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{a49a474e-d21d-45e1-9eaf-c39efb9107d8}}}",
+                                                "assertion": "regex",
+                                                "regex": "[Bb]onjour"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "7fab0437-6fca-4ad1-8cd5-919c5b471455": {
+            "type": "appmixer.ai.huggingface.TranslateText",
+            "x": 480,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "b50a1bac-e0f3-4b54-a9ed-0b8c2d813d09": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "b50a1bac-e0f3-4b54-a9ed-0b8c2d813d09": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "model": {},
+                                    "text": {},
+                                    "sourceLanguage": {},
+                                    "targetLanguage": {}
+                                },
+                                "lambda": {
+                                    "model": "google-t5/t5-small",
+                                    "text": "The house is wonderful.",
+                                    "sourceLanguage": "en",
+                                    "targetLanguage": "de"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "b30b0060-f55f-4377-8e63-75cdca57f7e3": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 688,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "7fab0437-6fca-4ad1-8cd5-919c5b471455": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "7fab0437-6fca-4ad1-8cd5-919c5b471455": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "191f9db6-f85b-4d96-8a8c-2c1013bceeb7": {
+                                            "variable": "$.7fab0437-6fca-4ad1-8cd5-919c5b471455.out.translation",
+                                            "functions": []
+                                        },
+                                        "0bd48a5d-2f6b-4b4a-aba2-f1fb22ec6aac": {
+                                            "variable": "$.7fab0437-6fca-4ad1-8cd5-919c5b471455.out.targetLanguage",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{191f9db6-f85b-4d96-8a8c-2c1013bceeb7}}}",
+                                                "assertion": "regex",
+                                                "regex": "Haus"
+                                            },
+                                            {
+                                                "field": "{{{0bd48a5d-2f6b-4b4a-aba2-f1fb22ec6aac}}}",
+                                                "assertion": "equal",
+                                                "expected": "de"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "3c927628-5dc2-4515-bfa4-aa140f3a8438": {
+            "type": "appmixer.ai.huggingface.FindDatasets",
+            "x": 688,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "b50a1bac-e0f3-4b54-a9ed-0b8c2d813d09": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "b50a1bac-e0f3-4b54-a9ed-0b8c2d813d09": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "search": {},
+                                    "author": {},
+                                    "filter": {},
+                                    "sort": {},
+                                    "direction": {},
+                                    "outputType": {}
+                                },
+                                "lambda": {
+                                    "search": "squad",
+                                    "author": "rajpurkar",
+                                    "filter": "task_categories:question-answering",
+                                    "sort": "downloads",
+                                    "direction": "desc",
+                                    "outputType": "first"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "33530473-e794-4e83-b638-b75210ec2b52": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 896,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "3c927628-5dc2-4515-bfa4-aa140f3a8438": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "3c927628-5dc2-4515-bfa4-aa140f3a8438": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "f27c21b1-d9b0-4700-80ea-509faec98f79": {
+                                            "variable": "$.3c927628-5dc2-4515-bfa4-aa140f3a8438.out.id",
+                                            "functions": []
+                                        },
+                                        "f9b4c7e8-a73f-4492-88ca-9ae74ef36740": {
+                                            "variable": "$.3c927628-5dc2-4515-bfa4-aa140f3a8438.out.url",
+                                            "functions": []
+                                        },
+                                        "9d3535ef-ae32-4910-8006-bc8db6d3d050": {
+                                            "variable": "$.3c927628-5dc2-4515-bfa4-aa140f3a8438.out.count",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{f27c21b1-d9b0-4700-80ea-509faec98f79}}}",
+                                                "assertion": "equal",
+                                                "expected": "rajpurkar/squad"
+                                            },
+                                            {
+                                                "field": "{{{f9b4c7e8-a73f-4492-88ca-9ae74ef36740}}}",
+                                                "assertion": "regex",
+                                                "regex": "^https://huggingface.co/datasets/rajpurkar/"
+                                            },
+                                            {
+                                                "field": "{{{9d3535ef-ae32-4910-8006-bc8db6d3d050}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "cb5a5331-ab5f-4d8a-be68-62711bb96963": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 1104,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "07c6e972-82c3-4452-b6fa-e4bea19d74ba": [
+                        "out"
+                    ],
+                    "b30b0060-f55f-4377-8e63-75cdca57f7e3": [
+                        "out"
+                    ],
+                    "33530473-e794-4e83-b638-b75210ec2b52": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 300
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "87cf4e9c-db92-48f4-bb17-b1951361610b": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1312,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "cb5a5331-ab5f-4d8a-be68-62711bb96963": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "successStoreId": "64f6f1f9193228000754082f",
+                    "failedStoreId": "64f6f1f0193228000754082e"
+                },
+                "transform": {
+                    "in": {
+                        "cb5a5331-ab5f-4d8a-be68-62711bb96963": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "932c8834-adec-477f-829d-4dfa3059d248": {
+                                            "variable": "$.cb5a5331-ab5f-4d8a-be68-62711bb96963.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E Hugging Face - Translation and Datasets",
+                                    "result": "{{{932c8834-adec-477f-829d-4dfa3059d248}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        }
+    }
+}
