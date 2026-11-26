@@ -102,6 +102,11 @@ module.exports = {
 
         if (responseType) {
             options.responseType = responseType;
+        } else {
+            // Ask for JSON explicitly. axios defaults to "application/json, text/plain, */*",
+            // which some hf-inference model servers (e.g. google-t5/t5-small) reject with
+            // HTTP 400 "Accept type ... not supported".
+            options.headers.Accept = 'application/json';
         }
 
         const response = await context.httpRequest(options);
