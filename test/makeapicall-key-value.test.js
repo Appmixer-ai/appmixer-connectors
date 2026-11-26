@@ -93,6 +93,10 @@ describe('MakeApiCall: Request Headers and Query Parameters from the Designer', 
         context.httpRequest
             .withArgs(sinon.match({ url: sinon.match(/\/api\/state\/Cust12345$/) }))
             .resolves({ status: 200, data: SUPEROFFICE_STATE });
+        // Revinate CDP requests an access token first and refuses to go on without one.
+        context.httpRequest
+            .withArgs(sinon.match({ url: 'https://api.revinate.com/oauth/token' }))
+            .resolves({ status: 200, data: { access_token: 'kv-test-token', expires_in: 86400 } });
         context.messages = {
             in: {
                 content: {

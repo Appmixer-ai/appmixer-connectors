@@ -1,0 +1,69 @@
+{
+    "connector": "appmixer.revinate",
+    "vendor": "appmixer",
+    "module": "revinate",
+    "modules": ["reputation", "cdp"],
+    "issue": "https://github.com/Appmixer-ai/appmixer-components/issues/3164",
+    "steps": {
+        "build": "done",
+        "review": "done",
+        "cliTests": "blocked",
+        "verify": "blocked",
+        "e2e": "blocked",
+        "ship": "pr-open"
+    },
+    "auth": {
+        "reputation": {
+            "service": "appmixer:revinate:reputation",
+            "type": "apiKey",
+            "fields": ["username", "apiKey", "apiSecret"],
+            "status": "missing"
+        },
+        "cdp": {
+            "service": "appmixer:revinate:cdp",
+            "type": "apiKey",
+            "fields": ["clientId", "clientSecret", "accountId"],
+            "status": "missing"
+        },
+        "reason": "No Revinate test account exists (creds show revinate is empty). Revinate has no sandbox and no self-service credentials: Porter keys and CDP client credentials are issued per customer by Revinate."
+    },
+    "localTests": "blocked-no-credentials",
+    "notRunAgainstRealApi": true,
+    "verified": {
+        "static": [
+            "node scripts/validate.js --connector revinate: 0 failures, 0 warnings",
+            "eslint: clean",
+            "72 unit tests in artifacts/test/revinate.test.js with a mocked HTTP client, among them the HMAC digest of the sample in the Porter documentation",
+            "Porter paths and query parameters taken from the Swagger 1.2 files at https://porter.revinate.com/api-docs/default/*; CDP paths, headers and parameters from the pages of https://developer.revinate.com/",
+            "appmixer e2e validate on the 6 flows: passed"
+        ],
+        "liveWithoutAccount": [
+            "38 runs of the connector's own code (auth.validate of both modules, every component, every trigger tick() and test()) against https://porter.revinate.com and https://api.revinate.com with invalid credentials",
+            "Porter answers every signed request with 401 { timestamp, status, error, message: 'Username does not exist', path }; the connector turns it into a CancelError (InvalidTokenError in auth.js); the Hotel dropdown source returns an empty list",
+            "With this machine's clock set 20 minutes back, the Porter request was repeated once with the time taken from Revinate's 401 answer",
+            "POST https://api.revinate.com/oauth/token: JSON body with invalid client -> 401 { error: 'access_denied', error_description: 'Unauthorized' }; form body -> 415; wrong audience -> 400",
+            "GET /api/v2/rich-guest-profiles, /api/v2/rich-guest-profile/{id} and /api/v2/reservations with a made-up bearer token -> 403 from the gateway authorizer, turned into a CancelError; an unknown path answers differently (Missing Authentication Token), so the three routes exist",
+            "Make API Call of both modules refuses a foreign host without sending a request"
+        ],
+        "notVerified": [
+            "No request with valid credentials was ever sent. No component has returned real data.",
+            "appmixer test component, appmixer connector verify and the E2E flows were not run.",
+            "See artifacts/test-flows/README.md, 'Things only a run can settle'."
+        ]
+    },
+    "needsFromHuman": [
+        "A Revinate customer or partner account. Nothing here can be bought or signed up for online.",
+        "Reputation module: a Porter API key and API secret from Revinate, and the username of a Revinate user with access to the key and to a hotel with reviews",
+        "Guest Data module: a CDP API Client ID and Client Secret from Revinate, and an Account ID they are authorized for, holding guest profiles and reservations",
+        "Stored with: creds set revinate ...",
+        "For the trigger flows: somebody who can answer a guest survey and change a reservation in the connected PMS while the flow waits"
+    ],
+    "notes": [
+        "Two modules with their own auth.js because the two APIs use different credentials and a hotel may have only one of them.",
+        "Both APIs are read-only: no Create, Update or Delete components.",
+        "CDP uses OAuth 2.0 client credentials. It is implemented as an apiKey-type connection (three fields); the components request the access token and cache it for its lifetime.",
+        "Not built: Find Widget Reviews, Find Hotel Sets, Find Hotel Set Reviews (lower priority in the issue; reachable through Make API Call).",
+        "verify.json has no round-trip spec: there is nothing to write.",
+        "Find Reviews asks for 100 reviews, not the API maximum of 1000: a review can carry a whole survey and 1000 of them could exceed the engine's message size."
+    ]
+}

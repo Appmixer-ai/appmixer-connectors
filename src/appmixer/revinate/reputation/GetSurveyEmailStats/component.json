@@ -1,0 +1,151 @@
+{
+    "name": "appmixer.revinate.reputation.GetSurveyEmailStats",
+    "label": "Get Survey Email Stats",
+    "description": "Get the statistics of the guest survey e-mails of one hotel for a period: sent, delivered, opens, clicks, bounces, spam reports and unsubscribes.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:revinate:reputation"
+    },
+    "quota": {
+        "manager": "appmixer:revinate:reputation",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "hotelId": {
+                        "type": "string"
+                    },
+                    "startDate": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "endDate": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "required": [
+                    "hotelId"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "hotelId": {
+                        "type": "text",
+                        "index": 1,
+                        "label": "Hotel",
+                        "tooltip": "Pick a hotel, or type its Hotel ID.",
+                        "source": {
+                            "url": "/component/appmixer/revinate/reputation/FindHotels?outPort=out",
+                            "data": {
+                                "properties": {
+                                    "isSource": true
+                                },
+                                "transform": "./FindHotels#toSelectArray"
+                            }
+                        }
+                    },
+                    "startDate": {
+                        "type": "date-time",
+                        "index": 2,
+                        "label": "Start Date",
+                        "tooltip": "The start of the period. Leave Start Date and End Date empty for Revinate's default period."
+                    },
+                    "endDate": {
+                        "type": "date-time",
+                        "index": 3,
+                        "label": "End Date",
+                        "tooltip": "The end of the period. Defaults to now when only Start Date is set."
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "requests": {
+                        "type": "integer",
+                        "title": "Requests",
+                        "example": 520
+                    },
+                    "sent": {
+                        "type": "integer",
+                        "title": "Sent",
+                        "example": 512
+                    },
+                    "delivered": {
+                        "type": "integer",
+                        "title": "Delivered",
+                        "example": 498
+                    },
+                    "uniqueOpens": {
+                        "type": "integer",
+                        "title": "Unique Opens",
+                        "example": 231
+                    },
+                    "uniqueViews": {
+                        "type": "integer",
+                        "title": "Unique Views",
+                        "example": 120
+                    },
+                    "uniqueClicks": {
+                        "type": "integer",
+                        "title": "Unique Clicks",
+                        "example": 87
+                    },
+                    "bounces": {
+                        "type": "integer",
+                        "title": "Bounces",
+                        "example": 9
+                    },
+                    "bounceDrops": {
+                        "type": "integer",
+                        "title": "Bounce Drops",
+                        "example": 3
+                    },
+                    "invalidEmails": {
+                        "type": "integer",
+                        "title": "Invalid Emails",
+                        "example": 2
+                    },
+                    "spamReports": {
+                        "type": "integer",
+                        "title": "Spam Reports",
+                        "example": 0
+                    },
+                    "unsubscribes": {
+                        "type": "integer",
+                        "title": "Unsubscribes",
+                        "example": 4
+                    },
+                    "links": {
+                        "type": "array",
+                        "title": "Links",
+                        "items": {
+                            "type": "object"
+                        },
+                        "example": [
+                            {
+                                "rel": "self",
+                                "href": "https://porter.revinate.com/hotels/10470/surveyemailstats?date=1792713600..1795392000"
+                            }
+                        ]
+                    }
+                }
+            }
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDI0IDEwMjgiIHJvbGU9ImltZyIgYXJpYS1sYWJlbD0iUmV2aW5hdGUiPjxyZWN0IHdpZHRoPSIxMDI0IiBoZWlnaHQ9IjEwMjgiIGZpbGw9IiMzNzYxRDgiLz48cGF0aCB0cmFuc2Zvcm09InRyYW5zbGF0ZSgwLDEwMjgpIHNjYWxlKDAuMSwtMC4xKSIgZmlsbD0iI0ZGRkZGRiIgZD0iTTUwNTAgNzc2OSBjLTE0IC0xMCAtMzYgLTI5IC01MCAtNDEgLTM2IC0zMSAtNTAxIC00MDUgLTU2OCAtNDU3IC0zMiAtMjQgLTgwIC02MyAtMTA3IC04NiAtMjggLTI0IC03MyAtNjAgLTEwMCAtODEgLTI4IC0yMCAtNTIgLTQxIC01NSAtNDUgLTMgLTQgLTIwIC0xOCAtMzcgLTMxIC02MyAtNDYgLTE0MCAtMTA3IC0xNTcgLTEyNCAtMTAgLTkgLTMxIC0yNyAtNDYgLTM4IC02NSAtNDggLTEzOCAtMTA2IC0xNTUgLTEyMyAtMTAgLTEwIC0zMCAtMjcgLTQ1IC0zOCAtNzUgLTU1IC0xMzkgLTEwNSAtMTU1IC0xMjIgLTEwIC0xMCAtMzAgLTI3IC00NSAtMzggLTc5IC01OCAtMTQxIC0xMDcgLTE1NyAtMTI0IC0xMCAtMTAgLTU4IC00OSAtMTA4IC04NiAtNDkgLTM4IC05NCAtNzQgLTEwMCAtODEgLTUgLTYgLTUwIC00MiAtMTAwIC04MCAtNDkgLTM3IC05MiAtNzEgLTk1IC03NSAtOSAtMTQgLTEzMyAtMTA5IC0xNDEgLTEwOSAtNSAwIC0xNSAtMTMgLTI0IC0zMCAtMjYgLTUwIC0xOCAtMjAwNiA5IC0yMDI1IDIzIC0xNyA1MyAtNyAxMDQgMzUgMjAgMTYgODcgNjggMTQ3IDExNSA2MSA0NiAxMTcgOTEgMTI1IDk4IDggOCA1NSA0NCAxMDMgODEgNDggMzcgOTYgNzQgMTA3IDg0IDEwIDkgNDAgMzQgNjcgNTQgMjYgMjEgODYgNjcgMTMxIDEwMyA0NiAzNiA4NyA2NSA5MCA2NSA0IDAgMjYgMTcgNDggMzggMjMgMjAgNjUgNTUgOTQgNzcgODcgNjcgMjY0IDIwNSAyODAgMjE4IDUzIDQ0IDEzNCAxMDcgMTM5IDEwNyAzIDAgMjUgMTcgNDcgMzggMjMgMjAgNjUgNTUgOTQgNzcgMTA5IDgzIDI2NiAyMDUgMjgwIDIxOCA4IDggNTUgNDQgMTAzIDgxIDQ4IDM3IDk1IDczIDEwNSA4MSAxMTMgOTcgMTk3IDE1NSAyMjQgMTU1IDI2IDAgNzUgLTI2IDEyMCAtNjQgMjAgLTE3IDU2IC00NyA3OCAtNjYgMjMgLTE5IDQ5IC0zOSA1OCAtNDQgMjAgLTExIDExMCAtODMgMTM1IC0xMDggMTAgLTEwIDIyIC0xOCAyNyAtMTggOCAwIDQzIC0yNyAxNDMgLTExMiAyMiAtMTggNDYgLTM3IDU1IC00MiAxNyAtOSAxMDEgLTc2IDEzNCAtMTA2IDkgLTggNDIgLTMzIDczIC01NSAzMSAtMjIgNzUgLTU3IDk4IC03NyAyMyAtMjEgNDUgLTM4IDQ4IC0zOCA1IDAgODYgLTYzIDEzOSAtMTA3IDggLTcgNjUgLTUxIDEyNSAtOTcgMTAzIC04MCAxNzcgLTEzOCAyMjggLTE3OCAxMiAtMTAgNzIgLTU2IDEzMiAtMTAzIDYxIC00NyAxMzMgLTEwMyAxNjAgLTEyNSAyOCAtMjIgNTkgLTQ2IDcwIC01NSAzMCAtMjMgMjMzIC0xODAgMjg4IC0yMjMgMjYgLTIwIDY0IC01MiA4NSAtNzAgNjYgLTU5IDEyNiAtNzAgMTQyIC0yNiA3IDE3IDkgMzcyIDggOTkxIGwtMyA5NjUgLTM2IDMxIGMtMjAgMTggLTUzIDQ2IC03NSA2NCAtMTE0IDkyIC0xOTMgMTU3IC0yMzAgMTg5IC00MSAzNCAtOTggNzggLTE1NSAxMjEgLTE2IDExIC00NSAzNyAtNjUgNTcgLTIwIDIwIC00MCAzNiAtNDUgMzYgLTQgMCAtMzAgMTkgLTU3IDQzIC0xMjMgMTA3IC0xNjYgMTQzIC0xODEgMTUxIC05IDUgLTM2IDI2IC02MSA0OCAtNTkgNTAgLTY3IDU3IC0xMjAgOTggLTUwIDM5IC0xNjcgMTM2IC0xOTAgMTU3IC04IDcgLTUzIDQ0IC0xMDAgODEgLTQ3IDM3IC05NyA3OCAtMTEwIDkxIC0xNCAxMyAtMzcgMzEgLTUxIDQwIC0zMCAxOCAtODggNjcgLTE1NiAxMjkgLTI1IDIzIC01MCA0MiAtNTQgNDIgLTUgMCAtMzAgMTkgLTU3IDQzIC0yNiAyMyAtNjYgNTYgLTg4IDc0IC0yMSAxNyAtNjggNTYgLTEwMyA4NSAtMzUgMjkgLTc1IDYxIC04OSA3MCAtMTMgOSAtMjggMjEgLTMxIDI2IC0zIDUgLTI5IDI3IC01NyA0OCAtMjggMjEgLTg1IDY3IC0xMjcgMTAyIC04MyA2OCAtMTEzIDc2IC0xNTcgNDF6IE01MDMwIDQ2MjggYy0zMCAtMjIgLTU3IC00NCAtNjAgLTQ5IC0zIC00IC00NSAtMzkgLTk1IC03OCAtNDkgLTM5IC0xMDEgLTgxIC0xMTUgLTkzIC0zOCAtMzMgLTMwNiAtMjQ5IC0zNDggLTI4MSAtMjAgLTE2IC01MCAtNDAgLTY3IC01NSAtMTYgLTE1IC00MSAtMzYgLTU2IC00NyAtOTUgLTcyIC0xMzggLTEwNiAtMTU0IC0xMjEgLTI3IC0yOCAtMTM3IC0xMTQgLTE0NCAtMTE0IC00IDAgLTIyIC0xNSAtNDEgLTMzIC0xOSAtMTggLTU5IC01MiAtODcgLTc2IC02NCAtNTIgLTY4IC03NyAtMjAgLTExOSAxNyAtMTYgNTkgLTUzIDkyIC04MiAzMyAtMjggODUgLTc0IDExNSAtMTAwIDUxIC00NSAxMjIgLTEwNSAyMjYgLTE5MiAyNSAtMjAgNjEgLTUzIDgxIC03MyAyMSAtMjEgNTMgLTQ5IDczIC02MyAzNCAtMjYgOTAgLTc0IDIwNyAtMTc5IDMyIC0yOSA2OSAtNjAgODMgLTcwIDIzIC0xNSA1NiAtNDQgMTkyIC0xNjYgNzAgLTYyIDE0NyAtMTI0IDE3NSAtMTM4IDIzIC0xMiA3MSAxNSAxNDEgODAgMTggMTcgNzkgNjggMTM1IDExMyA1NiA0NSAxMDQgODUgMTA3IDg5IDMgNCA0NiAzOSA5NSA3OCAxMTAgODYgOTYgNzUgMTgwIDE0NyAzOSAzMiA4NyA3MiAxMDggODcgMjEgMTYgNDUgMzYgNTUgNDYgOSAxMCA2NiA1OCAxMjcgMTA3IDExOSA5NyAxMjEgOTkgMTgwIDE0NyAyMiAxOSA1MCA0MCA2MyA0OSAxMiA4IDUxIDQxIDg3IDczIDk0IDgzIDk0IDgyIC01OCAyMDIgLTI2IDIxIC02NiA1NSAtOTAgNzUgLTIzIDIxIC00NSAzOCAtNDkgMzggLTQgMCAtMzEgMjAgLTYwIDQ1IC0xMTAgOTMgLTEzMCAxMTAgLTE0NiAxMTkgLTEwIDUgLTM2IDI1IC01OSA0NSAtOTAgNzcgLTEyNiAxMDYgLTE0MSAxMTUgLTEwIDUgLTM2IDI1IC01OSA0NSAtOTAgNzcgLTEyNiAxMDYgLTE0MSAxMTUgLTEwIDUgLTM2IDI1IC01OSA0NSAtOTAgNzcgLTEyNiAxMDYgLTE0MSAxMTUgLTEwIDUgLTM2IDI1IC01OSA0NSAtMTIxIDEwNCAtMTg1IDE1MSAtMjA2IDE1MSAtNyAwIC0zNyAtMTkgLTY3IC00MnoiLz48L3N2Zz4K"
+}

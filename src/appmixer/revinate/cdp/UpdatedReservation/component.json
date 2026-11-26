@@ -1,0 +1,343 @@
+{
+    "name": "appmixer.revinate.cdp.UpdatedReservation",
+    "label": "New or Updated Reservation",
+    "description": "Triggers when a room, spa, restaurant or golf reservation is created or modified in Revinate, for example booked, changed, checked in or cancelled. The API reports only the time of the last modification, so new and changed reservations cannot be told apart. Revinate has no webhooks, so the API is polled: every 15 minutes by default, up to 2000 records per check. Records modified before the flow was started do not trigger.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "trigger": true,
+    "tick": true,
+    "auth": {
+        "service": "appmixer:revinate:cdp"
+    },
+    "quota": {
+        "manager": "appmixer:revinate:cdp",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "properties": {
+        "schema": {
+            "type": "object",
+            "properties": {
+                "reservationTypes": {
+                    "type": [
+                        "array",
+                        "string"
+                    ]
+                },
+                "accountId": {
+                    "type": "string"
+                },
+                "pollingInterval": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 1440,
+                    "default": 15
+                }
+            }
+        },
+        "inspector": {
+            "inputs": {
+                "reservationTypes": {
+                    "type": "multiselect",
+                    "index": 1,
+                    "label": "Reservation Types",
+                    "tooltip": "Trigger for only reservations of these types. Leave empty for all types.",
+                    "options": [
+                        {
+                            "label": "Room",
+                            "value": "room"
+                        },
+                        {
+                            "label": "Spa",
+                            "value": "spa"
+                        },
+                        {
+                            "label": "Restaurant",
+                            "value": "restaurant"
+                        },
+                        {
+                            "label": "Golf",
+                            "value": "golf"
+                        }
+                    ]
+                },
+                "accountId": {
+                    "type": "text",
+                    "index": 2,
+                    "label": "Account ID",
+                    "tooltip": "Watch this Revinate Account ID instead of the one of the connected account. Leave empty to use the connected account's Account ID."
+                },
+                "pollingInterval": {
+                    "type": "number",
+                    "index": 3,
+                    "label": "Check Every (Minutes)",
+                    "defaultValue": 15,
+                    "tooltip": "How often Revinate is asked for changes, 1 to 1440 minutes. Revinate has no webhooks, and its API quota is agreed per customer, so keep this as long as your flow allows."
+                }
+            }
+        }
+    },
+    "outPorts": [
+        {
+            "name": "out",
+            "schema": {
+                "type": "object",
+                "required": [
+                    "reservation_type",
+                    "reservation_id",
+                    "rich_guest_profile_ids"
+                ],
+                "properties": {
+                    "reservation_type": {
+                        "type": "string",
+                        "title": "Reservation Type",
+                        "example": "room"
+                    },
+                    "reservation_id": {
+                        "type": "string",
+                        "title": "Reservation ID",
+                        "example": "a0ec947b-f945-46d4-abac-ff4e7b0e98b5"
+                    },
+                    "rich_guest_profile_ids": {
+                        "type": "array",
+                        "title": "Profile IDs",
+                        "items": {
+                            "type": "string"
+                        },
+                        "example": [
+                            "5af3a88f-a869-4f9f-8aef-c9c64147f10a"
+                        ]
+                    },
+                    "revinate_last_modified_at": {
+                        "type": "string",
+                        "title": "Last Modified At",
+                        "format": "date-time",
+                        "example": "2025-02-27T02:13:05.144Z"
+                    },
+                    "booking_date": {
+                        "type": "string",
+                        "title": "Booking Date",
+                        "format": "date-time",
+                        "example": "2025-02-27T00:38:02.019Z"
+                    },
+                    "reservation_source": {
+                        "type": "string",
+                        "title": "Reservation Source",
+                        "example": "Expedia"
+                    },
+                    "block_code": {
+                        "type": "string",
+                        "title": "Block Code",
+                        "example": "B598661"
+                    },
+                    "guarantee_code": {
+                        "type": "string",
+                        "title": "Guarantee Code",
+                        "example": "CC"
+                    },
+                    "market": {
+                        "type": "string",
+                        "title": "Market",
+                        "example": "OTA Leisure"
+                    },
+                    "revinate_room_reservation_id": {
+                        "type": "string",
+                        "title": "Room Reservation ID",
+                        "example": "a0ec947b-f945-46d4-abac-ff4e7b0e98b5"
+                    },
+                    "room_stays": {
+                        "type": "array",
+                        "title": "Room Stays",
+                        "items": {
+                            "type": "object"
+                        },
+                        "example": [
+                            {
+                                "revinate_room_stay_id": "4c15181d-da46-49ef-acbd-e6129c6950c2",
+                                "external_references": {
+                                    "account_id": "1928376",
+                                    "source_system_room_reservation_id": "R589665",
+                                    "source_system_room_stay_id": "R589665-1",
+                                    "source_system_id": "0"
+                                },
+                                "reservation_number": "R589665",
+                                "check_in_date": "2025-06-05T00:00:00.000Z",
+                                "check_out_date": "2025-06-11T00:00:00.000Z",
+                                "status_code": "ROOM_RESERVATION_STATUS_CODE_RESERVED",
+                                "rate_codes": [
+                                    "RACK",
+                                    "BARDIRECT"
+                                ],
+                                "room_type": "DLX",
+                                "room_number": "681",
+                                "number_of_adults": 2,
+                                "number_of_children": 1,
+                                "room_stay_rate_revenue_in_account_currency_property": 1450,
+                                "revinate_rich_guest_profile_id": "5af3a88f-a869-4f9f-8aef-c9c64147f10a"
+                            }
+                        ]
+                    },
+                    "revinate_spa_reservation_id": {
+                        "type": "string",
+                        "title": "Spa Reservation ID",
+                        "example": "06134b04-9fb0-46eb-87ac-2918be4d6fa2"
+                    },
+                    "spa_treatments": {
+                        "type": "array",
+                        "title": "Spa Treatments",
+                        "items": {
+                            "type": "object"
+                        },
+                        "example": [
+                            {
+                                "revinate_spa_treatment_id": "4d52a39e-b47c-4f1e-ad6d-c1925f016049",
+                                "reservation_number": "R4489554",
+                                "start_date": "2025-03-01T19:00:00.000Z",
+                                "end_date": "2025-03-01T21:00:00.000Z",
+                                "status_code": "SPA_RESERVATION_STATUS_CODE_CHECKED_IN",
+                                "inventory_codes": [
+                                    "MASSAGE",
+                                    "SAUNA"
+                                ],
+                                "location_name": "Prestige Palace",
+                                "spa_treatment_rate_revenue_in_account_currency_property": 250,
+                                "revinate_rich_guest_profile_id": "b1178b6b-7c18-49b0-8c01-e708a4a52728"
+                            }
+                        ]
+                    },
+                    "revinate_golf_reservation_id": {
+                        "type": "string",
+                        "title": "Golf Reservation ID",
+                        "example": "bbf420b7-6f95-4b2b-8165-971e471cbc29"
+                    },
+                    "tee_times": {
+                        "type": "array",
+                        "title": "Tee Times",
+                        "items": {
+                            "type": "object"
+                        },
+                        "example": [
+                            {
+                                "revinate_tee_time_id": "0eb9e0ba-58db-4c12-8307-a3aab08bf1df",
+                                "start_date": "2025-03-27T22:00:00.000Z",
+                                "end_date": "2025-03-28T02:00:00.000Z",
+                                "status_code": "GOLF_RESERVATION_STATUS_CODE_RESERVED",
+                                "golf_course": "Horizon Park",
+                                "number_of_holes": 18,
+                                "tee_time_rate_revenue_in_account_currency_property": 900,
+                                "revinate_rich_guest_profile_id": "17ac0e3f-dc9b-4174-85b2-8f7b9827053b"
+                            }
+                        ]
+                    },
+                    "revinate_restaurant_reservation_id": {
+                        "type": "string",
+                        "title": "Restaurant Reservation ID",
+                        "example": "a0ba4df6-a06b-432b-af7b-506f546a97bd"
+                    },
+                    "revinate_rich_guest_profile_id": {
+                        "type": "string",
+                        "title": "Restaurant Reservation Profile ID",
+                        "example": "08048660-1c46-4eb3-9fd1-cbf7e3c84ed8"
+                    },
+                    "external_references": {
+                        "type": "object",
+                        "title": "External References",
+                        "properties": {
+                            "account_id": {
+                                "type": "string",
+                                "title": "External References.Account ID",
+                                "example": "1928376"
+                            },
+                            "source_system_restaurant_reservation_id": {
+                                "type": "string",
+                                "title": "External References.Source System Restaurant Reservation ID",
+                                "example": "R4576828"
+                            },
+                            "source_system_id": {
+                                "type": [
+                                    "string",
+                                    "integer"
+                                ],
+                                "title": "External References.Source System ID",
+                                "example": 0
+                            }
+                        }
+                    },
+                    "start_date": {
+                        "type": "string",
+                        "title": "Start Date",
+                        "format": "date-time",
+                        "example": "2025-05-01T19:00:00.000Z"
+                    },
+                    "end_date": {
+                        "type": "string",
+                        "title": "End Date",
+                        "format": "date-time",
+                        "example": "2025-05-01T22:00:00.000Z"
+                    },
+                    "status_code": {
+                        "type": "string",
+                        "title": "Status Code",
+                        "example": "RESTAURANT_RESERVATION_STATUS_CODE_BOOKED"
+                    },
+                    "table_numbers": {
+                        "type": "array",
+                        "title": "Table Numbers",
+                        "items": {
+                            "type": "object"
+                        },
+                        "example": [
+                            {
+                                "table_number": "F01",
+                                "total_seats": 8
+                            }
+                        ]
+                    },
+                    "occasion": {
+                        "type": "string",
+                        "title": "Occasion",
+                        "example": "BIRTHDAY"
+                    },
+                    "number_of_adults": {
+                        "type": "integer",
+                        "title": "Number Of Adults",
+                        "example": 2
+                    },
+                    "number_of_children": {
+                        "type": "integer",
+                        "title": "Number Of Children",
+                        "example": 2
+                    },
+                    "number_of_infants": {
+                        "type": "integer",
+                        "title": "Number Of Infants",
+                        "example": 0
+                    },
+                    "number_of_teenagers": {
+                        "type": "integer",
+                        "title": "Number Of Teenagers",
+                        "example": 0
+                    },
+                    "number_of_seniors": {
+                        "type": "integer",
+                        "title": "Number Of Seniors",
+                        "example": 2
+                    },
+                    "restaurant_reservation_rate_revenue_in_account_currency_property": {
+                        "type": "number",
+                        "title": "Restaurant Revenue (Property Currency)",
+                        "example": 2000
+                    },
+                    "restaurant_reservation_rate_revenue_in_account_currency_group": {
+                        "type": "number",
+                        "title": "Restaurant Revenue (Group Currency)",
+                        "example": 2000
+                    }
+                }
+            }
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDI0IDEwMjgiIHJvbGU9ImltZyIgYXJpYS1sYWJlbD0iUmV2aW5hdGUiPjxyZWN0IHdpZHRoPSIxMDI0IiBoZWlnaHQ9IjEwMjgiIGZpbGw9IiMzNzYxRDgiLz48cGF0aCB0cmFuc2Zvcm09InRyYW5zbGF0ZSgwLDEwMjgpIHNjYWxlKDAuMSwtMC4xKSIgZmlsbD0iI0ZGRkZGRiIgZD0iTTUwNTAgNzc2OSBjLTE0IC0xMCAtMzYgLTI5IC01MCAtNDEgLTM2IC0zMSAtNTAxIC00MDUgLTU2OCAtNDU3IC0zMiAtMjQgLTgwIC02MyAtMTA3IC04NiAtMjggLTI0IC03MyAtNjAgLTEwMCAtODEgLTI4IC0yMCAtNTIgLTQxIC01NSAtNDUgLTMgLTQgLTIwIC0xOCAtMzcgLTMxIC02MyAtNDYgLTE0MCAtMTA3IC0xNTcgLTEyNCAtMTAgLTkgLTMxIC0yNyAtNDYgLTM4IC02NSAtNDggLTEzOCAtMTA2IC0xNTUgLTEyMyAtMTAgLTEwIC0zMCAtMjcgLTQ1IC0zOCAtNzUgLTU1IC0xMzkgLTEwNSAtMTU1IC0xMjIgLTEwIC0xMCAtMzAgLTI3IC00NSAtMzggLTc5IC01OCAtMTQxIC0xMDcgLTE1NyAtMTI0IC0xMCAtMTAgLTU4IC00OSAtMTA4IC04NiAtNDkgLTM4IC05NCAtNzQgLTEwMCAtODEgLTUgLTYgLTUwIC00MiAtMTAwIC04MCAtNDkgLTM3IC05MiAtNzEgLTk1IC03NSAtOSAtMTQgLTEzMyAtMTA5IC0xNDEgLTEwOSAtNSAwIC0xNSAtMTMgLTI0IC0zMCAtMjYgLTUwIC0xOCAtMjAwNiA5IC0yMDI1IDIzIC0xNyA1MyAtNyAxMDQgMzUgMjAgMTYgODcgNjggMTQ3IDExNSA2MSA0NiAxMTcgOTEgMTI1IDk4IDggOCA1NSA0NCAxMDMgODEgNDggMzcgOTYgNzQgMTA3IDg0IDEwIDkgNDAgMzQgNjcgNTQgMjYgMjEgODYgNjcgMTMxIDEwMyA0NiAzNiA4NyA2NSA5MCA2NSA0IDAgMjYgMTcgNDggMzggMjMgMjAgNjUgNTUgOTQgNzcgODcgNjcgMjY0IDIwNSAyODAgMjE4IDUzIDQ0IDEzNCAxMDcgMTM5IDEwNyAzIDAgMjUgMTcgNDcgMzggMjMgMjAgNjUgNTUgOTQgNzcgMTA5IDgzIDI2NiAyMDUgMjgwIDIxOCA4IDggNTUgNDQgMTAzIDgxIDQ4IDM3IDk1IDczIDEwNSA4MSAxMTMgOTcgMTk3IDE1NSAyMjQgMTU1IDI2IDAgNzUgLTI2IDEyMCAtNjQgMjAgLTE3IDU2IC00NyA3OCAtNjYgMjMgLTE5IDQ5IC0zOSA1OCAtNDQgMjAgLTExIDExMCAtODMgMTM1IC0xMDggMTAgLTEwIDIyIC0xOCAyNyAtMTggOCAwIDQzIC0yNyAxNDMgLTExMiAyMiAtMTggNDYgLTM3IDU1IC00MiAxNyAtOSAxMDEgLTc2IDEzNCAtMTA2IDkgLTggNDIgLTMzIDczIC01NSAzMSAtMjIgNzUgLTU3IDk4IC03NyAyMyAtMjEgNDUgLTM4IDQ4IC0zOCA1IDAgODYgLTYzIDEzOSAtMTA3IDggLTcgNjUgLTUxIDEyNSAtOTcgMTAzIC04MCAxNzcgLTEzOCAyMjggLTE3OCAxMiAtMTAgNzIgLTU2IDEzMiAtMTAzIDYxIC00NyAxMzMgLTEwMyAxNjAgLTEyNSAyOCAtMjIgNTkgLTQ2IDcwIC01NSAzMCAtMjMgMjMzIC0xODAgMjg4IC0yMjMgMjYgLTIwIDY0IC01MiA4NSAtNzAgNjYgLTU5IDEyNiAtNzAgMTQyIC0yNiA3IDE3IDkgMzcyIDggOTkxIGwtMyA5NjUgLTM2IDMxIGMtMjAgMTggLTUzIDQ2IC03NSA2NCAtMTE0IDkyIC0xOTMgMTU3IC0yMzAgMTg5IC00MSAzNCAtOTggNzggLTE1NSAxMjEgLTE2IDExIC00NSAzNyAtNjUgNTcgLTIwIDIwIC00MCAzNiAtNDUgMzYgLTQgMCAtMzAgMTkgLTU3IDQzIC0xMjMgMTA3IC0xNjYgMTQzIC0xODEgMTUxIC05IDUgLTM2IDI2IC02MSA0OCAtNTkgNTAgLTY3IDU3IC0xMjAgOTggLTUwIDM5IC0xNjcgMTM2IC0xOTAgMTU3IC04IDcgLTUzIDQ0IC0xMDAgODEgLTQ3IDM3IC05NyA3OCAtMTEwIDkxIC0xNCAxMyAtMzcgMzEgLTUxIDQwIC0zMCAxOCAtODggNjcgLTE1NiAxMjkgLTI1IDIzIC01MCA0MiAtNTQgNDIgLTUgMCAtMzAgMTkgLTU3IDQzIC0yNiAyMyAtNjYgNTYgLTg4IDc0IC0yMSAxNyAtNjggNTYgLTEwMyA4NSAtMzUgMjkgLTc1IDYxIC04OSA3MCAtMTMgOSAtMjggMjEgLTMxIDI2IC0zIDUgLTI5IDI3IC01NyA0OCAtMjggMjEgLTg1IDY3IC0xMjcgMTAyIC04MyA2OCAtMTEzIDc2IC0xNTcgNDF6IE01MDMwIDQ2MjggYy0zMCAtMjIgLTU3IC00NCAtNjAgLTQ5IC0zIC00IC00NSAtMzkgLTk1IC03OCAtNDkgLTM5IC0xMDEgLTgxIC0xMTUgLTkzIC0zOCAtMzMgLTMwNiAtMjQ5IC0zNDggLTI4MSAtMjAgLTE2IC01MCAtNDAgLTY3IC01NSAtMTYgLTE1IC00MSAtMzYgLTU2IC00NyAtOTUgLTcyIC0xMzggLTEwNiAtMTU0IC0xMjEgLTI3IC0yOCAtMTM3IC0xMTQgLTE0NCAtMTE0IC00IDAgLTIyIC0xNSAtNDEgLTMzIC0xOSAtMTggLTU5IC01MiAtODcgLTc2IC02NCAtNTIgLTY4IC03NyAtMjAgLTExOSAxNyAtMTYgNTkgLTUzIDkyIC04MiAzMyAtMjggODUgLTc0IDExNSAtMTAwIDUxIC00NSAxMjIgLTEwNSAyMjYgLTE5MiAyNSAtMjAgNjEgLTUzIDgxIC03MyAyMSAtMjEgNTMgLTQ5IDczIC02MyAzNCAtMjYgOTAgLTc0IDIwNyAtMTc5IDMyIC0yOSA2OSAtNjAgODMgLTcwIDIzIC0xNSA1NiAtNDQgMTkyIC0xNjYgNzAgLTYyIDE0NyAtMTI0IDE3NSAtMTM4IDIzIC0xMiA3MSAxNSAxNDEgODAgMTggMTcgNzkgNjggMTM1IDExMyA1NiA0NSAxMDQgODUgMTA3IDg5IDMgNCA0NiAzOSA5NSA3OCAxMTAgODYgOTYgNzUgMTgwIDE0NyAzOSAzMiA4NyA3MiAxMDggODcgMjEgMTYgNDUgMzYgNTUgNDYgOSAxMCA2NiA1OCAxMjcgMTA3IDExOSA5NyAxMjEgOTkgMTgwIDE0NyAyMiAxOSA1MCA0MCA2MyA0OSAxMiA4IDUxIDQxIDg3IDczIDk0IDgzIDk0IDgyIC01OCAyMDIgLTI2IDIxIC02NiA1NSAtOTAgNzUgLTIzIDIxIC00NSAzOCAtNDkgMzggLTQgMCAtMzEgMjAgLTYwIDQ1IC0xMTAgOTMgLTEzMCAxMTAgLTE0NiAxMTkgLTEwIDUgLTM2IDI1IC01OSA0NSAtOTAgNzcgLTEyNiAxMDYgLTE0MSAxMTUgLTEwIDUgLTM2IDI1IC01OSA0NSAtOTAgNzcgLTEyNiAxMDYgLTE0MSAxMTUgLTEwIDUgLTM2IDI1IC01OSA0NSAtOTAgNzcgLTEyNiAxMDYgLTE0MSAxMTUgLTEwIDUgLTM2IDI1IC01OSA0NSAtMTIxIDEwNCAtMTg1IDE1MSAtMjA2IDE1MSAtNyAwIC0zNyAtMTkgLTY3IC00MnoiLz48L3N2Zz4K"
+}

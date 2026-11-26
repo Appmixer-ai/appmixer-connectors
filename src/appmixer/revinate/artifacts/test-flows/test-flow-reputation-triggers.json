@@ -1,0 +1,183 @@
+{
+    "name": "E2E Revinate Reputation - review triggers",
+    "description": "New Review and Updated Review triggers. The Porter API is read-only, so the review has to be produced by hand while the flow runs (see the note).",
+    "flow": {
+        "0d7c1779-54ee-4e17-8fb0-1cf7a35cca81": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16,
+            "source": {},
+            "version": "1.0.0",
+            "config": {},
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "2fb6e749-e0c8-47c5-ad24-a5c71e9c946f": {
+            "type": "appmixer.utils.timers.Wait",
+            "x": 272,
+            "y": 16,
+            "version": "1.0.0",
+            "source": { "in": { "0d7c1779-54ee-4e17-8fb0-1cf7a35cca81": ["out"] } },
+            "config": {
+                "transform": {
+                    "in": {
+                        "0d7c1779-54ee-4e17-8fb0-1cf7a35cca81": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": { "interval": {} },
+                                "lambda": { "interval": "2m" }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "983109df-3c5e-4013-8b49-77aface92bac": {
+            "type": "appmixer.revinate.reputation.NewReview",
+            "x": 64,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {},
+            "config": { "properties": { "pollingInterval": 1 } },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "b1d7ba24-3460-4003-a738-cc8367a9d371": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 272,
+            "y": 144,
+            "version": "1.0.0",
+            "source": { "in": { "983109df-3c5e-4013-8b49-77aface92bac": ["out"] } },
+            "config": {
+                "transform": {
+                    "in": {
+                        "983109df-3c5e-4013-8b49-77aface92bac": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "9cd50e66-b207-4f34-9dc3-226b2df9f32a": {
+                                            "variable": "$.983109df-3c5e-4013-8b49-77aface92bac.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            { "field": "{{{9cd50e66-b207-4f34-9dc3-226b2df9f32a}}}", "assertion": "regex", "regex": "^\\d+$" }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "8e31aaa8-17df-4dae-94a5-943291bda5e1": {
+            "type": "appmixer.revinate.reputation.UpdatedReview",
+            "x": 64,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {},
+            "config": { "properties": { "pollingInterval": 1 } },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "12218760-e765-4e16-935a-a943d67f00a0": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 272,
+            "y": 272,
+            "version": "1.0.0",
+            "source": { "in": { "8e31aaa8-17df-4dae-94a5-943291bda5e1": ["out"] } },
+            "config": {
+                "transform": {
+                    "in": {
+                        "8e31aaa8-17df-4dae-94a5-943291bda5e1": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "b1223c17-68ab-4f93-a260-5e17e2d4e1a6": {
+                                            "variable": "$.8e31aaa8-17df-4dae-94a5-943291bda5e1.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            { "field": "{{{b1223c17-68ab-4f93-a260-5e17e2d4e1a6}}}", "assertion": "regex", "regex": "^\\d+$" }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "e3540e58-6437-49b5-8553-1bec6600b376": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 480,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "b1d7ba24-3460-4003-a738-cc8367a9d371": ["out"],
+                    "12218760-e765-4e16-935a-a943d67f00a0": ["out"]
+                }
+            },
+            "config": { "properties": { "timeout": 1800 } },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "4cb73e72-0b06-478c-a2bb-1d88215dba0b": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 688,
+            "y": 272,
+            "version": "1.0.0",
+            "source": { "in": { "e3540e58-6437-49b5-8553-1bec6600b376": ["out"] } },
+            "config": {
+                "properties": {
+                    "successStoreId": "64f6f1f9193228000754082f",
+                    "failedStoreId": "64f6f1f0193228000754082e"
+                },
+                "transform": {
+                    "in": {
+                        "e3540e58-6437-49b5-8553-1bec6600b376": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "e1ac1715-9ac0-4708-a9e8-087aab23ef1a": {
+                                            "variable": "$.e3540e58-6437-49b5-8553-1bec6600b376.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E Revinate Reputation - review triggers",
+                                    "result": "{{{e1ac1715-9ac0-4708-a9e8-087aab23ef1a}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        }
+    },
+    "notes": {
+        "7500b004-9638-4355-bdca-c93b57145661": {
+            "x": 64,
+            "y": 432,
+            "width": 736,
+            "height": 352,
+            "content": "## Manual test: the review has to be produced by hand\n\nThe Porter API is read-only, so this flow cannot create a review itself. It is a harness for a manual check and cannot run unattended.\n\n1. Start the flow. Both triggers record \"now\" on their first check and check again every minute (Check Every = 1).\n2. Wait at least 2 minutes.\n3. In the Revinate account, make a new review appear for a hotel the connected user can access. The quickest way is to answer one of the hotel's own guest surveys (Guest Feedback); a new review on a public review site only shows up when Revinate collects it, which can take hours.\n4. New Review fires for it. Updated Review fires as well if Revinate sets the update time of a new review; if it does not, post a management response to the review to make it fire.\n\nThe flow waits 30 minutes. It has never been run: no Revinate test credentials existed when the connector was built."
+        }
+    }
+}

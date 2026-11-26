@@ -1,0 +1,328 @@
+{
+    "name": "E2E Revinate Guest Data - profiles and reservations",
+    "description": "Find Guest Profiles, Get Guest Profile, Find Reservations and Make API Call against the connected CDP account. Read-only.",
+    "flow": {
+        "f3f8ae20-03bf-4a16-9df8-03ddf5570de5": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16,
+            "source": {},
+            "version": "1.0.0",
+            "config": {},
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "9955f691-b60a-4c14-82a3-70d55b266216": {
+            "type": "appmixer.revinate.cdp.FindGuestProfiles",
+            "x": 272,
+            "y": 16,
+            "version": "1.0.0",
+            "source": { "in": { "f3f8ae20-03bf-4a16-9df8-03ddf5570de5": ["out"] } },
+            "config": {
+                "transform": {
+                    "in": {
+                        "f3f8ae20-03bf-4a16-9df8-03ddf5570de5": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": { "outputType": {} },
+                                "lambda": { "outputType": "first" }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "7335d8b2-4cbb-4af9-a6e7-d645d3a0acef": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 480,
+            "y": 16,
+            "version": "1.0.0",
+            "source": { "in": { "9955f691-b60a-4c14-82a3-70d55b266216": ["out"] } },
+            "config": {
+                "transform": {
+                    "in": {
+                        "9955f691-b60a-4c14-82a3-70d55b266216": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "3e2aeac6-6335-448e-9a09-9d446e03c759": {
+                                            "variable": "$.9955f691-b60a-4c14-82a3-70d55b266216.out.revinate_rich_guest_profile_id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            { "field": "{{{3e2aeac6-6335-448e-9a09-9d446e03c759}}}", "assertion": "notEmpty" }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "31dc211b-e2e2-44fb-91e6-a4464107bd31": {
+            "type": "appmixer.revinate.cdp.GetGuestProfile",
+            "x": 480,
+            "y": 144,
+            "version": "1.0.0",
+            "source": { "in": { "9955f691-b60a-4c14-82a3-70d55b266216": ["out"] } },
+            "config": {
+                "transform": {
+                    "in": {
+                        "9955f691-b60a-4c14-82a3-70d55b266216": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "profileId": {
+                                        "a0c580ea-e507-4243-ab17-96e33509c3a5": {
+                                            "variable": "$.9955f691-b60a-4c14-82a3-70d55b266216.out.revinate_rich_guest_profile_id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": { "profileId": "{{{a0c580ea-e507-4243-ab17-96e33509c3a5}}}" }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "892629b1-f55e-482b-9843-129320b586ad": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 688,
+            "y": 144,
+            "version": "1.0.0",
+            "source": { "in": { "31dc211b-e2e2-44fb-91e6-a4464107bd31": ["out"] } },
+            "config": {
+                "transform": {
+                    "in": {
+                        "31dc211b-e2e2-44fb-91e6-a4464107bd31": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "78c21f91-b0b1-4ef6-9ab0-871e363e225e": {
+                                            "variable": "$.31dc211b-e2e2-44fb-91e6-a4464107bd31.out.revinate_rich_guest_profile_id",
+                                            "functions": []
+                                        },
+                                        "8286a634-8cef-4af0-9006-1416b53aaae8": {
+                                            "variable": "$.9955f691-b60a-4c14-82a3-70d55b266216.out.revinate_rich_guest_profile_id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{78c21f91-b0b1-4ef6-9ab0-871e363e225e}}}",
+                                                "assertion": "equal",
+                                                "expected": "{{{8286a634-8cef-4af0-9006-1416b53aaae8}}}"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "c85d2ab4-63fc-425a-9f12-5cd798df33eb": {
+            "type": "appmixer.revinate.cdp.FindReservations",
+            "x": 688,
+            "y": 272,
+            "version": "1.0.0",
+            "source": { "in": { "31dc211b-e2e2-44fb-91e6-a4464107bd31": ["out"] } },
+            "config": {
+                "transform": {
+                    "in": {
+                        "31dc211b-e2e2-44fb-91e6-a4464107bd31": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": { "outputType": {} },
+                                "lambda": { "outputType": "first" }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "efa37530-2ede-4382-8d14-d40010a679e0": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 896,
+            "y": 272,
+            "version": "1.0.0",
+            "source": { "in": { "c85d2ab4-63fc-425a-9f12-5cd798df33eb": ["out"] } },
+            "config": {
+                "transform": {
+                    "in": {
+                        "c85d2ab4-63fc-425a-9f12-5cd798df33eb": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "dc1f76f7-2ab2-42f9-9f05-cbb702d7009d": {
+                                            "variable": "$.c85d2ab4-63fc-425a-9f12-5cd798df33eb.out.reservation_id",
+                                            "functions": []
+                                        },
+                                        "604188cf-88bd-4d12-ac5e-c74fb4d4475d": {
+                                            "variable": "$.c85d2ab4-63fc-425a-9f12-5cd798df33eb.out.reservation_type",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            { "field": "{{{dc1f76f7-2ab2-42f9-9f05-cbb702d7009d}}}", "assertion": "notEmpty" },
+                                            { "field": "{{{604188cf-88bd-4d12-ac5e-c74fb4d4475d}}}", "assertion": "regex", "regex": "^(room|spa|restaurant|golf)$" }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "c52acbb1-9972-4215-9c19-7fe47d254b91": {
+            "type": "appmixer.revinate.cdp.MakeApiCall",
+            "x": 896,
+            "y": 400,
+            "version": "1.0.0",
+            "source": { "in": { "c85d2ab4-63fc-425a-9f12-5cd798df33eb": ["out"] } },
+            "config": {
+                "transform": {
+                    "in": {
+                        "c85d2ab4-63fc-425a-9f12-5cd798df33eb": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": { "url": {}, "method": {}, "parameters": {}, "headers": {} },
+                                "lambda": {
+                                    "url": "/api/v2/rich-guest-profiles",
+                                    "method": "GET",
+                                    "parameters": "{\"pageLimit\": \"1\"}",
+                                    "headers": "{\"Accept\": \"application/json\"}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "f2ca71ba-d7f8-45ab-9f84-759781258659": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1104,
+            "y": 400,
+            "version": "1.0.0",
+            "source": { "in": { "c52acbb1-9972-4215-9c19-7fe47d254b91": ["out"] } },
+            "config": {
+                "transform": {
+                    "in": {
+                        "c52acbb1-9972-4215-9c19-7fe47d254b91": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "4aec4739-faee-4f34-bb86-26802364d16b": {
+                                            "variable": "$.c52acbb1-9972-4215-9c19-7fe47d254b91.out.statusCode",
+                                            "functions": []
+                                        },
+                                        "b695e6dd-5be2-4e47-90b5-a136329210c1": {
+                                            "variable": "$.c52acbb1-9972-4215-9c19-7fe47d254b91.out.body",
+                                            "functions": [{ "name": "g_jsonPath", "params": [{ "value": "$.meta.page.limit" }] }]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            { "field": "{{{4aec4739-faee-4f34-bb86-26802364d16b}}}", "assertion": "equal", "expected": 200 },
+                                            { "field": "{{{b695e6dd-5be2-4e47-90b5-a136329210c1}}}", "assertion": "equal", "expected": 1 }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "7cc7dc65-d55a-45ff-9e36-316fc5ddc1ee": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 1312,
+            "y": 400,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "7335d8b2-4cbb-4af9-a6e7-d645d3a0acef": ["out"],
+                    "892629b1-f55e-482b-9843-129320b586ad": ["out"],
+                    "efa37530-2ede-4382-8d14-d40010a679e0": ["out"],
+                    "f2ca71ba-d7f8-45ab-9f84-759781258659": ["out"]
+                }
+            },
+            "config": { "properties": { "timeout": 180 } },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "02e6a4e7-ef78-4c52-b026-8964b5718862": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1520,
+            "y": 400,
+            "version": "1.0.0",
+            "source": { "in": { "7cc7dc65-d55a-45ff-9e36-316fc5ddc1ee": ["out"] } },
+            "config": {
+                "properties": {
+                    "successStoreId": "64f6f1f9193228000754082f",
+                    "failedStoreId": "64f6f1f0193228000754082e"
+                },
+                "transform": {
+                    "in": {
+                        "7cc7dc65-d55a-45ff-9e36-316fc5ddc1ee": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "e585cfc8-11ec-4c64-804d-7c7847ffa306": {
+                                            "variable": "$.7cc7dc65-d55a-45ff-9e36-316fc5ddc1ee.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E Revinate Guest Data - profiles and reservations",
+                                    "result": "{{{e585cfc8-11ec-4c64-804d-7c7847ffa306}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        }
+    },
+    "notes": {
+        "5ae0fca8-bb9c-43ab-94ab-95331544c903": {
+            "x": 64,
+            "y": 560,
+            "width": 736,
+            "height": 288,
+            "content": "## Test data assumption: a CDP account with guests and reservations\n\nRevinate has no sandbox. The Account ID of the connected Revinate Guest Data account (Client ID, Client Secret, Account ID) must hold at least one Rich Guest Profile and at least one reservation of any type.\n\nThis flow has never been run: no Revinate test credentials existed when the connector was built. Not confirmed against a live account: the page size of 100 the components ask for, `pageLimit=1` in the Make API Call step, and that `meta.page.limit` echoes the page size."
+        }
+    }
+}

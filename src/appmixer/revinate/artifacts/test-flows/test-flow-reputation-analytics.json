@@ -1,0 +1,373 @@
+{
+    "name": "E2E Revinate Reputation - analytics",
+    "description": "Get Reviews Snapshot, Get Survey Email Stats, Get Sentiment By Category and Get Sentiment By Topic for the first hotel of the connected Porter account. Read-only.",
+    "flow": {
+        "d5fbf4b6-eebc-411f-be70-5394b539ecb9": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16,
+            "source": {},
+            "version": "1.0.0",
+            "config": {},
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "d9411bad-819a-4bbb-8d7c-ae96f64a3624": {
+            "type": "appmixer.revinate.reputation.FindHotels",
+            "x": 272,
+            "y": 16,
+            "version": "1.0.0",
+            "source": { "in": { "d5fbf4b6-eebc-411f-be70-5394b539ecb9": ["out"] } },
+            "config": {
+                "transform": {
+                    "in": {
+                        "d5fbf4b6-eebc-411f-be70-5394b539ecb9": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": { "outputType": {} },
+                                "lambda": { "outputType": "first" }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "6bf067a6-04a0-4adf-90f4-8e8e5bf02f55": {
+            "type": "appmixer.revinate.reputation.GetReviewsSnapshot",
+            "x": 480,
+            "y": 16,
+            "version": "1.0.0",
+            "source": { "in": { "d9411bad-819a-4bbb-8d7c-ae96f64a3624": ["out"] } },
+            "config": {
+                "transform": {
+                    "in": {
+                        "d9411bad-819a-4bbb-8d7c-ae96f64a3624": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "hotelId": {
+                                        "ba51b095-ff26-4b6c-9a6e-d49901fd587a": {
+                                            "variable": "$.d9411bad-819a-4bbb-8d7c-ae96f64a3624.out.id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "startDate": {
+                                        "d6d985f4-5334-46d1-bd64-e8b0b8d928c0": {
+                                            "functions": [
+                                                { "name": "g_now" },
+                                                { "name": "g_addTimeSpan", "hashParams": { "days": { "value": -90 } } }
+                                            ]
+                                        }
+                                    },
+                                    "endDate": {
+                                        "5c86a88b-53d1-4e88-a6e6-2d045965da6e": {
+                                            "functions": [{ "name": "g_now" }]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "hotelId": "{{{ba51b095-ff26-4b6c-9a6e-d49901fd587a}}}",
+                                    "startDate": "{{{d6d985f4-5334-46d1-bd64-e8b0b8d928c0}}}",
+                                    "endDate": "{{{5c86a88b-53d1-4e88-a6e6-2d045965da6e}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "bc09f3a7-24b9-446c-8bfa-13a30214b6cf": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 688,
+            "y": 16,
+            "version": "1.0.0",
+            "source": { "in": { "6bf067a6-04a0-4adf-90f4-8e8e5bf02f55": ["out"] } },
+            "config": {
+                "transform": {
+                    "in": {
+                        "6bf067a6-04a0-4adf-90f4-8e8e5bf02f55": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "465221d6-b414-4015-b693-7758bc99e943": {
+                                            "variable": "$.6bf067a6-04a0-4adf-90f4-8e8e5bf02f55.out.aggregateValues.newReviews",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            { "field": "{{{465221d6-b414-4015-b693-7758bc99e943}}}", "assertion": "regex", "regex": "^\\d+(\\.\\d+)?$" }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "4ced397e-7a92-417d-8afb-fbc571f1402c": {
+            "type": "appmixer.revinate.reputation.GetSurveyEmailStats",
+            "x": 688,
+            "y": 144,
+            "version": "1.0.0",
+            "source": { "in": { "6bf067a6-04a0-4adf-90f4-8e8e5bf02f55": ["out"] } },
+            "config": {
+                "transform": {
+                    "in": {
+                        "6bf067a6-04a0-4adf-90f4-8e8e5bf02f55": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "hotelId": {
+                                        "a52808a0-5cb8-42a0-8684-aaf1b60fe444": {
+                                            "variable": "$.d9411bad-819a-4bbb-8d7c-ae96f64a3624.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": { "hotelId": "{{{a52808a0-5cb8-42a0-8684-aaf1b60fe444}}}" }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "ee667820-80fd-4b55-a552-44d9a9ae40b1": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 896,
+            "y": 144,
+            "version": "1.0.0",
+            "source": { "in": { "4ced397e-7a92-417d-8afb-fbc571f1402c": ["out"] } },
+            "config": {
+                "transform": {
+                    "in": {
+                        "4ced397e-7a92-417d-8afb-fbc571f1402c": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "a4daa01b-ebe2-4266-8e10-00bfaaf66713": {
+                                            "variable": "$.4ced397e-7a92-417d-8afb-fbc571f1402c.out.sent",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            { "field": "{{{a4daa01b-ebe2-4266-8e10-00bfaaf66713}}}", "assertion": "regex", "regex": "^\\d+$" }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "851a0be2-016e-4ce9-90ed-3d87709c3e87": {
+            "type": "appmixer.revinate.reputation.GetSentimentByCategory",
+            "x": 896,
+            "y": 272,
+            "version": "1.0.0",
+            "source": { "in": { "4ced397e-7a92-417d-8afb-fbc571f1402c": ["out"] } },
+            "config": {
+                "transform": {
+                    "in": {
+                        "4ced397e-7a92-417d-8afb-fbc571f1402c": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "hotelId": {
+                                        "f01ee573-5cfc-4666-a0b3-db3cb067faf0": {
+                                            "variable": "$.d9411bad-819a-4bbb-8d7c-ae96f64a3624.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": { "hotelId": "{{{f01ee573-5cfc-4666-a0b3-db3cb067faf0}}}" }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "a66d0307-481a-41f4-9376-1396c72454a8": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1104,
+            "y": 272,
+            "version": "1.0.0",
+            "source": { "in": { "851a0be2-016e-4ce9-90ed-3d87709c3e87": ["out"] } },
+            "config": {
+                "transform": {
+                    "in": {
+                        "851a0be2-016e-4ce9-90ed-3d87709c3e87": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "5003deb9-a70d-4d2f-acde-249c8a3eecd5": {
+                                            "variable": "$.851a0be2-016e-4ce9-90ed-3d87709c3e87.out.topicCategories",
+                                            "functions": [{ "name": "g_jsonPath", "params": [{ "value": "$[0].text" }] }]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            { "field": "{{{5003deb9-a70d-4d2f-acde-249c8a3eecd5}}}", "assertion": "notEmpty" }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "4d331220-11a1-43cb-b5d9-63a53440dc90": {
+            "type": "appmixer.revinate.reputation.GetSentimentByTopic",
+            "x": 1104,
+            "y": 400,
+            "version": "1.0.0",
+            "source": { "in": { "851a0be2-016e-4ce9-90ed-3d87709c3e87": ["out"] } },
+            "config": {
+                "transform": {
+                    "in": {
+                        "851a0be2-016e-4ce9-90ed-3d87709c3e87": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "hotelId": {
+                                        "42e9cef7-fd8d-4900-87e8-8dc1fc76b0d6": {
+                                            "variable": "$.d9411bad-819a-4bbb-8d7c-ae96f64a3624.out.id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "topicCategoryId": {
+                                        "a44006cf-dbb1-429d-97c6-1953232cbcda": {
+                                            "variable": "$.851a0be2-016e-4ce9-90ed-3d87709c3e87.out.topicCategories",
+                                            "functions": [{ "name": "g_jsonPath", "params": [{ "value": "$[0].topicCategoryId" }] }]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "hotelId": "{{{42e9cef7-fd8d-4900-87e8-8dc1fc76b0d6}}}",
+                                    "topicCategoryId": "{{{a44006cf-dbb1-429d-97c6-1953232cbcda}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "1324112f-709a-4a75-86a0-47b2bcaca6b3": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1312,
+            "y": 400,
+            "version": "1.0.0",
+            "source": { "in": { "4d331220-11a1-43cb-b5d9-63a53440dc90": ["out"] } },
+            "config": {
+                "transform": {
+                    "in": {
+                        "4d331220-11a1-43cb-b5d9-63a53440dc90": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "2f853610-419c-4485-88c6-bab765a9da50": {
+                                            "variable": "$.4d331220-11a1-43cb-b5d9-63a53440dc90.out.topics",
+                                            "functions": [{ "name": "g_jsonPath", "params": [{ "value": "$[0].text" }] }]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            { "field": "{{{2f853610-419c-4485-88c6-bab765a9da50}}}", "assertion": "notEmpty" }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "4892bcdd-3e37-480a-a35d-ade7e9ca58e0": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 1520,
+            "y": 400,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "bc09f3a7-24b9-446c-8bfa-13a30214b6cf": ["out"],
+                    "ee667820-80fd-4b55-a552-44d9a9ae40b1": ["out"],
+                    "a66d0307-481a-41f4-9376-1396c72454a8": ["out"],
+                    "1324112f-709a-4a75-86a0-47b2bcaca6b3": ["out"]
+                }
+            },
+            "config": { "properties": { "timeout": 180 } },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "6fc328eb-1128-428a-87ed-27f4d527be37": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1728,
+            "y": 400,
+            "version": "1.0.0",
+            "source": { "in": { "4892bcdd-3e37-480a-a35d-ade7e9ca58e0": ["out"] } },
+            "config": {
+                "properties": {
+                    "successStoreId": "64f6f1f9193228000754082f",
+                    "failedStoreId": "64f6f1f0193228000754082e"
+                },
+                "transform": {
+                    "in": {
+                        "4892bcdd-3e37-480a-a35d-ade7e9ca58e0": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "ad08b837-988e-4114-862f-e9efe53caa17": {
+                                            "variable": "$.4892bcdd-3e37-480a-a35d-ade7e9ca58e0.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E Revinate Reputation - analytics",
+                                    "result": "{{{ad08b837-988e-4114-862f-e9efe53caa17}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        }
+    },
+    "notes": {
+        "44fb4c3e-3d68-415e-adfb-fb05a9d64119": {
+            "x": 64,
+            "y": 560,
+            "width": 736,
+            "height": 256,
+            "content": "## Test data assumption: a hotel with reviews and sentiment data\n\nRevinate has no sandbox. The first hotel the connected Revinate Reputation account can access must have reviews in the last 90 days, guest surveys enabled and sentiment analysis data (at least one topic category with topics).\n\nThis flow has never been run: no Revinate test credentials existed when the connector was built. Whether the snapshot endpoints accept the period and return the fields asserted here is taken from the Porter Swagger file only."
+        }
+    }
+}
