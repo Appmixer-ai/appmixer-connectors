@@ -912,6 +912,16 @@ function rawBodyCandidates(content) {
     return candidates;
 }
 
+/**
+ * Whether the engine handed over the request body as received (the signed bytes), not only
+ * the parsed JSON.
+ */
+function hasRawBody(content) {
+
+    const raw = content.rawBody !== undefined ? content.rawBody : content.raw;
+    return (raw !== undefined && raw !== null) || typeof content.data === 'string' || Buffer.isBuffer(content.data);
+}
+
 function safeEqual(a, b) {
 
     const left = Buffer.from(String(a), 'utf8');
@@ -998,6 +1008,25 @@ async function readWebhook(context) {
     }
 
     if (!verifySignature(state.secret, content)) {
+        const signature = getHeader(headers, 'x-lime-signature');
+        if (state.secret && signature && !hasRawBody(content)) {
+            // Only the parsed body is available and its re-serialization does not give the
+            // signed bytes (e.g. a number sent as 100.0). The delivery cannot be trusted, but the
+            // event must not be lost: the trigger reads the changes through the API instead.
+            const timestamp = Number.parseInt(getHeader(headers, 'x-lime-delivery-timestamp'), 10);
+            await context.log({
+                step: 'The X-Lime-Signature of a delivery could not be checked: the engine passed no raw request body '
+                    + 'and the re-serialized body does not reproduce the signed bytes. The delivery is not used; '
+                    + 'the trigger reads the changes through the Lime CRM API at the next check instead.',
+                deliveryId: getHeader(headers, 'x-lime-delivery-id')
+            });
+            return {
+                accepted: false,
+                unverifiable: true,
+                status: 202,
+                deliveryTime: Number.isFinite(timestamp) ? timestamp * 1000 : Date.now()
+            };
+        }
         await context.log({ step: 'Rejected a webhook call with a missing or invalid X-Lime-Signature header.' });
         return { accepted: false, status: 401 };
     }
@@ -1043,6 +1072,295 @@ async function latestObjects(context, limetype, sortProperty, limit = 1) {
         params: { _limit: limit, _sort: '-' + sortProperty }
     });
     return extractItems(data).map(mapObject);
+}
+
+// ---------------------------------------------------------------- polling
+
+// Pages a poll reads at most (newest first), i.e. 500 objects per check.
+const POLL_MAX_PAGES = 10;
+// Updated Object (polling) keeps the last seen values of this many objects.
+const SNAPSHOT_LIMIT = 500;
+// A catch-up after an unverifiable delivery starts this long before the delivery.
+const CATCH_UP_MARGIN_MS = 5 * 60 * 1000;
+// How long an emitted event is remembered to keep the webhook and the catch-up from both firing.
+const EMITTED_TTL_MS = 24 * 60 * 60 * 1000;
+
+const TRIGGER_MODES = ['webhook', 'polling'];
+
+function triggerMode(context) {
+
+    const mode = context.properties.mode;
+    return TRIGGER_MODES.includes(mode) ? mode : 'webhook';
+}
+
+function timeOf(value) {
+
+    const time = Date.parse(value);
+    return Number.isFinite(time) ? time : null;
+}
+
+function nextLinkOf(data) {
+
+    const links = data && typeof data === 'object' ? data._links : null;
+    const next = links && links.next;
+    if (!next) return null;
+    return typeof next === 'string' ? next : next.href || null;
+}
+
+async function apiGetUrl(context, url) {
+
+    try {
+        const { data } = await context.httpRequest({
+            method: 'GET',
+            url: resolveApiUrl(context, url),
+            headers: authHeaders(context.auth.apiKey)
+        });
+        return data;
+    } catch (err) {
+        throw toApiError(err);
+    }
+}
+
+/**
+ * The objects of a limetype newest first by sortProperty, following the next links while
+ * isNewer(object) holds, at most POLL_MAX_PAGES pages.
+ * @returns {Promise<{ objects: Array, complete: boolean }>} complete is false when more
+ *   objects were newer than one poll reads
+ */
+async function objectsWhile(context, limetype, sortProperty, isNewer) {
+
+    const objects = [];
+    let data = await apiCall(context, {
+        path: '/limeobject/' + encodeURIComponent(limetype) + '/',
+        params: { _limit: MAX_PAGE_SIZE, _sort: '-' + sortProperty }
+    });
+    for (let page = 1; ; page++) {
+        const items = extractItems(data).map(mapObject);
+        for (const item of items) {
+            if (!isNewer(item)) return { objects, complete: true };
+            objects.push(item);
+        }
+        const next = nextLinkOf(data);
+        if (!next || items.length === 0) return { objects, complete: true };
+        if (page >= POLL_MAX_PAGES) return { objects, complete: false };
+        data = await apiGetUrl(context, next);
+    }
+}
+
+/**
+ * Mark an event as emitted. Returns false when it was emitted already (by the webhook or a
+ * catch-up poll), so each event goes out once.
+ */
+async function markEmitted(context, eventKey) {
+
+    const cacheKey = 'limecrm-emitted-' + context.componentId + '-' + eventKey;
+    let lock;
+    try {
+        lock = await context.lock(cacheKey, { ttl: 10 * 1000, retryDelay: 500, maxRetryCount: 3 });
+        if (await context.staticCache.get(cacheKey)) return false;
+        await context.staticCache.set(cacheKey, true, EMITTED_TTL_MS);
+        return true;
+    } finally {
+        lock && await lock.unlock();
+    }
+}
+
+/**
+ * Change the trigger state under a lock: receive() (catch-up requests) and tick() share it.
+ */
+async function updateState(context, change) {
+
+    let lock;
+    try {
+        lock = await context.lock('limecrm-state-' + context.componentId, { ttl: 60 * 1000, retryDelay: 500, maxRetryCount: 10 });
+        const state = await context.loadState() || {};
+        const next = await change(state);
+        if (next) await context.saveState(next);
+        return next || state;
+    } finally {
+        lock && await lock.unlock();
+    }
+}
+
+/**
+ * A delivery could not be verified: remember to read the changes through the API at the
+ * next tick, from a little before the delivery.
+ */
+async function requestCatchUp(context, deliveryTime = Date.now()) {
+
+    const since = Math.min(Date.now(), deliveryTime) - CATCH_UP_MARGIN_MS;
+    return updateState(context, state => ({
+        ...state,
+        catchUpSince: state.catchUpSince ? Math.min(state.catchUpSince, since) : since
+    }));
+}
+
+/**
+ * The properties of an object without the system ones (id and the _ prefixed ones).
+ */
+function objectValues(object) {
+
+    const values = {};
+    for (const [key, value] of Object.entries(object || {})) {
+        if (key === 'id' || key.startsWith('_')) continue;
+        values[key] = value;
+    }
+    return values;
+}
+
+/**
+ * The previous values of the properties that differ, as the webhook's original_values.
+ */
+function changedValues(previous, current) {
+
+    const original = {};
+    const keys = new Set([...Object.keys(previous || {}), ...Object.keys(current || {})]);
+    for (const key of keys) {
+        const before = previous[key] === undefined ? null : previous[key];
+        const after = current[key] === undefined ? null : current[key];
+        if (JSON.stringify(before) !== JSON.stringify(after)) {
+            original[key] = before;
+        }
+    }
+    return original;
+}
+
+/**
+ * A just-created object (Updated Object ignores it, as the webhook's update event does).
+ */
+function isCreation(object) {
+
+    const created = timeOf(object._createdtime);
+    const updated = timeOf(object._timestamp);
+    return created !== null && updated !== null && Math.abs(updated - created) < 1000;
+}
+
+function comparableValue(value) {
+
+    if (value === null || value === undefined) return '';
+    if (typeof value === 'object' && !Array.isArray(value)) {
+        if (value.key !== undefined) return comparableValue(value.key);
+        if (value.id !== undefined) return comparableValue(value.id);
+        if (value._id !== undefined) return comparableValue(value._id);
+    }
+    if (typeof value === 'boolean') return value ? 'true' : 'false';
+    return String(value).trim().toLowerCase();
+}
+
+const BOOLEAN_WORDS = { yes: 'true', no: 'false', 1: 'true', 0: 'false' };
+
+/**
+ * The optional condition of Updated Object: fire only when the property changed to the value.
+ * @param {object} properties context.properties ({ conditionProperty, conditionValue })
+ * @param {object} object the updated object
+ * @param {object} originalValues the previous values of the changed properties
+ * @param {boolean} previousKnown false when the previous values are not known (the first
+ *   update of an object a poll sees, a catch-up): then the current value decides alone
+ */
+function conditionMet(properties, object, originalValues, previousKnown = true) {
+
+    const property = typeof properties.conditionProperty === 'string' ? properties.conditionProperty.trim() : '';
+    if (!property) return true;
+    const actual = comparableValue(object[property]);
+    let expected = comparableValue(properties.conditionValue);
+    if (typeof object[property] === 'boolean' && BOOLEAN_WORDS[expected]) {
+        expected = BOOLEAN_WORDS[expected];
+    }
+    if (actual !== expected) return false;
+    if (!previousKnown) return true;
+    return Object.prototype.hasOwnProperty.call(originalValues || {}, property);
+}
+
+// New Object (polling): keyset on id.
+
+async function newObjectsBaseline(context, limetype) {
+
+    const [latest] = await latestObjects(context, limetype, 'id', 1);
+    return { mode: 'polling', cursorId: latest ? Number(latest.id) || 0 : 0 };
+}
+
+/**
+ * Objects created after cursorId, oldest first.
+ */
+async function pollNewObjects(context, limetype, cursorId) {
+
+    const { objects, complete } = await objectsWhile(context, limetype, 'id', object => Number(object.id) > cursorId);
+    const created = objects.reverse();
+    const maxId = created.reduce((max, object) => Math.max(max, Number(object.id) || 0), cursorId);
+    return { objects: created, cursorId: maxId, complete };
+}
+
+// Updated Object (polling): _timestamp cursor and the last seen values per object.
+
+function pruneSnapshots(snapshots) {
+
+    const entries = Object.entries(snapshots);
+    if (entries.length <= SNAPSHOT_LIMIT) return snapshots;
+    entries.sort((a, b) => b[1].t - a[1].t);
+    return Object.fromEntries(entries.slice(0, SNAPSHOT_LIMIT));
+}
+
+async function updatedObjectsBaseline(context, limetype) {
+
+    // The newest page is remembered so its objects are not reported as updated by the first
+    // poll and their next update has previous values.
+    const latest = await latestObjects(context, limetype, '_timestamp', MAX_PAGE_SIZE);
+    const snapshots = {};
+    let cursor = null;
+    for (const object of latest) {
+        const time = timeOf(object._timestamp);
+        if (time === null) continue;
+        snapshots[object.id] = { t: time, v: objectValues(object) };
+        cursor = cursor === null ? time : Math.max(cursor, time);
+    }
+    return { mode: 'polling', cursor: cursor === null ? Date.now() : cursor, snapshots };
+}
+
+/**
+ * Objects updated since the cursor, oldest first, with the previous values of the changed
+ * properties from the snapshots. Created objects are only remembered.
+ * @returns {Promise<{ updates: Array<{ object, originalValues, previousKnown }>, state, complete }>}
+ */
+async function pollUpdatedObjects(context, limetype, state) {
+
+    const cursor = Number(state.cursor) || Date.now();
+    const snapshots = { ...(state.snapshots || {}) };
+    const { objects, complete } = await objectsWhile(context, limetype, '_timestamp', object => {
+        const time = timeOf(object._timestamp);
+        return time !== null && time >= cursor;
+    });
+
+    const updates = [];
+    let maxTime = cursor;
+    for (const object of objects.reverse()) {
+        const time = timeOf(object._timestamp);
+        const previous = snapshots[object.id];
+        if (previous && previous.t >= time) continue;
+        const values = objectValues(object);
+        if (previous || !isCreation(object)) {
+            updates.push({
+                object,
+                originalValues: previous ? changedValues(previous.v, values) : {},
+                previousKnown: !!previous
+            });
+        }
+        snapshots[object.id] = { t: time, v: values };
+        maxTime = Math.max(maxTime, time);
+    }
+    return { updates, complete, state: { ...state, cursor: maxTime, snapshots: pruneSnapshots(snapshots) } };
+}
+
+/**
+ * Catch-up of a webhook trigger: the objects whose timeProperty is not older than since,
+ * oldest first.
+ */
+async function objectsSince(context, limetype, sortProperty, timeProperty, since) {
+
+    const { objects, complete } = await objectsWhile(context, limetype, sortProperty, object => {
+        const time = timeOf(object[timeProperty]);
+        return time === null || time >= since;
+    });
+    return { objects: objects.reverse(), complete };
 }
 
 /**
@@ -1095,7 +1413,23 @@ module.exports = {
     getHeader,
     pythonJson,
     verifySignature,
+    hasRawBody,
     readWebhook,
     getObject,
+    triggerMode,
+    timeOf,
+    objectsWhile,
+    markEmitted,
+    updateState,
+    requestCatchUp,
+    objectValues,
+    changedValues,
+    isCreation,
+    conditionMet,
+    newObjectsBaseline,
+    pollNewObjects,
+    updatedObjectsBaseline,
+    pollUpdatedObjects,
+    objectsSince,
     latestObjects
 };

@@ -1,7 +1,7 @@
 {
     "name": "appmixer.limecrm.core.UpdatedObject",
     "label": "Updated Object",
-    "description": "Triggers when an object of the selected limetype is updated. Outputs the object and the previous values of the changed properties. Needs Lime Webhooks on the Lime CRM server (included in Lime CRM Cloud) and an API user that is an administrator or a member of the Webhook Users group.",
+    "description": "Triggers when an object of the selected limetype is updated, optionally only when a property changes to a given value. Outputs the object and the previous values of the changed properties. In Webhook mode it needs Lime Webhooks on the Lime CRM server (included in Lime CRM Cloud) and an API user that is an administrator or a member of the Webhook Users group; Polling mode checks the API every minute instead.",
     "author": "Appmixer <info@appmixer.com>",
     "version": "1.0.0",
     "auth": {
@@ -16,11 +16,25 @@
     },
     "trigger": true,
     "webhook": true,
+    "tick": true,
     "properties": {
         "schema": {
             "type": "object",
             "properties": {
                 "limetype": {
+                    "type": "string"
+                },
+                "mode": {
+                    "type": "string",
+                    "enum": [
+                        "webhook",
+                        "polling"
+                    ]
+                },
+                "conditionProperty": {
+                    "type": "string"
+                },
+                "conditionValue": {
                     "type": "string"
                 }
             },
@@ -44,6 +58,35 @@
                             "transform": "./ListLimetypes#toSelectArray"
                         }
                     }
+                },
+                "mode": {
+                    "type": "select",
+                    "label": "Mode",
+                    "index": 2,
+                    "defaultValue": "webhook",
+                    "tooltip": "How the trigger learns about changes. <b>Webhook</b> (default) gets them from Lime Webhooks right away; it needs Lime Webhooks on the server (included in Lime CRM Cloud, an optional package on-premise) and an API user that is an administrator or a member of the Webhook Users group. <b>Polling</b> asks the Lime CRM API for changes every minute and works without Lime Webhooks.",
+                    "options": [
+                        {
+                            "label": "Webhook",
+                            "value": "webhook"
+                        },
+                        {
+                            "label": "Polling",
+                            "value": "polling"
+                        }
+                    ]
+                },
+                "conditionProperty": {
+                    "type": "text",
+                    "label": "Only When Property",
+                    "index": 3,
+                    "tooltip": "Optional. The API name of a property, e.g. <code>dealstatus</code>. The trigger then fires only for updates that change this property to the value below; other updates are skipped."
+                },
+                "conditionValue": {
+                    "type": "text",
+                    "label": "Changes To",
+                    "index": 4,
+                    "tooltip": "The value the property must change to, e.g. <code>closed</code>. Option properties take the option key, relations the ID, yes/no properties <code>true</code> or <code>false</code>. Comparison is case-insensitive; leave empty to fire when the property is cleared. In Polling mode the first update of an object the trigger has not seen before fires when the property has this value, because its previous value is not known."
                 }
             }
         }
@@ -52,7 +95,7 @@
         {
             "name": "out",
             "source": {
-                "url": "/component/appmixer/limecrm/core/GetObjectSchema?outPort=out&ignoreAuth=true",
+                "url": "/component/appmixer/limecrm/core/GetObjectSchema?outPort=out",
                 "data": {
                     "messages": {
                         "in/limetype": "properties/limetype",

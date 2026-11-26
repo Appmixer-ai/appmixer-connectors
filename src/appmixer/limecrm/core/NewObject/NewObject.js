@@ -16,6 +16,58 @@ const ITEM_SCHEMA = {
     }
 };
 
+async function emit(context, object) {
+
+    if (await lib.markEmitted(context, 'new-' + object.id)) {
+        await context.sendJson(object, 'out');
+    }
+}
+
+/**
+ * Polling mode: the objects created since the last check (keyset on id).
+ */
+async function poll(context, limetype) {
+
+    await lib.updateState(context, async state => {
+        if (state.cursorId === undefined) {
+            return lib.newObjectsBaseline(context, limetype);
+        }
+        const previous = Number(state.cursorId) || 0;
+        const { objects, cursorId, complete } = await lib.pollNewObjects(context, limetype, previous);
+        if (!complete) {
+            await context.log({
+                step: 'More objects were created since the last check than one check reads; only the newest are emitted.',
+                count: objects.length
+            });
+        }
+        for (const object of objects) {
+            await context.sendJson(object, 'out');
+        }
+        return cursorId !== state.cursorId ? { ...state, cursorId } : null;
+    });
+}
+
+/**
+ * Webhook mode: a delivery could not be verified, read the objects created around it.
+ */
+async function catchUp(context, limetype) {
+
+    await lib.updateState(context, async state => {
+        const since = state.catchUpSince;
+        if (!since) return null;
+        const { objects, complete } = await lib.objectsSince(context, limetype, 'id', '_createdtime', since);
+        if (!complete) {
+            await context.log({ step: 'The catch-up after an unverifiable delivery found more objects than one check reads; only the newest are emitted.' });
+        }
+        for (const object of objects) {
+            await emit(context, object);
+        }
+        const next = { ...state };
+        delete next.catchUpSince;
+        return next;
+    });
+}
+
 module.exports = {
 
     ITEM_SCHEMA,
@@ -23,6 +75,9 @@ module.exports = {
     async start(context) {
 
         const limetype = lib.assertName(context, context.properties.limetype, 'Limetype');
+        if (lib.triggerMode(context) === 'polling') {
+            return context.saveState(await lib.newObjectsBaseline(context, limetype));
+        }
         return lib.startWebhookTrigger(context, limetype + '.' + EVENT);
     },
 
@@ -31,10 +86,27 @@ module.exports = {
         return lib.stopWebhookTrigger(context);
     },
 
+    async tick(context) {
+
+        const limetype = lib.assertName(context, context.properties.limetype, 'Limetype');
+        if (lib.triggerMode(context) === 'polling') {
+            return poll(context, limetype);
+        }
+        // Webhook mode makes no request unless a delivery could not be verified.
+        const state = await context.loadState() || {};
+        if (state.catchUpSince) {
+            return catchUp(context, limetype);
+        }
+    },
+
     async receive(context) {
 
         if (context.messages.webhook) {
-            const { accepted, status, body } = await lib.readWebhook(context);
+            const { accepted, unverifiable, status, body, deliveryTime } = await lib.readWebhook(context);
+            if (unverifiable) {
+                await lib.requestCatchUp(context, deliveryTime);
+                return context.response({}, status);
+            }
             if (!accepted) {
                 return status ? context.response({ error: 'Invalid signature.' }, status) : context.response();
             }
@@ -50,7 +122,7 @@ module.exports = {
                     await context.log({ step: 'The new object could not be read.', id: body.id });
                 }
                 if (object) {
-                    await context.sendJson(object, 'out');
+                    await emit(context, object);
                 }
             }
             return context.response();

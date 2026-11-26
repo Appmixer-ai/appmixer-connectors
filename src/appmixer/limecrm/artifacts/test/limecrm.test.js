@@ -499,4 +499,186 @@ describe('limecrm', () => {
             assert.deepStrictEqual(context.state, {});
         });
     });
+
+    describe('polling and catch-up', () => {
+
+        const LIST = 'https://acme.lime-crm.com/acme/api/v1/limeobject/company/';
+
+        function page(items, next) {
+            return { _embedded: { limeobjects: items }, _links: next ? { next: { href: next } } : {} };
+        }
+
+        it('New Object (polling) starts at the newest id and emits newer objects oldest first, across pages', async () => {
+            let objects = [{ id: 1000 }];
+            const context = createContext({
+                properties: { limetype: 'company', mode: 'polling' },
+                responder: (o) => {
+                    const url = new URL(o.url);
+                    if (url.searchParams.get('_offset') === '2') return page(objects.slice(2));
+                    return page(objects.slice(0, 2), objects.length > 2 ? LIST + '?_sort=-id&_limit=50&_offset=2' : null);
+                }
+            });
+            await NewObject.start(context);
+            assert.deepStrictEqual(context.state, { mode: 'polling', cursorId: 1000 });
+            assert.ok(!context.requests.some(r => r.url.includes('/subscription/')));
+
+            objects = [{ id: 1003 }, { id: 1002 }, { id: 1001 }, { id: 1000 }];
+            await NewObject.tick(context);
+            assert.deepStrictEqual(context.sent.map(s => s.data.id), [1001, 1002, 1003]);
+            assert.strictEqual(context.state.cursorId, 1003);
+            const first = new URL(context.requests[1].url);
+            assert.strictEqual(first.searchParams.get('_sort'), '-id');
+            assert.strictEqual(first.searchParams.get('_limit'), '50');
+
+            await NewObject.tick(context);
+            assert.strictEqual(context.sent.length, 3);
+        });
+
+        it('New Object (polling) keeps the cursor when the answer is empty', async () => {
+            let objects = [];
+            const context = createContext({
+                properties: { limetype: 'company', mode: 'polling' },
+                state: { mode: 'polling', cursorId: 1003 },
+                responder: () => page(objects)
+            });
+            await NewObject.tick(context);
+            assert.strictEqual(context.state.cursorId, 1003);
+            objects = [{ id: 1003 }];
+            await NewObject.tick(context);
+            assert.strictEqual(context.sent.length, 0);
+        });
+
+        it('a webhook-mode tick makes no request', async () => {
+            const context = createContext({ properties: { limetype: 'company' }, state: { subscriptionId: '12', secret: 's' } });
+            await NewObject.tick(context);
+            await UpdatedObject.tick(context);
+            assert.strictEqual(context.requests.length, 0);
+        });
+
+        it('Updated Object (polling) emits the previous values of the changed properties and skips created objects', async () => {
+            let objects = [
+                { id: 1, name: 'Acme', phone: '1', _createdtime: '2026-11-20T08:00:00Z', _timestamp: '2026-11-20T09:00:00Z' }
+            ];
+            const context = createContext({
+                properties: { limetype: 'company', mode: 'polling' },
+                responder: () => page(objects)
+            });
+            await UpdatedObject.start(context);
+            assert.strictEqual(context.state.cursor, Date.parse('2026-11-20T09:00:00Z'));
+            assert.deepStrictEqual(context.state.snapshots['1'].v, { name: 'Acme', phone: '1' });
+
+            await UpdatedObject.tick(context);
+            assert.strictEqual(context.sent.length, 0, 'the object at the cursor is not an update');
+
+            objects = [
+                { id: 2, name: 'New', _createdtime: '2026-11-20T10:00:00Z', _timestamp: '2026-11-20T10:00:00Z' },
+                { id: 1, name: 'Acme', phone: '2', _createdtime: '2026-11-20T08:00:00Z', _timestamp: '2026-11-20T09:30:00Z' }
+            ];
+            await UpdatedObject.tick(context);
+            assert.deepStrictEqual(context.sent.map(s => s.data), [{
+                id: 1, name: 'Acme', phone: '2', _createdtime: '2026-11-20T08:00:00Z', _timestamp: '2026-11-20T09:30:00Z',
+                originalValues: { phone: '1' }
+            }]);
+            assert.ok(context.state.snapshots['2'], 'a created object is remembered');
+
+            objects = [
+                { id: 2, name: 'Renamed', _createdtime: '2026-11-20T10:00:00Z', _timestamp: '2026-11-20T10:05:00Z' },
+                ...objects
+            ];
+            await UpdatedObject.tick(context);
+            assert.strictEqual(context.sent.length, 2);
+            assert.deepStrictEqual(context.sent[1].data.originalValues, { name: 'New' });
+        });
+
+        it('the condition fires only when the property changes to the value', () => {
+            const props = { conditionProperty: 'dealstatus', conditionValue: 'Closed' };
+            assert.ok(lib.conditionMet(props, { dealstatus: 'closed' }, { dealstatus: 'open' }));
+            assert.ok(lib.conditionMet(props, { dealstatus: { key: 'closed', text: 'Closed' } }, { dealstatus: 'open' }));
+            assert.ok(!lib.conditionMet(props, { dealstatus: 'closed' }, { phone: '1' }), 'unrelated update');
+            assert.ok(!lib.conditionMet(props, { dealstatus: 'open' }, { dealstatus: 'new' }), 'other value');
+            assert.ok(lib.conditionMet(props, { dealstatus: 'closed' }, {}, false), 'previous value unknown');
+            assert.ok(lib.conditionMet({ conditionProperty: 'inactive', conditionValue: 'yes' }, { inactive: true }, { inactive: false }));
+            assert.ok(lib.conditionMet({}, { id: 1 }, {}));
+        });
+
+        it('Updated Object (webhook) applies the condition to the original values', async () => {
+            const state = { subscriptionId: '12', apiVersion: 'v1', secret: 's3cret', eventName: 'company.update' };
+            const deliver = async (originalValues, deliveryId) => {
+                const body = { event: 'company.update', body: { id: 1004, original_values: originalValues } };
+                const raw = JSON.stringify(body);
+                return {
+                    headers: { 'x-lime-webhook-id': '12', 'x-lime-delivery-id': deliveryId, 'x-lime-signature': sign(state.secret, raw) },
+                    rawBody: raw,
+                    data: body
+                };
+            };
+            const context = createContext({
+                properties: { limetype: 'company', conditionProperty: 'dealstatus', conditionValue: 'closed' },
+                state,
+                webhook: await deliver({ phone: '1' }, 'd-1'),
+                responder: () => ({ id: 1004, dealstatus: 'closed', _timestamp: '2026-11-20T10:00:00Z' })
+            });
+            await UpdatedObject.receive(context);
+            assert.strictEqual(context.sent.length, 0);
+            context.messages.webhook.content = await deliver({ dealstatus: 'open' }, 'd-2');
+            await UpdatedObject.receive(context);
+            assert.deepStrictEqual(context.sent[0].data.originalValues, { dealstatus: 'open' });
+        });
+
+        it('an unverifiable delivery without a raw body is caught up by polling, without duplicates', async () => {
+            const secret = 's3cret';
+            const now = Date.now();
+            // Lime signed "100.0"; the parsed body re-serializes it as 100.
+            const signedRaw = '{"event": "company.new", "body": {"id": 1005, "values": {"turnover": 100.0}}}';
+            const webhook = {
+                headers: { 'x-lime-webhook-id': '12', 'x-lime-delivery-id': 'd-9', 'x-lime-signature': sign(secret, signedRaw) },
+                data: JSON.parse(signedRaw)
+            };
+            const created = new Date(now - 30 * 1000).toISOString();
+            const context = createContext({
+                properties: { limetype: 'company' },
+                state: { subscriptionId: '12', apiVersion: 'v1', secret, eventName: 'company.new' },
+                webhook,
+                responder: (o) => (o.url.includes('/limeobject/company/1004/')
+                    ? { id: 1004, _createdtime: created }
+                    : page([{ id: 1005, _createdtime: created }, { id: 1004, _createdtime: created }, { id: 900, _createdtime: '2026-01-01T00:00:00Z' }]))
+            });
+            await NewObject.receive(context);
+            assert.strictEqual(context.responses[0].status, 202);
+            assert.strictEqual(context.requests.length, 0, 'the unverified body is not used');
+            assert.ok(context.state.catchUpSince <= now - 5 * 60 * 1000);
+
+            // Object 1004 came through a verified delivery in the meantime.
+            const body = { event: 'company.new', body: { id: 1004 } };
+            const raw = JSON.stringify(body);
+            context.messages.webhook.content = {
+                headers: { 'x-lime-webhook-id': '12', 'x-lime-delivery-id': 'd-10', 'x-lime-signature': sign(secret, raw) },
+                rawBody: raw,
+                data: body
+            };
+            await NewObject.receive(context);
+            assert.deepStrictEqual(context.sent.map(s => s.data.id), [1004]);
+
+            await NewObject.tick(context);
+            assert.deepStrictEqual(context.sent.map(s => s.data.id), [1004, 1005]);
+            assert.strictEqual(context.state.catchUpSince, undefined);
+
+            const before = context.requests.length;
+            await NewObject.tick(context);
+            assert.strictEqual(context.requests.length, before, 'no request once caught up');
+        });
+
+        it('Deleted Object logs an unverifiable delivery and answers 202', async () => {
+            const secret = 's3cret';
+            const signedRaw = '{"event": "company.delete", "body": {"id": 7, "values": {"turnover": 100.0}}}';
+            const context = createContext({
+                properties: { limetype: 'company' },
+                state: { subscriptionId: '12', secret, eventName: 'company.delete' },
+                webhook: { headers: { 'x-lime-signature': sign(secret, signedRaw) }, data: JSON.parse(signedRaw) }
+            });
+            await DeletedObject.receive(context);
+            assert.strictEqual(context.responses[0].status, 202);
+            assert.strictEqual(context.sent.length, 0);
+        });
+    });
 });

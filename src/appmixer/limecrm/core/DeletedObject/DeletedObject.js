@@ -20,7 +20,13 @@ module.exports = {
     async receive(context) {
 
         if (context.messages.webhook) {
-            const { accepted, status, body } = await lib.readWebhook(context);
+            const { accepted, unverifiable, status, body } = await lib.readWebhook(context);
+            if (unverifiable) {
+                // New and Updated Object read the changes through the API instead; deleted objects
+                // cannot be listed, so this event is lost.
+                await context.log({ step: 'The deleted object of an unverifiable delivery cannot be recovered: Lime CRM has no API that lists deleted objects.' });
+                return context.response({}, status);
+            }
             if (!accepted) {
                 return status ? context.response({ error: 'Invalid signature.' }, status) : context.response();
             }

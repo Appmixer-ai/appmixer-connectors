@@ -1,7 +1,7 @@
 {
     "name": "appmixer.limecrm.core.NewObject",
     "label": "New Object",
-    "description": "Triggers when an object of the selected limetype is created. Needs Lime Webhooks on the Lime CRM server (included in Lime CRM Cloud) and an API user that is an administrator or a member of the Webhook Users group.",
+    "description": "Triggers when an object of the selected limetype is created. In Webhook mode it needs Lime Webhooks on the Lime CRM server (included in Lime CRM Cloud) and an API user that is an administrator or a member of the Webhook Users group; Polling mode checks the API every minute instead.",
     "author": "Appmixer <info@appmixer.com>",
     "version": "1.0.0",
     "auth": {
@@ -16,12 +16,20 @@
     },
     "trigger": true,
     "webhook": true,
+    "tick": true,
     "properties": {
         "schema": {
             "type": "object",
             "properties": {
                 "limetype": {
                     "type": "string"
+                },
+                "mode": {
+                    "type": "string",
+                    "enum": [
+                        "webhook",
+                        "polling"
+                    ]
                 }
             },
             "required": [
@@ -44,6 +52,23 @@
                             "transform": "./ListLimetypes#toSelectArray"
                         }
                     }
+                },
+                "mode": {
+                    "type": "select",
+                    "label": "Mode",
+                    "index": 2,
+                    "defaultValue": "webhook",
+                    "tooltip": "How the trigger learns about changes. <b>Webhook</b> (default) gets them from Lime Webhooks right away; it needs Lime Webhooks on the server (included in Lime CRM Cloud, an optional package on-premise) and an API user that is an administrator or a member of the Webhook Users group. <b>Polling</b> asks the Lime CRM API for changes every minute and works without Lime Webhooks.",
+                    "options": [
+                        {
+                            "label": "Webhook",
+                            "value": "webhook"
+                        },
+                        {
+                            "label": "Polling",
+                            "value": "polling"
+                        }
+                    ]
                 }
             }
         }
@@ -52,7 +77,7 @@
         {
             "name": "out",
             "source": {
-                "url": "/component/appmixer/limecrm/core/GetObjectSchema?outPort=out&ignoreAuth=true",
+                "url": "/component/appmixer/limecrm/core/GetObjectSchema?outPort=out",
                 "data": {
                     "messages": {
                         "in/limetype": "properties/limetype"
