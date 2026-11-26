@@ -40,7 +40,9 @@ const CONFIG = {
 // token anywhere else), keyed by the connector directory (src/appmixer/<connector>).
 const AUTH_OVERRIDES = {
     // lib.js accepts only a *.workday.com / *.myworkday.com hostname.
-    workday: { host: 'kv-test.workday.com' }
+    workday: { host: 'kv-test.workday.com' },
+    // lib.js takes the API host from a fixed list of environments.
+    siteminder: { environment: 'production' }
 };
 
 // What a *Url/*Uri/*Domain account field holds differs by connector: a full URL, a bare hostname

@@ -1,0 +1,773 @@
+{
+    "name": "E2E SiteMinder - Availability, rates and Make API Call",
+    "description": "Reads 30 days of availability of the first room type and the first rate plan of the first hotel, the rates of that rate plan, and the publishers once more through Make API Call.",
+    "notes": {
+        "7e03c467-1e0c-43f3-a0f7-7655fd6e91b7": {
+            "x": 64,
+            "y": 208,
+            "width": 560,
+            "height": 448,
+            "content": "## Needs a SiteMinder Exchange test account\n\nThis flow was never run: SiteMinder issues API access only to partners with a signed agreement.\n\nIt takes the **first publisher** SiteMinder returns and the **first hotel** of that publisher. That hotel must be activated for the application of the connected account, and its publisher must provide availability and rates (ARI). **Little Hotelier** and **SiteMinder Channel Manager** hotels have reservations only: with one of them as the first publisher, the room type and rate plan steps answer HTTP 405 and the flow fails. The test hotel SiteMinder sets up for certification is a Little Hotelier account, so ask the Partner Integrations team for a hotel of a publisher with ARI.\n\nThe first room type and the first rate plan must have availability and rates loaded for the next 30 days."
+        }
+    },
+    "flow": {
+        "97e7ba9f-1d89-4e06-aeee-929276a62f8e": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {},
+            "config": {},
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "46d97e73-0569-46c7-a989-e1b623387560": {
+            "type": "appmixer.siteminder.core.FindPublishers",
+            "x": 272,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "97e7ba9f-1d89-4e06-aeee-929276a62f8e": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "97e7ba9f-1d89-4e06-aeee-929276a62f8e": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "outputType": {}
+                                },
+                                "lambda": {
+                                    "outputType": "first"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "95b43ea3-2848-441a-a432-876742074679": {
+            "type": "appmixer.siteminder.core.FindHotels",
+            "x": 480,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "46d97e73-0569-46c7-a989-e1b623387560": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "46d97e73-0569-46c7-a989-e1b623387560": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "publisherCode": {
+                                        "1dd048d4-dc15-49a1-a027-02a795fa6a84": {
+                                            "variable": "$.46d97e73-0569-46c7-a989-e1b623387560.out.code",
+                                            "functions": []
+                                        }
+                                    },
+                                    "outputType": {}
+                                },
+                                "lambda": {
+                                    "publisherCode": "{{{1dd048d4-dc15-49a1-a027-02a795fa6a84}}}",
+                                    "outputType": "first"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "bac6946e-dfeb-4241-ab6b-78b1e14a4752": {
+            "type": "appmixer.siteminder.core.FindRoomTypes",
+            "x": 688,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "95b43ea3-2848-441a-a432-876742074679": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "95b43ea3-2848-441a-a432-876742074679": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "publisherCode": {
+                                        "83bc22f0-893d-4ba1-ad74-930d044a50da": {
+                                            "variable": "$.46d97e73-0569-46c7-a989-e1b623387560.out.code",
+                                            "functions": []
+                                        }
+                                    },
+                                    "hotelCode": {
+                                        "017f63b7-d9f0-4c53-a748-a182f08fb057": {
+                                            "variable": "$.95b43ea3-2848-441a-a432-876742074679.out.code",
+                                            "functions": []
+                                        }
+                                    },
+                                    "outputType": {}
+                                },
+                                "lambda": {
+                                    "publisherCode": "{{{83bc22f0-893d-4ba1-ad74-930d044a50da}}}",
+                                    "hotelCode": "{{{017f63b7-d9f0-4c53-a748-a182f08fb057}}}",
+                                    "outputType": "first"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "786cda78-43dd-44ec-ac43-554f4afc7de4": {
+            "type": "appmixer.siteminder.core.FindRoomTypeAvailability",
+            "x": 896,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "bac6946e-dfeb-4241-ab6b-78b1e14a4752": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "bac6946e-dfeb-4241-ab6b-78b1e14a4752": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "publisherCode": {
+                                        "381f1aae-25e1-41c6-a8e2-58387b97e974": {
+                                            "variable": "$.46d97e73-0569-46c7-a989-e1b623387560.out.code",
+                                            "functions": []
+                                        }
+                                    },
+                                    "hotelCode": {
+                                        "9c11bf2c-b614-46bc-aa30-3128361789c3": {
+                                            "variable": "$.95b43ea3-2848-441a-a432-876742074679.out.code",
+                                            "functions": []
+                                        }
+                                    },
+                                    "roomTypeCode": {
+                                        "a4e5b51b-dcba-4cf4-ae58-64518c8c0a57": {
+                                            "variable": "$.bac6946e-dfeb-4241-ab6b-78b1e14a4752.out.code",
+                                            "functions": []
+                                        }
+                                    },
+                                    "startDate": {
+                                        "4681301a-743c-4ba4-ae79-4e72fc00f3c4": {
+                                            "functions": [
+                                                {
+                                                    "name": "g_now"
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "range": {},
+                                    "outputType": {}
+                                },
+                                "lambda": {
+                                    "publisherCode": "{{{381f1aae-25e1-41c6-a8e2-58387b97e974}}}",
+                                    "hotelCode": "{{{9c11bf2c-b614-46bc-aa30-3128361789c3}}}",
+                                    "roomTypeCode": "{{{a4e5b51b-dcba-4cf4-ae58-64518c8c0a57}}}",
+                                    "startDate": "{{{4681301a-743c-4ba4-ae79-4e72fc00f3c4}}}",
+                                    "range": 30,
+                                    "outputType": "array"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "d1e654a3-fbf9-4232-a33e-12ebe8ce736f": {
+            "type": "appmixer.utils.test.Assert",
+            "label": "Assert FindRoomTypeAvailability",
+            "x": 1104,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "786cda78-43dd-44ec-ac43-554f4afc7de4": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "786cda78-43dd-44ec-ac43-554f4afc7de4": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "085981dc-1d83-4e88-a423-fbd9341e3d92": {
+                                            "variable": "$.786cda78-43dd-44ec-ac43-554f4afc7de4.out.result",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$[0].date"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{085981dc-1d83-4e88-a423-fbd9341e3d92}}}",
+                                                "assertion": "regex",
+                                                "regex": "^\\d{4}-\\d{2}-\\d{2}$"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "35538c40-9b31-4b4c-aca9-473f615644c1": {
+            "type": "appmixer.siteminder.core.FindRatePlans",
+            "x": 1104,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "786cda78-43dd-44ec-ac43-554f4afc7de4": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "786cda78-43dd-44ec-ac43-554f4afc7de4": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "publisherCode": {
+                                        "325e5a86-9e44-4f4b-a659-9e29f9b703d3": {
+                                            "variable": "$.46d97e73-0569-46c7-a989-e1b623387560.out.code",
+                                            "functions": []
+                                        }
+                                    },
+                                    "hotelCode": {
+                                        "18a057d2-1a03-47fb-a7a5-580141bd997b": {
+                                            "variable": "$.95b43ea3-2848-441a-a432-876742074679.out.code",
+                                            "functions": []
+                                        }
+                                    },
+                                    "outputType": {}
+                                },
+                                "lambda": {
+                                    "publisherCode": "{{{325e5a86-9e44-4f4b-a659-9e29f9b703d3}}}",
+                                    "hotelCode": "{{{18a057d2-1a03-47fb-a7a5-580141bd997b}}}",
+                                    "outputType": "first"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "ebbd80a1-9293-4ba9-ac6b-91de4d270ac0": {
+            "type": "appmixer.siteminder.core.FindRatePlanAvailability",
+            "x": 1312,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "35538c40-9b31-4b4c-aca9-473f615644c1": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "35538c40-9b31-4b4c-aca9-473f615644c1": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "publisherCode": {
+                                        "42618667-7220-4a17-a12e-699c3505ff91": {
+                                            "variable": "$.46d97e73-0569-46c7-a989-e1b623387560.out.code",
+                                            "functions": []
+                                        }
+                                    },
+                                    "hotelCode": {
+                                        "28706d5b-45bf-4716-afe0-f8fbb51f6790": {
+                                            "variable": "$.95b43ea3-2848-441a-a432-876742074679.out.code",
+                                            "functions": []
+                                        }
+                                    },
+                                    "ratePlanCode": {
+                                        "e8876ad3-436e-4ca6-aa80-14caeb2545a4": {
+                                            "variable": "$.35538c40-9b31-4b4c-aca9-473f615644c1.out.code",
+                                            "functions": []
+                                        }
+                                    },
+                                    "startDate": {
+                                        "79f45d74-5a52-45e8-a6f8-69de84aed513": {
+                                            "functions": [
+                                                {
+                                                    "name": "g_now"
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "range": {},
+                                    "outputType": {}
+                                },
+                                "lambda": {
+                                    "publisherCode": "{{{42618667-7220-4a17-a12e-699c3505ff91}}}",
+                                    "hotelCode": "{{{28706d5b-45bf-4716-afe0-f8fbb51f6790}}}",
+                                    "ratePlanCode": "{{{e8876ad3-436e-4ca6-aa80-14caeb2545a4}}}",
+                                    "startDate": "{{{79f45d74-5a52-45e8-a6f8-69de84aed513}}}",
+                                    "range": 30,
+                                    "outputType": "array"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "599f34a3-2d69-4433-add2-ed9bf665ee24": {
+            "type": "appmixer.utils.test.Assert",
+            "label": "Assert FindRatePlanAvailability",
+            "x": 1520,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "ebbd80a1-9293-4ba9-ac6b-91de4d270ac0": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "ebbd80a1-9293-4ba9-ac6b-91de4d270ac0": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "b228b564-85ce-45ab-a506-f25fb7d2dfaa": {
+                                            "variable": "$.ebbd80a1-9293-4ba9-ac6b-91de4d270ac0.out.result",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$[0].date"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{b228b564-85ce-45ab-a506-f25fb7d2dfaa}}}",
+                                                "assertion": "regex",
+                                                "regex": "^\\d{4}-\\d{2}-\\d{2}$"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "282170a1-e1a2-455c-a4d3-3d671915b272": {
+            "type": "appmixer.siteminder.core.FindRates",
+            "x": 1520,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "ebbd80a1-9293-4ba9-ac6b-91de4d270ac0": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "ebbd80a1-9293-4ba9-ac6b-91de4d270ac0": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "publisherCode": {
+                                        "e9dcbf47-7aa8-48e9-a397-b3a6a3844bf4": {
+                                            "variable": "$.46d97e73-0569-46c7-a989-e1b623387560.out.code",
+                                            "functions": []
+                                        }
+                                    },
+                                    "hotelCode": {
+                                        "9f2f6321-5a83-47e2-af1a-0b5023ac2418": {
+                                            "variable": "$.95b43ea3-2848-441a-a432-876742074679.out.code",
+                                            "functions": []
+                                        }
+                                    },
+                                    "ratePlanCode": {
+                                        "ce3c9420-f99c-41a5-ad17-7e7f5d4b3e30": {
+                                            "variable": "$.35538c40-9b31-4b4c-aca9-473f615644c1.out.code",
+                                            "functions": []
+                                        }
+                                    },
+                                    "startDate": {
+                                        "d63fcd33-9894-4e19-adaa-f952ceba6e04": {
+                                            "functions": [
+                                                {
+                                                    "name": "g_now"
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "range": {},
+                                    "outputType": {}
+                                },
+                                "lambda": {
+                                    "publisherCode": "{{{e9dcbf47-7aa8-48e9-a397-b3a6a3844bf4}}}",
+                                    "hotelCode": "{{{9f2f6321-5a83-47e2-af1a-0b5023ac2418}}}",
+                                    "ratePlanCode": "{{{ce3c9420-f99c-41a5-ad17-7e7f5d4b3e30}}}",
+                                    "startDate": "{{{d63fcd33-9894-4e19-adaa-f952ceba6e04}}}",
+                                    "range": 30,
+                                    "outputType": "array"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "c63b8959-b7a2-4563-a5ae-5a459557be90": {
+            "type": "appmixer.utils.test.Assert",
+            "label": "Assert FindRates",
+            "x": 1728,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "282170a1-e1a2-455c-a4d3-3d671915b272": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "282170a1-e1a2-455c-a4d3-3d671915b272": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "9ac5a5d5-8c17-4592-aa5e-8a23bb3cd963": {
+                                            "variable": "$.282170a1-e1a2-455c-a4d3-3d671915b272.out.result",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$[0].currencyCode"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        },
+                                        "a7c96eee-c5dd-42e1-a546-0d98281950d0": {
+                                            "variable": "$.282170a1-e1a2-455c-a4d3-3d671915b272.out.result",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$[0].ratePlanCode"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{9ac5a5d5-8c17-4592-aa5e-8a23bb3cd963}}}",
+                                                "assertion": "regex",
+                                                "regex": "^[A-Z]{3}$"
+                                            },
+                                            {
+                                                "field": "{{{a7c96eee-c5dd-42e1-a546-0d98281950d0}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "2d338f04-b5ee-4e53-ada5-5bef7dcb530c": {
+            "type": "appmixer.siteminder.core.MakeApiCall",
+            "x": 1728,
+            "y": 400,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "282170a1-e1a2-455c-a4d3-3d671915b272": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "282170a1-e1a2-455c-a4d3-3d671915b272": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "url": {
+                                        "d95d0a73-7153-49c6-ac7a-5b0dcd38a626": {
+                                            "variable": "$.46d97e73-0569-46c7-a989-e1b623387560.out.code",
+                                            "functions": []
+                                        }
+                                    },
+                                    "method": {},
+                                    "headers": {}
+                                },
+                                "lambda": {
+                                    "url": "/inventory/v1/publishers/{{{d95d0a73-7153-49c6-ac7a-5b0dcd38a626}}}/hotels",
+                                    "method": "GET",
+                                    "headers": "{\"Accept\": \"application/json\"}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "bf89f149-9983-405d-ad54-6253c4a09c63": {
+            "type": "appmixer.utils.test.Assert",
+            "label": "Assert MakeApiCall",
+            "x": 1936,
+            "y": 400,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "2d338f04-b5ee-4e53-ada5-5bef7dcb530c": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "2d338f04-b5ee-4e53-ada5-5bef7dcb530c": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "104fdf3b-56d9-4aea-ae56-e4c9e4829bdb": {
+                                            "variable": "$.2d338f04-b5ee-4e53-ada5-5bef7dcb530c.out.statusCode",
+                                            "functions": []
+                                        },
+                                        "ab8345fe-8544-4fac-a231-237291a02cb3": {
+                                            "variable": "$.2d338f04-b5ee-4e53-ada5-5bef7dcb530c.out.body",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$[0].code"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{104fdf3b-56d9-4aea-ae56-e4c9e4829bdb}}}",
+                                                "assertion": "equal",
+                                                "expected": 200
+                                            },
+                                            {
+                                                "field": "{{{ab8345fe-8544-4fac-a231-237291a02cb3}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "d2edf0de-1dec-44b5-a021-25e18a995dc2": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 2144,
+            "y": 400,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "d1e654a3-fbf9-4232-a33e-12ebe8ce736f": [
+                        "out"
+                    ],
+                    "599f34a3-2d69-4433-add2-ed9bf665ee24": [
+                        "out"
+                    ],
+                    "c63b8959-b7a2-4563-a5ae-5a459557be90": [
+                        "out"
+                    ],
+                    "bf89f149-9983-405d-ad54-6253c4a09c63": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 180
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "e0c0e5ae-f020-4ff4-af51-51d010139e1b": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 2352,
+            "y": 400,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "d2edf0de-1dec-44b5-a021-25e18a995dc2": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "successStoreId": "64f6f1f9193228000754082f",
+                    "failedStoreId": "64f6f1f0193228000754082e"
+                },
+                "transform": {
+                    "in": {
+                        "d2edf0de-1dec-44b5-a021-25e18a995dc2": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "647ff87f-cc7f-42b3-a416-35212e467daa": {
+                                            "variable": "$.d2edf0de-1dec-44b5-a021-25e18a995dc2.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E SiteMinder - Availability, rates and Make API Call",
+                                    "result": "{{{647ff87f-cc7f-42b3-a416-35212e467daa}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        }
+    }
+}

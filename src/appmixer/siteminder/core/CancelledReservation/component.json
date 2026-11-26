@@ -1,0 +1,1067 @@
+{
+    "name": "appmixer.siteminder.core.CancelledReservation",
+    "label": "Cancelled Reservation",
+    "description": "Triggers when SiteMinder Exchange delivers a cancelled reservation of one of your hotels (status Cancelled). A cancellation can arrive for a reservation that was never delivered before, and then carries little more than the reservation ID and the hotel code. SiteMinder pushes reservations to the reservation endpoint of this connector; the flow receives those of the hotels listed in Hotel Codes when the message carries the endpoint credentials of the connected account.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "trigger": true,
+    "webhook": true,
+    "auth": {
+        "service": "appmixer:siteminder"
+    },
+    "properties": {
+        "schema": {
+            "type": "object",
+            "properties": {
+                "hotelCodes": {
+                    "type": "string"
+                }
+            },
+            "required": [
+                "hotelCodes"
+            ]
+        },
+        "inspector": {
+            "inputs": {
+                "hotelCodes": {
+                    "type": "textarea",
+                    "index": 1,
+                    "label": "Hotel Codes",
+                    "tooltip": "The hotel codes this flow receives reservations for: one code, or several separated by commas or line breaks. A hotel code is the code your application assigned to the property when it was activated in SiteMinder Exchange (<code>HotelCode</code> in the reservation message). A reservation of a hotel that no running flow lists is answered with the error \"Hotel not found\"."
+                }
+            }
+        }
+    },
+    "outPorts": [
+        {
+            "name": "out",
+            "schema": {
+                "type": "object",
+                "required": [
+                    "reservationId",
+                    "status",
+                    "eventType",
+                    "hotelCode",
+                    "hotelReservationIds",
+                    "roomStays",
+                    "guests",
+                    "services",
+                    "comments",
+                    "specialRequests",
+                    "reservation"
+                ],
+                "properties": {
+                    "reservationId": {
+                        "type": "string",
+                        "title": "Reservation ID",
+                        "example": "BDC-3685569477"
+                    },
+                    "status": {
+                        "type": "string",
+                        "title": "Status",
+                        "example": "Reserved"
+                    },
+                    "eventType": {
+                        "type": "string",
+                        "title": "Event Type",
+                        "example": "new"
+                    },
+                    "hotelCode": {
+                        "type": "string",
+                        "title": "Hotel Code",
+                        "example": "HOTEL-1042"
+                    },
+                    "publisherCode": {
+                        "type": "string",
+                        "title": "Publisher Code",
+                        "example": "TESTPMS"
+                    },
+                    "bookingChannelName": {
+                        "type": "string",
+                        "title": "Booking Channel Name",
+                        "example": "Booking.com"
+                    },
+                    "bookingChannelCode": {
+                        "type": "string",
+                        "title": "Booking Channel Code",
+                        "example": "BDC"
+                    },
+                    "createdAt": {
+                        "type": "string",
+                        "title": "Created At",
+                        "example": "2026-11-19T18:02:44+00:00"
+                    },
+                    "lastModifiedAt": {
+                        "type": "string",
+                        "title": "Last Modified At",
+                        "example": "2026-11-19T18:13:51+00:00"
+                    },
+                    "creatorId": {
+                        "type": "string",
+                        "title": "Creator ID",
+                        "example": "LINDA-RESAGENT"
+                    },
+                    "lastModifierId": {
+                        "type": "string",
+                        "title": "Last Modifier ID",
+                        "example": "651651651651"
+                    },
+                    "arrivalDate": {
+                        "type": "string",
+                        "title": "Arrival Date",
+                        "example": "2026-12-01"
+                    },
+                    "departureDate": {
+                        "type": "string",
+                        "title": "Departure Date",
+                        "example": "2026-12-03"
+                    },
+                    "adults": {
+                        "type": "integer",
+                        "title": "Adults",
+                        "example": 2
+                    },
+                    "children": {
+                        "type": "integer",
+                        "title": "Children",
+                        "example": 0
+                    },
+                    "infants": {
+                        "type": "integer",
+                        "title": "Infants",
+                        "example": 0
+                    },
+                    "guestCount": {
+                        "type": "integer",
+                        "title": "Guest Count",
+                        "example": 2
+                    },
+                    "totalAmountBeforeTax": {
+                        "type": "number",
+                        "title": "Total Amount Before Tax",
+                        "example": 217
+                    },
+                    "totalAmountAfterTax": {
+                        "type": "number",
+                        "title": "Total Amount After Tax",
+                        "example": 255.55
+                    },
+                    "currencyCode": {
+                        "type": "string",
+                        "title": "Currency",
+                        "example": "AUD"
+                    },
+                    "taxAmount": {
+                        "type": "number",
+                        "title": "Tax Amount",
+                        "example": 38.55
+                    },
+                    "commissionAmount": {
+                        "type": "number",
+                        "title": "Commission Amount",
+                        "example": 25
+                    },
+                    "commissionCurrencyCode": {
+                        "type": "string",
+                        "title": "Commission Currency",
+                        "example": "AUD"
+                    },
+                    "primaryGuest": {
+                        "type": "object",
+                        "title": "Primary Guest",
+                        "properties": {
+                            "rph": {
+                                "type": "string",
+                                "title": "Primary Guest.Guest Reference",
+                                "example": "1"
+                            },
+                            "primary": {
+                                "type": "boolean",
+                                "title": "Primary Guest.Primary Guest",
+                                "example": true
+                            },
+                            "arrivalTime": {
+                                "type": "string",
+                                "title": "Primary Guest.Arrival Time",
+                                "example": "13:30:00"
+                            },
+                            "age": {
+                                "type": "integer",
+                                "title": "Primary Guest.Age",
+                                "example": 51
+                            },
+                            "profileId": {
+                                "type": "string",
+                                "title": "Primary Guest.Profile ID",
+                                "example": "8943112"
+                            },
+                            "profileType": {
+                                "type": "string",
+                                "title": "Primary Guest.Profile Type",
+                                "example": "1"
+                            },
+                            "namePrefix": {
+                                "type": "string",
+                                "title": "Primary Guest.Name Prefix",
+                                "example": "Mrs."
+                            },
+                            "givenName": {
+                                "type": "string",
+                                "title": "Primary Guest.Given Name",
+                                "example": "Ginny"
+                            },
+                            "middleName": {
+                                "type": "string",
+                                "title": "Primary Guest.Middle Name",
+                                "example": "Adeline"
+                            },
+                            "surname": {
+                                "type": "string",
+                                "title": "Primary Guest.Surname",
+                                "example": "Woolf"
+                            },
+                            "email": {
+                                "type": "string",
+                                "title": "Primary Guest.Email",
+                                "example": "ginny.woolf@example.com"
+                            },
+                            "phoneNumber": {
+                                "type": "string",
+                                "title": "Primary Guest.Phone Number",
+                                "example": "13855956"
+                            },
+                            "phoneCountryAccessCode": {
+                                "type": "string",
+                                "title": "Primary Guest.Phone Country Code",
+                                "example": "61"
+                            },
+                            "phoneAreaCityCode": {
+                                "type": "string",
+                                "title": "Primary Guest.Phone Area Code",
+                                "example": "4"
+                            },
+                            "addressLine": {
+                                "type": "string",
+                                "title": "Primary Guest.Address",
+                                "example": "125 Pitt Street"
+                            },
+                            "city": {
+                                "type": "string",
+                                "title": "Primary Guest.City",
+                                "example": "Sydney"
+                            },
+                            "postalCode": {
+                                "type": "string",
+                                "title": "Primary Guest.Postal Code",
+                                "example": "2000"
+                            },
+                            "state": {
+                                "type": "string",
+                                "title": "Primary Guest.State",
+                                "example": "New South Wales"
+                            },
+                            "stateCode": {
+                                "type": "string",
+                                "title": "Primary Guest.State Code",
+                                "example": "NSW"
+                            },
+                            "country": {
+                                "type": "string",
+                                "title": "Primary Guest.Country",
+                                "example": "Australia"
+                            },
+                            "countryCode": {
+                                "type": "string",
+                                "title": "Primary Guest.Country Code",
+                                "example": "AU"
+                            },
+                            "birthDate": {
+                                "type": "string",
+                                "title": "Primary Guest.Birth Date",
+                                "example": "1966-07-16"
+                            },
+                            "vip": {
+                                "type": "boolean",
+                                "title": "Primary Guest.VIP",
+                                "example": true
+                            },
+                            "loyaltyProgram": {
+                                "type": "string",
+                                "title": "Primary Guest.Loyalty Program",
+                                "example": "PLATINUM"
+                            },
+                            "loyaltyMembershipId": {
+                                "type": "string",
+                                "title": "Primary Guest.Loyalty Membership ID",
+                                "example": "8943112"
+                            },
+                            "loyaltyLevel": {
+                                "type": "string",
+                                "title": "Primary Guest.Loyalty Level",
+                                "example": "VIP"
+                            },
+                            "companyName": {
+                                "type": "string",
+                                "title": "Primary Guest.Company Name",
+                                "example": "Dalloway"
+                            },
+                            "companyCode": {
+                                "type": "string",
+                                "title": "Primary Guest.Company Code",
+                                "example": "DLW"
+                            },
+                            "companyEmail": {
+                                "type": "string",
+                                "title": "Primary Guest.Company Email",
+                                "example": "info@dalloway.example.com"
+                            }
+                        }
+                    },
+                    "booker": {
+                        "type": "object",
+                        "title": "Booker",
+                        "properties": {
+                            "profileId": {
+                                "type": "string",
+                                "title": "Booker.Profile ID",
+                                "example": "8943112"
+                            },
+                            "profileType": {
+                                "type": "string",
+                                "title": "Booker.Profile Type",
+                                "example": "1"
+                            },
+                            "namePrefix": {
+                                "type": "string",
+                                "title": "Booker.Name Prefix",
+                                "example": "Mrs."
+                            },
+                            "givenName": {
+                                "type": "string",
+                                "title": "Booker.Given Name",
+                                "example": "Ginny"
+                            },
+                            "middleName": {
+                                "type": "string",
+                                "title": "Booker.Middle Name",
+                                "example": "Adeline"
+                            },
+                            "surname": {
+                                "type": "string",
+                                "title": "Booker.Surname",
+                                "example": "Woolf"
+                            },
+                            "email": {
+                                "type": "string",
+                                "title": "Booker.Email",
+                                "example": "ginny.woolf@example.com"
+                            },
+                            "phoneNumber": {
+                                "type": "string",
+                                "title": "Booker.Phone Number",
+                                "example": "13855956"
+                            },
+                            "phoneCountryAccessCode": {
+                                "type": "string",
+                                "title": "Booker.Phone Country Code",
+                                "example": "61"
+                            },
+                            "phoneAreaCityCode": {
+                                "type": "string",
+                                "title": "Booker.Phone Area Code",
+                                "example": "4"
+                            },
+                            "addressLine": {
+                                "type": "string",
+                                "title": "Booker.Address",
+                                "example": "125 Pitt Street"
+                            },
+                            "city": {
+                                "type": "string",
+                                "title": "Booker.City",
+                                "example": "Sydney"
+                            },
+                            "postalCode": {
+                                "type": "string",
+                                "title": "Booker.Postal Code",
+                                "example": "2000"
+                            },
+                            "state": {
+                                "type": "string",
+                                "title": "Booker.State",
+                                "example": "New South Wales"
+                            },
+                            "stateCode": {
+                                "type": "string",
+                                "title": "Booker.State Code",
+                                "example": "NSW"
+                            },
+                            "country": {
+                                "type": "string",
+                                "title": "Booker.Country",
+                                "example": "Australia"
+                            },
+                            "countryCode": {
+                                "type": "string",
+                                "title": "Booker.Country Code",
+                                "example": "AU"
+                            },
+                            "birthDate": {
+                                "type": "string",
+                                "title": "Booker.Birth Date",
+                                "example": "1966-07-16"
+                            },
+                            "vip": {
+                                "type": "boolean",
+                                "title": "Booker.VIP",
+                                "example": true
+                            },
+                            "loyaltyProgram": {
+                                "type": "string",
+                                "title": "Booker.Loyalty Program",
+                                "example": "PLATINUM"
+                            },
+                            "loyaltyMembershipId": {
+                                "type": "string",
+                                "title": "Booker.Loyalty Membership ID",
+                                "example": "8943112"
+                            },
+                            "loyaltyLevel": {
+                                "type": "string",
+                                "title": "Booker.Loyalty Level",
+                                "example": "VIP"
+                            },
+                            "companyName": {
+                                "type": "string",
+                                "title": "Booker.Company Name",
+                                "example": "Dalloway"
+                            },
+                            "companyCode": {
+                                "type": "string",
+                                "title": "Booker.Company Code",
+                                "example": "DLW"
+                            },
+                            "companyEmail": {
+                                "type": "string",
+                                "title": "Booker.Company Email",
+                                "example": "info@dalloway.example.com"
+                            }
+                        }
+                    },
+                    "hotelReservationIds": {
+                        "type": "array",
+                        "title": "Hotel Reservation IDs",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "type": {
+                                    "type": "string",
+                                    "title": "Type",
+                                    "example": "10"
+                                },
+                                "value": {
+                                    "type": "string",
+                                    "title": "Value",
+                                    "example": "BDC3685170919"
+                                },
+                                "source": {
+                                    "type": "string",
+                                    "title": "Source",
+                                    "example": "TESTPMS_GRHP6597"
+                                }
+                            }
+                        },
+                        "example": [
+                            {
+                                "type": "10",
+                                "value": "BDC3685170919",
+                                "source": "TESTPMS_GRHP6597"
+                            }
+                        ]
+                    },
+                    "roomStays": {
+                        "type": "array",
+                        "title": "Room Stays",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "roomTypeCode": {
+                                    "type": "string",
+                                    "title": "Room Type Code",
+                                    "example": "DLX"
+                                },
+                                "roomTypeName": {
+                                    "type": "string",
+                                    "title": "Room Type Name",
+                                    "example": "Deluxe"
+                                },
+                                "roomDescription": {
+                                    "type": "string",
+                                    "title": "Room Description",
+                                    "example": "Deluxe room with a harbour view"
+                                },
+                                "roomId": {
+                                    "type": "string",
+                                    "title": "Room ID",
+                                    "example": "1501"
+                                },
+                                "ratePlanCode": {
+                                    "type": "string",
+                                    "title": "Rate Plan Code",
+                                    "example": "WKGPKG"
+                                },
+                                "ratePlanName": {
+                                    "type": "string",
+                                    "title": "Rate Plan Name",
+                                    "example": "Weekend Package"
+                                },
+                                "ratePlanDescription": {
+                                    "type": "string",
+                                    "title": "Rate Plan Description",
+                                    "example": "Includes breakfast and late checkout"
+                                },
+                                "numberOfUnits": {
+                                    "type": "integer",
+                                    "title": "Number of Rooms",
+                                    "example": 1
+                                },
+                                "arrivalDate": {
+                                    "type": "string",
+                                    "title": "Arrival Date",
+                                    "example": "2026-12-01"
+                                },
+                                "departureDate": {
+                                    "type": "string",
+                                    "title": "Departure Date",
+                                    "example": "2026-12-03"
+                                },
+                                "adults": {
+                                    "type": "integer",
+                                    "title": "Adults",
+                                    "example": 2
+                                },
+                                "children": {
+                                    "type": "integer",
+                                    "title": "Children",
+                                    "example": 0
+                                },
+                                "infants": {
+                                    "type": "integer",
+                                    "title": "Infants",
+                                    "example": 0
+                                },
+                                "guestCount": {
+                                    "type": "integer",
+                                    "title": "Guest Count",
+                                    "example": 2
+                                },
+                                "totalAmountBeforeTax": {
+                                    "type": "number",
+                                    "title": "Total Amount Before Tax",
+                                    "example": 187
+                                },
+                                "totalAmountAfterTax": {
+                                    "type": "number",
+                                    "title": "Total Amount After Tax",
+                                    "example": 215.05
+                                },
+                                "currencyCode": {
+                                    "type": "string",
+                                    "title": "Currency",
+                                    "example": "AUD"
+                                },
+                                "promotionCode": {
+                                    "type": "string",
+                                    "title": "Promotion Code",
+                                    "example": "STAYNSAVE15"
+                                },
+                                "marketCode": {
+                                    "type": "string",
+                                    "title": "Market Code",
+                                    "example": "Corporate"
+                                },
+                                "sourceOfBusiness": {
+                                    "type": "string",
+                                    "title": "Source of Business",
+                                    "example": "Radio"
+                                },
+                                "guestRphs": {
+                                    "type": "array",
+                                    "title": "Guest References",
+                                    "items": {
+                                        "type": "string"
+                                    },
+                                    "example": [
+                                        "1",
+                                        "2"
+                                    ]
+                                },
+                                "dailyRates": {
+                                    "type": "array",
+                                    "title": "Daily Rates",
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {
+                                            "effectiveDate": {
+                                                "type": "string",
+                                                "title": "Effective Date",
+                                                "example": "2026-12-01"
+                                            },
+                                            "expireDate": {
+                                                "type": "string",
+                                                "title": "Expire Date",
+                                                "example": "2026-12-02"
+                                            },
+                                            "unitMultiplier": {
+                                                "type": "integer",
+                                                "title": "Unit Multiplier",
+                                                "example": 1
+                                            },
+                                            "amountBeforeTax": {
+                                                "type": "number",
+                                                "title": "Amount Before Tax",
+                                                "example": 100
+                                            },
+                                            "amountAfterTax": {
+                                                "type": "number",
+                                                "title": "Amount After Tax",
+                                                "example": 110
+                                            },
+                                            "currencyCode": {
+                                                "type": "string",
+                                                "title": "Currency",
+                                                "example": "AUD"
+                                            }
+                                        }
+                                    },
+                                    "example": [
+                                        {
+                                            "effectiveDate": "2026-12-01",
+                                            "expireDate": "2026-12-02",
+                                            "unitMultiplier": 1,
+                                            "amountBeforeTax": 100,
+                                            "amountAfterTax": 110,
+                                            "currencyCode": "AUD"
+                                        }
+                                    ]
+                                },
+                                "comments": {
+                                    "type": "array",
+                                    "title": "Comments",
+                                    "items": {
+                                        "type": "string"
+                                    },
+                                    "example": [
+                                        "Free spa entry for the whole stay."
+                                    ]
+                                },
+                                "specialRequests": {
+                                    "type": "array",
+                                    "title": "Special Requests",
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {
+                                            "code": {
+                                                "type": "string",
+                                                "title": "Request Code",
+                                                "example": "Smoking"
+                                            },
+                                            "name": {
+                                                "type": "string",
+                                                "title": "Name",
+                                                "example": "Extra Bed"
+                                            },
+                                            "text": {
+                                                "type": "string",
+                                                "title": "Text",
+                                                "example": "Non-smoking room."
+                                            }
+                                        }
+                                    },
+                                    "example": [
+                                        {
+                                            "code": "Smoking",
+                                            "text": "Non-smoking room."
+                                        }
+                                    ]
+                                }
+                            }
+                        },
+                        "example": [
+                            {
+                                "roomTypeCode": "DLX",
+                                "roomTypeName": "Deluxe",
+                                "ratePlanCode": "WKGPKG",
+                                "arrivalDate": "2026-12-01",
+                                "departureDate": "2026-12-03",
+                                "adults": 2,
+                                "guestCount": 2,
+                                "totalAmountAfterTax": 215.05,
+                                "currencyCode": "AUD"
+                            }
+                        ]
+                    },
+                    "guests": {
+                        "type": "array",
+                        "title": "Guests",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "rph": {
+                                    "type": "string",
+                                    "title": "Guest Reference",
+                                    "example": "1"
+                                },
+                                "primary": {
+                                    "type": "boolean",
+                                    "title": "Primary Guest",
+                                    "example": true
+                                },
+                                "arrivalTime": {
+                                    "type": "string",
+                                    "title": "Arrival Time",
+                                    "example": "13:30:00"
+                                },
+                                "age": {
+                                    "type": "integer",
+                                    "title": "Age",
+                                    "example": 51
+                                },
+                                "profileId": {
+                                    "type": "string",
+                                    "title": "Profile ID",
+                                    "example": "8943112"
+                                },
+                                "profileType": {
+                                    "type": "string",
+                                    "title": "Profile Type",
+                                    "example": "1"
+                                },
+                                "namePrefix": {
+                                    "type": "string",
+                                    "title": "Name Prefix",
+                                    "example": "Mrs."
+                                },
+                                "givenName": {
+                                    "type": "string",
+                                    "title": "Given Name",
+                                    "example": "Ginny"
+                                },
+                                "middleName": {
+                                    "type": "string",
+                                    "title": "Middle Name",
+                                    "example": "Adeline"
+                                },
+                                "surname": {
+                                    "type": "string",
+                                    "title": "Surname",
+                                    "example": "Woolf"
+                                },
+                                "email": {
+                                    "type": "string",
+                                    "title": "Email",
+                                    "example": "ginny.woolf@example.com"
+                                },
+                                "phoneNumber": {
+                                    "type": "string",
+                                    "title": "Phone Number",
+                                    "example": "13855956"
+                                },
+                                "phoneCountryAccessCode": {
+                                    "type": "string",
+                                    "title": "Phone Country Code",
+                                    "example": "61"
+                                },
+                                "phoneAreaCityCode": {
+                                    "type": "string",
+                                    "title": "Phone Area Code",
+                                    "example": "4"
+                                },
+                                "addressLine": {
+                                    "type": "string",
+                                    "title": "Address",
+                                    "example": "125 Pitt Street"
+                                },
+                                "city": {
+                                    "type": "string",
+                                    "title": "City",
+                                    "example": "Sydney"
+                                },
+                                "postalCode": {
+                                    "type": "string",
+                                    "title": "Postal Code",
+                                    "example": "2000"
+                                },
+                                "state": {
+                                    "type": "string",
+                                    "title": "State",
+                                    "example": "New South Wales"
+                                },
+                                "stateCode": {
+                                    "type": "string",
+                                    "title": "State Code",
+                                    "example": "NSW"
+                                },
+                                "country": {
+                                    "type": "string",
+                                    "title": "Country",
+                                    "example": "Australia"
+                                },
+                                "countryCode": {
+                                    "type": "string",
+                                    "title": "Country Code",
+                                    "example": "AU"
+                                },
+                                "birthDate": {
+                                    "type": "string",
+                                    "title": "Birth Date",
+                                    "example": "1966-07-16"
+                                },
+                                "vip": {
+                                    "type": "boolean",
+                                    "title": "VIP",
+                                    "example": true
+                                },
+                                "loyaltyProgram": {
+                                    "type": "string",
+                                    "title": "Loyalty Program",
+                                    "example": "PLATINUM"
+                                },
+                                "loyaltyMembershipId": {
+                                    "type": "string",
+                                    "title": "Loyalty Membership ID",
+                                    "example": "8943112"
+                                },
+                                "loyaltyLevel": {
+                                    "type": "string",
+                                    "title": "Loyalty Level",
+                                    "example": "VIP"
+                                },
+                                "companyName": {
+                                    "type": "string",
+                                    "title": "Company Name",
+                                    "example": "Dalloway"
+                                },
+                                "companyCode": {
+                                    "type": "string",
+                                    "title": "Company Code",
+                                    "example": "DLW"
+                                },
+                                "companyEmail": {
+                                    "type": "string",
+                                    "title": "Company Email",
+                                    "example": "info@dalloway.example.com"
+                                },
+                                "comments": {
+                                    "type": "array",
+                                    "title": "Comments",
+                                    "items": {
+                                        "type": "string"
+                                    },
+                                    "example": [
+                                        "No flowers - pollen allergy."
+                                    ]
+                                },
+                                "specialRequests": {
+                                    "type": "array",
+                                    "title": "Special Requests",
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {
+                                            "code": {
+                                                "type": "string",
+                                                "title": "Request Code",
+                                                "example": "Smoking"
+                                            },
+                                            "name": {
+                                                "type": "string",
+                                                "title": "Name",
+                                                "example": "Extra Bed"
+                                            },
+                                            "text": {
+                                                "type": "string",
+                                                "title": "Text",
+                                                "example": "Non-smoking room."
+                                            }
+                                        }
+                                    },
+                                    "example": [
+                                        {
+                                            "code": "Room features",
+                                            "text": "Aircon off"
+                                        }
+                                    ]
+                                }
+                            }
+                        },
+                        "example": [
+                            {
+                                "rph": "1",
+                                "primary": true,
+                                "givenName": "Ginny",
+                                "surname": "Woolf",
+                                "email": "ginny.woolf@example.com"
+                            }
+                        ]
+                    },
+                    "services": {
+                        "type": "array",
+                        "title": "Services",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "rph": {
+                                    "type": "string",
+                                    "title": "Service Reference",
+                                    "example": "1"
+                                },
+                                "id": {
+                                    "type": "string",
+                                    "title": "Service ID",
+                                    "example": "01120212A3"
+                                },
+                                "inventoryCode": {
+                                    "type": "string",
+                                    "title": "Inventory Code",
+                                    "example": "ACAR_PARK"
+                                },
+                                "categoryCode": {
+                                    "type": "string",
+                                    "title": "Category Code",
+                                    "example": "PARKING"
+                                },
+                                "pricingType": {
+                                    "type": "string",
+                                    "title": "Pricing Type",
+                                    "example": "Per night"
+                                },
+                                "quantity": {
+                                    "type": "integer",
+                                    "title": "Quantity",
+                                    "example": 1
+                                },
+                                "inclusive": {
+                                    "type": "boolean",
+                                    "title": "Included in Rate",
+                                    "example": true
+                                },
+                                "description": {
+                                    "type": "string",
+                                    "title": "Description",
+                                    "example": "Covered and secured parking space."
+                                },
+                                "startDate": {
+                                    "type": "string",
+                                    "title": "Start Date",
+                                    "example": "2026-12-01"
+                                },
+                                "endDate": {
+                                    "type": "string",
+                                    "title": "End Date",
+                                    "example": "2026-12-03"
+                                },
+                                "amountBeforeTax": {
+                                    "type": "number",
+                                    "title": "Amount Before Tax",
+                                    "example": 20
+                                },
+                                "amountAfterTax": {
+                                    "type": "number",
+                                    "title": "Amount After Tax",
+                                    "example": 22
+                                },
+                                "currencyCode": {
+                                    "type": "string",
+                                    "title": "Currency",
+                                    "example": "AUD"
+                                },
+                                "comments": {
+                                    "type": "array",
+                                    "title": "Comments",
+                                    "items": {
+                                        "type": "string"
+                                    },
+                                    "example": [
+                                        "Release the space before 3 PM."
+                                    ]
+                                }
+                            }
+                        },
+                        "example": [
+                            {
+                                "inventoryCode": "ACAR_PARK",
+                                "categoryCode": "PARKING",
+                                "quantity": 1,
+                                "amountAfterTax": 22,
+                                "currencyCode": "AUD"
+                            }
+                        ]
+                    },
+                    "comments": {
+                        "type": "array",
+                        "title": "Comments",
+                        "items": {
+                            "type": "string"
+                        },
+                        "example": [
+                            "Business trip"
+                        ]
+                    },
+                    "specialRequests": {
+                        "type": "array",
+                        "title": "Special Requests",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "code": {
+                                    "type": "string",
+                                    "title": "Request Code",
+                                    "example": "Smoking"
+                                },
+                                "name": {
+                                    "type": "string",
+                                    "title": "Name",
+                                    "example": "Extra Bed"
+                                },
+                                "text": {
+                                    "type": "string",
+                                    "title": "Text",
+                                    "example": "Non-smoking room."
+                                }
+                            }
+                        },
+                        "example": [
+                            {
+                                "code": "Staff",
+                                "text": "Late arrival, please keep the reception open."
+                            }
+                        ]
+                    },
+                    "echoToken": {
+                        "type": "string",
+                        "title": "Message Echo Token",
+                        "example": "cc3048b5-55ca-4d77-b316-cb8e769c1381"
+                    },
+                    "messageTimestamp": {
+                        "type": "string",
+                        "title": "Message Timestamp",
+                        "example": "2026-11-19T18:13:53+00:00"
+                    },
+                    "reservation": {
+                        "type": "object",
+                        "title": "Full Reservation",
+                        "properties": {},
+                        "example": {
+                            "ResStatus": "Reserved",
+                            "CreateDateTime": "2026-11-19T18:02:44+00:00",
+                            "UniqueID": {
+                                "ID": "BDC-3685569477"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA5NjggOTY4IiByb2xlPSJpbWciIGFyaWEtbGFiZWw9IlNpdGVNaW5kZXIiPjxkZWZzPjxsaW5lYXJHcmFkaWVudCBpZD0iZyIgeDE9IjAiIHkxPSIwIiB4Mj0iMSIgeTI9IjAuNSI+PHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjQkNGRkYwIi8+PHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjQ0FGRkJGIi8+PC9saW5lYXJHcmFkaWVudD48L2RlZnM+PHJlY3Qgd2lkdGg9Ijk2OCIgaGVpZ2h0PSI5NjgiIHJ4PSIxMzYiIGZpbGw9IiMwMDZERkYiLz48cGF0aCB0cmFuc2Zvcm09InRyYW5zbGF0ZSgwLDk2OCkgc2NhbGUoMC4xLC0wLjEpIiBmaWxsPSJ1cmwoI2cpIiBkPSJNNjgyNSA3NzI4IGMtMzMgLTUgLTk5IC0xOCAtMTQ3IC0yOSAtNDggLTEwIC0xMDAgLTE5IC0xMTcgLTE5IC0xNyAwIC02OCAtOSAtMTEzIC0xOSAtNzggLTE4IC0xMzYgLTI5IC0yODMgLTUzIC0zMyAtNSAtMTAwIC0xOCAtMTUwIC0yOCAtNDkgLTEwIC0xMTcgLTIzIC0xNTAgLTI4IC0xNzAgLTI4IC0yMDcgLTM1IC0yOTAgLTUyIC04NyAtMTggLTE2NSAtMzEgLTI5MCAtNTIgLTMzIC01IC0xMDAgLTE3IC0xNTAgLTI4IC04NyAtMTggLTE2NCAtMzEgLTI5MCAtNTIgLTMzIC01IC0xMDAgLTE3IC0xNTAgLTI4IC04NyAtMTggLTE2NCAtMzEgLTI5MCAtNTIgLTMzIC01IC0xMDAgLTE3IC0xNTAgLTI4IC04NyAtMTggLTE2NCAtMzEgLTI5MCAtNTIgLTMzIC01IC0xMDAgLTE3IC0xNTAgLTI4IC04NSAtMTcgLTE1MyAtMjkgLTI5MCAtNTIgLTMxNSAtNTEgLTU0MSAtMjExIC02NzggLTQ3OCAtNTYgLTExMiAtODQgLTIwMyAtOTYgLTMxOCAtNyAtNjggLTExIC01NzcgLTExIC0xNTEyIDAgLTE1NDggLTQgLTE0NTEgNTcgLTE0MzUgMTMgMyA1NiAxMCA5NiAxNSA0MCA1IDk5IDE2IDEzMiAyNCAzMiA5IDc0IDE2IDkyIDE2IDE4IDAgNzAgOSAxMTUgMTkgNDYgMTEgMTEwIDI0IDE0MyAyOSAxNjggMjggMjA3IDM1IDI4NiA1MyA0NyAxMCA5OSAxOSAxMTUgMTkgMTcgMCA1NyA3IDg5IDE2IDMzIDggOTUgMTkgMTM5IDI0IDQzIDUgOTIgMTggMTEwIDI4IGwzMSAxOCA1IDE0MjggYzQgMTI1NyA3IDE0MzAgMjAgMTQzNiAxOCA5IDk5IDI2IDE5NSA0MSAzOSA2IDk3IDE3IDEzMCAyNSAzMyA4IDk0IDE5IDEzNiAyNCA0MSA1IDg3IDEzIDEwMSAxOSAxNCA1IDU1IDEzIDkwIDE2IDM0IDQgODYgMTMgMTEzIDIwIDI4IDggODYgMTggMTMwIDI0IDQ1IDUgOTMgMTQgMTA3IDIwIDE0IDUgNTUgMTMgOTAgMTYgMzQgNCA4NiAxMyAxMTMgMjAgMjggOCA4NyAxOSAxMzMgMjQgNDYgNiA4OCAxMyA5NCAxNyA1IDQgNDcgMTIgOTIgMTkgOTQgMTUgMjMxIDQwIDMzMSA2MCAzOSA4IDk3IDE5IDEzMCAyNCA2OCA5IDIwNSAzNSAzMTAgNTYgMzkgOCA5OSAxOSAxMzUgMjQgMzYgNiA5OSAxNyAxNDAgMjUgNDEgOCA5NiAxOCAxMjMgMjEgNzcgMTAgNzcgMTEgNzcgMzgwIDAgMTk5IC00IDMyMyAtMTAgMzM2IC0xMiAyMSAtMTUgMjEgLTEwNSA3eiBNNjgyNSA2Mjg4IGMtMzMgLTUgLTk5IC0xOCAtMTQ3IC0yOSAtNDggLTEwIC0xMDAgLTE5IC0xMTcgLTE5IC0xNyAwIC02OCAtOSAtMTEzIC0xOSAtNzggLTE4IC0xMzkgLTMwIC0yODMgLTUyIC0zMyAtNiAtOTkgLTE5IC0xNDYgLTMwIC00NyAtMTAgLTk5IC0xOSAtMTE1IC0xOSAtMTcgMCAtNTcgLTcgLTg5IC0xNiAtMzMgLTggLTk1IC0xOSAtMTM5IC0yNCAtNDMgLTUgLTkyIC0xOCAtMTEwIC0yOCBsLTMxIC0xOCAtNSAtMTQyOCBjLTQgLTEyNTcgLTcgLTE0MzAgLTIwIC0xNDM2IC0xOCAtOSAtOTkgLTI2IC0xOTUgLTQxIC0zOCAtNiAtOTcgLTE3IC0xMzAgLTI1IC0zMyAtOCAtOTQgLTE5IC0xMzYgLTI0IC00MSAtNSAtODcgLTEzIC0xMDEgLTE5IC0xNCAtNSAtNTUgLTEzIC05MCAtMTYgLTM0IC00IC04NSAtMTMgLTExMyAtMjAgLTI3IC04IC04NiAtMTggLTEzMCAtMjQgLTQ1IC01IC05MyAtMTQgLTEwNyAtMjAgLTE0IC01IC01NSAtMTMgLTkwIC0xNiAtMzQgLTQgLTg1IC0xMyAtMTEzIC0yMCAtMjcgLTggLTg2IC0xOCAtMTMwIC0yNCAtNDUgLTUgLTkzIC0xNCAtMTA3IC0yMCAtMTQgLTUgLTU1IC0xMyAtOTAgLTE2IC0zNCAtNCAtODUgLTEzIC0xMTMgLTIwIC0yNyAtOCAtODYgLTE4IC0xMzAgLTI0IC00NSAtNSAtOTMgLTE0IC0xMDcgLTIwIC0xNCAtNSAtNTUgLTEzIC05MCAtMTYgLTM0IC00IC04NSAtMTMgLTExMyAtMjAgLTI3IC04IC04MSAtMTggLTEyMCAtMjMgLTc2IC0xMCAtMjExIC0zNSAtMzE1IC01OCAtMzYgLTggLTk4IC0xOCAtMTM5IC0yMyAtMTEzIC0xNCAtMTA2IDEyIC0xMDkgLTM3NSAtMyAtMzY2IC0yIC0zNzYgNTUgLTM2MSAxMyAzIDU2IDEwIDk2IDE1IDQwIDUgOTkgMTYgMTMyIDI0IDMyIDkgNzQgMTYgOTIgMTYgMTggMCA3MCA5IDExNSAxOSA3OCAxOCAxMzYgMjkgMjgzIDUzIDMzIDUgMTAxIDE3IDE1MCAyOCA4NyAxOCAxNjQgMzEgMjkwIDUyIDMzIDUgMTAxIDE3IDE1MCAyOCA4NCAxNyAxMzcgMjYgMjkwIDUyIDMzIDUgMTAxIDE4IDE1MCAyOCA1MCAxMCAxMTkgMjMgMTU1IDI5IDEyNSAyMSAxODUgMzIgMjM1IDQyIDI4IDUgNzcgMTQgMTEwIDIwIDMzIDUgODkgMTYgMTI1IDI0IDM2IDggOTkgMTkgMTQxIDI1IDQxIDUgODcgMTMgMTAxIDE5IDE0IDUgNTUgMTMgOTAgMTYgMzQgNCA4NiAxMyAxMTMgMjAgMjggOCA4NiAxOCAxMzAgMjQgNDQgNiA5NCAxNSAxMTAgMjAgMTcgNiA2NiAxNSAxMTAgMjAgNDUgNiA5MyAxNCAxMDcgMjAgMTQgNSA1NSAxMyA5MCAxNiAyMTMgMjIgNDQ1IDE1NSA1ODIgMzMzIDQ1IDYwIDEzNiAyMjMgMTM2IDI0NiAwIDcgMTAgMzUgMjMgNjIgbDIyIDQ5IDMgMTUxNCBjMyAxNTMzIDIgMTU0NCAtMzIgMTU0MCAtNiAtMSAtMzggLTYgLTcxIC0xMXoiLz48L3N2Zz4="
+}

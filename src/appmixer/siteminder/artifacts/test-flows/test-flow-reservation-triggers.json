@@ -1,0 +1,1237 @@
+{
+    "name": "E2E SiteMinder - Reservation triggers (sample messages, self-provoked)",
+    "description": "Posts SiteMinder's documented sample reservation messages to the connector's own reservation endpoint and checks the four reservation triggers and the OTA answers. Needs no SiteMinder account and proves nothing about SiteMinder itself: it tests this side of the exchange with sample payloads.",
+    "notes": {
+        "fca872f8-88d4-4baf-a968-13f509a6c6d4": {
+            "x": 64,
+            "y": 1168,
+            "width": 1040,
+            "height": 288,
+            "content": "## Self-provoked: sample messages, no SiteMinder account\n\nThe `Post` components send SiteMinder's documented sample messages (minimum content, maximum content, minimum cancellation) to this instance's own reservation endpoint, `/plugins/appmixer/siteminder/reservations`. The URL is built from `g_webhookUrl`, so the flow works on any instance.\n\n**Account:** the four triggers need a SiteMinder connection with **Endpoint Username** `appmixer-e2e-sample` and **Endpoint Password** `E2e-Sample-0nly!2026` (API Token empty). The messages carry exactly these credentials; with any other account every Post is answered with error 497 and the flow fails. These credentials are public sample values: never use them for a connection that receives real reservations.\n\nThe last two Posts check the refusals: a wrong password (OTA error 497) and a hotel no flow listens for (OTA error 392). Both are answered with HTTP 200, as SiteMinder requires."
+        }
+    },
+    "flow": {
+        "630bfd4e-85cb-42a5-a457-37f042984166": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {},
+            "config": {},
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "c4bc93bc-1921-4917-abdf-3afb02e58db9": {
+            "type": "appmixer.utils.http.Post",
+            "x": 272,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "630bfd4e-85cb-42a5-a457-37f042984166": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "630bfd4e-85cb-42a5-a457-37f042984166": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "url": {
+                                        "a85a64e2-5cef-4f6d-a864-c814c1d349b4": {
+                                            "functions": [
+                                                {
+                                                    "name": "g_webhookUrl"
+                                                },
+                                                {
+                                                    "name": "g_replace",
+                                                    "params": [
+                                                        {
+                                                            "value": "/flows/.*$"
+                                                        },
+                                                        {
+                                                            "value": "/plugins/appmixer/siteminder/reservations"
+                                                        }
+                                                    ],
+                                                    "hashParams": {
+                                                        "regex": {
+                                                            "value": true
+                                                        }
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "headers": {},
+                                    "bodyType": {},
+                                    "body": {}
+                                },
+                                "lambda": {
+                                    "url": "{{{a85a64e2-5cef-4f6d-a864-c814c1d349b4}}}",
+                                    "headers": "{\"Content-Type\": \"application/xml; charset=utf-8\"}",
+                                    "bodyType": "raw",
+                                    "body": "<SOAP-ENV:Envelope xmlns:SOAP-ENV=\"http://schemas.xmlsoap.org/soap/envelope/\"><SOAP-ENV:Header><wsse:Security SOAP-ENV:mustUnderstand=\"1\" xmlns:wsse=\"http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd\"><wsse:UsernameToken><wsse:Username>appmixer-e2e-sample</wsse:Username><wsse:Password Type=\"http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-username-token-profile-1.0#PasswordText\">E2e-Sample-0nly!2026</wsse:Password></wsse:UsernameToken></wsse:Security></SOAP-ENV:Header><SOAP-ENV:Body><OTA_HotelResNotifRQ xmlns=\"http://www.opentravel.org/OTA/2003/05\" Version=\"1.0\" EchoToken=\"abc-123\" TimeStamp=\"2018-05-04T19:40:04Z\"><HotelReservations><HotelReservation ResStatus=\"Reserved\" CreateDateTime=\"2018-05-04T19:32:04Z\"><POS><Source><RequestorID ID=\"PMSPUBLISHER\"/></Source></POS><UniqueID ID=\"123456789\"/><RoomStays><RoomStay><TimeSpan Start=\"2017-09-05\" End=\"2017-09-06\"/></RoomStay></RoomStays><ResGlobalInfo><TimeSpan Start=\"2017-09-05\" End=\"2017-09-06\"/><Total AmountAfterTax=\"200.00\"/><!-- May be AmountBeforeTax --><BasicPropertyInfo HotelCode=\"10107\"/></ResGlobalInfo></HotelReservation></HotelReservations></OTA_HotelResNotifRQ></SOAP-ENV:Body></SOAP-ENV:Envelope>"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "label": "Post new reservation (minimum content sample)"
+        },
+        "cd8b1026-fd00-4062-abad-c1fea8b38ffc": {
+            "type": "appmixer.utils.test.Assert",
+            "label": "Assert answer 1",
+            "x": 480,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "c4bc93bc-1921-4917-abdf-3afb02e58db9": [
+                        "response"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "c4bc93bc-1921-4917-abdf-3afb02e58db9": {
+                            "response": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "8b95b005-6bea-4267-a561-ce277ddab591": {
+                                            "variable": "$.c4bc93bc-1921-4917-abdf-3afb02e58db9.response.statusCode",
+                                            "functions": []
+                                        },
+                                        "ae474173-407f-40d5-a7ae-8678f03ec6fd": {
+                                            "variable": "$.c4bc93bc-1921-4917-abdf-3afb02e58db9.response.body",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{8b95b005-6bea-4267-a561-ce277ddab591}}}",
+                                                "assertion": "equal",
+                                                "expected": 200
+                                            },
+                                            {
+                                                "field": "{{{ae474173-407f-40d5-a7ae-8678f03ec6fd}}}",
+                                                "assertion": "regex",
+                                                "regex": "<Success\\/>"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "b430172a-e2a6-4dd7-a3f3-486c4c472ddf": {
+            "type": "appmixer.utils.http.Post",
+            "x": 480,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "c4bc93bc-1921-4917-abdf-3afb02e58db9": [
+                        "response"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "c4bc93bc-1921-4917-abdf-3afb02e58db9": {
+                            "response": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "url": {
+                                        "82d41526-4f16-4e37-a395-465e7031bc29": {
+                                            "functions": [
+                                                {
+                                                    "name": "g_webhookUrl"
+                                                },
+                                                {
+                                                    "name": "g_replace",
+                                                    "params": [
+                                                        {
+                                                            "value": "/flows/.*$"
+                                                        },
+                                                        {
+                                                            "value": "/plugins/appmixer/siteminder/reservations"
+                                                        }
+                                                    ],
+                                                    "hashParams": {
+                                                        "regex": {
+                                                            "value": true
+                                                        }
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "headers": {},
+                                    "bodyType": {},
+                                    "body": {}
+                                },
+                                "lambda": {
+                                    "url": "{{{82d41526-4f16-4e37-a395-465e7031bc29}}}",
+                                    "headers": "{\"Content-Type\": \"application/xml; charset=utf-8\"}",
+                                    "bodyType": "raw",
+                                    "body": "<SOAP-ENV:Envelope xmlns:SOAP-ENV=\"http://schemas.xmlsoap.org/soap/envelope/\"><SOAP-ENV:Header><wsse:Security SOAP-ENV:mustUnderstand=\"1\" xmlns:wsse=\"http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd\"><wsse:UsernameToken><wsse:Username>appmixer-e2e-sample</wsse:Username><wsse:Password Type=\"http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-username-token-profile-1.0#PasswordText\">E2e-Sample-0nly!2026</wsse:Password></wsse:UsernameToken></wsse:Security></SOAP-ENV:Header><SOAP-ENV:Body><OTA_HotelResNotifRQ xmlns=\"http://www.opentravel.org/OTA/2003/05\" Version=\"1.0\" EchoToken=\"cc3048b5-55ca-4d77-b316-cb8e769c1381\" TimeStamp=\"2017-09-19T18:13:53+00:00\"><HotelReservations><HotelReservation ResStatus=\"Reserved\" CreateDateTime=\"2017-09-19T18:02:44+00:00\" CreatorID=\"LINDA-RESAGENT\" LastModifyDateTime=\"2017-09-19T18:13:51+00:00\" LastModifierID=\"651651651651\"><POS><Source><RequestorID ID=\"TESTPMS\"/></Source><Source><BookingChannel Type=\"4\" Primary=\"true\"><CompanyName Code=\"Code1\">CompanyName0</CompanyName></BookingChannel></Source></POS><UniqueID ID=\"BDC-3685569477\"/><RoomStays><RoomStay MarketCode=\"Corporate\" SourceOfBusiness=\"Radio\" PromotionCode=\"STAYNSAVE15\"><RoomTypes><RoomType RoomType=\"Deluxe\" RoomTypeCode=\"DLX\" RoomCategory=\"4\" RoomID=\"1501\" NonSmoking=\"true\" Configuration=\"King Split + Single Bed\"><RoomDescription><Text>Deluxe Room with a lovely view over the harbour and a seperate lounge with 50\" LED TV</Text></RoomDescription><AdditionalDetails><AdditionalDetail Type=\"4\" Code=\"CORNERROOM\"><DetailDescription><Text>This room is a Deluxe Corner Room</Text></DetailDescription></AdditionalDetail></AdditionalDetails></RoomType></RoomTypes><RatePlans><RatePlan RatePlanCode=\"WKGPKG\" EffectiveDate=\"2017-12-01\" ExpireDate=\"2017-12-03\" RatePlanName=\"Weekend Package\"><RatePlanDescription><Text>Weekend Package includes wine, chocolates, champagne on arrival and late checkout at 3PM</Text></RatePlanDescription><RatePlanInclusions TaxInclusive=\"true\" ServiceFeeInclusive=\"false\"><RatePlanInclusionDescription><Text>Champagne on arrival, English Breakfast, Chocolates and 3PM Checkout </Text></RatePlanInclusionDescription></RatePlanInclusions><MealsIncluded MealPlanIndicator=\"true\" MealPlanCodes=\"7\"/><AdditionalDetails><AdditionalDetail Type=\"12\" Code=\"WKDNDPKGINFO\"><DetailDescription><Text>Some parts of this package (such as wine selection) will need to be arranged with guest prior to check-in</Text></DetailDescription></AdditionalDetail></AdditionalDetails></RatePlan></RatePlans><RoomRates><RoomRate InvBlockCode=\"HIGHROLL\" NumberOfUnits=\"1\" RoomID=\"1501\" RoomTypeCode=\"DLX\" RatePlanCode=\"WKGPKG\" RatePlanCategory=\"Consumer Packages\" EffectiveDate=\"2017-12-01\" ExpireDate=\"2017-12-03\"><Rates><Rate EffectiveDate=\"2017-12-01\" ExpireDate=\"2017-12-02\" UnitMultiplier=\"1\"><Base AmountBeforeTax=\"100.00\" AmountAfterTax=\"110.00\" CurrencyCode=\"AUD\"><Taxes CurrencyCode=\"AUD\" Amount=\"10.00\"><Tax Code=\"19\" Amount=\"0\" CurrencyCode=\"AUD\" Percent=\"10\"><TaxDescription><Text>GST</Text></TaxDescription></Tax></Taxes></Base><Total AmountBeforeTax=\"120.00\" AmountAfterTax=\"132.00\" CurrencyCode=\"AUD\"><Taxes CurrencyCode=\"AUD\" Amount=\"12.00\"><Tax Code=\"19\" Amount=\"0\" CurrencyCode=\"AUD\" Percent=\"10\"><TaxDescription><Text>GST</Text></TaxDescription></Tax></Taxes></Total></Rate><Rate EffectiveDate=\"2017-12-02\" ExpireDate=\"2017-12-03\" UnitMultiplier=\"1\"><Base AmountBeforeTax=\"80.00\" AmountAfterTax=\"88.00\" CurrencyCode=\"AUD\"><Taxes CurrencyCode=\"AUD\" Amount=\"8.00\"><Tax Code=\"19\" Amount=\"0\" CurrencyCode=\"AUD\" Percent=\"10\"><TaxDescription><Text>GST</Text></TaxDescription></Tax></Taxes></Base><Total AmountBeforeTax=\"100.00\" AmountAfterTax=\"110.00\" CurrencyCode=\"AUD\"><Taxes CurrencyCode=\"AUD\" Amount=\"10.00\"><Tax Code=\"19\" Amount=\"0\" CurrencyCode=\"AUD\" Percent=\"10\"><TaxDescription><Text>GST</Text></TaxDescription></Tax></Taxes></Total></Rate></Rates><ServiceRPHs><ServiceRPH RPH=\"1\"/></ServiceRPHs></RoomRate></RoomRates><GuestCounts><GuestCount AgeQualifyingCode=\"10\" Age=\"51\" Count=\"1\" AgeBucket=\"AdultOver50\"/><GuestCount AgeQualifyingCode=\"10\" Age=\"44\" Count=\"1\" AgeBucket=\"AdultOver40\"/></GuestCounts><TimeSpan Start=\"2017-12-01\" End=\"2017-12-03\"/><Guarantee GuaranteeCode=\"COMBINED_GUARANTEE\" GuaranteeType=\"DepositRequired\"><GuaranteesAccepted><GuaranteeAccepted PaymentTransactionTypeCode=\"charge\"><PaymentCard CardCode=\"VI\" EffectiveDate=\"0717\" ExpireDate=\"0720\"><CardHolderName>Leonard Woolf</CardHolderName><CardNumber Mask=\"4021XXXXXXXX8995\" Token=\"0087254835699221\" TokenProviderID=\"VTS\"></CardNumber></PaymentCard></GuaranteeAccepted><GuaranteeAccepted PaymentTransactionTypeCode=\"charge\"><Voucher SeriesCode=\"4555\"/></GuaranteeAccepted><GuaranteeAccepted PaymentTransactionTypeCode=\"charge\"><DirectBill DirectBill_ID=\"4981003\"/></GuaranteeAccepted></GuaranteesAccepted><GuaranteeDescription><Text>Combined Guarantees Accepted (Platinum Membership)</Text></GuaranteeDescription></Guarantee><DepositPayments><GuaranteePayment><AcceptedPayments><AcceptedPayment PaymentTransactionTypeCode=\"charge\"><PaymentCard CardCode=\"VI\" EffectiveDate=\"0717\" ExpireDate=\"0720\"><CardHolderName>Leonard Woolf</CardHolderName><CardNumber Mask=\"4021XXXXXXXX8995\" Token=\"0087254835699221\" TokenProviderID=\"VTS\"></CardNumber></PaymentCard></AcceptedPayment></AcceptedPayments><AmountPercent Percent=\"30\" CurrencyCode=\"AUD\" Amount=\"64.52\" NmbrOfNights=\"2\"><Taxes CurrencyCode=\"AUD\" Amount=\"1.29\"><Tax Code=\"16\" Amount=\"0\" CurrencyCode=\"AUD\" Percent=\"2\"><TaxDescription><Text>Credit Card surcharge.</Text></TaxDescription></Tax></Taxes></AmountPercent><Deadline AbsoluteDeadline=\"2017-11-21T12:00:00+00:00\" OffsetTimeUnit=\"Day\" OffsetUnitMultiplier=\"10\" OffsetDropTime=\"BeforeArrival\"/><Description><Text>30% deposit (of the total cost of the stay) will be charged to card holder's account 10 days before the date of arrival at the latest.</Text></Description><Address Type=\"1\"><AddressLine>12 Pine Street</AddressLine><CityName>Sydney</CityName><PostalCode>2095</PostalCode><StateProv StateCode=\"NSW\">New South Wales</StateProv><CountryName Code=\"AU\">Australia</CountryName></Address></GuaranteePayment><GuaranteePayment><AcceptedPayments><AcceptedPayment PaymentTransactionTypeCode=\"charge\"><Voucher SeriesCode=\"4555\"/></AcceptedPayment></AcceptedPayments><AmountPercent Percent=\"10\" CurrencyCode=\"AUD\" Amount=\"21.51\" NmbrOfNights=\"2\"><Taxes CurrencyCode=\"AUD\" Amount=\"1.08\"><Tax Code=\"16\" Amount=\"0\" CurrencyCode=\"AUD\" Percent=\"5\"><TaxDescription><Text>Payment surcharge.</Text></TaxDescription></Tax></Taxes></AmountPercent><Deadline AbsoluteDeadline=\"2017-11-21T12:00:00+00:00\" OffsetTimeUnit=\"Day\" OffsetUnitMultiplier=\"10\" OffsetDropTime=\"BeforeArrival\"/><Description><Text>10% deposit (of the total cost of the stay) will be charged using provided Voucher code 10 days before the date of arrival at the latest.</Text></Description><Address Type=\"1\"><AddressLine>12 Pine Street</AddressLine><CityName>Sydney</CityName><PostalCode>2095</PostalCode><StateProv StateCode=\"NSW\">New South Wales</StateProv><CountryName Code=\"AU\">Australia</CountryName></Address></GuaranteePayment><GuaranteePayment><AcceptedPayments><AcceptedPayment PaymentTransactionTypeCode=\"charge\"><DirectBill DirectBill_ID=\"4981003\"/></AcceptedPayment></AcceptedPayments><AmountPercent Percent=\"20\" CurrencyCode=\"AUD\" Amount=\"43.01\" NmbrOfNights=\"2\"><Taxes CurrencyCode=\"AUD\" Amount=\"2.15\"><Tax Code=\"16\" Amount=\"0\" CurrencyCode=\"AUD\" Percent=\"5\"><TaxDescription><Text>Payment surcharge.</Text></TaxDescription></Tax></Taxes></AmountPercent><Deadline AbsoluteDeadline=\"2017-11-21T12:00:00+00:00\" OffsetTimeUnit=\"Day\" OffsetUnitMultiplier=\"10\" OffsetDropTime=\"BeforeArrival\"/><Description><Text>20% deposit (of the total cost of the stay) will be charged using Direct Bill ID provided 10 days before the date of arrival at the latest.</Text></Description><Address Type=\"2\"><AddressLine>125 Pitt Street</AddressLine><CityName>Sydney</CityName><PostalCode>2000</PostalCode><StateProv StateCode=\"NSW\">New South Wales</StateProv><CountryName Code=\"AU\">Australia</CountryName></Address></GuaranteePayment></DepositPayments><Discount TaxInclusive=\"true\" Percent=\"15\" DiscountCode=\"STAYNSAVE15\" AmountBeforeTax=\"33.00\" AmountAfterTax=\"36.30\" CurrencyCode=\"AUD\"><Taxes CurrencyCode=\"AUD\" Amount=\"3.30\"><Tax Code=\"19\" Amount=\"0\" CurrencyCode=\"AUD\" Percent=\"10\"><TaxDescription><Text>GST</Text></TaxDescription></Tax></Taxes><DiscountReason><Text>Stay 2 nights and get 15% off.</Text></DiscountReason></Discount><Total AmountBeforeTax=\"187.00\" AmountAfterTax=\"215.05\" CurrencyCode=\"AUD\"><Taxes CurrencyCode=\"AUD\" Amount=\"28.05\"><Tax Code=\"19\" Amount=\"0\" CurrencyCode=\"AUD\" Percent=\"10\"><TaxDescription><Text>GST</Text></TaxDescription></Tax><Tax Code=\"21\" Amount=\"0\" CurrencyCode=\"AUD\" Percent=\"5\"><TaxDescription><Text>Insurance Premium Tax</Text></TaxDescription></Tax></Taxes></Total><ResGuestRPHs><ResGuestRPH RPH=\"1\"/><ResGuestRPH RPH=\"2\"/></ResGuestRPHs><Memberships><Membership ProgramCode=\"Platinum\" AccountID=\"8943112\"/><Membership ProgramCode=\"Platinum\" AccountID=\"8943966\"/></Memberships><Comments><Comment GuestViewable=\"true\"><Text>Platinum Members are offered a free spa entry for the whole length of stay.</Text></Comment></Comments><SpecialRequests><SpecialRequest RequestCode=\"Bedding Configuration\" CodeContext=\"GUEST_DIRECT\"><Text>King Split + Single Bed.</Text></SpecialRequest><SpecialRequest RequestCode=\"Smoking\" CodeContext=\"CHANNEL\"><Text>Non-smoking room.</Text></SpecialRequest></SpecialRequests></RoomStay></RoomStays><Services><Service ServicePricingType=\"Per night\" ServiceCategoryCode=\"PARKING\" ServiceInventoryCode=\"ACAR_PARK\" Inclusive=\"true\" Quantity=\"1\" ServiceRPH=\"1\" Type=\"10\" ID=\"01120212A3\" ID_Context=\"HOTEL\"><Price><Total AmountBeforeTax=\"20.00\" AmountAfterTax=\"22.00\" CurrencyCode=\"AUD\"><Taxes CurrencyCode=\"AUD\" Amount=\"2.00\"><Tax Code=\"19\" Amount=\"0\" CurrencyCode=\"AUD\" Percent=\"10\"><TaxDescription><Text>GST</Text></TaxDescription></Tax></Taxes></Total></Price><ServiceDetails><GuestCounts><GuestCount AgeQualifyingCode=\"10\" Age=\"44\" Count=\"1\" AgeBucket=\"AdultOver40\"/></GuestCounts><TimeSpan Start=\"2017-12-01\" End=\"2017-12-03\"/><Comments><Comment GuestViewable=\"false\"><Text>Car space needs to be released before 3PM check-out day. No exceptions allowed.</Text></Comment></Comments><ServiceDescription><Text>Accessible, covered and secured vehicle storage space.</Text></ServiceDescription></ServiceDetails></Service><Service ServicePricingType=\"Per person\" ServiceCategoryCode=\"GUEST\" ServiceInventoryCode=\"CLIENT\" Inclusive=\"false\" Quantity=\"1\" ServiceRPH=\"2\" Type=\"1\" ID=\"CLI8569\" ID_Context=\"GUEST_DIRECT\"><Price><Total AmountBeforeTax=\"30.00\" AmountAfterTax=\"36.00\" CurrencyCode=\"AUD\"><Taxes CurrencyCode=\"AUD\" Amount=\"6.00\"><Tax Code=\"14\" Amount=\"0\" CurrencyCode=\"AUD\" Percent=\"20\"><TaxDescription><Text>Service charge</Text></TaxDescription></Tax></Taxes></Total></Price><ServiceDetails><GuestCounts><GuestCount AgeQualifyingCode=\"10\" Age=\"51\" Count=\"1\" AgeBucket=\"AdultOver50\"/></GuestCounts><TimeSpan Start=\"2017-12-01\" End=\"2017-12-02\"/><Comments><Comment GuestViewable=\"true\"><Text>French manicure - Platinum Members are offered a free pedicure.</Text></Comment></Comments><ServiceDescription><Text>Manicure and pedicure set.</Text></ServiceDescription></ServiceDetails></Service><ServiceCategory ServiceCategoryCode=\"PARKING\"/><ServiceCategory ServiceCategoryCode=\"GUEST\"/></Services><BillingInstructionCode BillingCode=\"385H45991\" AccountNumber=\"WOOLF05301300\" Start=\"2017-12-01\" End=\"2017-12-03\" AuthorizationCode=\"7985\" Description=\"Please follow billing instructions for Platinum Membership.\"><ResGuestRPH RPH=\"1\"/></BillingInstructionCode><ResGuests><ResGuest ResGuestRPH=\"1\" AgeQualifyingCode=\"10\" ArrivalTime=\"13:30:00\" PrimaryIndicator=\"true\" Age=\"51\"><Profiles><ProfileInfo><UniqueID Type=\"1\" ID=\"8943112\" ID_Context=\"PROPERTY\"/><Profile ProfileType=\"1\" ShareAllOptOutInd=\"true\" ShareAllMarketInd=\"false\"><Customer VIP_Indicator=\"true\" CustomerValue=\"Platinum\" BirthDate=\"1966-07-16\"><PersonName NameType=\"2\" Language=\"en\"><NamePrefix>Mrs.</NamePrefix><GivenName>Ginny</GivenName><MiddleName>Adeline</MiddleName><Surname>Woolf</Surname><NameSuffix>Jr.</NameSuffix><NameTitle>Ph.D.</NameTitle></PersonName><Telephone PhoneLocationType=\"10\" PhoneTechType=\"5\" CountryAccessCode=\"61\" AreaCityCode=\"4\" PhoneNumber=\"13855956\" Remark=\"Active\" FormattedInd=\"false\" DefaultInd=\"true\"/><Email DefaultInd=\"true\" EmailType=\"1\">Virginia.Woolf@hotmail.com</Email><Address Type=\"2\"><AddressLine>125 Pitt Street</AddressLine><CityName>Sydney</CityName><PostalCode>2000</PostalCode><StateProv StateCode=\"NSW\">New South Wales</StateProv><CountryName Code=\"AU\">Australia</CountryName><CompanyName Code=\"DLW\">Dalloway</CompanyName><AddresseeName NameType=\"2\" Language=\"en\"><NamePrefix>Mrs.</NamePrefix><GivenName>Ginny</GivenName><MiddleName>Adeline</MiddleName><Surname>Woolf</Surname><NameSuffix>Jr.</NameSuffix><NameTitle>Ph.D.</NameTitle></AddresseeName></Address><RelatedTraveler Relation=\"Security\" BirthDate=\"1958-12-01\"><UniqueID Type=\"1\" ID=\"8943125\" ID_Context=\"Platinum_Member\"/><PersonName NameType=\"2\" Language=\"en\"><NamePrefix>Mr.</NamePrefix><GivenName>Charles</GivenName><MiddleName>Hank</MiddleName><Surname>Bukowski</Surname><NameSuffix>Sr.</NameSuffix><NameTitle>D.Lett.</NameTitle></PersonName></RelatedTraveler><CustLoyalty ProgramID=\"PLATINUM5+5\" MembershipID=\"8943112\" LoyalLevel=\"VIP\" LoyalLevelCode=\"10\" SignupDate=\"2014-08-08\" EffectiveDate=\"2014-08-08\" ExpireDate=\"2024-08-08\" Remark=\"5+5 DEAL (Sign up for 5 years of Platinum membership, get another 5 years for free)\"/></Customer><CompanyInfo><CompanyName Code=\"DLW\">Dalloway</CompanyName><AddressInfo Type=\"2\"><AddressLine>88 Pall Mall</AddressLine><CityName>London</CityName><PostalCode>SW1Y 5ER</PostalCode><StateProv StateCode=\"ENG\">England</StateProv><CountryName Code=\"UK\">United Kingdom</CountryName></AddressInfo><TelephoneInfo PhoneLocationType=\"9\" PhoneTechType=\"1\" CountryAccessCode=\"44\" AreaCityCode=\"20\" PhoneNumber=\"23983039\" Remark=\"Only active during business hours: 8AM-8PM BST\" FormattedInd=\"false\" DefaultInd=\"true\"/><Email DefaultInd=\"true\" EmailType=\"2\">info@dalloway.co.uk</Email><ContactPerson><PersonName NameType=\"3\" Language=\"en-UK\"><NamePrefix>Mr.</NamePrefix><GivenName>Warren</GivenName><MiddleName>Glass</MiddleName><Surname>Smith</Surname><NameSuffix>II</NameSuffix><NameTitle>M.D.</NameTitle></PersonName><Telephone PhoneLocationType=\"10\" PhoneTechType=\"5\" CountryAccessCode=\"44\" AreaCityCode=\"20\" PhoneNumber=\"28596654\" Remark=\"Active\" FormattedInd=\"false\" DefaultInd=\"true\"/><Address Type=\"2\"><AddressLine>88 Pall Mall</AddressLine><CityName>London</CityName><PostalCode>SW1Y 5ER</PostalCode><StateProv StateCode=\"ENG\">England</StateProv><CountryName Code=\"UK\">United Kingdom</CountryName></Address><Email DefaultInd=\"true\" EmailType=\"2\">Phillip.Glass-Smith@dalloway.co.uk</Email></ContactPerson></CompanyInfo></Profile></ProfileInfo></Profiles><SpecialRequests><SpecialRequest RequestCode=\"Room features\" CodeContext=\"GUEST_DIRECT\"><Text>Aircon off</Text></SpecialRequest></SpecialRequests><Comments><Comment GuestViewable=\"false\"><Text>No flowers - pollen allergy.</Text></Comment></Comments><ServiceRPHs><ServiceRPH RPH=\"2\"/></ServiceRPHs><ArrivalTransport><TransportInfo Type=\"Rail\" ID=\"80D-AAE\" Time=\"2017-12-01T09:25:00\"/></ArrivalTransport><DepartureTransport><TransportInfo Type=\"Rail\" ID=\"77D-ABB\" Time=\"2017-12-03T20:05:00\"/></DepartureTransport></ResGuest><ResGuest ResGuestRPH=\"2\" AgeQualifyingCode=\"10\" ArrivalTime=\"15:30:00\" PrimaryIndicator=\"false\" Age=\"44\"><Profiles><ProfileInfo><UniqueID Type=\"1\" ID=\"8943966\" ID_Context=\"PROPERTY\"/><Profile ProfileType=\"1\" ShareAllOptOutInd=\"true\" ShareAllMarketInd=\"false\"><Customer VIP_Indicator=\"true\" CustomerValue=\"Platinum\" BirthDate=\"1973-04-12\"><PersonName NameType=\"2\" Language=\"en\"><NamePrefix>Mr.</NamePrefix><GivenName>Willy</GivenName><Surname>Bradshaw</Surname></PersonName><Telephone PhoneLocationType=\"10\" PhoneTechType=\"5\" CountryAccessCode=\"61\" AreaCityCode=\"4\" PhoneNumber=\"138564216\" Remark=\"Active\" FormattedInd=\"false\" DefaultInd=\"true\"/><Email DefaultInd=\"true\" EmailType=\"2\">WBradshaw@orlando.com.au</Email><Address Type=\"1\"><AddressLine>3 Hunter Street</AddressLine><CityName>Sydney</CityName><PostalCode>2017</PostalCode><StateProv StateCode=\"NSW\">New South Wales</StateProv><CountryName Code=\"AU\">Australia</CountryName><AddresseeName Language=\"en\"><NamePrefix>Mr.</NamePrefix><GivenName>William</GivenName><Surname>Bradshaw</Surname><NameSuffix>Sr.</NameSuffix></AddresseeName></Address><CustLoyalty ProgramID=\"PLAT\" MembershipID=\"8943966\" LoyalLevel=\"VIP\" LoyalLevelCode=\"10\" SignupDate=\"2016-04-18\" EffectiveDate=\"2016-06-25\" ExpireDate=\"2021-06-25\" Remark=\"Standard 5 year membership.\"/></Customer><CompanyInfo><CompanyName Code=\"ORL\">Orlando</CompanyName><AddressInfo Type=\"2\"><AddressLine>175B George Street</AddressLine><CityName>Sydney</CityName><PostalCode>2000</PostalCode><StateProv StateCode=\"NSW\">New South Wales</StateProv><CountryName Code=\"AU\">Australia</CountryName></AddressInfo><TelephoneInfo PhoneLocationType=\"7\" PhoneTechType=\"1\" CountryAccessCode=\"61\" AreaCityCode=\"2\" PhoneNumber=\"45665039\" Remark=\"All phone calls are recorded.\" FormattedInd=\"false\" DefaultInd=\"true\"/><Email DefaultInd=\"true\" EmailType=\"2\">info@orlando.com.au</Email></CompanyInfo></Profile></ProfileInfo></Profiles><Comments><Comment GuestViewable=\"false\"><Text>Disability - accessible room and parking space necessary.</Text></Comment></Comments><ArrivalTransport><TransportInfo Type=\"Air\" ID=\"QR199\" Time=\"2017-12-01T12:30:00\"/></ArrivalTransport><DepartureTransport><TransportInfo Type=\"Rail\" ID=\"77D-ABB\" Time=\"2017-12-03T20:05:00\"/></DepartureTransport></ResGuest></ResGuests><ResGlobalInfo><GuestCounts><GuestCount AgeQualifyingCode=\"10\" Age=\"51\" Count=\"1\" AgeBucket=\"AdultOver50\"/><GuestCount AgeQualifyingCode=\"10\" Age=\"44\" Count=\"1\" AgeBucket=\"AdultOver40\"/></GuestCounts><TimeSpan Start=\"2017-12-01\" End=\"2017-12-03\"/><Memberships><Membership ProgramCode=\"Platinum\" AccountID=\"8943112\"/><Membership ProgramCode=\"Platinum\" AccountID=\"8943966\"/></Memberships><Comments><Comment GuestViewable=\"true\"><Text>Business trip</Text></Comment></Comments><SpecialRequests><SpecialRequest RequestCode=\"Staff\" CodeContext=\"GUEST_DIRECT\"><Text>Please make sure your chef Leonard is on duty during our stay, thanks.</Text></SpecialRequest></SpecialRequests><Guarantee GuaranteeCode=\"COMBINED_GUARANTEE\" GuaranteeType=\"DepositRequired\"><GuaranteesAccepted><GuaranteeAccepted PaymentTransactionTypeCode=\"charge\"><PaymentCard CardCode=\"VI\" EffectiveDate=\"0717\" ExpireDate=\"0720\"><CardHolderName>Leonard Woolf</CardHolderName><CardNumber Mask=\"4021XXXXXXXX8995\" Token=\"0087254835699221\" TokenProviderID=\"VTS\"></CardNumber></PaymentCard></GuaranteeAccepted><GuaranteeAccepted PaymentTransactionTypeCode=\"charge\"><Voucher SeriesCode=\"4555\"/></GuaranteeAccepted><GuaranteeAccepted PaymentTransactionTypeCode=\"charge\"><DirectBill DirectBill_ID=\"4981003\"/></GuaranteeAccepted></GuaranteesAccepted><GuaranteeDescription><Text>Combined Guarantees Accepted (Platinum Membership)</Text></GuaranteeDescription></Guarantee><DepositPayments><GuaranteePayment><AcceptedPayments><AcceptedPayment PaymentTransactionTypeCode=\"charge\"><PaymentCard CardCode=\"VI\" EffectiveDate=\"0717\" ExpireDate=\"0720\"><CardHolderName>Leonard Woolf</CardHolderName><CardNumber Mask=\"4021XXXXXXXXX8995\" Token=\"0087254835699221\" TokenProviderID=\"VTS\"></CardNumber></PaymentCard></AcceptedPayment></AcceptedPayments><AmountPercent Percent=\"30\" CurrencyCode=\"AUD\" Amount=\"76.67\" NmbrOfNights=\"2\"><Taxes CurrencyCode=\"AUD\" Amount=\"1.53\"><Tax Code=\"16\" Amount=\"0\" CurrencyCode=\"AUD\" Percent=\"2\"><TaxDescription><Text>Credit Card surcharge.</Text></TaxDescription></Tax></Taxes></AmountPercent><Deadline AbsoluteDeadline=\"2017-11-21T12:00:00+00:00\" OffsetTimeUnit=\"Day\" OffsetUnitMultiplier=\"10\" OffsetDropTime=\"BeforeArrival\"/><Description><Text>30% deposit (of the total reservation cost) will be charged to card holder's account 10 days before the date of arrival at the latest.</Text></Description><Address Type=\"1\"><AddressLine>12 Pine Street</AddressLine><CityName>Sydney</CityName><PostalCode>2095</PostalCode><StateProv StateCode=\"NSW\">New South Wales</StateProv><CountryName Code=\"AU\">Australia</CountryName></Address></GuaranteePayment><GuaranteePayment><AcceptedPayments><AcceptedPayment PaymentTransactionTypeCode=\"charge\"><Voucher SeriesCode=\"4555\"/></AcceptedPayment></AcceptedPayments><AmountPercent Percent=\"10\" CurrencyCode=\"AUD\" Amount=\"25.56\" NmbrOfNights=\"2\"><Taxes CurrencyCode=\"AUD\" Amount=\"1.28\"><Tax Code=\"16\" Amount=\"0\" CurrencyCode=\"AUD\" Percent=\"5\"><TaxDescription><Text>Payment surcharge.</Text></TaxDescription></Tax></Taxes></AmountPercent><Deadline AbsoluteDeadline=\"2017-11-21T12:00:00+00:00\" OffsetTimeUnit=\"Day\" OffsetUnitMultiplier=\"10\" OffsetDropTime=\"BeforeArrival\"/><Description><Text>10% deposit (of the total reservation cost) will be charged using provided Voucher code 10 days before the date of arrival at the latest.</Text></Description><Address Type=\"1\"><AddressLine>12 Pine Street</AddressLine><CityName>Sydney</CityName><PostalCode>2095</PostalCode><StateProv StateCode=\"NSW\">New South Wales</StateProv><CountryName Code=\"AU\">Australia</CountryName></Address></GuaranteePayment><GuaranteePayment><AcceptedPayments><AcceptedPayment PaymentTransactionTypeCode=\"charge\"><DirectBill DirectBill_ID=\"4981003\"/></AcceptedPayment></AcceptedPayments><AmountPercent Percent=\"20\" CurrencyCode=\"AUD\" Amount=\"51.11\" NmbrOfNights=\"2\"><Taxes CurrencyCode=\"AUD\" Amount=\"2.56\"><Tax Code=\"16\" Amount=\"0\" CurrencyCode=\"AUD\" Percent=\"5\"><TaxDescription><Text>Payment surcharge.</Text></TaxDescription></Tax></Taxes></AmountPercent><Deadline AbsoluteDeadline=\"2017-11-21T12:00:00+00:00\" OffsetTimeUnit=\"Day\" OffsetUnitMultiplier=\"10\" OffsetDropTime=\"BeforeArrival\"/><Description><Text>20% deposit (of the total reservation cost) will be charged using Direct Bill ID provided 10 days before the date of arrival at the latest.</Text></Description><Address Type=\"2\"><AddressLine>125 Pitt Street</AddressLine><CityName>Sydney</CityName><PostalCode>2000</PostalCode><StateProv StateCode=\"NSW\">New South Wales</StateProv><CountryName Code=\"AU\">Australia</CountryName></Address></GuaranteePayment></DepositPayments><Total AmountBeforeTax=\"217.00\" AmountAfterTax=\"255.55\" CurrencyCode=\"AUD\"><Taxes CurrencyCode=\"AUD\" Amount=\"38.55\"><Tax Code=\"19\" Amount=\"0\" CurrencyCode=\"AUD\" Percent=\"10\"><TaxDescription><Text>GST</Text></TaxDescription></Tax><Tax Code=\"21\" Amount=\"0\" CurrencyCode=\"AUD\" Percent=\"5\"><TaxDescription><Text>Insurance Premium Tax</Text></TaxDescription></Tax><Tax Code=\"14\" Amount=\"6.00\" CurrencyCode=\"AUD\" Percent=\"0\"><TaxDescription><Text>Service charge - manicure</Text></TaxDescription></Tax></Taxes></Total><HotelReservationIDs><HotelReservationID ResID_Type=\"10\" ResID_Value=\"BDC3685170919\" ResID_Source=\"TESTPMS_GRHP6597\"/></HotelReservationIDs><Profiles><ProfileInfo><UniqueID Type=\"1\" ID=\"8942213\" ID_Context=\"PROPERTY\"/><Profile ShareAllMarketInd=\"true\" ShareAllOptOutInd=\"false\" ProfileType=\"1\"><Customer VIP_Indicator=\"true\" CustomerValue=\"5\" BirthDate=\"1959-12-12\"><PersonName NameType=\"2\" Language=\"en\"><NamePrefix>Mr.</NamePrefix><GivenName>Leo</GivenName><MiddleName>Darcy</MiddleName><Surname>Woolf</Surname><NameSuffix>Ret.</NameSuffix><NameTitle>BA</NameTitle></PersonName><Telephone PhoneLocationType=\"10\" PhoneTechType=\"5\" CountryAccessCode=\"61\" AreaCityCode=\"4\" PhoneNumber=\"23865911\" Remark=\"Active\" FormattedInd=\"false\" DefaultInd=\"true\"/><Email DefaultInd=\"true\" EmailType=\"1\">LeonardoWoolf59@gmail.com</Email><Address Type=\"1\"><AddressLine>12 Pine Street</AddressLine><CityName>Sydney</CityName><PostalCode>2095</PostalCode><StateProv StateCode=\"NSW\">New South Wales</StateProv><CountryName Code=\"AU\">Australia</CountryName></Address><CustLoyalty ProgramID=\"GOLD\" MembershipID=\"8974358\" LoyalLevel=\"VIP\" LoyalLevelCode=\"2\" SignupDate=\"2002-01-06\" EffectiveDate=\"2002-01-06\" ExpireDate=\"2032-01-06\" Remark=\"30 years + Membership\"/></Customer></Profile></ProfileInfo><ProfileInfo><Profile ProfileType=\"5\"><CompanyInfo><CompanyName Code=\"ASTERIX\">Asterix</CompanyName><AddressInfo Type=\"2\"><AddressLine>360C Bergen Street</AddressLine><CityName>New York - Brooklyn</CityName><PostalCode>11238</PostalCode><StateProv StateCode=\"NY\">New York</StateProv><CountryName Code=\"US\">United States</CountryName></AddressInfo><TelephoneInfo  PhoneLocationType=\"9\" PhoneTechType=\"1\" CountryAccessCode=\"1\" AreaCityCode=\"212\" PhoneNumber=\"44458561\" Remark=\"Voicemail only\" FormattedInd=\"false\" DefaultInd=\"true\"/><Email DefaultInd=\"true\" EmailType=\"2\">support@asterix.com</Email><ContactPerson><PersonName NameType=\"2\" Language=\"en-US\"><NamePrefix>Ms.</NamePrefix><GivenName>Elle</GivenName><MiddleName>Maria</MiddleName><Surname>VanHoff</Surname><NameSuffix>Jr.</NameSuffix><NameTitle>M.D.</NameTitle></PersonName><Telephone PhoneLocationType=\"9\" PhoneTechType=\"1\" CountryAccessCode=\"1\" AreaCityCode=\"212\" PhoneNumber=\"44458562\" Remark=\"Helpdesk\" FormattedInd=\"false\" DefaultInd=\"true\"/><Address Type=\"0\"><AddressLine>360C Bergen Street</AddressLine><CityName>New York - Brooklyn</CityName><PostalCode>11238</PostalCode><StateProv StateCode=\"NY\">New York</StateProv><CountryName Code=\"US\">United States</CountryName></Address><Email DefaultInd=\"true\" EmailType=\"2\">Elle.VanHoff@asterix.com</Email></ContactPerson></CompanyInfo></Profile></ProfileInfo></Profiles><TotalCommissions><UniqueID Type=\"5\" ID=\"11395LYN\"/><CommissionPayableAmount CurrencyCode=\"AUD\" Amount=\"25.00\"/><Comment><Text>Booking agent reservation commission - flat rate.</Text></Comment></TotalCommissions><BasicPropertyInfo ChainCode=\"GLDNRIV\" BrandCode=\"GRH-P\" HotelCode=\"GRHP6597\" HotelName=\"Golden River Hotel - Perth\"/></ResGlobalInfo></HotelReservation></HotelReservations></OTA_HotelResNotifRQ></SOAP-ENV:Body></SOAP-ENV:Envelope>"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "label": "Post modified reservation (maximum content sample)"
+        },
+        "b242d64b-6430-4bde-a1b8-826d98f6c899": {
+            "type": "appmixer.utils.test.Assert",
+            "label": "Assert answer 2",
+            "x": 688,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "b430172a-e2a6-4dd7-a3f3-486c4c472ddf": [
+                        "response"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "b430172a-e2a6-4dd7-a3f3-486c4c472ddf": {
+                            "response": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "50dadddf-21c0-47c9-af87-1c8e7a30af0b": {
+                                            "variable": "$.b430172a-e2a6-4dd7-a3f3-486c4c472ddf.response.statusCode",
+                                            "functions": []
+                                        },
+                                        "f8598fdd-0741-4403-a3cf-673ba355421d": {
+                                            "variable": "$.b430172a-e2a6-4dd7-a3f3-486c4c472ddf.response.body",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{50dadddf-21c0-47c9-af87-1c8e7a30af0b}}}",
+                                                "assertion": "equal",
+                                                "expected": 200
+                                            },
+                                            {
+                                                "field": "{{{f8598fdd-0741-4403-a3cf-673ba355421d}}}",
+                                                "assertion": "regex",
+                                                "regex": "<Success\\/>"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "a5a54690-e440-40a3-a82e-a0d0562d1aab": {
+            "type": "appmixer.utils.http.Post",
+            "x": 688,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "b430172a-e2a6-4dd7-a3f3-486c4c472ddf": [
+                        "response"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "b430172a-e2a6-4dd7-a3f3-486c4c472ddf": {
+                            "response": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "url": {
+                                        "ef30b1e5-9a13-4029-ac28-f3b3162bf567": {
+                                            "functions": [
+                                                {
+                                                    "name": "g_webhookUrl"
+                                                },
+                                                {
+                                                    "name": "g_replace",
+                                                    "params": [
+                                                        {
+                                                            "value": "/flows/.*$"
+                                                        },
+                                                        {
+                                                            "value": "/plugins/appmixer/siteminder/reservations"
+                                                        }
+                                                    ],
+                                                    "hashParams": {
+                                                        "regex": {
+                                                            "value": true
+                                                        }
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "headers": {},
+                                    "bodyType": {},
+                                    "body": {}
+                                },
+                                "lambda": {
+                                    "url": "{{{ef30b1e5-9a13-4029-ac28-f3b3162bf567}}}",
+                                    "headers": "{\"Content-Type\": \"application/xml; charset=utf-8\"}",
+                                    "bodyType": "raw",
+                                    "body": "<SOAP-ENV:Envelope xmlns:SOAP-ENV=\"http://schemas.xmlsoap.org/soap/envelope/\"><SOAP-ENV:Header><wsse:Security SOAP-ENV:mustUnderstand=\"1\" xmlns:wsse=\"http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd\"><wsse:UsernameToken><wsse:Username>appmixer-e2e-sample</wsse:Username><wsse:Password Type=\"http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-username-token-profile-1.0#PasswordText\">E2e-Sample-0nly!2026</wsse:Password></wsse:UsernameToken></wsse:Security></SOAP-ENV:Header><SOAP-ENV:Body><OTA_HotelResNotifRQ xmlns=\"http://www.opentravel.org/OTA/2003/05\" Version=\"1\" EchoToken=\"abc-123\" TimeStamp=\"2018-09-20T07:55:07Z\"><HotelReservations><HotelReservation ResStatus=\"Cancelled\" CreateDateTime=\"2018-05-04T19:32:04Z\" LastModifyDateTime=\"2018-09-20T07:55:04Z\"><POS><Source><RequestorID ID=\"PMSPUBLISHER\"/></Source></POS><UniqueID ID=\"123456789\"/><ResGlobalInfo><BasicPropertyInfo HotelCode=\"10107\"/></ResGlobalInfo></HotelReservation></HotelReservations></OTA_HotelResNotifRQ></SOAP-ENV:Body></SOAP-ENV:Envelope>"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "label": "Post cancellation (minimum cancellation sample)"
+        },
+        "ccf53a08-a53b-4913-a9bc-6d6a24efb55f": {
+            "type": "appmixer.utils.test.Assert",
+            "label": "Assert answer 3",
+            "x": 896,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "a5a54690-e440-40a3-a82e-a0d0562d1aab": [
+                        "response"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "a5a54690-e440-40a3-a82e-a0d0562d1aab": {
+                            "response": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "9122e1f1-556b-4515-a0b1-7e09a8983577": {
+                                            "variable": "$.a5a54690-e440-40a3-a82e-a0d0562d1aab.response.statusCode",
+                                            "functions": []
+                                        },
+                                        "090363b5-ad73-421e-aa5b-acfd0e418afa": {
+                                            "variable": "$.a5a54690-e440-40a3-a82e-a0d0562d1aab.response.body",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{9122e1f1-556b-4515-a0b1-7e09a8983577}}}",
+                                                "assertion": "equal",
+                                                "expected": 200
+                                            },
+                                            {
+                                                "field": "{{{090363b5-ad73-421e-aa5b-acfd0e418afa}}}",
+                                                "assertion": "regex",
+                                                "regex": "<Success\\/>"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "e7e2aadd-e746-4ecb-a3e2-e056511e54ee": {
+            "type": "appmixer.utils.http.Post",
+            "x": 896,
+            "y": 400,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "a5a54690-e440-40a3-a82e-a0d0562d1aab": [
+                        "response"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "a5a54690-e440-40a3-a82e-a0d0562d1aab": {
+                            "response": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "url": {
+                                        "3b7c2824-b1f5-4589-a90a-37fc689a798c": {
+                                            "functions": [
+                                                {
+                                                    "name": "g_webhookUrl"
+                                                },
+                                                {
+                                                    "name": "g_replace",
+                                                    "params": [
+                                                        {
+                                                            "value": "/flows/.*$"
+                                                        },
+                                                        {
+                                                            "value": "/plugins/appmixer/siteminder/reservations"
+                                                        }
+                                                    ],
+                                                    "hashParams": {
+                                                        "regex": {
+                                                            "value": true
+                                                        }
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "headers": {},
+                                    "bodyType": {},
+                                    "body": {}
+                                },
+                                "lambda": {
+                                    "url": "{{{3b7c2824-b1f5-4589-a90a-37fc689a798c}}}",
+                                    "headers": "{\"Content-Type\": \"application/xml; charset=utf-8\"}",
+                                    "bodyType": "raw",
+                                    "body": "<SOAP-ENV:Envelope xmlns:SOAP-ENV=\"http://schemas.xmlsoap.org/soap/envelope/\"><SOAP-ENV:Header><wsse:Security SOAP-ENV:mustUnderstand=\"1\" xmlns:wsse=\"http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd\"><wsse:UsernameToken><wsse:Username>appmixer-e2e-sample</wsse:Username><wsse:Password Type=\"http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-username-token-profile-1.0#PasswordText\">Wrong-Passw0rd!2026</wsse:Password></wsse:UsernameToken></wsse:Security></SOAP-ENV:Header><SOAP-ENV:Body><OTA_HotelResNotifRQ xmlns=\"http://www.opentravel.org/OTA/2003/05\" Version=\"1.0\" EchoToken=\"abc-123\" TimeStamp=\"2018-05-04T19:40:04Z\"><HotelReservations><HotelReservation ResStatus=\"Reserved\" CreateDateTime=\"2018-05-04T19:32:04Z\"><POS><Source><RequestorID ID=\"PMSPUBLISHER\"/></Source></POS><UniqueID ID=\"123456789\"/><RoomStays><RoomStay><TimeSpan Start=\"2017-09-05\" End=\"2017-09-06\"/></RoomStay></RoomStays><ResGlobalInfo><TimeSpan Start=\"2017-09-05\" End=\"2017-09-06\"/><Total AmountAfterTax=\"200.00\"/><!-- May be AmountBeforeTax --><BasicPropertyInfo HotelCode=\"10107\"/></ResGlobalInfo></HotelReservation></HotelReservations></OTA_HotelResNotifRQ></SOAP-ENV:Body></SOAP-ENV:Envelope>"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "label": "Post with a wrong password"
+        },
+        "0d8fddf6-84b6-423f-a993-00f602e909b5": {
+            "type": "appmixer.utils.test.Assert",
+            "label": "Assert answer 4",
+            "x": 1104,
+            "y": 400,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "e7e2aadd-e746-4ecb-a3e2-e056511e54ee": [
+                        "response"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "e7e2aadd-e746-4ecb-a3e2-e056511e54ee": {
+                            "response": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "f1cf6b11-8da1-4305-ae76-d9085b4d5e02": {
+                                            "variable": "$.e7e2aadd-e746-4ecb-a3e2-e056511e54ee.response.statusCode",
+                                            "functions": []
+                                        },
+                                        "32606355-81df-4381-af23-ef73d3b4fd27": {
+                                            "variable": "$.e7e2aadd-e746-4ecb-a3e2-e056511e54ee.response.body",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{f1cf6b11-8da1-4305-ae76-d9085b4d5e02}}}",
+                                                "assertion": "equal",
+                                                "expected": 200
+                                            },
+                                            {
+                                                "field": "{{{32606355-81df-4381-af23-ef73d3b4fd27}}}",
+                                                "assertion": "regex",
+                                                "regex": "Code=\"497\">Invalid Username and\\/or Password<"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "434b05d3-da66-4b69-a6f6-2ec1dd29ab23": {
+            "type": "appmixer.utils.http.Post",
+            "x": 1104,
+            "y": 528,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "e7e2aadd-e746-4ecb-a3e2-e056511e54ee": [
+                        "response"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "e7e2aadd-e746-4ecb-a3e2-e056511e54ee": {
+                            "response": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "url": {
+                                        "24a76989-d143-464a-a8ae-f9b955de1784": {
+                                            "functions": [
+                                                {
+                                                    "name": "g_webhookUrl"
+                                                },
+                                                {
+                                                    "name": "g_replace",
+                                                    "params": [
+                                                        {
+                                                            "value": "/flows/.*$"
+                                                        },
+                                                        {
+                                                            "value": "/plugins/appmixer/siteminder/reservations"
+                                                        }
+                                                    ],
+                                                    "hashParams": {
+                                                        "regex": {
+                                                            "value": true
+                                                        }
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "headers": {},
+                                    "bodyType": {},
+                                    "body": {}
+                                },
+                                "lambda": {
+                                    "url": "{{{24a76989-d143-464a-a8ae-f9b955de1784}}}",
+                                    "headers": "{\"Content-Type\": \"application/xml; charset=utf-8\"}",
+                                    "bodyType": "raw",
+                                    "body": "<SOAP-ENV:Envelope xmlns:SOAP-ENV=\"http://schemas.xmlsoap.org/soap/envelope/\"><SOAP-ENV:Header><wsse:Security SOAP-ENV:mustUnderstand=\"1\" xmlns:wsse=\"http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd\"><wsse:UsernameToken><wsse:Username>appmixer-e2e-sample</wsse:Username><wsse:Password Type=\"http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-username-token-profile-1.0#PasswordText\">E2e-Sample-0nly!2026</wsse:Password></wsse:UsernameToken></wsse:Security></SOAP-ENV:Header><SOAP-ENV:Body><OTA_HotelResNotifRQ xmlns=\"http://www.opentravel.org/OTA/2003/05\" Version=\"1.0\" EchoToken=\"abc-123\" TimeStamp=\"2018-05-04T19:40:04Z\"><HotelReservations><HotelReservation ResStatus=\"Reserved\" CreateDateTime=\"2018-05-04T19:32:04Z\"><POS><Source><RequestorID ID=\"PMSPUBLISHER\"/></Source></POS><UniqueID ID=\"123456789\"/><RoomStays><RoomStay><TimeSpan Start=\"2017-09-05\" End=\"2017-09-06\"/></RoomStay></RoomStays><ResGlobalInfo><TimeSpan Start=\"2017-09-05\" End=\"2017-09-06\"/><Total AmountAfterTax=\"200.00\"/><!-- May be AmountBeforeTax --><BasicPropertyInfo HotelCode=\"E2E-UNKNOWN-HOTEL\"/></ResGlobalInfo></HotelReservation></HotelReservations></OTA_HotelResNotifRQ></SOAP-ENV:Body></SOAP-ENV:Envelope>"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "label": "Post for an unknown hotel"
+        },
+        "e06ba833-dec3-43de-ab4c-cfa6ab335c6e": {
+            "type": "appmixer.utils.test.Assert",
+            "label": "Assert answer 5",
+            "x": 1312,
+            "y": 528,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "434b05d3-da66-4b69-a6f6-2ec1dd29ab23": [
+                        "response"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "434b05d3-da66-4b69-a6f6-2ec1dd29ab23": {
+                            "response": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "17670187-ec8b-4e68-afcb-e5a68d8d7ddf": {
+                                            "variable": "$.434b05d3-da66-4b69-a6f6-2ec1dd29ab23.response.statusCode",
+                                            "functions": []
+                                        },
+                                        "40f44dd0-e0de-4213-ab40-b53728237eb0": {
+                                            "variable": "$.434b05d3-da66-4b69-a6f6-2ec1dd29ab23.response.body",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{17670187-ec8b-4e68-afcb-e5a68d8d7ddf}}}",
+                                                "assertion": "equal",
+                                                "expected": 200
+                                            },
+                                            {
+                                                "field": "{{{40f44dd0-e0de-4213-ab40-b53728237eb0}}}",
+                                                "assertion": "regex",
+                                                "regex": "Code=\"392\">Hotel not found for HotelCode=E2E-UNKNOWN-HOTEL<"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "7b3e66fe-531e-4bbf-a29e-3e421a71d8ae": {
+            "type": "appmixer.siteminder.core.NewReservation",
+            "x": 64,
+            "y": 656,
+            "version": "1.0.0",
+            "source": {},
+            "config": {
+                "properties": {
+                    "hotelCodes": "10107, GRHP6597"
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "label": "NewReservation"
+        },
+        "f55baee5-3904-4af3-a4f5-acfbb75d35d1": {
+            "type": "appmixer.utils.test.Assert",
+            "label": "Assert NewReservation",
+            "x": 272,
+            "y": 656,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "7b3e66fe-531e-4bbf-a29e-3e421a71d8ae": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "7b3e66fe-531e-4bbf-a29e-3e421a71d8ae": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "e84afe01-cc58-403a-a73a-42d7c9384818": {
+                                            "variable": "$.7b3e66fe-531e-4bbf-a29e-3e421a71d8ae.out.reservationId",
+                                            "functions": []
+                                        },
+                                        "32c7e044-0946-41c4-ae3c-a61474a81c3a": {
+                                            "variable": "$.7b3e66fe-531e-4bbf-a29e-3e421a71d8ae.out.eventType",
+                                            "functions": []
+                                        },
+                                        "3b4a6010-c15f-43b5-a0d6-d1a5521bfe9d": {
+                                            "variable": "$.7b3e66fe-531e-4bbf-a29e-3e421a71d8ae.out.status",
+                                            "functions": []
+                                        },
+                                        "07c178d6-58a6-41bb-a2fc-d37003a18dd3": {
+                                            "variable": "$.7b3e66fe-531e-4bbf-a29e-3e421a71d8ae.out.hotelCode",
+                                            "functions": []
+                                        },
+                                        "d3a016c8-b4db-493d-a237-078e48847997": {
+                                            "variable": "$.7b3e66fe-531e-4bbf-a29e-3e421a71d8ae.out.publisherCode",
+                                            "functions": []
+                                        },
+                                        "f2488dff-2770-40e3-a3ba-6b923279aeda": {
+                                            "variable": "$.7b3e66fe-531e-4bbf-a29e-3e421a71d8ae.out.arrivalDate",
+                                            "functions": []
+                                        },
+                                        "7d120108-0723-48b1-a64d-5dc7ad7d416e": {
+                                            "variable": "$.7b3e66fe-531e-4bbf-a29e-3e421a71d8ae.out.totalAmountAfterTax",
+                                            "functions": []
+                                        },
+                                        "6cb5d9de-7b3c-48fd-ab2b-e4f6f242053e": {
+                                            "variable": "$.7b3e66fe-531e-4bbf-a29e-3e421a71d8ae.out.echoToken",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{e84afe01-cc58-403a-a73a-42d7c9384818}}}",
+                                                "assertion": "equal",
+                                                "expected": "123456789"
+                                            },
+                                            {
+                                                "field": "{{{32c7e044-0946-41c4-ae3c-a61474a81c3a}}}",
+                                                "assertion": "equal",
+                                                "expected": "new"
+                                            },
+                                            {
+                                                "field": "{{{3b4a6010-c15f-43b5-a0d6-d1a5521bfe9d}}}",
+                                                "assertion": "equal",
+                                                "expected": "Reserved"
+                                            },
+                                            {
+                                                "field": "{{{07c178d6-58a6-41bb-a2fc-d37003a18dd3}}}",
+                                                "assertion": "equal",
+                                                "expected": "10107"
+                                            },
+                                            {
+                                                "field": "{{{d3a016c8-b4db-493d-a237-078e48847997}}}",
+                                                "assertion": "equal",
+                                                "expected": "PMSPUBLISHER"
+                                            },
+                                            {
+                                                "field": "{{{f2488dff-2770-40e3-a3ba-6b923279aeda}}}",
+                                                "assertion": "equal",
+                                                "expected": "2017-09-05"
+                                            },
+                                            {
+                                                "field": "{{{7d120108-0723-48b1-a64d-5dc7ad7d416e}}}",
+                                                "assertion": "equal",
+                                                "expected": 200
+                                            },
+                                            {
+                                                "field": "{{{6cb5d9de-7b3c-48fd-ab2b-e4f6f242053e}}}",
+                                                "assertion": "equal",
+                                                "expected": "abc-123"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "fc4a5970-9a9a-4a15-a5c6-6a7d6f9fa7b4": {
+            "type": "appmixer.siteminder.core.UpdatedReservation",
+            "x": 64,
+            "y": 784,
+            "version": "1.0.0",
+            "source": {},
+            "config": {
+                "properties": {
+                    "hotelCodes": "10107, GRHP6597"
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "label": "UpdatedReservation"
+        },
+        "da4c3756-a4d1-4e35-af56-b076ff7ac589": {
+            "type": "appmixer.utils.test.Assert",
+            "label": "Assert UpdatedReservation",
+            "x": 272,
+            "y": 784,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "fc4a5970-9a9a-4a15-a5c6-6a7d6f9fa7b4": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "fc4a5970-9a9a-4a15-a5c6-6a7d6f9fa7b4": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "5b8ba21c-c467-4fc3-ac14-f82abdbe2e85": {
+                                            "variable": "$.fc4a5970-9a9a-4a15-a5c6-6a7d6f9fa7b4.out.reservationId",
+                                            "functions": []
+                                        },
+                                        "0daf6891-6c5f-4590-aa5e-86719b150132": {
+                                            "variable": "$.fc4a5970-9a9a-4a15-a5c6-6a7d6f9fa7b4.out.eventType",
+                                            "functions": []
+                                        },
+                                        "c4625731-00ce-4658-a681-c93912608beb": {
+                                            "variable": "$.fc4a5970-9a9a-4a15-a5c6-6a7d6f9fa7b4.out.hotelCode",
+                                            "functions": []
+                                        },
+                                        "20260b55-4a2c-42b3-a447-0919ca47e40b": {
+                                            "variable": "$.fc4a5970-9a9a-4a15-a5c6-6a7d6f9fa7b4.out.departureDate",
+                                            "functions": []
+                                        },
+                                        "f2fd601b-7550-497c-a907-1125e2716978": {
+                                            "variable": "$.fc4a5970-9a9a-4a15-a5c6-6a7d6f9fa7b4.out.guestCount",
+                                            "functions": []
+                                        },
+                                        "3b607fcb-986b-4839-aed8-530b09b5792c": {
+                                            "variable": "$.fc4a5970-9a9a-4a15-a5c6-6a7d6f9fa7b4.out.totalAmountAfterTax",
+                                            "functions": []
+                                        },
+                                        "7a2b09b1-6273-4e27-abd2-1030e927a90f": {
+                                            "variable": "$.fc4a5970-9a9a-4a15-a5c6-6a7d6f9fa7b4.out.currencyCode",
+                                            "functions": []
+                                        },
+                                        "af17174d-f4ae-470a-a7ac-57dab46c0b86": {
+                                            "variable": "$.fc4a5970-9a9a-4a15-a5c6-6a7d6f9fa7b4.out.primaryGuest.givenName",
+                                            "functions": []
+                                        },
+                                        "acb32542-cedc-42f5-ae92-7c9bd538daa7": {
+                                            "variable": "$.fc4a5970-9a9a-4a15-a5c6-6a7d6f9fa7b4.out.primaryGuest.email",
+                                            "functions": []
+                                        },
+                                        "f3f9ad65-b747-475c-ad94-4812c70b95db": {
+                                            "variable": "$.fc4a5970-9a9a-4a15-a5c6-6a7d6f9fa7b4.out.booker.surname",
+                                            "functions": []
+                                        },
+                                        "759732a2-ca0a-48e5-a6cf-a87a18963811": {
+                                            "variable": "$.fc4a5970-9a9a-4a15-a5c6-6a7d6f9fa7b4.out.roomStays",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$[0].roomTypeCode"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        },
+                                        "e3b5c1eb-6461-41ac-a735-a6aa4dbd40cf": {
+                                            "variable": "$.fc4a5970-9a9a-4a15-a5c6-6a7d6f9fa7b4.out.guests",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$[1].surname"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        },
+                                        "4caa44bd-08d3-4076-a983-7a0dd5807f6d": {
+                                            "variable": "$.fc4a5970-9a9a-4a15-a5c6-6a7d6f9fa7b4.out.services",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$[0].inventoryCode"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{5b8ba21c-c467-4fc3-ac14-f82abdbe2e85}}}",
+                                                "assertion": "equal",
+                                                "expected": "BDC-3685569477"
+                                            },
+                                            {
+                                                "field": "{{{0daf6891-6c5f-4590-aa5e-86719b150132}}}",
+                                                "assertion": "equal",
+                                                "expected": "updated"
+                                            },
+                                            {
+                                                "field": "{{{c4625731-00ce-4658-a681-c93912608beb}}}",
+                                                "assertion": "equal",
+                                                "expected": "GRHP6597"
+                                            },
+                                            {
+                                                "field": "{{{20260b55-4a2c-42b3-a447-0919ca47e40b}}}",
+                                                "assertion": "equal",
+                                                "expected": "2017-12-03"
+                                            },
+                                            {
+                                                "field": "{{{f2fd601b-7550-497c-a907-1125e2716978}}}",
+                                                "assertion": "equal",
+                                                "expected": 2
+                                            },
+                                            {
+                                                "field": "{{{3b607fcb-986b-4839-aed8-530b09b5792c}}}",
+                                                "assertion": "equal",
+                                                "expected": 255.55
+                                            },
+                                            {
+                                                "field": "{{{7a2b09b1-6273-4e27-abd2-1030e927a90f}}}",
+                                                "assertion": "equal",
+                                                "expected": "AUD"
+                                            },
+                                            {
+                                                "field": "{{{af17174d-f4ae-470a-a7ac-57dab46c0b86}}}",
+                                                "assertion": "equal",
+                                                "expected": "Ginny"
+                                            },
+                                            {
+                                                "field": "{{{acb32542-cedc-42f5-ae92-7c9bd538daa7}}}",
+                                                "assertion": "equal",
+                                                "expected": "Virginia.Woolf@hotmail.com"
+                                            },
+                                            {
+                                                "field": "{{{f3f9ad65-b747-475c-ad94-4812c70b95db}}}",
+                                                "assertion": "equal",
+                                                "expected": "Woolf"
+                                            },
+                                            {
+                                                "field": "{{{759732a2-ca0a-48e5-a6cf-a87a18963811}}}",
+                                                "assertion": "equal",
+                                                "expected": "DLX"
+                                            },
+                                            {
+                                                "field": "{{{e3b5c1eb-6461-41ac-a735-a6aa4dbd40cf}}}",
+                                                "assertion": "equal",
+                                                "expected": "Bradshaw"
+                                            },
+                                            {
+                                                "field": "{{{4caa44bd-08d3-4076-a983-7a0dd5807f6d}}}",
+                                                "assertion": "equal",
+                                                "expected": "ACAR_PARK"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "c6be2503-6ab0-4c64-acc0-0324efee8681": {
+            "type": "appmixer.siteminder.core.CancelledReservation",
+            "x": 64,
+            "y": 912,
+            "version": "1.0.0",
+            "source": {},
+            "config": {
+                "properties": {
+                    "hotelCodes": "10107, GRHP6597"
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "label": "CancelledReservation"
+        },
+        "d56322c8-2ec3-4ba5-a587-aa6c19ae2d14": {
+            "type": "appmixer.utils.test.Assert",
+            "label": "Assert CancelledReservation",
+            "x": 272,
+            "y": 912,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "c6be2503-6ab0-4c64-acc0-0324efee8681": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "c6be2503-6ab0-4c64-acc0-0324efee8681": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "f0735f64-d20f-494e-a5e7-ec9eae615206": {
+                                            "variable": "$.c6be2503-6ab0-4c64-acc0-0324efee8681.out.reservationId",
+                                            "functions": []
+                                        },
+                                        "691b6988-90e9-4bca-a2db-a3f2b838c444": {
+                                            "variable": "$.c6be2503-6ab0-4c64-acc0-0324efee8681.out.eventType",
+                                            "functions": []
+                                        },
+                                        "7ee8f13b-de26-4742-ae2a-b17b832efb3b": {
+                                            "variable": "$.c6be2503-6ab0-4c64-acc0-0324efee8681.out.status",
+                                            "functions": []
+                                        },
+                                        "565c6919-901a-4d9b-a1ee-5b4ae216affe": {
+                                            "variable": "$.c6be2503-6ab0-4c64-acc0-0324efee8681.out.lastModifiedAt",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{f0735f64-d20f-494e-a5e7-ec9eae615206}}}",
+                                                "assertion": "equal",
+                                                "expected": "123456789"
+                                            },
+                                            {
+                                                "field": "{{{691b6988-90e9-4bca-a2db-a3f2b838c444}}}",
+                                                "assertion": "equal",
+                                                "expected": "cancelled"
+                                            },
+                                            {
+                                                "field": "{{{7ee8f13b-de26-4742-ae2a-b17b832efb3b}}}",
+                                                "assertion": "equal",
+                                                "expected": "Cancelled"
+                                            },
+                                            {
+                                                "field": "{{{565c6919-901a-4d9b-a1ee-5b4ae216affe}}}",
+                                                "assertion": "equal",
+                                                "expected": "2018-09-20T07:55:04Z"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "11178ea8-b13b-4750-a805-f8bf09430816": {
+            "type": "appmixer.siteminder.core.NewReservationMessage",
+            "x": 64,
+            "y": 1040,
+            "version": "1.0.0",
+            "source": {},
+            "config": {
+                "properties": {
+                    "hotelCodes": "GRHP6597",
+                    "statuses": [
+                        "Reserved",
+                        "In-house"
+                    ]
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "label": "NewReservationMessage"
+        },
+        "955bb479-d985-4331-a9db-5359baaf6f04": {
+            "type": "appmixer.utils.test.Assert",
+            "label": "Assert NewReservationMessage",
+            "x": 272,
+            "y": 1040,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "11178ea8-b13b-4750-a805-f8bf09430816": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "11178ea8-b13b-4750-a805-f8bf09430816": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "ea46bf15-a11d-4f84-a938-52281fb9c0b6": {
+                                            "variable": "$.11178ea8-b13b-4750-a805-f8bf09430816.out.reservationId",
+                                            "functions": []
+                                        },
+                                        "57960bee-8eda-4221-af4e-e98751e95b3e": {
+                                            "variable": "$.11178ea8-b13b-4750-a805-f8bf09430816.out.status",
+                                            "functions": []
+                                        },
+                                        "a4921f60-f072-4bee-a235-b04f2a2787e5": {
+                                            "variable": "$.11178ea8-b13b-4750-a805-f8bf09430816.out.bookingChannelName",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{ea46bf15-a11d-4f84-a938-52281fb9c0b6}}}",
+                                                "assertion": "equal",
+                                                "expected": "BDC-3685569477"
+                                            },
+                                            {
+                                                "field": "{{{57960bee-8eda-4221-af4e-e98751e95b3e}}}",
+                                                "assertion": "equal",
+                                                "expected": "Reserved"
+                                            },
+                                            {
+                                                "field": "{{{a4921f60-f072-4bee-a235-b04f2a2787e5}}}",
+                                                "assertion": "equal",
+                                                "expected": "CompanyName0"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "1b0b58bf-a2e2-487e-afba-bd3c0af105b9": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 1520,
+            "y": 1040,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "cd8b1026-fd00-4062-abad-c1fea8b38ffc": [
+                        "out"
+                    ],
+                    "b242d64b-6430-4bde-a1b8-826d98f6c899": [
+                        "out"
+                    ],
+                    "ccf53a08-a53b-4913-a9bc-6d6a24efb55f": [
+                        "out"
+                    ],
+                    "0d8fddf6-84b6-423f-a993-00f602e909b5": [
+                        "out"
+                    ],
+                    "e06ba833-dec3-43de-ab4c-cfa6ab335c6e": [
+                        "out"
+                    ],
+                    "f55baee5-3904-4af3-a4f5-acfbb75d35d1": [
+                        "out"
+                    ],
+                    "da4c3756-a4d1-4e35-af56-b076ff7ac589": [
+                        "out"
+                    ],
+                    "d56322c8-2ec3-4ba5-a587-aa6c19ae2d14": [
+                        "out"
+                    ],
+                    "955bb479-d985-4331-a9db-5359baaf6f04": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 180
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "5461b8e0-dbf6-4aae-a10b-d33acc30f7bc": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1728,
+            "y": 1040,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "1b0b58bf-a2e2-487e-afba-bd3c0af105b9": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "successStoreId": "64f6f1f9193228000754082f",
+                    "failedStoreId": "64f6f1f0193228000754082e"
+                },
+                "transform": {
+                    "in": {
+                        "1b0b58bf-a2e2-487e-afba-bd3c0af105b9": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "385e8b34-7891-4b7a-af58-f89563feee4c": {
+                                            "variable": "$.1b0b58bf-a2e2-487e-afba-bd3c0af105b9.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E SiteMinder - Reservation triggers (sample messages, self-provoked)",
+                                    "result": "{{{385e8b34-7891-4b7a-af58-f89563feee4c}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        }
+    }
+}

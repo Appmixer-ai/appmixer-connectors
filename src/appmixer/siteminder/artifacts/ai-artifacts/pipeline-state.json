@@ -1,0 +1,57 @@
+{
+    "connector": "appmixer.siteminder",
+    "vendor": "appmixer",
+    "module": "siteminder",
+    "issue": "https://github.com/Appmixer-ai/appmixer-components/issues/3165",
+    "steps": {
+        "build": "done",
+        "review": "done",
+        "cliTests": "blocked",
+        "verify": "blocked",
+        "e2e": "partial",
+        "ship": "pr-open"
+    },
+    "auth": {
+        "service": "appmixer:siteminder",
+        "type": "apiKey",
+        "fields": ["environment", "apiToken", "soapUsername", "soapPassword"],
+        "status": "missing",
+        "reason": "No SiteMinder test account exists (creds show siteminder is empty). SiteMinder Exchange access needs a signed partnership agreement; the Bearer token comes from the SMX Partner Portal of the environment SiteMinder issues during onboarding."
+    },
+    "localTests": "blocked-no-credentials",
+    "notRunAgainstRealApi": true,
+    "verified": {
+        "static": [
+            "node scripts/validate.js --connector siteminder: 0 failures, 0 warnings",
+            "eslint: clean",
+            "57 unit tests in artifacts/test/siteminder.test.js with a mocked HTTP client and a mocked plugin context; the SOAP tests use the sample messages of SiteMinder's documentation (artifacts/test/fixtures)",
+            "The unit tests also pass on Node 18",
+            "appmixer e2e validate on the 3 flows: passed"
+        ],
+        "liveOnAppmixerOnly": [
+            "The connector was published to dev-automated-00001 from the PR head; the plugin route /plugins/appmixer/siteminder/reservations answers there",
+            "E2E flow test-flow-reservation-triggers.json passed on dev-automated-00001 on 2026-11-26 (9 asserts, 38 checks): SiteMinder's three sample messages posted to the route reach the four triggers, and a wrong password and an unknown hotel code are answered with OTA errors 497 and 392",
+            "This tested Appmixer's side with sample payloads. SiteMinder was not involved."
+        ],
+        "notVerified": [
+            "No request was ever sent to the SiteMinder API, not even an unauthenticated one. No component of the availability and rates API has returned real data.",
+            "SiteMinder has never pushed a reservation to the endpoint. Nothing is known about real publisher messages beyond the documented samples.",
+            "appmixer test component and appmixer connector verify were not run.",
+            "See artifacts/test-flows/README.md, 'Things only a run can settle'."
+        ]
+    },
+    "needsFromHuman": [
+        "A SiteMinder Exchange partnership agreement and the test environment SiteMinder issues during onboarding. Nothing here can be signed up for online.",
+        "The Bearer token from the SMX Partner Portal of that environment, stored with: creds set siteminder ...",
+        "A test hotel whose publisher provides availability and rates (the Little Hotelier certification hotel has reservations only)",
+        "For reservations from SiteMinder itself: the endpoint URL of the instance, an endpoint username and password and the hotel code handed to SiteMinder's Partner Integrations team, and somebody who creates, changes and cancels a reservation in the test hotel while a flow runs"
+    ],
+    "notes": [
+        "One connection holds both credential sets of a partner application (API token; endpoint username and password). Either half may be empty. Hotels are not part of the connection: the hotel code is a component input.",
+        "Reservations arrive on one plugin route. A message reaches a trigger only when its WS-Security credentials equal the endpoint credentials of the trigger's account and its HotelCode is listed in the trigger.",
+        "Not built: the write endpoints of the API (create or update rates, update availability, message status). They are in the OpenAPI file only, answer 202 with a message id, and SiteMinder's guides describe the API as read-only for applications.",
+        "Not built: any reservation read or write component. SMX has none.",
+        "Dependency: fast-xml-parser 5.12.0, the version utils/xml already ships.",
+        "verify.json has no round-trip spec: there is nothing to write."
+    ]
+}
