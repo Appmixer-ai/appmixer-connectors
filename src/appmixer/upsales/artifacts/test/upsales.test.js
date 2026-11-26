@@ -60,7 +60,9 @@ const createContext = ({ responder, content = {}, state = {} } = {}) => {
 };
 
 const query = (options) => new URL(options.url).searchParams;
-const list = (items, total = items.length) => ({ data: { error: null, metadata: { total, limit: 1, offset: 0 }, data: items } });
+const list = (items, total = items.length) => ({
+    data: { error: null, metadata: { total, limit: 1, offset: 0 }, data: items }
+});
 
 describe('upsales lib.request', function() {
 
