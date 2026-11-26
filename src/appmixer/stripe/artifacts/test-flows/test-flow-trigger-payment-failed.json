@@ -1,0 +1,496 @@
+{
+    "name": "E2E Stripe - Payment Failed trigger",
+    "description": "Starts the Payment Failed trigger (invoice.payment_failed), then subscribes a customer whose card is declined on charge (pm_card_chargeCustomerFail); the first invoice payment fails and the trigger must emit it. The customer is deleted afterwards, which also cancels the subscription.",
+    "flow": {
+        "3e4cd19a-5f3e-4050-9a5d-cc0552692faf": {
+            "type": "appmixer.stripe.core.PaymentFailed",
+            "x": 64,
+            "y": 400,
+            "version": "1.0.0",
+            "source": {},
+            "config": {
+                "properties": {
+                    "events": [
+                        "invoice.payment_failed"
+                    ]
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "92162cc1-7335-4be4-b6d0-60ca12cbde1e": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {},
+            "config": {},
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "4a28cf23-e958-4643-b1f9-ca66ab8cb23a": {
+            "type": "appmixer.utils.timers.Wait",
+            "x": 272,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "92162cc1-7335-4be4-b6d0-60ca12cbde1e": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "92162cc1-7335-4be4-b6d0-60ca12cbde1e": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "interval": {}
+                                },
+                                "lambda": {
+                                    "interval": "1m"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "9c4dda70-d527-4849-bdde-374a494c3f05": {
+            "type": "appmixer.stripe.core.CreateCustomer",
+            "x": 480,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "4a28cf23-e958-4643-b1f9-ca66ab8cb23a": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "4a28cf23-e958-4643-b1f9-ca66ab8cb23a": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "email": {},
+                                    "name": {},
+                                    "paymentMethod": {}
+                                },
+                                "lambda": {
+                                    "email": "e2e-payment-failed@example.com",
+                                    "name": "E2E Payment Failed Customer",
+                                    "paymentMethod": "pm_card_chargeCustomerFail"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "677fc07f-2724-4d09-9858-622ef5d8c933": {
+            "type": "appmixer.stripe.core.FindPaymentMethods",
+            "x": 688,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "9c4dda70-d527-4849-bdde-374a494c3f05": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "9c4dda70-d527-4849-bdde-374a494c3f05": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "customerId": {
+                                        "0ff8af8c-7e40-49c3-92cd-913e61003d51": {
+                                            "variable": "$.9c4dda70-d527-4849-bdde-374a494c3f05.out.id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "type": {},
+                                    "outputType": {}
+                                },
+                                "lambda": {
+                                    "customerId": "{{{0ff8af8c-7e40-49c3-92cd-913e61003d51}}}",
+                                    "type": "card",
+                                    "outputType": "first"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "858f40ea-f3d3-466a-b74c-d390e8789e0e": {
+            "type": "appmixer.stripe.core.MakeApiCall",
+            "x": 896,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "677fc07f-2724-4d09-9858-622ef5d8c933": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "677fc07f-2724-4d09-9858-622ef5d8c933": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "url": {},
+                                    "method": {},
+                                    "body": {}
+                                },
+                                "lambda": {
+                                    "url": "/v1/prices",
+                                    "method": "POST",
+                                    "body": "{\"currency\":\"usd\",\"unit_amount\":1000,\"product_data[name]\":\"E2E Stripe Failing Plan\",\"recurring[interval]\":\"month\"}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "5b849172-0533-4909-b0ee-375bd87d6d72": {
+            "type": "appmixer.stripe.core.CreateSubscription",
+            "x": 1104,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "858f40ea-f3d3-466a-b74c-d390e8789e0e": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "858f40ea-f3d3-466a-b74c-d390e8789e0e": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "customer": {
+                                        "d787b990-5303-4168-8e62-37f9c93abb1c": {
+                                            "variable": "$.9c4dda70-d527-4849-bdde-374a494c3f05.out.id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "items": {
+                                        "0332cebc-080b-48c8-b999-0190bc7bdbd7": {
+                                            "variable": "$.858f40ea-f3d3-466a-b74c-d390e8789e0e.out.body",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$.id"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "defaultPaymentMethod": {
+                                        "dbf69049-8a67-4116-935c-48dbd7864347": {
+                                            "variable": "$.677fc07f-2724-4d09-9858-622ef5d8c933.out.id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "collectionMethod": {},
+                                    "description": {}
+                                },
+                                "lambda": {
+                                    "customer": "{{{d787b990-5303-4168-8e62-37f9c93abb1c}}}",
+                                    "items": {
+                                        "AND": [
+                                            {
+                                                "price": "{{{0332cebc-080b-48c8-b999-0190bc7bdbd7}}}",
+                                                "quantity": 1
+                                            }
+                                        ]
+                                    },
+                                    "defaultPaymentMethod": "{{{dbf69049-8a67-4116-935c-48dbd7864347}}}",
+                                    "collectionMethod": "charge_automatically",
+                                    "description": "E2E Payment Failed"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "f6577b99-88c4-484f-a758-d0d417abaf2f": {
+            "type": "appmixer.stripe.core.MakeApiCall",
+            "x": 1312,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "5b849172-0533-4909-b0ee-375bd87d6d72": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "5b849172-0533-4909-b0ee-375bd87d6d72": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "url": {
+                                        "110057c1-4f21-427f-abd3-3f177d938c4d": {
+                                            "variable": "$.858f40ea-f3d3-466a-b74c-d390e8789e0e.out.body",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$.product"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "method": {},
+                                    "body": {}
+                                },
+                                "lambda": {
+                                    "url": "/v1/products/{{{110057c1-4f21-427f-abd3-3f177d938c4d}}}",
+                                    "method": "POST",
+                                    "body": "{\"active\":\"false\"}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "b616b2bc-0319-4f0f-9c42-68e6c9c8065b": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 272,
+            "y": 400,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "3e4cd19a-5f3e-4050-9a5d-cc0552692faf": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "3e4cd19a-5f3e-4050-9a5d-cc0552692faf": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "0a263a39-9acb-41d3-b029-7f1b586fcd25": {
+                                            "variable": "$.3e4cd19a-5f3e-4050-9a5d-cc0552692faf.out.type",
+                                            "functions": []
+                                        },
+                                        "2627d7c3-85fc-493c-b9ac-e1a3675af090": {
+                                            "variable": "$.3e4cd19a-5f3e-4050-9a5d-cc0552692faf.out.data.object",
+                                            "functions": []
+                                        },
+                                        "4e10db11-151e-4a34-bae7-5a48d88ab390": {
+                                            "variable": "$.3e4cd19a-5f3e-4050-9a5d-cc0552692faf.out.data.customer",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{0a263a39-9acb-41d3-b029-7f1b586fcd25}}}",
+                                                "assertion": "equal",
+                                                "expected": "invoice.payment_failed"
+                                            },
+                                            {
+                                                "field": "{{{2627d7c3-85fc-493c-b9ac-e1a3675af090}}}",
+                                                "assertion": "equal",
+                                                "expected": "invoice"
+                                            },
+                                            {
+                                                "field": "{{{4e10db11-151e-4a34-bae7-5a48d88ab390}}}",
+                                                "assertion": "regex",
+                                                "regex": "^cus_"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "103c04b1-70b1-4406-b483-f8acc9985656": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 480,
+            "y": 400,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "b616b2bc-0319-4f0f-9c42-68e6c9c8065b": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 420
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "00166e0c-3b6b-4580-9772-bef262050350": {
+            "type": "appmixer.stripe.core.DeleteCustomer",
+            "x": 688,
+            "y": 400,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "103c04b1-70b1-4406-b483-f8acc9985656": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "103c04b1-70b1-4406-b483-f8acc9985656": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "customerId": {
+                                        "7fb3f819-256b-42ce-98b7-bf71e8b670c4": {
+                                            "variable": "$.3e4cd19a-5f3e-4050-9a5d-cc0552692faf.out.data.customer",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "customerId": "{{{7fb3f819-256b-42ce-98b7-bf71e8b670c4}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "8b6f2947-016d-4743-8cf1-5ffc338bb843": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 896,
+            "y": 400,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "00166e0c-3b6b-4580-9772-bef262050350": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "00166e0c-3b6b-4580-9772-bef262050350": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "a373b7fa-ee32-4672-9bff-8aafe9eb5eeb": {
+                                            "variable": "$.103c04b1-70b1-4406-b483-f8acc9985656.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E Stripe - Payment Failed trigger",
+                                    "result": "{{{a373b7fa-ee32-4672-9bff-8aafe9eb5eeb}}}"
+                                }
+                            }
+                        }
+                    }
+                },
+                "properties": {
+                    "successStoreId": "64f6f1f9193228000754082f",
+                    "failedStoreId": "64f6f1f0193228000754082e"
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        }
+    },
+    "notes": {
+        "97668962-e9b0-4c84-b770-985710bb00d7": {
+            "x": 64,
+            "y": 560,
+            "width": 672,
+            "height": 224,
+            "content": "## ⚠️ Trigger test assumptions\n\n- The trigger registers a Stripe webhook endpoint when the flow starts and deletes it when the flow stops. Stripe allows at most 16 endpoints per account: delete stale ones in the Dashboard (Developers → Webhooks) if the start fails.\n- **Keep the Wait 1m** before the provoking step so the endpoint is live.\n- The provoke attaches the `pm_card_chargeCustomerFail` test card (attaches fine, every charge is declined) and subscribes the customer without a trial, so Stripe's first invoice payment fails.\n- Use a test-mode secret key; other activity in the same account during the run can fire the trigger and fail the Assert."
+        }
+    }
+}

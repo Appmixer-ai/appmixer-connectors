@@ -8,7 +8,34 @@ const Each = require('../../Each/Each');
 
 describe('Each Component', () => {
 
+    // The delayed Each paces items with setTimeout and stops a batch when Date.now() passes a
+    // deadline. The tests use windows of a few milliseconds (a 10 ms interval gives an 8.5 ms
+    // deadline, the delay between two items is 5 ms), so on real timers a busy CI runner that
+    // fires the 5 ms timer a few milliseconds late sends one item where the test expects two.
+    // A fake clock makes time exact: a pump fires the pending timers one by one, in order, and
+    // each one moves Date.now() by precisely its delay. No test waits on the wall clock.
+    //
+    // The clock lives in its own sandbox: createMockContext() calls sinon.restore(), which would
+    // put the real timers back in the middle of a test.
+    const timers = sinon.createSandbox();
+    let clock;
+    let pumping;
+
+    beforeEach(() => {
+        clock = timers.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'Date'] });
+        pumping = true;
+        // setImmediate stays real: it yields to the code under test between two timers.
+        const pump = () => {
+            if (!pumping) return;
+            clock.next();
+            setImmediate(pump);
+        };
+        setImmediate(pump);
+    });
+
     afterEach(() => {
+        pumping = false;
+        timers.restore();
         sinon.restore();
     });
 

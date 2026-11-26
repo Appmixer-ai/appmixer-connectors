@@ -31,6 +31,12 @@ class FacebookClient {
         return response.data;
     }
 
+    async delete(path) {
+        const url = `${BASE_URL}${path}?` + new URLSearchParams({ access_token: this.accessToken }).toString();
+        const response = await this.context.httpRequest({ method: 'DELETE', url });
+        return response.data;
+    }
+
     /**
      * POST multipart form data (a form-data instance), e.g. a file upload.
      */
@@ -100,7 +106,7 @@ class FacebookClient {
 
 /**
  * Resolve the page access token + name and build a client scoped to the page.
- * Shared by NewPagePost and FindPagePosts so both issue the same authenticated requests.
+ * Shared by the page components (create, find, delete) so they issue the same authenticated requests.
  */
 async function getPageClient(context, pageId) {
 

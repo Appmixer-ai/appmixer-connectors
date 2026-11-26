@@ -683,7 +683,7 @@
             }
         },
         "14ca56fc-1744-561b-af9f-1803f73edff1": {
-            "type": "appmixer.google.drive.MakeApiCall",
+            "type": "appmixer.google.drive.GetFileMetadata",
             "x": 1728,
             "y": 784,
             "version": "1.0.0",
@@ -691,7 +691,7 @@
                 "autoRetry": false,
                 "onError": "stopFlow"
             },
-            "label": "MakeApiCall (GET folder)",
+            "label": "GetFileMetadata (folder)",
             "source": {
                 "in": {
                     "ace0a614-64e2-5ab9-98eb-2fa5bbabd6b2": [
@@ -706,17 +706,15 @@
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
-                                    "url": {
+                                    "fileId": {
                                         "840f27d2-5c9e-5321-804d-2cb036eaff0d": {
                                             "variable": "$.10becb35-6c1a-53e5-be67-2e53405e30fb.out.googleDriveFileMetadata.id",
                                             "functions": []
                                         }
-                                    },
-                                    "method": {}
+                                    }
                                 },
                                 "lambda": {
-                                    "url": "/files/{{{840f27d2-5c9e-5321-804d-2cb036eaff0d}}}?fields=id,name,mimeType",
-                                    "method": "GET"
+                                    "fileId": "{{{840f27d2-5c9e-5321-804d-2cb036eaff0d}}}"
                                 }
                             }
                         }
@@ -749,21 +747,12 @@
                                 "modifiers": {
                                     "expression": {
                                         "73af7afd-5d2c-576c-b639-19af872616cc": {
-                                            "variable": "$.14ca56fc-1744-561b-af9f-1803f73edff1.out.status",
+                                            "variable": "$.14ca56fc-1744-561b-af9f-1803f73edff1.out.googleDriveFileMetadata.mimeType",
                                             "functions": []
                                         },
                                         "ddb59ce8-dbe8-5b0b-a600-41fe063dc905": {
-                                            "variable": "$.14ca56fc-1744-561b-af9f-1803f73edff1.out.body",
-                                            "functions": [
-                                                {
-                                                    "name": "g_jsonPath",
-                                                    "params": [
-                                                        {
-                                                            "value": "$.name"
-                                                        }
-                                                    ]
-                                                }
-                                            ]
+                                            "variable": "$.14ca56fc-1744-561b-af9f-1803f73edff1.out.googleDriveFileMetadata.name",
+                                            "functions": []
                                         },
                                         "cadc63b6-cb9d-5df7-89d4-0cef57b3ce7a": {
                                             "variable": "$.3e973a38-019f-574a-9618-ed2c880b3a4d.out.folderName",
@@ -777,7 +766,7 @@
                                             {
                                                 "field": "{{{73af7afd-5d2c-576c-b639-19af872616cc}}}",
                                                 "assertion": "equal",
-                                                "expected": "200"
+                                                "expected": "application/vnd.google-apps.folder"
                                             },
                                             {
                                                 "field": "{{{ddb59ce8-dbe8-5b0b-a600-41fe063dc905}}}",

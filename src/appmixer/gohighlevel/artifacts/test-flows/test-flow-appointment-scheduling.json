@@ -1,5 +1,50 @@
 {
     "flow": {
+        "0afb5fa3-cd60-475a-a625-39401df675e9": {
+            "config": {
+                "properties": {
+                    "account": "69bd20b72e33e81a1e686f91"
+                },
+                "transform": {
+                    "in": {
+                        "33802334-31cf-5169-9a25-2f2a579151b0": {
+                            "out": {
+                                "lambda": {
+                                    "appointmentId": "{{{var-appointment-id}}}",
+                                    "appointmentStatus": "confirmed",
+                                    "title": "E2E Test Appointment Updated"
+                                },
+                                "modifiers": {
+                                    "appointmentId": {
+                                        "var-appointment-id": {
+                                            "functions": [],
+                                            "variable": "$.33802334-31cf-5169-9a25-2f2a579151b0.out.id"
+                                        }
+                                    },
+                                    "appointmentStatus": {},
+                                    "title": {}
+                                },
+                                "type": "json2new"
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "source": {
+                "in": {
+                    "33802334-31cf-5169-9a25-2f2a579151b0": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.gohighlevel.core.UpdateAppointment",
+            "x": 736,
+            "y": 336
+        },
         "0d18d15f-3fca-5e41-b2d3-6e21ec237000": {
             "config": {
                 "properties": {
@@ -15,14 +60,62 @@
                     "4e3ecc6f-88b8-55c9-ad97-f321a55cfa09": [
                         "out"
                     ],
+                    "9f8cee69-7bc9-4128-8cd7-db53efa07e24": [
+                        "out"
+                    ],
                     "caeca176-d348-5aea-8dd5-7d2e8751434d": [
                         "out"
                     ]
                 }
             },
             "type": "appmixer.utils.test.AfterAll",
-            "x": 1184,
+            "x": 1408,
             "y": 16
+        },
+        "27802c10-0c06-48d6-a32a-a900adb93861": {
+            "config": {
+                "properties": {
+                    "account": "69bd20b72e33e81a1e686f91"
+                },
+                "transform": {
+                    "in": {
+                        "0afb5fa3-cd60-475a-a625-39401df675e9": {
+                            "out": {
+                                "lambda": {
+                                    "headers": "[{\"key\": \"Version\", \"value\": \"2021-07-28\"}]",
+                                    "method": "GET",
+                                    "url": "/calendars/events/appointments/{{{var-appointment-id}}}"
+                                },
+                                "modifiers": {
+                                    "headers": {},
+                                    "method": {},
+                                    "url": {
+                                        "var-appointment-id": {
+                                            "functions": [],
+                                            "variable": "$.33802334-31cf-5169-9a25-2f2a579151b0.out.id"
+                                        }
+                                    }
+                                },
+                                "type": "json2new"
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "source": {
+                "in": {
+                    "0afb5fa3-cd60-475a-a625-39401df675e9": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.gohighlevel.core.MakeApiCall",
+            "x": 960,
+            "y": 336
         },
         "33802334-31cf-5169-9a25-2f2a579151b0": {
             "config": {
@@ -116,14 +209,10 @@
                         "0d18d15f-3fca-5e41-b2d3-6e21ec237000": {
                             "out": {
                                 "lambda": {
-                                    "headers": "[{\"key\": \"Version\", \"value\": \"2021-07-28\"}]",
-                                    "method": "DELETE",
-                                    "url": "/calendars/events/{{{var-appointment-id}}}"
+                                    "appointmentId": "{{{var-appointment-id}}}"
                                 },
                                 "modifiers": {
-                                    "headers": {},
-                                    "method": {},
-                                    "url": {
+                                    "appointmentId": {
                                         "var-appointment-id": {
                                             "functions": [],
                                             "variable": "$.33802334-31cf-5169-9a25-2f2a579151b0.out.id"
@@ -147,8 +236,8 @@
                     ]
                 }
             },
-            "type": "appmixer.gohighlevel.core.MakeApiCall",
-            "x": 1408,
+            "type": "appmixer.gohighlevel.core.DeleteAppointment",
+            "x": 1632,
             "y": 16
         },
         "4e3ecc6f-88b8-55c9-ad97-f321a55cfa09": {
@@ -278,6 +367,79 @@
             "type": "appmixer.utils.controls.OnStart",
             "x": 64,
             "y": 16
+        },
+        "9f8cee69-7bc9-4128-8cd7-db53efa07e24": {
+            "config": {
+                "transform": {
+                    "in": {
+                        "27802c10-0c06-48d6-a32a-a900adb93861": {
+                            "out": {
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "assertion": "equal",
+                                                "expected": "confirmed",
+                                                "field": "{{{status-after-var}}}"
+                                            },
+                                            {
+                                                "assertion": "equal",
+                                                "expected": "E2E Test Appointment Updated",
+                                                "field": "{{{title-after-var}}}"
+                                            }
+                                        ]
+                                    }
+                                },
+                                "modifiers": {
+                                    "expression": {
+                                        "status-after-var": {
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$.appointment.appointmentStatus"
+                                                        }
+                                                    ]
+                                                }
+                                            ],
+                                            "variable": "$.27802c10-0c06-48d6-a32a-a900adb93861.out.body"
+                                        },
+                                        "title-after-var": {
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$.appointment.title"
+                                                        }
+                                                    ]
+                                                }
+                                            ],
+                                            "variable": "$.27802c10-0c06-48d6-a32a-a900adb93861.out.body"
+                                        }
+                                    }
+                                },
+                                "type": "json2new"
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "source": {
+                "in": {
+                    "27802c10-0c06-48d6-a32a-a900adb93861": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.utils.test.Assert",
+            "x": 1184,
+            "y": 336
         },
         "afd3b15e-b99c-5056-afb5-fb5f48af6d1a": {
             "config": {
@@ -415,7 +577,7 @@
                 }
             },
             "type": "appmixer.utils.test.ProcessE2EResults",
-            "x": 1632,
+            "x": 1856,
             "y": 16
         }
     },

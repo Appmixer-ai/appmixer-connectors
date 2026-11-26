@@ -4,6 +4,7 @@ const assert = require('assert');
 const sinon = require('sinon');
 
 const CreatePost = require('../../core/CreatePost/CreatePost');
+const DeletePost = require('../../core/DeletePost/DeletePost');
 const ListOrganizations = require('../../core/ListOrganizations/ListOrganizations');
 const MakeApiCall = require('../../core/MakeApiCall/MakeApiCall');
 const { VERSION_HEADER } = require('../../lib');
@@ -404,6 +405,64 @@ describe('linkedinPages core', function() {
 
             assert.deepStrictEqual(ListOrganizations.organizationsToSelectArray(undefined), []);
             assert.deepStrictEqual(ListOrganizations.organizationsToSelectArray({}), []);
+        });
+    });
+
+    describe('DeletePost', function() {
+
+        it('deletes the post by its encoded URN and returns an empty object', async function() {
+
+            const context = createContext({ postId: ' urn:li:share:7241234567890123456 ' });
+            context.httpRequest.resolves({ status: 204, headers: {} });
+
+            await DeletePost.receive(context);
+
+            const request = context.httpRequest.firstCall.args[0];
+            assert.strictEqual(request.method, 'DELETE');
+            assert.strictEqual(request.url, 'https://api.linkedin.com/rest/posts/urn%3Ali%3Ashare%3A7241234567890123456');
+            assert.strictEqual(request.headers.Authorization, 'Bearer token-1');
+            assert.strictEqual(request.headers['LinkedIn-Version'], VERSION_HEADER);
+            assert.strictEqual(request.headers['X-RestLi-Method'], 'DELETE');
+            assert.deepStrictEqual(context.sendJson.firstCall.args, [{}, 'out']);
+        });
+
+        it('accepts an already URL-encoded ugcPost URN', async function() {
+
+            const context = createContext({ postId: 'urn%3Ali%3AugcPost%3A123' });
+            context.httpRequest.resolves({ status: 204, headers: {} });
+
+            await DeletePost.receive(context);
+
+            assert.strictEqual(context.httpRequest.firstCall.args[0].url, 'https://api.linkedin.com/rest/posts/urn%3Ali%3AugcPost%3A123');
+        });
+
+        it('rejects a missing or malformed post ID without calling the API', async function() {
+
+            const missing = createContext({});
+            await assert.rejects(DeletePost.receive(missing), /Post ID is required/);
+            const malformed = createContext({ postId: '../organizationAcls' });
+            await assert.rejects(DeletePost.receive(malformed), /Invalid post ID/);
+            assert.strictEqual(malformed.httpRequest.callCount, 0);
+        });
+
+        it('explains a 403 response', async function() {
+
+            const context = createContext({ postId: 'urn:li:share:1' });
+            context.httpRequest.rejects(httpError(403, { message: 'Not enough permissions' }));
+
+            await assert.rejects(DeletePost.receive(context), err => {
+                assert.strictEqual(err.name, 'CancelError');
+                assert.match(err.message, /403 Forbidden.*Not enough permissions/);
+                return true;
+            });
+        });
+
+        it('passes other errors through', async function() {
+
+            const context = createContext({ postId: 'urn:li:share:1' });
+            context.httpRequest.rejects(httpError(404, {}));
+
+            await assert.rejects(DeletePost.receive(context), /status code 404/);
         });
     });
 

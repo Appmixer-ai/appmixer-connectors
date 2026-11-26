@@ -266,6 +266,9 @@
                     ],
                     "e9fa61e3-c845-4cde-a474-d152fe67d639": [
                         "out"
+                    ],
+                    "d7a3b9e1-6c2f-4a85-b0d4-8e1f3a6c2b97": [
+                        "out"
                     ]
                 }
             },
@@ -322,6 +325,96 @@
                 "onError": "stopFlow"
             },
             "version": "1.0.1"
+        },
+        "c4f1e2a7-3b5d-4e8f-9a61-2d7b8c0e5f13": {
+            "type": "appmixer.posthog.core.MakeApiCall",
+            "x": 416,
+            "y": 607,
+            "source": {
+                "in": {
+                    "b1269d42-e428-4b9e-b2ec-654f67897189": [
+                        "out"
+                    ]
+                }
+            },
+            "label": "MakeApiCall (under test)",
+            "config": {
+                "transform": {
+                    "in": {
+                        "b1269d42-e428-4b9e-b2ec-654f67897189": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {},
+                                "lambda": {
+                                    "url": "/api/projects/244976/",
+                                    "method": "GET"
+                                }
+                            }
+                        }
+                    }
+                },
+                "properties": {
+                    "account": "6a7adcd8b0d69cdb741fd08c"
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "d7a3b9e1-6c2f-4a85-b0d4-8e1f3a6c2b97": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 624,
+            "y": 607,
+            "source": {
+                "in": {
+                    "c4f1e2a7-3b5d-4e8f-9a61-2d7b8c0e5f13": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "c4f1e2a7-3b5d-4e8f-9a61-2d7b8c0e5f13": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "e2b8c4d6-1f7a-4c39-8d5e-6a0b2f9c1e48": {
+                                            "variable": "$.c4f1e2a7-3b5d-4e8f-9a61-2d7b8c0e5f13.out.body",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$.id"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "assertion": "notEmpty",
+                                                "field": "{{{e2b8c4d6-1f7a-4c39-8d5e-6a0b2f9c1e48}}}"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
         }
     },
     "name": "E2E PostHog - Discovery",

@@ -301,6 +301,108 @@
                 "onError": "stopFlow"
             }
         },
+        "592d7e35-3e50-482b-93d6-2a780d720b9b": {
+            "type": "appmixer.microsoft.mail.MakeApiCall",
+            "x": 1200,
+            "y": 420,
+            "source": {
+                "in": {
+                    "f2f4595d-d7ed-41bb-bb57-56cb4936c4a1": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "account": "6a466fd9b97d4609b92a5f6a"
+                },
+                "transform": {
+                    "in": {
+                        "f2f4595d-d7ed-41bb-bb57-56cb4936c4a1": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "url": {},
+                                    "method": {}
+                                },
+                                "lambda": {
+                                    "url": "me/mailFolders/inbox",
+                                    "method": "GET"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "c120be31-4e58-4461-956f-277f97f1230d": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1440,
+            "y": 420,
+            "source": {
+                "in": {
+                    "592d7e35-3e50-482b-93d6-2a780d720b9b": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "592d7e35-3e50-482b-93d6-2a780d720b9b": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "3452ae0c-d25d-4366-8d91-8bc021ef98f3": {
+                                            "variable": "$.592d7e35-3e50-482b-93d6-2a780d720b9b.out.status",
+                                            "functions": []
+                                        },
+                                        "8070c45a-bbe2-405b-8750-38cbf8ca7f3d": {
+                                            "variable": "$.592d7e35-3e50-482b-93d6-2a780d720b9b.out.body",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$.id"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "assertion": "equal",
+                                                "field": "{{{3452ae0c-d25d-4366-8d91-8bc021ef98f3}}}",
+                                                "expected": 200
+                                            },
+                                            {
+                                                "assertion": "notEmpty",
+                                                "field": "{{{8070c45a-bbe2-405b-8750-38cbf8ca7f3d}}}"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
         "06bd7829-c91d-4f1e-be63-f127c601925f": {
             "type": "appmixer.utils.test.AfterAll",
             "x": 1440,
@@ -314,6 +416,9 @@
                         "out"
                     ],
                     "14e63279-13af-4bf8-9e53-a87d2850b810": [
+                        "out"
+                    ],
+                    "c120be31-4e58-4461-956f-277f97f1230d": [
                         "out"
                     ]
                 }
@@ -350,15 +455,7 @@
                                 "type": "json2new",
                                 "modifiers": {
                                     "recipients": {},
-                                    "testCase": {
-                                        "c8408cb6-e7e5-4b3e-8556-1eaf97517fca": {
-                                            "functions": [
-                                                {
-                                                    "name": "g_flowName"
-                                                }
-                                            ]
-                                        }
-                                    },
+                                    "testCase": {},
                                     "result": {
                                         "e1b506f2-4a71-4f82-b31d-d277045e824e": {
                                             "variable": "$.06bd7829-c91d-4f1e-be63-f127c601925f.out",
@@ -368,7 +465,7 @@
                                 },
                                 "lambda": {
                                     "recipients": "test@appmixer.ai",
-                                    "testCase": "{{{c8408cb6-e7e5-4b3e-8556-1eaf97517fca}}}",
+                                    "testCase": "E2E Microsoft Mail - Lists",
                                     "result": "{{{e1b506f2-4a71-4f82-b31d-d277045e824e}}}"
                                 }
                             }

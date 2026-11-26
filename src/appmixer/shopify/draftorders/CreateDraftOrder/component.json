@@ -1,0 +1,1366 @@
+{
+    "name": "appmixer.shopify.draftorders.CreateDraftOrder",
+    "description": "Create a draft order, for example a quote or an order taken by phone, that the customer can pay through its invoice. Returns the draft order. Needs the write_draft_orders access scope on the Shopify app.",
+    "author": "Appmixer <info@appmixer.com>",
+    "private": false,
+    "auth": {
+        "service": "appmixer:shopify",
+        "scope": [
+            "read_draft_orders",
+            "write_orders"
+        ]
+    },
+    "quota": {
+        "manager": "appmixer:shopify",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "lineItems": {
+                        "type": "object"
+                    },
+                    "customerId": {
+                        "type": "string"
+                    },
+                    "email": {
+                        "type": "string"
+                    },
+                    "phone": {
+                        "type": "string"
+                    },
+                    "note": {
+                        "type": "string"
+                    },
+                    "tags": {
+                        "type": "string"
+                    },
+                    "poNumber": {
+                        "type": "string"
+                    },
+                    "taxExempt": {
+                        "type": "boolean"
+                    },
+                    "shippingFirstName": {
+                        "type": "string"
+                    },
+                    "shippingLastName": {
+                        "type": "string"
+                    },
+                    "shippingCompany": {
+                        "type": "string"
+                    },
+                    "shippingAddress1": {
+                        "type": "string"
+                    },
+                    "shippingAddress2": {
+                        "type": "string"
+                    },
+                    "shippingCity": {
+                        "type": "string"
+                    },
+                    "shippingProvinceCode": {
+                        "type": "string"
+                    },
+                    "shippingCountryCode": {
+                        "type": "string"
+                    },
+                    "shippingZip": {
+                        "type": "string"
+                    },
+                    "shippingPhone": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "lineItems"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "lineItems": {
+                        "type": "expression",
+                        "label": "Line Items",
+                        "index": 1,
+                        "levels": [
+                            "ADD"
+                        ],
+                        "tooltip": "The products of the draft order. Each item is either a product variant of your store, or a custom item with its own title and price.",
+                        "fields": {
+                            "itemType": {
+                                "type": "select",
+                                "label": "Item Type",
+                                "index": 1,
+                                "defaultValue": "variant",
+                                "options": [
+                                    {
+                                        "value": "variant",
+                                        "label": "Product variant"
+                                    },
+                                    {
+                                        "value": "custom",
+                                        "label": "Custom item"
+                                    }
+                                ]
+                            },
+                            "variantId": {
+                                "type": "text",
+                                "label": "Product Variant",
+                                "index": 2,
+                                "tooltip": "Pick a product variant, or enter its ID (global or numeric). Its title and price are taken from the product.",
+                                "source": {
+                                    "url": "/component/appmixer/shopify/products/FindProducts?outPort=out",
+                                    "data": {
+                                        "messages": {
+                                            "in/outputType": "array"
+                                        },
+                                        "properties": {
+                                            "isSource": true
+                                        },
+                                        "transform": "./FindProducts#variantsToSelectArray"
+                                    }
+                                },
+                                "when": {
+                                    "eq": {
+                                        "./itemType": "variant"
+                                    }
+                                }
+                            },
+                            "title": {
+                                "type": "text",
+                                "label": "Title",
+                                "index": 3,
+                                "tooltip": "The title of the custom item.",
+                                "when": {
+                                    "eq": {
+                                        "./itemType": "custom"
+                                    }
+                                }
+                            },
+                            "price": {
+                                "type": "number",
+                                "label": "Unit Price",
+                                "index": 4,
+                                "tooltip": "The price of one custom item, in the store currency.",
+                                "when": {
+                                    "eq": {
+                                        "./itemType": "custom"
+                                    }
+                                }
+                            },
+                            "sku": {
+                                "type": "text",
+                                "label": "SKU",
+                                "index": 5,
+                                "when": {
+                                    "eq": {
+                                        "./itemType": "custom"
+                                    }
+                                }
+                            },
+                            "quantity": {
+                                "type": "number",
+                                "label": "Quantity",
+                                "index": 6,
+                                "defaultValue": 1,
+                                "tooltip": "How many units are ordered."
+                            },
+                            "taxable": {
+                                "type": "toggle",
+                                "label": "Taxable",
+                                "index": 7,
+                                "defaultValue": true,
+                                "when": {
+                                    "eq": {
+                                        "./itemType": "custom"
+                                    }
+                                }
+                            },
+                            "requiresShipping": {
+                                "type": "toggle",
+                                "label": "Requires Shipping",
+                                "index": 8,
+                                "defaultValue": true,
+                                "when": {
+                                    "eq": {
+                                        "./itemType": "custom"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "customerId": {
+                        "type": "text",
+                        "label": "Customer",
+                        "tooltip": "Pick the customer, or enter the customer ID (global or numeric).",
+                        "source": {
+                            "url": "/component/appmixer/shopify/customers/FindCustomers?outPort=out",
+                            "data": {
+                                "messages": {
+                                    "in/outputType": "array"
+                                },
+                                "properties": {
+                                    "isSource": true
+                                },
+                                "transform": "./FindCustomers#customersToSelectArray"
+                            }
+                        },
+                        "index": 2
+                    },
+                    "email": {
+                        "type": "text",
+                        "label": "Email",
+                        "tooltip": "The customer's email address for the draft order.",
+                        "index": 3
+                    },
+                    "phone": {
+                        "type": "text",
+                        "label": "Phone",
+                        "tooltip": "The customer's phone number, in E.164 format (for example +15145556789).",
+                        "index": 4
+                    },
+                    "note": {
+                        "type": "textarea",
+                        "label": "Note",
+                        "tooltip": "A note for the draft order.",
+                        "index": 5
+                    },
+                    "tags": {
+                        "type": "text",
+                        "label": "Tags",
+                        "tooltip": "Comma-separated tags.",
+                        "index": 6
+                    },
+                    "poNumber": {
+                        "type": "text",
+                        "label": "PO Number",
+                        "tooltip": "The purchase order number.",
+                        "index": 7
+                    },
+                    "taxExempt": {
+                        "type": "toggle",
+                        "label": "Tax Exempt",
+                        "tooltip": "Whether the draft order is exempt from taxes.",
+                        "index": 8
+                    },
+                    "shippingFirstName": {
+                        "type": "text",
+                        "label": "First Name",
+                        "index": 20,
+                        "group": "shippingAddress"
+                    },
+                    "shippingLastName": {
+                        "type": "text",
+                        "label": "Last Name",
+                        "index": 21,
+                        "group": "shippingAddress"
+                    },
+                    "shippingCompany": {
+                        "type": "text",
+                        "label": "Company",
+                        "index": 22,
+                        "group": "shippingAddress"
+                    },
+                    "shippingAddress1": {
+                        "type": "text",
+                        "label": "Address Line 1",
+                        "index": 23,
+                        "group": "shippingAddress"
+                    },
+                    "shippingAddress2": {
+                        "type": "text",
+                        "label": "Address Line 2",
+                        "index": 24,
+                        "group": "shippingAddress"
+                    },
+                    "shippingCity": {
+                        "type": "text",
+                        "label": "City",
+                        "index": 25,
+                        "group": "shippingAddress"
+                    },
+                    "shippingProvinceCode": {
+                        "type": "text",
+                        "label": "Province Code",
+                        "index": 26,
+                        "group": "shippingAddress",
+                        "tooltip": "State or province code, for example <code>ON</code> or <code>CA</code>. Names are not accepted."
+                    },
+                    "shippingCountryCode": {
+                        "type": "text",
+                        "label": "Country Code",
+                        "index": 27,
+                        "group": "shippingAddress",
+                        "tooltip": "Two-letter ISO country code, for example <code>CZ</code> or <code>US</code>. Names are not accepted."
+                    },
+                    "shippingZip": {
+                        "type": "text",
+                        "label": "Postal Code",
+                        "index": 28,
+                        "group": "shippingAddress"
+                    },
+                    "shippingPhone": {
+                        "type": "text",
+                        "label": "Phone",
+                        "index": 29,
+                        "group": "shippingAddress"
+                    }
+                },
+                "groups": {
+                    "shippingAddress": {
+                        "label": "Shipping Address",
+                        "index": 1
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "schema": {
+                "type": "object",
+                "required": [
+                    "id",
+                    "legacyResourceId",
+                    "name",
+                    "status",
+                    "tags",
+                    "taxExempt",
+                    "taxesIncluded",
+                    "currencyCode",
+                    "presentmentCurrencyCode",
+                    "totalQuantityOfLineItems",
+                    "createdAt",
+                    "updatedAt",
+                    "customAttributes",
+                    "taxLines",
+                    "subtotalPriceSet",
+                    "totalDiscountsSet",
+                    "totalShippingPriceSet",
+                    "totalTaxSet",
+                    "totalPriceSet",
+                    "lineItems"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "title": "Draft Order ID",
+                        "example": "gid://shopify/DraftOrder/1698576236625"
+                    },
+                    "legacyResourceId": {
+                        "type": "string",
+                        "title": "Legacy Resource ID",
+                        "example": "1698576236625"
+                    },
+                    "name": {
+                        "type": "string",
+                        "title": "Name",
+                        "example": "#D14"
+                    },
+                    "status": {
+                        "type": "string",
+                        "title": "Status",
+                        "example": "OPEN"
+                    },
+                    "email": {
+                        "type": "string",
+                        "title": "Email",
+                        "example": "jane.doe@example.com"
+                    },
+                    "phone": {
+                        "type": "string",
+                        "title": "Phone",
+                        "example": "+16135550135"
+                    },
+                    "note2": {
+                        "type": "string",
+                        "title": "Note",
+                        "example": "Call before delivery"
+                    },
+                    "tags": {
+                        "type": "array",
+                        "title": "Tags",
+                        "items": {
+                            "type": "string"
+                        },
+                        "example": [
+                            "wholesale"
+                        ]
+                    },
+                    "poNumber": {
+                        "type": "string",
+                        "title": "PO Number",
+                        "example": "PO-2026-118"
+                    },
+                    "taxExempt": {
+                        "type": "boolean",
+                        "title": "Tax Exempt",
+                        "example": false
+                    },
+                    "taxesIncluded": {
+                        "type": "boolean",
+                        "title": "Taxes Included",
+                        "example": false
+                    },
+                    "currencyCode": {
+                        "type": "string",
+                        "title": "Currency Code",
+                        "example": "USD"
+                    },
+                    "presentmentCurrencyCode": {
+                        "type": "string",
+                        "title": "Presentment Currency Code",
+                        "example": "USD"
+                    },
+                    "invoiceUrl": {
+                        "type": "string",
+                        "title": "Invoice URL",
+                        "example": "https://example-store.myshopify.com/107961745489/invoices/51ca2234d7197be947328766b6beb411"
+                    },
+                    "invoiceSentAt": {
+                        "type": "string",
+                        "title": "Invoice Sent At",
+                        "example": "2026-10-02T15:30:00Z",
+                        "format": "date-time"
+                    },
+                    "reserveInventoryUntil": {
+                        "type": "string",
+                        "title": "Reserve Inventory Until",
+                        "example": "2026-10-09T15:26:06Z",
+                        "format": "date-time"
+                    },
+                    "totalQuantityOfLineItems": {
+                        "type": "integer",
+                        "title": "Total Quantity",
+                        "example": 1
+                    },
+                    "createdAt": {
+                        "type": "string",
+                        "title": "Created At",
+                        "example": "2026-10-02T15:26:06Z",
+                        "format": "date-time"
+                    },
+                    "updatedAt": {
+                        "type": "string",
+                        "title": "Updated At",
+                        "example": "2026-10-02T15:27:07Z",
+                        "format": "date-time"
+                    },
+                    "completedAt": {
+                        "type": "string",
+                        "title": "Completed At",
+                        "example": "2026-10-04T10:00:00Z",
+                        "format": "date-time"
+                    },
+                    "order": {
+                        "type": "object",
+                        "title": "Order",
+                        "required": [
+                            "id",
+                            "legacyResourceId",
+                            "name"
+                        ],
+                        "properties": {
+                            "id": {
+                                "type": "string",
+                                "title": "Order.ID",
+                                "example": "gid://shopify/Order/7801814876320"
+                            },
+                            "legacyResourceId": {
+                                "type": "string",
+                                "title": "Order.Legacy Resource ID",
+                                "example": "7801814876320"
+                            },
+                            "name": {
+                                "type": "string",
+                                "title": "Order.Name",
+                                "example": "#1018"
+                            }
+                        }
+                    },
+                    "customer": {
+                        "type": "object",
+                        "title": "Customer",
+                        "required": [
+                            "id",
+                            "legacyResourceId",
+                            "displayName"
+                        ],
+                        "properties": {
+                            "id": {
+                                "type": "string",
+                                "title": "Customer.ID",
+                                "example": "gid://shopify/Customer/27598980087889"
+                            },
+                            "legacyResourceId": {
+                                "type": "string",
+                                "title": "Customer.Legacy Resource ID",
+                                "example": "27598980087889"
+                            },
+                            "displayName": {
+                                "type": "string",
+                                "title": "Customer.Display Name",
+                                "example": "Jane Doe"
+                            },
+                            "defaultEmailAddress": {
+                                "type": "object",
+                                "title": "Customer.Default Email Address",
+                                "required": [
+                                    "emailAddress"
+                                ],
+                                "properties": {
+                                    "emailAddress": {
+                                        "type": "string",
+                                        "title": "Customer.Default Email Address.Email Address",
+                                        "example": "jane.doe@example.com"
+                                    }
+                                }
+                            },
+                            "defaultPhoneNumber": {
+                                "type": "object",
+                                "title": "Customer.Default Phone Number",
+                                "required": [
+                                    "phoneNumber"
+                                ],
+                                "properties": {
+                                    "phoneNumber": {
+                                        "type": "string",
+                                        "title": "Customer.Default Phone Number.Phone Number",
+                                        "example": "+16135550135"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "customAttributes": {
+                        "type": "array",
+                        "title": "Custom Attributes",
+                        "items": {
+                            "type": "object",
+                            "required": [
+                                "key"
+                            ],
+                            "properties": {
+                                "key": {
+                                    "type": "string",
+                                    "title": "Key",
+                                    "example": "channel"
+                                },
+                                "value": {
+                                    "type": "string",
+                                    "title": "Value",
+                                    "example": "phone"
+                                }
+                            }
+                        },
+                        "example": [
+                            {
+                                "key": "channel",
+                                "value": "phone"
+                            }
+                        ]
+                    },
+                    "appliedDiscount": {
+                        "type": "object",
+                        "title": "Applied Discount",
+                        "required": [
+                            "description",
+                            "value",
+                            "valueType",
+                            "amountSet"
+                        ],
+                        "properties": {
+                            "title": {
+                                "type": "string",
+                                "title": "Applied Discount.Title",
+                                "example": "Loyalty"
+                            },
+                            "description": {
+                                "type": "string",
+                                "title": "Applied Discount.Description",
+                                "example": "Returning customer"
+                            },
+                            "value": {
+                                "type": "integer",
+                                "title": "Applied Discount.Value",
+                                "example": 10
+                            },
+                            "valueType": {
+                                "type": "string",
+                                "title": "Applied Discount.Value Type",
+                                "example": "PERCENTAGE"
+                            },
+                            "amountSet": {
+                                "type": "object",
+                                "title": "Applied Discount.Amount",
+                                "required": [
+                                    "shopMoney"
+                                ],
+                                "properties": {
+                                    "shopMoney": {
+                                        "type": "object",
+                                        "title": "Applied Discount.Amount.Shop Money",
+                                        "required": [
+                                            "amount",
+                                            "currencyCode"
+                                        ],
+                                        "properties": {
+                                            "amount": {
+                                                "type": "string",
+                                                "title": "Applied Discount.Amount.Shop Money.Amount",
+                                                "example": "1.0"
+                                            },
+                                            "currencyCode": {
+                                                "type": "string",
+                                                "title": "Applied Discount.Amount.Shop Money.Currency Code",
+                                                "example": "USD"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "shippingLine": {
+                        "type": "object",
+                        "title": "Shipping Line",
+                        "required": [
+                            "title",
+                            "custom",
+                            "originalPriceSet"
+                        ],
+                        "properties": {
+                            "title": {
+                                "type": "string",
+                                "title": "Shipping Line.Title",
+                                "example": "Standard Shipping"
+                            },
+                            "code": {
+                                "type": "string",
+                                "title": "Shipping Line.Code",
+                                "example": "standard"
+                            },
+                            "custom": {
+                                "type": "boolean",
+                                "title": "Shipping Line.Custom",
+                                "example": true
+                            },
+                            "originalPriceSet": {
+                                "type": "object",
+                                "title": "Shipping Line.Original Price",
+                                "required": [
+                                    "shopMoney"
+                                ],
+                                "properties": {
+                                    "shopMoney": {
+                                        "type": "object",
+                                        "title": "Shipping Line.Original Price.Shop Money",
+                                        "required": [
+                                            "amount",
+                                            "currencyCode"
+                                        ],
+                                        "properties": {
+                                            "amount": {
+                                                "type": "string",
+                                                "title": "Shipping Line.Original Price.Shop Money.Amount",
+                                                "example": "5.0"
+                                            },
+                                            "currencyCode": {
+                                                "type": "string",
+                                                "title": "Shipping Line.Original Price.Shop Money.Currency Code",
+                                                "example": "USD"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "taxLines": {
+                        "type": "array",
+                        "title": "Tax Lines",
+                        "items": {
+                            "type": "object",
+                            "required": [
+                                "title",
+                                "priceSet"
+                            ],
+                            "properties": {
+                                "title": {
+                                    "type": "string",
+                                    "title": "Title",
+                                    "example": "HST"
+                                },
+                                "rate": {
+                                    "type": "number",
+                                    "title": "Rate",
+                                    "example": 0.13
+                                },
+                                "priceSet": {
+                                    "type": "object",
+                                    "title": "Price",
+                                    "required": [
+                                        "shopMoney"
+                                    ],
+                                    "properties": {
+                                        "shopMoney": {
+                                            "type": "object",
+                                            "title": "Price.Shop Money",
+                                            "required": [
+                                                "amount",
+                                                "currencyCode"
+                                            ],
+                                            "properties": {
+                                                "amount": {
+                                                    "type": "string",
+                                                    "title": "Price.Shop Money.Amount",
+                                                    "example": "1.3"
+                                                },
+                                                "currencyCode": {
+                                                    "type": "string",
+                                                    "title": "Price.Shop Money.Currency Code",
+                                                    "example": "USD"
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        "example": [
+                            {
+                                "title": "HST",
+                                "rate": 0.13,
+                                "priceSet": {
+                                    "shopMoney": {
+                                        "amount": "1.3",
+                                        "currencyCode": "USD"
+                                    }
+                                }
+                            }
+                        ]
+                    },
+                    "subtotalPriceSet": {
+                        "type": "object",
+                        "title": "Subtotal Price",
+                        "required": [
+                            "shopMoney"
+                        ],
+                        "properties": {
+                            "shopMoney": {
+                                "type": "object",
+                                "title": "Subtotal Price.Shop Money",
+                                "required": [
+                                    "amount",
+                                    "currencyCode"
+                                ],
+                                "properties": {
+                                    "amount": {
+                                        "type": "string",
+                                        "title": "Subtotal Price.Shop Money.Amount",
+                                        "example": "9.99"
+                                    },
+                                    "currencyCode": {
+                                        "type": "string",
+                                        "title": "Subtotal Price.Shop Money.Currency Code",
+                                        "example": "USD"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "totalDiscountsSet": {
+                        "type": "object",
+                        "title": "Total Discounts",
+                        "required": [
+                            "shopMoney"
+                        ],
+                        "properties": {
+                            "shopMoney": {
+                                "type": "object",
+                                "title": "Total Discounts.Shop Money",
+                                "required": [
+                                    "amount",
+                                    "currencyCode"
+                                ],
+                                "properties": {
+                                    "amount": {
+                                        "type": "string",
+                                        "title": "Total Discounts.Shop Money.Amount",
+                                        "example": "0.0"
+                                    },
+                                    "currencyCode": {
+                                        "type": "string",
+                                        "title": "Total Discounts.Shop Money.Currency Code",
+                                        "example": "USD"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "totalShippingPriceSet": {
+                        "type": "object",
+                        "title": "Total Shipping Price",
+                        "required": [
+                            "shopMoney"
+                        ],
+                        "properties": {
+                            "shopMoney": {
+                                "type": "object",
+                                "title": "Total Shipping Price.Shop Money",
+                                "required": [
+                                    "amount",
+                                    "currencyCode"
+                                ],
+                                "properties": {
+                                    "amount": {
+                                        "type": "string",
+                                        "title": "Total Shipping Price.Shop Money.Amount",
+                                        "example": "5.0"
+                                    },
+                                    "currencyCode": {
+                                        "type": "string",
+                                        "title": "Total Shipping Price.Shop Money.Currency Code",
+                                        "example": "USD"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "totalTaxSet": {
+                        "type": "object",
+                        "title": "Total Tax",
+                        "required": [
+                            "shopMoney"
+                        ],
+                        "properties": {
+                            "shopMoney": {
+                                "type": "object",
+                                "title": "Total Tax.Shop Money",
+                                "required": [
+                                    "amount",
+                                    "currencyCode"
+                                ],
+                                "properties": {
+                                    "amount": {
+                                        "type": "string",
+                                        "title": "Total Tax.Shop Money.Amount",
+                                        "example": "1.3"
+                                    },
+                                    "currencyCode": {
+                                        "type": "string",
+                                        "title": "Total Tax.Shop Money.Currency Code",
+                                        "example": "USD"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "totalPriceSet": {
+                        "type": "object",
+                        "title": "Total Price",
+                        "required": [
+                            "shopMoney"
+                        ],
+                        "properties": {
+                            "shopMoney": {
+                                "type": "object",
+                                "title": "Total Price.Shop Money",
+                                "required": [
+                                    "amount",
+                                    "currencyCode"
+                                ],
+                                "properties": {
+                                    "amount": {
+                                        "type": "string",
+                                        "title": "Total Price.Shop Money.Amount",
+                                        "example": "16.29"
+                                    },
+                                    "currencyCode": {
+                                        "type": "string",
+                                        "title": "Total Price.Shop Money.Currency Code",
+                                        "example": "USD"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "shippingAddress": {
+                        "type": "object",
+                        "title": "Shipping Address",
+                        "required": [
+                            "id"
+                        ],
+                        "properties": {
+                            "id": {
+                                "type": "string",
+                                "title": "Shipping Address.ID",
+                                "example": "gid://shopify/MailingAddress/38344136425553?model_name=CustomerAddress"
+                            },
+                            "firstName": {
+                                "type": "string",
+                                "title": "Shipping Address.First Name",
+                                "example": "Jane"
+                            },
+                            "lastName": {
+                                "type": "string",
+                                "title": "Shipping Address.Last Name",
+                                "example": "Doe"
+                            },
+                            "company": {
+                                "type": "string",
+                                "title": "Shipping Address.Company",
+                                "example": "Acme Inc."
+                            },
+                            "address1": {
+                                "type": "string",
+                                "title": "Shipping Address.Address Line 1",
+                                "example": "150 Elgin Street"
+                            },
+                            "address2": {
+                                "type": "string",
+                                "title": "Shipping Address.Address Line 2",
+                                "example": "Suite 800"
+                            },
+                            "city": {
+                                "type": "string",
+                                "title": "Shipping Address.City",
+                                "example": "Ottawa"
+                            },
+                            "province": {
+                                "type": "string",
+                                "title": "Shipping Address.Province",
+                                "example": "Ontario"
+                            },
+                            "provinceCode": {
+                                "type": "string",
+                                "title": "Shipping Address.Province Code",
+                                "example": "ON"
+                            },
+                            "country": {
+                                "type": "string",
+                                "title": "Shipping Address.Country",
+                                "example": "Canada"
+                            },
+                            "countryCodeV2": {
+                                "type": "string",
+                                "title": "Shipping Address.Country Code",
+                                "example": "CA"
+                            },
+                            "zip": {
+                                "type": "string",
+                                "title": "Shipping Address.ZIP",
+                                "example": "K2P 1L4"
+                            },
+                            "phone": {
+                                "type": "string",
+                                "title": "Shipping Address.Phone",
+                                "example": "+16135550135"
+                            }
+                        }
+                    },
+                    "billingAddress": {
+                        "type": "object",
+                        "title": "Billing Address",
+                        "required": [
+                            "id"
+                        ],
+                        "properties": {
+                            "id": {
+                                "type": "string",
+                                "title": "Billing Address.ID",
+                                "example": "gid://shopify/MailingAddress/38344136425553?model_name=CustomerAddress"
+                            },
+                            "firstName": {
+                                "type": "string",
+                                "title": "Billing Address.First Name",
+                                "example": "Jane"
+                            },
+                            "lastName": {
+                                "type": "string",
+                                "title": "Billing Address.Last Name",
+                                "example": "Doe"
+                            },
+                            "company": {
+                                "type": "string",
+                                "title": "Billing Address.Company",
+                                "example": "Acme Inc."
+                            },
+                            "address1": {
+                                "type": "string",
+                                "title": "Billing Address.Address Line 1",
+                                "example": "150 Elgin Street"
+                            },
+                            "address2": {
+                                "type": "string",
+                                "title": "Billing Address.Address Line 2",
+                                "example": "Suite 800"
+                            },
+                            "city": {
+                                "type": "string",
+                                "title": "Billing Address.City",
+                                "example": "Ottawa"
+                            },
+                            "province": {
+                                "type": "string",
+                                "title": "Billing Address.Province",
+                                "example": "Ontario"
+                            },
+                            "provinceCode": {
+                                "type": "string",
+                                "title": "Billing Address.Province Code",
+                                "example": "ON"
+                            },
+                            "country": {
+                                "type": "string",
+                                "title": "Billing Address.Country",
+                                "example": "Canada"
+                            },
+                            "countryCodeV2": {
+                                "type": "string",
+                                "title": "Billing Address.Country Code",
+                                "example": "CA"
+                            },
+                            "zip": {
+                                "type": "string",
+                                "title": "Billing Address.ZIP",
+                                "example": "K2P 1L4"
+                            },
+                            "phone": {
+                                "type": "string",
+                                "title": "Billing Address.Phone",
+                                "example": "+16135550135"
+                            }
+                        }
+                    },
+                    "lineItems": {
+                        "type": "array",
+                        "title": "Line Items",
+                        "items": {
+                            "type": "object",
+                            "required": [
+                                "id",
+                                "name",
+                                "title",
+                                "quantity",
+                                "custom",
+                                "requiresShipping",
+                                "taxable",
+                                "isGiftCard",
+                                "originalUnitPriceSet",
+                                "originalTotalSet",
+                                "discountedTotalSet"
+                            ],
+                            "properties": {
+                                "id": {
+                                    "type": "string",
+                                    "title": "ID",
+                                    "example": "gid://shopify/DraftOrderLineItem/59738255294545"
+                                },
+                                "name": {
+                                    "type": "string",
+                                    "title": "Name",
+                                    "example": "Gift Card - $10"
+                                },
+                                "title": {
+                                    "type": "string",
+                                    "title": "Title",
+                                    "example": "Gift Card"
+                                },
+                                "variantTitle": {
+                                    "type": "string",
+                                    "title": "Variant Title",
+                                    "example": "$10"
+                                },
+                                "sku": {
+                                    "type": "string",
+                                    "title": "SKU",
+                                    "example": "GC-10"
+                                },
+                                "vendor": {
+                                    "type": "string",
+                                    "title": "Vendor",
+                                    "example": "Snowboard Vendor"
+                                },
+                                "quantity": {
+                                    "type": "integer",
+                                    "title": "Quantity",
+                                    "example": 1
+                                },
+                                "custom": {
+                                    "type": "boolean",
+                                    "title": "Custom",
+                                    "example": false
+                                },
+                                "requiresShipping": {
+                                    "type": "boolean",
+                                    "title": "Requires Shipping",
+                                    "example": false
+                                },
+                                "taxable": {
+                                    "type": "boolean",
+                                    "title": "Taxable",
+                                    "example": true
+                                },
+                                "isGiftCard": {
+                                    "type": "boolean",
+                                    "title": "Gift Card",
+                                    "example": false
+                                },
+                                "originalUnitPriceSet": {
+                                    "type": "object",
+                                    "title": "Original Unit Price",
+                                    "required": [
+                                        "shopMoney"
+                                    ],
+                                    "properties": {
+                                        "shopMoney": {
+                                            "type": "object",
+                                            "title": "Original Unit Price.Shop Money",
+                                            "required": [
+                                                "amount",
+                                                "currencyCode"
+                                            ],
+                                            "properties": {
+                                                "amount": {
+                                                    "type": "string",
+                                                    "title": "Original Unit Price.Shop Money.Amount",
+                                                    "example": "9.99"
+                                                },
+                                                "currencyCode": {
+                                                    "type": "string",
+                                                    "title": "Original Unit Price.Shop Money.Currency Code",
+                                                    "example": "USD"
+                                                }
+                                            }
+                                        }
+                                    }
+                                },
+                                "originalTotalSet": {
+                                    "type": "object",
+                                    "title": "Original Total",
+                                    "required": [
+                                        "shopMoney"
+                                    ],
+                                    "properties": {
+                                        "shopMoney": {
+                                            "type": "object",
+                                            "title": "Original Total.Shop Money",
+                                            "required": [
+                                                "amount",
+                                                "currencyCode"
+                                            ],
+                                            "properties": {
+                                                "amount": {
+                                                    "type": "string",
+                                                    "title": "Original Total.Shop Money.Amount",
+                                                    "example": "9.99"
+                                                },
+                                                "currencyCode": {
+                                                    "type": "string",
+                                                    "title": "Original Total.Shop Money.Currency Code",
+                                                    "example": "USD"
+                                                }
+                                            }
+                                        }
+                                    }
+                                },
+                                "discountedTotalSet": {
+                                    "type": "object",
+                                    "title": "Discounted Total",
+                                    "required": [
+                                        "shopMoney"
+                                    ],
+                                    "properties": {
+                                        "shopMoney": {
+                                            "type": "object",
+                                            "title": "Discounted Total.Shop Money",
+                                            "required": [
+                                                "amount",
+                                                "currencyCode"
+                                            ],
+                                            "properties": {
+                                                "amount": {
+                                                    "type": "string",
+                                                    "title": "Discounted Total.Shop Money.Amount",
+                                                    "example": "9.99"
+                                                },
+                                                "currencyCode": {
+                                                    "type": "string",
+                                                    "title": "Discounted Total.Shop Money.Currency Code",
+                                                    "example": "USD"
+                                                }
+                                            }
+                                        }
+                                    }
+                                },
+                                "appliedDiscount": {
+                                    "type": "object",
+                                    "title": "Applied Discount",
+                                    "required": [
+                                        "description",
+                                        "value",
+                                        "valueType",
+                                        "amountSet"
+                                    ],
+                                    "properties": {
+                                        "title": {
+                                            "type": "string",
+                                            "title": "Applied Discount.Title",
+                                            "example": "Loyalty"
+                                        },
+                                        "description": {
+                                            "type": "string",
+                                            "title": "Applied Discount.Description",
+                                            "example": "Returning customer"
+                                        },
+                                        "value": {
+                                            "type": "integer",
+                                            "title": "Applied Discount.Value",
+                                            "example": 10
+                                        },
+                                        "valueType": {
+                                            "type": "string",
+                                            "title": "Applied Discount.Value Type",
+                                            "example": "PERCENTAGE"
+                                        },
+                                        "amountSet": {
+                                            "type": "object",
+                                            "title": "Applied Discount.Amount",
+                                            "required": [
+                                                "shopMoney"
+                                            ],
+                                            "properties": {
+                                                "shopMoney": {
+                                                    "type": "object",
+                                                    "title": "Applied Discount.Amount.Shop Money",
+                                                    "required": [
+                                                        "amount",
+                                                        "currencyCode"
+                                                    ],
+                                                    "properties": {
+                                                        "amount": {
+                                                            "type": "string",
+                                                            "title": "Applied Discount.Amount.Shop Money.Amount",
+                                                            "example": "1.0"
+                                                        },
+                                                        "currencyCode": {
+                                                            "type": "string",
+                                                            "title": "Applied Discount.Amount.Shop Money.Currency Code",
+                                                            "example": "USD"
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                },
+                                "product": {
+                                    "type": "object",
+                                    "title": "Product",
+                                    "required": [
+                                        "id",
+                                        "title"
+                                    ],
+                                    "properties": {
+                                        "id": {
+                                            "type": "string",
+                                            "title": "Product.ID",
+                                            "example": "gid://shopify/Product/16344831754321"
+                                        },
+                                        "title": {
+                                            "type": "string",
+                                            "title": "Product.Title",
+                                            "example": "Gift Card"
+                                        }
+                                    }
+                                },
+                                "variant": {
+                                    "type": "object",
+                                    "title": "Variant",
+                                    "required": [
+                                        "id",
+                                        "title"
+                                    ],
+                                    "properties": {
+                                        "id": {
+                                            "type": "string",
+                                            "title": "Variant.ID",
+                                            "example": "gid://shopify/ProductVariant/62788974084177"
+                                        },
+                                        "title": {
+                                            "type": "string",
+                                            "title": "Variant.Title",
+                                            "example": "$10"
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        "example": [
+                            {
+                                "id": "gid://shopify/DraftOrderLineItem/59738255294545",
+                                "name": "Gift Card - $10",
+                                "title": "Gift Card",
+                                "variantTitle": "$10",
+                                "sku": "GC-10",
+                                "vendor": "Snowboard Vendor",
+                                "quantity": 1,
+                                "custom": false,
+                                "requiresShipping": false,
+                                "taxable": true,
+                                "isGiftCard": false,
+                                "originalUnitPriceSet": {
+                                    "shopMoney": {
+                                        "amount": "9.99",
+                                        "currencyCode": "USD"
+                                    }
+                                },
+                                "originalTotalSet": {
+                                    "shopMoney": {
+                                        "amount": "9.99",
+                                        "currencyCode": "USD"
+                                    }
+                                },
+                                "discountedTotalSet": {
+                                    "shopMoney": {
+                                        "amount": "9.99",
+                                        "currencyCode": "USD"
+                                    }
+                                },
+                                "appliedDiscount": {
+                                    "title": "Loyalty",
+                                    "description": "Returning customer",
+                                    "value": 10,
+                                    "valueType": "PERCENTAGE",
+                                    "amountSet": {
+                                        "shopMoney": {
+                                            "amount": "1.0",
+                                            "currencyCode": "USD"
+                                        }
+                                    }
+                                },
+                                "product": {
+                                    "id": "gid://shopify/Product/16344831754321",
+                                    "title": "Gift Card"
+                                },
+                                "variant": {
+                                    "id": "gid://shopify/ProductVariant/62788974084177",
+                                    "title": "$10"
+                                }
+                            }
+                        ]
+                    }
+                }
+            }
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiA/PjwhRE9DVFlQRSBzdmcgIFBVQkxJQyAnLS8vVzNDLy9EVEQgU1ZHIDEuMS8vRU4nICAnaHR0cDovL3d3dy53My5vcmcvR3JhcGhpY3MvU1ZHLzEuMS9EVEQvc3ZnMTEuZHRkJz48c3ZnIGVuYWJsZS1iYWNrZ3JvdW5kPSJuZXcgMCAwIDEyOCAxMjgiIGlkPSJTb2NpYWxfSWNvbnMiIHZlcnNpb249IjEuMSIgdmlld0JveD0iMCAwIDEyOCAxMjgiIHhtbDpzcGFjZT0icHJlc2VydmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiPjxnIGlkPSJfeDM3X19zdHJva2UiPjxnIGlkPSJTaG9waWZ5Ij48cmVjdCBjbGlwLXJ1bGU9ImV2ZW5vZGQiIGZpbGw9Im5vbmUiIGZpbGwtcnVsZT0iZXZlbm9kZCIgaGVpZ2h0PSIxMjgiIHdpZHRoPSIxMjgiLz48cGF0aCBjbGlwLXJ1bGU9ImV2ZW5vZGQiIGQ9Ik03MC40NSwxOS41NjhjMC0wLjQzNiwwLjAwNC0wLjg2NCwwLjAwNC0xLjMzMiAgICBjMC00LjA4LTAuNTY1LTcuMzY4LTEuNDY5LTkuOTcyYzMuNjM0LDAuNDU2LDYuMDU0LDQuNjEyLDcuNjEsOS4zOTJDNzQuNzczLDE4LjIyNCw3Mi42OTksMTguODY4LDcwLjQ1LDE5LjU2OHogTTYyLjQyNiw2MC4yNDggICAgYzAsMC00LjI1MS0yLjI4LTkuNDYxLTIuMjhjLTcuNjQyLDAtOC4wMjgsNC44Mi04LjAyOCw2LjAzMmMwLDYuNjI4LDE3LjE4Nyw5LjE2OCwxNy4xODcsMjQuNjg4ICAgIGMwLDEyLjIwOC03LjcwNiwyMC4wNzItMTguMDk4LDIwLjA3MmMtMTIuNDcsMC0xOC44NDYtNy44LTE4Ljg0Ni03LjhsMy4zMzktMTEuMDg0YzAsMCw2LjU1NSw1LjY1NiwxMi4wODgsNS42NTYgICAgYzMuNjEsMCw1LjA4My0yLjg2LDUuMDgzLTQuOTQ4YzAtOC42NDQtMTQuMTAyLTkuMDMyLTE0LjEwMi0yMy4yMzZjMC0xMS45NTIsOC41MzgtMjMuNTIsMjUuNzcyLTIzLjUyICAgIGM2LjYzOSwwLDkuOTIzLDEuOTEyLDkuOTIzLDEuOTEyTDYyLjQyNiw2MC4yNDh6IE01OS41OTYsNC40MjhjMC43MTIsMCwxLjQyNSwwLjI0NCwyLjExLDAuNzE2ICAgIGMtNS4yNjYsMi40ODgtMTAuOTA2LDguNzYtMTMuMjksMjEuMjhjLTMuNDgzLDEuMDg0LTYuODg2LDIuMTQ0LTEwLjAzNCwzLjEyNEM0MS4xNzEsMTkuOTk2LDQ3Ljc5OCw0LjQyOCw1OS41OTYsNC40Mjh6ICAgICBNNjYuMTQ3LDIwLjE5MmMwLDAuMjUyLTAuMDA0LDAuNDg0LTAuMDA0LDAuNzE2Yy00LDEuMjQ0LTguMzQzLDIuNTk2LTEyLjY5NywzLjk1MkM1NS44OSwxNS4zOCw2MC40NzIsMTAuOCw2NC40OCw5LjA3MiAgICBDNjUuNDg3LDExLjYxNiw2Ni4xNDcsMTUuMjY4LDY2LjE0NywyMC4xOTJ6IE04NS4wNTgsMTUuMDk3Yy0wLjI2LDAuMDM0LTAuNDg1LDAuMDg1LTAuNjQyLDAuMTMxICAgIGMtMC4wODQsMC4wMjQtMS40ODUsMC40Ni0zLjgwNSwxLjE4Qzc4LjMzOSw5Ljg0LDc0LjMzMSwzLjgwNCw2Ny4yODIsMy44MDRjLTAuMTk1LDAtMC4zOTgsMC4wMDgtMC41OTcsMC4wMiAgICBDNjQuNjc5LDEuMTYsNjIuMTk1LDAsNjAuMDUsMEM0My42MjMsMCwzNS43NzQsMjAuNjQsMzMuMzE0LDMxLjEyNGMtNi4zODQsMS45ODgtMTAuOTE4LDMuNC0xMS40OTUsMy41ODQgICAgYy0zLjU2NiwxLjEyNC0zLjY3OCwxLjIzNi00LjE0Myw0LjYwOEMxNy4zMjIsNDEuODcyLDgsMTE0LjMyNCw4LDExNC4zMjRMODAuNjM5LDEyOGwwLjA3Ny0wLjAxN0w4NS4wNTgsMTUuMDk3eiBNOTAuMjU5LDE4LjY1MiAgICBjMi4wOTcsMi4wOTMsNC40NzUsNC40NjQsNC40NzUsNC40NjRzOS43ODcsMC43MjgsMTAuMjQ5LDAuNzY4YzAuNDY2LDAuMDQsMS4wMjcsMC4zOTYsMS4xMTQsMS4wNCAgICBjMC4wODgsMC42NDQsMTMuOTAzLDk0LjUyLDEzLjkwMyw5NC41MmwtMzMuOTAxLDcuMzY5TDkwLjI1OSwxOC42NTJ6IiBmaWxsPSIjODFCRjM3IiBmaWxsLXJ1bGU9ImV2ZW5vZGQiIGlkPSJTaG9waWZ5XzFfIi8+PC9nPjwvZz48L3N2Zz4="
+}

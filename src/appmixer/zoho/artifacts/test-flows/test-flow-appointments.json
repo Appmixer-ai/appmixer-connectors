@@ -491,6 +491,9 @@
                     ],
                     "e3b46ffb-42a2-4730-b952-cbff4e686aad": [
                         "out"
+                    ],
+                    "8e4d1b6a-0c2f-4a97-b3d5-6f1e2a9c7b38": [
+                        "out"
                     ]
                 }
             },
@@ -501,7 +504,7 @@
             }
         },
         "f1e2d3c4-b5a6-4978-8a6b-5c4d3e2f1a94": {
-            "type": "appmixer.zoho.crm.MakeApiCall",
+            "type": "appmixer.zoho.crm.DeleteAppointment",
             "x": 2256,
             "y": 448,
             "version": "1.0.0",
@@ -523,7 +526,7 @@
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
-                                    "url": {
+                                    "appointmentId": {
                                         "v-cleanup-a": {
                                             "variable": "$.a4c2e8b1-3f5d-4e7a-8c9b-1d2e3f4a5b61.out.id",
                                             "functions": []
@@ -532,12 +535,10 @@
                                             "variable": "$.c8d7e6f5-4b3a-4291-8f7e-6d5c4b3a2983.out.id",
                                             "functions": []
                                         }
-                                    },
-                                    "method": {}
+                                    }
                                 },
                                 "lambda": {
-                                    "url": "/crm/v8/Appointments__s?ids={{{v-cleanup-a}}},{{{v-cleanup-b}}}",
-                                    "method": "DELETE"
+                                    "appointmentId": "{{{v-cleanup-a}}},{{{v-cleanup-b}}}"
                                 }
                             }
                         }
@@ -620,6 +621,98 @@
             "errorHandling": {
                 "autoRetry": false,
                 "onError": "stopFlow"
+            }
+        },
+        "2c7e9a41-5d3b-4f86-a1e2-7b9c0d4e6f15": {
+            "type": "appmixer.zoho.crm.MakeApiCall",
+            "x": 528,
+            "y": 128,
+            "version": "1.0.0",
+            "label": "MakeApiCall (under test)",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "source": {
+                "in": {
+                    "034ecf2f-dd39-4ed2-afc2-8d5435bd81aa": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "034ecf2f-dd39-4ed2-afc2-8d5435bd81aa": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "url": {},
+                                    "method": {}
+                                },
+                                "lambda": {
+                                    "url": "/crm/v2/users?type=CurrentUser",
+                                    "method": "GET"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "8e4d1b6a-0c2f-4a97-b3d5-6f1e2a9c7b38": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 720,
+            "y": 128,
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "source": {
+                "in": {
+                    "2c7e9a41-5d3b-4f86-a1e2-7b9c0d4e6f15": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "2c7e9a41-5d3b-4f86-a1e2-7b9c0d4e6f15": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "5a9f3c2e-7b1d-4e64-8c0a-2d6b4e8f1a73": {
+                                            "variable": "$.2c7e9a41-5d3b-4f86-a1e2-7b9c0d4e6f15.out.body",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$.users[0].id"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{5a9f3c2e-7b1d-4e64-8c0a-2d6b4e8f1a73}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
     },

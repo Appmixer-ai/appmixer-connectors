@@ -1,0 +1,483 @@
+{
+    "name": "E2E Stripe - Subscription Changed trigger",
+    "description": "Starts the Subscription Changed trigger (customer.subscription.created), then subscribes a new customer with a trial; the trigger must emit the subscription, which is then canceled and its customer deleted.",
+    "flow": {
+        "77d0788a-dd5f-44bb-b7b5-1b9a16ce0715": {
+            "type": "appmixer.stripe.core.SubscriptionChanged",
+            "x": 64,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {},
+            "config": {
+                "properties": {
+                    "events": [
+                        "customer.subscription.created"
+                    ]
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "b7edfa88-0261-4f3e-b7e5-cb9937bc0a70": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {},
+            "config": {},
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "1f900709-a1f8-4ab8-bd63-c8dfaa8b5b19": {
+            "type": "appmixer.utils.timers.Wait",
+            "x": 272,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "b7edfa88-0261-4f3e-b7e5-cb9937bc0a70": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "b7edfa88-0261-4f3e-b7e5-cb9937bc0a70": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "interval": {}
+                                },
+                                "lambda": {
+                                    "interval": "1m"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "8ce6f2e1-46df-449e-923a-fe1645f2b6c3": {
+            "type": "appmixer.stripe.core.CreateCustomer",
+            "x": 480,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "1f900709-a1f8-4ab8-bd63-c8dfaa8b5b19": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "1f900709-a1f8-4ab8-bd63-c8dfaa8b5b19": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "email": {},
+                                    "name": {}
+                                },
+                                "lambda": {
+                                    "email": "e2e-subscription-changed@example.com",
+                                    "name": "E2E Subscription Changed Customer"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "02afa686-c059-4e5a-8e69-d2f705248299": {
+            "type": "appmixer.stripe.core.MakeApiCall",
+            "x": 688,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "8ce6f2e1-46df-449e-923a-fe1645f2b6c3": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "8ce6f2e1-46df-449e-923a-fe1645f2b6c3": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "url": {},
+                                    "method": {},
+                                    "body": {}
+                                },
+                                "lambda": {
+                                    "url": "/v1/prices",
+                                    "method": "POST",
+                                    "body": "{\"currency\":\"usd\",\"unit_amount\":1000,\"product_data[name]\":\"E2E Stripe Trigger Plan\",\"recurring[interval]\":\"month\"}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "249b46f1-738f-4146-b930-f2b10e17e623": {
+            "type": "appmixer.stripe.core.CreateSubscription",
+            "x": 896,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "02afa686-c059-4e5a-8e69-d2f705248299": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "02afa686-c059-4e5a-8e69-d2f705248299": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "customer": {
+                                        "76f0ce64-5e75-4c9b-a7f1-a0a10e354bee": {
+                                            "variable": "$.8ce6f2e1-46df-449e-923a-fe1645f2b6c3.out.id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "items": {
+                                        "28ce6c04-2603-4868-91af-c9a4f0bd9e29": {
+                                            "variable": "$.02afa686-c059-4e5a-8e69-d2f705248299.out.body",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$.id"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "trialPeriodDays": {},
+                                    "description": {}
+                                },
+                                "lambda": {
+                                    "customer": "{{{76f0ce64-5e75-4c9b-a7f1-a0a10e354bee}}}",
+                                    "items": {
+                                        "AND": [
+                                            {
+                                                "price": "{{{28ce6c04-2603-4868-91af-c9a4f0bd9e29}}}",
+                                                "quantity": 1
+                                            }
+                                        ]
+                                    },
+                                    "trialPeriodDays": 14,
+                                    "description": "E2E Subscription Changed"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "4db5c7eb-5667-4f26-b125-026d972acfb9": {
+            "type": "appmixer.stripe.core.MakeApiCall",
+            "x": 1104,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "249b46f1-738f-4146-b930-f2b10e17e623": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "249b46f1-738f-4146-b930-f2b10e17e623": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "url": {
+                                        "c8c07eb2-1a27-4720-92be-c92fd64d7620": {
+                                            "variable": "$.02afa686-c059-4e5a-8e69-d2f705248299.out.body",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$.product"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "method": {},
+                                    "body": {}
+                                },
+                                "lambda": {
+                                    "url": "/v1/products/{{{c8c07eb2-1a27-4720-92be-c92fd64d7620}}}",
+                                    "method": "POST",
+                                    "body": "{\"active\":\"false\"}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "594d099f-1782-4499-99f6-4bdcf079381e": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 272,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "77d0788a-dd5f-44bb-b7b5-1b9a16ce0715": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "77d0788a-dd5f-44bb-b7b5-1b9a16ce0715": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "83225576-27fc-4bf8-a226-2a1427b0f78d": {
+                                            "variable": "$.77d0788a-dd5f-44bb-b7b5-1b9a16ce0715.out.type",
+                                            "functions": []
+                                        },
+                                        "121243b4-c390-4a9d-aa41-6eb26664844b": {
+                                            "variable": "$.77d0788a-dd5f-44bb-b7b5-1b9a16ce0715.out.data.description",
+                                            "functions": []
+                                        },
+                                        "c249ef83-654a-4ad4-b876-2f3d46ecada9": {
+                                            "variable": "$.77d0788a-dd5f-44bb-b7b5-1b9a16ce0715.out.data.status",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{83225576-27fc-4bf8-a226-2a1427b0f78d}}}",
+                                                "assertion": "equal",
+                                                "expected": "customer.subscription.created"
+                                            },
+                                            {
+                                                "field": "{{{121243b4-c390-4a9d-aa41-6eb26664844b}}}",
+                                                "assertion": "equal",
+                                                "expected": "E2E Subscription Changed"
+                                            },
+                                            {
+                                                "field": "{{{c249ef83-654a-4ad4-b876-2f3d46ecada9}}}",
+                                                "assertion": "equal",
+                                                "expected": "trialing"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "353acc8b-30de-4cc5-8bf3-5e62344cea1f": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 480,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "594d099f-1782-4499-99f6-4bdcf079381e": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 420
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "f01b0442-32fd-49fa-8d66-cc72f4e5f575": {
+            "type": "appmixer.stripe.core.CancelSubscription",
+            "x": 688,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "353acc8b-30de-4cc5-8bf3-5e62344cea1f": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "353acc8b-30de-4cc5-8bf3-5e62344cea1f": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "subscriptionId": {
+                                        "2557ba2a-7627-4822-b78c-4846d75cdfb2": {
+                                            "variable": "$.77d0788a-dd5f-44bb-b7b5-1b9a16ce0715.out.data.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "subscriptionId": "{{{2557ba2a-7627-4822-b78c-4846d75cdfb2}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "dfc2b1b1-fb14-4457-b50f-f133105e79d5": {
+            "type": "appmixer.stripe.core.DeleteCustomer",
+            "x": 896,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "f01b0442-32fd-49fa-8d66-cc72f4e5f575": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "f01b0442-32fd-49fa-8d66-cc72f4e5f575": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "customerId": {
+                                        "410a3ebb-c59e-4f8d-9acf-e7464d8cc944": {
+                                            "variable": "$.77d0788a-dd5f-44bb-b7b5-1b9a16ce0715.out.data.customer",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "customerId": "{{{410a3ebb-c59e-4f8d-9acf-e7464d8cc944}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "1082bcc1-58e4-47f3-99da-ee7721281a82": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1104,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "dfc2b1b1-fb14-4457-b50f-f133105e79d5": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "dfc2b1b1-fb14-4457-b50f-f133105e79d5": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "1a859e50-1ec6-4d15-b7d6-ac67ae9ea89a": {
+                                            "variable": "$.353acc8b-30de-4cc5-8bf3-5e62344cea1f.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E Stripe - Subscription Changed trigger",
+                                    "result": "{{{1a859e50-1ec6-4d15-b7d6-ac67ae9ea89a}}}"
+                                }
+                            }
+                        }
+                    }
+                },
+                "properties": {
+                    "successStoreId": "64f6f1f9193228000754082f",
+                    "failedStoreId": "64f6f1f0193228000754082e"
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        }
+    },
+    "notes": {
+        "4ba38447-0549-4d6b-9bfa-314c34c99c19": {
+            "x": 64,
+            "y": 560,
+            "width": 672,
+            "height": 224,
+            "content": "## ⚠️ Trigger test assumptions\n\n- The trigger registers a Stripe webhook endpoint when the flow starts and deletes it when the flow stops. Stripe allows at most 16 endpoints per account: delete stale ones in the Dashboard (Developers → Webhooks) if the start fails.\n- **Keep the Wait 1m** before the provoking step so the endpoint is live.\n- The provoke creates a customer, a monthly price and a 14-day trial subscription; the trigger listens to Subscription Created only, so the cancel in the cleanup does not fire it again.\n- Use a test-mode secret key; other activity in the same account during the run can fire the trigger and fail the Assert."
+        }
+    }
+}

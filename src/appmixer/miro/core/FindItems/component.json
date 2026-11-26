@@ -1,0 +1,176 @@
+{
+    "name": "appmixer.miro.core.FindItems",
+    "label": "Find Items",
+    "description": "Find items on a board, optionally only items of one type. Returns at most 50 items (one page); if the item you need is not among them, narrow the search by item type.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:miro"
+    },
+    "quota": {
+        "manager": "appmixer:miro",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "boardId": {
+                        "type": "string"
+                    },
+                    "type": {
+                        "type": "string",
+                        "enum": [
+                            "sticky_note",
+                            "card",
+                            "app_card",
+                            "shape",
+                            "text",
+                            "image",
+                            "document",
+                            "embed",
+                            "frame",
+                            "preview",
+                            "doc_format",
+                            "data_table_format"
+                        ]
+                    },
+                    "outputType": {
+                        "type": "string",
+                        "default": "array"
+                    }
+                },
+                "required": [
+                    "boardId"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "boardId": {
+                        "type": "text",
+                        "index": 1,
+                        "label": "Board",
+                        "tooltip": "Pick a board, or type its Board ID (the part after <code>/board/</code> in the board URL).",
+                        "source": {
+                            "url": "/component/appmixer/miro/core/FindBoards?outPort=out",
+                            "data": {
+                                "properties": {
+                                    "isSource": true
+                                },
+                                "transform": "./FindBoards#toSelectArray"
+                            }
+                        }
+                    },
+                    "type": {
+                        "type": "select",
+                        "index": 2,
+                        "label": "Item Type",
+                        "tooltip": "Find only items of this type. Leave empty for all items (the first 50 are returned).",
+                        "options": [
+                            {
+                                "label": "Sticky note",
+                                "value": "sticky_note"
+                            },
+                            {
+                                "label": "Card",
+                                "value": "card"
+                            },
+                            {
+                                "label": "App card",
+                                "value": "app_card"
+                            },
+                            {
+                                "label": "Shape",
+                                "value": "shape"
+                            },
+                            {
+                                "label": "Text",
+                                "value": "text"
+                            },
+                            {
+                                "label": "Image",
+                                "value": "image"
+                            },
+                            {
+                                "label": "Document",
+                                "value": "document"
+                            },
+                            {
+                                "label": "Embed",
+                                "value": "embed"
+                            },
+                            {
+                                "label": "Frame",
+                                "value": "frame"
+                            },
+                            {
+                                "label": "Preview",
+                                "value": "preview"
+                            },
+                            {
+                                "label": "Doc format",
+                                "value": "doc_format"
+                            },
+                            {
+                                "label": "Data table format",
+                                "value": "data_table_format"
+                            }
+                        ]
+                    },
+                    "outputType": {
+                        "type": "select",
+                        "label": "Output Type",
+                        "index": 3,
+                        "defaultValue": "array",
+                        "tooltip": "Choose whether you want to receive the result set as one complete list, or first item only or one item at a time or stream the items to a file.",
+                        "options": [
+                            {
+                                "label": "First Item Only",
+                                "value": "first"
+                            },
+                            {
+                                "label": "All items at once",
+                                "value": "array"
+                            },
+                            {
+                                "label": "One item at a time",
+                                "value": "object"
+                            },
+                            {
+                                "label": "Store to CSV file",
+                                "value": "file"
+                            }
+                        ]
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "source": {
+                "url": "/component/appmixer/miro/core/FindItems?outPort=out&ignoreAuth=true",
+                "data": {
+                    "properties": {
+                        "generateOutputPortOptions": true
+                    },
+                    "messages": {
+                        "in/boardId": "dummy",
+                        "in/outputType": "inputs/in/outputType"
+                    }
+                }
+            }
+        },
+        {
+            "name": "notFound",
+            "options": []
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHJlY3Qgd2lkdGg9IjI0IiBoZWlnaHQ9IjI0IiByeD0iNSIgZmlsbD0iI0ZGREQzMyIvPjxwYXRoIHRyYW5zZm9ybT0idHJhbnNsYXRlKDQuOCA0LjgpIHNjYWxlKDAuNikiIGZpbGw9IiMwNTAwMzgiIGQ9Ik0xNy4zOTIgMEgxMy45TDE3IDQuODA4IDEwLjQ0NCAwSDYuOTQ5bDMuMTAyIDYuM0wzLjQ5NCAwSDBsMy4wNSA4LjEzMUwwIDI0aDMuNDk0TDEwLjA1IDYuOTg1IDYuOTQ5IDI0aDMuNDk0TDE3IDUuNDk0IDEzLjg5OSAyNGgzLjQ5M0wyNCAzLjY3MiAxNy4zOTIgMHoiLz48L3N2Zz4="
+}

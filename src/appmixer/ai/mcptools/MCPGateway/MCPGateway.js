@@ -94,7 +94,7 @@ module.exports = {
         const toolDefs = await componentTool.getComponentToolDefs(context);
         const toolDef = toolDefs.find(def => def.function.name === fn.name);
         if (!toolDef) {
-            await context.log({ step: 'unknown-tool', name: fn.name });
+            await context.log('warn', { step: 'unknown-tool', name: fn.name });
             return context.response(`Unknown tool: ${fn.name}`, 404);
         }
 

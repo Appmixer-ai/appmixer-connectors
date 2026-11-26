@@ -1,0 +1,125 @@
+{
+    "name": "appmixer.toggl.core.UpdateTimeEntry",
+    "label": "Update Time Entry",
+    "description": "Update a time entry. Only the fields you fill in are changed.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:toggl"
+    },
+    "quota": {
+        "manager": "appmixer:toggl",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "timeEntryId": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "start": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "stop": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "projectId": {
+                        "type": "string"
+                    },
+                    "taskId": {
+                        "type": "string"
+                    },
+                    "billable": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "timeEntryId"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "timeEntryId": {
+                        "type": "text",
+                        "label": "Time Entry ID",
+                        "tooltip": "Numeric ID of the time entry to update.",
+                        "index": 1
+                    },
+                    "description": {
+                        "type": "text",
+                        "label": "Description",
+                        "tooltip": "New description. Leave empty to keep the current one.",
+                        "index": 2
+                    },
+                    "start": {
+                        "type": "date-time",
+                        "label": "Start",
+                        "tooltip": "New start. Leave empty to keep the current one.",
+                        "index": 3
+                    },
+                    "stop": {
+                        "type": "date-time",
+                        "label": "Stop",
+                        "tooltip": "New end. Toggl stores it as the duration since Start. Leave empty to keep the current one.",
+                        "index": 4
+                    },
+                    "projectId": {
+                        "type": "text",
+                        "label": "Project",
+                        "tooltip": "Pick a project or type its numeric ID. Leave empty to keep the current one.",
+                        "source": {
+                            "url": "/component/appmixer/toggl/core/ListProjects?outPort=out",
+                            "data": {
+                                "messages": {
+                                    "in/outputType": "array"
+                                },
+                                "properties": {
+                                    "isSource": true
+                                },
+                                "transform": "./ListProjects#toSelectArray"
+                            }
+                        },
+                        "index": 5
+                    },
+                    "taskId": {
+                        "type": "text",
+                        "label": "Task ID",
+                        "tooltip": "Numeric ID of a task. Leave empty to keep the current one.",
+                        "index": 6
+                    },
+                    "billable": {
+                        "type": "select",
+                        "label": "Billable",
+                        "tooltip": "Leave empty to keep the current value.",
+                        "options": [
+                            {
+                                "label": "Yes",
+                                "value": "true"
+                            },
+                            {
+                                "label": "No",
+                                "value": "false"
+                            }
+                        ],
+                        "index": 7
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        "out"
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZmlsbD0iI0U1N0NEOCIgZD0iTTEyIDBhMTIgMTIgMCAxIDAgMCAyNCAxMiAxMiAwIDAgMCAwLTI0em0tLjg4MyA0LjMyMmgxLjc2NnY4Ljc1N2gtMS43NjZ6bS0uNzQgMi4wNTN2MS43ODlhNC40NDggNC40NDggMCAxIDAgMy4yNDcgMFY2LjM3NWE2LjE0NiA2LjE0NiAwIDEgMS01LjY2OSAxMC41NTIgNi4xNDUgNi4xNDUgMCAwIDEgMi40MjEtMTAuNTUyeiIvPjwvc3ZnPg=="
+}

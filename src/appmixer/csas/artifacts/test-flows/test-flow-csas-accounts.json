@@ -1,5 +1,5 @@
 {
-    "name": "E2E Česká spořitelna - Accounts, Transactions and API Call",
+    "name": "E2E Česká spořitelna - Accounts, Transactions, Balance and API Call",
     "flow": {
         "b1f0c6a2-3d4e-4f51-9a01-1c2d3e4f5a01": {
             "type": "appmixer.utils.controls.OnStart",
@@ -196,8 +196,8 @@
             }
         },
         "b1f0c6a2-3d4e-4f51-9a01-1c2d3e4f5a06": {
-            "type": "appmixer.csas.accounts.MakeApiCall",
-            "label": "MakeApiCall",
+            "type": "appmixer.csas.accounts.GetAccountBalance",
+            "label": "GetAccountBalance",
             "version": "1.0.0",
             "x": 832,
             "y": 384,
@@ -208,17 +208,15 @@
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
-                                    "url": {
+                                    "accountId": {
                                         "acc": {
                                             "functions": [],
                                             "variable": "$.b1f0c6a2-3d4e-4f51-9a01-1c2d3e4f5a02.out.id"
                                         }
-                                    },
-                                    "method": {}
+                                    }
                                 },
                                 "lambda": {
-                                    "url": "/my/accounts/{{{acc}}}/balance",
-                                    "method": "GET"
+                                    "accountId": "{{{acc}}}"
                                 }
                             }
                         }
@@ -253,7 +251,23 @@
                                     "expression": {
                                         "f0-3e4f5a06": {
                                             "functions": [],
-                                            "variable": "$.b1f0c6a2-3d4e-4f51-9a01-1c2d3e4f5a06.out.statusCode"
+                                            "variable": "$.b1f0c6a2-3d4e-4f51-9a01-1c2d3e4f5a06.out.accountId"
+                                        },
+                                        "f1-3e4f5a06": {
+                                            "functions": [],
+                                            "variable": "$.b1f0c6a2-3d4e-4f51-9a01-1c2d3e4f5a02.out.id"
+                                        },
+                                        "f2-3e4f5a06": {
+                                            "functions": [],
+                                            "variable": "$.b1f0c6a2-3d4e-4f51-9a01-1c2d3e4f5a06.out.amount.value"
+                                        },
+                                        "f3-3e4f5a06": {
+                                            "functions": [],
+                                            "variable": "$.b1f0c6a2-3d4e-4f51-9a01-1c2d3e4f5a06.out.amount.currency"
+                                        },
+                                        "f4-3e4f5a06": {
+                                            "functions": [],
+                                            "variable": "$.b1f0c6a2-3d4e-4f51-9a01-1c2d3e4f5a06.out.balances"
                                         }
                                     }
                                 },
@@ -263,7 +277,20 @@
                                             {
                                                 "assertion": "equal",
                                                 "field": "{{{f0-3e4f5a06}}}",
-                                                "expected": "200"
+                                                "expected": "{{{f1-3e4f5a06}}}"
+                                            },
+                                            {
+                                                "assertion": "notEmpty",
+                                                "field": "{{{f2-3e4f5a06}}}"
+                                            },
+                                            {
+                                                "assertion": "regex",
+                                                "field": "{{{f3-3e4f5a06}}}",
+                                                "regex": "^[A-Z]{3}$"
+                                            },
+                                            {
+                                                "assertion": "notEmpty",
+                                                "field": "{{{f4-3e4f5a06}}}"
                                             }
                                         ]
                                     }
@@ -280,6 +307,108 @@
             "source": {
                 "in": {
                     "b1f0c6a2-3d4e-4f51-9a01-1c2d3e4f5a06": [
+                        "out"
+                    ]
+                }
+            }
+        },
+        "b1f0c6a2-3d4e-4f51-9a01-1c2d3e4f5a10": {
+            "type": "appmixer.csas.accounts.MakeApiCall",
+            "label": "MakeApiCall",
+            "version": "1.0.0",
+            "x": 832,
+            "y": 512,
+            "config": {
+                "transform": {
+                    "in": {
+                        "b1f0c6a2-3d4e-4f51-9a01-1c2d3e4f5a02": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "url": {},
+                                    "method": {}
+                                },
+                                "lambda": {
+                                    "url": "/my/accounts",
+                                    "method": "GET"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "source": {
+                "in": {
+                    "b1f0c6a2-3d4e-4f51-9a01-1c2d3e4f5a02": [
+                        "out"
+                    ]
+                }
+            }
+        },
+        "b1f0c6a2-3d4e-4f51-9a01-1c2d3e4f5a11": {
+            "type": "appmixer.utils.test.Assert",
+            "label": "Assert",
+            "version": "1.0.0",
+            "x": 1040,
+            "y": 512,
+            "config": {
+                "transform": {
+                    "in": {
+                        "b1f0c6a2-3d4e-4f51-9a01-1c2d3e4f5a10": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "f0-3e4f5a10": {
+                                            "functions": [],
+                                            "variable": "$.b1f0c6a2-3d4e-4f51-9a01-1c2d3e4f5a10.out.statusCode"
+                                        },
+                                        "f1-3e4f5a10": {
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$.accounts"
+                                                        }
+                                                    ]
+                                                }
+                                            ],
+                                            "variable": "$.b1f0c6a2-3d4e-4f51-9a01-1c2d3e4f5a10.out.body"
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "assertion": "equal",
+                                                "field": "{{{f0-3e4f5a10}}}",
+                                                "expected": "200"
+                                            },
+                                            {
+                                                "assertion": "notEmpty",
+                                                "field": "{{{f1-3e4f5a10}}}"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "source": {
+                "in": {
+                    "b1f0c6a2-3d4e-4f51-9a01-1c2d3e4f5a10": [
                         "out"
                     ]
                 }
@@ -309,6 +438,9 @@
                         "out"
                     ],
                     "b1f0c6a2-3d4e-4f51-9a01-1c2d3e4f5a07": [
+                        "out"
+                    ],
+                    "b1f0c6a2-3d4e-4f51-9a01-1c2d3e4f5a11": [
                         "out"
                     ]
                 }
@@ -342,7 +474,7 @@
                                 },
                                 "lambda": {
                                     "recipients": "test@appmixer.com",
-                                    "testCase": "E2E Česká spořitelna - Accounts, Transactions and API Call",
+                                    "testCase": "E2E Česká spořitelna - Accounts, Transactions, Balance and API Call",
                                     "result": "{{{res}}}"
                                 }
                             }

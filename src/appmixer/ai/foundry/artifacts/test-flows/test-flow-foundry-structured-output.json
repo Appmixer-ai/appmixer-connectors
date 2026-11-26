@@ -1,0 +1,266 @@
+{
+    "name": "E2E AI Foundry - Structured Output",
+    "type": "automation",
+    "flow": {
+        "36745aa0-e583-4344-9d81-fe65c52977cf": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 48,
+            "version": "1.0.0",
+            "source": {},
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {}
+        },
+        "4ec155ce-d48e-4f3e-b891-fedb6ed56306": {
+            "type": "appmixer.utils.controls.SetVariable",
+            "x": 272,
+            "y": 48,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "36745aa0-e583-4344-9d81-fe65c52977cf": [
+                        "out"
+                    ]
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "36745aa0-e583-4344-9d81-fe65c52977cf": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "variables": {}
+                                },
+                                "lambda": {
+                                    "variables": {
+                                        "ADD": [
+                                            {
+                                                "type": "text",
+                                                "name": "sourceText",
+                                                "text": "Jane Doe is 34 years old and lives in Berlin."
+                                            },
+                                            {
+                                                "type": "text",
+                                                "name": "moderationText",
+                                                "text": "I want to learn how to bake sourdough bread this weekend."
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "0fb0ad52-77b7-485c-b47d-1a3774b54558": {
+            "type": "appmixer.ai.foundry.TransformTextToJSON",
+            "x": 480,
+            "y": 48,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "4ec155ce-d48e-4f3e-b891-fedb6ed56306": [
+                        "out"
+                    ]
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "4ec155ce-d48e-4f3e-b891-fedb6ed56306": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "text": {
+                                        "4c5416b2-6669-49a1-855c-6f1441d94734": {
+                                            "variable": "$.4ec155ce-d48e-4f3e-b891-fedb6ed56306.out.sourceText",
+                                            "functions": []
+                                        }
+                                    },
+                                    "jsonSchema": {},
+                                    "model": {}
+                                },
+                                "lambda": {
+                                    "text": "{{{4c5416b2-6669-49a1-855c-6f1441d94734}}}",
+                                    "jsonSchema": "{\"type\":\"object\",\"properties\":{\"name\":{\"type\":\"string\"},\"age\":{\"type\":\"number\"},\"city\":{\"type\":\"string\"}},\"required\":[\"name\",\"age\",\"city\"],\"additionalProperties\":false}",
+                                    "model": "DeepSeek-V4-Flash"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "46bd6ea4-01c8-4724-9ef3-5d207d148765": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 688,
+            "y": 48,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "0fb0ad52-77b7-485c-b47d-1a3774b54558": [
+                        "out"
+                    ]
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "0fb0ad52-77b7-485c-b47d-1a3774b54558": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "37a27ae7-e5b4-4296-9473-db2bff0709f1": {
+                                            "variable": "$.0fb0ad52-77b7-485c-b47d-1a3774b54558.out.json",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$.name"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        },
+                                        "ffbd7a10-ff8a-4e3f-9de8-704576488298": {
+                                            "variable": "$.0fb0ad52-77b7-485c-b47d-1a3774b54558.out.json",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$.city"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        },
+                                        "781a0b84-5b5a-4778-a082-ae3e15d3901c": {
+                                            "variable": "$.0fb0ad52-77b7-485c-b47d-1a3774b54558.out.json",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$.age"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{37a27ae7-e5b4-4296-9473-db2bff0709f1}}}",
+                                                "assertion": "equal",
+                                                "expected": "Jane Doe"
+                                            },
+                                            {
+                                                "field": "{{{ffbd7a10-ff8a-4e3f-9de8-704576488298}}}",
+                                                "assertion": "equal",
+                                                "expected": "Berlin"
+                                            },
+                                            {
+                                                "field": "{{{781a0b84-5b5a-4778-a082-ae3e15d3901c}}}",
+                                                "assertion": "regex",
+                                                "regex": "^34$"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "78f2356a-0b6b-48ff-ad49-647732c4b838": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 896,
+            "y": 176,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "46bd6ea4-01c8-4724-9ef3-5d207d148765": [
+                        "out"
+                    ]
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "properties": {
+                    "timeout": 180
+                }
+            }
+        },
+        "d517b7e4-f387-4a48-9693-f388481004c4": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1104,
+            "y": 176,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "78f2356a-0b6b-48ff-ad49-647732c4b838": [
+                        "out"
+                    ]
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "properties": {},
+                "transform": {
+                    "in": {
+                        "78f2356a-0b6b-48ff-ad49-647732c4b838": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "db8468fd-084d-4c3b-a471-293d44f32a01": {
+                                            "variable": "$.78f2356a-0b6b-48ff-ad49-647732c4b838.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.com",
+                                    "testCase": "E2E AI Foundry - Structured Output",
+                                    "result": "{{{db8468fd-084d-4c3b-a471-293d44f32a01}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

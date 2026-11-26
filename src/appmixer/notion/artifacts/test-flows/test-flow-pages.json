@@ -1,6 +1,6 @@
 {
     "name": "E2E Notion - pages",
-    "description": "End-to-end test for the Notion connector - List Pages and Create Page (parent taken from List Pages).",
+    "description": "End-to-end test for the Notion connector - List Pages, Create Page (parent taken from List Pages), Make API Call (GET /users/me); cleanup with Archive Page.",
     "flow": {
         "21252278-1f66-493b-9df1-c00cd0fc4c44": {
             "type": "appmixer.utils.controls.OnStart",
@@ -243,6 +243,9 @@
                     ],
                     "9005b67c-17fd-4e7a-9bee-f2f6f9c0a762": [
                         "out"
+                    ],
+                    "adc542e0-f54b-4877-af17-9d64a9d35ab3": [
+                        "out"
                     ]
                 }
             },
@@ -257,7 +260,7 @@
             }
         },
         "a001923f-bd87-4498-a65e-903458b611dc": {
-            "type": "appmixer.notion.core.MakeApiCall",
+            "type": "appmixer.notion.core.ArchivePage",
             "x": 1312,
             "y": 144,
             "version": "1.0.0",
@@ -275,19 +278,15 @@
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
-                                    "url": {
+                                    "pageId": {
                                         "fa7fa1e9-02ea-41da-9cc2-e68b2e0a7b77": {
                                             "variable": "$.70208a6a-1c99-475a-9b40-e425c3a30a88.out.id",
                                             "functions": []
                                         }
-                                    },
-                                    "method": {},
-                                    "body": {}
+                                    }
                                 },
                                 "lambda": {
-                                    "url": "/pages/{{{fa7fa1e9-02ea-41da-9cc2-e68b2e0a7b77}}}",
-                                    "method": "PATCH",
-                                    "body": "{\"archived\": true}"
+                                    "pageId": "{{{fa7fa1e9-02ea-41da-9cc2-e68b2e0a7b77}}}"
                                 }
                             }
                         }
@@ -332,6 +331,97 @@
                                     "recipients": "test@appmixer.com",
                                     "testCase": "E2E Notion - pages",
                                     "result": "{{{6cd607d4-2d23-4258-a7df-3f4ad889a927}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "f111a7a6-23e7-4847-bfb4-3a2f127fd7b6": {
+            "type": "appmixer.notion.core.MakeApiCall",
+            "x": 272,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "21252278-1f66-493b-9df1-c00cd0fc4c44": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "21252278-1f66-493b-9df1-c00cd0fc4c44": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "url": {},
+                                    "method": {}
+                                },
+                                "lambda": {
+                                    "url": "/users/me",
+                                    "method": "GET"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "adc542e0-f54b-4877-af17-9d64a9d35ab3": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 480,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "f111a7a6-23e7-4847-bfb4-3a2f127fd7b6": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "f111a7a6-23e7-4847-bfb4-3a2f127fd7b6": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "c710a7aa-aee3-4be2-898a-750a2098dae0": {
+                                            "variable": "$.f111a7a6-23e7-4847-bfb4-3a2f127fd7b6.out.status",
+                                            "functions": []
+                                        },
+                                        "96fcd1a1-dc6c-4a37-a2e6-5e4ef915fef0": {
+                                            "variable": "$.f111a7a6-23e7-4847-bfb4-3a2f127fd7b6.out.body",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{c710a7aa-aee3-4be2-898a-750a2098dae0}}}",
+                                                "assertion": "regex",
+                                                "regex": "^200$"
+                                            },
+                                            {
+                                                "field": "{{{96fcd1a1-dc6c-4a37-a2e6-5e4ef915fef0}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
                                 }
                             }
                         }

@@ -41,7 +41,8 @@ module.exports = [
         messageIncludes: 'exports no ITEM_SCHEMA',
         paths: [
             'ai/openai/TransformTextToJSON/component.json',
-            'ai/openai/VariableExtractor/component.json'
+            'ai/openai/VariableExtractor/component.json',
+            'ai/foundry/TransformTextToJSON/component.json'
         ],
         reason: 'The out port schema is not a fixed item contract: it is the JSON Schema the user types into the jsonSchema/outputVariables input, echoed back verbatim by getOutputPortOptions. There is no static ITEM_SCHEMA to export — every flow declares a different shape — so verify has nothing to compare against and the title rule has no fixed leaves to check.'
     },
@@ -341,14 +342,18 @@ module.exports = [
             'hubspot/crm/NewContactInList/component.json',
             'hubspot/crm/CreateCompany/component.json',
             'hubspot/crm/CreateDeal/component.json',
+            'hubspot/crm/CreateTicket/component.json',
             'hubspot/crm/FindCompanies/component.json',
             'hubspot/crm/FindContacts/component.json',
+            'hubspot/crm/GetCompany/component.json',
             'hubspot/crm/GetContact/component.json',
             'hubspot/crm/GetDeal/component.json',
             'hubspot/crm/ListContacts/component.json',
             'hubspot/crm/ListDeals/component.json',
+            'hubspot/crm/NewCompany/component.json',
             'hubspot/crm/NewContact/component.json',
             'hubspot/crm/NewDeal/component.json',
+            'hubspot/crm/NewTicket/component.json',
             'hubspot/crm/UpdateCompany/component.json',
             'hubspot/crm/UpdateContact/component.json',
             'hubspot/crm/UpdateDeal/component.json',
@@ -356,7 +361,7 @@ module.exports = [
             'hubspot/crm/UpdatedDeal/component.json',
             'hubspot/engagements/FindNotes/component.json'
         ],
-        reason: 'Every hubspot dynamic outPort source resolves through the live HubSpot properties API (GetContactsProperties / GetDealsProperties / GetCompaniesProperties, either directly or via componentStaticCall inside the component\'s own generateOutputPortOptions). These calls need an authenticated session; adding ignoreAuth=true would make the dropdown request unauthenticated and fail with 500 Invalid URL chips in the designer.'
+        reason: 'Every hubspot dynamic outPort source resolves through the live HubSpot properties API (GetContactsProperties / GetDealsProperties / GetCompaniesProperties / GetTicketsProperties, either directly or via componentStaticCall inside the component\'s own generateOutputPortOptions). These calls need an authenticated session; adding ignoreAuth=true would make the dropdown request unauthenticated and fail with 500 Invalid URL chips in the designer.'
     },
     {
         validator: 'dynamic-outport-required-inputs',
@@ -380,5 +385,21 @@ module.exports = [
         messageIncludes: 'missing "ignoreAuth=true"',
         paths: ['hubbi/core/NewHubEvent/component.json'],
         reason: 'NewHubEvent builds its output-port options from the hub\'s actual target fields: the generateOutputPortOptions branch calls lib.getFields(context, ENDPOINTS.targetFields, conversionKey), a live HubBI request that reads context.auth. Adding ignoreAuth=true would send that call unauthenticated and the picker would fail rather than degrade. Unlike the connector\'s List helpers, whose options come from a static schema, this source cannot be made auth-free.'
+    },
+    {
+        validator: 'dynamic-outport-required-inputs',
+        messageIncludes: 'ignoreAuth=true',
+        paths: [
+            'snowflake/db/AddRow/component.json',
+            'snowflake/db/NewRow/component.json',
+            'snowflake/db/DeletedRow/component.json'
+        ],
+        reason: 'The out port options list the columns of the selected table: the generateOutputPortOptions branch calls ListColumns, which runs SHOW COLUMNS against the connected Snowflake account and needs its credentials. Adding ignoreAuth=true would make the designer call it unauthenticated and fail. Same case as postgres CreateRow.'
+    },
+    {
+        validator: 'dynamic-outport-required-inputs',
+        messageIncludes: 'ignoreAuth=true',
+        paths: ['salesforce/crm/RecordUpdated/component.json'],
+        reason: 'The out port source is GetObjectFields, which calls the Salesforce describe API of the connected org (instance URL and token from the account) to list the fields of the chosen object. It needs the caller\'s account; with ignoreAuth=true the designer would call it unauthenticated and the variable picker would fail.'
     }
 ];

@@ -1,0 +1,164 @@
+{
+    "name": "appmixer.workday.core.FindWorkers",
+    "label": "Find Workers",
+    "description": "Find workers by name or employee ID, work email, supervisory organization, location and status. Returns every matching worker with the current staffing information. Without any filter it returns all active workers.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:workday"
+    },
+    "quota": {
+        "manager": "appmixer:workday",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "search": {
+                        "type": "string"
+                    },
+                    "email": {
+                        "type": "string"
+                    },
+                    "organizationId": {
+                        "type": "string"
+                    },
+                    "locationId": {
+                        "type": "string"
+                    },
+                    "includeTerminatedWorkers": {
+                        "type": "boolean",
+                        "default": false
+                    },
+                    "outputType": {
+                        "type": "string",
+                        "default": "array"
+                    }
+                }
+            },
+            "inspector": {
+                "inputs": {
+                    "search": {
+                        "type": "text",
+                        "index": 1,
+                        "label": "Search",
+                        "tooltip": "Text to search for in worker names and employee IDs, e.g. <code>Logan</code> or <code>21001</code>. Not case-sensitive; several words separated by spaces match any of them."
+                    },
+                    "email": {
+                        "type": "text",
+                        "index": 2,
+                        "label": "Email",
+                        "tooltip": "Return only workers with this email address, e.g. <code>lmcneil@workday.net</code>."
+                    },
+                    "organizationId": {
+                        "type": "text",
+                        "index": 3,
+                        "label": "Supervisory Organization",
+                        "tooltip": "Return only workers whose primary job belongs to this supervisory organization. Select one or enter its Workday ID or reference ID, e.g. <code>SUPERVISORY_Human_Resources</code>. Workers of subordinate organizations are not included. Workday has no such filter, so all workers are read and the matching ones kept; in a large tenant that takes a while.",
+                        "source": {
+                            "url": "/component/appmixer/workday/core/ListSupervisoryOrganizations?outPort=out",
+                            "data": {
+                                "properties": {
+                                    "isSource": true
+                                },
+                                "messages": {
+                                    "in/outputType": "array"
+                                },
+                                "transform": "./ListSupervisoryOrganizations#toSelectArray"
+                            }
+                        }
+                    },
+                    "locationId": {
+                        "type": "text",
+                        "index": 4,
+                        "label": "Location",
+                        "tooltip": "Return only workers whose primary job is at this location. Enter the Workday ID or the Location ID, e.g. <code>San_Francisco_site</code>. Both are part of each worker returned by List Workers. Workday has no such filter, so all workers are read and the matching ones kept."
+                    },
+                    "includeTerminatedWorkers": {
+                        "type": "toggle",
+                        "index": 5,
+                        "label": "Include Terminated Workers",
+                        "defaultValue": false,
+                        "tooltip": "By default only active workers are returned. Turn on to include terminated workers as well."
+                    },
+                    "outputType": {
+                        "type": "select",
+                        "label": "Output Type",
+                        "index": 6,
+                        "defaultValue": "array",
+                        "tooltip": "Choose whether you want to receive the result set as one complete list, or first item only or one item at a time or stream the items to a file.",
+                        "options": [
+                            {
+                                "label": "First Item Only",
+                                "value": "first"
+                            },
+                            {
+                                "label": "All items at once",
+                                "value": "array"
+                            },
+                            {
+                                "label": "One item at a time",
+                                "value": "object"
+                            },
+                            {
+                                "label": "Store to CSV file",
+                                "value": "file"
+                            }
+                        ]
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "source": {
+                "url": "/component/appmixer/workday/core/FindWorkers?outPort=out&ignoreAuth=true",
+                "data": {
+                    "properties": {
+                        "generateOutputPortOptions": true
+                    },
+                    "messages": {
+                        "in/outputType": "inputs/in/outputType"
+                    }
+                }
+            }
+        },
+        {
+            "name": "notFound",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "search": {
+                        "type": "string",
+                        "title": "Search",
+                        "example": "Logan"
+                    },
+                    "email": {
+                        "type": "string",
+                        "title": "Email",
+                        "example": "lmcneil@workday.net"
+                    },
+                    "organizationId": {
+                        "type": "string",
+                        "title": "Supervisory Organization",
+                        "example": "SUPERVISORY_Human_Resources"
+                    },
+                    "locationId": {
+                        "type": "string",
+                        "title": "Location",
+                        "example": "San_Francisco_site"
+                    }
+                }
+            }
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgLTUwIDEyMDAgMTIwMCI+PHBhdGggdHJhbnNmb3JtPSJ0cmFuc2xhdGUoLTI0NC41IDIwKSBzY2FsZSgwLjQpIiBkPSJNMTE3Mi44IDUyMkMxNDIzLjQgMjcxIDE3NTYuOCAxMzIuOCAyMTExLjYgMTMyLjhDMjQ2NS43IDEzMi44IDI3OTguNyAyNzAuNyAzMDQ5LjEgNTIxLjFDMzE5Mi4zIDY2NC4zIDMyOTguNiA4MzQuNCAzMzYzLjUgMTAyMC4xQzMzNjYuMyAxMDI4LjEgMzM3My43IDEwMzMuNCAzMzgyLjIgMTAzMy40SDM0ODAuNkMzNDk0IDEwMzMuNCAzNTAzLjcgMTAyMC40IDM0OTkuNSAxMDA3LjZDMzQyOS40IDc5MS4xIDMzMDguNSA1OTIuOCAzMTQzIDQyNy4yQzI4NjcuNiAxNTEuNyAyNTAxLjMgMCAyMTExLjggMEMxNzIxLjYgMCAxMzU0LjYgMTUyIDEwNzguOSA0MjguMUM5MTMuNyA1OTMuNSA3OTMuMiA3OTEuNSA3MjMuMyAxMDA3LjVDNzE5LjIgMTAyMC4zIDcyOC44IDEwMzMuMyA3NDIuMyAxMDMzLjNIODQwLjdDODQ5LjIgMTAzMy4zIDg1Ni42IDEwMjcuOSA4NTkuNCAxMDIwQzkyNCA4MzQuOSAxMDMwIDY2NSAxMTcyLjggNTIyWiIgZmlsbD0iI0ZDNUIwNSIvPjxwYXRoIHRyYW5zZm9ybT0idHJhbnNsYXRlKDIwMCAtNzgzKSIgZD0iTTE2NC43IDE3ODIuOUMxNDkuNCAxNzgyLjkgMTQwLjQgMTc3Ni41IDEzNS40IDE3NjEuMUM3NS4xOTk5IDE1OTQuMSAzNC4zOTk5IDE0MjguMiAtNy4zMTk0NWUtMDUgMTI2MS4yQy0zLjkwMDA3IDEyNDQuNSAzLjc5OTkzIDEyMzIuOSAyMS41OTk5IDEyMzIuOUgxMDQuN0MxMjAuMSAxMjMyLjkgMTMwLjIgMTI0MC42IDEzMi45IDEyNTQuN0MxNTQuNSAxMzczIDE4MC4yIDE0OTUgMjE0LjcgMTYxNC42TDMxNC4zIDEyNTQuN0MzMTguMSAxMjQwLjYgMzI4LjMgMTIzMi45IDM0My42IDEyMzIuOUg0NTYuMUM0NzEuNCAxMjMyLjkgNDgxLjYgMTI0MC42IDQ4NS40IDEyNTQuN0w1ODUgMTYxNC42QzYxOS41IDE0OTUuMSA2NDUuMiAxMzczIDY2Ni44IDEyNTQuN0M2NjkuMyAxMjQwLjYgNjc5LjcgMTIzMi45IDY5NSAxMjMyLjlINzc4LjFDNzk1LjkgMTIzMi45IDgwMy41IDEyNDQuNCA3OTkuNyAxMjYxLjJDNzY1LjMgMTQyOC4yIDcyNC41IDE1OTQuMSA2NjQuMyAxNzYxLjFDNjU5LjEgMTc3Ni41IDY1MC4zIDE3ODIuOSA2MzUgMTc4Mi45SDU0MS40QzUyNy40IDE3ODIuOSA1MTUuOSAxNzc2LjUgNTEyLjEgMTc2MS4xTDM5OS43IDEzNjUuMkwyODcuMyAxNzYxLjFDMjgzLjUgMTc3Ni41IDI3MiAxNzgyLjkgMjU4IDE3ODIuOUgxNjQuN1oiIGZpbGw9IiMwRjJFNjYiLz48L3N2Zz4="
+}

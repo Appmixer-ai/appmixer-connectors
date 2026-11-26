@@ -1,0 +1,543 @@
+{
+    "name": "E2E SuperOffice - New Follow-up trigger",
+    "description": "Polling trigger NewFollowUp fires for a record created by the flow.",
+    "notes": {
+        "8001b066-b03f-4e6e-935d-f424fcdb7a0d": {
+            "x": 64,
+            "y": 560,
+            "width": 672,
+            "height": 160,
+            "content": "## Test data\n\nThe trigger polls every minute; its first tick only records existing records. The flow waits 1 minute, creates a record and the trigger must report it on a later tick. AfterAll timeout is 300 s."
+        }
+    },
+    "flow": {
+        "884158f4-13a1-42fd-b3af-04a1e3399b4c": {
+            "type": "appmixer.superoffice.core.NewFollowUp",
+            "x": 64,
+            "y": 400,
+            "version": "1.0.0",
+            "source": {},
+            "config": {},
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "7d210ae9-b3ee-412f-b377-cc807ec3db96": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {},
+            "config": {},
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "f0e20e23-c76f-4463-997a-ba1d314a2471": {
+            "type": "appmixer.utils.timers.Wait",
+            "x": 272,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "7d210ae9-b3ee-412f-b377-cc807ec3db96": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "7d210ae9-b3ee-412f-b377-cc807ec3db96": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "interval": {}
+                                },
+                                "lambda": {
+                                    "interval": "1m"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "265bc51a-16f3-47a0-83ed-e7c8b02b1073": {
+            "type": "appmixer.superoffice.core.CreateCompany",
+            "x": 480,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "f0e20e23-c76f-4463-997a-ba1d314a2471": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "f0e20e23-c76f-4463-997a-ba1d314a2471": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "name": {
+                                        "52a9d09f-9335-46dc-a60c-6183d18f743d": {
+                                            "functions": [
+                                                {
+                                                    "name": "g_timestamp"
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "name": "E2E SO Trigger Co {{{52a9d09f-9335-46dc-a60c-6183d18f743d}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "f44642c1-e795-498a-8633-ec2914f91d7f": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 688,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "265bc51a-16f3-47a0-83ed-e7c8b02b1073": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "265bc51a-16f3-47a0-83ed-e7c8b02b1073": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "354078a3-1f3e-40f2-9a7a-5be30fb505bd": {
+                                            "variable": "$.265bc51a-16f3-47a0-83ed-e7c8b02b1073.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{354078a3-1f3e-40f2-9a7a-5be30fb505bd}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "e5bc2864-30b6-4e95-8dc8-0d23599a0436": {
+            "type": "appmixer.superoffice.core.CreateFollowUp",
+            "x": 688,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "265bc51a-16f3-47a0-83ed-e7c8b02b1073": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "265bc51a-16f3-47a0-83ed-e7c8b02b1073": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "startDate": {
+                                        "5bc67824-3a54-49d5-9c47-1d9ecf21469b": {
+                                            "functions": [
+                                                {
+                                                    "name": "g_now"
+                                                },
+                                                {
+                                                    "name": "g_addTimeSpan",
+                                                    "hashParams": {
+                                                        "minutes": {
+                                                            "value": 2880
+                                                        }
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "endDate": {
+                                        "de64fdd2-92fa-4cd5-b979-70d1e09436d1": {
+                                            "functions": [
+                                                {
+                                                    "name": "g_now"
+                                                },
+                                                {
+                                                    "name": "g_addTimeSpan",
+                                                    "hashParams": {
+                                                        "minutes": {
+                                                            "value": 2910
+                                                        }
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "companyId": {
+                                        "0a8b2ae7-1280-4600-a759-c2167a725b16": {
+                                            "variable": "$.265bc51a-16f3-47a0-83ed-e7c8b02b1073.out.id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "title": {}
+                                },
+                                "lambda": {
+                                    "startDate": "{{{5bc67824-3a54-49d5-9c47-1d9ecf21469b}}}",
+                                    "endDate": "{{{de64fdd2-92fa-4cd5-b979-70d1e09436d1}}}",
+                                    "companyId": "{{{0a8b2ae7-1280-4600-a759-c2167a725b16}}}",
+                                    "title": "E2E trigger follow-up"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "94eb6fd0-5de3-4df7-8b71-f9210e87d6e4": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 896,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "e5bc2864-30b6-4e95-8dc8-0d23599a0436": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "e5bc2864-30b6-4e95-8dc8-0d23599a0436": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "5ccb3f0e-23fe-44cf-a9fb-d399e067192c": {
+                                            "variable": "$.e5bc2864-30b6-4e95-8dc8-0d23599a0436.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{5ccb3f0e-23fe-44cf-a9fb-d399e067192c}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "3236a2c8-e8ff-4a1a-b2e8-0f9110d7e9ce": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 480,
+            "y": 400,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "29eea844-0481-4593-8054-7640e2f40a02": [
+                        "true"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "29eea844-0481-4593-8054-7640e2f40a02": {
+                            "true": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "0f6216da-dfd4-462b-8967-9e977c107426": {
+                                            "variable": "$.884158f4-13a1-42fd-b3af-04a1e3399b4c.out.id",
+                                            "functions": []
+                                        },
+                                        "d5b5ac47-274e-4136-bd69-9ff5cff0dfdd": {
+                                            "variable": "$.884158f4-13a1-42fd-b3af-04a1e3399b4c.out.title",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{0f6216da-dfd4-462b-8967-9e977c107426}}}",
+                                                "assertion": "notEmpty"
+                                            },
+                                            {
+                                                "field": "{{{d5b5ac47-274e-4136-bd69-9ff5cff0dfdd}}}",
+                                                "assertion": "regex",
+                                                "regex": "^E2E trigger follow-up$"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "6bbbc8da-159d-461a-bf28-caa37ab43558": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 1104,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "f44642c1-e795-498a-8633-ec2914f91d7f": [
+                        "out"
+                    ],
+                    "94eb6fd0-5de3-4df7-8b71-f9210e87d6e4": [
+                        "out"
+                    ],
+                    "3236a2c8-e8ff-4a1a-b2e8-0f9110d7e9ce": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 300
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "81662e0b-04e9-4d4c-9919-a40f031fc5af": {
+            "type": "appmixer.superoffice.core.DeleteFollowUp",
+            "x": 1312,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "6bbbc8da-159d-461a-bf28-caa37ab43558": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "6bbbc8da-159d-461a-bf28-caa37ab43558": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "followUpId": {
+                                        "ff778993-dace-40a1-9ed1-4beed606f26b": {
+                                            "variable": "$.e5bc2864-30b6-4e95-8dc8-0d23599a0436.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "followUpId": "{{{ff778993-dace-40a1-9ed1-4beed606f26b}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "83a5df38-bea4-46ff-9af4-2fd30f96cf9d": {
+            "type": "appmixer.superoffice.core.DeleteCompany",
+            "x": 1520,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "81662e0b-04e9-4d4c-9919-a40f031fc5af": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "81662e0b-04e9-4d4c-9919-a40f031fc5af": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "companyId": {
+                                        "795ce8aa-4cf9-48cd-9efa-c63675ffe5b4": {
+                                            "variable": "$.265bc51a-16f3-47a0-83ed-e7c8b02b1073.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "companyId": "{{{795ce8aa-4cf9-48cd-9efa-c63675ffe5b4}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "b569f6ae-a1dc-437b-8e25-cebd5ed74eb3": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1728,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "83a5df38-bea4-46ff-9af4-2fd30f96cf9d": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "successStoreId": "64f6f1f9193228000754082f",
+                    "failedStoreId": "64f6f1f0193228000754082e"
+                },
+                "transform": {
+                    "in": {
+                        "83a5df38-bea4-46ff-9af4-2fd30f96cf9d": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "6f81369c-d06e-4b81-a047-f92b98cc0906": {
+                                            "variable": "$.6bbbc8da-159d-461a-bf28-caa37ab43558.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E SuperOffice - New Follow-up trigger",
+                                    "result": "{{{6f81369c-d06e-4b81-a047-f92b98cc0906}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "29eea844-0481-4593-8054-7640e2f40a02": {
+            "type": "appmixer.utils.controls.Condition",
+            "x": 272,
+            "y": 400,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "884158f4-13a1-42fd-b3af-04a1e3399b4c": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "884158f4-13a1-42fd-b3af-04a1e3399b4c": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "7bbdd019-c306-4286-8289-9ccb6a8ba27a": {
+                                            "variable": "$.884158f4-13a1-42fd-b3af-04a1e3399b4c.out.title",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "OR": [
+                                                    {
+                                                        "input": "{{{7bbdd019-c306-4286-8289-9ccb6a8ba27a}}}",
+                                                        "operator": "regex",
+                                                        "regex": "^E2E trigger follow-up$"
+                                                    }
+                                                ]
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        }
+    }
+}

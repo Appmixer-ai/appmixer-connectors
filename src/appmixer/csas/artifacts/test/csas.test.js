@@ -7,6 +7,7 @@ const auth = require('../../auth');
 const ListAccounts = require('../../accounts/ListAccounts/ListAccounts');
 const FindTransactions = require('../../accounts/FindTransactions/FindTransactions');
 const MakeApiCall = require('../../accounts/MakeApiCall/MakeApiCall');
+const GetAccountBalance = require('../../accounts/GetAccountBalance/GetAccountBalance');
 
 const BASE = 'https://www.csas.cz/webapi/api/v3/accounts';
 
@@ -223,6 +224,60 @@ describe('csas', () => {
         it('rejects a body that is not JSON', async () => {
             const context = makeContext({ url: '/my/accounts', method: 'POST', body: '{nope' });
             await assert.rejects(() => MakeApiCall.receive(context), /valid JSON/);
+        });
+    });
+
+    describe('GetAccountBalance', () => {
+
+        const balance = (code, value) => ({
+            type: { codeOrProprietary: { code } },
+            amount: { value, currency: 'CZK' },
+            creditDebitIndicator: 'CRDT',
+            date: { dateTime: '2026-11-20T08:15:00.0Z' }
+        });
+
+        it('requires the account ID', async () => {
+            const context = makeContext({});
+            await assert.rejects(() => GetAccountBalance.receive(context), /Account ID is required/);
+            assert.strictEqual(context.httpRequest.callCount, 0);
+        });
+
+        it('sends the closing available balance on top and all balances', async () => {
+            const context = makeContext({ accountId: 'acc/1' });
+            context.httpRequest.resolves({ data: { balances: [balance('CLBD', 200), balance('CLAV', 150)] } });
+
+            await GetAccountBalance.receive(context);
+
+            const req = context.httpRequest.firstCall.args[0];
+            assert.strictEqual(req.method, 'GET');
+            assert.strictEqual(req.url, BASE + '/my/accounts/acc%2F1/balance');
+            assert.strictEqual(req.headers['WEB-API-key'], 'web-api-key');
+            assert.deepStrictEqual(context.sendJson.firstCall.args, [{
+                accountId: 'acc/1',
+                type: 'CLAV',
+                amount: { value: 150, currency: 'CZK' },
+                creditDebitIndicator: 'CRDT',
+                dateTime: '2026-11-20T08:15:00.0Z',
+                balances: [balance('CLBD', 200), balance('CLAV', 150)]
+            }, 'out']);
+        });
+
+        it('flattens the nested list the sandbox returns and falls back to the first balance', async () => {
+            const context = makeContext({ accountId: 'acc' });
+            context.httpRequest.resolves({ data: { balances: [{ balances: [balance('CLBD', 48923.15)] }] } });
+
+            await GetAccountBalance.receive(context);
+
+            const out = context.sendJson.firstCall.args[0];
+            assert.strictEqual(out.type, 'CLBD');
+            assert.deepStrictEqual(out.amount, { value: 48923.15, currency: 'CZK' });
+            assert.strictEqual(out.balances.length, 1);
+        });
+
+        it('fails when the bank returns no balance', async () => {
+            const context = makeContext({ accountId: 'acc' });
+            context.httpRequest.resolves({ data: { balances: [] } });
+            await assert.rejects(() => GetAccountBalance.receive(context), { name: 'CancelError' });
         });
     });
 

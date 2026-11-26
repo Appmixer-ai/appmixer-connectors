@@ -1,0 +1,468 @@
+{
+    "name": "appmixer.miro.core.CreateShape",
+    "label": "Create Shape",
+    "description": "Add a shape, such as a rectangle, circle or arrow, with optional text to a board.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:miro"
+    },
+    "quota": {
+        "manager": "appmixer:miro",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "boardId": {
+                        "type": "string"
+                    },
+                    "shape": {
+                        "type": "string",
+                        "enum": [
+                            "rectangle",
+                            "round_rectangle",
+                            "circle",
+                            "triangle",
+                            "rhombus",
+                            "parallelogram",
+                            "trapezoid",
+                            "pentagon",
+                            "hexagon",
+                            "octagon",
+                            "wedge_round_rectangle_callout",
+                            "star",
+                            "flow_chart_predefined_process",
+                            "cloud",
+                            "cross",
+                            "can",
+                            "right_arrow",
+                            "left_arrow",
+                            "left_right_arrow",
+                            "left_brace",
+                            "right_brace"
+                        ]
+                    },
+                    "content": {
+                        "type": "string"
+                    },
+                    "fillColor": {
+                        "type": "string"
+                    },
+                    "borderColor": {
+                        "type": "string"
+                    },
+                    "color": {
+                        "type": "string"
+                    },
+                    "x": {
+                        "type": "number"
+                    },
+                    "y": {
+                        "type": "number"
+                    },
+                    "width": {
+                        "type": "number"
+                    },
+                    "height": {
+                        "type": "number"
+                    },
+                    "parentId": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "boardId"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "boardId": {
+                        "type": "text",
+                        "index": 1,
+                        "label": "Board",
+                        "tooltip": "Pick a board, or type its Board ID (the part after <code>/board/</code> in the board URL).",
+                        "source": {
+                            "url": "/component/appmixer/miro/core/FindBoards?outPort=out",
+                            "data": {
+                                "properties": {
+                                    "isSource": true
+                                },
+                                "transform": "./FindBoards#toSelectArray"
+                            }
+                        }
+                    },
+                    "shape": {
+                        "type": "select",
+                        "index": 2,
+                        "label": "Shape",
+                        "defaultValue": "rectangle",
+                        "tooltip": "Geometric shape of the item.",
+                        "options": [
+                            {
+                                "label": "Rectangle",
+                                "value": "rectangle"
+                            },
+                            {
+                                "label": "Round rectangle",
+                                "value": "round_rectangle"
+                            },
+                            {
+                                "label": "Circle",
+                                "value": "circle"
+                            },
+                            {
+                                "label": "Triangle",
+                                "value": "triangle"
+                            },
+                            {
+                                "label": "Rhombus",
+                                "value": "rhombus"
+                            },
+                            {
+                                "label": "Parallelogram",
+                                "value": "parallelogram"
+                            },
+                            {
+                                "label": "Trapezoid",
+                                "value": "trapezoid"
+                            },
+                            {
+                                "label": "Pentagon",
+                                "value": "pentagon"
+                            },
+                            {
+                                "label": "Hexagon",
+                                "value": "hexagon"
+                            },
+                            {
+                                "label": "Octagon",
+                                "value": "octagon"
+                            },
+                            {
+                                "label": "Wedge round rectangle callout",
+                                "value": "wedge_round_rectangle_callout"
+                            },
+                            {
+                                "label": "Star",
+                                "value": "star"
+                            },
+                            {
+                                "label": "Flow chart predefined process",
+                                "value": "flow_chart_predefined_process"
+                            },
+                            {
+                                "label": "Cloud",
+                                "value": "cloud"
+                            },
+                            {
+                                "label": "Cross",
+                                "value": "cross"
+                            },
+                            {
+                                "label": "Can",
+                                "value": "can"
+                            },
+                            {
+                                "label": "Right arrow",
+                                "value": "right_arrow"
+                            },
+                            {
+                                "label": "Left arrow",
+                                "value": "left_arrow"
+                            },
+                            {
+                                "label": "Left right arrow",
+                                "value": "left_right_arrow"
+                            },
+                            {
+                                "label": "Left brace",
+                                "value": "left_brace"
+                            },
+                            {
+                                "label": "Right brace",
+                                "value": "right_brace"
+                            }
+                        ]
+                    },
+                    "content": {
+                        "type": "textarea",
+                        "index": 3,
+                        "label": "Text",
+                        "tooltip": "Text inside the shape. Simple HTML is supported."
+                    },
+                    "fillColor": {
+                        "type": "text",
+                        "index": 4,
+                        "label": "Fill Color",
+                        "tooltip": "Fill color as a hex code, for example <code>#8fd14f</code>."
+                    },
+                    "borderColor": {
+                        "type": "text",
+                        "index": 5,
+                        "label": "Border Color",
+                        "tooltip": "Border color as a hex code, for example <code>#1a1a1a</code>."
+                    },
+                    "color": {
+                        "type": "text",
+                        "index": 6,
+                        "label": "Text Color",
+                        "tooltip": "Text color as a hex code, for example <code>#1a1a1a</code>."
+                    },
+                    "x": {
+                        "type": "number",
+                        "index": 7,
+                        "label": "X",
+                        "tooltip": "Horizontal position of the item's center on the board, in board units. 0 is the center of the board (or the top left corner of the frame when Frame ID is set)."
+                    },
+                    "y": {
+                        "type": "number",
+                        "index": 8,
+                        "label": "Y",
+                        "tooltip": "Vertical position of the item's center on the board, in board units."
+                    },
+                    "width": {
+                        "type": "number",
+                        "index": 9,
+                        "label": "Width",
+                        "tooltip": "Width of the item in board units."
+                    },
+                    "height": {
+                        "type": "number",
+                        "index": 10,
+                        "label": "Height",
+                        "tooltip": "Height of the item in board units."
+                    },
+                    "parentId": {
+                        "type": "text",
+                        "index": 11,
+                        "label": "Frame ID",
+                        "tooltip": "Optional ID of a frame to put the item in. The position is then relative to the frame's top left corner."
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "title": "Item ID",
+                        "example": "3458764517517819002"
+                    },
+                    "type": {
+                        "type": "string",
+                        "title": "Type",
+                        "example": "shape"
+                    },
+                    "data": {
+                        "type": "object",
+                        "title": "Data",
+                        "properties": {
+                            "content": {
+                                "type": "string",
+                                "title": "Data.Content",
+                                "example": "<p>Start</p>"
+                            },
+                            "shape": {
+                                "type": "string",
+                                "title": "Data.Shape",
+                                "example": "rectangle"
+                            }
+                        },
+                        "required": [
+                            "shape"
+                        ]
+                    },
+                    "style": {
+                        "type": "object",
+                        "title": "Style",
+                        "properties": {
+                            "fillColor": {
+                                "type": "string",
+                                "title": "Style.Fill Color",
+                                "example": "#ffffff"
+                            },
+                            "fillOpacity": {
+                                "type": "string",
+                                "title": "Style.Fill Opacity",
+                                "example": "1.0"
+                            },
+                            "borderColor": {
+                                "type": "string",
+                                "title": "Style.Border Color",
+                                "example": "#1a1a1a"
+                            },
+                            "borderWidth": {
+                                "type": "string",
+                                "title": "Style.Border Width",
+                                "example": "2.0"
+                            },
+                            "borderStyle": {
+                                "type": "string",
+                                "title": "Style.Border Style",
+                                "example": "normal"
+                            },
+                            "color": {
+                                "type": "string",
+                                "title": "Style.Text Color",
+                                "example": "#1a1a1a"
+                            },
+                            "fontFamily": {
+                                "type": "string",
+                                "title": "Style.Font Family",
+                                "example": "arial"
+                            },
+                            "fontSize": {
+                                "type": "string",
+                                "title": "Style.Font Size",
+                                "example": "14"
+                            },
+                            "textAlign": {
+                                "type": "string",
+                                "title": "Style.Text Align",
+                                "example": "center"
+                            },
+                            "textAlignVertical": {
+                                "type": "string",
+                                "title": "Style.Text Align Vertical",
+                                "example": "middle"
+                            }
+                        },
+                        "required": []
+                    },
+                    "position": {
+                        "type": "object",
+                        "title": "Position",
+                        "properties": {
+                            "x": {
+                                "type": "number",
+                                "title": "Position.X",
+                                "example": 0
+                            },
+                            "y": {
+                                "type": "number",
+                                "title": "Position.Y",
+                                "example": 0
+                            },
+                            "origin": {
+                                "type": "string",
+                                "title": "Position.Origin",
+                                "example": "center"
+                            },
+                            "relativeTo": {
+                                "type": "string",
+                                "title": "Position.Relative To",
+                                "example": "canvas_center"
+                            }
+                        },
+                        "required": [
+                            "x",
+                            "y"
+                        ]
+                    },
+                    "geometry": {
+                        "type": "object",
+                        "title": "Geometry",
+                        "properties": {
+                            "width": {
+                                "type": "number",
+                                "title": "Geometry.Width",
+                                "example": 199.99
+                            },
+                            "height": {
+                                "type": "number",
+                                "title": "Geometry.Height",
+                                "example": 228
+                            },
+                            "rotation": {
+                                "type": "number",
+                                "title": "Geometry.Rotation",
+                                "example": 0
+                            }
+                        },
+                        "required": []
+                    },
+                    "parent": {
+                        "type": "object",
+                        "title": "Parent",
+                        "properties": {
+                            "id": {
+                                "type": "string",
+                                "title": "Parent.ID",
+                                "example": "3458764517517818000"
+                            }
+                        },
+                        "required": []
+                    },
+                    "createdAt": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Created At",
+                        "example": "2026-11-20T09:20:00Z"
+                    },
+                    "modifiedAt": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Modified At",
+                        "example": "2026-11-20T09:20:00Z"
+                    },
+                    "createdBy": {
+                        "type": "object",
+                        "title": "Created By",
+                        "properties": {
+                            "id": {
+                                "type": "string",
+                                "title": "Created By.ID",
+                                "example": "3458764512345678901"
+                            },
+                            "type": {
+                                "type": "string",
+                                "title": "Created By.Type",
+                                "example": "user"
+                            }
+                        },
+                        "required": [
+                            "id"
+                        ]
+                    },
+                    "modifiedBy": {
+                        "type": "object",
+                        "title": "Modified By",
+                        "properties": {
+                            "id": {
+                                "type": "string",
+                                "title": "Modified By.ID",
+                                "example": "3458764512345678901"
+                            },
+                            "type": {
+                                "type": "string",
+                                "title": "Modified By.Type",
+                                "example": "user"
+                            }
+                        },
+                        "required": [
+                            "id"
+                        ]
+                    }
+                },
+                "required": [
+                    "id",
+                    "type",
+                    "data"
+                ]
+            }
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHJlY3Qgd2lkdGg9IjI0IiBoZWlnaHQ9IjI0IiByeD0iNSIgZmlsbD0iI0ZGREQzMyIvPjxwYXRoIHRyYW5zZm9ybT0idHJhbnNsYXRlKDQuOCA0LjgpIHNjYWxlKDAuNikiIGZpbGw9IiMwNTAwMzgiIGQ9Ik0xNy4zOTIgMEgxMy45TDE3IDQuODA4IDEwLjQ0NCAwSDYuOTQ5bDMuMTAyIDYuM0wzLjQ5NCAwSDBsMy4wNSA4LjEzMUwwIDI0aDMuNDk0TDEwLjA1IDYuOTg1IDYuOTQ5IDI0aDMuNDk0TDE3IDUuNDk0IDEzLjg5OSAyNGgzLjQ5M0wyNCAzLjY3MiAxNy4zOTIgMHoiLz48L3N2Zz4="
+}

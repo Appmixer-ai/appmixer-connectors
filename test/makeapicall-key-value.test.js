@@ -10,6 +10,7 @@
 const assert = require('assert');
 const path = require('path');
 const glob = require('glob');
+const sinon = require('sinon');
 const { createMockContext } = require('./utils');
 
 const ROOT = path.join(__dirname, '..');
@@ -18,20 +19,46 @@ const components = glob.sync('src/**/MakeApiCall/MakeApiCall.js', { cwd: ROOT })
 // Inputs a few components require on top of url/method; harmless for the rest.
 const EXTRA_INPUTS = { baseUrl: 'https://kv-test.example.com', tenantId: 'kv-test-tenant', companyId: 'kv-test' };
 
-// Account data a few components read before the call (DocuSign base URI, Jira cloud id).
+// Account data a few components read before the call (DocuSign base URI, Jira cloud id, SuperOffice tenant).
 const PROFILE_INFO = {
     accounts: [{ base_uri: 'https://kv-test.example.com', account_id: 'kv-test', is_default: true }],
     apiUrl: 'https://api.atlassian.com/ex/jira/kv-test',
     region: 'us',
-    accountURL: 'https://kv-test.example.com'
+    accountURL: 'https://kv-test.example.com',
+    tenantId: 'Cust12345'
 };
 
-// Any auth or config field reads as a placeholder: a URL for *Url/*Uri/*Domain fields, a token otherwise.
-const auth = new Proxy({}, {
+// SuperOffice asks its state endpoint where the tenant's API lives and sends the token only there.
+const SUPEROFFICE_STATE = { IsRunning: true, Api: 'https://online.superoffice.com/Cust12345/api' };
+
+// Service config of the components that validate it instead of taking any placeholder.
+const CONFIG = {
+    'src/appmixer/superoffice/core/MakeApiCall/MakeApiCall.js': { environment: 'online' }
+};
+
+// Account fields a connector validates before any request (it refuses to send the
+// token anywhere else), keyed by the connector directory (src/appmixer/<connector>).
+const AUTH_OVERRIDES = {
+    // lib.js accepts only a *.workday.com / *.myworkday.com hostname.
+    workday: { host: 'kv-test.workday.com' }
+};
+
+// What a *Url/*Uri/*Domain account field holds differs by connector: a full URL, a bare hostname
+// ("acme.example.com") or just the account name ("acme" for acme.freshservice.com). A connector
+// that validates the field before sending the token rejects the other shapes, so the test tries
+// them in turn and needs no entry per connector. AUTH_OVERRIDES is only for a field that must
+// name the vendor's own host.
+const HOST_SHAPES = ['https://kv-test.example.com', 'kv-test.example.com', 'kv-test'];
+
+// Any auth or config field reads as a placeholder: a host for *Url/*Uri/*Domain fields, a token otherwise.
+const createAuth = (overrides = {}, hostShape = HOST_SHAPES[0]) => new Proxy({}, {
     get: (target, prop) => {
         if (typeof prop !== 'string') return undefined;
         if (prop === 'profileInfo') return PROFILE_INFO;
-        return /(url|uri|domain)$/i.test(prop) ? 'https://kv-test.example.com' : 'kv-test';
+        if (Object.prototype.hasOwnProperty.call(overrides, prop)) return overrides[prop];
+        // An Azure resource endpoint: ai.foundry refuses a host outside the Azure OpenAI domains.
+        if (prop === 'endpoint') return 'https://kv-test.openai.azure.com';
+        return /(url|uri|domain)$/i.test(prop) ? hostShape : 'kv-test';
     }
 });
 
@@ -46,37 +73,69 @@ describe('MakeApiCall: Request Headers and Query Parameters from the Designer', 
         assert(components.length > 150, `only ${components.length} found`);
     });
 
+    // One call of the component with the given shape of host-like account fields. Returns the
+    // request that carried the test header (if any), all requests, and the error the component threw.
+    const callWith = async (file, hostShape) => {
+
+        const component = require(path.join(ROOT, file));
+        const connector = file.split('/')[2];
+        const auth = createAuth(AUTH_OVERRIDES[connector], hostShape);
+        const context = createMockContext();
+        context.auth = auth;
+        context.config = CONFIG[file] || auth;
+        context.profileInfo = { ...context.profileInfo, ...PROFILE_INFO };
+        context.httpRequest.resolves({
+            status: 200,
+            statusCode: 200,
+            headers: { 'content-type': 'application/json' },
+            data: {}
+        });
+        context.httpRequest
+            .withArgs(sinon.match({ url: sinon.match(/\/api\/state\/Cust12345$/) }))
+            .resolves({ status: 200, data: SUPEROFFICE_STATE });
+        context.messages = {
+            in: {
+                content: {
+                    ...EXTRA_INPUTS,
+                    url: '/kv-test',
+                    method: 'GET',
+                    headers: JSON.stringify({ 'X-Kv-Test': 'header-value' }),
+                    parameters: JSON.stringify({ kvtest: 'param-value' })
+                }
+            }
+        };
+
+        let error = null;
+        try {
+            await component.receive(context);
+        } catch (err) {
+            error = err;
+        }
+
+        const requests = context.httpRequest.getCalls().map(call => call.args[0]);
+        const request = requests.find(options => findHeader(options.headers, 'X-Kv-Test'));
+        return { request, requests, error };
+    };
+
     components.forEach(file => {
 
         it(path.dirname(file).replace(/^src\//, ''), async () => {
 
-            const component = require(path.join(ROOT, file));
-            const context = createMockContext();
-            context.auth = auth;
-            context.config = auth;
-            context.profileInfo = { ...context.profileInfo, ...PROFILE_INFO };
-            context.httpRequest.resolves({
-                status: 200,
-                statusCode: 200,
-                headers: { 'content-type': 'application/json' },
-                data: {}
-            });
-            context.messages = {
-                in: {
-                    content: {
-                        ...EXTRA_INPUTS,
-                        url: '/kv-test',
-                        method: 'GET',
-                        headers: JSON.stringify({ 'X-Kv-Test': 'header-value' }),
-                        parameters: JSON.stringify({ kvtest: 'param-value' })
-                    }
-                }
-            };
+            // The first shape whose call sends the header counts; when none does, the failure
+            // reported is the one of the first shape (the placeholder every connector got before).
+            let first = null;
+            let result = null;
+            for (const hostShape of HOST_SHAPES) {
+                result = await callWith(file, hostShape);
+                first = first || result;
+                if (result.request && !result.error) break;
+            }
+            if (!result.request || result.error) {
+                result = first;
+            }
+            if (result.error) throw result.error;
 
-            await component.receive(context);
-
-            const requests = context.httpRequest.getCalls().map(call => call.args[0]);
-            const request = requests.find(options => findHeader(options.headers, 'X-Kv-Test'));
+            const { request, requests } = result;
             assert(request, `no request carried the X-Kv-Test header (${requests.length} request(s))`);
             assert.strictEqual(findHeader(request.headers, 'X-Kv-Test')[1], 'header-value');
 

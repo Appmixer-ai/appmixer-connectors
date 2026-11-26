@@ -8,9 +8,12 @@ const lib = require('../../lib');
 module.exports = {
 
     async receive(context) {
-        const { issue, title = '', body = '', assignees = [], labels = [], milestone = '' } = context.messages.in.content;
+        const { issue, title = '', body = '', assignees = [], labels = [], milestone = '', state = '' } = context.messages.in.content;
         if (!issue) {
             throw new context.CancelError('Issue is required!');
+        }
+        if (state && !['open', 'closed'].includes(state)) {
+            throw new context.CancelError('State must be either "open" or "closed"!');
         }
         let requestData = {};
 
@@ -23,6 +26,7 @@ module.exports = {
             requestData.labels = lib.normalizeMultiselectInput(labels, context, 'Labels');
         }
         if (milestone) requestData.milestone = milestone;
+        if (state) requestData.state = state;
 
         const { data } = await lib.apiRequest(context, `repos/${context.properties.repositoryId}/issues/${context.messages.in.content.issue}`, {
             method: 'PATCH',
