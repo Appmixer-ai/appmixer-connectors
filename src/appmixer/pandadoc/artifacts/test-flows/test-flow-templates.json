@@ -1,6 +1,6 @@
 {
     "name": "E2E PandaDoc - templates",
-    "description": "List the templates and create a document from the first one, then delete the document.",
+    "description": "Create a template from a PDF URL, list the templates, create a document from the new template, then delete the document and the template.",
     "flow": {
         "58722403-a892-40a2-955f-087d5360a265": {
             "type": "appmixer.utils.controls.OnStart",
@@ -105,8 +105,8 @@
                 "onError": "stopFlow"
             }
         },
-        "20c6903e-f730-4c9f-836e-ab39e23f95d9": {
-            "type": "appmixer.pandadoc.core.ListTemplates",
+        "3e0b6a51-7c2d-4f8e-b1a9-5d4c6e8f2a10": {
+            "type": "appmixer.pandadoc.core.MakeApiCall",
             "x": 480,
             "y": 144,
             "version": "1.0.0",
@@ -121,6 +121,142 @@
                 "transform": {
                     "in": {
                         "b4bc018f-bcb6-4ba3-8e94-fd5a06c8174b": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "url": {},
+                                    "method": {},
+                                    "body": {}
+                                },
+                                "lambda": {
+                                    "url": "/public/v1/templates",
+                                    "method": "POST",
+                                    "body": "{\"name\":\"E2E PandaDoc Template\",\"url\":\"https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf\",\"metadata\":{\"source\":\"appmixer-e2e\"}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "6a7c9e21-0d3b-4e5f-8a1c-2b4d6f8e0c32": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 688,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "3e0b6a51-7c2d-4f8e-b1a9-5d4c6e8f2a10": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "3e0b6a51-7c2d-4f8e-b1a9-5d4c6e8f2a10": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "e1f2a3b4-c5d6-4e7f-8a9b-0c1d2e3f4a51": {
+                                            "variable": "$.3e0b6a51-7c2d-4f8e-b1a9-5d4c6e8f2a10.out.body",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$.id"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        },
+                                        "e1f2a3b4-c5d6-4e7f-8a9b-0c1d2e3f4a52": {
+                                            "variable": "$.3e0b6a51-7c2d-4f8e-b1a9-5d4c6e8f2a10.out.statusCode",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{e1f2a3b4-c5d6-4e7f-8a9b-0c1d2e3f4a51}}}",
+                                                "assertion": "notEmpty"
+                                            },
+                                            {
+                                                "field": "{{{e1f2a3b4-c5d6-4e7f-8a9b-0c1d2e3f4a52}}}",
+                                                "assertion": "equal",
+                                                "expected": "201"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "9b1d3f53-2e4a-4c6b-9d8e-0f1a3c5e7b54": {
+            "type": "appmixer.utils.timers.Wait",
+            "x": 688,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "3e0b6a51-7c2d-4f8e-b1a9-5d4c6e8f2a10": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "3e0b6a51-7c2d-4f8e-b1a9-5d4c6e8f2a10": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "interval": {}
+                                },
+                                "lambda": {
+                                    "interval": "1m"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "20c6903e-f730-4c9f-836e-ab39e23f95d9": {
+            "type": "appmixer.pandadoc.core.ListTemplates",
+            "x": 896,
+            "y": 400,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "9b1d3f53-2e4a-4c6b-9d8e-0f1a3c5e7b54": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "9b1d3f53-2e4a-4c6b-9d8e-0f1a3c5e7b54": {
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
@@ -141,8 +277,8 @@
         },
         "4c482e73-e45b-468a-a184-0e6b2b7bdfdb": {
             "type": "appmixer.utils.test.Assert",
-            "x": 688,
-            "y": 144,
+            "x": 1104,
+            "y": 400,
             "version": "1.0.0",
             "source": {
                 "in": {
@@ -196,8 +332,8 @@
         },
         "07d37a0c-55e6-442f-8385-af458ae2864b": {
             "type": "appmixer.pandadoc.core.CreateDocumentFromTemplate",
-            "x": 688,
-            "y": 272,
+            "x": 1104,
+            "y": 528,
             "version": "1.0.0",
             "source": {
                 "in": {
@@ -215,13 +351,13 @@
                                 "modifiers": {
                                     "templateId": {
                                         "1387f5c5-f311-472d-a76d-706086b839f6": {
-                                            "variable": "$.20c6903e-f730-4c9f-836e-ab39e23f95d9.out.result",
+                                            "variable": "$.3e0b6a51-7c2d-4f8e-b1a9-5d4c6e8f2a10.out.body",
                                             "functions": [
                                                 {
                                                     "name": "g_jsonPath",
                                                     "params": [
                                                         {
-                                                            "value": "$[0].id"
+                                                            "value": "$.id"
                                                         }
                                                     ]
                                                 }
@@ -268,8 +404,8 @@
         },
         "b26df72f-5be4-4198-99be-7493d90e73fb": {
             "type": "appmixer.utils.test.Assert",
-            "x": 896,
-            "y": 272,
+            "x": 1312,
+            "y": 528,
             "version": "1.0.0",
             "source": {
                 "in": {
@@ -323,12 +459,15 @@
         },
         "8de6e6cc-fcb5-42c9-bea6-582b6d9ecbe7": {
             "type": "appmixer.utils.test.AfterAll",
-            "x": 1104,
-            "y": 272,
+            "x": 1520,
+            "y": 528,
             "version": "1.0.0",
             "source": {
                 "in": {
                     "5c01cca6-50ef-481e-804c-31f38d5a0337": [
+                        "out"
+                    ],
+                    "6a7c9e21-0d3b-4e5f-8a1c-2b4d6f8e0c32": [
                         "out"
                     ],
                     "4c482e73-e45b-468a-a184-0e6b2b7bdfdb": [
@@ -351,8 +490,8 @@
         },
         "fc4d7d62-2b05-4243-944a-18b7886042bc": {
             "type": "appmixer.pandadoc.core.DeleteDocument",
-            "x": 1312,
-            "y": 272,
+            "x": 1728,
+            "y": 528,
             "version": "1.0.0",
             "source": {
                 "in": {
@@ -388,14 +527,64 @@
                 "onError": "stopFlow"
             }
         },
-        "df3d909e-3b99-4403-9590-20d811b05e51": {
-            "type": "appmixer.utils.test.ProcessE2EResults",
-            "x": 1520,
-            "y": 272,
+        "c4e6a875-6f8b-4a0c-8e2d-4b6d8f0a2c76": {
+            "type": "appmixer.pandadoc.core.MakeApiCall",
+            "x": 1936,
+            "y": 528,
             "version": "1.0.0",
             "source": {
                 "in": {
                     "fc4d7d62-2b05-4243-944a-18b7886042bc": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "fc4d7d62-2b05-4243-944a-18b7886042bc": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "url": {
+                                        "d7e8f9a0-b1c2-4d3e-9f4a-5b6c7d8e9f01": {
+                                            "variable": "$.3e0b6a51-7c2d-4f8e-b1a9-5d4c6e8f2a10.out.body",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$.id"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "method": {}
+                                },
+                                "lambda": {
+                                    "url": "/public/v1/templates/{{{d7e8f9a0-b1c2-4d3e-9f4a-5b6c7d8e9f01}}}",
+                                    "method": "DELETE"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "df3d909e-3b99-4403-9590-20d811b05e51": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 2144,
+            "y": 528,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "c4e6a875-6f8b-4a0c-8e2d-4b6d8f0a2c76": [
                         "out"
                     ]
                 }
@@ -407,7 +596,7 @@
                 },
                 "transform": {
                     "in": {
-                        "fc4d7d62-2b05-4243-944a-18b7886042bc": {
+                        "c4e6a875-6f8b-4a0c-8e2d-4b6d8f0a2c76": {
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
@@ -439,10 +628,10 @@
     "notes": {
         "53573c9b-acdf-4290-afd6-336910de2c39": {
             "x": 64,
-            "y": 528,
+            "y": 656,
             "width": 672,
             "height": 224,
-            "content": "## ⚠️ Test data assumption\n\nThe workspace needs **at least one template**, and the first template List Templates returns must accept a recipient **without a role** (a template with no roles, or one whose fields are not assigned to a role). Otherwise PandaDoc rejects the document. Create such a template in PandaDoc (Templates → New template) before running the flow."
+            "content": "## Test data\n\nThe flow creates its own template (Make API Call → POST /public/v1/templates from a public PDF URL), so a fresh workspace works. The **Wait (1m)** gives PandaDoc time to process the uploaded PDF before the template is used — do not remove it. The template has no roles, so the recipient is added without a role. Cleanup deletes the document and the template."
         }
     }
 }
