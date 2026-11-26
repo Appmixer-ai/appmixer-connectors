@@ -1,0 +1,188 @@
+{
+    "name": "E2E Revinate Guest Data - profile and reservation triggers",
+    "description": "New or Updated Guest Profile and New or Updated Reservation triggers. The CDP API is read-only, so the change has to be produced by hand while the flow runs (see the note).",
+    "flow": {
+        "8b2a6d67-ed53-47c7-841e-7c3fae984034": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16,
+            "source": {},
+            "version": "1.0.0",
+            "config": {},
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "d34f5a8c-fc87-44af-b712-e0003b61da39": {
+            "type": "appmixer.utils.timers.Wait",
+            "x": 272,
+            "y": 16,
+            "version": "1.0.0",
+            "source": { "in": { "8b2a6d67-ed53-47c7-841e-7c3fae984034": ["out"] } },
+            "config": {
+                "transform": {
+                    "in": {
+                        "8b2a6d67-ed53-47c7-841e-7c3fae984034": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": { "interval": {} },
+                                "lambda": { "interval": "2m" }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "9716ab2b-3ef5-4e85-9d95-df731c041886": {
+            "type": "appmixer.revinate.cdp.UpdatedGuestProfile",
+            "x": 64,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {},
+            "config": { "properties": { "pollingInterval": 1 } },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "8ac9bd71-a93e-45b6-bcd1-d6ef43135072": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 272,
+            "y": 144,
+            "version": "1.0.0",
+            "source": { "in": { "9716ab2b-3ef5-4e85-9d95-df731c041886": ["out"] } },
+            "config": {
+                "transform": {
+                    "in": {
+                        "9716ab2b-3ef5-4e85-9d95-df731c041886": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "0d75e675-f0fc-4909-94e9-f821d38af7c3": {
+                                            "variable": "$.9716ab2b-3ef5-4e85-9d95-df731c041886.out.revinate_rich_guest_profile_id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            { "field": "{{{0d75e675-f0fc-4909-94e9-f821d38af7c3}}}", "assertion": "notEmpty" }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "8d389304-ad29-45b3-9c51-4f78edc88e93": {
+            "type": "appmixer.revinate.cdp.UpdatedReservation",
+            "x": 64,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {},
+            "config": { "properties": { "pollingInterval": 1 } },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "3ce408b1-a6db-4811-9545-362a6ad0b9e4": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 272,
+            "y": 272,
+            "version": "1.0.0",
+            "source": { "in": { "8d389304-ad29-45b3-9c51-4f78edc88e93": ["out"] } },
+            "config": {
+                "transform": {
+                    "in": {
+                        "8d389304-ad29-45b3-9c51-4f78edc88e93": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "6876e6da-29cc-4453-9bfd-8e61fd4fc06b": {
+                                            "variable": "$.8d389304-ad29-45b3-9c51-4f78edc88e93.out.reservation_id",
+                                            "functions": []
+                                        },
+                                        "3b97b8f2-13d1-43c2-923e-130c0f001598": {
+                                            "variable": "$.8d389304-ad29-45b3-9c51-4f78edc88e93.out.reservation_type",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            { "field": "{{{6876e6da-29cc-4453-9bfd-8e61fd4fc06b}}}", "assertion": "notEmpty" },
+                                            { "field": "{{{3b97b8f2-13d1-43c2-923e-130c0f001598}}}", "assertion": "regex", "regex": "^(room|spa|restaurant|golf)$" }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "e30e0ed5-10c0-482e-bb58-f38c3d82babf": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 480,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "8ac9bd71-a93e-45b6-bcd1-d6ef43135072": ["out"],
+                    "3ce408b1-a6db-4811-9545-362a6ad0b9e4": ["out"]
+                }
+            },
+            "config": { "properties": { "timeout": 1800 } },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "6cbb59db-c951-468e-81a2-083cfee46eb3": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 688,
+            "y": 272,
+            "version": "1.0.0",
+            "source": { "in": { "e30e0ed5-10c0-482e-bb58-f38c3d82babf": ["out"] } },
+            "config": {
+                "properties": {
+                    "successStoreId": "64f6f1f9193228000754082f",
+                    "failedStoreId": "64f6f1f0193228000754082e"
+                },
+                "transform": {
+                    "in": {
+                        "e30e0ed5-10c0-482e-bb58-f38c3d82babf": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "467e45cb-feed-4944-b2ee-91c5b4f61e1f": {
+                                            "variable": "$.e30e0ed5-10c0-482e-bb58-f38c3d82babf.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E Revinate Guest Data - profile and reservation triggers",
+                                    "result": "{{{467e45cb-feed-4944-b2ee-91c5b4f61e1f}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        }
+    },
+    "notes": {
+        "175235db-5a36-4570-86f9-baa84309422d": {
+            "x": 64,
+            "y": 432,
+            "width": 736,
+            "height": 352,
+            "content": "## Manual test: the change has to be produced by hand\n\nThe CDP API is read-only, so this flow cannot change a guest or a reservation itself. It is a harness for a manual check and cannot run unattended.\n\n1. Start the flow. Both triggers record \"now\" on their first check and check again every minute (Check Every = 1).\n2. Wait at least 2 minutes.\n3. In the property management system connected to the Revinate account, create or change a reservation for a guest (a new booking changes both the reservation and the guest's Rich Guest Profile). How long Revinate takes to import the change depends on the PMS integration.\n4. New or Updated Reservation fires for the reservation and New or Updated Guest Profile for the guest.\n\nThe flow waits 30 minutes. It has never been run: no Revinate test credentials existed when the connector was built."
+        }
+    }
+}

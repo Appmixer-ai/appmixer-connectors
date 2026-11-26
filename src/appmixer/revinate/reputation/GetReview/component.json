@@ -1,0 +1,419 @@
+{
+    "name": "appmixer.revinate.reputation.GetReview",
+    "label": "Get Review",
+    "description": "Get one review by its ID, with its rating, text, review site, management response and, for survey responses, the guest's stay and answers. Review content from this API is licensed for analysis, not for public display.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:revinate:reputation"
+    },
+    "quota": {
+        "manager": "appmixer:revinate:reputation",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "reviewId": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "reviewId"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "reviewId": {
+                        "type": "text",
+                        "index": 1,
+                        "label": "Review ID",
+                        "tooltip": "The numeric ID of the review, as returned by Find Reviews or a review trigger."
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "schema": {
+                "type": "object",
+                "required": [
+                    "id",
+                    "links"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "title": "Review ID",
+                        "example": 482930112
+                    },
+                    "hotelId": {
+                        "type": "integer",
+                        "title": "Hotel ID",
+                        "example": 10470
+                    },
+                    "title": {
+                        "type": "string",
+                        "title": "Title",
+                        "example": "Lovely stay near the old town"
+                    },
+                    "body": {
+                        "type": "string",
+                        "title": "Body",
+                        "example": "The room was spotless and the front desk team went out of their way to help us."
+                    },
+                    "author": {
+                        "type": "string",
+                        "title": "Author",
+                        "example": "Jane D"
+                    },
+                    "authorLocation": {
+                        "type": "string",
+                        "title": "Author Location",
+                        "example": "Portland, Oregon"
+                    },
+                    "dateReview": {
+                        "type": "integer",
+                        "title": "Review Date (Unix Time)",
+                        "example": 1795305600
+                    },
+                    "dateCollected": {
+                        "type": "integer",
+                        "title": "Date Collected (Unix Time)",
+                        "example": 1795392000
+                    },
+                    "updatedAt": {
+                        "type": "integer",
+                        "title": "Updated At (Unix Time)",
+                        "example": 1795478400
+                    },
+                    "rating": {
+                        "type": "number",
+                        "title": "Rating",
+                        "example": 4
+                    },
+                    "nps": {
+                        "type": "integer",
+                        "title": "NPS",
+                        "example": 9
+                    },
+                    "reviewSite": {
+                        "type": "object",
+                        "title": "Review Site",
+                        "properties": {
+                            "id": {
+                                "type": "integer",
+                                "title": "Review Site.ID",
+                                "example": 3
+                            },
+                            "name": {
+                                "type": "string",
+                                "title": "Review Site.Name",
+                                "example": "TripAdvisor"
+                            },
+                            "mainUrl": {
+                                "type": "string",
+                                "title": "Review Site.Main URL",
+                                "example": "http://www.tripadvisor.com"
+                            },
+                            "slug": {
+                                "type": "string",
+                                "title": "Review Site.Slug",
+                                "example": "tripadvisor"
+                            },
+                            "links": {
+                                "type": "array",
+                                "title": "Review Site.Links",
+                                "items": {
+                                    "type": "object"
+                                },
+                                "example": [
+                                    {
+                                        "rel": "self",
+                                        "href": "https://porter.revinate.com/reviewsites/3"
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "language": {
+                        "type": "object",
+                        "title": "Language",
+                        "properties": {
+                            "id": {
+                                "type": "integer",
+                                "title": "Language.ID",
+                                "example": 1
+                            },
+                            "name": {
+                                "type": "string",
+                                "title": "Language.Name",
+                                "example": "English"
+                            },
+                            "englishName": {
+                                "type": "string",
+                                "title": "Language.English Name",
+                                "example": "English"
+                            },
+                            "slug": {
+                                "type": "string",
+                                "title": "Language.Slug",
+                                "example": "en"
+                            },
+                            "links": {
+                                "type": "array",
+                                "title": "Language.Links",
+                                "items": {
+                                    "type": "object"
+                                },
+                                "example": [
+                                    {
+                                        "rel": "self",
+                                        "href": "https://porter.revinate.com/languages/1"
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "crawledUrl": {
+                        "type": "string",
+                        "title": "Review URL",
+                        "example": "https://www.tripadvisor.com/ShowUserReviews-g60950-d123456-r482930112.html"
+                    },
+                    "subratings": {
+                        "type": "object",
+                        "title": "Subratings",
+                        "example": {
+                            "Cleanliness": 5,
+                            "Service": 4,
+                            "Rooms": 4
+                        }
+                    },
+                    "tripType": {
+                        "type": "string",
+                        "title": "Trip Type",
+                        "example": "Couples"
+                    },
+                    "guestStay": {
+                        "type": "object",
+                        "title": "Guest Stay",
+                        "properties": {
+                            "checkinDate": {
+                                "type": "string",
+                                "title": "Guest Stay.Check-in Date",
+                                "format": "date-time",
+                                "example": "2026-11-12T00:00:00.000Z"
+                            },
+                            "checkoutDate": {
+                                "type": "string",
+                                "title": "Guest Stay.Check-out Date",
+                                "format": "date-time",
+                                "example": "2026-11-15T00:00:00.000Z"
+                            },
+                            "loyaltyId": {
+                                "type": "string",
+                                "title": "Guest Stay.Loyalty ID",
+                                "example": "5968788744"
+                            },
+                            "confirmationCode": {
+                                "type": "string",
+                                "title": "Guest Stay.Confirmation Code",
+                                "example": "R589665"
+                            },
+                            "bookingChannel": {
+                                "type": "string",
+                                "title": "Guest Stay.Booking Channel",
+                                "example": "Direct"
+                            },
+                            "roomType": {
+                                "type": "string",
+                                "title": "Guest Stay.Room Type",
+                                "example": "DLX"
+                            },
+                            "roomNumber": {
+                                "type": "string",
+                                "title": "Guest Stay.Room Number",
+                                "example": "409"
+                            },
+                            "rate": {
+                                "type": "string",
+                                "title": "Guest Stay.Rate",
+                                "example": "189.00"
+                            },
+                            "rateCurrency": {
+                                "type": "string",
+                                "title": "Guest Stay.Rate Currency",
+                                "example": "USD"
+                            },
+                            "ratePlanCode": {
+                                "type": "string",
+                                "title": "Guest Stay.Rate Plan Code",
+                                "example": "BAR"
+                            },
+                            "checkedInBy": {
+                                "type": "string",
+                                "title": "Guest Stay.Checked In By",
+                                "example": "mlee"
+                            },
+                            "checkedOutBy": {
+                                "type": "string",
+                                "title": "Guest Stay.Checked Out By",
+                                "example": "tnguyen"
+                            },
+                            "groupName": {
+                                "type": "string",
+                                "title": "Guest Stay.Group Name",
+                                "example": "Smith Wedding"
+                            },
+                            "guest": {
+                                "type": "object",
+                                "title": "Guest Stay.Guest",
+                                "properties": {
+                                    "title": {
+                                        "type": "string",
+                                        "title": "Guest Stay.Guest.Title",
+                                        "example": "Ms."
+                                    },
+                                    "firstName": {
+                                        "type": "string",
+                                        "title": "Guest Stay.Guest.First Name",
+                                        "example": "Jane"
+                                    },
+                                    "lastName": {
+                                        "type": "string",
+                                        "title": "Guest Stay.Guest.Last Name",
+                                        "example": "Doe"
+                                    },
+                                    "phone": {
+                                        "type": "string",
+                                        "title": "Guest Stay.Guest.Phone",
+                                        "example": "+1 503 555 0142"
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "title": "Guest Stay.Guest.Email",
+                                        "example": "jane.doe@example.com"
+                                    },
+                                    "address": {
+                                        "type": "string",
+                                        "title": "Guest Stay.Guest.Address",
+                                        "example": "249 Sullivan St"
+                                    },
+                                    "address2": {
+                                        "type": "string",
+                                        "title": "Guest Stay.Guest.Address 2",
+                                        "example": "Apt 3"
+                                    },
+                                    "city": {
+                                        "type": "string",
+                                        "title": "Guest Stay.Guest.City",
+                                        "example": "Portland"
+                                    },
+                                    "state": {
+                                        "type": "string",
+                                        "title": "Guest Stay.Guest.State",
+                                        "example": "OR"
+                                    },
+                                    "country": {
+                                        "type": "string",
+                                        "title": "Guest Stay.Guest.Country",
+                                        "example": "US"
+                                    },
+                                    "postalCode": {
+                                        "type": "string",
+                                        "title": "Guest Stay.Guest.Postal Code",
+                                        "example": "97205"
+                                    },
+                                    "links": {
+                                        "type": "array",
+                                        "title": "Guest Stay.Guest.Links",
+                                        "items": {
+                                            "type": "object"
+                                        },
+                                        "example": []
+                                    }
+                                }
+                            },
+                            "links": {
+                                "type": "array",
+                                "title": "Guest Stay.Links",
+                                "items": {
+                                    "type": "object"
+                                },
+                                "example": []
+                            }
+                        }
+                    },
+                    "surveyTopics": {
+                        "type": "array",
+                        "title": "Survey Topics",
+                        "items": {
+                            "type": "object"
+                        },
+                        "example": [
+                            {
+                                "name": "Overall",
+                                "questionAnswers": [
+                                    {
+                                        "question": {
+                                            "name": "How likely are you to recommend us?",
+                                            "type": "NPS"
+                                        },
+                                        "ratingAnswer": 9
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    "response": {
+                        "type": "object",
+                        "title": "Response",
+                        "properties": {
+                            "body": {
+                                "type": "string",
+                                "title": "Response.Body",
+                                "example": "Thank you for staying with us, Jane. We hope to welcome you back soon."
+                            },
+                            "author": {
+                                "type": "string",
+                                "title": "Response.Author",
+                                "example": "General Manager"
+                            },
+                            "date": {
+                                "type": "integer",
+                                "title": "Response.Date (Unix Time)",
+                                "example": 1795478400
+                            }
+                        }
+                    },
+                    "links": {
+                        "type": "array",
+                        "title": "Links",
+                        "items": {
+                            "type": "object"
+                        },
+                        "example": [
+                            {
+                                "rel": "self",
+                                "href": "https://porter.revinate.com/reviews/482930112"
+                            },
+                            {
+                                "rel": "hotel",
+                                "href": "https://porter.revinate.com/hotels/10470"
+                            }
+                        ]
+                    }
+                }
+            }
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDI0IDEwMjgiIHJvbGU9ImltZyIgYXJpYS1sYWJlbD0iUmV2aW5hdGUiPjxyZWN0IHdpZHRoPSIxMDI0IiBoZWlnaHQ9IjEwMjgiIGZpbGw9IiMzNzYxRDgiLz48cGF0aCB0cmFuc2Zvcm09InRyYW5zbGF0ZSgwLDEwMjgpIHNjYWxlKDAuMSwtMC4xKSIgZmlsbD0iI0ZGRkZGRiIgZD0iTTUwNTAgNzc2OSBjLTE0IC0xMCAtMzYgLTI5IC01MCAtNDEgLTM2IC0zMSAtNTAxIC00MDUgLTU2OCAtNDU3IC0zMiAtMjQgLTgwIC02MyAtMTA3IC04NiAtMjggLTI0IC03MyAtNjAgLTEwMCAtODEgLTI4IC0yMCAtNTIgLTQxIC01NSAtNDUgLTMgLTQgLTIwIC0xOCAtMzcgLTMxIC02MyAtNDYgLTE0MCAtMTA3IC0xNTcgLTEyNCAtMTAgLTkgLTMxIC0yNyAtNDYgLTM4IC02NSAtNDggLTEzOCAtMTA2IC0xNTUgLTEyMyAtMTAgLTEwIC0zMCAtMjcgLTQ1IC0zOCAtNzUgLTU1IC0xMzkgLTEwNSAtMTU1IC0xMjIgLTEwIC0xMCAtMzAgLTI3IC00NSAtMzggLTc5IC01OCAtMTQxIC0xMDcgLTE1NyAtMTI0IC0xMCAtMTAgLTU4IC00OSAtMTA4IC04NiAtNDkgLTM4IC05NCAtNzQgLTEwMCAtODEgLTUgLTYgLTUwIC00MiAtMTAwIC04MCAtNDkgLTM3IC05MiAtNzEgLTk1IC03NSAtOSAtMTQgLTEzMyAtMTA5IC0xNDEgLTEwOSAtNSAwIC0xNSAtMTMgLTI0IC0zMCAtMjYgLTUwIC0xOCAtMjAwNiA5IC0yMDI1IDIzIC0xNyA1MyAtNyAxMDQgMzUgMjAgMTYgODcgNjggMTQ3IDExNSA2MSA0NiAxMTcgOTEgMTI1IDk4IDggOCA1NSA0NCAxMDMgODEgNDggMzcgOTYgNzQgMTA3IDg0IDEwIDkgNDAgMzQgNjcgNTQgMjYgMjEgODYgNjcgMTMxIDEwMyA0NiAzNiA4NyA2NSA5MCA2NSA0IDAgMjYgMTcgNDggMzggMjMgMjAgNjUgNTUgOTQgNzcgODcgNjcgMjY0IDIwNSAyODAgMjE4IDUzIDQ0IDEzNCAxMDcgMTM5IDEwNyAzIDAgMjUgMTcgNDcgMzggMjMgMjAgNjUgNTUgOTQgNzcgMTA5IDgzIDI2NiAyMDUgMjgwIDIxOCA4IDggNTUgNDQgMTAzIDgxIDQ4IDM3IDk1IDczIDEwNSA4MSAxMTMgOTcgMTk3IDE1NSAyMjQgMTU1IDI2IDAgNzUgLTI2IDEyMCAtNjQgMjAgLTE3IDU2IC00NyA3OCAtNjYgMjMgLTE5IDQ5IC0zOSA1OCAtNDQgMjAgLTExIDExMCAtODMgMTM1IC0xMDggMTAgLTEwIDIyIC0xOCAyNyAtMTggOCAwIDQzIC0yNyAxNDMgLTExMiAyMiAtMTggNDYgLTM3IDU1IC00MiAxNyAtOSAxMDEgLTc2IDEzNCAtMTA2IDkgLTggNDIgLTMzIDczIC01NSAzMSAtMjIgNzUgLTU3IDk4IC03NyAyMyAtMjEgNDUgLTM4IDQ4IC0zOCA1IDAgODYgLTYzIDEzOSAtMTA3IDggLTcgNjUgLTUxIDEyNSAtOTcgMTAzIC04MCAxNzcgLTEzOCAyMjggLTE3OCAxMiAtMTAgNzIgLTU2IDEzMiAtMTAzIDYxIC00NyAxMzMgLTEwMyAxNjAgLTEyNSAyOCAtMjIgNTkgLTQ2IDcwIC01NSAzMCAtMjMgMjMzIC0xODAgMjg4IC0yMjMgMjYgLTIwIDY0IC01MiA4NSAtNzAgNjYgLTU5IDEyNiAtNzAgMTQyIC0yNiA3IDE3IDkgMzcyIDggOTkxIGwtMyA5NjUgLTM2IDMxIGMtMjAgMTggLTUzIDQ2IC03NSA2NCAtMTE0IDkyIC0xOTMgMTU3IC0yMzAgMTg5IC00MSAzNCAtOTggNzggLTE1NSAxMjEgLTE2IDExIC00NSAzNyAtNjUgNTcgLTIwIDIwIC00MCAzNiAtNDUgMzYgLTQgMCAtMzAgMTkgLTU3IDQzIC0xMjMgMTA3IC0xNjYgMTQzIC0xODEgMTUxIC05IDUgLTM2IDI2IC02MSA0OCAtNTkgNTAgLTY3IDU3IC0xMjAgOTggLTUwIDM5IC0xNjcgMTM2IC0xOTAgMTU3IC04IDcgLTUzIDQ0IC0xMDAgODEgLTQ3IDM3IC05NyA3OCAtMTEwIDkxIC0xNCAxMyAtMzcgMzEgLTUxIDQwIC0zMCAxOCAtODggNjcgLTE1NiAxMjkgLTI1IDIzIC01MCA0MiAtNTQgNDIgLTUgMCAtMzAgMTkgLTU3IDQzIC0yNiAyMyAtNjYgNTYgLTg4IDc0IC0yMSAxNyAtNjggNTYgLTEwMyA4NSAtMzUgMjkgLTc1IDYxIC04OSA3MCAtMTMgOSAtMjggMjEgLTMxIDI2IC0zIDUgLTI5IDI3IC01NyA0OCAtMjggMjEgLTg1IDY3IC0xMjcgMTAyIC04MyA2OCAtMTEzIDc2IC0xNTcgNDF6IE01MDMwIDQ2MjggYy0zMCAtMjIgLTU3IC00NCAtNjAgLTQ5IC0zIC00IC00NSAtMzkgLTk1IC03OCAtNDkgLTM5IC0xMDEgLTgxIC0xMTUgLTkzIC0zOCAtMzMgLTMwNiAtMjQ5IC0zNDggLTI4MSAtMjAgLTE2IC01MCAtNDAgLTY3IC01NSAtMTYgLTE1IC00MSAtMzYgLTU2IC00NyAtOTUgLTcyIC0xMzggLTEwNiAtMTU0IC0xMjEgLTI3IC0yOCAtMTM3IC0xMTQgLTE0NCAtMTE0IC00IDAgLTIyIC0xNSAtNDEgLTMzIC0xOSAtMTggLTU5IC01MiAtODcgLTc2IC02NCAtNTIgLTY4IC03NyAtMjAgLTExOSAxNyAtMTYgNTkgLTUzIDkyIC04MiAzMyAtMjggODUgLTc0IDExNSAtMTAwIDUxIC00NSAxMjIgLTEwNSAyMjYgLTE5MiAyNSAtMjAgNjEgLTUzIDgxIC03MyAyMSAtMjEgNTMgLTQ5IDczIC02MyAzNCAtMjYgOTAgLTc0IDIwNyAtMTc5IDMyIC0yOSA2OSAtNjAgODMgLTcwIDIzIC0xNSA1NiAtNDQgMTkyIC0xNjYgNzAgLTYyIDE0NyAtMTI0IDE3NSAtMTM4IDIzIC0xMiA3MSAxNSAxNDEgODAgMTggMTcgNzkgNjggMTM1IDExMyA1NiA0NSAxMDQgODUgMTA3IDg5IDMgNCA0NiAzOSA5NSA3OCAxMTAgODYgOTYgNzUgMTgwIDE0NyAzOSAzMiA4NyA3MiAxMDggODcgMjEgMTYgNDUgMzYgNTUgNDYgOSAxMCA2NiA1OCAxMjcgMTA3IDExOSA5NyAxMjEgOTkgMTgwIDE0NyAyMiAxOSA1MCA0MCA2MyA0OSAxMiA4IDUxIDQxIDg3IDczIDk0IDgzIDk0IDgyIC01OCAyMDIgLTI2IDIxIC02NiA1NSAtOTAgNzUgLTIzIDIxIC00NSAzOCAtNDkgMzggLTQgMCAtMzEgMjAgLTYwIDQ1IC0xMTAgOTMgLTEzMCAxMTAgLTE0NiAxMTkgLTEwIDUgLTM2IDI1IC01OSA0NSAtOTAgNzcgLTEyNiAxMDYgLTE0MSAxMTUgLTEwIDUgLTM2IDI1IC01OSA0NSAtOTAgNzcgLTEyNiAxMDYgLTE0MSAxMTUgLTEwIDUgLTM2IDI1IC01OSA0NSAtOTAgNzcgLTEyNiAxMDYgLTE0MSAxMTUgLTEwIDUgLTM2IDI1IC01OSA0NSAtMTIxIDEwNCAtMTg1IDE1MSAtMjA2IDE1MSAtNyAwIC0zNyAtMTkgLTY3IC00MnoiLz48L3N2Zz4K"
+}

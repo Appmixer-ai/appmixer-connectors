@@ -1,0 +1,272 @@
+{
+    "name": "E2E Revinate Reputation - reviews",
+    "description": "Find Reviews, Get Review and Make API Call against the newest review of the connected Porter account. Read-only.",
+    "flow": {
+        "fe746762-35f2-4e0e-ad5b-8635f2f156e7": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16,
+            "source": {},
+            "version": "1.0.0",
+            "config": {},
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "62db7490-16e8-4794-affd-a736c9594dd4": {
+            "type": "appmixer.revinate.reputation.FindReviews",
+            "x": 272,
+            "y": 16,
+            "version": "1.0.0",
+            "source": { "in": { "fe746762-35f2-4e0e-ad5b-8635f2f156e7": ["out"] } },
+            "config": {
+                "transform": {
+                    "in": {
+                        "fe746762-35f2-4e0e-ad5b-8635f2f156e7": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": { "outputType": {} },
+                                "lambda": { "outputType": "first" }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "25426ee3-d750-4773-9dbe-32b35c8e151f": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 480,
+            "y": 16,
+            "version": "1.0.0",
+            "source": { "in": { "62db7490-16e8-4794-affd-a736c9594dd4": ["out"] } },
+            "config": {
+                "transform": {
+                    "in": {
+                        "62db7490-16e8-4794-affd-a736c9594dd4": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "f9d9dbfc-ae9f-4efd-8d1b-e11307675873": {
+                                            "variable": "$.62db7490-16e8-4794-affd-a736c9594dd4.out.id",
+                                            "functions": []
+                                        },
+                                        "3edee7a9-c837-44b8-a6f8-7fe9b5316d99": {
+                                            "variable": "$.62db7490-16e8-4794-affd-a736c9594dd4.out.dateCollected",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            { "field": "{{{f9d9dbfc-ae9f-4efd-8d1b-e11307675873}}}", "assertion": "regex", "regex": "^\\d+$" },
+                                            { "field": "{{{3edee7a9-c837-44b8-a6f8-7fe9b5316d99}}}", "assertion": "notEmpty" }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "c94d5006-b3e8-410e-a4a2-0a5bb27e34e2": {
+            "type": "appmixer.revinate.reputation.GetReview",
+            "x": 480,
+            "y": 144,
+            "version": "1.0.0",
+            "source": { "in": { "62db7490-16e8-4794-affd-a736c9594dd4": ["out"] } },
+            "config": {
+                "transform": {
+                    "in": {
+                        "62db7490-16e8-4794-affd-a736c9594dd4": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "reviewId": {
+                                        "878a8075-115d-4ca0-aec9-059694f3fbf0": {
+                                            "variable": "$.62db7490-16e8-4794-affd-a736c9594dd4.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": { "reviewId": "{{{878a8075-115d-4ca0-aec9-059694f3fbf0}}}" }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "53f5e5d7-beb5-4bb8-8719-b29a6c5e2d4b": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 688,
+            "y": 144,
+            "version": "1.0.0",
+            "source": { "in": { "c94d5006-b3e8-410e-a4a2-0a5bb27e34e2": ["out"] } },
+            "config": {
+                "transform": {
+                    "in": {
+                        "c94d5006-b3e8-410e-a4a2-0a5bb27e34e2": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "dfdc6660-f2fb-45d7-abe4-d5c4fceeecfd": {
+                                            "variable": "$.c94d5006-b3e8-410e-a4a2-0a5bb27e34e2.out.id",
+                                            "functions": []
+                                        },
+                                        "87e9e3c5-d085-4781-929b-07850629d11e": {
+                                            "variable": "$.62db7490-16e8-4794-affd-a736c9594dd4.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{dfdc6660-f2fb-45d7-abe4-d5c4fceeecfd}}}",
+                                                "assertion": "equal",
+                                                "expected": "{{{87e9e3c5-d085-4781-929b-07850629d11e}}}"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "f0627398-bba7-465e-9cc3-642f979d031a": {
+            "type": "appmixer.revinate.reputation.MakeApiCall",
+            "x": 688,
+            "y": 272,
+            "version": "1.0.0",
+            "source": { "in": { "c94d5006-b3e8-410e-a4a2-0a5bb27e34e2": ["out"] } },
+            "config": {
+                "transform": {
+                    "in": {
+                        "c94d5006-b3e8-410e-a4a2-0a5bb27e34e2": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": { "url": {}, "method": {}, "parameters": {}, "headers": {} },
+                                "lambda": {
+                                    "url": "/reviews",
+                                    "method": "GET",
+                                    "parameters": "{\"size\": \"1\"}",
+                                    "headers": "{\"Accept\": \"application/json\"}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "11d6fd5a-ca68-4628-a8b4-63d6184bfaa2": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 896,
+            "y": 272,
+            "version": "1.0.0",
+            "source": { "in": { "f0627398-bba7-465e-9cc3-642f979d031a": ["out"] } },
+            "config": {
+                "transform": {
+                    "in": {
+                        "f0627398-bba7-465e-9cc3-642f979d031a": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "0d86e45b-eead-4335-ae1e-6203b3c49f29": {
+                                            "variable": "$.f0627398-bba7-465e-9cc3-642f979d031a.out.statusCode",
+                                            "functions": []
+                                        },
+                                        "b5b02fb0-1a2a-4032-af28-0ea2abbd40d7": {
+                                            "variable": "$.f0627398-bba7-465e-9cc3-642f979d031a.out.body",
+                                            "functions": [{ "name": "g_jsonPath", "params": [{ "value": "$.page.size" }] }]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            { "field": "{{{0d86e45b-eead-4335-ae1e-6203b3c49f29}}}", "assertion": "equal", "expected": 200 },
+                                            { "field": "{{{b5b02fb0-1a2a-4032-af28-0ea2abbd40d7}}}", "assertion": "equal", "expected": 1 }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "49c2499e-8ee5-4b60-9b1f-fdb3bf8f85e1": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 1104,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "25426ee3-d750-4773-9dbe-32b35c8e151f": ["out"],
+                    "53f5e5d7-beb5-4bb8-8719-b29a6c5e2d4b": ["out"],
+                    "11d6fd5a-ca68-4628-a8b4-63d6184bfaa2": ["out"]
+                }
+            },
+            "config": { "properties": { "timeout": 180 } },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        },
+        "4546d11e-1c19-4a0a-9b50-128155668266": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1312,
+            "y": 272,
+            "version": "1.0.0",
+            "source": { "in": { "49c2499e-8ee5-4b60-9b1f-fdb3bf8f85e1": ["out"] } },
+            "config": {
+                "properties": {
+                    "successStoreId": "64f6f1f9193228000754082f",
+                    "failedStoreId": "64f6f1f0193228000754082e"
+                },
+                "transform": {
+                    "in": {
+                        "49c2499e-8ee5-4b60-9b1f-fdb3bf8f85e1": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "8a1ce5dd-8924-4098-b033-c7333cc55199": {
+                                            "variable": "$.49c2499e-8ee5-4b60-9b1f-fdb3bf8f85e1.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E Revinate Reputation - reviews",
+                                    "result": "{{{8a1ce5dd-8924-4098-b033-c7333cc55199}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": { "autoRetry": false, "onError": "stopFlow" }
+        }
+    },
+    "notes": {
+        "69f016dc-30e7-4dbd-bceb-f9bf6776d497": {
+            "x": 64,
+            "y": 432,
+            "width": 736,
+            "height": 256,
+            "content": "## Test data assumption: a Porter account with reviews\n\nRevinate has no sandbox. The connected Revinate Reputation account (username, Porter API key and API secret) must reach at least one hotel that has at least one review. The flow takes the first review Find Reviews returns, so no ID is hardcoded.\n\nThis flow has never been run: no Revinate test credentials existed when the connector was built."
+        }
+    }
+}

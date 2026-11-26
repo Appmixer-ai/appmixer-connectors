@@ -1,0 +1,318 @@
+{
+    "name": "appmixer.revinate.reputation.FindReviews",
+    "label": "Find Reviews",
+    "description": "Find guest reviews and survey responses of all your hotels or of one hotel, by rating, feedback, management response, review site, language and date. Returns at most 100 reviews (one page); narrow the filters, for example the date range, if the review you need is not among them. Review content from this API is licensed for analysis, not for public display.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:revinate:reputation"
+    },
+    "quota": {
+        "manager": "appmixer:revinate:reputation",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "hotelId": {
+                        "type": "string"
+                    },
+                    "ratings": {
+                        "type": [
+                            "array",
+                            "string"
+                        ]
+                    },
+                    "feedback": {
+                        "type": "string",
+                        "enum": [
+                            "positive",
+                            "neutral",
+                            "negative"
+                        ]
+                    },
+                    "response": {
+                        "type": "string",
+                        "enum": [
+                            "none",
+                            "posted"
+                        ]
+                    },
+                    "reviewSiteSlug": {
+                        "type": "string"
+                    },
+                    "languageSlug": {
+                        "type": "string"
+                    },
+                    "collectedFrom": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "collectedTo": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updatedFrom": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updatedTo": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "sortBy": {
+                        "type": "string",
+                        "enum": [
+                            "dateCollected",
+                            "dateReview",
+                            "updatedAt",
+                            "rating"
+                        ]
+                    },
+                    "sortDirection": {
+                        "type": "string",
+                        "enum": [
+                            "DESC",
+                            "ASC"
+                        ],
+                        "default": "DESC"
+                    },
+                    "outputType": {
+                        "type": "string",
+                        "default": "array"
+                    }
+                }
+            },
+            "inspector": {
+                "inputs": {
+                    "hotelId": {
+                        "type": "text",
+                        "index": 1,
+                        "label": "Hotel",
+                        "tooltip": "Find only reviews of this hotel. Pick a hotel, or type its Hotel ID. Leave empty for all hotels of the connected account.",
+                        "source": {
+                            "url": "/component/appmixer/revinate/reputation/FindHotels?outPort=out",
+                            "data": {
+                                "properties": {
+                                    "isSource": true
+                                },
+                                "transform": "./FindHotels#toSelectArray"
+                            }
+                        }
+                    },
+                    "ratings": {
+                        "type": "multiselect",
+                        "index": 2,
+                        "label": "Ratings",
+                        "tooltip": "Find only reviews with one of these ratings. Leave empty for all ratings.",
+                        "options": [
+                            {
+                                "label": "1 star",
+                                "value": "1"
+                            },
+                            {
+                                "label": "2 stars",
+                                "value": "2"
+                            },
+                            {
+                                "label": "3 stars",
+                                "value": "3"
+                            },
+                            {
+                                "label": "4 stars",
+                                "value": "4"
+                            },
+                            {
+                                "label": "5 stars",
+                                "value": "5"
+                            }
+                        ]
+                    },
+                    "feedback": {
+                        "type": "select",
+                        "index": 3,
+                        "label": "Feedback",
+                        "tooltip": "Find only reviews Revinate classifies as positive, neutral or negative. Leave empty for all.",
+                        "options": [
+                            {
+                                "label": "Positive",
+                                "value": "positive"
+                            },
+                            {
+                                "label": "Neutral",
+                                "value": "neutral"
+                            },
+                            {
+                                "label": "Negative",
+                                "value": "negative"
+                            }
+                        ]
+                    },
+                    "response": {
+                        "type": "select",
+                        "index": 4,
+                        "label": "Management Response",
+                        "tooltip": "Find only reviews that have, or do not have, a management response. Leave empty for all.",
+                        "options": [
+                            {
+                                "label": "No response yet",
+                                "value": "none"
+                            },
+                            {
+                                "label": "Response posted",
+                                "value": "posted"
+                            }
+                        ]
+                    },
+                    "reviewSiteSlug": {
+                        "type": "text",
+                        "index": 5,
+                        "label": "Review Site",
+                        "tooltip": "Find only reviews from this review site. Pick a site, or type its slug, for example tripadvisor.",
+                        "source": {
+                            "url": "/component/appmixer/revinate/reputation/ListReviewSites?outPort=out",
+                            "data": {
+                                "properties": {
+                                    "isSource": true
+                                },
+                                "transform": "./ListReviewSites#toSelectArray"
+                            }
+                        }
+                    },
+                    "languageSlug": {
+                        "type": "text",
+                        "index": 6,
+                        "label": "Language",
+                        "tooltip": "Find only reviews written in this language. Pick a language, or type its slug, for example en.",
+                        "source": {
+                            "url": "/component/appmixer/revinate/reputation/ListLanguages?outPort=out",
+                            "data": {
+                                "properties": {
+                                    "isSource": true
+                                },
+                                "transform": "./ListLanguages#toSelectArray"
+                            }
+                        }
+                    },
+                    "collectedFrom": {
+                        "type": "date-time",
+                        "index": 7,
+                        "label": "Collected From",
+                        "tooltip": "Find only reviews Revinate collected from this moment on."
+                    },
+                    "collectedTo": {
+                        "type": "date-time",
+                        "index": 8,
+                        "label": "Collected To",
+                        "tooltip": "Find only reviews Revinate collected up to this moment."
+                    },
+                    "updatedFrom": {
+                        "type": "date-time",
+                        "index": 9,
+                        "label": "Updated From",
+                        "tooltip": "Find only reviews that changed from this moment on, for example because a management response was posted."
+                    },
+                    "updatedTo": {
+                        "type": "date-time",
+                        "index": 10,
+                        "label": "Updated To",
+                        "tooltip": "Find only reviews that changed up to this moment."
+                    },
+                    "sortBy": {
+                        "type": "select",
+                        "index": 11,
+                        "label": "Sort By",
+                        "tooltip": "Sort the reviews by this field. Leave empty for Revinate's own order. Revinate sorts only for API keys that are enabled for sorting and answers with an error otherwise.",
+                        "options": [
+                            {
+                                "label": "Date collected",
+                                "value": "dateCollected"
+                            },
+                            {
+                                "label": "Review date",
+                                "value": "dateReview"
+                            },
+                            {
+                                "label": "Updated at",
+                                "value": "updatedAt"
+                            },
+                            {
+                                "label": "Rating",
+                                "value": "rating"
+                            }
+                        ]
+                    },
+                    "sortDirection": {
+                        "type": "select",
+                        "index": 12,
+                        "label": "Sort Direction",
+                        "tooltip": "Used together with Sort By.",
+                        "defaultValue": "DESC",
+                        "options": [
+                            {
+                                "label": "Descending (newest or highest first)",
+                                "value": "DESC"
+                            },
+                            {
+                                "label": "Ascending (oldest or lowest first)",
+                                "value": "ASC"
+                            }
+                        ]
+                    },
+                    "outputType": {
+                        "type": "select",
+                        "index": 13,
+                        "label": "Output Type",
+                        "defaultValue": "array",
+                        "tooltip": "Choose whether you want to receive the result set as one complete list, or first item only or one item at a time or stream the items to a file.",
+                        "options": [
+                            {
+                                "label": "First Item Only",
+                                "value": "first"
+                            },
+                            {
+                                "label": "All items at once",
+                                "value": "array"
+                            },
+                            {
+                                "label": "One item at a time",
+                                "value": "object"
+                            },
+                            {
+                                "label": "Store to CSV file",
+                                "value": "file"
+                            }
+                        ]
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "source": {
+                "url": "/component/appmixer/revinate/reputation/FindReviews?outPort=out&ignoreAuth=true",
+                "data": {
+                    "properties": {
+                        "generateOutputPortOptions": true
+                    },
+                    "messages": {
+                        "in/outputType": "inputs/in/outputType"
+                    }
+                }
+            }
+        },
+        {
+            "name": "notFound",
+            "options": []
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDI0IDEwMjgiIHJvbGU9ImltZyIgYXJpYS1sYWJlbD0iUmV2aW5hdGUiPjxyZWN0IHdpZHRoPSIxMDI0IiBoZWlnaHQ9IjEwMjgiIGZpbGw9IiMzNzYxRDgiLz48cGF0aCB0cmFuc2Zvcm09InRyYW5zbGF0ZSgwLDEwMjgpIHNjYWxlKDAuMSwtMC4xKSIgZmlsbD0iI0ZGRkZGRiIgZD0iTTUwNTAgNzc2OSBjLTE0IC0xMCAtMzYgLTI5IC01MCAtNDEgLTM2IC0zMSAtNTAxIC00MDUgLTU2OCAtNDU3IC0zMiAtMjQgLTgwIC02MyAtMTA3IC04NiAtMjggLTI0IC03MyAtNjAgLTEwMCAtODEgLTI4IC0yMCAtNTIgLTQxIC01NSAtNDUgLTMgLTQgLTIwIC0xOCAtMzcgLTMxIC02MyAtNDYgLTE0MCAtMTA3IC0xNTcgLTEyNCAtMTAgLTkgLTMxIC0yNyAtNDYgLTM4IC02NSAtNDggLTEzOCAtMTA2IC0xNTUgLTEyMyAtMTAgLTEwIC0zMCAtMjcgLTQ1IC0zOCAtNzUgLTU1IC0xMzkgLTEwNSAtMTU1IC0xMjIgLTEwIC0xMCAtMzAgLTI3IC00NSAtMzggLTc5IC01OCAtMTQxIC0xMDcgLTE1NyAtMTI0IC0xMCAtMTAgLTU4IC00OSAtMTA4IC04NiAtNDkgLTM4IC05NCAtNzQgLTEwMCAtODEgLTUgLTYgLTUwIC00MiAtMTAwIC04MCAtNDkgLTM3IC05MiAtNzEgLTk1IC03NSAtOSAtMTQgLTEzMyAtMTA5IC0xNDEgLTEwOSAtNSAwIC0xNSAtMTMgLTI0IC0zMCAtMjYgLTUwIC0xOCAtMjAwNiA5IC0yMDI1IDIzIC0xNyA1MyAtNyAxMDQgMzUgMjAgMTYgODcgNjggMTQ3IDExNSA2MSA0NiAxMTcgOTEgMTI1IDk4IDggOCA1NSA0NCAxMDMgODEgNDggMzcgOTYgNzQgMTA3IDg0IDEwIDkgNDAgMzQgNjcgNTQgMjYgMjEgODYgNjcgMTMxIDEwMyA0NiAzNiA4NyA2NSA5MCA2NSA0IDAgMjYgMTcgNDggMzggMjMgMjAgNjUgNTUgOTQgNzcgODcgNjcgMjY0IDIwNSAyODAgMjE4IDUzIDQ0IDEzNCAxMDcgMTM5IDEwNyAzIDAgMjUgMTcgNDcgMzggMjMgMjAgNjUgNTUgOTQgNzcgMTA5IDgzIDI2NiAyMDUgMjgwIDIxOCA4IDggNTUgNDQgMTAzIDgxIDQ4IDM3IDk1IDczIDEwNSA4MSAxMTMgOTcgMTk3IDE1NSAyMjQgMTU1IDI2IDAgNzUgLTI2IDEyMCAtNjQgMjAgLTE3IDU2IC00NyA3OCAtNjYgMjMgLTE5IDQ5IC0zOSA1OCAtNDQgMjAgLTExIDExMCAtODMgMTM1IC0xMDggMTAgLTEwIDIyIC0xOCAyNyAtMTggOCAwIDQzIC0yNyAxNDMgLTExMiAyMiAtMTggNDYgLTM3IDU1IC00MiAxNyAtOSAxMDEgLTc2IDEzNCAtMTA2IDkgLTggNDIgLTMzIDczIC01NSAzMSAtMjIgNzUgLTU3IDk4IC03NyAyMyAtMjEgNDUgLTM4IDQ4IC0zOCA1IDAgODYgLTYzIDEzOSAtMTA3IDggLTcgNjUgLTUxIDEyNSAtOTcgMTAzIC04MCAxNzcgLTEzOCAyMjggLTE3OCAxMiAtMTAgNzIgLTU2IDEzMiAtMTAzIDYxIC00NyAxMzMgLTEwMyAxNjAgLTEyNSAyOCAtMjIgNTkgLTQ2IDcwIC01NSAzMCAtMjMgMjMzIC0xODAgMjg4IC0yMjMgMjYgLTIwIDY0IC01MiA4NSAtNzAgNjYgLTU5IDEyNiAtNzAgMTQyIC0yNiA3IDE3IDkgMzcyIDggOTkxIGwtMyA5NjUgLTM2IDMxIGMtMjAgMTggLTUzIDQ2IC03NSA2NCAtMTE0IDkyIC0xOTMgMTU3IC0yMzAgMTg5IC00MSAzNCAtOTggNzggLTE1NSAxMjEgLTE2IDExIC00NSAzNyAtNjUgNTcgLTIwIDIwIC00MCAzNiAtNDUgMzYgLTQgMCAtMzAgMTkgLTU3IDQzIC0xMjMgMTA3IC0xNjYgMTQzIC0xODEgMTUxIC05IDUgLTM2IDI2IC02MSA0OCAtNTkgNTAgLTY3IDU3IC0xMjAgOTggLTUwIDM5IC0xNjcgMTM2IC0xOTAgMTU3IC04IDcgLTUzIDQ0IC0xMDAgODEgLTQ3IDM3IC05NyA3OCAtMTEwIDkxIC0xNCAxMyAtMzcgMzEgLTUxIDQwIC0zMCAxOCAtODggNjcgLTE1NiAxMjkgLTI1IDIzIC01MCA0MiAtNTQgNDIgLTUgMCAtMzAgMTkgLTU3IDQzIC0yNiAyMyAtNjYgNTYgLTg4IDc0IC0yMSAxNyAtNjggNTYgLTEwMyA4NSAtMzUgMjkgLTc1IDYxIC04OSA3MCAtMTMgOSAtMjggMjEgLTMxIDI2IC0zIDUgLTI5IDI3IC01NyA0OCAtMjggMjEgLTg1IDY3IC0xMjcgMTAyIC04MyA2OCAtMTEzIDc2IC0xNTcgNDF6IE01MDMwIDQ2MjggYy0zMCAtMjIgLTU3IC00NCAtNjAgLTQ5IC0zIC00IC00NSAtMzkgLTk1IC03OCAtNDkgLTM5IC0xMDEgLTgxIC0xMTUgLTkzIC0zOCAtMzMgLTMwNiAtMjQ5IC0zNDggLTI4MSAtMjAgLTE2IC01MCAtNDAgLTY3IC01NSAtMTYgLTE1IC00MSAtMzYgLTU2IC00NyAtOTUgLTcyIC0xMzggLTEwNiAtMTU0IC0xMjEgLTI3IC0yOCAtMTM3IC0xMTQgLTE0NCAtMTE0IC00IDAgLTIyIC0xNSAtNDEgLTMzIC0xOSAtMTggLTU5IC01MiAtODcgLTc2IC02NCAtNTIgLTY4IC03NyAtMjAgLTExOSAxNyAtMTYgNTkgLTUzIDkyIC04MiAzMyAtMjggODUgLTc0IDExNSAtMTAwIDUxIC00NSAxMjIgLTEwNSAyMjYgLTE5MiAyNSAtMjAgNjEgLTUzIDgxIC03MyAyMSAtMjEgNTMgLTQ5IDczIC02MyAzNCAtMjYgOTAgLTc0IDIwNyAtMTc5IDMyIC0yOSA2OSAtNjAgODMgLTcwIDIzIC0xNSA1NiAtNDQgMTkyIC0xNjYgNzAgLTYyIDE0NyAtMTI0IDE3NSAtMTM4IDIzIC0xMiA3MSAxNSAxNDEgODAgMTggMTcgNzkgNjggMTM1IDExMyA1NiA0NSAxMDQgODUgMTA3IDg5IDMgNCA0NiAzOSA5NSA3OCAxMTAgODYgOTYgNzUgMTgwIDE0NyAzOSAzMiA4NyA3MiAxMDggODcgMjEgMTYgNDUgMzYgNTUgNDYgOSAxMCA2NiA1OCAxMjcgMTA3IDExOSA5NyAxMjEgOTkgMTgwIDE0NyAyMiAxOSA1MCA0MCA2MyA0OSAxMiA4IDUxIDQxIDg3IDczIDk0IDgzIDk0IDgyIC01OCAyMDIgLTI2IDIxIC02NiA1NSAtOTAgNzUgLTIzIDIxIC00NSAzOCAtNDkgMzggLTQgMCAtMzEgMjAgLTYwIDQ1IC0xMTAgOTMgLTEzMCAxMTAgLTE0NiAxMTkgLTEwIDUgLTM2IDI1IC01OSA0NSAtOTAgNzcgLTEyNiAxMDYgLTE0MSAxMTUgLTEwIDUgLTM2IDI1IC01OSA0NSAtOTAgNzcgLTEyNiAxMDYgLTE0MSAxMTUgLTEwIDUgLTM2IDI1IC01OSA0NSAtOTAgNzcgLTEyNiAxMDYgLTE0MSAxMTUgLTEwIDUgLTM2IDI1IC01OSA0NSAtMTIxIDEwNCAtMTg1IDE1MSAtMjA2IDE1MSAtNyAwIC0zNyAtMTkgLTY3IC00MnoiLz48L3N2Zz4K"
+}
