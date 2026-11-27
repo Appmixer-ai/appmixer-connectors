@@ -1,0 +1,241 @@
+{
+    "name": "E2E IDeaS - make api call",
+    "description": "Sends one inventory date through Make API Call with its own ReplyTo header and checks that IDeaS accepted it.",
+    "notes": {
+        "bde19133-59c2-443d-87e0-51b622902d98": {
+            "x": 64,
+            "y": 208,
+            "width": 880,
+            "height": 288,
+            "content": "## Never run\n\nWritten from the IDeaS documentation; it has only passed `appmixer e2e validate`. See README.md in this folder.\n\n## Test data assumptions\n\n- The body names `TESTCLIENT` / `TESTHOTELCODE` (the documentation's sample codes). Replace them with the codes of the test property.\n- The `ReplyTo` header is required by IDeaS (the request is refused without it), so the assert on the status code also shows that the header reached IDeaS. It points at this connector's reply route with a token that is not valid: IDeaS's result is answered 404 and goes nowhere. Make API Call never receives a result; the Send components do."
+        }
+    },
+    "flow": {
+        "4084f577-9db6-4ae4-b64f-2ce25be70263": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {},
+            "config": {},
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "84abf6c1-8097-4093-93a5-c0b35439d9cc": {
+            "type": "appmixer.ideas.core.MakeApiCall",
+            "x": 272,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "4084f577-9db6-4ae4-b64f-2ce25be70263": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "4084f577-9db6-4ae4-b64f-2ce25be70263": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "url": {},
+                                    "method": {},
+                                    "headers": {
+                                        "b55bfb76-606f-4de9-a108-8fcb6d2457a3": {
+                                            "functions": [
+                                                {
+                                                    "name": "g_webhookUrl"
+                                                },
+                                                {
+                                                    "name": "g_replace",
+                                                    "params": [
+                                                        {
+                                                            "value": "/flows/"
+                                                        },
+                                                        {
+                                                            "value": "/plugins/appmixer/ideas/reply/"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "body": {
+                                        "8ab3e640-a682-4930-a400-5a713541b35d": {
+                                            "functions": [
+                                                {
+                                                    "name": "g_now"
+                                                },
+                                                {
+                                                    "name": "g_formatDate",
+                                                    "params": [
+                                                        {
+                                                            "value": "YYYY-MM-DDTHH:mm:ssZ"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        },
+                                        "d8402d18-7ab0-41ca-bdca-c2974d746298": {
+                                            "functions": [
+                                                {
+                                                    "name": "g_now"
+                                                },
+                                                {
+                                                    "name": "g_addTimeSpan",
+                                                    "hashParams": {
+                                                        "days": {
+                                                            "value": 2
+                                                        }
+                                                    }
+                                                },
+                                                {
+                                                    "name": "g_formatDate",
+                                                    "params": [
+                                                        {
+                                                            "value": "YYYY-MM-DD"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "url": "/api/public/v1/inventories",
+                                    "method": "POST",
+                                    "headers": "{\"ReplyTo\": \"{{{b55bfb76-606f-4de9-a108-8fcb6d2457a3}}}/trackers/e2e-make-api-call\"}",
+                                    "body": "[{\"clientCode\":\"TESTCLIENT\",\"propertyCode\":\"TESTHOTELCODE\",\"correlationId\":\"e2e-ideas-make-api-call\",\"createDateTime\":\"{{{8ab3e640-a682-4930-a400-5a713541b35d}}}\",\"occupancyDate\":\"{{{d8402d18-7ab0-41ca-bdca-c2974d746298}}}\",\"roomTypeInventories\":[{\"roomTypeCode\":\"DBL\",\"roomTypeCapacity\":40,\"roomsNotAvailableMaintenance\":1,\"roomsSold\":23}]}]"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "072811f8-8ded-455b-94bb-f57c1d74a652": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 480,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "84abf6c1-8097-4093-93a5-c0b35439d9cc": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "84abf6c1-8097-4093-93a5-c0b35439d9cc": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "887c2fd9-4bfc-4220-9ee0-29625c822cc2": {
+                                            "variable": "$.84abf6c1-8097-4093-93a5-c0b35439d9cc.out.statusCode",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{887c2fd9-4bfc-4220-9ee0-29625c822cc2}}}",
+                                                "assertion": "regex",
+                                                "regex": "^2\\d\\d$"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "a70f5c11-9c0e-40e1-93bb-a89dad2dfbf1": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 688,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "072811f8-8ded-455b-94bb-f57c1d74a652": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 180
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "a18206c1-d0d6-4be7-8ec4-e43ab2e4bacc": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 896,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "a70f5c11-9c0e-40e1-93bb-a89dad2dfbf1": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "successStoreId": "64f6f1f9193228000754082f",
+                    "failedStoreId": "64f6f1f0193228000754082e"
+                },
+                "transform": {
+                    "in": {
+                        "a70f5c11-9c0e-40e1-93bb-a89dad2dfbf1": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "57bda910-ba25-4e50-9c44-19bc8d8dcb56": {
+                                            "variable": "$.a70f5c11-9c0e-40e1-93bb-a89dad2dfbf1.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E IDeaS - make api call",
+                                    "result": "{{{57bda910-ba25-4e50-9c44-19bc8d8dcb56}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        }
+    }
+}

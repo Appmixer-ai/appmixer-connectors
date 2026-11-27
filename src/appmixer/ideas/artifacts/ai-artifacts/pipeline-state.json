@@ -1,0 +1,56 @@
+{
+    "connector": "appmixer.ideas",
+    "vendor": "appmixer",
+    "module": "ideas",
+    "issue": "https://github.com/Appmixer-ai/appmixer-components/issues/3167",
+    "steps": {
+        "build": "done",
+        "review": "done",
+        "cliTests": "blocked",
+        "verify": "blocked",
+        "e2e": "blocked",
+        "ship": "pr-open"
+    },
+    "auth": {
+        "service": "appmixer:ideas",
+        "type": "apiKey",
+        "fields": ["baseUrl", "clientId", "clientSecret", "clientCode", "propertyCode", "tokenUrl"],
+        "serviceConfig": ["additionalApiHosts"],
+        "status": "missing",
+        "reason": "No IDeaS test environment exists (creds show ideas is empty). IDeaS issues the environment URL, the OAuth client credentials and the chain and hotel codes of a test property only to integration partners during onboarding."
+    },
+    "localTests": "blocked-no-credentials",
+    "notRunAgainstRealApi": true,
+    "publishedTo": [],
+    "verified": {
+        "static": [
+            "node scripts/validate.js --connector ideas: 0 failures, 0 warnings",
+            "eslint: clean",
+            "42 unit tests in artifacts/test/ideas.test.js with a mocked HTTP client, component context and plugin context; also on Node 18",
+            "appmixer e2e validate on the 2 flows: passed"
+        ],
+        "live": [
+            "2026-11-27: the three Send components (unchanged code, local script) against https://api-mock-service.ideasrms.com, one request each: 202 {\"status\":\"success\"}. Proves schema conformity of the built payloads only.",
+            "2026-11-27: one incomplete inventory item through lib.request against the mock: refused, the sl-violations header parsed into the error message.",
+            "2026-11-27: the documentation's own reservation sample is rejected by the mock as published (null in four optional string fields); the connector drops optional nulls."
+        ],
+        "notVerified": [
+            "No request with credentials was ever sent to IDeaS: token endpoint, chain and hotel code check, RMS processing untested.",
+            "IDeaS has never called the ReplyTo URL; the reply route and the done port were exercised only by unit tests.",
+            "The connector was not published to any Appmixer instance; no E2E flow has run.",
+            "appmixer test component and appmixer connector verify were not run."
+        ]
+    },
+    "needsFromHuman": [
+        "Acceptance as an IDeaS integration partner (the 'Become a Partner' form at https://ideas.com/about/partners/api/). Not applied for.",
+        "From IDeaS, for its test environment: Base URL (and token URL if separate), OAuth Client ID and Client Secret, chain code and hotel code of a test property; store with creds set ideas ...",
+        "If the issued hosts are not under ideasrms.com or ideas.com: additionalApiHosts in the connector configuration appmixer:ideas",
+        "If IDeaS allow-lists callback URLs: <API URL>/plugins/appmixer/ideas/reply/ registered with IDeaS"
+    ],
+    "notes": [
+        "A connection is one IDeaS environment and one property: Base URL, Client ID, Client Secret, Client Code (chain code), Property Code (hotel code), optional Token URL. IDeaS validates the credentials against the chain and hotel code, and the environment host is issued per partner and per environment, so all of it belongs to the account.",
+        "The Send components are self-callback async components: the ReplyTo header points at a plugin route with a signed reply token; the route hands the result to the component's webhook with the scope of the original message, and the component verifies the token with its own account before emitting on done.",
+        "The access token is cached encrypted in the connector's service state (shared by all flows of the same credentials), with a budget of 6 token requests per hour.",
+        "Not built: Get/Find components and a rate decision trigger. The API has no read endpoint and no documented outbound decision delivery."
+    ]
+}

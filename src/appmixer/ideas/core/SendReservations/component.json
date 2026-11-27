@@ -1,0 +1,157 @@
+{
+    "name": "appmixer.ideas.core.SendReservations",
+    "label": "Send Reservations",
+    "description": "Send reservations of the connected property to IDeaS RMS: new, changed, cancelled, in-house, checked-out and no-show ones (POST /api/public/v1/reservations). IDeaS stores each reservation by its reservation ID; a cancellation is a reservation with the status CANCELLED. IDeaS acknowledges the message at once (Out) and processes it later; its result, SUCCESS or FAILED with the reasons, arrives on Done. The connector gives IDeaS the address for the result itself (the ReplyTo header) and accepts only a result signed for this component and account. If IDeaS never reports back, Done does not fire; the schema validation service never reports back.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "webhook": true,
+    "auth": {
+        "service": "appmixer:ideas"
+    },
+    "quota": {
+        "manager": "appmixer:ideas",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "reservations": {
+                        "type": "string"
+                    },
+                    "correlationId": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "reservations"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "reservations": {
+                        "type": "textarea",
+                        "index": 1,
+                        "label": "Reservations",
+                        "tooltip": "One or more reservations as a JSON array in the IDeaS format (a single object is accepted too). Each needs <code>reservationId</code>, <code>status</code> (RESERVED, CANCELLED, IN_HOUSE, CHECKED_OUT, NO_SHOW), <code>bookingDateTime</code>, <code>lastModifiedDateTime</code>, <code>numberOfRooms</code>, <code>roomStays</code> (with <code>arrivalDate</code>, <code>departureDate</code>, <code>roomTypeCode</code>, <code>marketSegmentCode</code>, <code>numberOfAdults</code>, <code>numberOfChildren</code>, <code>currencyCode</code>, <code>rateCode</code> and <code>rates</code>) and <code>stayRevenue.daily</code>. <code>clientCode</code>, <code>propertyCode</code> and <code>correlationId</code> are filled in from the account and the Correlation ID when an item leaves them out. Every item is checked against the IDeaS schema before anything is sent. See the <a href=\"https://developers.ideas.com/reservation-api/operations/savereservations\" target=\"_blank\">field reference</a>."
+                    },
+                    "correlationId": {
+                        "type": "text",
+                        "index": 2,
+                        "label": "Correlation ID",
+                        "tooltip": "Optional. Your own ID for this message, for example a batch number of your PMS (at most 128 characters). It is filled into every item that has no <code>correlationId</code> of its own, and it comes back on both output ports so that you can match the processing result to what you sent. Leave empty to use a new UUID."
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "trackerId": {
+                        "type": "string",
+                        "title": "Tracker ID",
+                        "example": "5b0e7c52-1f0a-4c55-9a43-0d3c8e2b7f11"
+                    },
+                    "statusCode": {
+                        "type": "integer",
+                        "title": "Status Code",
+                        "example": 202
+                    },
+                    "correlationId": {
+                        "type": "string",
+                        "title": "Correlation ID",
+                        "example": "pms-batch-20261127-0001"
+                    },
+                    "count": {
+                        "type": "integer",
+                        "title": "Count",
+                        "example": 1
+                    },
+                    "responseBody": {
+                        "type": "string",
+                        "title": "Response Body",
+                        "example": "5b0e7c52-1f0a-4c55-9a43-0d3c8e2b7f11"
+                    }
+                },
+                "required": [
+                    "statusCode",
+                    "correlationId",
+                    "count"
+                ]
+            }
+        },
+        {
+            "name": "done",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "status": {
+                        "type": "string",
+                        "title": "Status",
+                        "example": "SUCCESS"
+                    },
+                    "trackerId": {
+                        "type": "string",
+                        "title": "Tracker ID",
+                        "example": "5b0e7c52-1f0a-4c55-9a43-0d3c8e2b7f11"
+                    },
+                    "correlationId": {
+                        "type": "string",
+                        "title": "Correlation ID",
+                        "example": "pms-batch-20261127-0001"
+                    },
+                    "count": {
+                        "type": "integer",
+                        "title": "Count",
+                        "example": 1
+                    },
+                    "message": {
+                        "type": "string",
+                        "title": "Message",
+                        "example": "Room type SGC is not configured for the property."
+                    },
+                    "messages": {
+                        "type": "array",
+                        "title": "Messages",
+                        "example": [
+                            {
+                                "code": "INVALID_ROOM_TYPE",
+                                "text": "Room type SGC is not configured for the property."
+                            }
+                        ],
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "code": {
+                                    "type": "string",
+                                    "title": "Messages.Code",
+                                    "example": "INVALID_ROOM_TYPE"
+                                },
+                                "text": {
+                                    "type": "string",
+                                    "title": "Messages.Text",
+                                    "example": "Room type SGC is not configured for the property."
+                                }
+                            }
+                        }
+                    }
+                },
+                "required": [
+                    "status",
+                    "correlationId",
+                    "count"
+                ]
+            }
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMjggMTI4IiByb2xlPSJpbWciIGFyaWEtbGFiZWw9IklEZWFTIj48cmVjdCB3aWR0aD0iMTI4IiBoZWlnaHQ9IjEyOCIgcng9IjE2IiBmaWxsPSIjMDA4OGNlIi8+PGcgZmlsbD0iI2ZmZiIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMTIuMDAgNTEuNTcpIHNjYWxlKDAuNzY0NykiPjxwYXRoIGQ9Ik0xMzYsMjIuNTZjMCw1LjkzLTQuMTcsOS45MS0xMS41MSw5LjkxYTIyLjI1LDIyLjI1LDAsMCwxLTEwLjI2LTIuNjVWMjQuMjRjMiwxLjI0LDUuODQsMy40NSwxMC4zNSwzLjQ1LDMuNTQsMCw1Ljc1LTEuNDEsNS43NS00LjM0LDAtMi4yMS0xLjY4LTMuNzEtNi42My00Ljg2LTYuNjMtMS41OS05LjI5LTUuMTMtOS4yOS05LjI5LDAtNC43OCwzLjEtOS4yLDEwLjc5LTkuMmExOS41NCwxOS41NCwwLDAsMSw4LjQ5LDIuMlY3LjM0YTE3LjI5LDE3LjI5LDAsMCwwLTguNDktMi43NGMtMy43MSwwLTUuMTMsMS41OS01LjEzLDMuOHMyLDMuNDUsNS41Nyw0LjM0QzEzMi44MiwxNC40MiwxMzYsMTcuODcsMTM2LDIyLjU2WiIvPjxwYXRoIGQ9Ik0xMDkuNDUsMjguMjJhNi42Nyw2LjY3LDAsMCwwLDIuNDctLjUzdjIuNjVhNy4xNiw3LjE2LDAsMCwxLTQuNjgsMS43N2MtMy43MiwwLTUuNC0xLjk0LTYuMS00Ljg2YTE0LjExLDE0LjExLDAsMCwxLTExLjMzLDUuMjJjLTguNCwwLTE0Ljg2LTcuMjYtMTQuODYtMTYuMlM4MS40MSwwLDg5LjgxLDBhMTQuMzgsMTQuMzgsMCwwLDEsMTEuNjgsNS4xM0wxMDMuNjEuMzVoMy44MVYyNS4yMUMxMDcuNDIsMjcuNDMsMTA4LjEyLDI4LjIyLDEwOS40NSwyOC4yMlpNMTAxLDEwLjc5QTExLjM1LDExLjM1LDAsMCwwLDkxLjA1LDVjLTUuNzUsMC05LjY0LDQuMzQtOS42NCwxMS4zMnMzLjg5LDExLjI1LDkuNjQsMTEuMjVBMTEuNjksMTEuNjksMCwwLDAsMTAxLDIxLjU4WiIvPjxwYXRoIGQ9Ik0zNy4zLDUuMjRhMTUuNDcsMTUuNDcsMCwwLDEsNC4yMiwxMS4xOUExNS40NywxNS40NywwLDAsMSwzNy4zLDI3LjYyQzM0LjM5LDMwLjUzLDMwLDMyLjI3LDI0LDMyLjI3SDEzLjgyVi41OUgyNEMzMCwuNTgsMzQuMzksMi4zMywzNy4zLDUuMjRaTTM1LjUsMTYuNDNhMTAuNywxMC43LDAsMCwwLTIuMzMtNy4zQzMxLjUsNy4yNywyOC43Miw2LDI0LjA1LDZIMTkuN1YyNi44OWg0LjM1YzQuNjcsMCw3LjQ1LTEuMyw5LjEyLTMuMTZBMTAuNywxMC43LDAsMCwwLDM1LjUsMTYuNDNaIi8+PHBhdGggZD0iTTcxLjEyLDI0LjA2bDEuNzgsMy43N2EyMC4yOSwyMC4yOSwwLDAsMS0xMi43NCw0LjY0Yy05LjczLDAtMTUuOTMtNi45LTE1LjkzLTE2LjI4QzQ0LjIzLDYuMzcsNTEsMCw1OS4yNywwYzcuODcsMCwxMy40NCw1LjY2LDEzLjQ0LDEyLjEyYTE0LjEzLDE0LjEzLDAsMCwxLS40NCwzLjI3SDUwLjZjLS41Myw0Ljg3LDEuNTEsMTIsMTEuNDEsMTJBMTYuMjQsMTYuMjQsMCwwLDAsNzEuMTIsMjQuMDZabS0yMC0xMi45Mkg2Ni4zNGEzLjIyLDMuMjIsMCwwLDAsLjA5LS43YzAtMi45Mi0yLjM4LTUuNzUtNy4wNy01Ljc1QTguMjMsOC4yMywwLDAsMCw1MS4xMywxMS4xNFoiLz48cGF0aCBkPSJNNy44My41OWgtN0wwLDNzMiwuMywyLDNWMjYuODJjMCwyLjcxLTEuOTUsMy0xLjk1LDNsLjg3LDIuNDVoN1oiLz48L2c+PC9zdmc+"
+}
