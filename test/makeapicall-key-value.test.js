@@ -39,6 +39,9 @@ const CONFIG = {
 // Account fields a connector validates before any request (it refuses to send the
 // token anywhere else), keyed by the connector directory (src/appmixer/<connector>).
 const AUTH_OVERRIDES = {
+    // lib.js sends the token only to a host under ideasrms.com or ideas.com. Its schema validation
+    // service takes no token, so no token request has to be answered first.
+    ideas: { baseUrl: 'https://api-mock-service.ideasrms.com' },
     // lib.js accepts only a *.workday.com / *.myworkday.com hostname.
     workday: { host: 'kv-test.workday.com' }
 };
