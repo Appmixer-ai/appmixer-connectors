@@ -1,0 +1,421 @@
+{
+    "name": "E2E Upsales - New Task trigger",
+    "description": "Polling trigger NewActivity reports a record created by the flow.",
+    "notes": {
+        "8e9d2b58-b191-4798-8d66-e559cf596cfa": {
+            "x": 64,
+            "y": 900,
+            "width": 672,
+            "height": 180,
+            "content": "## Polling trigger\n\nThe trigger polls every minute and its first tick only records where it starts. The flow waits 2 minutes, then creates the record the trigger must report on a later tick; a Condition keeps only the record of this run. AfterAll timeout is 420 s. Do not remove the Wait."
+        }
+    },
+    "flow": {
+        "823097e1-1f0b-4cea-976e-564a6fd6673c": {
+            "type": "appmixer.upsales.core.NewActivity",
+            "x": 64,
+            "y": 528,
+            "version": "1.0.0",
+            "source": {},
+            "config": {},
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "e8d6a310-a997-4b9c-b662-63703fe77313": {
+            "type": "appmixer.utils.controls.Condition",
+            "x": 272,
+            "y": 528,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "823097e1-1f0b-4cea-976e-564a6fd6673c": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "823097e1-1f0b-4cea-976e-564a6fd6673c": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "d764db79-2500-4d81-9ee0-279ed4e9346f": {
+                                            "variable": "$.823097e1-1f0b-4cea-976e-564a6fd6673c.out.description",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "OR": [
+                                                    {
+                                                        "input": "{{{d764db79-2500-4d81-9ee0-279ed4e9346f}}}",
+                                                        "operator": "regex",
+                                                        "regex": "^E2E NewTask \\d+$"
+                                                    }
+                                                ]
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "da471101-89ea-4b8b-863f-3b76a4d58e85": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 480,
+            "y": 528,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "e8d6a310-a997-4b9c-b662-63703fe77313": [
+                        "true"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "e8d6a310-a997-4b9c-b662-63703fe77313": {
+                            "true": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "24b7a01d-8b67-4892-83f3-4fa62d4e7842": {
+                                            "variable": "$.823097e1-1f0b-4cea-976e-564a6fd6673c.out.id",
+                                            "functions": []
+                                        },
+                                        "c0e57530-146c-4e29-b2eb-9acc51027c56": {
+                                            "variable": "$.823097e1-1f0b-4cea-976e-564a6fd6673c.out.description",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{24b7a01d-8b67-4892-83f3-4fa62d4e7842}}}",
+                                                "assertion": "notEmpty"
+                                            },
+                                            {
+                                                "field": "{{{c0e57530-146c-4e29-b2eb-9acc51027c56}}}",
+                                                "assertion": "regex",
+                                                "regex": "^E2E NewTask \\d+$"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "69801ed3-659d-4414-8ac6-d45e3f440dee": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {},
+            "config": {},
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "980bca4b-fd34-43b6-81f9-3958e9979668": {
+            "type": "appmixer.utils.timers.Wait",
+            "x": 272,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "69801ed3-659d-4414-8ac6-d45e3f440dee": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "69801ed3-659d-4414-8ac6-d45e3f440dee": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "interval": {}
+                                },
+                                "lambda": {
+                                    "interval": "2m"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "fb620328-87a4-446d-b40d-25b2b3f8a5e0": {
+            "type": "appmixer.upsales.core.FindUsers",
+            "x": 480,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "980bca4b-fd34-43b6-81f9-3958e9979668": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "980bca4b-fd34-43b6-81f9-3958e9979668": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "outputType": {}
+                                },
+                                "lambda": {
+                                    "outputType": "first"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "029a31fd-caca-4e06-8bf8-835b20021b58": {
+            "type": "appmixer.upsales.core.CreateActivity",
+            "x": 688,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "fb620328-87a4-446d-b40d-25b2b3f8a5e0": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "fb620328-87a4-446d-b40d-25b2b3f8a5e0": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "type": {},
+                                    "description": {
+                                        "e0f9dad0-433b-4dd9-9a73-5a64a4e81159": {
+                                            "functions": [
+                                                {
+                                                    "name": "g_timestamp"
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "userId": {
+                                        "4560e591-389d-4192-a9e4-7cb9ae694ddb": {
+                                            "functions": [],
+                                            "variable": "$.fb620328-87a4-446d-b40d-25b2b3f8a5e0.out.id"
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "type": "todo",
+                                    "description": "E2E NewTask {{{e0f9dad0-433b-4dd9-9a73-5a64a4e81159}}}",
+                                    "userId": "{{{4560e591-389d-4192-a9e4-7cb9ae694ddb}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "7f78eac1-3e77-45fd-b059-8ff168167450": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 896,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "029a31fd-caca-4e06-8bf8-835b20021b58": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "029a31fd-caca-4e06-8bf8-835b20021b58": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "32635479-4cad-4f85-b217-a1fc50e709bf": {
+                                            "variable": "$.029a31fd-caca-4e06-8bf8-835b20021b58.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{32635479-4cad-4f85-b217-a1fc50e709bf}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "f5e96562-4bb3-49f5-9267-e12ae37bba62": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 1104,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "7f78eac1-3e77-45fd-b059-8ff168167450": [
+                        "out"
+                    ],
+                    "da471101-89ea-4b8b-863f-3b76a4d58e85": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 420
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "789599ea-f7de-4a1d-ac5a-1c77d0771f68": {
+            "type": "appmixer.upsales.core.DeleteActivity",
+            "x": 1312,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "f5e96562-4bb3-49f5-9267-e12ae37bba62": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "f5e96562-4bb3-49f5-9267-e12ae37bba62": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "activityId": {
+                                        "25a05332-2820-49c0-9832-46600ded2192": {
+                                            "functions": [],
+                                            "variable": "$.823097e1-1f0b-4cea-976e-564a6fd6673c.out.id"
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "activityId": "{{{25a05332-2820-49c0-9832-46600ded2192}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "a9cb5f5e-4a7b-4dd1-842b-c612ab264249": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1520,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "789599ea-f7de-4a1d-ac5a-1c77d0771f68": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "successStoreId": "64f6f1f9193228000754082f",
+                    "failedStoreId": "64f6f1f0193228000754082e"
+                },
+                "transform": {
+                    "in": {
+                        "789599ea-f7de-4a1d-ac5a-1c77d0771f68": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "25f272dd-adba-4187-8371-636cc6c69ff2": {
+                                            "functions": [],
+                                            "variable": "$.f5e96562-4bb3-49f5-9267-e12ae37bba62.out"
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E Upsales - New Task trigger",
+                                    "result": "{{{25f272dd-adba-4187-8371-636cc6c69ff2}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        }
+    }
+}

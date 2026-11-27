@@ -1,0 +1,507 @@
+{
+    "name": "E2E Upsales - New Appointment trigger",
+    "description": "Polling trigger NewAppointment reports a record created by the flow.",
+    "notes": {
+        "abb7fd30-e6c6-4d8a-8e9f-ca6e1a658d98": {
+            "x": 64,
+            "y": 900,
+            "width": 672,
+            "height": 180,
+            "content": "## Polling trigger\n\nThe trigger polls every minute and its first tick only records where it starts. The flow waits 2 minutes, then creates the record the trigger must report on a later tick; a Condition keeps only the record of this run. AfterAll timeout is 420 s. Do not remove the Wait."
+        }
+    },
+    "flow": {
+        "f0b6bc8c-efaa-41d3-8ebd-33cddeb168ea": {
+            "type": "appmixer.upsales.core.NewAppointment",
+            "x": 64,
+            "y": 528,
+            "version": "1.0.0",
+            "source": {},
+            "config": {},
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "c911889e-07f2-4897-9e51-f6946923128e": {
+            "type": "appmixer.utils.controls.Condition",
+            "x": 272,
+            "y": 528,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "f0b6bc8c-efaa-41d3-8ebd-33cddeb168ea": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "f0b6bc8c-efaa-41d3-8ebd-33cddeb168ea": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "c1471fc4-ebd6-4a20-9f70-2eb8a6049e42": {
+                                            "variable": "$.f0b6bc8c-efaa-41d3-8ebd-33cddeb168ea.out.description",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "OR": [
+                                                    {
+                                                        "input": "{{{c1471fc4-ebd6-4a20-9f70-2eb8a6049e42}}}",
+                                                        "operator": "regex",
+                                                        "regex": "^E2E NewAppointment \\d+$"
+                                                    }
+                                                ]
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "28d506df-03f6-4e1f-8970-58bb25f93403": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 480,
+            "y": 528,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "c911889e-07f2-4897-9e51-f6946923128e": [
+                        "true"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "c911889e-07f2-4897-9e51-f6946923128e": {
+                            "true": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "cb277a0b-7844-4f11-b3be-83a32308f994": {
+                                            "variable": "$.f0b6bc8c-efaa-41d3-8ebd-33cddeb168ea.out.id",
+                                            "functions": []
+                                        },
+                                        "281264e6-84e1-41d0-aeac-3246249ec0be": {
+                                            "variable": "$.f0b6bc8c-efaa-41d3-8ebd-33cddeb168ea.out.description",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{cb277a0b-7844-4f11-b3be-83a32308f994}}}",
+                                                "assertion": "notEmpty"
+                                            },
+                                            {
+                                                "field": "{{{281264e6-84e1-41d0-aeac-3246249ec0be}}}",
+                                                "assertion": "regex",
+                                                "regex": "^E2E NewAppointment \\d+$"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "243ff7b8-a8fb-4a6f-a5fd-49100253c6f4": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {},
+            "config": {},
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "e25358dc-03bd-474c-b7a8-21de78f59a22": {
+            "type": "appmixer.utils.timers.Wait",
+            "x": 272,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "243ff7b8-a8fb-4a6f-a5fd-49100253c6f4": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "243ff7b8-a8fb-4a6f-a5fd-49100253c6f4": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "interval": {}
+                                },
+                                "lambda": {
+                                    "interval": "2m"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "aef8a675-ce6e-482b-8fb0-a82ef9558371": {
+            "type": "appmixer.upsales.core.FindUsers",
+            "x": 480,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "e25358dc-03bd-474c-b7a8-21de78f59a22": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "e25358dc-03bd-474c-b7a8-21de78f59a22": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "outputType": {}
+                                },
+                                "lambda": {
+                                    "outputType": "first"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "18bc0144-ae0f-4b76-979b-6a720dbbc506": {
+            "type": "appmixer.upsales.core.MakeApiCall",
+            "x": 688,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "aef8a675-ce6e-482b-8fb0-a82ef9558371": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "aef8a675-ce6e-482b-8fb0-a82ef9558371": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "url": {},
+                                    "method": {}
+                                },
+                                "lambda": {
+                                    "url": "/activitytypes/appointment",
+                                    "method": "GET"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "bd28158f-2875-49f0-8e6b-be19bb067823": {
+            "type": "appmixer.upsales.core.CreateAppointment",
+            "x": 896,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "18bc0144-ae0f-4b76-979b-6a720dbbc506": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "18bc0144-ae0f-4b76-979b-6a720dbbc506": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "appointmentTypeId": {
+                                        "af872d4a-fadc-462b-8b3f-28e4365764dc": {
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$.data[0].id"
+                                                        }
+                                                    ]
+                                                }
+                                            ],
+                                            "variable": "$.18bc0144-ae0f-4b76-979b-6a720dbbc506.out.body"
+                                        }
+                                    },
+                                    "description": {
+                                        "9e7a2023-d993-4535-8591-8223e796d68b": {
+                                            "functions": [
+                                                {
+                                                    "name": "g_timestamp"
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "userId": {
+                                        "bce235bb-05d3-4fd5-b13a-bcc74655fed2": {
+                                            "functions": [],
+                                            "variable": "$.aef8a675-ce6e-482b-8fb0-a82ef9558371.out.id"
+                                        }
+                                    },
+                                    "date": {
+                                        "1b9fc737-ad06-4803-80d0-85156de1147f": {
+                                            "functions": [
+                                                {
+                                                    "name": "g_now"
+                                                },
+                                                {
+                                                    "name": "g_addTimeSpan",
+                                                    "hashParams": {
+                                                        "minutes": {
+                                                            "value": 1440
+                                                        }
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "endDate": {
+                                        "09e4e5e5-3d9a-40de-9aa4-f5f85998f180": {
+                                            "functions": [
+                                                {
+                                                    "name": "g_now"
+                                                },
+                                                {
+                                                    "name": "g_addTimeSpan",
+                                                    "hashParams": {
+                                                        "minutes": {
+                                                            "value": 1470
+                                                        }
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "appointmentTypeId": "{{{af872d4a-fadc-462b-8b3f-28e4365764dc}}}",
+                                    "description": "E2E NewAppointment {{{9e7a2023-d993-4535-8591-8223e796d68b}}}",
+                                    "userId": "{{{bce235bb-05d3-4fd5-b13a-bcc74655fed2}}}",
+                                    "date": "{{{1b9fc737-ad06-4803-80d0-85156de1147f}}}",
+                                    "endDate": "{{{09e4e5e5-3d9a-40de-9aa4-f5f85998f180}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "65f66256-c357-4b4c-bde4-1889d891f0f7": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1104,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "bd28158f-2875-49f0-8e6b-be19bb067823": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "bd28158f-2875-49f0-8e6b-be19bb067823": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "d2466d8c-f0e8-4681-95a5-310b37c89ce9": {
+                                            "variable": "$.bd28158f-2875-49f0-8e6b-be19bb067823.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{d2466d8c-f0e8-4681-95a5-310b37c89ce9}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "37766af6-efdc-4dd1-ab0c-8f9ebe6f6752": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 1312,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "65f66256-c357-4b4c-bde4-1889d891f0f7": [
+                        "out"
+                    ],
+                    "28d506df-03f6-4e1f-8970-58bb25f93403": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 420
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "bdc9ae6d-8a35-4355-89a9-f0d1d52d3805": {
+            "type": "appmixer.upsales.core.DeleteAppointment",
+            "x": 1520,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "37766af6-efdc-4dd1-ab0c-8f9ebe6f6752": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "37766af6-efdc-4dd1-ab0c-8f9ebe6f6752": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "appointmentId": {
+                                        "dfc7e740-6b46-43ea-866a-360de9e2c67a": {
+                                            "functions": [],
+                                            "variable": "$.f0b6bc8c-efaa-41d3-8ebd-33cddeb168ea.out.id"
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "appointmentId": "{{{dfc7e740-6b46-43ea-866a-360de9e2c67a}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "adef9c3f-1792-4ad6-9b65-3cf26ffd13fa": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1728,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "bdc9ae6d-8a35-4355-89a9-f0d1d52d3805": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "successStoreId": "64f6f1f9193228000754082f",
+                    "failedStoreId": "64f6f1f0193228000754082e"
+                },
+                "transform": {
+                    "in": {
+                        "bdc9ae6d-8a35-4355-89a9-f0d1d52d3805": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "3f1a653c-2cdc-4b25-af29-ad8256ead6f9": {
+                                            "functions": [],
+                                            "variable": "$.37766af6-efdc-4dd1-ab0c-8f9ebe6f6752.out"
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E Upsales - New Appointment trigger",
+                                    "result": "{{{3f1a653c-2cdc-4b25-af29-ad8256ead6f9}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        }
+    }
+}

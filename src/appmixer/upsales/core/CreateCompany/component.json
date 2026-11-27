@@ -1,0 +1,271 @@
+{
+    "name": "appmixer.upsales.core.CreateCompany",
+    "label": "Create Company",
+    "description": "Create a company in Upsales.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:upsales"
+    },
+    "quota": {
+        "manager": "appmixer:upsales",
+        "resources": [
+            "requests",
+            "writes"
+        ],
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string"
+                    },
+                    "phone": {
+                        "type": "string"
+                    },
+                    "webpage": {
+                        "type": "string"
+                    },
+                    "notes": {
+                        "type": "string"
+                    },
+                    "userId": {
+                        "type": "string"
+                    },
+                    "parentId": {
+                        "type": "string"
+                    },
+                    "customFields": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "name"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "name": {
+                        "type": "text",
+                        "index": 1,
+                        "label": "Name",
+                        "tooltip": "The company name."
+                    },
+                    "phone": {
+                        "type": "text",
+                        "index": 2,
+                        "label": "Phone",
+                        "tooltip": "The company phone number."
+                    },
+                    "webpage": {
+                        "type": "text",
+                        "index": 3,
+                        "label": "Web Page",
+                        "tooltip": "The company website, e.g. https://piedpiper.com."
+                    },
+                    "notes": {
+                        "type": "textarea",
+                        "index": 4,
+                        "label": "Notes",
+                        "tooltip": "Notes about the company."
+                    },
+                    "userId": {
+                        "type": "text",
+                        "index": 5,
+                        "label": "Account Manager",
+                        "tooltip": "The user who manages the company. Pick one, or type the user ID.",
+                        "source": {
+                            "url": "/component/appmixer/upsales/core/ListUsers?outPort=out",
+                            "data": {
+                                "properties": {
+                                    "isSource": true
+                                },
+                                "transform": "./ListUsers#toSelectArray"
+                            }
+                        }
+                    },
+                    "parentId": {
+                        "type": "text",
+                        "index": 6,
+                        "label": "Parent Company ID",
+                        "tooltip": "The ID of the parent company, if any."
+                    },
+                    "customFields": {
+                        "type": "textarea",
+                        "index": 7,
+                        "label": "Custom Fields",
+                        "tooltip": "Optional custom field values as a JSON array, e.g. <code>[{\"fieldId\": 3, \"value\": \"2210\"}]</code>. Field IDs are listed in Upsales under Settings &rarr; Company custom fields, or through Make API Call <code>GET /customfields/company</code>."
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "schema": {
+                "type": "object",
+                "required": [
+                    "id"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "title": "Company ID",
+                        "example": 2
+                    },
+                    "name": {
+                        "type": "string",
+                        "title": "Name",
+                        "example": "Pied Piper"
+                    },
+                    "phone": {
+                        "type": "string",
+                        "title": "Phone",
+                        "example": "+46 8 123 456"
+                    },
+                    "fax": {
+                        "type": "string",
+                        "title": "Fax",
+                        "example": "+46 8 123 457"
+                    },
+                    "webpage": {
+                        "type": "string",
+                        "title": "Web Page",
+                        "example": "https://piedpiper.com"
+                    },
+                    "notes": {
+                        "type": "string",
+                        "title": "Notes",
+                        "example": "Key account"
+                    },
+                    "orgNo": {
+                        "type": "string",
+                        "title": "Organization Number",
+                        "example": "556677-8899"
+                    },
+                    "active": {
+                        "type": "integer",
+                        "title": "Active",
+                        "example": 1
+                    },
+                    "journeyStep": {
+                        "type": "string",
+                        "title": "Journey Step",
+                        "example": "lead"
+                    },
+                    "score": {
+                        "type": "integer",
+                        "title": "Score",
+                        "example": 0
+                    },
+                    "isExternal": {
+                        "type": "integer",
+                        "title": "Is External",
+                        "example": 0
+                    },
+                    "users": {
+                        "type": "array",
+                        "title": "Account Managers",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "id": {
+                                    "type": "integer",
+                                    "title": "ID",
+                                    "example": 1
+                                },
+                                "name": {
+                                    "type": "string",
+                                    "title": "Name",
+                                    "example": "Gustav Petterson"
+                                },
+                                "email": {
+                                    "type": "string",
+                                    "title": "Email",
+                                    "example": "gustav@example.com"
+                                }
+                            }
+                        },
+                        "example": [
+                            {
+                                "id": 1,
+                                "name": "Gustav Petterson",
+                                "email": "gustav@example.com"
+                            }
+                        ]
+                    },
+                    "categories": {
+                        "type": "array",
+                        "title": "Categories",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "id": {
+                                    "type": "integer",
+                                    "title": "ID",
+                                    "example": 4
+                                },
+                                "name": {
+                                    "type": "string",
+                                    "title": "Name",
+                                    "example": "Partner"
+                                }
+                            }
+                        },
+                        "example": [
+                            {
+                                "id": 4,
+                                "name": "Partner"
+                            }
+                        ]
+                    },
+                    "custom": {
+                        "type": "array",
+                        "title": "Custom Fields",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "fieldId": {
+                                    "type": "integer",
+                                    "title": "Field ID",
+                                    "example": 3
+                                },
+                                "value": {
+                                    "type": "string",
+                                    "title": "Value",
+                                    "example": "2210"
+                                }
+                            }
+                        },
+                        "example": [
+                            {
+                                "fieldId": 3,
+                                "value": "2210"
+                            }
+                        ]
+                    },
+                    "regDate": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Created At",
+                        "example": "2021-09-29T05:59:05.000Z"
+                    },
+                    "modDate": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Modified At",
+                        "example": "2021-09-29T05:59:05.000Z"
+                    }
+                }
+            }
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAyIiBoZWlnaHQ9IjEwMiIgdmlld0JveD0iMCAwIDEwMiAxMDIiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3QgZmlsbD0iIzFEM0Q0OCIgd2lkdGg9IjEwMiIgaGVpZ2h0PSIxMDIiIHJ4PSIyNCIvPjxwYXRoIGZpbGw9IiNDQUU3RTciIGQ9Ik0yNi41MzE5IDY1Ljg5NDZDMjQuNTg2NiA2NS4xMjU2IDIyLjg4NDUgNjQuMTE2MyAyMS40NzQyIDYyLjcyMjVDMjAuMDE1MiA2MS4zNzY3IDE4Ljk0NTMgNTkuNzQyNiAxOC4xNjcyIDU3Ljc3MjFDMTcuMzg5MSA1NS44MDE1IDE3IDUzLjU5MDcgMTcgNTEuMTM5NVYzNkgyMy4yNzM2VjUxLjQ3NkMyMy4yNzM2IDUyLjg2OTggMjMuNTE2NyA1NC4xMTk0IDI0LjAwMyA1NS4zMjA5QzI0LjQ4OTQgNTYuNTIyNSAyNS4xMjE2IDU3LjU3OTggMjUuOTk3IDU4LjQ0NUMyNi44MjM3IDU5LjM1ODEgMjcuODkzNiA2MC4wMzEgMjkuMDYwOCA2MC41NTk3QzMwLjIyOCA2MS4wODg0IDMxLjU4OTcgNjEuMzI4NyAzMyA2MS4zMjg3QzM0LjQxMDMgNjEuMzI4NyAzNS43MjM0IDYxLjA4ODQgMzYuOTM5MiA2MC41NTk3QzM4LjEwNjQgNjAuMDc5MSAzOS4xMjc3IDU5LjM1ODEgNDAuMDAzIDU4LjQ0NUM0MC44Mjk4IDU3LjUzMTggNDEuNTEwNiA1Ni41MjI1IDQxLjk5NyA1NS4zMjA5QzQyLjQ4MzMgNTQuMTE5NCA0Mi43MjY0IDUyLjgyMTcgNDIuNzI2NCA1MS40NzZWMzZINDlWNTEuMDkxNUM0OSA1My41NDI2IDQ4LjYxMDkgNTUuNzUzNSA0Ny44MzI4IDU3LjcyNEM0Ny4wNTQ3IDU5LjY5NDYgNDUuOTM2MiA2MS4zMjg3IDQ0LjUyNTggNjIuNzIyNUM0My4xMTU1IDY0LjA2ODIgNDEuNDEzNCA2NS4xMjU2IDM5LjQ2ODEgNjUuODk0NkMzNy41MjI4IDY2LjY2MzYgMzUuMzM0MyA2NyAzMyA2N0MzMC42MTcgNjcgMjguNDc3MiA2Ni42NjM2IDI2LjUzMTkgNjUuODk0NloiLz48cGF0aCBmaWxsPSIjQ0FFN0U3IiBkPSJNNjQuNDg3IDY2LjA2OThDNjIuNjI0OCA2NS4zMDYyIDYxLjEwNTcgNjQuMTYwNyA1OS45Mjk2IDYyLjYzMzNWNzdINTRWMzYuNjIwNUg1OS45Nzg2VjQxLjA1OTRDNjEuMTU0NyAzOS40ODQzIDYyLjY3MzggMzguMjkxIDY0LjU4NSAzNy4zODQyQzY2LjQ0NzIgMzYuNDc3MyA2OC40NTY0IDM2IDcwLjYxMjYgMzZDNzIuNjcwNyAzNiA3NC42MzA5IDM2LjM4MTggNzYuNDQ0MSAzNy4wOTc4Qzc4LjMwNjMgMzcuODYxNSA3OS45MjM0IDM4LjkxMTUgODEuMzQ0NiA0MC4yNDhDODIuNzY1NyA0MS42MzIxIDgzLjg5MjggNDMuMjU0OSA4NC43MjU5IDQ1LjE2NDFDODUuNTU5IDQ3LjA3MzMgODYgNDkuMjIxMiA4NiA1MS41NkM4NiA1My44OTg3IDg1LjU1OSA1Ni4wNDY2IDg0LjcyNTkgNTcuOTU1OEM4My44OTI4IDU5Ljg2NSA4Mi43MTY3IDYxLjUzNTUgODEuMjk1NiA2Mi45MTk3Qzc5Ljg3NDQgNjQuMzAzOCA3OC4yMDgzIDY1LjM1MzkgNzYuMzQ2MSA2Ni4wNjk4Qzc0LjQ4MzkgNjYuODMzNSA3Mi41NzI3IDY3LjE2NzYgNzAuNTYzNSA2Ny4xNjc2QzY4LjQwNzMgNjcuMjYzMSA2Ni4zOTgyIDY2LjgzMzUgNjQuNDg3IDY2LjA2OThaTTczLjY5OTggNjAuOTYyN0M3NC45MjUgNjAuNDM3NyA3Ni4wMDMxIDU5LjcyMTggNzYuOTM0MSA1OC44MTQ5Qzc3Ljg2NTIgNTcuOTA4IDc4LjU1MTMgNTYuODEwMiA3OS4wOTAzIDU1LjU2OTNDNzkuNTgwNCA1NC4zMjgzIDc5Ljg3NDQgNTIuOTkxOCA3OS44NzQ0IDUxLjYwNzdDNzkuODc0NCA1MC4yMjM1IDc5LjYyOTQgNDguODg3MSA3OS4wOTAzIDQ3LjY0NjFDNzguNTUxMyA0Ni40MDUxIDc3Ljg2NTIgNDUuMzA3MyA3Ni45MzQxIDQ0LjQwMDVDNzYuMDAzMSA0My40OTM2IDc0LjkyNSA0Mi43Nzc2IDczLjY5OTggNDIuMjUyNkM3Mi40NzQ3IDQxLjcyNzYgNzEuMTUxNiA0MS40ODg5IDY5LjczMDUgNDEuNDg4OUM2OC4zMDkzIDQxLjQ4ODkgNjYuOTM3MiA0MS43NzUzIDY1LjcxMjEgNDIuMzAwM0M2NC40ODcgNDIuODI1NCA2My40MDg5IDQzLjU0MTMgNjIuNDc3OCA0NC40NDgyQzYxLjU0NjcgNDUuMzU1MSA2MC44NjA2IDQ2LjQ1MjkgNjAuMzIxNiA0Ny42OTM4QzU5LjgzMTUgNDguOTM0OCA1OS41Mzc1IDUwLjIyMzUgNTkuNTM3NSA1MS42MDc3QzU5LjUzNzUgNTIuOTkxOCA1OS43ODI1IDU0LjMyODMgNjAuMzIxNiA1NS41NjkzQzYwLjgxMTYgNTYuODEwMiA2MS41NDY3IDU3LjkwOCA2Mi40Nzc4IDU4LjgxNDlDNjMuNDA4OSA1OS43MjE4IDY0LjQ4NyA2MC40Mzc3IDY1LjcxMjEgNjAuOTYyN0M2Ni45MzcyIDYxLjQ4NzggNjguMzA5MyA2MS43NzQyIDY5LjczMDUgNjEuNzc0MkM3MS4xNTE2IDYxLjcyNjQgNzIuNDc0NyA2MS40ODc4IDczLjY5OTggNjAuOTYyN1oiLz48L3N2Zz4="
+}

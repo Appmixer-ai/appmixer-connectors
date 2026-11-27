@@ -1,0 +1,493 @@
+{
+    "name": "E2E Upsales - Updated Ticket trigger",
+    "description": "Polling trigger TicketUpdated reports a ticket created by the flow.",
+    "notes": {
+        "a002fa38-3069-45b1-aa37-0f99be060a5b": {
+            "x": 64,
+            "y": 900,
+            "width": 672,
+            "height": 220,
+            "content": "## Polling trigger\n\nThe trigger polls every minute and its first tick only records where it starts. The flow waits 2 minutes, then creates the ticket the trigger must report on a later tick; a Condition keeps only the ticket of this run. AfterAll timeout is 420 s. Do not remove the Wait.\n\nThe account needs the **Customer Support** product and at least one ticket status and type."
+        }
+    },
+    "flow": {
+        "dcb071c4-df09-489a-b51b-597203c0a28f": {
+            "type": "appmixer.upsales.core.TicketUpdated",
+            "x": 64,
+            "y": 656,
+            "version": "1.0.0",
+            "source": {},
+            "config": {},
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "452ac663-5573-472f-be96-6d8cfc32a495": {
+            "type": "appmixer.utils.controls.Condition",
+            "x": 272,
+            "y": 656,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "dcb071c4-df09-489a-b51b-597203c0a28f": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "dcb071c4-df09-489a-b51b-597203c0a28f": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "e455e5b8-0a77-4824-a2f9-e6bdb21c6138": {
+                                            "variable": "$.dcb071c4-df09-489a-b51b-597203c0a28f.out.title",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "OR": [
+                                                    {
+                                                        "input": "{{{e455e5b8-0a77-4824-a2f9-e6bdb21c6138}}}",
+                                                        "operator": "regex",
+                                                        "regex": "^E2E Upsales Updated Ticket \\d+$"
+                                                    }
+                                                ]
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "79ad7009-4054-40f6-9283-098c5fac6a16": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 480,
+            "y": 656,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "452ac663-5573-472f-be96-6d8cfc32a495": [
+                        "true"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "452ac663-5573-472f-be96-6d8cfc32a495": {
+                            "true": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "9b859ec0-7ed1-43fd-8360-3eab6268a6ed": {
+                                            "variable": "$.dcb071c4-df09-489a-b51b-597203c0a28f.out.id",
+                                            "functions": []
+                                        },
+                                        "0555538e-72f7-4926-b2f9-6b6c267ac906": {
+                                            "variable": "$.dcb071c4-df09-489a-b51b-597203c0a28f.out.title",
+                                            "functions": []
+                                        },
+                                        "bb116629-1d0a-4e3a-beb7-4200c1a5caba": {
+                                            "variable": "$.dcb071c4-df09-489a-b51b-597203c0a28f.out.previousKnown",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{9b859ec0-7ed1-43fd-8360-3eab6268a6ed}}}",
+                                                "assertion": "notEmpty"
+                                            },
+                                            {
+                                                "field": "{{{0555538e-72f7-4926-b2f9-6b6c267ac906}}}",
+                                                "assertion": "regex",
+                                                "regex": "^E2E Upsales Updated Ticket \\d+$"
+                                            },
+                                            {
+                                                "field": "{{{bb116629-1d0a-4e3a-beb7-4200c1a5caba}}}",
+                                                "assertion": "regex",
+                                                "regex": "^(true|false)$"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "2c73ce8f-bff5-4782-8429-bbcdfcde4787": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {},
+            "config": {},
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "94efe33f-bf74-4a5a-a689-eea2edb9c658": {
+            "type": "appmixer.utils.timers.Wait",
+            "x": 272,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "2c73ce8f-bff5-4782-8429-bbcdfcde4787": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "2c73ce8f-bff5-4782-8429-bbcdfcde4787": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "interval": {}
+                                },
+                                "lambda": {
+                                    "interval": "2m"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "3c22c0da-57fe-41cd-b37c-4c30e5b3bd42": {
+            "type": "appmixer.upsales.core.MakeApiCall",
+            "x": 480,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "94efe33f-bf74-4a5a-a689-eea2edb9c658": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "94efe33f-bf74-4a5a-a689-eea2edb9c658": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "url": {},
+                                    "method": {}
+                                },
+                                "lambda": {
+                                    "url": "/ticketStatus",
+                                    "method": "GET"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "01eb5511-32b1-4ee4-900b-acad029efb1b": {
+            "type": "appmixer.upsales.core.MakeApiCall",
+            "x": 688,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "3c22c0da-57fe-41cd-b37c-4c30e5b3bd42": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "3c22c0da-57fe-41cd-b37c-4c30e5b3bd42": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "url": {},
+                                    "method": {}
+                                },
+                                "lambda": {
+                                    "url": "/ticketTypes",
+                                    "method": "GET"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "24603952-16b7-4f16-b91f-aa01f48be92d": {
+            "type": "appmixer.upsales.core.CreateTicket",
+            "x": 896,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "01eb5511-32b1-4ee4-900b-acad029efb1b": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "01eb5511-32b1-4ee4-900b-acad029efb1b": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "title": {
+                                        "db81521d-e4ce-4962-91e6-8476167d2940": {
+                                            "functions": [
+                                                {
+                                                    "name": "g_timestamp"
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "description": {},
+                                    "statusId": {
+                                        "4856c5c3-67df-4941-8fc6-3222224667b4": {
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$.data[0].id"
+                                                        }
+                                                    ]
+                                                }
+                                            ],
+                                            "variable": "$.3c22c0da-57fe-41cd-b37c-4c30e5b3bd42.out.body"
+                                        }
+                                    },
+                                    "typeId": {
+                                        "4b40d91c-9cdc-415d-9e46-edac203bf106": {
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$.data[0].id"
+                                                        }
+                                                    ]
+                                                }
+                                            ],
+                                            "variable": "$.01eb5511-32b1-4ee4-900b-acad029efb1b.out.body"
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "title": "E2E Upsales Updated Ticket {{{db81521d-e4ce-4962-91e6-8476167d2940}}}",
+                                    "description": "The customer cannot log in to the mobile app after the update.",
+                                    "statusId": "{{{4856c5c3-67df-4941-8fc6-3222224667b4}}}",
+                                    "typeId": "{{{4b40d91c-9cdc-415d-9e46-edac203bf106}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "94e38acf-4dfd-45f8-8b3c-71aab960e87d": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1104,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "24603952-16b7-4f16-b91f-aa01f48be92d": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "24603952-16b7-4f16-b91f-aa01f48be92d": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "89a677a7-6009-4d50-aa1b-a2b5fb08358b": {
+                                            "variable": "$.24603952-16b7-4f16-b91f-aa01f48be92d.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{89a677a7-6009-4d50-aa1b-a2b5fb08358b}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "67424ba8-7253-4d49-835a-46ed0983098e": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 1312,
+            "y": 400,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "94e38acf-4dfd-45f8-8b3c-71aab960e87d": [
+                        "out"
+                    ],
+                    "79ad7009-4054-40f6-9283-098c5fac6a16": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 420
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "c77055ea-383f-42b3-9f38-b8e6eadadfd1": {
+            "type": "appmixer.upsales.core.DeleteTicket",
+            "x": 1520,
+            "y": 400,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "67424ba8-7253-4d49-835a-46ed0983098e": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "67424ba8-7253-4d49-835a-46ed0983098e": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "ticketId": {
+                                        "145c4671-69af-4ba6-a8e3-cd2be96f96da": {
+                                            "functions": [],
+                                            "variable": "$.dcb071c4-df09-489a-b51b-597203c0a28f.out.id"
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "ticketId": "{{{145c4671-69af-4ba6-a8e3-cd2be96f96da}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "3b017de1-cb3a-4fa9-b6db-dd3bddf2e83b": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1728,
+            "y": 400,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "c77055ea-383f-42b3-9f38-b8e6eadadfd1": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "successStoreId": "64f6f1f9193228000754082f",
+                    "failedStoreId": "64f6f1f0193228000754082e"
+                },
+                "transform": {
+                    "in": {
+                        "c77055ea-383f-42b3-9f38-b8e6eadadfd1": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "fe1098aa-9314-427e-8132-747ed4fa0308": {
+                                            "functions": [],
+                                            "variable": "$.67424ba8-7253-4d49-835a-46ed0983098e.out"
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E Upsales - Updated Ticket trigger",
+                                    "result": "{{{fe1098aa-9314-427e-8132-747ed4fa0308}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        }
+    }
+}
