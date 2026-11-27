@@ -214,6 +214,35 @@ describe('Gorgias', function() {
             assert.strictEqual(context.sent[0].port, 'notFound');
         });
 
+        it('FindTickets follows next_cursor and returns every page', async function() {
+            const context = createContext({
+                content: { customerId: '3', outputType: 'array' },
+                responses: [
+                    { data: { data: [{ id: 1 }, { id: 2 }], meta: { next_cursor: 'c2' } } },
+                    { data: { data: [{ id: 3 }], meta: { next_cursor: null } } }
+                ]
+            });
+            await FindTickets.receive(context);
+            assert.strictEqual(context.requests.length, 2);
+            assert.strictEqual(context.requests[0].params.cursor, undefined);
+            assert.strictEqual(context.requests[1].params.cursor, 'c2');
+            assert.strictEqual(context.requests[1].params.customer_id, 3);
+            assert.deepStrictEqual(context.sent[0].data.result.map(t => t.id), [1, 2, 3]);
+        });
+
+        it('listAll stops at maxItems and reports the truncation', async function() {
+            const context = createContext({
+                responses: [
+                    { data: { data: [{ id: 1 }, { id: 2 }], meta: { next_cursor: 'c2' } } },
+                    { data: { data: [{ id: 3 }, { id: 4 }], meta: { next_cursor: 'c3' } } }
+                ]
+            });
+            const { items, truncated } = await lib.listAll(context, '/customers', {}, { maxItems: 3 });
+            assert.strictEqual(context.requests.length, 2);
+            assert.deepStrictEqual(items.map(i => i.id), [1, 2, 3]);
+            assert.strictEqual(truncated, true);
+        });
+
         it('AddTicketTags posts the tag names', async function() {
             const context = createContext({ content: { ticketId: '5', tags: ['vip', 'refund'] } });
             await AddTicketTags.receive(context);

@@ -16,6 +16,10 @@ const SUBDOMAIN_PATTERN = /^[a-z0-9][a-z0-9-]*$/i;
 // Largest page of the list endpoints (limit: 1-100).
 const PAGE_SIZE = 100;
 
+// Find and List components follow meta.next_cursor up to this many items (100 requests), so one
+// message on a huge helpdesk cannot run unbounded. Reaching it is logged.
+const MAX_LIST_ITEMS = 10000;
+
 // Inspector pickers are called in bursts when an inspector opens.
 const DEFAULT_LIST_CACHE_TTL = 2 * 60 * 1000;
 
@@ -151,10 +155,32 @@ const listPage = async (context, path, params = {}) => {
 };
 
 /**
- * listPage for inspector sources: cached per account, endpoint and query, behind a lock so a
- * burst of designer calls makes one request.
+ * All items of a list endpoint: follows meta.next_cursor (cursor pagination,
+ * https://developers.gorgias.com/docs/pagination) until it is null or maxItems are read.
+ * @returns {Promise<{items: object[], truncated: boolean}>}
  */
-const listPageCached = async (context, path, params = {}) => {
+const listAll = async (context, path, params = {}, { maxItems = MAX_LIST_ITEMS } = {}) => {
+
+    const items = [];
+    let cursor = null;
+    do {
+        const page = await listPage(context, path, cursor ? { ...params, cursor } : params);
+        items.push(...page.items);
+        cursor = page.nextCursor;
+    } while (cursor && items.length < maxItems);
+
+    const truncated = Boolean(cursor) || items.length > maxItems;
+    if (truncated) {
+        await context.log({ step: 'list-truncated', path, maxItems });
+    }
+    return { items: items.slice(0, maxItems), truncated };
+};
+
+/**
+ * listAll for inspector sources: cached per account, endpoint and query, behind a lock so a
+ * burst of designer calls makes one series of requests.
+ */
+const listAllCached = async (context, path, params = {}) => {
 
     const key = 'gorgias-source-' + hash({
         subdomain: context.auth.subdomain,
@@ -170,7 +196,7 @@ const listPageCached = async (context, path, params = {}) => {
         if (cached) {
             return cached;
         }
-        const page = await listPage(context, path, params);
+        const page = await listAll(context, path, params);
         await context.staticCache.set(key, page, context.config.listCacheTTL || DEFAULT_LIST_CACHE_TTL);
         return page;
     } finally {
@@ -394,6 +420,7 @@ module.exports = {
 
     SUBDOMAIN_PATTERN,
     PAGE_SIZE,
+    MAX_LIST_ITEMS,
     apiOrigin,
     accountOrigin,
     authHeaders,
@@ -402,7 +429,8 @@ module.exports = {
     optionalId,
     listItems,
     listPage,
-    listPageCached,
+    listAll,
+    listAllCached,
     normalizeMultiselectInput,
     compact,
     getTicket,

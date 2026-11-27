@@ -7,7 +7,7 @@ const SCHEMAS = require('../../schemas.json');
 const ITEM_SCHEMA = SCHEMAS.view;
 
 // GET /api/views - https://developers.gorgias.com/reference/list-views
-// One page of up to 100 items. Also the source of the views pickers: those calls
+// All items: follows the cursor up to lib.MAX_LIST_ITEMS. Also the source of the views pickers: those calls
 // (isSource) are cached and answer an empty list instead of an error.
 module.exports = {
 
@@ -24,8 +24,8 @@ module.exports = {
         const params = { order_by: 'created_datetime:desc' };
         try {
             const { items } = context.properties.isSource
-                ? await lib.listPageCached(context, '/views', params)
-                : await lib.listPage(context, '/views', params);
+                ? await lib.listAllCached(context, '/views', params)
+                : await lib.listAll(context, '/views', params);
             return lib.sendArrayOutput({ context, outputType, records: items });
         } catch (err) {
             if (context.properties.isSource) {
