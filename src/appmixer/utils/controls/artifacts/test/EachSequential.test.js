@@ -231,7 +231,10 @@ describe('Each Component - sequential mode', () => {
         assert.deepStrictEqual(h.flowState, {});
     });
 
-    it('should keep many concurrent loops out of the component state (#3159)', async () => {
+    it('should keep many concurrent loops out of the component state (#3159)', async function() {
+        // 200 acks through a real mutex: ~160 ms locally, ~1.3 s on a CI runner, over the 2 s
+        // default on a slow one (failed builds of #1569 and of the Tableau and Nuki PRs).
+        this.timeout(10000);
         const h = createHarness();
         const loops = Array.from({ length: 20 }, (_, n) => `run-${n}`);
         const list = Array.from({ length: 10 }, (_, i) => ({ i, payload: 'x'.repeat(100) }));
