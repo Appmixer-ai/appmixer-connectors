@@ -14,6 +14,9 @@ module.exports = {
         if (!description) {
             throw new context.CancelError('Text is required!');
         }
+        if (!userId) {
+            throw new context.CancelError('Author is required!');
+        }
 
         const body = lib.compact({
             description,

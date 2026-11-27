@@ -413,7 +413,7 @@ describe('upsales tickets', function() {
         assert.deepStrictEqual(context.sent[0], { data: {}, port: 'out' });
     });
 
-    it('AddTicketComment posts to the comment endpoint as an internal note by default', async function() {
+    it('AddTicketComment requires an author and posts to the comment endpoint as an internal note by default', async function() {
         const context = createContext({
             responder: async () => ({ data: { error: null, data: { id: 41 } } }),
             content: { ticketId: '101', description: 'Survey sent', userId: '8' }
@@ -422,6 +422,9 @@ describe('upsales tickets', function() {
         assert.strictEqual(context.requests[0].method, 'POST');
         assert.strictEqual(new URL(context.requests[0].url).pathname, '/api/v2/tickets/101/comment');
         assert.deepStrictEqual(context.requests[0].data, { description: 'Survey sent', isPublic: false, user: { id: 8 } });
+        const noAuthor = createContext({ responder: async () => ({ data: {} }), content: { ticketId: '101', description: 'x' } });
+        await assert.rejects(AddTicketComment.receive(noAuthor), CancelError);
+        assert.strictEqual(noAuthor.requests.length, 0);
     });
 });
 
