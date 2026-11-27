@@ -1,0 +1,223 @@
+{
+    "name": "appmixer.pandadoc.core.CreateDocumentFromFileUrl",
+    "label": "Create Document From File URL",
+    "description": "Create a document from a publicly accessible PDF (or DOCX) file URL. By default the component continues when the document is ready to send.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:pandadoc"
+    },
+    "quota": {
+        "manager": "appmixer:pandadoc",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "url": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "recipientEmail": {
+                        "type": "string"
+                    },
+                    "recipientFirstName": {
+                        "type": "string"
+                    },
+                    "recipientLastName": {
+                        "type": "string"
+                    },
+                    "recipientRole": {
+                        "type": "string"
+                    },
+                    "additionalRecipients": {
+                        "type": "string"
+                    },
+                    "parseFormFields": {
+                        "type": "boolean"
+                    },
+                    "fields": {
+                        "type": "string"
+                    },
+                    "metadata": {
+                        "type": "string"
+                    },
+                    "tags": {
+                        "type": "string"
+                    },
+                    "folderId": {
+                        "type": "string"
+                    },
+                    "waitForDraft": {
+                        "type": "boolean"
+                    }
+                },
+                "required": [
+                    "url",
+                    "name"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "url": {
+                        "type": "text",
+                        "index": 1,
+                        "label": "File URL",
+                        "tooltip": "A public HTTPS URL of the PDF or DOCX file."
+                    },
+                    "name": {
+                        "type": "text",
+                        "index": 2,
+                        "label": "Document Name",
+                        "tooltip": "Name of the new document."
+                    },
+                    "recipientEmail": {
+                        "type": "text",
+                        "index": 3,
+                        "label": "Recipient Email",
+                        "tooltip": "Email of the recipient (signer). With a sandbox API key the recipient must have an email of your own organization's domain."
+                    },
+                    "recipientFirstName": {
+                        "type": "text",
+                        "index": 4,
+                        "label": "Recipient First Name",
+                        "tooltip": "First name of the recipient."
+                    },
+                    "recipientLastName": {
+                        "type": "text",
+                        "index": 5,
+                        "label": "Recipient Last Name",
+                        "tooltip": "Last name of the recipient."
+                    },
+                    "recipientRole": {
+                        "type": "text",
+                        "index": 6,
+                        "label": "Recipient Role",
+                        "tooltip": "The template role this recipient takes, e.g. <code>Client</code>. Must match a role defined in the template; leave empty when the document has no roles."
+                    },
+                    "additionalRecipients": {
+                        "type": "textarea",
+                        "index": 7,
+                        "label": "Additional Recipients",
+                        "tooltip": "More recipients as a JSON array, e.g. <code>[{\"email\": \"cc@example.com\", \"first_name\": \"Ann\", \"role\": \"Approver\"}]</code>. Each recipient takes <code>email</code> or <code>phone</code>, <code>first_name</code>, <code>last_name</code>, <code>role</code> and <code>signing_order</code>."
+                    },
+                    "parseFormFields": {
+                        "type": "toggle",
+                        "index": 8,
+                        "label": "Parse Form Fields",
+                        "tooltip": "Turn on for a PDF with form fields; leave off for a PDF with field tags or without fields.",
+                        "defaultValue": false
+                    },
+                    "fields": {
+                        "type": "key-value",
+                        "index": 9,
+                        "label": "Fields",
+                        "tooltip": "Values to pre-fill fields with, by field name (merge field). Signature fields cannot be pre-filled.",
+                        "keyLabel": "Name",
+                        "valueLabel": "Value",
+                        "addLabel": "Add item",
+                        "removeLabel": "Remove item"
+                    },
+                    "metadata": {
+                        "type": "key-value",
+                        "index": 10,
+                        "label": "Metadata",
+                        "tooltip": "Your own key-value data stored on the document, e.g. a deal ID. Returned by Get Document and the triggers.",
+                        "keyLabel": "Name",
+                        "valueLabel": "Value",
+                        "addLabel": "Add item",
+                        "removeLabel": "Remove item"
+                    },
+                    "tags": {
+                        "type": "text",
+                        "index": 11,
+                        "label": "Tags",
+                        "tooltip": "Comma-separated tags for the document."
+                    },
+                    "folderId": {
+                        "type": "text",
+                        "index": 12,
+                        "label": "Folder ID",
+                        "tooltip": "The UUID of the documents folder to put the document in. Leave empty for the default folder."
+                    },
+                    "waitForDraft": {
+                        "type": "toggle",
+                        "index": 13,
+                        "label": "Wait Until Ready",
+                        "tooltip": "PandaDoc creates documents asynchronously. When on, the component checks the status once a minute and continues when the document is a draft and can be sent (up to 10 minutes). When off, it continues right away with the status <code>document.uploaded</code>.",
+                        "defaultValue": true
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "schema": {
+                "type": "object",
+                "required": [
+                    "id",
+                    "name",
+                    "status",
+                    "date_created"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "title": "Document ID",
+                        "example": "msFYActMfJHqNTKH8YSvF1"
+                    },
+                    "name": {
+                        "type": "string",
+                        "title": "Name",
+                        "example": "Quote for Acme Inc."
+                    },
+                    "status": {
+                        "type": "string",
+                        "title": "Status",
+                        "example": "document.draft"
+                    },
+                    "date_created": {
+                        "type": "string",
+                        "title": "Date Created",
+                        "example": "2026-11-20T09:15:00.000000Z",
+                        "format": "date-time"
+                    },
+                    "date_modified": {
+                        "type": "string",
+                        "title": "Date Modified",
+                        "example": "2026-11-20T09:15:04.000000Z",
+                        "format": "date-time"
+                    },
+                    "date_completed": {
+                        "type": "string",
+                        "title": "Date Completed",
+                        "example": "2026-11-21T14:02:11.000000Z",
+                        "format": "date-time"
+                    },
+                    "expiration_date": {
+                        "type": "string",
+                        "title": "Expiration Date",
+                        "example": "2027-01-19T09:15:00.000000Z",
+                        "format": "date-time"
+                    },
+                    "version": {
+                        "type": "string",
+                        "title": "Version",
+                        "example": "2"
+                    }
+                }
+            }
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0OCA0OCI+PHJlY3Qgd2lkdGg9IjQ4IiBoZWlnaHQ9IjQ4IiByeD0iMTAiIGZpbGw9IiMyNDg1NjciLz48ZyBmaWxsPSJub25lIiBzdHJva2U9IiNmZmYiIHN0cm9rZS13aWR0aD0iMy42Ij48Y2lyY2xlIGN4PSIxNy41IiBjeT0iMjUiIHI9IjYiLz48Y2lyY2xlIGN4PSIzMC41IiBjeT0iMjUiIHI9IjYiLz48L2c+PGcgZmlsbD0iI2ZmZiI+PHJlY3QgeD0iOS43IiB5PSIxOSIgd2lkdGg9IjMuNiIgaGVpZ2h0PSIxOCIgcng9IjEuOCIvPjxyZWN0IHg9IjM0LjciIHk9IjExIiB3aWR0aD0iMy42IiBoZWlnaHQ9IjIwIiByeD0iMS44Ii8+PC9nPjwvc3ZnPg=="
+}

@@ -102,6 +102,11 @@ module.exports = {
 
         if (responseType) {
             options.responseType = responseType;
+        } else {
+            // Ask for JSON explicitly. axios defaults to "application/json, text/plain, */*",
+            // which some hf-inference model servers (e.g. google-t5/t5-small) reject with
+            // HTTP 400 "Accept type ... not supported".
+            options.headers.Accept = 'application/json';
         }
 
         const response = await context.httpRequest(options);
@@ -157,6 +162,35 @@ module.exports = {
             .split('/')
             .map(segment => encodeURIComponent(segment))
             .join('/');
+    },
+
+    /**
+     * Read an image from Appmixer file storage and return it base64 encoded, the
+     * form the image tasks of Inference Providers take in `inputs`. A file whose
+     * stored content type says it is not an image is refused up front, so the user
+     * gets a clear message instead of a model error about undecodable input.
+     * @param {object} context Appmixer component context
+     * @param {string} fileId Appmixer file ID
+     * @returns {Promise<string>}
+     */
+    async loadImageBase64(context, fileId) {
+
+        const fileInfo = await context.getFileInfo(fileId);
+        const contentType = String((fileInfo && fileInfo.contentType) || '').toLowerCase();
+
+        if (contentType && !contentType.startsWith('image/') && contentType !== 'application/octet-stream') {
+            throw new context.CancelError(
+                `File ${fileId} is not an image (content type ${contentType}).`
+            );
+        }
+
+        const buffer = await context.loadFile(fileId);
+
+        if (!buffer || buffer.length === 0) {
+            throw new context.CancelError(`File ${fileId} is empty.`);
+        }
+
+        return Buffer.from(buffer).toString('base64');
     },
 
     /**

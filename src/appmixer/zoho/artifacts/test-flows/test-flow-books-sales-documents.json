@@ -1,13 +1,13 @@
 {
     "name": "E2E Zoho Books - item, estimate and sales order",
-    "description": "Creates a customer and an item, quotes the item in an estimate, marks the estimate sent and accepted, turns it into a sales order, asserts each record and deletes all of them.",
+    "description": "Creates a customer and an item, quotes the item in an estimate, marks the estimate sent and accepted, turns it into a sales order, asserts each record and deletes all of them and checks Make API Call with a read-only request (list organizations).",
     "notes": {
         "57a84c1d-c0d0-4a6a-98e8-ab16d86bf2c4": {
             "x": 64,
             "y": 512,
             "width": 672,
             "height": 240,
-            "content": "## ⚠️ Test data assumption\n\n**Organization ID** `20111141498` is set on every Zoho Books component, including the MakeApiCall cleanup steps (Query Parameters). It must be an organization of the connected Zoho Books account — on another tenant replace it everywhere (List Organizations returns it).\n\nThe cleanup deletes the sales order, the estimate, the item and the customer in that order: an item cannot be deleted while a transaction still uses it. If the flow stops half way, delete the records named *Appmixer E2E …* by hand."
+            "content": "## ⚠️ Test data assumption\n\n**Organization ID** `20111141498` is set on every Zoho Books component. It must be an organization of the connected Zoho Books account — on another tenant replace it everywhere (List Organizations returns it).\n\nThe cleanup deletes the sales order, the estimate, the item and the customer in that order: an item cannot be deleted while a transaction still uses it. If the flow stops half way, delete the records named *Appmixer E2E …* by hand."
         }
     },
     "flow": {
@@ -234,7 +234,7 @@
             }
         },
         "5b1e2c40-7d3a-4f6e-9a21-3c8e4d2f1a01": {
-            "type": "appmixer.zoho.books.MakeApiCall",
+            "type": "appmixer.zoho.books.MarkEstimateAsSent",
             "x": 1104,
             "y": 384,
             "version": "1.0.0",
@@ -252,19 +252,17 @@
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
-                                    "url": {
+                                    "organizationId": {},
+                                    "estimateId": {
                                         "8a0f6c12-2b4e-4d7a-b1c3-6e5f7a8b9c01": {
                                             "variable": "$.003705cc-1294-4f3a-926b-c342c94d8a48.out.estimate_id",
                                             "functions": []
                                         }
-                                    },
-                                    "method": {},
-                                    "parameters": {}
+                                    }
                                 },
                                 "lambda": {
-                                    "url": "/estimates/{{{8a0f6c12-2b4e-4d7a-b1c3-6e5f7a8b9c01}}}/status/sent",
-                                    "method": "POST",
-                                    "parameters": "{\"organization_id\":\"20111141498\"}"
+                                    "organizationId": "20111141498",
+                                    "estimateId": "{{{8a0f6c12-2b4e-4d7a-b1c3-6e5f7a8b9c01}}}"
                                 }
                             }
                         }
@@ -277,7 +275,7 @@
             }
         },
         "5b1e2c40-7d3a-4f6e-9a21-3c8e4d2f1a02": {
-            "type": "appmixer.zoho.books.MakeApiCall",
+            "type": "appmixer.zoho.books.MarkEstimateAsAccepted",
             "x": 1312,
             "y": 384,
             "version": "1.0.0",
@@ -295,19 +293,17 @@
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
-                                    "url": {
+                                    "organizationId": {},
+                                    "estimateId": {
                                         "8a0f6c12-2b4e-4d7a-b1c3-6e5f7a8b9c02": {
                                             "variable": "$.003705cc-1294-4f3a-926b-c342c94d8a48.out.estimate_id",
                                             "functions": []
                                         }
-                                    },
-                                    "method": {},
-                                    "parameters": {}
+                                    }
                                 },
                                 "lambda": {
-                                    "url": "/estimates/{{{8a0f6c12-2b4e-4d7a-b1c3-6e5f7a8b9c02}}}/status/accepted",
-                                    "method": "POST",
-                                    "parameters": "{\"organization_id\":\"20111141498\"}"
+                                    "organizationId": "20111141498",
+                                    "estimateId": "{{{8a0f6c12-2b4e-4d7a-b1c3-6e5f7a8b9c02}}}"
                                 }
                             }
                         }
@@ -528,6 +524,9 @@
                     ],
                     "1e566aba-ec3f-4c39-803d-4b45e5a15249": [
                         "out"
+                    ],
+                    "6f3c2a1e-9b4d-4c8e-a7f5-2d1e0b9c8a72": [
+                        "out"
                     ]
                 }
             },
@@ -542,7 +541,7 @@
             }
         },
         "d7e75443-cca1-4d5a-bda1-934ac2843c54": {
-            "type": "appmixer.zoho.books.MakeApiCall",
+            "type": "appmixer.zoho.books.DeleteSalesOrder",
             "x": 2352,
             "y": 384,
             "version": "1.0.0",
@@ -560,19 +559,17 @@
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
-                                    "url": {
+                                    "organizationId": {},
+                                    "salesOrderId": {
                                         "4108445c-bfbb-43af-8596-7094198f8270": {
                                             "variable": "$.9592a041-156e-4505-8153-c23d6df7919c.out.salesorder_id",
                                             "functions": []
                                         }
-                                    },
-                                    "method": {},
-                                    "parameters": {}
+                                    }
                                 },
                                 "lambda": {
-                                    "url": "/salesorders/{{{4108445c-bfbb-43af-8596-7094198f8270}}}",
-                                    "method": "DELETE",
-                                    "parameters": "{\"organization_id\":\"20111141498\"}"
+                                    "organizationId": "20111141498",
+                                    "salesOrderId": "{{{4108445c-bfbb-43af-8596-7094198f8270}}}"
                                 }
                             }
                         }
@@ -585,7 +582,7 @@
             }
         },
         "0c50c3bc-f2c4-43bb-8d00-77bc5fdefd14": {
-            "type": "appmixer.zoho.books.MakeApiCall",
+            "type": "appmixer.zoho.books.DeleteEstimate",
             "x": 2560,
             "y": 384,
             "version": "1.0.0",
@@ -603,19 +600,17 @@
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
-                                    "url": {
+                                    "organizationId": {},
+                                    "estimateId": {
                                         "dd9ec204-8129-4e53-a56e-d62561e08313": {
                                             "variable": "$.003705cc-1294-4f3a-926b-c342c94d8a48.out.estimate_id",
                                             "functions": []
                                         }
-                                    },
-                                    "method": {},
-                                    "parameters": {}
+                                    }
                                 },
                                 "lambda": {
-                                    "url": "/estimates/{{{dd9ec204-8129-4e53-a56e-d62561e08313}}}",
-                                    "method": "DELETE",
-                                    "parameters": "{\"organization_id\":\"20111141498\"}"
+                                    "organizationId": "20111141498",
+                                    "estimateId": "{{{dd9ec204-8129-4e53-a56e-d62561e08313}}}"
                                 }
                             }
                         }
@@ -628,7 +623,7 @@
             }
         },
         "12cc4534-1750-4094-84ac-e084c4953c55": {
-            "type": "appmixer.zoho.books.MakeApiCall",
+            "type": "appmixer.zoho.books.DeleteItem",
             "x": 2768,
             "y": 384,
             "version": "1.0.0",
@@ -646,19 +641,17 @@
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
-                                    "url": {
+                                    "organizationId": {},
+                                    "itemId": {
                                         "b2556e45-c377-4734-942a-6e3e3b53f603": {
                                             "variable": "$.2d7660ae-68cf-496f-ac35-170d877c68e9.out.item_id",
                                             "functions": []
                                         }
-                                    },
-                                    "method": {},
-                                    "parameters": {}
+                                    }
                                 },
                                 "lambda": {
-                                    "url": "/items/{{{b2556e45-c377-4734-942a-6e3e3b53f603}}}",
-                                    "method": "DELETE",
-                                    "parameters": "{\"organization_id\":\"20111141498\"}"
+                                    "organizationId": "20111141498",
+                                    "itemId": "{{{b2556e45-c377-4734-942a-6e3e3b53f603}}}"
                                 }
                             }
                         }
@@ -747,6 +740,98 @@
                                     "recipients": "test@appmixer.com",
                                     "testCase": "E2E Zoho Books - item, estimate and sales order",
                                     "result": "{{{fe5f1645-93f3-48b6-9821-1b506eeb134f}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "6f3c2a1e-9b4d-4c8e-a7f5-2d1e0b9c8a71": {
+            "type": "appmixer.zoho.books.MakeApiCall",
+            "label": "Make API Call (list organizations)",
+            "x": 272,
+            "y": 832,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "b05dcd50-434d-4bc1-855d-e19acd444a2d": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "b05dcd50-434d-4bc1-855d-e19acd444a2d": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "url": {},
+                                    "method": {}
+                                },
+                                "lambda": {
+                                    "url": "/organizations",
+                                    "method": "GET"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "6f3c2a1e-9b4d-4c8e-a7f5-2d1e0b9c8a72": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 480,
+            "y": 832,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "6f3c2a1e-9b4d-4c8e-a7f5-2d1e0b9c8a71": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "6f3c2a1e-9b4d-4c8e-a7f5-2d1e0b9c8a71": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "6f3c2a1e-9b4d-4c8e-a7f5-2d1e0b9c8a73": {
+                                            "variable": "$.6f3c2a1e-9b4d-4c8e-a7f5-2d1e0b9c8a71.out.status",
+                                            "functions": []
+                                        },
+                                        "6f3c2a1e-9b4d-4c8e-a7f5-2d1e0b9c8a74": {
+                                            "variable": "$.6f3c2a1e-9b4d-4c8e-a7f5-2d1e0b9c8a71.out.body",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{6f3c2a1e-9b4d-4c8e-a7f5-2d1e0b9c8a73}}}",
+                                                "assertion": "regex",
+                                                "regex": "^200$"
+                                            },
+                                            {
+                                                "field": "{{{6f3c2a1e-9b4d-4c8e-a7f5-2d1e0b9c8a74}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
                                 }
                             }
                         }

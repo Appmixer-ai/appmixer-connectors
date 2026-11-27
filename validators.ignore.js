@@ -395,5 +395,11 @@ module.exports = [
             'snowflake/db/DeletedRow/component.json'
         ],
         reason: 'The out port options list the columns of the selected table: the generateOutputPortOptions branch calls ListColumns, which runs SHOW COLUMNS against the connected Snowflake account and needs its credentials. Adding ignoreAuth=true would make the designer call it unauthenticated and fail. Same case as postgres CreateRow.'
+    },
+    {
+        validator: 'dynamic-outport-required-inputs',
+        messageIncludes: 'ignoreAuth=true',
+        paths: ['salesforce/crm/RecordUpdated/component.json'],
+        reason: 'The out port source is GetObjectFields, which calls the Salesforce describe API of the connected org (instance URL and token from the account) to list the fields of the chosen object. It needs the caller\'s account; with ignoreAuth=true the designer would call it unauthenticated and the variable picker would fail.'
     }
 ];
