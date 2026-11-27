@@ -1,0 +1,160 @@
+{
+    "name": "appmixer.roompricegenie.core.SendRates",
+    "label": "Send Rates",
+    "description": "Send the current price of a room type (and rate plan) for a date range of the connected property to RoomPriceGenie (rates.update). Prices are whole numbers: a price with decimals is rounded to the closest whole number. Fill in the fields for one room type and one date range, or Rate Updates (JSON) for several at once. Do not send back prices you have just received from RoomPriceGenie, and send rates separately from availability.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:roompricegenie"
+    },
+    "quota": {
+        "manager": "appmixer:roompricegenie",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "roomTypeCode": {
+                        "type": "string"
+                    },
+                    "roomTypeName": {
+                        "type": "string"
+                    },
+                    "ratePlanCode": {
+                        "type": "string"
+                    },
+                    "ratePlanName": {
+                        "type": "string"
+                    },
+                    "startDate": {
+                        "type": "string",
+                        "format": "date"
+                    },
+                    "endDate": {
+                        "type": "string",
+                        "format": "date"
+                    },
+                    "price": {
+                        "type": "number"
+                    },
+                    "occupancyPrices": {
+                        "type": "string"
+                    },
+                    "defaultOccupancy": {
+                        "type": "integer"
+                    },
+                    "data": {
+                        "type": "string"
+                    }
+                }
+            },
+            "inspector": {
+                "inputs": {
+                    "roomTypeCode": {
+                        "type": "text",
+                        "index": 1,
+                        "label": "Room Type Code",
+                        "tooltip": "Your immutable code of the room type, as sent in the inventory (<code>room_type_code</code>), for example <code>DBL</code>."
+                    },
+                    "roomTypeName": {
+                        "type": "text",
+                        "index": 2,
+                        "label": "Room Type Name",
+                        "tooltip": "The name of the room type, for example <code>Double Room</code>."
+                    },
+                    "ratePlanCode": {
+                        "type": "text",
+                        "index": 3,
+                        "label": "Rate Plan Code",
+                        "tooltip": "Your immutable code of the rate plan (<code>rate_plan_code</code>), for example <code>BAR</code>. Fill it in only when your integration uses rate plans; leave it empty otherwise."
+                    },
+                    "ratePlanName": {
+                        "type": "text",
+                        "index": 4,
+                        "label": "Rate Plan Name",
+                        "tooltip": "The name of the rate plan, for example <code>Best Available Rate</code>. Required together with Rate Plan Code."
+                    },
+                    "startDate": {
+                        "type": "date-time",
+                        "index": 5,
+                        "label": "Start Date",
+                        "tooltip": "The first date the price applies to (YYYY-MM-DD).",
+                        "config": {
+                            "enableTime": false
+                        }
+                    },
+                    "endDate": {
+                        "type": "date-time",
+                        "index": 6,
+                        "label": "End Date",
+                        "tooltip": "The last date the price applies to (YYYY-MM-DD), the same as Start Date or later. The price is applied to every date in the range. RoomPriceGenie asks for date ranges instead of one message per day.",
+                        "config": {
+                            "enableTime": false
+                        }
+                    },
+                    "price": {
+                        "type": "number",
+                        "index": 7,
+                        "label": "Price",
+                        "tooltip": "The price of the room type for every date in the range. Use it when the room has one price; use Occupancy Prices instead when the price depends on the number of guests."
+                    },
+                    "occupancyPrices": {
+                        "type": "textarea",
+                        "index": 8,
+                        "label": "Occupancy Prices",
+                        "tooltip": "With occupancy pricing: the price per number of guests as a JSON array, for all occupancy levels of the room type. Example: <code>[{\"occupancy\":1,\"price\":100},{\"occupancy\":2,\"price\":150}]</code>"
+                    },
+                    "defaultOccupancy": {
+                        "type": "number",
+                        "index": 9,
+                        "label": "Default Occupancy",
+                        "tooltip": "The default occupancy of the room type. Fill it in only with occupancy pricing."
+                    },
+                    "data": {
+                        "type": "textarea",
+                        "index": 10,
+                        "label": "Rate Updates (JSON)",
+                        "tooltip": "Use this instead of the fields above to send several room types or date ranges in one message. A JSON array in the form RoomPriceGenie documents as <code>data</code>, for example <code>[{\"room_type_code\":\"DBL\",\"room_type_name\":\"Double Room\",\"rate_plan_code\":\"BAR\",\"rate_plan_name\":\"Best Available Rate\",\"calendar\":[{\"start_date\":\"2027-01-02\",\"end_date\":\"2027-01-05\",\"price\":100}]}]</code>."
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "event": {
+                        "type": "string",
+                        "title": "Event",
+                        "example": "rates.update"
+                    },
+                    "tracking_id": {
+                        "type": "string",
+                        "title": "Tracking ID",
+                        "example": "3cc216d5-3a7a-4d3b-acc8-7af2ec0019ae"
+                    },
+                    "property_code": {
+                        "type": "string",
+                        "title": "Property Code",
+                        "example": "HOTEL123"
+                    }
+                },
+                "required": [
+                    "event",
+                    "tracking_id",
+                    "property_code"
+                ]
+            }
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9Ii00NiAwIDE4NSAxODUiIHJvbGU9ImltZyIgYXJpYS1sYWJlbD0iUm9vbVByaWNlR2VuaWUiPjxwYXRoIGZpbGw9IiM1YjQ4ZWUiIGQ9Ik04Ny40Niw4MS4yNWMtLjYyLTguNTgtMy40MS0xNC43MS04LjMxLTE4LjI0LTMuNzEtMy4yMi04LjgtMy43My0xMy43Mi00LjIxbC0uODYtLjA5YTMzLjU2LDMzLjU2LDAsMCwwLDEuODUtMTMuMjRjMi45LTQuNDMsNC4zMy0xMy41NCwxLTIwLjA3LTMuNTgtNi45NC03LjE5LTguOTUtMTAuNjctMTAuOWwtMS4xNC0uNjRhMjEuNTgsMjEuNTgsMCwwLDEtNi4yOS01LjU5LDMwLjI2LDMwLjI2LDAsMCwxLTIuMjEtMy44TDQ0LDcuNThjLTIuNzksMi43OS02LjY1LDUuNjYtMTIuNSw5LjMxQzI0LDIxLjU0LDE2LjYsMjcuMDksMTUuMTYsMzkuMDZjLTEuMTMsOS4zOCw1Ljc1LDE1LDEyLjQ2LDE3LjI0YTIyLjgsMjIuOCwwLDAsMCwxLjg2LDMuMTZjLTYuODUsMS43Ni0xNS44MSw0LjIxLTE5LjczLDkuNzNDNC44MSw3Ni4xNSw1LDg3LjcsNS4xNCw5MS4wN2MuMzUsNy4xLDIuNDQsMTQuOCw1LjIsMTkuMTVoMGExMSwxMSwwLDAsMCw2LjEsNC42NmMxLjg2LDYuMDksNS44OSwxMSw5LjEzLDE1LjM0LDMuNTksNC44Niw2LjYyLDkuNTUsNy4zNywxNS45YTUwLjY2LDUwLjY2LDAsMCwxLTEuNjcsMTguNTEsNTEuMDYsNTEuMDYsMCwwLDEtMiw2LjA5Yy0uNzcsMS45My00LjQ1LDkuOC00LjQ1LDkuOHM5LjUzLTMuNzUsMTAuMjctNC4xMWE2Ni4zOSw2Ni4zOSwwLDAsMCw2LTMuMzMsODUuMzYsODUuMzYsMCwwLDAsMTcuOTMtMTVjMTItMTMuMjIsMTguMjUtMzIuOTIsMjAtNDcuOTMuNDQtLjEzLjg4LS4yOCwxLjMxLS40NEM4NC41MywxMDguMDYsODkuMTMsMTAxLjc3LDg3LjQ2LDgxLjI1Wm0tNTcuMiw4OS45NGgwWm0wLDBabTMtMTE5cy0xLjMxLTQuMzQuMjEtN2MyLjMyLTQsOC41My03LjQyLDEyLjI0LTkuNDUuNzUtLjQxLDEuNDEtLjc3LDItMS4xLDIuMDguOCw2LjYzLDMuMjQsOC4zMSw1LjEyYTE2Ljg0LDE2Ljg0LDAsMCwxLDMuMzksNS4yNiw1LjI2LDUuMjYsMCwwLDEsLjMzLDEuNTQsMjYuMjEsMjYuMjEsMCwwLDEtMy4wOSwxMy4zYy0xLjY4LDIuODctMy44NCw0LjYyLTYuNDIsNS4yMS0zLC42Ny04LTEuNzktMTIuMi02QTE5LjM0LDE5LjM0LDAsMCwxLDMzLjI1LDUyLjIxWk0yMS44OCwzOS44N2MxLjA5LTksNi42LTEzLjE0LDEzLjE2LTE3LjIzYTkyLjE0LDkyLjE0LDAsMCwwLDExLTcuNzYsMjguNzUsMjguNzUsMCwwLDAsNi40LDVsMSwuNTZjMy4wOCwxLjcyLDUuMzEsMyw4LDguMWExNC4yNCwxNC4yNCwwLDAsMSwxLDguMzljLS4zOS0uNTMtLjgzLTEuMDctMS4zMy0xLjYzQTI5LDI5LDAsMCwwLDUzLjU3LDMwYy0zLjA3LTEuNjEtNC43NS0yLjI5LTYuMjktMi4yOXMtMy43MywxLjU2LTQuODIsMi4xNmMtNC42MiwyLjUyLTExLjU5LDYuMzMtMTQuODcsMTJhMTQuMjQsMTQuMjQsMCwwLDAtMiw2QTguMTcsOC4xNywwLDAsMSwyMS44OCwzOS44N1pNNTQuMDcsMTUzLjU0YTc4LjIsNzguMiwwLDAsMS0xNi40OSwxMy43OWwwLDAsLjI3LTFhNTcuMjksNTcuMjksMCwwLDAsMS44Ni0yMWMtMS04LjIyLTUtMTQuMTItOC42Ni0xOS4xNC0yLjg2LTMuODgtNS4zOS03LjA2LTctMTAuNTJBNjQuNjksNjQuNjksMCwwLDAsNDguMTcsMTEwbDQuNzQuMzdjNiwuNDgsMTEuNTMuOTIsMTYuMjMuOTIsMSwwLDIsMCwzLS4wOEM3MC4yMSwxMjUsNjQuMzksMTQyLjIsNTQuMDcsMTUzLjU0Wm0yMy44Ni01MC4xMmExNC4yNywxNC4yNywwLDAsMS0yLjgyLjc0Yy01LC44Mi0xMi43My4yLTIxLjY2LS41MWwtMS0uMDhhNzUuNDMsNzUuNDMsMCwwLDEsNS44OS01LjY3YzMuMTUtMi42NSw2LTQuMzcsOC43LTVhMywzLDAsMCwwLDIuNDQtMi43N1Y4OC41OEEyLjIsMi4yLDAsMCwwLDY3LDg2LjNhMTkuNjksMTkuNjksMCwwLDAtNiwycy0uNDgsMC0uNjcsMGExODgsMTg4LDAsMCwwLTIyLjQzLS42OCwzNC40LDM0LjQsMCwwLDAtMTQuMSwzLjQ4QTIuMywyLjMsMCwwLDAsMjMsOTQuMzdsLjgyLDEuMjhhMi43LDIuNywwLDAsMCwzLjQ4Ljg3LDI4LjY0LDI4LjY0LDAsMCwxLDExLTIuNSwxMjIuMTcsMTIyLjE3LDAsMCwxLDE0LjMxLjI4LDE0Ni40MiwxNDYuNDIsMCwwLDAtMTAuNDUsMTAuOTMsNTkuODksNTkuODksMCwwLDEtMTkuNzgsMy43LDE0LjEsMTQuMSwwLDAsMS0zLjUzLS4zNyw0LjMsNC4zLDAsMCwxLTIuODItMmMtMS44Mi0yLjg2LTMuODMtOS4yMy00LjE2LTE1Ljg1LS4zNi03LjQyLjkzLTE0LjE4LDMuMzctMTcuNjIsMi42My0zLjcsMTEuNDEtNiwxNi42Ni03LjI5LDEtLjI0LDEuODEtLjQ2LDIuNi0uNjhDMzcuNCw2Ny43Miw0My4wNiw3Miw0OS4wNyw3MmExMS44NCwxMS44NCwwLDAsMCwyLjYzLS4yOSwxNi4yOSwxNi4yOSwwLDAsMCw5LjU1LTYuNTVjMS4xOS4xNSwyLjM3LjI3LDMuNTIuMzksNC4yNi40Miw3Ljk0Ljc4LDEwLDIuNjRsLjMyLjI1YzMuMjUsMi4yOSw1LjEzLDYuNzYsNS42MSwxMy4zNEM4MS45Myw5Ni43OSw3OS4zMiwxMDIuODYsNzcuOTMsMTAzLjQyWiIvPjwvc3ZnPg=="
+}

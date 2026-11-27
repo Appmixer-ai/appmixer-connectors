@@ -1,0 +1,196 @@
+{
+    "name": "E2E RoomPriceGenie - inventory",
+    "description": "Sends the inventory (two room types, one rate plan) of the connected sandbox property with Send Inventory.",
+    "notes": {
+        "bd9de492-9e2b-4600-8195-20c1533b2479": {
+            "x": 64,
+            "y": 208,
+            "width": 880,
+            "height": 320,
+            "content": "## Never run\n\nThis flow was written from RoomPriceGenie's documentation and has only passed `appmixer e2e validate`. No RoomPriceGenie test account existed when it was written. See README.md in this folder for what a run needs.\n\n## ⚠️ Replaces the whole inventory\n\n`inventory.update` replaces all room types and rate plans of the connected property; anything not in this flow is un-mapped in RoomPriceGenie. Run it only with a connection of a **sandbox property made for this test**, never with a real hotel.\n\nAfter the first run the room types `E2E-DBL` and `E2E-SGL` and the rate plan `E2E-BAR` must be mapped in the RoomPriceGenie sandbox account (Room Setup → Setup All Rooms), or by RoomPriceGenie's team. The flow \"E2E RoomPriceGenie - ari updates\" needs that mapping."
+        }
+    },
+    "flow": {
+        "6f78b7fc-2ee9-4035-be9e-003a70148d80": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {},
+            "config": {},
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "05abdee9-ee55-4035-bfe9-f42d548c5f04": {
+            "type": "appmixer.roompricegenie.core.SendInventory",
+            "x": 272,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "6f78b7fc-2ee9-4035-be9e-003a70148d80": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "6f78b7fc-2ee9-4035-be9e-003a70148d80": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "roomTypes": {},
+                                    "ratePlans": {}
+                                },
+                                "lambda": {
+                                    "roomTypes": "[{\"room_type_code\":\"E2E-DBL\",\"room_type_name\":\"E2E Double Room\",\"number_of_rooms\":10,\"default_occupancy\":2,\"min_occupancy\":1,\"max_occupancy\":2},{\"room_type_code\":\"E2E-SGL\",\"room_type_name\":\"E2E Single Room\",\"number_of_rooms\":5,\"default_occupancy\":1,\"min_occupancy\":1,\"max_occupancy\":1}]",
+                                    "ratePlans": "[{\"rate_plan_code\":\"E2E-BAR\",\"rate_plan_name\":\"E2E Best Available Rate\"}]"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "0212c586-ba03-43ee-9745-6196e7c671e1": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 480,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "05abdee9-ee55-4035-bfe9-f42d548c5f04": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "05abdee9-ee55-4035-bfe9-f42d548c5f04": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "83c2a78c-8a38-4a4c-a584-dacd048a5713": {
+                                            "functions": [],
+                                            "variable": "$.05abdee9-ee55-4035-bfe9-f42d548c5f04.out.event"
+                                        },
+                                        "e3180f14-cde1-4b8a-ab41-af020ac2746a": {
+                                            "functions": [],
+                                            "variable": "$.05abdee9-ee55-4035-bfe9-f42d548c5f04.out.tracking_id"
+                                        },
+                                        "99572f9c-ac5e-4210-9d88-d5c3386f5a2a": {
+                                            "functions": [],
+                                            "variable": "$.05abdee9-ee55-4035-bfe9-f42d548c5f04.out.property_code"
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{83c2a78c-8a38-4a4c-a584-dacd048a5713}}}",
+                                                "assertion": "equal",
+                                                "expected": "inventory.update"
+                                            },
+                                            {
+                                                "field": "{{{e3180f14-cde1-4b8a-ab41-af020ac2746a}}}",
+                                                "assertion": "regex",
+                                                "regex": "^[0-9a-f-]{36}$"
+                                            },
+                                            {
+                                                "field": "{{{99572f9c-ac5e-4210-9d88-d5c3386f5a2a}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "2cfedf01-8cf1-4f49-931f-ba892e3968ee": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 688,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "0212c586-ba03-43ee-9745-6196e7c671e1": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 180
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "5a73660f-6678-406b-a13c-bb9effc18f4e": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 896,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "2cfedf01-8cf1-4f49-931f-ba892e3968ee": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "2cfedf01-8cf1-4f49-931f-ba892e3968ee": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "ba76c12c-48c8-40d8-b909-62b44998c5fb": {
+                                            "functions": [],
+                                            "variable": "$.2cfedf01-8cf1-4f49-931f-ba892e3968ee.out"
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E RoomPriceGenie - inventory",
+                                    "result": "{{{ba76c12c-48c8-40d8-b909-62b44998c5fb}}}"
+                                }
+                            }
+                        }
+                    }
+                },
+                "properties": {
+                    "successStoreId": "64f6f1f9193228000754082f",
+                    "failedStoreId": "64f6f1f0193228000754082e"
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        }
+    }
+}

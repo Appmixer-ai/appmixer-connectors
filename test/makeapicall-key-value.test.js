@@ -33,6 +33,11 @@ const SUPEROFFICE_STATE = { IsRunning: true, Api: 'https://online.superoffice.co
 
 // Service config of the components that validate it instead of taking any placeholder.
 const CONFIG = {
+    // lib.js sends the Partner API Key and the token only to an HTTPS host under roompricegenie.com.
+    'src/appmixer/roompricegenie/core/MakeApiCall/MakeApiCall.js': {
+        baseUrl: 'https://kv-test.roompricegenie.com',
+        partnerApiKey: 'kv-test'
+    },
     'src/appmixer/superoffice/core/MakeApiCall/MakeApiCall.js': { environment: 'online' }
 };
 
@@ -95,6 +100,10 @@ describe('MakeApiCall: Request Headers and Query Parameters from the Designer', 
             headers: { 'content-type': 'application/json' },
             data: {}
         });
+        // RoomPriceGenie exchanges the property's client credentials for an access token first.
+        context.httpRequest
+            .withArgs(sinon.match({ url: 'https://kv-test.roompricegenie.com/integrations/token/' }))
+            .resolves({ status: 200, data: { access_token: 'kv-test-token', expires_in: 86400 } });
         context.httpRequest
             .withArgs(sinon.match({ url: sinon.match(/\/api\/state\/Cust12345$/) }))
             .resolves({ status: 200, data: SUPEROFFICE_STATE });

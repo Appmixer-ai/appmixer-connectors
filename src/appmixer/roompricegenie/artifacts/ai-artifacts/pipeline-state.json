@@ -1,0 +1,59 @@
+{
+    "connector": "appmixer.roompricegenie",
+    "vendor": "appmixer",
+    "module": "roompricegenie",
+    "issue": "https://github.com/Appmixer-ai/appmixer-components/issues/3166",
+    "steps": {
+        "build": "done",
+        "review": "done",
+        "cliTests": "blocked",
+        "verify": "blocked",
+        "e2e": "blocked",
+        "ship": "pr-open"
+    },
+    "auth": {
+        "service": "appmixer:roompricegenie",
+        "type": "apiKey",
+        "fields": ["propertyCode", "clientId", "clientSecret"],
+        "serviceConfig": ["baseUrl", "partnerApiKey", "partnerId"],
+        "status": "missing",
+        "reason": "No RoomPriceGenie test account exists (creds show roompricegenie is empty). RoomPriceGenie issues the Partner API Key, the base URLs and a sandbox property only during partner onboarding (welcome call, technical kickoff, certification)."
+    },
+    "localTests": "blocked-no-credentials",
+    "notRunAgainstRealApi": true,
+    "publishedTo": [],
+    "verified": {
+        "static": [
+            "node scripts/validate.js --connector roompricegenie: 0 failures, 0 warnings",
+            "eslint: clean",
+            "122 unit tests in artifacts/test/roompricegenie.test.js with a mocked HTTP client and a mocked plugin context; the inbound path is tested with RSA keys generated in the test",
+            "The unit tests also pass on Node 18",
+            "appmixer e2e validate on the 5 flows: passed"
+        ],
+        "live": [
+            "One request without credentials, GET https://refactoringdevapi.roompricegenie.com/integrations/jwk/ on 2026-11-26: 401 not_authenticated. It shows the documented development host exists and the signing keys need the Partner API Key."
+        ],
+        "notVerified": [
+            "No authenticated request was ever sent to RoomPriceGenie. No component has run against the API.",
+            "RoomPriceGenie has never pushed an update to the endpoint. The inbound path was exercised only by unit tests with locally generated keys.",
+            "The connector was not published to any Appmixer instance; no E2E flow has run.",
+            "appmixer test component and appmixer connector verify were not run.",
+            "See artifacts/test-flows/README.md, 'Things only a run can settle'."
+        ]
+    },
+    "needsFromHuman": [
+        "Acceptance as a RoomPriceGenie Open API partner. Nothing here can be signed up for online.",
+        "From RoomPriceGenie, for the development environment: the API base URL, the Partner API Key (and partner ID), and a sandbox property with its client_id and client_secret; stored with: creds set roompricegenie ...",
+        "The connector configuration appmixer:roompricegenie (baseUrl, partnerApiKey) on the test instance",
+        "For the triggers: the endpoint URL <API URL>/plugins/appmixer/roompricegenie/events registered by RoomPriceGenie, mapped rooms in the sandbox account, and somebody who clicks Upload Prices there while a flow runs"
+    ],
+    "notes": [
+        "The Partner API Key and the base URL are connector configuration, not account fields: they belong to the partner, and the plugin route needs them without an account to read RoomPriceGenie's signing keys. A connection is one property: property code, client ID, client secret.",
+        "The base URL is accepted only as an HTTPS host under roompricegenie.com; Make API Call is pinned to it.",
+        "Updates arrive on one plugin route. A request must carry the Partner API Key and an RS256 token signed with a key of the configured host; an update reaches a trigger only when the token's client_id equals the Client ID of the trigger's connection and its audience contains the property code.",
+        "Not built: the iframe URL request, the Revenue Intelligence SDK one-time token and the reservation endpoint for 'Standard Partners' (HMAC or key-only schemes for UI embedding and non-Open-API partners).",
+        "Not built: any read component. The API has none.",
+        "No npm dependency: the token is verified with node:crypto.",
+        "verify.json is empty: there is nothing to read and no select input the service echoes."
+    ]
+}

@@ -1,0 +1,230 @@
+{
+    "name": "appmixer.roompricegenie.core.CreateAccount",
+    "label": "Create Account",
+    "description": "Create a RoomPriceGenie account for one of your properties (account.create). RoomPriceGenie creates the account in a pending state and emails the owner an activation link that is valid for 48 hours. The output holds the Client ID and Client Secret of the new account: connect them as a new RoomPriceGenie account; they work only after the owner has activated the account. Every run asks RoomPriceGenie for a real account and sends a real email. A second request for the same property code is rejected while the first is pending. The Client Secret is part of the output and therefore of the flow logs. Uses the Partner API Key of the connector configuration, not a connected account.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "quota": {
+        "manager": "appmixer:roompricegenie",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "propertyCode": {
+                        "type": "string"
+                    },
+                    "hotelName": {
+                        "type": "string"
+                    },
+                    "hotelCountryCode": {
+                        "type": "string"
+                    },
+                    "ownerEmail": {
+                        "type": "string"
+                    },
+                    "ownerFirstName": {
+                        "type": "string"
+                    },
+                    "ownerLastName": {
+                        "type": "string"
+                    },
+                    "ownerLanguage": {
+                        "type": "string"
+                    },
+                    "hotelAddress": {
+                        "type": "string"
+                    },
+                    "hotelPostcode": {
+                        "type": "string"
+                    },
+                    "latitude": {
+                        "type": "number"
+                    },
+                    "longitude": {
+                        "type": "number"
+                    },
+                    "hotelTimezone": {
+                        "type": "string"
+                    },
+                    "hotelCurrencyCode": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "propertyCode",
+                    "hotelName",
+                    "hotelCountryCode",
+                    "ownerEmail",
+                    "ownerFirstName"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "propertyCode": {
+                        "type": "text",
+                        "index": 1,
+                        "label": "Property Code",
+                        "tooltip": "Your own unique, immutable code for the property (<code>property_code</code>). RoomPriceGenie will know the property by it."
+                    },
+                    "hotelName": {
+                        "type": "text",
+                        "index": 2,
+                        "label": "Hotel Name",
+                        "tooltip": "The name of the property."
+                    },
+                    "hotelCountryCode": {
+                        "type": "text",
+                        "index": 3,
+                        "label": "Country Code",
+                        "tooltip": "The country of the property as a two-letter ISO 3166-1 code, for example <code>GB</code>."
+                    },
+                    "ownerEmail": {
+                        "type": "text",
+                        "index": 4,
+                        "label": "Owner Email",
+                        "tooltip": "The email address of the account owner. RoomPriceGenie sends the activation link to it."
+                    },
+                    "ownerFirstName": {
+                        "type": "text",
+                        "index": 5,
+                        "label": "Owner First Name",
+                        "tooltip": "The first name of the account owner."
+                    },
+                    "ownerLastName": {
+                        "type": "text",
+                        "index": 6,
+                        "label": "Owner Last Name",
+                        "tooltip": "The last name of the account owner."
+                    },
+                    "ownerLanguage": {
+                        "type": "select",
+                        "index": 7,
+                        "label": "Owner Language",
+                        "tooltip": "The language of the account owner. When empty, RoomPriceGenie derives it from the country or uses English.",
+                        "options": [
+                            {
+                                "label": "English",
+                                "value": "en"
+                            },
+                            {
+                                "label": "English (United Kingdom)",
+                                "value": "en-GB"
+                            },
+                            {
+                                "label": "English (United States)",
+                                "value": "en-US"
+                            },
+                            {
+                                "label": "German",
+                                "value": "de"
+                            },
+                            {
+                                "label": "French",
+                                "value": "fr"
+                            },
+                            {
+                                "label": "Spanish",
+                                "value": "es"
+                            },
+                            {
+                                "label": "Italian",
+                                "value": "it"
+                            }
+                        ]
+                    },
+                    "hotelAddress": {
+                        "type": "text",
+                        "index": 8,
+                        "label": "Hotel Address",
+                        "tooltip": "The full address of the property, including the city."
+                    },
+                    "hotelPostcode": {
+                        "type": "text",
+                        "index": 9,
+                        "label": "Hotel Postcode",
+                        "tooltip": "The postcode of the property."
+                    },
+                    "latitude": {
+                        "type": "number",
+                        "index": 10,
+                        "label": "Latitude",
+                        "tooltip": "The latitude of the property, for example <code>51.5074</code>. Fill in together with Longitude."
+                    },
+                    "longitude": {
+                        "type": "number",
+                        "index": 11,
+                        "label": "Longitude",
+                        "tooltip": "The longitude of the property, for example <code>-0.1278</code>. Fill in together with Latitude."
+                    },
+                    "hotelTimezone": {
+                        "type": "text",
+                        "index": 12,
+                        "label": "Hotel Time Zone",
+                        "tooltip": "The IANA time zone of the property, for example <code>Europe/London</code>. When empty, RoomPriceGenie derives it from the coordinates or the address."
+                    },
+                    "hotelCurrencyCode": {
+                        "type": "text",
+                        "index": 13,
+                        "label": "Currency Code",
+                        "tooltip": "The currency of the property as a three-letter ISO 4217 code, for example <code>GBP</code>. When empty, RoomPriceGenie uses USD."
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "event": {
+                        "type": "string",
+                        "title": "Event",
+                        "example": "account.create"
+                    },
+                    "tracking_id": {
+                        "type": "string",
+                        "title": "Tracking ID",
+                        "example": "3cc216d5-3a7a-4d3b-acc8-7af2ec0019ae"
+                    },
+                    "property_code": {
+                        "type": "string",
+                        "title": "Property Code",
+                        "example": "HOTEL123"
+                    },
+                    "message": {
+                        "type": "string",
+                        "title": "Message",
+                        "example": "Account creation request received successfully!"
+                    },
+                    "client_id": {
+                        "type": "string",
+                        "title": "Client ID",
+                        "example": "273992812100eaeb9c6cb606bea40622b9affbe9783881f8320ad575959"
+                    },
+                    "client_secret": {
+                        "type": "string",
+                        "title": "Client Secret",
+                        "example": "f7ScJjNdU-U-RPq_gLcYET2iahCuqLkJD_sIfKvNEEqOprUbWrSJUcikMqLwa-VWA959"
+                    }
+                },
+                "required": [
+                    "event",
+                    "tracking_id",
+                    "property_code",
+                    "client_id",
+                    "client_secret"
+                ]
+            }
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9Ii00NiAwIDE4NSAxODUiIHJvbGU9ImltZyIgYXJpYS1sYWJlbD0iUm9vbVByaWNlR2VuaWUiPjxwYXRoIGZpbGw9IiM1YjQ4ZWUiIGQ9Ik04Ny40Niw4MS4yNWMtLjYyLTguNTgtMy40MS0xNC43MS04LjMxLTE4LjI0LTMuNzEtMy4yMi04LjgtMy43My0xMy43Mi00LjIxbC0uODYtLjA5YTMzLjU2LDMzLjU2LDAsMCwwLDEuODUtMTMuMjRjMi45LTQuNDMsNC4zMy0xMy41NCwxLTIwLjA3LTMuNTgtNi45NC03LjE5LTguOTUtMTAuNjctMTAuOWwtMS4xNC0uNjRhMjEuNTgsMjEuNTgsMCwwLDEtNi4yOS01LjU5LDMwLjI2LDMwLjI2LDAsMCwxLTIuMjEtMy44TDQ0LDcuNThjLTIuNzksMi43OS02LjY1LDUuNjYtMTIuNSw5LjMxQzI0LDIxLjU0LDE2LjYsMjcuMDksMTUuMTYsMzkuMDZjLTEuMTMsOS4zOCw1Ljc1LDE1LDEyLjQ2LDE3LjI0YTIyLjgsMjIuOCwwLDAsMCwxLjg2LDMuMTZjLTYuODUsMS43Ni0xNS44MSw0LjIxLTE5LjczLDkuNzNDNC44MSw3Ni4xNSw1LDg3LjcsNS4xNCw5MS4wN2MuMzUsNy4xLDIuNDQsMTQuOCw1LjIsMTkuMTVoMGExMSwxMSwwLDAsMCw2LjEsNC42NmMxLjg2LDYuMDksNS44OSwxMSw5LjEzLDE1LjM0LDMuNTksNC44Niw2LjYyLDkuNTUsNy4zNywxNS45YTUwLjY2LDUwLjY2LDAsMCwxLTEuNjcsMTguNTEsNTEuMDYsNTEuMDYsMCwwLDEtMiw2LjA5Yy0uNzcsMS45My00LjQ1LDkuOC00LjQ1LDkuOHM5LjUzLTMuNzUsMTAuMjctNC4xMWE2Ni4zOSw2Ni4zOSwwLDAsMCw2LTMuMzMsODUuMzYsODUuMzYsMCwwLDAsMTcuOTMtMTVjMTItMTMuMjIsMTguMjUtMzIuOTIsMjAtNDcuOTMuNDQtLjEzLjg4LS4yOCwxLjMxLS40NEM4NC41MywxMDguMDYsODkuMTMsMTAxLjc3LDg3LjQ2LDgxLjI1Wm0tNTcuMiw4OS45NGgwWm0wLDBabTMtMTE5cy0xLjMxLTQuMzQuMjEtN2MyLjMyLTQsOC41My03LjQyLDEyLjI0LTkuNDUuNzUtLjQxLDEuNDEtLjc3LDItMS4xLDIuMDguOCw2LjYzLDMuMjQsOC4zMSw1LjEyYTE2Ljg0LDE2Ljg0LDAsMCwxLDMuMzksNS4yNiw1LjI2LDUuMjYsMCwwLDEsLjMzLDEuNTQsMjYuMjEsMjYuMjEsMCwwLDEtMy4wOSwxMy4zYy0xLjY4LDIuODctMy44NCw0LjYyLTYuNDIsNS4yMS0zLC42Ny04LTEuNzktMTIuMi02QTE5LjM0LDE5LjM0LDAsMCwxLDMzLjI1LDUyLjIxWk0yMS44OCwzOS44N2MxLjA5LTksNi42LTEzLjE0LDEzLjE2LTE3LjIzYTkyLjE0LDkyLjE0LDAsMCwwLDExLTcuNzYsMjguNzUsMjguNzUsMCwwLDAsNi40LDVsMSwuNTZjMy4wOCwxLjcyLDUuMzEsMyw4LDguMWExNC4yNCwxNC4yNCwwLDAsMSwxLDguMzljLS4zOS0uNTMtLjgzLTEuMDctMS4zMy0xLjYzQTI5LDI5LDAsMCwwLDUzLjU3LDMwYy0zLjA3LTEuNjEtNC43NS0yLjI5LTYuMjktMi4yOXMtMy43MywxLjU2LTQuODIsMi4xNmMtNC42MiwyLjUyLTExLjU5LDYuMzMtMTQuODcsMTJhMTQuMjQsMTQuMjQsMCwwLDAtMiw2QTguMTcsOC4xNywwLDAsMSwyMS44OCwzOS44N1pNNTQuMDcsMTUzLjU0YTc4LjIsNzguMiwwLDAsMS0xNi40OSwxMy43OWwwLDAsLjI3LTFhNTcuMjksNTcuMjksMCwwLDAsMS44Ni0yMWMtMS04LjIyLTUtMTQuMTItOC42Ni0xOS4xNC0yLjg2LTMuODgtNS4zOS03LjA2LTctMTAuNTJBNjQuNjksNjQuNjksMCwwLDAsNDguMTcsMTEwbDQuNzQuMzdjNiwuNDgsMTEuNTMuOTIsMTYuMjMuOTIsMSwwLDIsMCwzLS4wOEM3MC4yMSwxMjUsNjQuMzksMTQyLjIsNTQuMDcsMTUzLjU0Wm0yMy44Ni01MC4xMmExNC4yNywxNC4yNywwLDAsMS0yLjgyLjc0Yy01LC44Mi0xMi43My4yLTIxLjY2LS41MWwtMS0uMDhhNzUuNDMsNzUuNDMsMCwwLDEsNS44OS01LjY3YzMuMTUtMi42NSw2LTQuMzcsOC43LTVhMywzLDAsMCwwLDIuNDQtMi43N1Y4OC41OEEyLjIsMi4yLDAsMCwwLDY3LDg2LjNhMTkuNjksMTkuNjksMCwwLDAtNiwycy0uNDgsMC0uNjcsMGExODgsMTg4LDAsMCwwLTIyLjQzLS42OCwzNC40LDM0LjQsMCwwLDAtMTQuMSwzLjQ4QTIuMywyLjMsMCwwLDAsMjMsOTQuMzdsLjgyLDEuMjhhMi43LDIuNywwLDAsMCwzLjQ4Ljg3LDI4LjY0LDI4LjY0LDAsMCwxLDExLTIuNSwxMjIuMTcsMTIyLjE3LDAsMCwxLDE0LjMxLjI4LDE0Ni40MiwxNDYuNDIsMCwwLDAtMTAuNDUsMTAuOTMsNTkuODksNTkuODksMCwwLDEtMTkuNzgsMy43LDE0LjEsMTQuMSwwLDAsMS0zLjUzLS4zNyw0LjMsNC4zLDAsMCwxLTIuODItMmMtMS44Mi0yLjg2LTMuODMtOS4yMy00LjE2LTE1Ljg1LS4zNi03LjQyLjkzLTE0LjE4LDMuMzctMTcuNjIsMi42My0zLjcsMTEuNDEtNiwxNi42Ni03LjI5LDEtLjI0LDEuODEtLjQ2LDIuNi0uNjhDMzcuNCw2Ny43Miw0My4wNiw3Miw0OS4wNyw3MmExMS44NCwxMS44NCwwLDAsMCwyLjYzLS4yOSwxNi4yOSwxNi4yOSwwLDAsMCw5LjU1LTYuNTVjMS4xOS4xNSwyLjM3LjI3LDMuNTIuMzksNC4yNi40Miw3Ljk0Ljc4LDEwLDIuNjRsLjMyLjI1YzMuMjUsMi4yOSw1LjEzLDYuNzYsNS42MSwxMy4zNEM4MS45Myw5Ni43OSw3OS4zMiwxMDIuODYsNzcuOTMsMTAzLjQyWiIvPjwvc3ZnPg=="
+}

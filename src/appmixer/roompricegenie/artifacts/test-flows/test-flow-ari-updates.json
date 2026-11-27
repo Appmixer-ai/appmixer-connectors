@@ -1,0 +1,934 @@
+{
+    "name": "E2E RoomPriceGenie - ari updates",
+    "description": "Sends availability, rates, restrictions and a reservation of the connected sandbox property, and one event through Make API Call.",
+    "notes": {
+        "7a010f2f-8535-4ccc-b23a-cea9e14b0e62": {
+            "x": 64,
+            "y": 720,
+            "width": 880,
+            "height": 320,
+            "content": "## Never run\n\nThis flow was written from RoomPriceGenie's documentation and has only passed `appmixer e2e validate`. No RoomPriceGenie test account existed when it was written. See README.md in this folder for what a run needs.\n\n## ⚠️ Test data assumption\n\nThe connected property is a **sandbox property** whose inventory is the one of the flow \"E2E RoomPriceGenie - inventory\" (room type `E2E-DBL`, rate plan `E2E-BAR`), and RoomPriceGenie has confirmed the mapping. Before that, RoomPriceGenie does not accept availability, rates and restrictions.\n\nThe flow writes availability, a price, a minimum stay and one reservation for the next days into that property. There is nothing to clean up: the API has no delete."
+        }
+    },
+    "flow": {
+        "5c65ca77-4479-4b28-99d0-6b421aa80a0e": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {},
+            "config": {},
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "ecc0f1c1-8bc7-4b05-8c7f-297e0f77af22": {
+            "type": "appmixer.roompricegenie.core.SendAvailability",
+            "x": 272,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "5c65ca77-4479-4b28-99d0-6b421aa80a0e": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "5c65ca77-4479-4b28-99d0-6b421aa80a0e": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "roomTypeCode": {},
+                                    "roomTypeName": {},
+                                    "startDate": {
+                                        "6bf27bf6-ea9c-4e97-b406-d192d50e2708": {
+                                            "functions": [
+                                                {
+                                                    "name": "g_now"
+                                                },
+                                                {
+                                                    "name": "g_addTimeSpan",
+                                                    "hashParams": {
+                                                        "minutes": {
+                                                            "value": 1440
+                                                        }
+                                                    }
+                                                },
+                                                {
+                                                    "name": "g_formatDate",
+                                                    "params": [
+                                                        {
+                                                            "value": "YYYY-MM-DD"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "endDate": {
+                                        "bc17bfab-c7d7-45e8-9fea-d541b3b4b3be": {
+                                            "functions": [
+                                                {
+                                                    "name": "g_now"
+                                                },
+                                                {
+                                                    "name": "g_addTimeSpan",
+                                                    "hashParams": {
+                                                        "minutes": {
+                                                            "value": 10080
+                                                        }
+                                                    }
+                                                },
+                                                {
+                                                    "name": "g_formatDate",
+                                                    "params": [
+                                                        {
+                                                            "value": "YYYY-MM-DD"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "roomsLeft": {},
+                                    "outOfOrder": {}
+                                },
+                                "lambda": {
+                                    "roomTypeCode": "E2E-DBL",
+                                    "roomTypeName": "E2E Double Room",
+                                    "startDate": "{{{6bf27bf6-ea9c-4e97-b406-d192d50e2708}}}",
+                                    "endDate": "{{{bc17bfab-c7d7-45e8-9fea-d541b3b4b3be}}}",
+                                    "roomsLeft": 7,
+                                    "outOfOrder": 0
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "076bcbd5-b0f2-4d2b-b88a-dd9d8e03c1b5": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 480,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "ecc0f1c1-8bc7-4b05-8c7f-297e0f77af22": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "ecc0f1c1-8bc7-4b05-8c7f-297e0f77af22": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "c4bf943f-f562-46e8-8082-8e923ec9d159": {
+                                            "functions": [],
+                                            "variable": "$.ecc0f1c1-8bc7-4b05-8c7f-297e0f77af22.out.event"
+                                        },
+                                        "b000e5d8-16c5-4693-851c-b735a9e1555d": {
+                                            "functions": [],
+                                            "variable": "$.ecc0f1c1-8bc7-4b05-8c7f-297e0f77af22.out.tracking_id"
+                                        },
+                                        "c84189e2-e387-4c05-83ba-d8c7c4b646e6": {
+                                            "functions": [],
+                                            "variable": "$.ecc0f1c1-8bc7-4b05-8c7f-297e0f77af22.out.property_code"
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{c4bf943f-f562-46e8-8082-8e923ec9d159}}}",
+                                                "assertion": "equal",
+                                                "expected": "availability.update"
+                                            },
+                                            {
+                                                "field": "{{{b000e5d8-16c5-4693-851c-b735a9e1555d}}}",
+                                                "assertion": "regex",
+                                                "regex": "^[0-9a-f-]{36}$"
+                                            },
+                                            {
+                                                "field": "{{{c84189e2-e387-4c05-83ba-d8c7c4b646e6}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "6ecfc46b-dc87-42e3-82ff-ff95ffd12a19": {
+            "type": "appmixer.roompricegenie.core.SendRates",
+            "x": 480,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "ecc0f1c1-8bc7-4b05-8c7f-297e0f77af22": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "ecc0f1c1-8bc7-4b05-8c7f-297e0f77af22": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "roomTypeCode": {},
+                                    "roomTypeName": {},
+                                    "ratePlanCode": {},
+                                    "ratePlanName": {},
+                                    "startDate": {
+                                        "a80047cf-cfd9-48b7-a4d6-12107603fe1a": {
+                                            "functions": [
+                                                {
+                                                    "name": "g_now"
+                                                },
+                                                {
+                                                    "name": "g_addTimeSpan",
+                                                    "hashParams": {
+                                                        "minutes": {
+                                                            "value": 1440
+                                                        }
+                                                    }
+                                                },
+                                                {
+                                                    "name": "g_formatDate",
+                                                    "params": [
+                                                        {
+                                                            "value": "YYYY-MM-DD"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "endDate": {
+                                        "ddc188a6-6fc3-4130-a1c1-78dfd6a19007": {
+                                            "functions": [
+                                                {
+                                                    "name": "g_now"
+                                                },
+                                                {
+                                                    "name": "g_addTimeSpan",
+                                                    "hashParams": {
+                                                        "minutes": {
+                                                            "value": 10080
+                                                        }
+                                                    }
+                                                },
+                                                {
+                                                    "name": "g_formatDate",
+                                                    "params": [
+                                                        {
+                                                            "value": "YYYY-MM-DD"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "price": {}
+                                },
+                                "lambda": {
+                                    "roomTypeCode": "E2E-DBL",
+                                    "roomTypeName": "E2E Double Room",
+                                    "ratePlanCode": "E2E-BAR",
+                                    "ratePlanName": "E2E Best Available Rate",
+                                    "startDate": "{{{a80047cf-cfd9-48b7-a4d6-12107603fe1a}}}",
+                                    "endDate": "{{{ddc188a6-6fc3-4130-a1c1-78dfd6a19007}}}",
+                                    "price": 120
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "2bc7fe2b-20fb-4f3a-b2cc-3f05a1e779de": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 688,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "6ecfc46b-dc87-42e3-82ff-ff95ffd12a19": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "6ecfc46b-dc87-42e3-82ff-ff95ffd12a19": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "65a2c36c-3956-43f8-895d-40b57ba54bef": {
+                                            "functions": [],
+                                            "variable": "$.6ecfc46b-dc87-42e3-82ff-ff95ffd12a19.out.event"
+                                        },
+                                        "c07e39c7-9047-4908-b730-e253943f568a": {
+                                            "functions": [],
+                                            "variable": "$.6ecfc46b-dc87-42e3-82ff-ff95ffd12a19.out.tracking_id"
+                                        },
+                                        "dd8f3f27-214b-4a29-aa6e-8f2567804137": {
+                                            "functions": [],
+                                            "variable": "$.6ecfc46b-dc87-42e3-82ff-ff95ffd12a19.out.property_code"
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{65a2c36c-3956-43f8-895d-40b57ba54bef}}}",
+                                                "assertion": "equal",
+                                                "expected": "rates.update"
+                                            },
+                                            {
+                                                "field": "{{{c07e39c7-9047-4908-b730-e253943f568a}}}",
+                                                "assertion": "regex",
+                                                "regex": "^[0-9a-f-]{36}$"
+                                            },
+                                            {
+                                                "field": "{{{dd8f3f27-214b-4a29-aa6e-8f2567804137}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "ba866ff7-2eb2-43b7-8995-900109b122d6": {
+            "type": "appmixer.roompricegenie.core.SendRestrictions",
+            "x": 688,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "6ecfc46b-dc87-42e3-82ff-ff95ffd12a19": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "6ecfc46b-dc87-42e3-82ff-ff95ffd12a19": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "roomTypeCode": {},
+                                    "roomTypeName": {},
+                                    "ratePlanCode": {},
+                                    "ratePlanName": {},
+                                    "startDate": {
+                                        "780d53d3-81a0-42c7-bd4b-b7008c033579": {
+                                            "functions": [
+                                                {
+                                                    "name": "g_now"
+                                                },
+                                                {
+                                                    "name": "g_addTimeSpan",
+                                                    "hashParams": {
+                                                        "minutes": {
+                                                            "value": 1440
+                                                        }
+                                                    }
+                                                },
+                                                {
+                                                    "name": "g_formatDate",
+                                                    "params": [
+                                                        {
+                                                            "value": "YYYY-MM-DD"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "endDate": {
+                                        "88a01f06-f747-4a24-95b3-c4def2886194": {
+                                            "functions": [
+                                                {
+                                                    "name": "g_now"
+                                                },
+                                                {
+                                                    "name": "g_addTimeSpan",
+                                                    "hashParams": {
+                                                        "minutes": {
+                                                            "value": 10080
+                                                        }
+                                                    }
+                                                },
+                                                {
+                                                    "name": "g_formatDate",
+                                                    "params": [
+                                                        {
+                                                            "value": "YYYY-MM-DD"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "minStayArrival": {}
+                                },
+                                "lambda": {
+                                    "roomTypeCode": "E2E-DBL",
+                                    "roomTypeName": "E2E Double Room",
+                                    "ratePlanCode": "E2E-BAR",
+                                    "ratePlanName": "E2E Best Available Rate",
+                                    "startDate": "{{{780d53d3-81a0-42c7-bd4b-b7008c033579}}}",
+                                    "endDate": "{{{88a01f06-f747-4a24-95b3-c4def2886194}}}",
+                                    "minStayArrival": 2
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "f7ee0b0f-c414-4bae-9197-17726d56e03a": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 896,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "ba866ff7-2eb2-43b7-8995-900109b122d6": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "ba866ff7-2eb2-43b7-8995-900109b122d6": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "1a8b8595-97d7-4057-81ca-54b23dab0018": {
+                                            "functions": [],
+                                            "variable": "$.ba866ff7-2eb2-43b7-8995-900109b122d6.out.event"
+                                        },
+                                        "dd01684c-3b8f-468a-bf31-6f2eac575c3a": {
+                                            "functions": [],
+                                            "variable": "$.ba866ff7-2eb2-43b7-8995-900109b122d6.out.tracking_id"
+                                        },
+                                        "c30558d6-daec-496f-a747-59ee5e22d21b": {
+                                            "functions": [],
+                                            "variable": "$.ba866ff7-2eb2-43b7-8995-900109b122d6.out.property_code"
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{1a8b8595-97d7-4057-81ca-54b23dab0018}}}",
+                                                "assertion": "equal",
+                                                "expected": "restrictions.update"
+                                            },
+                                            {
+                                                "field": "{{{dd01684c-3b8f-468a-bf31-6f2eac575c3a}}}",
+                                                "assertion": "regex",
+                                                "regex": "^[0-9a-f-]{36}$"
+                                            },
+                                            {
+                                                "field": "{{{c30558d6-daec-496f-a747-59ee5e22d21b}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "37c10791-fe23-4b85-aeda-4cef9529eda5": {
+            "type": "appmixer.roompricegenie.core.SendReservations",
+            "x": 896,
+            "y": 400,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "ba866ff7-2eb2-43b7-8995-900109b122d6": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "ba866ff7-2eb2-43b7-8995-900109b122d6": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "reservations": {
+                                        "4582f5d5-e9d5-4726-a151-b206f9722d34": {
+                                            "functions": [
+                                                {
+                                                    "name": "g_now"
+                                                },
+                                                {
+                                                    "name": "g_formatDate",
+                                                    "params": [
+                                                        {
+                                                            "value": "YYYYMMDDHHmmss"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        },
+                                        "b1270848-7f2f-4960-9fd0-6dc13d03bc8f": {
+                                            "functions": [
+                                                {
+                                                    "name": "g_now"
+                                                },
+                                                {
+                                                    "name": "g_addTimeSpan",
+                                                    "hashParams": {
+                                                        "minutes": {
+                                                            "value": 1440
+                                                        }
+                                                    }
+                                                },
+                                                {
+                                                    "name": "g_formatDate",
+                                                    "params": [
+                                                        {
+                                                            "value": "YYYY-MM-DD"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        },
+                                        "beed4b49-52a9-459a-b289-1c05da60d464": {
+                                            "functions": [
+                                                {
+                                                    "name": "g_now"
+                                                },
+                                                {
+                                                    "name": "g_addTimeSpan",
+                                                    "hashParams": {
+                                                        "minutes": {
+                                                            "value": 2880
+                                                        }
+                                                    }
+                                                },
+                                                {
+                                                    "name": "g_formatDate",
+                                                    "params": [
+                                                        {
+                                                            "value": "YYYY-MM-DD"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        },
+                                        "1f0d7b5d-b1a5-402c-a6dd-682895ba90a5": {
+                                            "functions": [
+                                                {
+                                                    "name": "g_now"
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "reservations": "[{\"reservation_id\":\"E2E-{{{4582f5d5-e9d5-4726-a151-b206f9722d34}}}\",\"status\":\"confirmed\",\"arrival_date\":\"{{{b1270848-7f2f-4960-9fd0-6dc13d03bc8f}}}\",\"departure_date\":\"{{{beed4b49-52a9-459a-b289-1c05da60d464}}}\",\"guest_country_code\":\"CH\",\"created_at\":\"{{{1f0d7b5d-b1a5-402c-a6dd-682895ba90a5}}}\",\"updated_at\":\"{{{1f0d7b5d-b1a5-402c-a6dd-682895ba90a5}}}\",\"stay_dates\":[{\"date\":\"{{{b1270848-7f2f-4960-9fd0-6dc13d03bc8f}}}\",\"room_type_id\":\"E2E-DBL\",\"room_type_name\":\"E2E Double Room\",\"rate_plan_id\":\"E2E-BAR\",\"rate_plan_name\":\"E2E Best Available Rate\",\"number_of_adults\":2,\"number_of_children\":0,\"rate_gross_amount\":\"120.0\",\"rate_net_amount\":\"108.0\",\"room_revenue_gross_amount\":\"120.0\",\"room_revenue_net_amount\":\"108.0\",\"currency_code\":\"EUR\"}]}]"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "b02653c3-89c0-45b5-929b-db8f7e5293df": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1104,
+            "y": 400,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "37c10791-fe23-4b85-aeda-4cef9529eda5": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "37c10791-fe23-4b85-aeda-4cef9529eda5": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "3cc05591-6cb8-4c30-a84e-ca32ebf39bd5": {
+                                            "functions": [],
+                                            "variable": "$.37c10791-fe23-4b85-aeda-4cef9529eda5.out.event"
+                                        },
+                                        "b2b14ca4-388e-4c02-8ac4-4d0c86e3822e": {
+                                            "functions": [],
+                                            "variable": "$.37c10791-fe23-4b85-aeda-4cef9529eda5.out.tracking_id"
+                                        },
+                                        "210e24b0-3c38-423e-a139-905b65d081b8": {
+                                            "functions": [],
+                                            "variable": "$.37c10791-fe23-4b85-aeda-4cef9529eda5.out.property_code"
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{3cc05591-6cb8-4c30-a84e-ca32ebf39bd5}}}",
+                                                "assertion": "equal",
+                                                "expected": "reservation.update"
+                                            },
+                                            {
+                                                "field": "{{{b2b14ca4-388e-4c02-8ac4-4d0c86e3822e}}}",
+                                                "assertion": "regex",
+                                                "regex": "^[0-9a-f-]{36}$"
+                                            },
+                                            {
+                                                "field": "{{{210e24b0-3c38-423e-a139-905b65d081b8}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "ce32ce5f-2645-49c9-9453-e8254b6e6094": {
+            "type": "appmixer.roompricegenie.core.MakeApiCall",
+            "x": 1104,
+            "y": 528,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "37c10791-fe23-4b85-aeda-4cef9529eda5": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "37c10791-fe23-4b85-aeda-4cef9529eda5": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "url": {},
+                                    "method": {},
+                                    "body": {
+                                        "0ea0c2ab-f19c-4876-a95d-e90276894abe": {
+                                            "functions": [
+                                                {
+                                                    "name": "g_now"
+                                                },
+                                                {
+                                                    "name": "g_formatDate",
+                                                    "params": [
+                                                        {
+                                                            "value": "YYMMDDHHmmss"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        },
+                                        "845a4cba-7a38-4cc9-889d-8b07fb59ae3b": {
+                                            "functions": [],
+                                            "variable": "$.37c10791-fe23-4b85-aeda-4cef9529eda5.out.property_code"
+                                        },
+                                        "514bfb9e-e029-428d-a84a-b7f234d25ba0": {
+                                            "functions": [
+                                                {
+                                                    "name": "g_now"
+                                                },
+                                                {
+                                                    "name": "g_addTimeSpan",
+                                                    "hashParams": {
+                                                        "minutes": {
+                                                            "value": 11520
+                                                        }
+                                                    }
+                                                },
+                                                {
+                                                    "name": "g_formatDate",
+                                                    "params": [
+                                                        {
+                                                            "value": "YYYY-MM-DD"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        },
+                                        "e80a3ffa-116d-4154-8814-9efcc65c5fd1": {
+                                            "functions": [
+                                                {
+                                                    "name": "g_now"
+                                                },
+                                                {
+                                                    "name": "g_addTimeSpan",
+                                                    "hashParams": {
+                                                        "minutes": {
+                                                            "value": 12960
+                                                        }
+                                                    }
+                                                },
+                                                {
+                                                    "name": "g_formatDate",
+                                                    "params": [
+                                                        {
+                                                            "value": "YYYY-MM-DD"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "url": "/integrations/api/v1/event/",
+                                    "method": "POST",
+                                    "body": "{\"event\":\"availability.update\",\"tracking_id\":\"00000000-0000-4000-8000-{{{0ea0c2ab-f19c-4876-a95d-e90276894abe}}}\",\"property_code\":\"{{{845a4cba-7a38-4cc9-889d-8b07fb59ae3b}}}\",\"data\":[{\"room_type_code\":\"E2E-DBL\",\"room_type_name\":\"E2E Double Room\",\"calendar\":[{\"start_date\":\"{{{514bfb9e-e029-428d-a84a-b7f234d25ba0}}}\",\"end_date\":\"{{{e80a3ffa-116d-4154-8814-9efcc65c5fd1}}}\",\"rooms_left\":6,\"out_of_order\":0}]}]}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "51b0fab2-0c33-4636-81f5-faa48f3bbc2a": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1312,
+            "y": 528,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "ce32ce5f-2645-49c9-9453-e8254b6e6094": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "ce32ce5f-2645-49c9-9453-e8254b6e6094": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "61e34599-d978-4fee-89ec-5301f3bbefdf": {
+                                            "functions": [],
+                                            "variable": "$.ce32ce5f-2645-49c9-9453-e8254b6e6094.out.statusCode"
+                                        },
+                                        "ebb76325-d2e5-488f-8f17-5a553b6d25d2": {
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$.event"
+                                                        }
+                                                    ]
+                                                }
+                                            ],
+                                            "variable": "$.ce32ce5f-2645-49c9-9453-e8254b6e6094.out.body"
+                                        },
+                                        "dee5fa61-f5a6-49b0-81f5-bb59d5e0b3ad": {
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$.tracking_id"
+                                                        }
+                                                    ]
+                                                }
+                                            ],
+                                            "variable": "$.ce32ce5f-2645-49c9-9453-e8254b6e6094.out.body"
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{61e34599-d978-4fee-89ec-5301f3bbefdf}}}",
+                                                "assertion": "equal",
+                                                "expected": 200
+                                            },
+                                            {
+                                                "field": "{{{ebb76325-d2e5-488f-8f17-5a553b6d25d2}}}",
+                                                "assertion": "equal",
+                                                "expected": "availability.update"
+                                            },
+                                            {
+                                                "field": "{{{dee5fa61-f5a6-49b0-81f5-bb59d5e0b3ad}}}",
+                                                "assertion": "regex",
+                                                "regex": "^00000000-0000-4000-8000-[0-9]{12}$"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "2c42536b-c96f-4775-9625-09537c3b9226": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 1520,
+            "y": 528,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "076bcbd5-b0f2-4d2b-b88a-dd9d8e03c1b5": [
+                        "out"
+                    ],
+                    "2bc7fe2b-20fb-4f3a-b2cc-3f05a1e779de": [
+                        "out"
+                    ],
+                    "f7ee0b0f-c414-4bae-9197-17726d56e03a": [
+                        "out"
+                    ],
+                    "b02653c3-89c0-45b5-929b-db8f7e5293df": [
+                        "out"
+                    ],
+                    "51b0fab2-0c33-4636-81f5-faa48f3bbc2a": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 180
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "3a13eaaf-ca4d-4b40-b19f-2a45e383e214": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1728,
+            "y": 528,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "2c42536b-c96f-4775-9625-09537c3b9226": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "2c42536b-c96f-4775-9625-09537c3b9226": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "366eb602-4d7b-44f3-a40e-f2ad173888d1": {
+                                            "functions": [],
+                                            "variable": "$.2c42536b-c96f-4775-9625-09537c3b9226.out"
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E RoomPriceGenie - ari updates",
+                                    "result": "{{{366eb602-4d7b-44f3-a40e-f2ad173888d1}}}"
+                                }
+                            }
+                        }
+                    }
+                },
+                "properties": {
+                    "successStoreId": "64f6f1f9193228000754082f",
+                    "failedStoreId": "64f6f1f0193228000754082e"
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        }
+    }
+}

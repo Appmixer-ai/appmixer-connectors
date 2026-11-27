@@ -1,0 +1,231 @@
+{
+    "name": "E2E RoomPriceGenie - trigger new restriction update",
+    "description": "Waits for a minimum stay update that RoomPriceGenie pushes for the connected sandbox property (New Restriction Update). Needs a manual step in the RoomPriceGenie account.",
+    "notes": {
+        "61f8d335-53c1-4dfa-be69-bd9fa0d00aab": {
+            "x": 64,
+            "y": 336,
+            "width": 880,
+            "height": 320,
+            "content": "## Never run\n\nThis flow was written from RoomPriceGenie's documentation and has only passed `appmixer e2e validate`. No RoomPriceGenie test account existed when it was written. See README.md in this folder for what a run needs.\n\n## ⚠️ Manual step: only RoomPriceGenie can fire this trigger\n\nEvery update is signed by RoomPriceGenie and the connector verifies the signature, so the flow cannot send itself a test update. While the flow runs (it waits 10 minutes):\n\n1. Open the RoomPriceGenie sandbox account of the connected property. Minimum stay must be enabled for the integration (ask RoomPriceGenie).\n2. Set a minimum stay of 2 nights on a date in the next 7 days and upload it (the documentation does not name the button for restrictions; ask RoomPriceGenie if **Upload Prices** does not send it).\n\nBefore that, once: RoomPriceGenie must have the endpoint `<API URL of this instance>/plugins/appmixer/roompricegenie/events` registered for your partner account in the same environment as the connector configuration, and the connected property must have its rooms mapped (flow \"E2E RoomPriceGenie - inventory\") and prices sent (flow \"E2E RoomPriceGenie - ari updates\").\n\nOne upload covers several room types; the trigger fires once for each, so the Assert may run more than once."
+        }
+    },
+    "flow": {
+        "6452a735-b713-4499-bbba-d22faf4e2d33": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {},
+            "config": {},
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "2e59405b-d327-4f14-b451-9ca5325e995f": {
+            "type": "appmixer.utils.timers.Wait",
+            "x": 272,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "6452a735-b713-4499-bbba-d22faf4e2d33": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "6452a735-b713-4499-bbba-d22faf4e2d33": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "interval": {}
+                                },
+                                "lambda": {
+                                    "interval": "1m"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "22a77dad-94bb-416b-9f83-16f663ac578c": {
+            "type": "appmixer.roompricegenie.core.NewRestrictionUpdate",
+            "x": 64,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {},
+            "config": {},
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "9dbba7a1-ab74-4755-9233-af8df6b29370": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 272,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "22a77dad-94bb-416b-9f83-16f663ac578c": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "22a77dad-94bb-416b-9f83-16f663ac578c": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "250c7438-91db-420e-853c-149f2a3e0899": {
+                                            "functions": [],
+                                            "variable": "$.22a77dad-94bb-416b-9f83-16f663ac578c.out.event"
+                                        },
+                                        "9e02d0ee-b4e3-4e16-86dd-8fb89a1a753e": {
+                                            "functions": [],
+                                            "variable": "$.22a77dad-94bb-416b-9f83-16f663ac578c.out.tracking_id"
+                                        },
+                                        "95d59e5b-3a01-4355-af9f-a2e395b438e8": {
+                                            "functions": [],
+                                            "variable": "$.22a77dad-94bb-416b-9f83-16f663ac578c.out.property_code"
+                                        },
+                                        "f8da99ae-96d7-42e5-b34e-ee58a6f98ab0": {
+                                            "functions": [],
+                                            "variable": "$.22a77dad-94bb-416b-9f83-16f663ac578c.out.room_type_code"
+                                        },
+                                        "497a6947-13bf-4ed3-b8c6-26cee95e6d69": {
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$[0].end_date"
+                                                        }
+                                                    ]
+                                                }
+                                            ],
+                                            "variable": "$.22a77dad-94bb-416b-9f83-16f663ac578c.out.calendar"
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{250c7438-91db-420e-853c-149f2a3e0899}}}",
+                                                "assertion": "equal",
+                                                "expected": "restrictions.update"
+                                            },
+                                            {
+                                                "field": "{{{9e02d0ee-b4e3-4e16-86dd-8fb89a1a753e}}}",
+                                                "assertion": "notEmpty"
+                                            },
+                                            {
+                                                "field": "{{{95d59e5b-3a01-4355-af9f-a2e395b438e8}}}",
+                                                "assertion": "notEmpty"
+                                            },
+                                            {
+                                                "field": "{{{f8da99ae-96d7-42e5-b34e-ee58a6f98ab0}}}",
+                                                "assertion": "notEmpty"
+                                            },
+                                            {
+                                                "field": "{{{497a6947-13bf-4ed3-b8c6-26cee95e6d69}}}",
+                                                "assertion": "regex",
+                                                "regex": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "d45128c2-d016-48dd-b29f-1ed13eb6959a": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 480,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "9dbba7a1-ab74-4755-9233-af8df6b29370": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 600
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "29bbeb08-1e61-423d-a9b8-0f8dc1b16235": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 688,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "d45128c2-d016-48dd-b29f-1ed13eb6959a": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "d45128c2-d016-48dd-b29f-1ed13eb6959a": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "525633e7-9229-4630-8211-305a3cce44de": {
+                                            "functions": [],
+                                            "variable": "$.d45128c2-d016-48dd-b29f-1ed13eb6959a.out"
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E RoomPriceGenie - trigger new restriction update",
+                                    "result": "{{{525633e7-9229-4630-8211-305a3cce44de}}}"
+                                }
+                            }
+                        }
+                    }
+                },
+                "properties": {
+                    "successStoreId": "64f6f1f9193228000754082f",
+                    "failedStoreId": "64f6f1f0193228000754082e"
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        }
+    }
+}

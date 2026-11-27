@@ -1,0 +1,83 @@
+{
+    "name": "appmixer.roompricegenie.core.SendInventory",
+    "label": "Send Inventory",
+    "description": "Send the complete list of room types and rate plans of the connected property to RoomPriceGenie (inventory.update). The message replaces the whole inventory: a room type or rate plan that is missing from it is un-mapped in RoomPriceGenie. Send it once when the property is set up and again only when a room type or rate plan is added or removed, never on a schedule. After the first inventory, wait until RoomPriceGenie confirms the mapping before you send availability, rates or restrictions.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:roompricegenie"
+    },
+    "quota": {
+        "manager": "appmixer:roompricegenie",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "roomTypes": {
+                        "type": "string"
+                    },
+                    "ratePlans": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "roomTypes"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "roomTypes": {
+                        "type": "textarea",
+                        "index": 1,
+                        "label": "Room Types",
+                        "tooltip": "All room types of the property as a JSON array. Each item needs <code>room_type_code</code> (an immutable code), <code>room_type_name</code> and <code>number_of_rooms</code>; with occupancy pricing also <code>default_occupancy</code>, <code>min_occupancy</code> and <code>max_occupancy</code>. Example: <code>[{\"room_type_code\":\"DBL\",\"room_type_name\":\"Double Room\",\"number_of_rooms\":10,\"default_occupancy\":2,\"min_occupancy\":1,\"max_occupancy\":3}]</code>"
+                    },
+                    "ratePlans": {
+                        "type": "textarea",
+                        "index": 2,
+                        "label": "Rate Plans",
+                        "tooltip": "All rate plans of the property as a JSON array; leave empty when your integration has no rate plans. Each item needs <code>rate_plan_code</code> (an immutable code) and <code>rate_plan_name</code>, and <code>room_type_code</code> when the rate plan belongs to one room type. Example: <code>[{\"rate_plan_code\":\"BAR\",\"rate_plan_name\":\"Best Available Rate\"}]</code>"
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "event": {
+                        "type": "string",
+                        "title": "Event",
+                        "example": "inventory.update"
+                    },
+                    "tracking_id": {
+                        "type": "string",
+                        "title": "Tracking ID",
+                        "example": "3cc216d5-3a7a-4d3b-acc8-7af2ec0019ae"
+                    },
+                    "property_code": {
+                        "type": "string",
+                        "title": "Property Code",
+                        "example": "HOTEL123"
+                    }
+                },
+                "required": [
+                    "event",
+                    "tracking_id",
+                    "property_code"
+                ]
+            }
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9Ii00NiAwIDE4NSAxODUiIHJvbGU9ImltZyIgYXJpYS1sYWJlbD0iUm9vbVByaWNlR2VuaWUiPjxwYXRoIGZpbGw9IiM1YjQ4ZWUiIGQ9Ik04Ny40Niw4MS4yNWMtLjYyLTguNTgtMy40MS0xNC43MS04LjMxLTE4LjI0LTMuNzEtMy4yMi04LjgtMy43My0xMy43Mi00LjIxbC0uODYtLjA5YTMzLjU2LDMzLjU2LDAsMCwwLDEuODUtMTMuMjRjMi45LTQuNDMsNC4zMy0xMy41NCwxLTIwLjA3LTMuNTgtNi45NC03LjE5LTguOTUtMTAuNjctMTAuOWwtMS4xNC0uNjRhMjEuNTgsMjEuNTgsMCwwLDEtNi4yOS01LjU5LDMwLjI2LDMwLjI2LDAsMCwxLTIuMjEtMy44TDQ0LDcuNThjLTIuNzksMi43OS02LjY1LDUuNjYtMTIuNSw5LjMxQzI0LDIxLjU0LDE2LjYsMjcuMDksMTUuMTYsMzkuMDZjLTEuMTMsOS4zOCw1Ljc1LDE1LDEyLjQ2LDE3LjI0YTIyLjgsMjIuOCwwLDAsMCwxLjg2LDMuMTZjLTYuODUsMS43Ni0xNS44MSw0LjIxLTE5LjczLDkuNzNDNC44MSw3Ni4xNSw1LDg3LjcsNS4xNCw5MS4wN2MuMzUsNy4xLDIuNDQsMTQuOCw1LjIsMTkuMTVoMGExMSwxMSwwLDAsMCw2LjEsNC42NmMxLjg2LDYuMDksNS44OSwxMSw5LjEzLDE1LjM0LDMuNTksNC44Niw2LjYyLDkuNTUsNy4zNywxNS45YTUwLjY2LDUwLjY2LDAsMCwxLTEuNjcsMTguNTEsNTEuMDYsNTEuMDYsMCwwLDEtMiw2LjA5Yy0uNzcsMS45My00LjQ1LDkuOC00LjQ1LDkuOHM5LjUzLTMuNzUsMTAuMjctNC4xMWE2Ni4zOSw2Ni4zOSwwLDAsMCw2LTMuMzMsODUuMzYsODUuMzYsMCwwLDAsMTcuOTMtMTVjMTItMTMuMjIsMTguMjUtMzIuOTIsMjAtNDcuOTMuNDQtLjEzLjg4LS4yOCwxLjMxLS40NEM4NC41MywxMDguMDYsODkuMTMsMTAxLjc3LDg3LjQ2LDgxLjI1Wm0tNTcuMiw4OS45NGgwWm0wLDBabTMtMTE5cy0xLjMxLTQuMzQuMjEtN2MyLjMyLTQsOC41My03LjQyLDEyLjI0LTkuNDUuNzUtLjQxLDEuNDEtLjc3LDItMS4xLDIuMDguOCw2LjYzLDMuMjQsOC4zMSw1LjEyYTE2Ljg0LDE2Ljg0LDAsMCwxLDMuMzksNS4yNiw1LjI2LDUuMjYsMCwwLDEsLjMzLDEuNTQsMjYuMjEsMjYuMjEsMCwwLDEtMy4wOSwxMy4zYy0xLjY4LDIuODctMy44NCw0LjYyLTYuNDIsNS4yMS0zLC42Ny04LTEuNzktMTIuMi02QTE5LjM0LDE5LjM0LDAsMCwxLDMzLjI1LDUyLjIxWk0yMS44OCwzOS44N2MxLjA5LTksNi42LTEzLjE0LDEzLjE2LTE3LjIzYTkyLjE0LDkyLjE0LDAsMCwwLDExLTcuNzYsMjguNzUsMjguNzUsMCwwLDAsNi40LDVsMSwuNTZjMy4wOCwxLjcyLDUuMzEsMyw4LDguMWExNC4yNCwxNC4yNCwwLDAsMSwxLDguMzljLS4zOS0uNTMtLjgzLTEuMDctMS4zMy0xLjYzQTI5LDI5LDAsMCwwLDUzLjU3LDMwYy0zLjA3LTEuNjEtNC43NS0yLjI5LTYuMjktMi4yOXMtMy43MywxLjU2LTQuODIsMi4xNmMtNC42MiwyLjUyLTExLjU5LDYuMzMtMTQuODcsMTJhMTQuMjQsMTQuMjQsMCwwLDAtMiw2QTguMTcsOC4xNywwLDAsMSwyMS44OCwzOS44N1pNNTQuMDcsMTUzLjU0YTc4LjIsNzguMiwwLDAsMS0xNi40OSwxMy43OWwwLDAsLjI3LTFhNTcuMjksNTcuMjksMCwwLDAsMS44Ni0yMWMtMS04LjIyLTUtMTQuMTItOC42Ni0xOS4xNC0yLjg2LTMuODgtNS4zOS03LjA2LTctMTAuNTJBNjQuNjksNjQuNjksMCwwLDAsNDguMTcsMTEwbDQuNzQuMzdjNiwuNDgsMTEuNTMuOTIsMTYuMjMuOTIsMSwwLDIsMCwzLS4wOEM3MC4yMSwxMjUsNjQuMzksMTQyLjIsNTQuMDcsMTUzLjU0Wm0yMy44Ni01MC4xMmExNC4yNywxNC4yNywwLDAsMS0yLjgyLjc0Yy01LC44Mi0xMi43My4yLTIxLjY2LS41MWwtMS0uMDhhNzUuNDMsNzUuNDMsMCwwLDEsNS44OS01LjY3YzMuMTUtMi42NSw2LTQuMzcsOC43LTVhMywzLDAsMCwwLDIuNDQtMi43N1Y4OC41OEEyLjIsMi4yLDAsMCwwLDY3LDg2LjNhMTkuNjksMTkuNjksMCwwLDAtNiwycy0uNDgsMC0uNjcsMGExODgsMTg4LDAsMCwwLTIyLjQzLS42OCwzNC40LDM0LjQsMCwwLDAtMTQuMSwzLjQ4QTIuMywyLjMsMCwwLDAsMjMsOTQuMzdsLjgyLDEuMjhhMi43LDIuNywwLDAsMCwzLjQ4Ljg3LDI4LjY0LDI4LjY0LDAsMCwxLDExLTIuNSwxMjIuMTcsMTIyLjE3LDAsMCwxLDE0LjMxLjI4LDE0Ni40MiwxNDYuNDIsMCwwLDAtMTAuNDUsMTAuOTMsNTkuODksNTkuODksMCwwLDEtMTkuNzgsMy43LDE0LjEsMTQuMSwwLDAsMS0zLjUzLS4zNyw0LjMsNC4zLDAsMCwxLTIuODItMmMtMS44Mi0yLjg2LTMuODMtOS4yMy00LjE2LTE1Ljg1LS4zNi03LjQyLjkzLTE0LjE4LDMuMzctMTcuNjIsMi42My0zLjcsMTEuNDEtNiwxNi42Ni03LjI5LDEtLjI0LDEuODEtLjQ2LDIuNi0uNjhDMzcuNCw2Ny43Miw0My4wNiw3Miw0OS4wNyw3MmExMS44NCwxMS44NCwwLDAsMCwyLjYzLS4yOSwxNi4yOSwxNi4yOSwwLDAsMCw5LjU1LTYuNTVjMS4xOS4xNSwyLjM3LjI3LDMuNTIuMzksNC4yNi40Miw3Ljk0Ljc4LDEwLDIuNjRsLjMyLjI1YzMuMjUsMi4yOSw1LjEzLDYuNzYsNS42MSwxMy4zNEM4MS45Myw5Ni43OSw3OS4zMiwxMDIuODYsNzcuOTMsMTAzLjQyWiIvPjwvc3ZnPg=="
+}
