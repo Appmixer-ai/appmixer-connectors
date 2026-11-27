@@ -27,8 +27,17 @@ class CancelError extends Error {
 const API = 'https://acme.gorgias.com/api';
 
 // A response of an Error makes httpRequest reject with it.
-const createContext = ({ content = {}, properties = {}, state = {}, responses = [], auth: account, webhook } = {}) => {
+// The secret a running webhook trigger keeps in its state; webhook calls carry it by default.
+const SECRET = 'a'.repeat(64);
 
+const createContext = ({
+    content = {}, properties = {}, state = {}, responses = [], auth: account, webhook,
+    headers = { 'X-Appmixer-Webhook-Secret': SECRET }
+} = {}) => {
+
+    if (webhook) {
+        state = { secret: SECRET, ...state };
+    }
     const context = {
         auth: account || { subdomain: 'acme', username: 'agent@example.com', apiKey: 'key-123' },
         config: {},
@@ -36,7 +45,7 @@ const createContext = ({ content = {}, properties = {}, state = {}, responses = 
         state: { ...state },
         componentId: 'component-1',
         flowId: 'flow-1',
-        messages: webhook ? { webhook: { content: { data: webhook } } } : { in: { content } },
+        messages: webhook ? { webhook: { content: { data: webhook, headers } } } : { in: { content } },
         CancelError,
         requests: [],
         sent: [],
@@ -72,8 +81,9 @@ const createContext = ({ content = {}, properties = {}, state = {}, responses = 
         getWebhookUrl() {
             return 'https://api.appmixer.example/flows/flow-1/components/component-1';
         },
-        response() {
+        response(body, status) {
             this.responded = true;
+            this.responseStatus = status || 200;
         }
     };
     return context;
@@ -347,7 +357,9 @@ describe('Gorgias', function() {
                 ticket_created: true, ticket_updated: false, ticket_message_created: false
             });
             assert.strictEqual(data.http.form.ticket_id, '{{ticket.id}}');
-            assert.deepStrictEqual(context.state, { integrationId: 321 });
+            const secret = data.http.headers['x-appmixer-webhook-secret'];
+            assert.match(secret, /^[0-9a-f]{64}$/);
+            assert.deepStrictEqual(context.state, { integrationId: 321, secret });
 
             await NewTicket.stop(context);
             assert.strictEqual(context.requests[1].method, 'DELETE');
@@ -378,6 +390,22 @@ describe('Gorgias', function() {
             await UpdatedTicket.receive(context);
             await UpdatedTicket.receive(context);
             assert.strictEqual(context.sent.length, 2);
+        });
+
+        it('receive answers 403 to a call without the integration secret and makes no request', async function() {
+            for (const [Trigger, options] of [
+                [NewTicket, { headers: {} }],
+                [UpdatedTicket, { headers: { 'x-appmixer-webhook-secret': 'b'.repeat(64) } }],
+                [NewTicketMessage, { headers: { 'x-appmixer-webhook-secret': 'short' } }],
+                // A state without a secret (integration registered before the secret existed) fails closed.
+                [NewTicket, { state: { integrationId: 1, secret: undefined } }]
+            ]) {
+                const context = createContext({ webhook: { ticket_id: '77', message_id: '9' }, ...options });
+                await Trigger.receive(context);
+                assert.strictEqual(context.requests.length, 0);
+                assert.strictEqual(context.sent.length, 0);
+                assert.strictEqual(context.responseStatus, 403);
+            }
         });
 
         it('receive ignores a call without a ticket ID and makes no request', async function() {
