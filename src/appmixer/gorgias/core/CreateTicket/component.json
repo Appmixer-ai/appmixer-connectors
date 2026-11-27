@@ -1,0 +1,393 @@
+{
+    "name": "appmixer.gorgias.core.CreateTicket",
+    "label": "Create Ticket",
+    "description": "Create a ticket with a first message from the customer, received through the API channel. The customer is matched by email, or created when no customer has that email.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:gorgias"
+    },
+    "quota": {
+        "manager": "appmixer:gorgias",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "customerEmail": {
+                        "type": "string"
+                    },
+                    "customerName": {
+                        "type": "string"
+                    },
+                    "subject": {
+                        "type": "string"
+                    },
+                    "message": {
+                        "type": "string"
+                    },
+                    "messageHtml": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "type": "string"
+                    },
+                    "priority": {
+                        "type": "string"
+                    },
+                    "assigneeUserId": {
+                        "type": "string"
+                    },
+                    "tags": {
+                        "type": [
+                            "array",
+                            "string"
+                        ],
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "externalId": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "customerEmail",
+                    "subject",
+                    "message"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "customerEmail": {
+                        "type": "text",
+                        "index": 1,
+                        "label": "Customer Email",
+                        "tooltip": "Email of the customer who writes the first message."
+                    },
+                    "customerName": {
+                        "type": "text",
+                        "index": 2,
+                        "label": "Customer Name",
+                        "tooltip": "Full name of the customer. Used when the customer does not exist yet."
+                    },
+                    "subject": {
+                        "type": "text",
+                        "index": 3,
+                        "label": "Subject",
+                        "tooltip": "Subject of the ticket."
+                    },
+                    "message": {
+                        "type": "textarea",
+                        "index": 4,
+                        "label": "Message",
+                        "tooltip": "Plain-text body of the first message, written by the customer."
+                    },
+                    "messageHtml": {
+                        "type": "textarea",
+                        "index": 5,
+                        "label": "Message HTML",
+                        "tooltip": "Optional HTML body of the message. When empty, the plain-text message is used."
+                    },
+                    "status": {
+                        "type": "select",
+                        "index": 6,
+                        "label": "Status",
+                        "tooltip": "Status of the ticket.",
+                        "options": [
+                            {
+                                "label": "Open",
+                                "value": "open"
+                            },
+                            {
+                                "label": "Closed",
+                                "value": "closed"
+                            }
+                        ]
+                    },
+                    "priority": {
+                        "type": "select",
+                        "index": 7,
+                        "label": "Priority",
+                        "tooltip": "Priority of the ticket.",
+                        "options": [
+                            {
+                                "label": "Critical",
+                                "value": "critical"
+                            },
+                            {
+                                "label": "High",
+                                "value": "high"
+                            },
+                            {
+                                "label": "Normal",
+                                "value": "normal"
+                            },
+                            {
+                                "label": "Low",
+                                "value": "low"
+                            }
+                        ]
+                    },
+                    "assigneeUserId": {
+                        "type": "text",
+                        "index": 8,
+                        "label": "Assignee",
+                        "tooltip": "Pick the agent to assign the ticket to, or type the numeric user ID.",
+                        "source": {
+                            "url": "/component/appmixer/gorgias/core/ListUsers?outPort=out",
+                            "data": {
+                                "properties": {
+                                    "isSource": true
+                                },
+                                "transform": "./ListUsers#toSelectArray"
+                            }
+                        }
+                    },
+                    "tags": {
+                        "type": "multiselect",
+                        "index": 9,
+                        "label": "Tags",
+                        "tooltip": "Tag names. Pick existing tags, or map names from a variable (an array or a comma-separated list). Tags that do not exist yet are created.",
+                        "source": {
+                            "url": "/component/appmixer/gorgias/core/ListTags?outPort=out",
+                            "data": {
+                                "properties": {
+                                    "isSource": true
+                                },
+                                "transform": "./ListTags#toSelectArray"
+                            }
+                        }
+                    },
+                    "externalId": {
+                        "type": "text",
+                        "index": 10,
+                        "label": "External ID",
+                        "tooltip": "Your own reference of the ticket in another system, e.g. an order number. Up to 255 characters."
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "schema": {
+                "type": "object",
+                "required": [
+                    "id",
+                    "uri",
+                    "channel",
+                    "via",
+                    "from_agent",
+                    "created_datetime"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "title": "Ticket ID",
+                        "example": 98765432
+                    },
+                    "uri": {
+                        "type": "string",
+                        "title": "URI",
+                        "example": "/api/tickets/98765432/"
+                    },
+                    "external_id": {
+                        "type": "string",
+                        "title": "External ID",
+                        "example": "ORDER-1001"
+                    },
+                    "subject": {
+                        "type": "string",
+                        "title": "Subject",
+                        "example": "Where is my order?"
+                    },
+                    "status": {
+                        "type": "string",
+                        "title": "Status",
+                        "example": "open"
+                    },
+                    "priority": {
+                        "type": "string",
+                        "title": "Priority",
+                        "example": "normal"
+                    },
+                    "channel": {
+                        "type": "string",
+                        "title": "Channel",
+                        "example": "api"
+                    },
+                    "via": {
+                        "type": "string",
+                        "title": "Via",
+                        "example": "api"
+                    },
+                    "from_agent": {
+                        "type": "boolean",
+                        "title": "From Agent",
+                        "example": false
+                    },
+                    "language": {
+                        "type": "string",
+                        "title": "Language",
+                        "example": "en"
+                    },
+                    "spam": {
+                        "type": "boolean",
+                        "title": "Spam",
+                        "example": false
+                    },
+                    "is_unread": {
+                        "type": "boolean",
+                        "title": "Is Unread",
+                        "example": true
+                    },
+                    "customer": {
+                        "type": "object",
+                        "title": "Customer",
+                        "required": [
+                            "id"
+                        ],
+                        "properties": {
+                            "id": {
+                                "type": "integer",
+                                "title": "Customer.ID",
+                                "example": 3924
+                            },
+                            "email": {
+                                "type": "string",
+                                "title": "Customer.Email",
+                                "example": "jane.doe@example.com"
+                            },
+                            "name": {
+                                "type": "string",
+                                "title": "Customer.Name",
+                                "example": "Jane Doe"
+                            }
+                        }
+                    },
+                    "assignee_user": {
+                        "type": "object",
+                        "title": "Assignee User",
+                        "required": [
+                            "id"
+                        ],
+                        "properties": {
+                            "id": {
+                                "type": "integer",
+                                "title": "Assignee User.ID",
+                                "example": 7
+                            },
+                            "email": {
+                                "type": "string",
+                                "title": "Assignee User.Email",
+                                "example": "agent@example.com"
+                            },
+                            "name": {
+                                "type": "string",
+                                "title": "Assignee User.Name",
+                                "example": "Alex Agent"
+                            }
+                        }
+                    },
+                    "assignee_team": {
+                        "type": "object",
+                        "title": "Assignee Team",
+                        "required": [
+                            "id"
+                        ],
+                        "properties": {
+                            "id": {
+                                "type": "integer",
+                                "title": "Assignee Team.ID",
+                                "example": 12
+                            },
+                            "name": {
+                                "type": "string",
+                                "title": "Assignee Team.Name",
+                                "example": "Tier 1"
+                            }
+                        }
+                    },
+                    "tags": {
+                        "type": "array",
+                        "title": "Tags",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "id": {
+                                    "type": "integer"
+                                },
+                                "name": {
+                                    "type": "string"
+                                }
+                            }
+                        },
+                        "example": [
+                            {
+                                "id": 1,
+                                "name": "urgent"
+                            }
+                        ]
+                    },
+                    "created_datetime": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Created",
+                        "example": "2026-11-20T14:42:00.384938"
+                    },
+                    "updated_datetime": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Updated",
+                        "example": "2026-11-20T15:10:21.932637"
+                    },
+                    "opened_datetime": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Opened",
+                        "example": "2026-11-20T15:02:46.472436"
+                    },
+                    "last_message_datetime": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Last Message",
+                        "example": "2026-11-20T15:10:21.468912"
+                    },
+                    "last_received_message_datetime": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Last Received Message",
+                        "example": "2026-11-20T14:42:00.384938"
+                    },
+                    "closed_datetime": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Closed",
+                        "example": "2026-11-21T09:00:00.000000"
+                    },
+                    "snooze_datetime": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Snoozed Until",
+                        "example": "2026-11-22T09:00:00.000000"
+                    },
+                    "trashed_datetime": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Trashed",
+                        "example": "2026-11-23T09:00:00.000000"
+                    }
+                }
+            }
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9Ii0xLjYgMC41NiAzNiAzNiI+PHBhdGggZmlsbD0iIzE2MTYxNiIgZD0iTTI5Ljk3MDMgOC43NzQzM0gyNC42MTMxVjMuNDEwMDNDMjQuNjEzMSAxLjgzNTUzIDIzLjMzOTMgMC41NjAwNTkgMjEuNzY2OSAwLjU2MDA1OUgyLjg0NjE5QzEuMjczNzggMC41NjAwNTkgMCAxLjgzNTUzIDAgMy40MTAwM1YzMC41NzAyQzAgMzIuMTQ0NyAxLjI3Mzc4IDMzLjQyMDIgMi44NDYxOSAzMy40MjAySDI3LjM0NjZMMjkuOTk3NyAzNi4wNzQ5QzMwLjMwODUgMzYuMzg2MSAzMC43MjYgMzYuNTYwMSAzMS4xNjQ4IDM2LjU2MDFDMzIuMDc2IDM2LjU2MDEgMzIuODE2NSAzNS44MjE2IDMyLjgxNjUgMzQuOTA2MlYxMS42MjQzQzMyLjgxNjUgMTAuMDQ5OCAzMS41NDI3IDguNzc0MzMgMjkuOTcwMyA4Ljc3NDMzWk0zMC4wODMgMzAuNjgwMUgyLjczMzQ0VjMuMjk3MTNIMjEuODc2NlY4Ljc3NDMzSDExLjA0OTVDOS40NzcxMyA4Ljc3NDMzIDguMjAzMzYgMTAuMDQ5OCA4LjIwMzM2IDExLjYyNDNWMjIuMzU2QzguMjAzMzYgMjMuOTMwNSA5LjQ3NzEzIDI1LjIwNTkgMTEuMDQ5NSAyNS4yMDU5SDIxLjc2NjlDMjMuMzM5MyAyNS4yMDU5IDI0LjYxMzEgMjMuOTMwNSAyNC42MTMxIDIyLjM1NlYxMS41MTQ1SDMwLjA4M1YzMC42ODMxVjMwLjY4MDFaTTIxLjg3OTcgMTEuNTExNFYyMi40NjU4SDEwLjkzOThWMTEuNTExNEgyMS44Nzk3WiIvPjwvc3ZnPg=="
+}

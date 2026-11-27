@@ -1,0 +1,129 @@
+{
+    "name": "appmixer.gorgias.core.UpdateTicket",
+    "label": "Update Ticket",
+    "description": "Update the subject, status, priority, assignee or external ID of a ticket. Empty fields are left unchanged.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:gorgias"
+    },
+    "quota": {
+        "manager": "appmixer:gorgias",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "ticketId": {
+                        "type": "string"
+                    },
+                    "subject": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "type": "string"
+                    },
+                    "priority": {
+                        "type": "string"
+                    },
+                    "assigneeUserId": {
+                        "type": "string"
+                    },
+                    "externalId": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "ticketId"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "ticketId": {
+                        "type": "text",
+                        "index": 1,
+                        "label": "Ticket ID",
+                        "tooltip": "The numeric ID of the ticket, e.g. from Create Ticket or Find Tickets."
+                    },
+                    "subject": {
+                        "type": "text",
+                        "index": 2,
+                        "label": "Subject",
+                        "tooltip": "Subject of the ticket."
+                    },
+                    "status": {
+                        "type": "select",
+                        "index": 3,
+                        "label": "Status",
+                        "tooltip": "Status of the ticket.",
+                        "options": [
+                            {
+                                "label": "Open",
+                                "value": "open"
+                            },
+                            {
+                                "label": "Closed",
+                                "value": "closed"
+                            }
+                        ]
+                    },
+                    "priority": {
+                        "type": "select",
+                        "index": 4,
+                        "label": "Priority",
+                        "tooltip": "Priority of the ticket.",
+                        "options": [
+                            {
+                                "label": "Critical",
+                                "value": "critical"
+                            },
+                            {
+                                "label": "High",
+                                "value": "high"
+                            },
+                            {
+                                "label": "Normal",
+                                "value": "normal"
+                            },
+                            {
+                                "label": "Low",
+                                "value": "low"
+                            }
+                        ]
+                    },
+                    "assigneeUserId": {
+                        "type": "text",
+                        "index": 5,
+                        "label": "Assignee",
+                        "tooltip": "Pick the agent to assign the ticket to, or type the numeric user ID.",
+                        "source": {
+                            "url": "/component/appmixer/gorgias/core/ListUsers?outPort=out",
+                            "data": {
+                                "properties": {
+                                    "isSource": true
+                                },
+                                "transform": "./ListUsers#toSelectArray"
+                            }
+                        }
+                    },
+                    "externalId": {
+                        "type": "text",
+                        "index": 6,
+                        "label": "External ID",
+                        "tooltip": "Your own reference of the ticket in another system, e.g. an order number. Up to 255 characters."
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        "out"
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9Ii0xLjYgMC41NiAzNiAzNiI+PHBhdGggZmlsbD0iIzE2MTYxNiIgZD0iTTI5Ljk3MDMgOC43NzQzM0gyNC42MTMxVjMuNDEwMDNDMjQuNjEzMSAxLjgzNTUzIDIzLjMzOTMgMC41NjAwNTkgMjEuNzY2OSAwLjU2MDA1OUgyLjg0NjE5QzEuMjczNzggMC41NjAwNTkgMCAxLjgzNTUzIDAgMy40MTAwM1YzMC41NzAyQzAgMzIuMTQ0NyAxLjI3Mzc4IDMzLjQyMDIgMi44NDYxOSAzMy40MjAySDI3LjM0NjZMMjkuOTk3NyAzNi4wNzQ5QzMwLjMwODUgMzYuMzg2MSAzMC43MjYgMzYuNTYwMSAzMS4xNjQ4IDM2LjU2MDFDMzIuMDc2IDM2LjU2MDEgMzIuODE2NSAzNS44MjE2IDMyLjgxNjUgMzQuOTA2MlYxMS42MjQzQzMyLjgxNjUgMTAuMDQ5OCAzMS41NDI3IDguNzc0MzMgMjkuOTcwMyA4Ljc3NDMzWk0zMC4wODMgMzAuNjgwMUgyLjczMzQ0VjMuMjk3MTNIMjEuODc2NlY4Ljc3NDMzSDExLjA0OTVDOS40NzcxMyA4Ljc3NDMzIDguMjAzMzYgMTAuMDQ5OCA4LjIwMzM2IDExLjYyNDNWMjIuMzU2QzguMjAzMzYgMjMuOTMwNSA5LjQ3NzEzIDI1LjIwNTkgMTEuMDQ5NSAyNS4yMDU5SDIxLjc2NjlDMjMuMzM5MyAyNS4yMDU5IDI0LjYxMzEgMjMuOTMwNSAyNC42MTMxIDIyLjM1NlYxMS41MTQ1SDMwLjA4M1YzMC42ODMxVjMwLjY4MDFaTTIxLjg3OTcgMTEuNTExNFYyMi40NjU4SDEwLjkzOThWMTEuNTExNEgyMS44Nzk3WiIvPjwvc3ZnPg=="
+}

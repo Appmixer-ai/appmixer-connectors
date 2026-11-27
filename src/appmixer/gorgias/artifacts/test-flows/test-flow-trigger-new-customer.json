@@ -1,0 +1,329 @@
+{
+    "name": "E2E Gorgias - new customer trigger",
+    "description": "End-to-end test of the New Customer polling trigger.",
+    "flow": {
+        "0e1c7e69-8644-4b6a-a785-60d092d029ef": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {},
+            "config": {},
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "a01dad29-db63-47d3-bf80-deffed153fb9": {
+            "type": "appmixer.utils.timers.Wait",
+            "x": 272,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "0e1c7e69-8644-4b6a-a785-60d092d029ef": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "0e1c7e69-8644-4b6a-a785-60d092d029ef": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "interval": {}
+                                },
+                                "lambda": {
+                                    "interval": "2m"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "cfe3f45a-7448-4784-b347-1c67a2fff48f": {
+            "type": "appmixer.gorgias.core.CreateCustomer",
+            "x": 480,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "a01dad29-db63-47d3-bf80-deffed153fb9": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "a01dad29-db63-47d3-bf80-deffed153fb9": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "email": {
+                                        "29fe8ddb-0bea-4185-9bd2-cca95251beac": {
+                                            "functions": [
+                                                {
+                                                    "name": "g_timestamp"
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "name": {}
+                                },
+                                "lambda": {
+                                    "email": "e2e-newcustomer-{{{29fe8ddb-0bea-4185-9bd2-cca95251beac}}}@example.com",
+                                    "name": "E2E Gorgias New Customer Trigger"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "3a24d41c-0d6b-4e87-87d4-c698d225993b": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 688,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "cfe3f45a-7448-4784-b347-1c67a2fff48f": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "cfe3f45a-7448-4784-b347-1c67a2fff48f": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "bfba4ec1-c1ea-46ac-b685-275d2984e326": {
+                                            "variable": "$.cfe3f45a-7448-4784-b347-1c67a2fff48f.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{bfba4ec1-c1ea-46ac-b685-275d2984e326}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "c055f23b-0764-4f8a-b332-c2bdcfb26655": {
+            "type": "appmixer.gorgias.core.NewCustomer",
+            "x": 64,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {},
+            "config": {},
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "ebe23c75-5edc-4ab2-9048-fb2b9c893dae": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 272,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "c055f23b-0764-4f8a-b332-c2bdcfb26655": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "c055f23b-0764-4f8a-b332-c2bdcfb26655": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "7a4feade-696b-43eb-96e2-f9c43a1d563f": {
+                                            "variable": "$.c055f23b-0764-4f8a-b332-c2bdcfb26655.out.id",
+                                            "functions": []
+                                        },
+                                        "3dd633ad-3a3f-4a80-a8da-d8ae0f80cb0f": {
+                                            "variable": "$.c055f23b-0764-4f8a-b332-c2bdcfb26655.out.email",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{7a4feade-696b-43eb-96e2-f9c43a1d563f}}}",
+                                                "assertion": "notEmpty"
+                                            },
+                                            {
+                                                "field": "{{{3dd633ad-3a3f-4a80-a8da-d8ae0f80cb0f}}}",
+                                                "assertion": "regex",
+                                                "regex": "^e2e-newcustomer-.+@example\\.com$"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "3fb5b850-a1c8-4a58-ac91-6077044522ac": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 896,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "3a24d41c-0d6b-4e87-87d4-c698d225993b": [
+                        "out"
+                    ],
+                    "ebe23c75-5edc-4ab2-9048-fb2b9c893dae": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 420
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "814b5f07-185f-43a4-86a4-a7f2dbd607cd": {
+            "type": "appmixer.gorgias.core.DeleteCustomer",
+            "x": 1104,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "3fb5b850-a1c8-4a58-ac91-6077044522ac": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "3fb5b850-a1c8-4a58-ac91-6077044522ac": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "customerId": {
+                                        "124fbad3-bcf1-4791-b343-9fc286c94dc6": {
+                                            "variable": "$.c055f23b-0764-4f8a-b332-c2bdcfb26655.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "customerId": "{{{124fbad3-bcf1-4791-b343-9fc286c94dc6}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "2dee7354-6723-4702-bad9-01e7d8d671a1": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1312,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "814b5f07-185f-43a4-86a4-a7f2dbd607cd": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "successStoreId": "64f6f1f9193228000754082f",
+                    "failedStoreId": "64f6f1f0193228000754082e"
+                },
+                "transform": {
+                    "in": {
+                        "814b5f07-185f-43a4-86a4-a7f2dbd607cd": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "5b5ada9c-e2ca-4549-b56e-a621d330f6a1": {
+                                            "variable": "$.3fb5b850-a1c8-4a58-ac91-6077044522ac.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E Gorgias - new customer trigger",
+                                    "result": "{{{5b5ada9c-e2ca-4549-b56e-a621d330f6a1}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        }
+    },
+    "notes": {
+        "4fa36bec-a38e-4163-b36b-876ce277ebc1": {
+            "x": 64,
+            "y": 528,
+            "width": 672,
+            "height": 256,
+            "content": "## ⚠️ Timing\n\nNew Customer records the existing customers on its first poll and emits only customers created later. The Wait (2 minutes) lets the first poll happen before the flow creates the customer. Keep the Wait. The customer is deleted through the ID the trigger emitted, so the cleanup also proves the trigger fired."
+        }
+    }
+}
