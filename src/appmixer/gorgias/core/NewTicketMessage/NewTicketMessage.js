@@ -31,8 +31,8 @@ module.exports = {
 
     async start(context) {
 
-        const integrationId = await lib.registerWebhook(context, EVENT);
-        return context.saveState({ integrationId });
+        const { integrationId, secret } = await lib.registerWebhook(context, EVENT);
+        return context.saveState({ integrationId, secret });
     },
 
     async stop(context) {
@@ -44,6 +44,10 @@ module.exports = {
     async receive(context) {
 
         if (context.messages.webhook) {
+            if (!lib.isAuthenticWebhook(context)) {
+                await context.log({ step: 'Ignored a webhook call without the integration secret.' });
+                return context.response({ error: 'Forbidden' }, 403);
+            }
             const body = lib.webhookBody(context);
             const message = await fetchMessage(context, body);
             if (!message) {
