@@ -1,0 +1,51 @@
+{
+    "connector": "appmixer.nuki",
+    "vendor": "appmixer",
+    "module": "nuki",
+    "issue": "https://github.com/Appmixer-ai/appmixer-components/issues/3163",
+    "steps": {
+        "build": "done",
+        "review": "done",
+        "cliTests": "blocked",
+        "verify": "blocked",
+        "e2e": "blocked",
+        "ship": "pr-open"
+    },
+    "auth": {
+        "type": "apiKey",
+        "status": "missing",
+        "reason": "No Nuki test account exists (creds show nuki is empty). Nuki has no sandbox: an API token only reaches real devices of a real Nuki Web account."
+    },
+    "localTests": "blocked-no-credentials",
+    "notRunAgainstRealApi": true,
+    "verified": {
+        "static": [
+            "node scripts/validate.js --connector nuki: 0 failures, 1 warning (writable-fields-readable on the authorizationId input, a false positive: it is the ID of the entity)",
+            "eslint: clean",
+            "66 unit tests in artifacts/test/nuki.test.js with a mocked HTTP client",
+            "every request of every component checked against https://api.nuki.io/static/swagger/swagger.json (version 4.27.0): path, method, query parameters, body fields, types, required fields - 31 requests, 0 problems",
+            "appmixer e2e validate on the 5 flows: passed"
+        ],
+        "liveWithoutAccount": [
+            "12 component runs and auth.validate / requestProfileInfo against https://api.nuki.io with an invalid token: every call answers 401 { detailMessage }, which the connector turns into a CancelError naming the token and the scope; the dropdown source returns an empty list; Make API Call refuses a foreign host without sending a request"
+        ],
+        "notVerified": [
+            "No component has run against a device: the test account (creds nuki) has a valid token but no device paired.",
+            "The E2E flows were not run, and connector verify skipped every device component.",
+            "See artifacts/test-flows/README.md, 'Things only a run can settle'."
+        ],
+        "liveWithToken": [
+            "2026-11-27 with a valid token on an account without a device: auth validate, requestProfileInfo, Create / Find / Delete Account User, the empty Find components, Make API Call, the trigger test() and tick(); connector verify 0 failures. Details in artifacts/test-flows/README.md, 'Verified live without a device'."
+        ]
+    },
+    "needsFromHuman": [
+        "One Nuki Smart Lock that is online (built-in Wi-Fi, or with a Nuki Bridge), paired with the Nuki Web account auth@appmixer.ai (creds nuki, token already stored)",
+        "A Nuki Keypad paired with it, for Create Keypad Code",
+        "A Smart Hosting subscription on the lock if the account is a short-term rental account (30-day trial, then EUR 69 per lock per year)"
+    ],
+    "notes": [
+        "OAuth 2 and webhooks need Nuki's Advanced API (approved per application). Not implemented: the connector uses the self-service API token and polling triggers.",
+        "verify.json has no round-trip spec. The only select the API echoes back is the language of an account user; a round-trip would create eight account users with the same e-mail address while deletes are asynchronous.",
+        "The Swagger file types the keypad code and the authorization type as integers, the guide's example sends strings. The connector sends integers."
+    ]
+}
