@@ -231,7 +231,9 @@ describe('Each Component - sequential mode', () => {
         assert.deepStrictEqual(h.flowState, {});
     });
 
-    it('should keep many concurrent loops out of the component state (#3159)', async () => {
+    it('should keep many concurrent loops out of the component state (#3159)', async function() {
+        // Hundreds of acknowledgements through sinon spies: a busy CI runner needs more than mocha's 2 s.
+        this.timeout(15000);
         const h = createHarness();
         const loops = Array.from({ length: 20 }, (_, n) => `run-${n}`);
         const list = Array.from({ length: 10 }, (_, i) => ({ i, payload: 'x'.repeat(100) }));
