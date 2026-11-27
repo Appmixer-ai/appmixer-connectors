@@ -43,7 +43,10 @@ const AUTH_OVERRIDES = {
     workday: { host: 'kv-test.workday.com' },
     // The site is the content URL of a Tableau site ("mysite"), not a host: lib.js accepts letters,
     // digits, "-" and "_" only. Its name ends with "Url", so the host shapes would be put in it.
-    tableau: { siteContentUrl: 'kv-test' }
+    tableau: { siteContentUrl: 'kv-test' },
+    // lib.js accepts only a plain subdomain ("acme" for https://acme.gorgias.com); the placeholder
+    // above would read 'subdomain' as a URL because the name ends in "domain".
+    gorgias: { subdomain: 'kv-test' }
 };
 
 // Tableau signs in first (POST /auth/signin) and sends the session token, not the account fields.
