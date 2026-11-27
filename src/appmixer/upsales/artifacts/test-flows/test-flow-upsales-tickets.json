@@ -7,7 +7,7 @@
             "y": 1100,
             "width": 672,
             "height": 220,
-            "content": "## Test data assumption\n\nThe Upsales account needs the **Customer Support** product, and at least one ticket status and one ticket type (read here through Make API Call <code>GET /ticketStatus</code> and <code>GET /ticketType</code>; the first of each is used). The ticket is not assigned to a user, because assignment needs a support licence."
+            "content": "## Test data assumption\n\nThe Upsales account needs the **Customer Support** product, and at least one ticket status and one ticket type (read here through Make API Call <code>GET /ticketStatus</code> and <code>GET /ticketTypes</code>; the first of each is used). The ticket is not assigned to a user, because assignment needs a support licence."
         }
     },
     "flow": {
@@ -82,7 +82,7 @@
                                     "method": {}
                                 },
                                 "lambda": {
-                                    "url": "/ticketType",
+                                    "url": "/ticketTypes",
                                     "method": "GET"
                                 }
                             }
@@ -637,8 +637,17 @@
                                 "modifiers": {
                                     "expression": {
                                         "ca83af6a-35c4-4f0a-9319-1cb243680e26": {
-                                            "variable": "$.5a6c8ff4-44ad-4be9-82f1-df9d12bee48b.out.count",
-                                            "functions": []
+                                            "variable": "$.5a6c8ff4-44ad-4be9-82f1-df9d12bee48b.out.result",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$[0].id"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
                                         },
                                         "7f10d79a-5a5f-414e-b26c-b9a3549eedd8": {
                                             "variable": "$.5a6c8ff4-44ad-4be9-82f1-df9d12bee48b.out.result",
@@ -663,8 +672,7 @@
                                         "AND": [
                                             {
                                                 "field": "{{{ca83af6a-35c4-4f0a-9319-1cb243680e26}}}",
-                                                "assertion": "regex",
-                                                "regex": "^[1-9][0-9]*$"
+                                                "assertion": "notEmpty"
                                             },
                                             {
                                                 "field": "{{{7f10d79a-5a5f-414e-b26c-b9a3549eedd8}}}",
