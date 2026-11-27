@@ -21,8 +21,13 @@ module.exports = {
         const output = typeof result?.content[0].text === 'string'
             ? result?.content[0].text
             : JSON.stringify(result?.content[0].text, null, 2);
+        // A tool that failed answers isError with the reason as its text (e.g. Teamwork's 403 "MCP is
+        // disabled in the AI settings"); sending it on `out` would pass it off as a result
+        if (result?.isError) {
+            throw new context.CancelError(`Tool ${context.properties.tool} failed: ${output}`);
+        }
 
-        return context.sendJson({ output }, 'out');
+        return await context.sendJson({ output }, 'out');
     },
 
     generateInspectorForToolInputSchema: async function(context) {

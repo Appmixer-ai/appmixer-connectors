@@ -1,0 +1,210 @@
+{
+    "name": "E2E Gorgias - make api call",
+    "description": "End-to-end test of Make API Call (GET /api/tickets on the account host).",
+    "flow": {
+        "fcf79c8a-3fbf-4f15-8047-4336b22bc4e0": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {},
+            "config": {},
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "cc2bc2b9-911e-4b15-8355-f3e2e60ca787": {
+            "type": "appmixer.gorgias.core.MakeApiCall",
+            "x": 272,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "fcf79c8a-3fbf-4f15-8047-4336b22bc4e0": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "fcf79c8a-3fbf-4f15-8047-4336b22bc4e0": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "url": {},
+                                    "method": {},
+                                    "parameters": {},
+                                    "headers": {}
+                                },
+                                "lambda": {
+                                    "url": "/api/tickets",
+                                    "method": "GET",
+                                    "parameters": "{\"limit\":\"1\"}",
+                                    "headers": "{\"Accept\":\"application/json\"}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "74ad7eaf-2ecb-4d0e-ab0f-8244c3a3e97b": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 480,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "cc2bc2b9-911e-4b15-8355-f3e2e60ca787": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "cc2bc2b9-911e-4b15-8355-f3e2e60ca787": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "26a0497f-1090-4687-a01a-b356ae6e979f": {
+                                            "variable": "$.cc2bc2b9-911e-4b15-8355-f3e2e60ca787.out.statusCode",
+                                            "functions": []
+                                        },
+                                        "c11d3c15-f018-4933-a830-3bd9c547f17a": {
+                                            "variable": "$.cc2bc2b9-911e-4b15-8355-f3e2e60ca787.out.body",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$.object"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        },
+                                        "ce8b8865-057c-4429-a5a8-bce98547c00f": {
+                                            "variable": "$.cc2bc2b9-911e-4b15-8355-f3e2e60ca787.out.body",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$.uri"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{26a0497f-1090-4687-a01a-b356ae6e979f}}}",
+                                                "assertion": "equal",
+                                                "expected": 200
+                                            },
+                                            {
+                                                "field": "{{{c11d3c15-f018-4933-a830-3bd9c547f17a}}}",
+                                                "assertion": "equal",
+                                                "expected": "list"
+                                            },
+                                            {
+                                                "field": "{{{ce8b8865-057c-4429-a5a8-bce98547c00f}}}",
+                                                "assertion": "regex",
+                                                "regex": "limit=1"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "011bf5f9-aa54-45e7-b738-f035cf3fc848": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 688,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "74ad7eaf-2ecb-4d0e-ab0f-8244c3a3e97b": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 180
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "e2050448-5610-49f9-9b47-f3847ef1b388": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 896,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "011bf5f9-aa54-45e7-b738-f035cf3fc848": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "successStoreId": "64f6f1f9193228000754082f",
+                    "failedStoreId": "64f6f1f0193228000754082e"
+                },
+                "transform": {
+                    "in": {
+                        "011bf5f9-aa54-45e7-b738-f035cf3fc848": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "eac2886b-306e-449a-b5bd-663b476bd703": {
+                                            "variable": "$.011bf5f9-aa54-45e7-b738-f035cf3fc848.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E Gorgias - make api call",
+                                    "result": "{{{eac2886b-306e-449a-b5bd-663b476bd703}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        }
+    }
+}

@@ -1,0 +1,305 @@
+{
+    "name": "appmixer.pandadoc.core.GetDocument",
+    "label": "Get Document",
+    "description": "Get the details of a document: status, recipients and their links, tokens, fields, metadata, pricing total and template.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:pandadoc"
+    },
+    "quota": {
+        "manager": "appmixer:pandadoc",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "documentId": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "documentId"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "documentId": {
+                        "type": "text",
+                        "index": 1,
+                        "label": "Document ID",
+                        "tooltip": "The ID of the document."
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "schema": {
+                "type": "object",
+                "required": [
+                    "id",
+                    "name",
+                    "status",
+                    "date_created",
+                    "date_modified",
+                    "recipients"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "title": "Document ID",
+                        "example": "msFYActMfJHqNTKH8YSvF1"
+                    },
+                    "name": {
+                        "type": "string",
+                        "title": "Name",
+                        "example": "Quote for Acme Inc."
+                    },
+                    "status": {
+                        "type": "string",
+                        "title": "Status",
+                        "example": "document.completed"
+                    },
+                    "date_created": {
+                        "type": "string",
+                        "title": "Date Created",
+                        "example": "2026-11-20T09:15:00.000000Z",
+                        "format": "date-time"
+                    },
+                    "date_modified": {
+                        "type": "string",
+                        "title": "Date Modified",
+                        "example": "2026-11-21T14:02:11.000000Z",
+                        "format": "date-time"
+                    },
+                    "date_sent": {
+                        "type": "string",
+                        "title": "Date Sent",
+                        "example": "2026-11-20T09:20:31.000000Z",
+                        "format": "date-time"
+                    },
+                    "date_completed": {
+                        "type": "string",
+                        "title": "Date Completed",
+                        "example": "2026-11-21T14:02:11.000000Z",
+                        "format": "date-time"
+                    },
+                    "expiration_date": {
+                        "type": "string",
+                        "title": "Expiration Date",
+                        "example": "2027-01-19T09:15:00.000000Z",
+                        "format": "date-time"
+                    },
+                    "ref_number": {
+                        "type": "string",
+                        "title": "Reference Number",
+                        "example": "0003"
+                    },
+                    "version": {
+                        "type": "string",
+                        "title": "Version",
+                        "example": "2"
+                    },
+                    "folder_uuid": {
+                        "type": "string",
+                        "title": "Folder ID",
+                        "example": "Ln9rpQGDYUrX2dGJQ7gHqL"
+                    },
+                    "created_by": {
+                        "type": "object",
+                        "title": "Created By",
+                        "properties": {
+                            "id": {
+                                "type": "string",
+                                "title": "Created By.ID",
+                                "example": "uHfzrB4Goai39ZkxDRLpMo"
+                            },
+                            "membership_id": {
+                                "type": "string",
+                                "title": "Created By.Membership ID",
+                                "example": "vk5aRcJG4RTd2J83wNGFT5"
+                            },
+                            "email": {
+                                "type": "string",
+                                "title": "Created By.Email",
+                                "example": "jane.doe@example.com"
+                            },
+                            "first_name": {
+                                "type": "string",
+                                "title": "Created By.First Name",
+                                "example": "Jane"
+                            },
+                            "last_name": {
+                                "type": "string",
+                                "title": "Created By.Last Name",
+                                "example": "Doe"
+                            }
+                        }
+                    },
+                    "template": {
+                        "type": "object",
+                        "title": "Template",
+                        "properties": {
+                            "id": {
+                                "type": "string",
+                                "title": "Template.ID",
+                                "example": "A9VkDBdjqn3HvRx7zyME3n"
+                            },
+                            "name": {
+                                "type": "string",
+                                "title": "Template.Name",
+                                "example": "Sales Quote"
+                            }
+                        }
+                    },
+                    "recipients": {
+                        "type": "array",
+                        "title": "Recipients",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "id": {
+                                    "type": "string"
+                                },
+                                "first_name": {
+                                    "type": "string"
+                                },
+                                "last_name": {
+                                    "type": "string"
+                                },
+                                "email": {
+                                    "type": "string"
+                                },
+                                "recipient_type": {
+                                    "type": "string"
+                                },
+                                "role": {
+                                    "type": "string"
+                                },
+                                "has_completed": {
+                                    "type": "boolean"
+                                },
+                                "signing_order": {
+                                    "type": "integer"
+                                },
+                                "shared_link": {
+                                    "type": "string"
+                                }
+                            }
+                        },
+                        "example": [
+                            {
+                                "id": "8KAZvGRL3W4u44a4fyDoeH",
+                                "first_name": "John",
+                                "last_name": "Smith",
+                                "email": "john.smith@example.com",
+                                "recipient_type": "signer",
+                                "role": "Client",
+                                "has_completed": false,
+                                "signing_order": null,
+                                "shared_link": "https://app.pandadoc.com/document/15d4b481384b652a298530ddc7023bfc07a67d59"
+                            }
+                        ]
+                    },
+                    "metadata": {
+                        "type": "object",
+                        "title": "Metadata",
+                        "properties": {},
+                        "example": {
+                            "deal_id": "1234"
+                        }
+                    },
+                    "tokens": {
+                        "type": "array",
+                        "title": "Tokens",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "name": {
+                                    "type": "string"
+                                },
+                                "value": {
+                                    "type": "string"
+                                }
+                            }
+                        },
+                        "example": [
+                            {
+                                "name": "Client.Company",
+                                "value": "Acme Inc."
+                            }
+                        ]
+                    },
+                    "fields": {
+                        "type": "array",
+                        "title": "Fields",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "uuid": {
+                                    "type": "string"
+                                },
+                                "name": {
+                                    "type": "string"
+                                },
+                                "field_id": {
+                                    "type": "string"
+                                },
+                                "type": {
+                                    "type": "string"
+                                },
+                                "value": {}
+                            }
+                        },
+                        "example": [
+                            {
+                                "uuid": "YcLBNUKcx45UFxAK3NjLIH",
+                                "name": "Text",
+                                "field_id": "Text1",
+                                "type": "text",
+                                "value": "Some text"
+                            }
+                        ]
+                    },
+                    "grand_total": {
+                        "type": "object",
+                        "title": "Grand Total",
+                        "properties": {
+                            "amount": {
+                                "type": "string",
+                                "title": "Grand Total.Amount",
+                                "example": "130.00"
+                            },
+                            "currency": {
+                                "type": "string",
+                                "title": "Grand Total.Currency",
+                                "example": "USD"
+                            }
+                        }
+                    },
+                    "tags": {
+                        "type": "array",
+                        "title": "Tags",
+                        "items": {
+                            "type": "string"
+                        },
+                        "example": [
+                            "quote",
+                            "q4"
+                        ]
+                    }
+                }
+            }
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0OCA0OCI+PHJlY3Qgd2lkdGg9IjQ4IiBoZWlnaHQ9IjQ4IiByeD0iMTAiIGZpbGw9IiMyNDg1NjciLz48ZyBmaWxsPSJub25lIiBzdHJva2U9IiNmZmYiIHN0cm9rZS13aWR0aD0iMy42Ij48Y2lyY2xlIGN4PSIxNy41IiBjeT0iMjUiIHI9IjYiLz48Y2lyY2xlIGN4PSIzMC41IiBjeT0iMjUiIHI9IjYiLz48L2c+PGcgZmlsbD0iI2ZmZiI+PHJlY3QgeD0iOS43IiB5PSIxOSIgd2lkdGg9IjMuNiIgaGVpZ2h0PSIxOCIgcng9IjEuOCIvPjxyZWN0IHg9IjM0LjciIHk9IjExIiB3aWR0aD0iMy42IiBoZWlnaHQ9IjIwIiByeD0iMS44Ii8+PC9nPjwvc3ZnPg=="
+}

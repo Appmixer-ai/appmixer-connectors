@@ -1,0 +1,185 @@
+{
+    "name": "appmixer.gorgias.core.CreateCustomer",
+    "label": "Create Customer",
+    "description": "Create a customer. Fill in at least an email, a phone number or a name.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:gorgias"
+    },
+    "quota": {
+        "manager": "appmixer:gorgias",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "email": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "phone": {
+                        "type": "string"
+                    },
+                    "externalId": {
+                        "type": "string"
+                    },
+                    "language": {
+                        "type": "string"
+                    },
+                    "timezone": {
+                        "type": "string"
+                    }
+                }
+            },
+            "inspector": {
+                "inputs": {
+                    "email": {
+                        "type": "text",
+                        "index": 1,
+                        "label": "Email",
+                        "tooltip": "Primary email address of the customer."
+                    },
+                    "name": {
+                        "type": "text",
+                        "index": 2,
+                        "label": "Name",
+                        "tooltip": "Full name of the customer."
+                    },
+                    "phone": {
+                        "type": "text",
+                        "index": 3,
+                        "label": "Phone",
+                        "tooltip": "Phone number of the customer in international format, e.g. <code>+14155550123</code>. Added as a phone channel."
+                    },
+                    "externalId": {
+                        "type": "text",
+                        "index": 4,
+                        "label": "External ID",
+                        "tooltip": "ID of the customer in another system, e.g. your store or CRM."
+                    },
+                    "language": {
+                        "type": "text",
+                        "index": 5,
+                        "label": "Language",
+                        "tooltip": "Preferred language as an ISO 639-1 code, e.g. <code>en</code> or <code>fr</code>."
+                    },
+                    "timezone": {
+                        "type": "text",
+                        "index": 6,
+                        "label": "Timezone",
+                        "tooltip": "Preferred timezone as an IANA name, e.g. <code>Europe/Paris</code>."
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "schema": {
+                "type": "object",
+                "required": [
+                    "id"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "title": "Customer ID",
+                        "example": 3924
+                    },
+                    "email": {
+                        "type": "string",
+                        "title": "Email",
+                        "example": "jane.doe@example.com"
+                    },
+                    "name": {
+                        "type": "string",
+                        "title": "Name",
+                        "example": "Jane Doe"
+                    },
+                    "firstname": {
+                        "type": "string",
+                        "title": "First Name",
+                        "example": "Jane"
+                    },
+                    "lastname": {
+                        "type": "string",
+                        "title": "Last Name",
+                        "example": "Doe"
+                    },
+                    "external_id": {
+                        "type": "string",
+                        "title": "External ID",
+                        "example": "shop-customer-84203241"
+                    },
+                    "language": {
+                        "type": "string",
+                        "title": "Language",
+                        "example": "en"
+                    },
+                    "timezone": {
+                        "type": "string",
+                        "title": "Timezone",
+                        "example": "Europe/Paris"
+                    },
+                    "note": {
+                        "type": "string",
+                        "title": "Note",
+                        "example": "VIP customer"
+                    },
+                    "channels": {
+                        "type": "array",
+                        "title": "Channels",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "id": {
+                                    "type": "integer"
+                                },
+                                "type": {
+                                    "type": "string"
+                                },
+                                "address": {
+                                    "type": "string"
+                                },
+                                "preferred": {
+                                    "type": "boolean"
+                                }
+                            }
+                        },
+                        "example": [
+                            {
+                                "id": 51,
+                                "type": "email",
+                                "address": "jane.doe@example.com",
+                                "preferred": true
+                            }
+                        ]
+                    },
+                    "created_datetime": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Created",
+                        "example": "2026-11-20T14:42:00.384938"
+                    },
+                    "updated_datetime": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Updated",
+                        "example": "2026-11-20T15:10:21.932637"
+                    }
+                }
+            }
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9Ii0xLjYgMC41NiAzNiAzNiI+PHBhdGggZmlsbD0iIzE2MTYxNiIgZD0iTTI5Ljk3MDMgOC43NzQzM0gyNC42MTMxVjMuNDEwMDNDMjQuNjEzMSAxLjgzNTUzIDIzLjMzOTMgMC41NjAwNTkgMjEuNzY2OSAwLjU2MDA1OUgyLjg0NjE5QzEuMjczNzggMC41NjAwNTkgMCAxLjgzNTUzIDAgMy40MTAwM1YzMC41NzAyQzAgMzIuMTQ0NyAxLjI3Mzc4IDMzLjQyMDIgMi44NDYxOSAzMy40MjAySDI3LjM0NjZMMjkuOTk3NyAzNi4wNzQ5QzMwLjMwODUgMzYuMzg2MSAzMC43MjYgMzYuNTYwMSAzMS4xNjQ4IDM2LjU2MDFDMzIuMDc2IDM2LjU2MDEgMzIuODE2NSAzNS44MjE2IDMyLjgxNjUgMzQuOTA2MlYxMS42MjQzQzMyLjgxNjUgMTAuMDQ5OCAzMS41NDI3IDguNzc0MzMgMjkuOTcwMyA4Ljc3NDMzWk0zMC4wODMgMzAuNjgwMUgyLjczMzQ0VjMuMjk3MTNIMjEuODc2NlY4Ljc3NDMzSDExLjA0OTVDOS40NzcxMyA4Ljc3NDMzIDguMjAzMzYgMTAuMDQ5OCA4LjIwMzM2IDExLjYyNDNWMjIuMzU2QzguMjAzMzYgMjMuOTMwNSA5LjQ3NzEzIDI1LjIwNTkgMTEuMDQ5NSAyNS4yMDU5SDIxLjc2NjlDMjMuMzM5MyAyNS4yMDU5IDI0LjYxMzEgMjMuOTMwNSAyNC42MTMxIDIyLjM1NlYxMS41MTQ1SDMwLjA4M1YzMC42ODMxVjMwLjY4MDFaTTIxLjg3OTcgMTEuNTExNFYyMi40NjU4SDEwLjkzOThWMTEuNTExNEgyMS44Nzk3WiIvPjwvc3ZnPg=="
+}

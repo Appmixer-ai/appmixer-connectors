@@ -1,0 +1,474 @@
+{
+    "name": "E2E PandaDoc - contacts",
+    "description": "Create a contact, find it by email, update it, check the update and delete it.",
+    "flow": {
+        "c23a40cd-53d9-4026-b6a0-eca44bd97892": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {},
+            "config": {},
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "f6a72997-87ff-448e-982f-e915d60ce73b": {
+            "type": "appmixer.pandadoc.core.CreateContact",
+            "x": 272,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "c23a40cd-53d9-4026-b6a0-eca44bd97892": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "c23a40cd-53d9-4026-b6a0-eca44bd97892": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "email": {
+                                        "59aeeb07-bd2e-41e8-ad51-887af8ed6344": {
+                                            "functions": [
+                                                {
+                                                    "name": "g_timestamp"
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "firstName": {},
+                                    "lastName": {},
+                                    "company": {},
+                                    "jobTitle": {}
+                                },
+                                "lambda": {
+                                    "email": "e2e-pandadoc-{{{59aeeb07-bd2e-41e8-ad51-887af8ed6344}}}@example.com",
+                                    "firstName": "E2E",
+                                    "lastName": "Contact",
+                                    "company": "Appmixer E2E",
+                                    "jobTitle": "Tester"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "162151b5-6874-411f-aea3-071baf52d9ae": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 480,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "f6a72997-87ff-448e-982f-e915d60ce73b": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "f6a72997-87ff-448e-982f-e915d60ce73b": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "7910253f-9b28-42c8-ac1b-5112b7affb3d": {
+                                            "variable": "$.f6a72997-87ff-448e-982f-e915d60ce73b.out.id",
+                                            "functions": []
+                                        },
+                                        "e387bd48-0103-4613-8a4b-2ec924536172": {
+                                            "variable": "$.f6a72997-87ff-448e-982f-e915d60ce73b.out.email",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{7910253f-9b28-42c8-ac1b-5112b7affb3d}}}",
+                                                "assertion": "notEmpty"
+                                            },
+                                            {
+                                                "field": "{{{e387bd48-0103-4613-8a4b-2ec924536172}}}",
+                                                "assertion": "regex",
+                                                "regex": "^e2e-pandadoc-.*@example.com$"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "be573712-2bd2-4cee-8428-8266014ac62b": {
+            "type": "appmixer.pandadoc.core.FindContacts",
+            "x": 480,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "f6a72997-87ff-448e-982f-e915d60ce73b": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "f6a72997-87ff-448e-982f-e915d60ce73b": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "email": {
+                                        "45bd28a2-1ccc-414a-b53a-fee091d692f0": {
+                                            "variable": "$.f6a72997-87ff-448e-982f-e915d60ce73b.out.email",
+                                            "functions": []
+                                        }
+                                    },
+                                    "outputType": {}
+                                },
+                                "lambda": {
+                                    "email": "{{{45bd28a2-1ccc-414a-b53a-fee091d692f0}}}",
+                                    "outputType": "first"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "76123cdb-a10c-4f14-b4ac-5acf3b372672": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 688,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "be573712-2bd2-4cee-8428-8266014ac62b": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "be573712-2bd2-4cee-8428-8266014ac62b": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "88723dd9-38ad-4610-a7e0-c5a9d381b027": {
+                                            "variable": "$.be573712-2bd2-4cee-8428-8266014ac62b.out.company",
+                                            "functions": []
+                                        },
+                                        "64c2c551-251d-437d-8528-714ff836c23f": {
+                                            "variable": "$.be573712-2bd2-4cee-8428-8266014ac62b.out.last_name",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{88723dd9-38ad-4610-a7e0-c5a9d381b027}}}",
+                                                "assertion": "equal",
+                                                "expected": "Appmixer E2E"
+                                            },
+                                            {
+                                                "field": "{{{64c2c551-251d-437d-8528-714ff836c23f}}}",
+                                                "assertion": "equal",
+                                                "expected": "Contact"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "02f95e98-80d1-4bbe-b5d0-8b585befb50c": {
+            "type": "appmixer.pandadoc.core.UpdateContact",
+            "x": 688,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "be573712-2bd2-4cee-8428-8266014ac62b": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "be573712-2bd2-4cee-8428-8266014ac62b": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "contactId": {
+                                        "a92bf514-d7d8-431f-9afe-cff792a6f0b1": {
+                                            "variable": "$.f6a72997-87ff-448e-982f-e915d60ce73b.out.id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "company": {},
+                                    "city": {}
+                                },
+                                "lambda": {
+                                    "contactId": "{{{a92bf514-d7d8-431f-9afe-cff792a6f0b1}}}",
+                                    "company": "Appmixer E2E Updated",
+                                    "city": "Prague"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "7db64c41-e687-4af2-8808-fba0fb598c50": {
+            "type": "appmixer.pandadoc.core.FindContacts",
+            "x": 896,
+            "y": 400,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "02f95e98-80d1-4bbe-b5d0-8b585befb50c": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "02f95e98-80d1-4bbe-b5d0-8b585befb50c": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "email": {
+                                        "5a692a61-ad20-4827-9aef-afbfac112fb4": {
+                                            "variable": "$.f6a72997-87ff-448e-982f-e915d60ce73b.out.email",
+                                            "functions": []
+                                        }
+                                    },
+                                    "outputType": {}
+                                },
+                                "lambda": {
+                                    "email": "{{{5a692a61-ad20-4827-9aef-afbfac112fb4}}}",
+                                    "outputType": "first"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "0c78671b-22fa-4636-aa2d-2e548450e380": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1104,
+            "y": 400,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "7db64c41-e687-4af2-8808-fba0fb598c50": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "7db64c41-e687-4af2-8808-fba0fb598c50": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "573308f4-3bc6-4cf3-a7ec-e260905b3094": {
+                                            "variable": "$.7db64c41-e687-4af2-8808-fba0fb598c50.out.company",
+                                            "functions": []
+                                        },
+                                        "24c0298d-d148-4977-90c9-cf491976795f": {
+                                            "variable": "$.7db64c41-e687-4af2-8808-fba0fb598c50.out.city",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{573308f4-3bc6-4cf3-a7ec-e260905b3094}}}",
+                                                "assertion": "equal",
+                                                "expected": "Appmixer E2E Updated"
+                                            },
+                                            {
+                                                "field": "{{{24c0298d-d148-4977-90c9-cf491976795f}}}",
+                                                "assertion": "equal",
+                                                "expected": "Prague"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "2ed7e731-9a3e-4f89-b00c-544cd401ba15": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 1312,
+            "y": 400,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "162151b5-6874-411f-aea3-071baf52d9ae": [
+                        "out"
+                    ],
+                    "76123cdb-a10c-4f14-b4ac-5acf3b372672": [
+                        "out"
+                    ],
+                    "0c78671b-22fa-4636-aa2d-2e548450e380": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 180
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "c1858a19-9e0a-4fa0-bb12-51fc9e3cbb70": {
+            "type": "appmixer.pandadoc.core.DeleteContact",
+            "x": 1520,
+            "y": 400,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "2ed7e731-9a3e-4f89-b00c-544cd401ba15": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "2ed7e731-9a3e-4f89-b00c-544cd401ba15": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "contactId": {
+                                        "59c70b21-ae5a-4d90-93e2-66ec0c89bf80": {
+                                            "variable": "$.f6a72997-87ff-448e-982f-e915d60ce73b.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "contactId": "{{{59c70b21-ae5a-4d90-93e2-66ec0c89bf80}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "115dbdf9-5de1-4bf9-b471-6602e81cc0c1": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1728,
+            "y": 400,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "c1858a19-9e0a-4fa0-bb12-51fc9e3cbb70": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "successStoreId": "64f6f1f9193228000754082f",
+                    "failedStoreId": "64f6f1f0193228000754082e"
+                },
+                "transform": {
+                    "in": {
+                        "c1858a19-9e0a-4fa0-bb12-51fc9e3cbb70": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "4425997c-90f4-4765-8a81-8fc8cd700f09": {
+                                            "variable": "$.2ed7e731-9a3e-4f89-b00c-544cd401ba15.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E PandaDoc - contacts",
+                                    "result": "{{{4425997c-90f4-4765-8a81-8fc8cd700f09}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        }
+    }
+}

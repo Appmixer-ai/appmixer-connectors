@@ -1,0 +1,287 @@
+{
+    "name": "appmixer.pandadoc.core.FindDocuments",
+    "label": "Find Documents",
+    "description": "Find documents by name, status, template, contact, tag, folder and creation date. This component returns at most 100 documents.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:pandadoc"
+    },
+    "quota": {
+        "manager": "appmixer:pandadoc",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "query": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "",
+                            "document.draft",
+                            "document.sent",
+                            "document.viewed",
+                            "document.completed",
+                            "document.waiting_approval",
+                            "document.approved",
+                            "document.rejected",
+                            "document.waiting_pay",
+                            "document.paid",
+                            "document.voided",
+                            "document.declined",
+                            "document.uploaded",
+                            "document.error",
+                            "document.external_review",
+                            "document.scheduled"
+                        ]
+                    },
+                    "templateId": {
+                        "type": "string"
+                    },
+                    "contactId": {
+                        "type": "string"
+                    },
+                    "tag": {
+                        "type": "string"
+                    },
+                    "folderId": {
+                        "type": "string"
+                    },
+                    "createdFrom": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "createdTo": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "orderBy": {
+                        "type": "string",
+                        "enum": [
+                            "-date_created",
+                            "date_created",
+                            "-date_modified",
+                            "-date_status_changed",
+                            "name"
+                        ]
+                    },
+                    "outputType": {
+                        "type": "string",
+                        "default": "array"
+                    }
+                }
+            },
+            "inspector": {
+                "inputs": {
+                    "query": {
+                        "type": "text",
+                        "index": 1,
+                        "label": "Search",
+                        "tooltip": "Search documents by name or reference number."
+                    },
+                    "status": {
+                        "type": "select",
+                        "index": 2,
+                        "label": "Status",
+                        "tooltip": "Only documents with this status.",
+                        "options": [
+                            {
+                                "label": "All",
+                                "value": ""
+                            },
+                            {
+                                "label": "Draft",
+                                "value": "document.draft"
+                            },
+                            {
+                                "label": "Sent",
+                                "value": "document.sent"
+                            },
+                            {
+                                "label": "Viewed",
+                                "value": "document.viewed"
+                            },
+                            {
+                                "label": "Completed",
+                                "value": "document.completed"
+                            },
+                            {
+                                "label": "Waiting Approval",
+                                "value": "document.waiting_approval"
+                            },
+                            {
+                                "label": "Approved",
+                                "value": "document.approved"
+                            },
+                            {
+                                "label": "Rejected",
+                                "value": "document.rejected"
+                            },
+                            {
+                                "label": "Waiting Payment",
+                                "value": "document.waiting_pay"
+                            },
+                            {
+                                "label": "Paid",
+                                "value": "document.paid"
+                            },
+                            {
+                                "label": "Voided",
+                                "value": "document.voided"
+                            },
+                            {
+                                "label": "Declined",
+                                "value": "document.declined"
+                            },
+                            {
+                                "label": "Uploaded",
+                                "value": "document.uploaded"
+                            },
+                            {
+                                "label": "Error",
+                                "value": "document.error"
+                            },
+                            {
+                                "label": "External Review",
+                                "value": "document.external_review"
+                            },
+                            {
+                                "label": "Scheduled",
+                                "value": "document.scheduled"
+                            }
+                        ],
+                        "defaultValue": ""
+                    },
+                    "templateId": {
+                        "type": "text",
+                        "index": 3,
+                        "label": "Template",
+                        "tooltip": "Only documents created from this template. Pick one, or type its template ID.",
+                        "source": {
+                            "url": "/component/appmixer/pandadoc/core/ListTemplates?outPort=out",
+                            "data": {
+                                "properties": {
+                                    "isSource": true
+                                },
+                                "transform": "./ListTemplates#toSelectArray"
+                            }
+                        }
+                    },
+                    "contactId": {
+                        "type": "text",
+                        "index": 4,
+                        "label": "Contact ID",
+                        "tooltip": "Only documents sent to this contact."
+                    },
+                    "tag": {
+                        "type": "text",
+                        "index": 5,
+                        "label": "Tag",
+                        "tooltip": "Only documents with this tag."
+                    },
+                    "folderId": {
+                        "type": "text",
+                        "index": 6,
+                        "label": "Folder ID",
+                        "tooltip": "Only documents in this folder."
+                    },
+                    "createdFrom": {
+                        "type": "date-time",
+                        "index": 7,
+                        "label": "Created From",
+                        "tooltip": "Only documents created at or after this time."
+                    },
+                    "createdTo": {
+                        "type": "date-time",
+                        "index": 8,
+                        "label": "Created To",
+                        "tooltip": "Only documents created before this time."
+                    },
+                    "orderBy": {
+                        "type": "select",
+                        "index": 9,
+                        "label": "Order By",
+                        "tooltip": "How to sort the documents.",
+                        "options": [
+                            {
+                                "label": "Newest Created First",
+                                "value": "-date_created"
+                            },
+                            {
+                                "label": "Oldest Created First",
+                                "value": "date_created"
+                            },
+                            {
+                                "label": "Recently Modified First",
+                                "value": "-date_modified"
+                            },
+                            {
+                                "label": "Recent Status Change First",
+                                "value": "-date_status_changed"
+                            },
+                            {
+                                "label": "Name",
+                                "value": "name"
+                            }
+                        ],
+                        "defaultValue": "-date_created"
+                    },
+                    "outputType": {
+                        "type": "select",
+                        "index": 10,
+                        "label": "Output Type",
+                        "defaultValue": "array",
+                        "tooltip": "Choose whether you want to receive the result set as one complete list, or first item only or one item at a time or stream the items to a file.",
+                        "options": [
+                            {
+                                "label": "First Item Only",
+                                "value": "first"
+                            },
+                            {
+                                "label": "All items at once",
+                                "value": "array"
+                            },
+                            {
+                                "label": "One item at a time",
+                                "value": "object"
+                            },
+                            {
+                                "label": "Store to CSV file",
+                                "value": "file"
+                            }
+                        ]
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "source": {
+                "url": "/component/appmixer/pandadoc/core/FindDocuments?outPort=out&ignoreAuth=true",
+                "data": {
+                    "properties": {
+                        "generateOutputPortOptions": true
+                    },
+                    "messages": {
+                        "in/outputType": "inputs/in/outputType"
+                    }
+                }
+            }
+        },
+        {
+            "name": "notFound"
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0OCA0OCI+PHJlY3Qgd2lkdGg9IjQ4IiBoZWlnaHQ9IjQ4IiByeD0iMTAiIGZpbGw9IiMyNDg1NjciLz48ZyBmaWxsPSJub25lIiBzdHJva2U9IiNmZmYiIHN0cm9rZS13aWR0aD0iMy42Ij48Y2lyY2xlIGN4PSIxNy41IiBjeT0iMjUiIHI9IjYiLz48Y2lyY2xlIGN4PSIzMC41IiBjeT0iMjUiIHI9IjYiLz48L2c+PGcgZmlsbD0iI2ZmZiI+PHJlY3QgeD0iOS43IiB5PSIxOSIgd2lkdGg9IjMuNiIgaGVpZ2h0PSIxOCIgcng9IjEuOCIvPjxyZWN0IHg9IjM0LjciIHk9IjExIiB3aWR0aD0iMy42IiBoZWlnaHQ9IjIwIiByeD0iMS44Ii8+PC9nPjwvc3ZnPg=="
+}

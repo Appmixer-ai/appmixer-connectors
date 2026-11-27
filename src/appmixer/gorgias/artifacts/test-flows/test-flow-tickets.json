@@ -1,0 +1,847 @@
+{
+    "name": "E2E Gorgias - tickets",
+    "description": "End-to-end test of the Gorgias ticket components: create, get, update, add tags, create messages (customer message and internal note), find and delete.",
+    "flow": {
+        "dd177dde-1530-406b-8c7b-4188e882ce95": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {},
+            "config": {},
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "da42baa7-a14a-41ed-9037-c2849ddf554c": {
+            "type": "appmixer.gorgias.core.CreateTicket",
+            "x": 272,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "dd177dde-1530-406b-8c7b-4188e882ce95": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "dd177dde-1530-406b-8c7b-4188e882ce95": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "customerEmail": {
+                                        "8311ffc8-c974-4f9c-9bcd-96633bebb52c": {
+                                            "functions": [
+                                                {
+                                                    "name": "g_timestamp"
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "customerName": {},
+                                    "subject": {
+                                        "bc15a423-2dc7-4a51-8e9a-f1ba7c8dc6f8": {
+                                            "functions": [
+                                                {
+                                                    "name": "g_timestamp"
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "message": {},
+                                    "status": {},
+                                    "priority": {},
+                                    "tags": {},
+                                    "externalId": {
+                                        "09e5f661-a3a5-48fb-8d3e-2c56da11b738": {
+                                            "functions": [
+                                                {
+                                                    "name": "g_timestamp"
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "customerEmail": "e2e-ticket-{{{8311ffc8-c974-4f9c-9bcd-96633bebb52c}}}@example.com",
+                                    "customerName": "E2E Gorgias Ticket Customer",
+                                    "subject": "E2E Gorgias Ticket {{{bc15a423-2dc7-4a51-8e9a-f1ba7c8dc6f8}}}",
+                                    "message": "Hello, where is my order? (E2E test ticket)",
+                                    "status": "open",
+                                    "priority": "normal",
+                                    "tags": "e2e-gorgias",
+                                    "externalId": "E2E-{{{09e5f661-a3a5-48fb-8d3e-2c56da11b738}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "c1fc154e-4b04-432e-a24d-ac6076e63a8e": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 480,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "da42baa7-a14a-41ed-9037-c2849ddf554c": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "da42baa7-a14a-41ed-9037-c2849ddf554c": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "66ec4bc4-5764-4cf6-9c05-5c5fdad9e87e": {
+                                            "variable": "$.da42baa7-a14a-41ed-9037-c2849ddf554c.out.id",
+                                            "functions": []
+                                        },
+                                        "f880cae8-f289-490b-a75e-846b6b32d3df": {
+                                            "variable": "$.da42baa7-a14a-41ed-9037-c2849ddf554c.out.subject",
+                                            "functions": []
+                                        },
+                                        "23345e24-d76b-418d-8fdb-3bab4e03d0ba": {
+                                            "variable": "$.da42baa7-a14a-41ed-9037-c2849ddf554c.out.customer.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{66ec4bc4-5764-4cf6-9c05-5c5fdad9e87e}}}",
+                                                "assertion": "notEmpty"
+                                            },
+                                            {
+                                                "field": "{{{f880cae8-f289-490b-a75e-846b6b32d3df}}}",
+                                                "assertion": "regex",
+                                                "regex": "^E2E Gorgias Ticket "
+                                            },
+                                            {
+                                                "field": "{{{23345e24-d76b-418d-8fdb-3bab4e03d0ba}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "d09e513f-c547-4cbb-92bf-3222acc2c841": {
+            "type": "appmixer.gorgias.core.UpdateTicket",
+            "x": 480,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "da42baa7-a14a-41ed-9037-c2849ddf554c": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "da42baa7-a14a-41ed-9037-c2849ddf554c": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "ticketId": {
+                                        "bf06f989-0c60-4ec0-a8e9-1c5ea3cadaaf": {
+                                            "variable": "$.da42baa7-a14a-41ed-9037-c2849ddf554c.out.id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "status": {},
+                                    "priority": {}
+                                },
+                                "lambda": {
+                                    "ticketId": "{{{bf06f989-0c60-4ec0-a8e9-1c5ea3cadaaf}}}",
+                                    "status": "closed",
+                                    "priority": "high"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "38dfb582-d0d3-4295-8ac3-dcc39ce28520": {
+            "type": "appmixer.gorgias.core.GetTicket",
+            "x": 688,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "d09e513f-c547-4cbb-92bf-3222acc2c841": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "d09e513f-c547-4cbb-92bf-3222acc2c841": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "ticketId": {
+                                        "94db4400-efc9-435a-9407-c269a9119b5d": {
+                                            "variable": "$.da42baa7-a14a-41ed-9037-c2849ddf554c.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "ticketId": "{{{94db4400-efc9-435a-9407-c269a9119b5d}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "1c858a2c-98cc-4ecd-b2c6-2fa5b49091d1": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 896,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "38dfb582-d0d3-4295-8ac3-dcc39ce28520": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "38dfb582-d0d3-4295-8ac3-dcc39ce28520": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "913bc6c9-1cf6-46fb-8f7f-0060d2e00957": {
+                                            "variable": "$.38dfb582-d0d3-4295-8ac3-dcc39ce28520.out.status",
+                                            "functions": []
+                                        },
+                                        "6d700e14-ce2a-4952-8900-1eaa94331436": {
+                                            "variable": "$.38dfb582-d0d3-4295-8ac3-dcc39ce28520.out.priority",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{913bc6c9-1cf6-46fb-8f7f-0060d2e00957}}}",
+                                                "assertion": "equal",
+                                                "expected": "closed"
+                                            },
+                                            {
+                                                "field": "{{{6d700e14-ce2a-4952-8900-1eaa94331436}}}",
+                                                "assertion": "equal",
+                                                "expected": "high"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "14c8e79f-42e8-4843-a4fb-d1bf6ce343ab": {
+            "type": "appmixer.gorgias.core.AddTicketTags",
+            "x": 896,
+            "y": 400,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "38dfb582-d0d3-4295-8ac3-dcc39ce28520": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "38dfb582-d0d3-4295-8ac3-dcc39ce28520": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "ticketId": {
+                                        "33e0e660-7c7e-42c9-93e8-3d01ad7fb65d": {
+                                            "variable": "$.da42baa7-a14a-41ed-9037-c2849ddf554c.out.id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "tags": {}
+                                },
+                                "lambda": {
+                                    "ticketId": "{{{33e0e660-7c7e-42c9-93e8-3d01ad7fb65d}}}",
+                                    "tags": "e2e-gorgias-tagged"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "699cb139-5028-46cc-baa4-d546555f17b4": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1104,
+            "y": 400,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "14c8e79f-42e8-4843-a4fb-d1bf6ce343ab": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "14c8e79f-42e8-4843-a4fb-d1bf6ce343ab": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "81c8e4cf-8fc9-44c3-8ec1-17916e1903d5": {
+                                            "variable": "$.14c8e79f-42e8-4843-a4fb-d1bf6ce343ab.out.ticketId",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{81c8e4cf-8fc9-44c3-8ec1-17916e1903d5}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "06abf74e-bd56-4fa4-9323-c9d7f2545781": {
+            "type": "appmixer.gorgias.core.CreateTicketMessage",
+            "x": 1104,
+            "y": 528,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "14c8e79f-42e8-4843-a4fb-d1bf6ce343ab": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "14c8e79f-42e8-4843-a4fb-d1bf6ce343ab": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "ticketId": {
+                                        "08e49a7c-5269-411c-a8c5-56150aaca04a": {
+                                            "variable": "$.da42baa7-a14a-41ed-9037-c2849ddf554c.out.id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "messageType": {},
+                                    "message": {}
+                                },
+                                "lambda": {
+                                    "ticketId": "{{{08e49a7c-5269-411c-a8c5-56150aaca04a}}}",
+                                    "messageType": "internal-note",
+                                    "message": "E2E internal note"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "ab667a4f-36e7-4cf5-95b8-f0bc436b1107": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1312,
+            "y": 528,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "06abf74e-bd56-4fa4-9323-c9d7f2545781": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "06abf74e-bd56-4fa4-9323-c9d7f2545781": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "4b38c064-1ed3-471f-ae92-8f01c985487c": {
+                                            "variable": "$.06abf74e-bd56-4fa4-9323-c9d7f2545781.out.id",
+                                            "functions": []
+                                        },
+                                        "ba0681fc-adda-48d7-ad01-4c9aa27ea35b": {
+                                            "variable": "$.06abf74e-bd56-4fa4-9323-c9d7f2545781.out.channel",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{4b38c064-1ed3-471f-ae92-8f01c985487c}}}",
+                                                "assertion": "notEmpty"
+                                            },
+                                            {
+                                                "field": "{{{ba0681fc-adda-48d7-ad01-4c9aa27ea35b}}}",
+                                                "assertion": "equal",
+                                                "expected": "internal-note"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "ea1a3b6d-053b-4472-9327-910d69154f2f": {
+            "type": "appmixer.gorgias.core.CreateTicketMessage",
+            "x": 1312,
+            "y": 656,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "06abf74e-bd56-4fa4-9323-c9d7f2545781": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "06abf74e-bd56-4fa4-9323-c9d7f2545781": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "ticketId": {
+                                        "876f90bf-293b-42d1-9fd7-6a222a8180ed": {
+                                            "variable": "$.da42baa7-a14a-41ed-9037-c2849ddf554c.out.id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "messageType": {},
+                                    "message": {},
+                                    "senderEmail": {
+                                        "84d2aac0-608d-46ff-99f6-043bc276905e": {
+                                            "variable": "$.da42baa7-a14a-41ed-9037-c2849ddf554c.out.customer.email",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "ticketId": "{{{876f90bf-293b-42d1-9fd7-6a222a8180ed}}}",
+                                    "messageType": "customer-message",
+                                    "message": "E2E follow-up from the customer",
+                                    "senderEmail": "{{{84d2aac0-608d-46ff-99f6-043bc276905e}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "ca82508e-3312-4665-af9b-6776c36c316e": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1520,
+            "y": 656,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "ea1a3b6d-053b-4472-9327-910d69154f2f": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "ea1a3b6d-053b-4472-9327-910d69154f2f": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "928d2e86-60d9-476a-85ce-e9b0ddd24b79": {
+                                            "variable": "$.ea1a3b6d-053b-4472-9327-910d69154f2f.out.id",
+                                            "functions": []
+                                        },
+                                        "a9fe5198-f511-4306-b4b3-899422302b7e": {
+                                            "variable": "$.ea1a3b6d-053b-4472-9327-910d69154f2f.out.ticket_id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{928d2e86-60d9-476a-85ce-e9b0ddd24b79}}}",
+                                                "assertion": "notEmpty"
+                                            },
+                                            {
+                                                "field": "{{{a9fe5198-f511-4306-b4b3-899422302b7e}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "dd2d4b38-521f-498f-aa99-b9d850495013": {
+            "type": "appmixer.gorgias.core.FindTickets",
+            "x": 1520,
+            "y": 784,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "ea1a3b6d-053b-4472-9327-910d69154f2f": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "ea1a3b6d-053b-4472-9327-910d69154f2f": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "customerId": {
+                                        "085a8749-562c-464f-a796-e164701f20cc": {
+                                            "variable": "$.da42baa7-a14a-41ed-9037-c2849ddf554c.out.customer.id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "outputType": {}
+                                },
+                                "lambda": {
+                                    "customerId": "{{{085a8749-562c-464f-a796-e164701f20cc}}}",
+                                    "outputType": "first"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "a29fc1e6-f6ba-4dac-950d-fee9a52b00c8": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1728,
+            "y": 784,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "dd2d4b38-521f-498f-aa99-b9d850495013": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "dd2d4b38-521f-498f-aa99-b9d850495013": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "8089b22f-3a26-47bc-b37d-5312eed270f6": {
+                                            "variable": "$.dd2d4b38-521f-498f-aa99-b9d850495013.out.subject",
+                                            "functions": []
+                                        },
+                                        "ecaad909-5ee2-4ac6-b6ab-440274d4ebe0": {
+                                            "variable": "$.dd2d4b38-521f-498f-aa99-b9d850495013.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{8089b22f-3a26-47bc-b37d-5312eed270f6}}}",
+                                                "assertion": "regex",
+                                                "regex": "^E2E Gorgias Ticket "
+                                            },
+                                            {
+                                                "field": "{{{ecaad909-5ee2-4ac6-b6ab-440274d4ebe0}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "b8f98888-9632-4b6b-8ac8-6e1e67833421": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 1936,
+            "y": 784,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "c1fc154e-4b04-432e-a24d-ac6076e63a8e": [
+                        "out"
+                    ],
+                    "1c858a2c-98cc-4ecd-b2c6-2fa5b49091d1": [
+                        "out"
+                    ],
+                    "699cb139-5028-46cc-baa4-d546555f17b4": [
+                        "out"
+                    ],
+                    "ab667a4f-36e7-4cf5-95b8-f0bc436b1107": [
+                        "out"
+                    ],
+                    "ca82508e-3312-4665-af9b-6776c36c316e": [
+                        "out"
+                    ],
+                    "a29fc1e6-f6ba-4dac-950d-fee9a52b00c8": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 180
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "abc61004-298c-4268-aa5e-f3c92865e8ce": {
+            "type": "appmixer.gorgias.core.DeleteTicket",
+            "x": 2144,
+            "y": 784,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "b8f98888-9632-4b6b-8ac8-6e1e67833421": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "b8f98888-9632-4b6b-8ac8-6e1e67833421": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "ticketId": {
+                                        "10e8999b-d10f-45ee-a5ee-8239c7ca5124": {
+                                            "variable": "$.da42baa7-a14a-41ed-9037-c2849ddf554c.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "ticketId": "{{{10e8999b-d10f-45ee-a5ee-8239c7ca5124}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "774e43b4-fb21-4fb8-ba2b-978b70d1f09a": {
+            "type": "appmixer.gorgias.core.DeleteCustomer",
+            "x": 2352,
+            "y": 784,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "abc61004-298c-4268-aa5e-f3c92865e8ce": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "abc61004-298c-4268-aa5e-f3c92865e8ce": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "customerId": {
+                                        "8649dcd4-940b-4dfc-a425-87b8e253d01a": {
+                                            "variable": "$.da42baa7-a14a-41ed-9037-c2849ddf554c.out.customer.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "customerId": "{{{8649dcd4-940b-4dfc-a425-87b8e253d01a}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "23581fe0-1b08-48f8-83b4-041e0658b781": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 2560,
+            "y": 784,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "774e43b4-fb21-4fb8-ba2b-978b70d1f09a": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "successStoreId": "64f6f1f9193228000754082f",
+                    "failedStoreId": "64f6f1f0193228000754082e"
+                },
+                "transform": {
+                    "in": {
+                        "774e43b4-fb21-4fb8-ba2b-978b70d1f09a": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "c68611e5-f3b1-43e7-ac67-13cb690363aa": {
+                                            "variable": "$.b8f98888-9632-4b6b-8ac8-6e1e67833421.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E Gorgias - tickets",
+                                    "result": "{{{c68611e5-f3b1-43e7-ac67-13cb690363aa}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        }
+    },
+    "notes": {
+        "6a4edbaf-9860-4a32-83a4-483c8a97db07": {
+            "x": 64,
+            "y": 1040,
+            "width": 672,
+            "height": 256,
+            "content": "## Test data\n\nThe flow creates its own customer (e2e-ticket-<timestamp>@example.com) and ticket and deletes both at the end. The customer message is an incoming message on the API channel; no email is sent. The tags e2e-gorgias and e2e-gorgias-tagged are created on the first run and kept."
+        }
+    }
+}

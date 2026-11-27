@@ -1,0 +1,200 @@
+{
+    "name": "E2E PandaDoc - recipient completed (manual)",
+    "description": "Recipient Completed fires when a person signs a document. Signing cannot be done through the API: follow the steps in the note while the flow runs.",
+    "flow": {
+        "a2e80e1d-6ece-4621-a520-757384d11221": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {},
+            "config": {},
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "3a30e6e7-8705-488a-8d38-5782c0967bbf": {
+            "type": "appmixer.utils.timers.Wait",
+            "x": 272,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "a2e80e1d-6ece-4621-a520-757384d11221": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "a2e80e1d-6ece-4621-a520-757384d11221": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "interval": {}
+                                },
+                                "lambda": {
+                                    "interval": "1m"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "59baaf4a-1e9c-4131-bb7a-58f98e44e141": {
+            "type": "appmixer.pandadoc.core.RecipientCompleted",
+            "x": 64,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {},
+            "config": {},
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "8ee32b55-feed-4c7d-baa3-07fd3150b737": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 272,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "59baaf4a-1e9c-4131-bb7a-58f98e44e141": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "59baaf4a-1e9c-4131-bb7a-58f98e44e141": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "296483f4-e647-4eff-9de3-8ec8f8d7aedb": {
+                                            "variable": "$.59baaf4a-1e9c-4131-bb7a-58f98e44e141.out.event",
+                                            "functions": []
+                                        },
+                                        "31692ba5-2c61-49d7-a129-31699acbf7e6": {
+                                            "variable": "$.59baaf4a-1e9c-4131-bb7a-58f98e44e141.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{296483f4-e647-4eff-9de3-8ec8f8d7aedb}}}",
+                                                "assertion": "equal",
+                                                "expected": "recipient_completed"
+                                            },
+                                            {
+                                                "field": "{{{31692ba5-2c61-49d7-a129-31699acbf7e6}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "d80521b6-a9de-4d39-bab6-b1d0865d2da1": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 688,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "3a30e6e7-8705-488a-8d38-5782c0967bbf": [
+                        "out"
+                    ],
+                    "8ee32b55-feed-4c7d-baa3-07fd3150b737": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 600
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "5999e0b0-1cc7-4542-bb54-4a19d3b99bb2": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 896,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "d80521b6-a9de-4d39-bab6-b1d0865d2da1": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "successStoreId": "64f6f1f9193228000754082f",
+                    "failedStoreId": "64f6f1f0193228000754082e"
+                },
+                "transform": {
+                    "in": {
+                        "d80521b6-a9de-4d39-bab6-b1d0865d2da1": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "299cc44d-672b-4a86-86d3-8207207edd74": {
+                                            "variable": "$.d80521b6-a9de-4d39-bab6-b1d0865d2da1.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E PandaDoc - recipient completed (manual)",
+                                    "result": "{{{299cc44d-672b-4a86-86d3-8207207edd74}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        }
+    },
+    "notes": {
+        "424e0472-4e7c-4aa5-82c5-4d6c64d661a2": {
+            "x": 64,
+            "y": 400,
+            "width": 672,
+            "height": 288,
+            "content": "## ⚠️ Manual steps\n\nA recipient has to complete (sign) a document; the API cannot do that. While the flow runs (10 minutes):\n\n1. In PandaDoc create a document (any template or PDF) with yourself as a signer and at least one signature field.\n2. Send it and open it from the email (or the document's signing link).\n3. Sign and finish the document.\n\nThe trigger then emits the recipient_completed event and the flow passes."
+        }
+    }
+}
