@@ -1,23 +1,53 @@
 # Nuki E2E test flows
 
 **None of these flows has been run.** They pass `appmixer e2e validate`, and that is all.
-Nuki has no sandbox and no virtual device, so a run needs a real Nuki account with a real
-device, which was not available when the connector was built. Treat the flows as prepared,
-not as proof.
+Nuki has no sandbox and no virtual device, so a run needs a real Nuki device. The test
+account (`creds show nuki`) has a token but no device. Treat the flows as prepared, not as
+proof.
+
+## Verified live without a device (2026-11-27)
+
+With a real API token on an account that has no device:
+
+- `appmixer test auth validate`: `true`. `requestProfileInfo` labels the account with its
+  e-mail (`GET /account`).
+- Create Account User, Find Account Users (first / array, the `email` filter, an unknown
+  e-mail goes to `notFound`) and Delete Account User, on a user created for the run and
+  deleted again. Deleting it a second time ends with the 404 message.
+- `appmixer connector verify nuki`: 0 failures. Find Account Users matches its schema; the
+  optional `type` and `operationId` (both in Nuki's Swagger) were not returned for that
+  user. Its shape is in `artifacts/samples/`. The device components were skipped: no device.
+- Find Smartlocks, Find Log Entries and Find Smartlock Authorizations on the empty account,
+  and on a device ID that does not exist, go to `notFound` (Nuki answers `200 []`).
+- Get Smartlock, Lock Smartlock and the Smartlock State Changed trigger on a device ID that
+  does not exist end with the 403 message. Nuki answers 403 "Your account forbids the
+  execution", not 404, for a device outside the account.
+- Make API Call with a relative path and with a full `https://api.nuki.io` URL; a foreign
+  host is refused before any request.
+- New Log Entry: `test()` ends with "No log entry matches the trigger settings yet";
+  `tick()` records an empty baseline.
+- The lock and unlock endpoints accept a POST without a body whatever the Content-Type.
+  `POST /smartlock/{id}/action/lock` with the body `{}` answers 415, so the connector
+  must keep sending no body there (it does).
+
+Not settled: everything under "Things only a run can settle" below, since each needs a
+device.
 
 ## What a run needs
 
-- A Nuki Web account (https://web.nuki.io) with the API activated. Do not use a social
-  login for it.
+- A Nuki Web account (https://web.nuki.io) with the API activated. A Google sign-in works
+  (the test account uses one).
 - One Nuki Smart Lock connected to that account and online: a model with built-in Wi-Fi,
   or an older model with a Nuki Bridge. It does not have to be mounted on a door, but it
   must be set up in the Nuki app.
 - A Nuki Keypad paired with that lock, for `test-flow-keypad-code.json`.
 - If the account is used for short-term rental, an active Smart Hosting subscription on
   the lock. Without it Nuki answers the create requests with 402.
-- An API token created in Nuki Web under API, with the scopes `smartlock.readOnly`,
-  `smartlock.action`, `smartlock.auth` and `smartlock.log`. Add `account` to see the
-  account's e-mail address as the connection name.
+- An API token created in Nuki Web under API, with the rights View devices
+  (`smartlock.readOnly`), Operate devices (`smartlock.action`), View and manage
+  authorizations (`smartlock.auth`) and View activity logs (`smartlock.log`). Add View and
+  manage account (`account`) to see the account's e-mail address as the connection name.
+  The test account's token has all of them.
 
 ## The flows
 

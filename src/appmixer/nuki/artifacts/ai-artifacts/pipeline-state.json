@@ -30,17 +30,18 @@
             "12 component runs and auth.validate / requestProfileInfo against https://api.nuki.io with an invalid token: every call answers 401 { detailMessage }, which the connector turns into a CancelError naming the token and the scope; the dropdown source returns an empty list; Make API Call refuses a foreign host without sending a request"
         ],
         "notVerified": [
-            "No request with a valid token was ever sent. No component has returned real data.",
-            "appmixer test component, appmixer connector verify and the E2E flows were not run.",
+            "No component has run against a device: the test account (creds nuki) has a valid token but no device paired.",
+            "The E2E flows were not run, and connector verify skipped every device component.",
             "See artifacts/test-flows/README.md, 'Things only a run can settle'."
+        ],
+        "liveWithToken": [
+            "2026-11-27 with a valid token on an account without a device: auth validate, requestProfileInfo, Create / Find / Delete Account User, the empty Find components, Make API Call, the trigger test() and tick(); connector verify 0 failures. Details in artifacts/test-flows/README.md, 'Verified live without a device'."
         ]
     },
     "needsFromHuman": [
-        "A Nuki Web account with the API activated (no social login)",
-        "One Nuki Smart Lock that is online (built-in Wi-Fi, or with a Nuki Bridge)",
+        "One Nuki Smart Lock that is online (built-in Wi-Fi, or with a Nuki Bridge), paired with the Nuki Web account auth@appmixer.ai (creds nuki, token already stored)",
         "A Nuki Keypad paired with it, for Create Keypad Code",
-        "A Smart Hosting subscription on the lock if the account is a short-term rental account (30-day trial, then EUR 69 per lock per year)",
-        "An API token with the scopes smartlock.readOnly, smartlock.action, smartlock.auth, smartlock.log (and account for the connection name), stored with: creds set nuki ..."
+        "A Smart Hosting subscription on the lock if the account is a short-term rental account (30-day trial, then EUR 69 per lock per year)"
     ],
     "notes": [
         "OAuth 2 and webhooks need Nuki's Advanced API (approved per application). Not implemented: the connector uses the self-service API token and polling triggers.",

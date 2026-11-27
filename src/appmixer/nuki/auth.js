@@ -16,11 +16,12 @@ module.exports = {
             apiKey: {
                 type: 'password',
                 name: 'API Token',
-                tooltip: 'In <a href="https://web.nuki.io" target="_blank">Nuki Web</a> open <i>API</i>, '
-                    + 'accept the API terms and click <i>Generate API token</i>. Select the scopes '
-                    + '<code>smartlock.readOnly</code>, <code>smartlock.action</code>, <code>smartlock.auth</code> '
-                    + 'and <code>smartlock.log</code> (add <code>account</code> to show the account name here). '
-                    + 'The token is shown only once.'
+                // The rights are named as Nuki Web labels them in the token form, not by their scope IDs.
+                tooltip: 'In <a href="https://web.nuki.io" target="_blank">Nuki Web</a> open the menu, then <i>API</i>, '
+                    + 'activate the Web API and click <i>Generate API token</i>. Keep the rights <i>View devices</i>, '
+                    + '<i>Operate devices</i>, <i>View and manage authorizations</i> and <i>View activity logs and get '
+                    + 'log notifications</i> (and <i>View and manage account</i> to show the account e-mail here). '
+                    + 'The token is shown only once, right after Save.'
             }
         },
 

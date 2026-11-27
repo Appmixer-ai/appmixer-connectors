@@ -25,7 +25,9 @@ const STATUS_HINTS = {
         + 'operation needs.',
     402: 'Nuki answered "payment required": the account or the device has no active subscription for '
         + 'this operation (for guest access, Smart Hosting).',
-    403: 'Nuki denied access to this device or record.',
+    // Nuki answers 403, not 404, for a device ID that is not in the account of the token.
+    403: 'Nuki denied access. The device or record does not exist in the Nuki Web account of this API token, '
+        + 'or the token is not allowed to use it.',
     404: 'Nuki did not find this device or record.',
     405: 'Nuki does not allow this operation on this device.',
     409: 'Nuki reported a conflict with an existing record (for a keypad code: the code is already used '
