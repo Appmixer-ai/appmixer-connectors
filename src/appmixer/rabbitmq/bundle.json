@@ -1,6 +1,6 @@
 {
     "name": "appmixer.rabbitmq",
-    "version": "1.0.6",
+    "version": "1.0.7",
     "changelog": {
         "1.0.0": [
             "Initial version."
@@ -22,6 +22,15 @@
         ],
         "1.0.6": [
             "Fixed connecting to RabbitMQ 4.1 and newer (\"negotiated frame_max = 4096 is lower than the minimum allowed value (8192)\"): updated amqplib to 0.10.9."
+        ],
+        "1.0.7": [
+            "NewMessage can consume a RabbitMQ stream: new prefetch, stream filter value and stream offset fields.",
+            "The stream offset is stored per flow and component, so a restarted or resynced consumer resumes where it left off.",
+            "Deliveries that do not match the stream filter value are acked and dropped, since the broker filter is a bloom filter and over-delivers.",
+            "Retention dropping messages a consumer had not read is reported on the new NewMessage warning port.",
+            "Stream deliveries are handled one at a time, with a prefetch of 1 by default, so the stored offset never passes a delivery that has not been enqueued.",
+            "A stream delivery that cannot be enqueued closes the consumer on that node, and the connection sync job resumes reading from that delivery.",
+            "No Ack is ignored for a stream: the broker refuses automatic acknowledgement there by closing the whole connection."
         ]
     }
 }

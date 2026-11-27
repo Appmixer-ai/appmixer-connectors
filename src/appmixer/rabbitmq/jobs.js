@@ -35,6 +35,7 @@ module.exports = async (context) => {
 
             for (const channel of registeredChannels) {
                 const channelId = channel.key;
+                if (!connections.isChannel(channelId)) continue;
                 const connectionParameters = channel.value;
 
                 // Check that the flow still exists and is running. This is a sanity check to make sure that if an error
