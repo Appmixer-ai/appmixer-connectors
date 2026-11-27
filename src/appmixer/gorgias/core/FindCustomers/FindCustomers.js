@@ -7,7 +7,7 @@ const SCHEMAS = require('../../schemas.json');
 const ITEM_SCHEMA = SCHEMAS.customer;
 
 // GET /api/customers - https://developers.gorgias.com/reference/list-customers
-// All matching customers, newest first: follows the cursor up to lib.MAX_LIST_ITEMS.
+// One page of up to 100 customers, newest first.
 module.exports = {
 
     ITEM_SCHEMA,
@@ -27,7 +27,7 @@ module.exports = {
             external_id: externalId
         });
 
-        const { items } = await lib.listAll(context, '/customers', params);
+        const { items } = await lib.listPage(context, '/customers', params);
 
         if (!items.length) {
             return context.sendJson({}, 'notFound');

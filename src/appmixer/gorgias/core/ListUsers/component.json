@@ -1,7 +1,8 @@
 {
     "name": "appmixer.gorgias.core.ListUsers",
     "label": "List Users",
-    "description": "List the users (agents) of the helpdesk, sorted by name. Returns all users (up to 10,000).",
+    "description": "Assignee picker source (private): the first 100 users (agents) of the helpdesk, sorted by name (one page).",
+    "private": true,
     "author": "Appmixer <info@appmixer.com>",
     "version": "1.0.0",
     "auth": {
@@ -19,55 +20,51 @@
             "name": "in",
             "schema": {
                 "type": "object",
-                "properties": {
-                    "outputType": {
-                        "type": "string",
-                        "default": "array"
-                    }
-                }
-            },
-            "inspector": {
-                "inputs": {
-                    "outputType": {
-                        "type": "select",
-                        "index": 1,
-                        "label": "Output Type",
-                        "defaultValue": "array",
-                        "tooltip": "Choose whether you want to receive the result set as one complete list, or first item only or one item at a time or stream the items to a file.",
-                        "options": [
-                            {
-                                "label": "First Item Only",
-                                "value": "first"
-                            },
-                            {
-                                "label": "All items at once",
-                                "value": "array"
-                            },
-                            {
-                                "label": "One item at a time",
-                                "value": "object"
-                            },
-                            {
-                                "label": "Store to CSV file",
-                                "value": "file"
-                            }
-                        ]
-                    }
-                }
+                "properties": {}
             }
         }
     ],
     "outPorts": [
         {
             "name": "out",
-            "source": {
-                "url": "/component/appmixer/gorgias/core/ListUsers?outPort=out&ignoreAuth=true",
-                "data": {
-                    "properties": {
-                        "generateOutputPortOptions": true
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "result": {
+                        "type": "array",
+                        "title": "Users",
+                        "example": [
+                            {
+                                "id": 5678,
+                                "name": "Jane Doe",
+                                "email": "jane@acme.com"
+                            }
+                        ],
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "id": {
+                                    "type": "integer",
+                                    "title": "ID",
+                                    "example": 5678
+                                },
+                                "name": {
+                                    "type": "string",
+                                    "title": "Name",
+                                    "example": "Jane Doe"
+                                },
+                                "email": {
+                                    "type": "string",
+                                    "title": "Email",
+                                    "example": "jane@acme.com"
+                                }
+                            }
+                        }
                     },
-                    "messages": {
-                        "in/outputType": "inputs/in/outputType"
+                    "count": {
+                        "type": "integer",
+                        "title": "Count",
+                        "example": 12
                     }
                 }
             }

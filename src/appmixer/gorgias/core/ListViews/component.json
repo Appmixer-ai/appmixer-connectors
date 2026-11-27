@@ -1,7 +1,8 @@
 {
     "name": "appmixer.gorgias.core.ListViews",
     "label": "List Views",
-    "description": "List the views of the helpdesk, newest first. Returns all views (up to 10,000).",
+    "description": "View picker source (private): the newest 100 views of the helpdesk (one page).",
+    "private": true,
     "author": "Appmixer <info@appmixer.com>",
     "version": "1.0.0",
     "auth": {
@@ -19,55 +20,45 @@
             "name": "in",
             "schema": {
                 "type": "object",
-                "properties": {
-                    "outputType": {
-                        "type": "string",
-                        "default": "array"
-                    }
-                }
-            },
-            "inspector": {
-                "inputs": {
-                    "outputType": {
-                        "type": "select",
-                        "index": 1,
-                        "label": "Output Type",
-                        "defaultValue": "array",
-                        "tooltip": "Choose whether you want to receive the result set as one complete list, or first item only or one item at a time or stream the items to a file.",
-                        "options": [
-                            {
-                                "label": "First Item Only",
-                                "value": "first"
-                            },
-                            {
-                                "label": "All items at once",
-                                "value": "array"
-                            },
-                            {
-                                "label": "One item at a time",
-                                "value": "object"
-                            },
-                            {
-                                "label": "Store to CSV file",
-                                "value": "file"
-                            }
-                        ]
-                    }
-                }
+                "properties": {}
             }
         }
     ],
     "outPorts": [
         {
             "name": "out",
-            "source": {
-                "url": "/component/appmixer/gorgias/core/ListViews?outPort=out&ignoreAuth=true",
-                "data": {
-                    "properties": {
-                        "generateOutputPortOptions": true
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "result": {
+                        "type": "array",
+                        "title": "Views",
+                        "example": [
+                            {
+                                "id": 91011,
+                                "name": "Open tickets"
+                            }
+                        ],
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "id": {
+                                    "type": "integer",
+                                    "title": "ID",
+                                    "example": 91011
+                                },
+                                "name": {
+                                    "type": "string",
+                                    "title": "Name",
+                                    "example": "Open tickets"
+                                }
+                            }
+                        }
                     },
-                    "messages": {
-                        "in/outputType": "inputs/in/outputType"
+                    "count": {
+                        "type": "integer",
+                        "title": "Count",
+                        "example": 12
                     }
                 }
             }

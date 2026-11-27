@@ -7,7 +7,7 @@ const SCHEMAS = require('../../schemas.json');
 const ITEM_SCHEMA = SCHEMAS.ticket;
 
 // GET /api/tickets - https://developers.gorgias.com/reference/list-tickets
-// All matching tickets, newest first: follows the cursor up to lib.MAX_LIST_ITEMS. The endpoint includes trashed tickets unless
+// One page of up to 100 tickets, newest first. The endpoint includes trashed tickets unless
 // trashed=false is sent.
 module.exports = {
 
@@ -37,7 +37,7 @@ module.exports = {
             params.external_id = externalId;
         }
 
-        const { items } = await lib.listAll(context, '/tickets', params);
+        const { items } = await lib.listPage(context, '/tickets', params);
 
         if (!items.length) {
             return context.sendJson({}, 'notFound');
