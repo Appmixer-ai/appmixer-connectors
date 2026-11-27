@@ -1,0 +1,139 @@
+{
+    "name": "appmixer.tableau.core.JobFinished",
+    "label": "Job Finished",
+    "description": "Triggers when a background job of the site finishes: an extract refresh (also one started by a schedule or in the Tableau UI), a flow run, a subscription. Checks the jobs created in the last 24 hours. Works without a site administrator account, but a non-administrator sees only the jobs of their own content.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:tableau"
+    },
+    "quota": {
+        "manager": "appmixer:tableau",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "tick": true,
+    "trigger": true,
+    "properties": {
+        "schema": {
+            "type": "object",
+            "properties": {
+                "jobType": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
+        "inspector": {
+            "inputs": {
+                "jobType": {
+                    "type": "select",
+                    "index": 1,
+                    "label": "Job Type",
+                    "tooltip": "Trigger only for jobs of this type. Empty: all types.",
+                    "options": [
+                        {
+                            "label": "Extract refresh (full)",
+                            "value": "refresh_extracts"
+                        },
+                        {
+                            "label": "Extract refresh (incremental)",
+                            "value": "increment_extracts"
+                        },
+                        {
+                            "label": "Flow run",
+                            "value": "run_flow"
+                        }
+                    ]
+                },
+                "status": {
+                    "type": "select",
+                    "index": 2,
+                    "label": "Status",
+                    "tooltip": "Trigger only for jobs that finished with this status. Empty: any finished job.",
+                    "options": [
+                        {
+                            "label": "Success",
+                            "value": "Success"
+                        },
+                        {
+                            "label": "Failed",
+                            "value": "Failed"
+                        },
+                        {
+                            "label": "Cancelled",
+                            "value": "Cancelled"
+                        }
+                    ]
+                }
+            }
+        }
+    },
+    "outPorts": [
+        {
+            "name": "out",
+            "schema": {
+                "type": "object",
+                "required": [
+                    "id",
+                    "status"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "title": "Job ID",
+                        "example": "2b3c4d5e-6f7a-4b8c-9d0e-1f2a3b4c5d6e"
+                    },
+                    "jobType": {
+                        "type": "string",
+                        "title": "Job Type",
+                        "example": "refresh_extracts"
+                    },
+                    "status": {
+                        "type": "string",
+                        "title": "Status",
+                        "example": "Success"
+                    },
+                    "priority": {
+                        "type": "integer",
+                        "title": "Priority",
+                        "example": 50
+                    },
+                    "title": {
+                        "type": "string",
+                        "title": "Title",
+                        "example": "Sales Overview"
+                    },
+                    "subtitle": {
+                        "type": "string",
+                        "title": "Subtitle",
+                        "example": "Workbook"
+                    },
+                    "createdAt": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Created At",
+                        "example": "2026-11-17T10:00:00Z"
+                    },
+                    "startedAt": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Started At",
+                        "example": "2026-11-17T10:00:05Z"
+                    },
+                    "endedAt": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Ended At",
+                        "example": "2026-11-17T10:03:10Z"
+                    }
+                }
+            }
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZmlsbD0iI0U5NzYyNyIgZD0iTTExLjY1NC4xNzRWMi4zNzdIOS42ODJ2LjU4aDEuOTcyVjUuMTZoLjY5NlYyLjk1N2gxLjk3di0uNThoLTEuOTdWLjE3NGgtLjM0OHptNi4wMyAyLjI2MmwtLjAwMiAxLjYyM3YxLjYyM2gtMi45NTd2LjkyN2gyLjk1N3YzLjE4OEgxOC43MjVsLjAxMS0xLjU4Mi4wMi0xLjU3NiAxLjQ2NS0uMDIgMS40Ni0uMDF2LS45MjdIMTguNzI4VjIuNDM2aC0uNTIyem0tMTIuNDA3LjA2VjUuNjg2SDIuMjkxdi45MjVINS4yNzdWOS44MDFoLjk4NVY2LjYxaDMuMDEzdi0uOTI1SDYuMjYyVjIuNDk2SDUuNzcwem02LjA4NiA1LjI3djMuNTkzSDguMDZ2MS4xODhoMy4zMDR2My41OTZoMS4yOHYtMy41OTZIMTUuOTUzdi0xLjE4OEgxMi42NDNWNy43NjZoLS42Mzd6bTkuNzIxIDEuNTV2Mi4yMjFoLTIuMDEydi44MTFoMi4wMTJ2Mi4yNjFoLjg4N3YtMi4yNjFIMjR2LS44MTFoLTIuMDI5VjkuMzE3aC0uNDIyem0tMTkuMTExLjEzMVYxMS42MjFIMHYuNjIxSDEuOTczdjIuMTk0SDIuNjR2LTIuMTk0aDJ2LS42MkgyLjYwOVY5LjQ0NmgtLjMxOHptMTUuNzA5IDQuNTE2djMuMjU0aC0zLjAxNnYuOTI3aDMuMDE2djMuMjE3aDEuMDcydi0zLjIxNkgyMS43NHYtLjkyOEgxOC43NTR2LTMuMjU0aC0uNTMzem0tMTIuNDYzLjAwOHYzLjI0NkgyLjI2MnYuOTI4aDIuOTU3djMuMTg5SDYuMzIwdi0zLjE4OWgyLjk1NXYtLjkyOEg2LjMyMFYxMy45N2gtLjU1em02LjMxNiA0LjU3OGwuMDAyIDEuMTAzdjEuMUg5LjU2NnYuODEyaDEuOTcxdjIuMjYyaC45MjhsLjAxMi0xLjExOS4wMTctMS4xNDNIMTQuNDYzdi0uODEyaC0yVjE4LjU0OWgtLjQ2NXoiLz48L3N2Zz4="
+}

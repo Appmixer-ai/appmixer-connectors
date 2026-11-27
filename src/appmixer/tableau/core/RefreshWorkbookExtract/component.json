@@ -1,0 +1,165 @@
+{
+    "name": "appmixer.tableau.core.RefreshWorkbookExtract",
+    "label": "Refresh Workbook Extract",
+    "description": "Refresh the extracts of a workbook now (\"Refresh Extracts\" in Tableau). The component waits until Tableau finishes the job (it checks once a minute). With Fail if the job doesn't succeed on (default), a job that ends Failed or Cancelled makes the component fail with the job ID and Tableau's notes, so the step can be retried; with it off, every finished job is output: check Status (Success, Failed or Cancelled). Requires the owner of the content, its project leader or a site administrator.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:tableau"
+    },
+    "quota": {
+        "manager": "appmixer:tableau",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "workbookId": {
+                        "type": "string"
+                    },
+                    "timeout": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "default": 120
+                    },
+                    "incremental": {
+                        "type": "boolean",
+                        "default": false
+                    },
+                    "failOnUnsuccessfulJob": {
+                        "type": "boolean",
+                        "default": true
+                    }
+                },
+                "required": [
+                    "workbookId"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "workbookId": {
+                        "type": "text",
+                        "index": 1,
+                        "label": "Workbook ID",
+                        "tooltip": "The ID of the workbook. Use Find Workbooks to get it."
+                    },
+                    "timeout": {
+                        "type": "number",
+                        "index": 2,
+                        "label": "Timeout (minutes)",
+                        "tooltip": "How long to wait for the job to finish before the component fails. A single Tableau Cloud refresh is stopped after 120 minutes. Default: 120.",
+                        "defaultValue": 120
+                    },
+                    "incremental": {
+                        "type": "toggle",
+                        "index": 3,
+                        "label": "Incremental",
+                        "tooltip": "Run an incremental refresh instead of a full one. Applies only to extracts configured for incremental refresh in Tableau. Off: a full refresh, whatever refresh type the extract is configured for. Requires Tableau Cloud or Tableau Server 2026.1 or later (REST API 3.28). Default: off.",
+                        "defaultValue": false
+                    },
+                    "failOnUnsuccessfulJob": {
+                        "type": "toggle",
+                        "index": 4,
+                        "label": "Fail if the job doesn't succeed",
+                        "tooltip": "On: the component fails when the job ends with another status than Success (Failed or Cancelled); the error contains the job ID and Tableau's notes. Off: the finished job is output whatever its status. Default: on.",
+                        "defaultValue": true
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "schema": {
+                "type": "object",
+                "required": [
+                    "id",
+                    "status"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "title": "Job ID",
+                        "example": "2b3c4d5e-6f7a-4b8c-9d0e-1f2a3b4c5d6e"
+                    },
+                    "type": {
+                        "type": "string",
+                        "title": "Type",
+                        "example": "RefreshExtract"
+                    },
+                    "mode": {
+                        "type": "string",
+                        "title": "Mode",
+                        "example": "Asynchronous"
+                    },
+                    "progress": {
+                        "type": "integer",
+                        "title": "Progress",
+                        "example": 100
+                    },
+                    "finishCode": {
+                        "type": "integer",
+                        "title": "Finish Code",
+                        "example": 0
+                    },
+                    "status": {
+                        "type": "string",
+                        "title": "Status",
+                        "example": "Success"
+                    },
+                    "createdAt": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Created At",
+                        "example": "2026-11-17T10:00:00Z"
+                    },
+                    "updatedAt": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Updated At",
+                        "example": "2026-11-17T10:03:10Z"
+                    },
+                    "completedAt": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Completed At",
+                        "example": "2026-11-17T10:03:10Z"
+                    },
+                    "workbookId": {
+                        "type": "string",
+                        "title": "Workbook ID",
+                        "example": "5a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d"
+                    },
+                    "workbookName": {
+                        "type": "string",
+                        "title": "Workbook Name",
+                        "example": "Sales Overview"
+                    },
+                    "datasourceId": {
+                        "type": "string",
+                        "title": "Data Source ID",
+                        "example": "3c4d5e6f-7a8b-4c9d-8e0f-1a2b3c4d5e6f"
+                    },
+                    "datasourceName": {
+                        "type": "string",
+                        "title": "Data Source Name",
+                        "example": "Superstore Orders"
+                    },
+                    "notes": {
+                        "type": "string",
+                        "title": "Notes",
+                        "example": "Finished refresh of extracts (new extract) for Workbook 'Sales Overview'"
+                    }
+                }
+            }
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZmlsbD0iI0U5NzYyNyIgZD0iTTExLjY1NC4xNzRWMi4zNzdIOS42ODJ2LjU4aDEuOTcyVjUuMTZoLjY5NlYyLjk1N2gxLjk3di0uNThoLTEuOTdWLjE3NGgtLjM0OHptNi4wMyAyLjI2MmwtLjAwMiAxLjYyM3YxLjYyM2gtMi45NTd2LjkyN2gyLjk1N3YzLjE4OEgxOC43MjVsLjAxMS0xLjU4Mi4wMi0xLjU3NiAxLjQ2NS0uMDIgMS40Ni0uMDF2LS45MjdIMTguNzI4VjIuNDM2aC0uNTIyem0tMTIuNDA3LjA2VjUuNjg2SDIuMjkxdi45MjVINS4yNzdWOS44MDFoLjk4NVY2LjYxaDMuMDEzdi0uOTI1SDYuMjYyVjIuNDk2SDUuNzcwem02LjA4NiA1LjI3djMuNTkzSDguMDZ2MS4xODhoMy4zMDR2My41OTZoMS4yOHYtMy41OTZIMTUuOTUzdi0xLjE4OEgxMi42NDNWNy43NjZoLS42Mzd6bTkuNzIxIDEuNTV2Mi4yMjFoLTIuMDEydi44MTFoMi4wMTJ2Mi4yNjFoLjg4N3YtMi4yNjFIMjR2LS44MTFoLTIuMDI5VjkuMzE3aC0uNDIyem0tMTkuMTExLjEzMVYxMS42MjFIMHYuNjIxSDEuOTczdjIuMTk0SDIuNjR2LTIuMTk0aDJ2LS42MkgyLjYwOVY5LjQ0NmgtLjMxOHptMTUuNzA5IDQuNTE2djMuMjU0aC0zLjAxNnYuOTI3aDMuMDE2djMuMjE3aDEuMDcydi0zLjIxNkgyMS43NHYtLjkyOEgxOC43NTR2LTMuMjU0aC0uNTMzem0tMTIuNDYzLjAwOHYzLjI0NkgyLjI2MnYuOTI4aDIuOTU3djMuMTg5SDYuMzIwdi0zLjE4OWgyLjk1NXYtLjkyOEg2LjMyMFYxMy45N2gtLjU1em02LjMxNiA0LjU3OGwuMDAyIDEuMTAzdjEuMUg5LjU2NnYuODEyaDEuOTcxdjIuMjYyaC45MjhsLjAxMi0xLjExOS4wMTctMS4xNDNIMTQuNDYzdi0uODEyaC0yVjE4LjU0OWgtLjQ2NXoiLz48L3N2Zz4="
+}
