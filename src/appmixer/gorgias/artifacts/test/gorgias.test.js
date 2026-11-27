@@ -222,6 +222,35 @@ describe('Gorgias', function() {
             assert.deepStrictEqual(context.sent[0].data, { ticketId: 5, tags: ['vip', 'refund'] });
         });
 
+        it('AddTicketTags creates tags that do not exist yet and adds them again', async function() {
+            const context = createContext({
+                content: { ticketId: '5', tags: 'vip, brand-new' },
+                responses: [
+                    httpError(400, { error: { msg: 'Tag(s) not found: [\'brand-new\']' } }),
+                    httpError(400, { error: { msg: 'A tag with this name already exists.' } }),
+                    { status: 201, data: { id: 9, name: 'brand-new' } },
+                    { status: 201, data: {} }
+                ]
+            });
+            await AddTicketTags.receive(context);
+            assert.deepStrictEqual(context.requests.map(r => [r.method, r.url, r.data]), [
+                ['POST', API + '/tickets/5/tags', { names: ['vip', 'brand-new'] }],
+                ['POST', API + '/tags', { name: 'vip' }],
+                ['POST', API + '/tags', { name: 'brand-new' }],
+                ['POST', API + '/tickets/5/tags', { names: ['vip', 'brand-new'] }]
+            ]);
+            assert.deepStrictEqual(context.sent[0].data, { ticketId: 5, tags: ['vip', 'brand-new'] });
+        });
+
+        it('AddTicketTags passes other errors through', async function() {
+            const context = createContext({
+                content: { ticketId: '5', tags: ['vip'] },
+                responses: [httpError(404, { error: { msg: 'Not found' } })]
+            });
+            await assert.rejects(AddTicketTags.receive(context), err => err.response.status === 404);
+            assert.strictEqual(context.requests.length, 1);
+        });
+
         it('ListTags answers an empty list to a failing picker call', async function() {
             const context = createContext({
                 content: { outputType: 'array' }, properties: { isSource: true }, responses: [httpError(500, {})]
