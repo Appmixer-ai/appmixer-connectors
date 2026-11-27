@@ -44,6 +44,8 @@ const AUTH_OVERRIDES = {
     // The site is the content URL of a Tableau site ("mysite"), not a host: lib.js accepts letters,
     // digits, "-" and "_" only. Its name ends with "Url", so the host shapes would be put in it.
     tableau: { siteContentUrl: 'kv-test' },
+    // Qlik Sense accepts only a *.qlikcloud.com / *.qlikcloudgov.com tenant hostname.
+    qliksense: { tenant: 'kv-test.eu.qlikcloud.com' },
     // lib.js accepts only a plain subdomain ("acme" for https://acme.gorgias.com); the placeholder
     // above would read 'subdomain' as a URL because the name ends in "domain".
     gorgias: { subdomain: 'kv-test' }

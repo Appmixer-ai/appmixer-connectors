@@ -1,0 +1,183 @@
+{
+    "name": "appmixer.qliksense.core.ReloadFinished",
+    "label": "Reload Finished",
+    "description": "Triggers when an app reload finishes (succeeded, failed, canceled or exceeded limit), for reloads started from the hub, a schedule, an automation or the API. Registers a Qlik Cloud webhook while the flow runs.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "trigger": true,
+    "webhook": true,
+    "auth": {
+        "service": "appmixer:qliksense"
+    },
+    "quota": {
+        "manager": "appmixer:qliksense",
+        "resources": "writes",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "properties": {
+        "schema": {
+            "type": "object",
+            "properties": {
+                "appId": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
+        "inspector": {
+            "inputs": {
+                "appId": {
+                    "type": "text",
+                    "index": 1,
+                    "label": "App",
+                    "tooltip": "Only reloads of this app. Pick an app, or type the App ID. Leave empty for all apps you can access.",
+                    "source": {
+                        "url": "/component/appmixer/qliksense/core/FindApps?outPort=out",
+                        "data": {
+                            "messages": {
+                                "in/outputType": "array"
+                            },
+                            "properties": {
+                                "isSource": true
+                            },
+                            "transform": "./FindApps#toSelectArray"
+                        }
+                    }
+                },
+                "status": {
+                    "type": "select",
+                    "index": 2,
+                    "label": "Status",
+                    "tooltip": "Only reloads that end with this status.",
+                    "options": [
+                        {
+                            "label": "Succeeded",
+                            "value": "SUCCEEDED"
+                        },
+                        {
+                            "label": "Failed",
+                            "value": "FAILED"
+                        },
+                        {
+                            "label": "Canceled",
+                            "value": "CANCELED"
+                        },
+                        {
+                            "label": "Exceeded Limit",
+                            "value": "EXCEEDED_LIMIT"
+                        }
+                    ]
+                }
+            }
+        }
+    },
+    "outPorts": [
+        {
+            "name": "out",
+            "schema": {
+                "type": "object",
+                "required": [
+                    "id",
+                    "appId",
+                    "status",
+                    "type",
+                    "userId",
+                    "tenantId",
+                    "creationTime",
+                    "succeeded"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "title": "Reload ID",
+                        "example": "6577e2d1c3a5f40001a1b2c3"
+                    },
+                    "appId": {
+                        "type": "string",
+                        "title": "App ID",
+                        "example": "f34b2a1e-5c7d-4e8f-9a0b-1c2d3e4f5a6b"
+                    },
+                    "status": {
+                        "type": "string",
+                        "title": "Status",
+                        "example": "SUCCEEDED"
+                    },
+                    "succeeded": {
+                        "type": "boolean",
+                        "title": "Succeeded",
+                        "example": true
+                    },
+                    "type": {
+                        "type": "string",
+                        "title": "Type",
+                        "example": "external"
+                    },
+                    "partial": {
+                        "type": "boolean",
+                        "title": "Partial",
+                        "example": false
+                    },
+                    "userId": {
+                        "type": "string",
+                        "title": "User ID",
+                        "example": "5f8a1c2b3d4e5f6a7b8c9d0e"
+                    },
+                    "tenantId": {
+                        "type": "string",
+                        "title": "Tenant ID",
+                        "example": "xqGQ0k66vSR8f9G7J-vYtHZQkiYrCpct"
+                    },
+                    "weight": {
+                        "type": "integer",
+                        "title": "Weight",
+                        "example": 0
+                    },
+                    "creationTime": {
+                        "type": "string",
+                        "title": "Creation Time",
+                        "example": "2026-11-16T10:01:40.120Z",
+                        "format": "date-time"
+                    },
+                    "startTime": {
+                        "type": "string",
+                        "title": "Start Time",
+                        "example": "2026-11-16T10:01:41.002Z",
+                        "format": "date-time"
+                    },
+                    "endTime": {
+                        "type": "string",
+                        "title": "End Time",
+                        "example": "2026-11-16T10:01:58.940Z",
+                        "format": "date-time"
+                    },
+                    "engineTime": {
+                        "type": "string",
+                        "title": "Engine Time",
+                        "example": "2026-11-16T10:01:58.901Z",
+                        "format": "date-time"
+                    },
+                    "errorCode": {
+                        "type": "string",
+                        "title": "Error Code",
+                        "example": "EngineReloadFailed"
+                    },
+                    "errorMessage": {
+                        "type": "string",
+                        "title": "Error Message",
+                        "example": "The data load script failed: Field not found."
+                    },
+                    "log": {
+                        "type": "string",
+                        "title": "Log",
+                        "example": "Started loading data\nData has been loaded."
+                    }
+                }
+            }
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB2aWV3Qm94PSIwIDAgMjQgMjQiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZmlsbD0iIzAwOTg0NSIgZD0ibTIzLjc1MTUgMjAuMTM2Ny0zLjEzLTIuNjMyNmMxLjA4NjItMS43MzA3IDEuNzMwMy0zLjc3NDUgMS43MzAzLTUuOTY1NSAwLTYuMTY4NC01LjAwOC0xMS4xNzY0LTExLjE3Ni0xMS4xNzY0UzAgNS4zNzAyIDAgMTEuNTM4NmMwIDYuMTY4IDUuMDA4IDExLjE3NiAxMS4xNzU5IDExLjE3NiAyLjM5MzQgMCA0LjYyMTYtLjc1NTIgNi40NDQzLTIuMDQzOGwzLjMzMjQgMi43OTg4cy40OTc0LjQyMzYuOTIxLS4wNzM4bDEuOTg4NC0yLjM1NjhjLS4wMTg2IDAgLjM4NjQtLjQ5NjgtLjExMDUtLjkwMjN6bS01LjcwNzgtOC41OThjMCAzLjc5MjYtMy4wNzQ3IDYuODY3Mi02Ljg2NzggNi44NjcyLTMuNzkyNiAwLTYuODY3OC0zLjA3NDYtNi44Njc4LTYuODY3MyAwLTMuNzkzIDMuMDc1Mi02Ljg2NzggNi44Njc4LTYuODY3OCAzLjc5MzEgMCA2Ljg2NzggMy4wNzQ3IDYuODY3OCA2Ljg2Nzh6bS0xMS4yODcgMGMwLTIuNDMwNCAxLjk3MDItNC40MDA2IDQuNDAwNi00LjQwMDYgMi40MzAzIDAgNC40MDA1IDEuOTcwMiA0LjQwMDUgNC40MDA1IDAgMi40MzA0LTEuOTcwMiA0LjQwMDYtNC40MDA1IDQuNDAwNi0yLjQzMDQgMC00LjQwMDUtMS45NzAyLTQuNDAwNS00LjQwMDZ6Ii8+PC9zdmc+"
+}

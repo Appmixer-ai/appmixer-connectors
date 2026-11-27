@@ -1,0 +1,153 @@
+{
+    "name": "appmixer.qliksense.core.RunAutomation",
+    "label": "Run Automation",
+    "description": "Run a Qlik Automate automation and wait until the run finishes. Qlik is checked once a minute; the run is sent on when it reaches a final status (finished, finished with warnings, failed, stopped, exceeded limit), so check Succeeded or Status in the next step. If the run does not finish within the timeout, the component fails.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:qliksense"
+    },
+    "quota": {
+        "manager": "appmixer:qliksense",
+        "resources": "writes",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "automationId": {
+                        "type": "string"
+                    },
+                    "timeoutMinutes": {
+                        "type": "integer",
+                        "default": 60
+                    }
+                },
+                "required": [
+                    "automationId"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "automationId": {
+                        "type": "text",
+                        "index": 1,
+                        "label": "Automation",
+                        "tooltip": "Pick an automation, or type the Automation ID.",
+                        "source": {
+                            "url": "/component/appmixer/qliksense/core/FindAutomations?outPort=out",
+                            "data": {
+                                "messages": {
+                                    "in/outputType": "array"
+                                },
+                                "properties": {
+                                    "isSource": true
+                                },
+                                "transform": "./FindAutomations#toSelectArray"
+                            }
+                        }
+                    },
+                    "timeoutMinutes": {
+                        "type": "number",
+                        "index": 2,
+                        "label": "Timeout (minutes)",
+                        "defaultValue": 60,
+                        "min": 2,
+                        "max": 1440,
+                        "tooltip": "How long to wait for the run to finish, in minutes (2 to 1440)."
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "schema": {
+                "type": "object",
+                "required": [
+                    "id",
+                    "automationId",
+                    "status"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "title": "Run ID",
+                        "example": "0a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d"
+                    },
+                    "automationId": {
+                        "type": "string",
+                        "title": "Automation ID",
+                        "example": "9d1e2f3a-4b5c-4d6e-8f7a-8b9c0d1e2f3a"
+                    },
+                    "title": {
+                        "type": "string",
+                        "title": "Title",
+                        "example": "Send sales report"
+                    },
+                    "status": {
+                        "type": "string",
+                        "title": "Status",
+                        "example": "finished"
+                    },
+                    "succeeded": {
+                        "type": "boolean",
+                        "title": "Succeeded",
+                        "example": true
+                    },
+                    "context": {
+                        "type": "string",
+                        "title": "Context",
+                        "example": "api_async"
+                    },
+                    "ownerId": {
+                        "type": "string",
+                        "title": "Owner ID",
+                        "example": "5f8a1c2b3d4e5f6a7b8c9d0e"
+                    },
+                    "spaceId": {
+                        "type": "string",
+                        "title": "Space ID",
+                        "example": "62716f4b39b865ece543cd45"
+                    },
+                    "executedById": {
+                        "type": "string",
+                        "title": "Executed By ID",
+                        "example": "5f8a1c2b3d4e5f6a7b8c9d0e"
+                    },
+                    "createdAt": {
+                        "type": "string",
+                        "title": "Created At",
+                        "example": "2026-11-16T10:00:00.000Z",
+                        "format": "date-time"
+                    },
+                    "startTime": {
+                        "type": "string",
+                        "title": "Start Time",
+                        "example": "2026-11-16T10:00:01.000Z",
+                        "format": "date-time"
+                    },
+                    "stopTime": {
+                        "type": "string",
+                        "title": "Stop Time",
+                        "example": "2026-11-16T10:00:09.000Z",
+                        "format": "date-time"
+                    },
+                    "updatedAt": {
+                        "type": "string",
+                        "title": "Updated At",
+                        "example": "2026-11-16T10:00:09.000Z",
+                        "format": "date-time"
+                    }
+                }
+            }
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB2aWV3Qm94PSIwIDAgMjQgMjQiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZmlsbD0iIzAwOTg0NSIgZD0ibTIzLjc1MTUgMjAuMTM2Ny0zLjEzLTIuNjMyNmMxLjA4NjItMS43MzA3IDEuNzMwMy0zLjc3NDUgMS43MzAzLTUuOTY1NSAwLTYuMTY4NC01LjAwOC0xMS4xNzY0LTExLjE3Ni0xMS4xNzY0UzAgNS4zNzAyIDAgMTEuNTM4NmMwIDYuMTY4IDUuMDA4IDExLjE3NiAxMS4xNzU5IDExLjE3NiAyLjM5MzQgMCA0LjYyMTYtLjc1NTIgNi40NDQzLTIuMDQzOGwzLjMzMjQgMi43OTg4cy40OTc0LjQyMzYuOTIxLS4wNzM4bDEuOTg4NC0yLjM1NjhjLS4wMTg2IDAgLjM4NjQtLjQ5NjgtLjExMDUtLjkwMjN6bS01LjcwNzgtOC41OThjMCAzLjc5MjYtMy4wNzQ3IDYuODY3Mi02Ljg2NzggNi44NjcyLTMuNzkyNiAwLTYuODY3OC0zLjA3NDYtNi44Njc4LTYuODY3MyAwLTMuNzkzIDMuMDc1Mi02Ljg2NzggNi44Njc4LTYuODY3OCAzLjc5MzEgMCA2Ljg2NzggMy4wNzQ3IDYuODY3OCA2Ljg2Nzh6bS0xMS4yODcgMGMwLTIuNDMwNCAxLjk3MDItNC40MDA2IDQuNDAwNi00LjQwMDYgMi40MzAzIDAgNC40MDA1IDEuOTcwMiA0LjQwMDUgNC40MDA1IDAgMi40MzA0LTEuOTcwMiA0LjQwMDYtNC40MDA1IDQuNDAwNi0yLjQzMDQgMC00LjQwMDUtMS45NzAyLTQuNDAwNS00LjQwMDZ6Ii8+PC9zdmc+"
+}

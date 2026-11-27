@@ -263,11 +263,15 @@ const listLatestMessages = async (context, { ticketId, limit = 1 } = {}) => {
 
 const TRIGGER_EVENTS = ['ticket_created', 'ticket_updated', 'ticket_message_created'];
 
+// The webhook URL is public. Each integration sends a random secret in this header, the trigger
+// keeps it in its state and ignores calls without it, so a forged POST cannot make it emit.
+const WEBHOOK_SECRET_HEADER = 'x-appmixer-webhook-secret';
+
 /**
  * Register an HTTP integration that calls the trigger's webhook URL on one ticket event.
  * @param {object} context
  * @param {'ticket_created'|'ticket_updated'|'ticket_message_created'} event
- * @returns {Promise<number>} integration ID
+ * @returns {Promise<{integrationId: number, secret: string}>} save both in the trigger state
  */
 const registerWebhook = async (context, event) => {
 
@@ -275,6 +279,7 @@ const registerWebhook = async (context, event) => {
     for (const name of TRIGGER_EVENTS) {
         triggers[name] = name === event;
     }
+    const secret = crypto.randomBytes(32).toString('hex');
     const form = { event, ticket_id: '{{ticket.id}}' };
     if (event === 'ticket_message_created') {
         form.message_id = '{{message.id}}';
@@ -292,13 +297,31 @@ const registerWebhook = async (context, event) => {
                 method: 'POST',
                 request_content_type: 'application/json',
                 response_content_type: 'application/json',
-                headers: {},
+                headers: { [WEBHOOK_SECRET_HEADER]: secret },
                 form,
                 triggers
             }
         }
     });
-    return data.id;
+    return { integrationId: data.id, secret };
+};
+
+/**
+ * True when a webhook call carries the secret this trigger registered with its integration.
+ * Fails closed: no secret in the state (or none in the call) means the call is not authentic.
+ */
+const isAuthenticWebhook = (context) => {
+
+    const expected = context.state && context.state.secret;
+    const headers = (context.messages.webhook.content || {}).headers || {};
+    const name = Object.keys(headers).find(key => key.toLowerCase() === WEBHOOK_SECRET_HEADER);
+    const received = name ? headers[name] : undefined;
+    if (typeof expected !== 'string' || !expected || typeof received !== 'string') {
+        return false;
+    }
+    const a = Buffer.from(received);
+    const b = Buffer.from(expected);
+    return a.length === b.length && crypto.timingSafeEqual(a, b);
 };
 
 const unregisterWebhook = async (context, integrationId) => {
@@ -412,6 +435,8 @@ module.exports = {
     registerWebhook,
     unregisterWebhook,
     webhookId,
+    isAuthenticWebhook,
+    WEBHOOK_SECRET_HEADER,
     onceByKey,
     webhookBody,
     csvCell,

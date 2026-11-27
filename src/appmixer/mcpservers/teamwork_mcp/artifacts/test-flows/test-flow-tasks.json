@@ -1,0 +1,454 @@
+{
+    "name": "E2E Teamwork MCP - Tasks",
+    "description": "Teamwork.com MCP server under the module's own OAuth (appmixer:mcpservers:teamwork_mcp): ListTools offers twprojects-create_task; CallTool creates a task in the \"E2E tasks\" tasklist of the \"E2E Teamwork MCP\" project (appmixer4.eu.teamwork.com), reads it back by the id from the answer, and completes it (the MCP server has no delete tool). Needs MCP with read-write mode on in the site's Settings → AI.",
+    "flow": {
+        "c1cb1007-1cf8-5a90-bf87-33b37956c1b6": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {},
+            "config": {},
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "a0719867-9f98-5787-a876-fcfed63bcae1": {
+            "type": "appmixer.mcpservers.teamwork_mcp.ListTools",
+            "x": 272,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "c1cb1007-1cf8-5a90-bf87-33b37956c1b6": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "c1cb1007-1cf8-5a90-bf87-33b37956c1b6": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {},
+                                "lambda": {}
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "30231fed-89ad-5a1f-b7f9-885f96829388": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 480,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "a0719867-9f98-5787-a876-fcfed63bcae1": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "a0719867-9f98-5787-a876-fcfed63bcae1": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "019bca14-933e-5d16-9032-38e16b6c2651": {
+                                            "variable": "$.a0719867-9f98-5787-a876-fcfed63bcae1.out.tools",
+                                            "functions": [
+                                                {
+                                                    "name": "g_length"
+                                                }
+                                            ]
+                                        },
+                                        "713da74e-d78c-569b-bcc8-cdf6cfc03808": {
+                                            "variable": "$.a0719867-9f98-5787-a876-fcfed63bcae1.out.tools",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$[?(@.name=='twprojects-create_task')].name"
+                                                        }
+                                                    ]
+                                                },
+                                                {
+                                                    "name": "g_first"
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{019bca14-933e-5d16-9032-38e16b6c2651}}}",
+                                                "assertion": "notEmpty"
+                                            },
+                                            {
+                                                "field": "{{{713da74e-d78c-569b-bcc8-cdf6cfc03808}}}",
+                                                "assertion": "equal",
+                                                "expected": "twprojects-create_task"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "3d10257b-68e8-5b06-96a0-0f6a265424b9": {
+            "type": "appmixer.mcpservers.teamwork_mcp.CallTool",
+            "x": 688,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "30231fed-89ad-5a1f-b7f9-885f96829388": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "30231fed-89ad-5a1f-b7f9-885f96829388": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "name": {
+                                        "a183affa-b8ef-5424-b62a-2375a146789d": {
+                                            "variable": "$.c1cb1007-1cf8-5a90-bf87-33b37956c1b6.out.started",
+                                            "functions": []
+                                        }
+                                    },
+                                    "tasklist_id": {}
+                                },
+                                "lambda": {
+                                    "name": "E2E Teamwork MCP task {{{a183affa-b8ef-5424-b62a-2375a146789d}}}",
+                                    "tasklist_id": 1668663
+                                }
+                            }
+                        }
+                    }
+                },
+                "properties": {
+                    "tool": "twprojects-create_task"
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "efeda5dd-f89e-5786-a66f-1b29ffb7d350": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 896,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "3d10257b-68e8-5b06-96a0-0f6a265424b9": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "3d10257b-68e8-5b06-96a0-0f6a265424b9": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "bc33a1c9-6692-536e-ab23-1aa35e7043ee": {
+                                            "variable": "$.3d10257b-68e8-5b06-96a0-0f6a265424b9.out.output",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{bc33a1c9-6692-536e-ab23-1aa35e7043ee}}}",
+                                                "assertion": "regex",
+                                                "regex": "^Task created successfully with ID \\d+$"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "eda6a501-da37-5034-a7ff-185b6b2a587c": {
+            "type": "appmixer.mcpservers.teamwork_mcp.CallTool",
+            "x": 1104,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "efeda5dd-f89e-5786-a66f-1b29ffb7d350": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "efeda5dd-f89e-5786-a66f-1b29ffb7d350": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "id": {
+                                        "4ff83be5-fbe2-5709-8aff-7484399bde97": {
+                                            "variable": "$.3d10257b-68e8-5b06-96a0-0f6a265424b9.out.output",
+                                            "functions": [
+                                                {
+                                                    "name": "g_split",
+                                                    "params": [
+                                                        {
+                                                            "value": " "
+                                                        }
+                                                    ]
+                                                },
+                                                {
+                                                    "name": "g_last"
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "id": "{{{4ff83be5-fbe2-5709-8aff-7484399bde97}}}"
+                                }
+                            }
+                        }
+                    }
+                },
+                "properties": {
+                    "tool": "twprojects-get_task"
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "2fb11f2e-93e8-5c27-a08b-7a7def79f650": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1312,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "eda6a501-da37-5034-a7ff-185b6b2a587c": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "eda6a501-da37-5034-a7ff-185b6b2a587c": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "df19a2f1-1063-552b-8a51-a2dca1867725": {
+                                            "variable": "$.eda6a501-da37-5034-a7ff-185b6b2a587c.out.output",
+                                            "functions": []
+                                        },
+                                        "0a03ed8e-26a9-5923-a5ad-2662d100612f": {
+                                            "variable": "$.c1cb1007-1cf8-5a90-bf87-33b37956c1b6.out.started",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{df19a2f1-1063-552b-8a51-a2dca1867725}}}",
+                                                "assertion": "regex",
+                                                "regex": "\"name\":\\s*\"E2E Teamwork MCP task {{{0a03ed8e-26a9-5923-a5ad-2662d100612f}}}\""
+                                            },
+                                            {
+                                                "field": "{{{df19a2f1-1063-552b-8a51-a2dca1867725}}}",
+                                                "assertion": "regex",
+                                                "regex": "\"tasklist\":\\s*\\{\\s*\"id\":\\s*1668663\\b"
+                                            },
+                                            {
+                                                "field": "{{{df19a2f1-1063-552b-8a51-a2dca1867725}}}",
+                                                "assertion": "regex",
+                                                "regex": "\"status\":\\s*\"new\""
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "f3ac3907-a369-5237-a623-df431bd80c77": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 1520,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "30231fed-89ad-5a1f-b7f9-885f96829388": [
+                        "out"
+                    ],
+                    "efeda5dd-f89e-5786-a66f-1b29ffb7d350": [
+                        "out"
+                    ],
+                    "2fb11f2e-93e8-5c27-a08b-7a7def79f650": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 180
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "3e750118-05f0-5ab1-b958-fe1c802918f5": {
+            "type": "appmixer.mcpservers.teamwork_mcp.CallTool",
+            "x": 1728,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "f3ac3907-a369-5237-a623-df431bd80c77": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "f3ac3907-a369-5237-a623-df431bd80c77": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "id": {
+                                        "e3f05375-697d-5de6-a0bb-185c6ec4e950": {
+                                            "variable": "$.3d10257b-68e8-5b06-96a0-0f6a265424b9.out.output",
+                                            "functions": [
+                                                {
+                                                    "name": "g_split",
+                                                    "params": [
+                                                        {
+                                                            "value": " "
+                                                        }
+                                                    ]
+                                                },
+                                                {
+                                                    "name": "g_last"
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "id": "{{{e3f05375-697d-5de6-a0bb-185c6ec4e950}}}"
+                                }
+                            }
+                        }
+                    }
+                },
+                "properties": {
+                    "tool": "twprojects-complete_task"
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "47b8644c-2450-5223-a577-d12fe6338c7c": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1936,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "3e750118-05f0-5ab1-b958-fe1c802918f5": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "successStoreId": "64f6f1f9193228000754082f",
+                    "failedStoreId": "64f6f1f0193228000754082e"
+                },
+                "transform": {
+                    "in": {
+                        "3e750118-05f0-5ab1-b958-fe1c802918f5": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "a961a56c-4b94-5a7c-8f01-98b2f3c6dff3": {
+                                            "variable": "$.f3ac3907-a369-5237-a623-df431bd80c77.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E Teamwork MCP - Tasks",
+                                    "result": "{{{a961a56c-4b94-5a7c-8f01-98b2f3c6dff3}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        }
+    }
+}
