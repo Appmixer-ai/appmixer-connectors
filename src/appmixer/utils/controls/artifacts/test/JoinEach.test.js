@@ -120,7 +120,9 @@ describe('JoinEach Component', () => {
         assert.deepStrictEqual(h.flowState, {});
     });
 
-    it('should keep many joins in progress out of the component state (#3159)', async () => {
+    it('should keep many joins in progress out of the component state (#3159)', async function() {
+        // Same load as the Each #3159 test (#1570): fine locally, can exceed mocha's 2 s default on a slow CI runner.
+        this.timeout(10000);
         const h = createHarness();
         const joins = Array.from({ length: 20 }, (_, i) => `c${i}`);
 
