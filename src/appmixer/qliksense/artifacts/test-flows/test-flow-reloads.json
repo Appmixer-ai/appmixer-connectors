@@ -1,0 +1,822 @@
+{
+    "name": "E2E Qlik Sense - reloads",
+    "description": "Reload an app and wait, get and find the reload, cancel a second reload; Reload Finished trigger.",
+    "flow": {
+        "c5e75d66-76ab-4470-b065-128c01e4a8cb": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {},
+            "config": {},
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "7a79d8a2-4f47-4a0d-9bd4-f95f053ce3c5": {
+            "type": "appmixer.utils.timers.Wait",
+            "x": 272,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "c5e75d66-76ab-4470-b065-128c01e4a8cb": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "c5e75d66-76ab-4470-b065-128c01e4a8cb": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "interval": {}
+                                },
+                                "lambda": {
+                                    "interval": "1m"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "aaf12ad6-3c68-4d4b-8193-0a0975f53dd7": {
+            "type": "appmixer.qliksense.core.CreateApp",
+            "x": 480,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "7a79d8a2-4f47-4a0d-9bd4-f95f053ce3c5": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "7a79d8a2-4f47-4a0d-9bd4-f95f053ce3c5": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "name": {
+                                        "e5f31dc6-ab9b-4aac-a4f3-c6f3ac177eff": {
+                                            "functions": [
+                                                {
+                                                    "name": "g_timestamp"
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "name": "E2E Qlik reload app {{{e5f31dc6-ab9b-4aac-a4f3-c6f3ac177eff}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "717a13ce-1d65-4fec-998f-193cf094b386": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 688,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "aaf12ad6-3c68-4d4b-8193-0a0975f53dd7": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "aaf12ad6-3c68-4d4b-8193-0a0975f53dd7": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "b8231145-67e8-4e1a-a948-b423af24a516": {
+                                            "variable": "$.aaf12ad6-3c68-4d4b-8193-0a0975f53dd7.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{b8231145-67e8-4e1a-a948-b423af24a516}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "55785632-d8a3-4515-8abd-3be94c85c04a": {
+            "type": "appmixer.qliksense.core.ReloadApp",
+            "x": 688,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "aaf12ad6-3c68-4d4b-8193-0a0975f53dd7": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "aaf12ad6-3c68-4d4b-8193-0a0975f53dd7": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "appId": {
+                                        "e43d6499-c4bc-4a83-a4de-73f0f8a3456a": {
+                                            "variable": "$.aaf12ad6-3c68-4d4b-8193-0a0975f53dd7.out.id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "timeoutMinutes": {},
+                                    "failIfNotSucceeded": {}
+                                },
+                                "lambda": {
+                                    "appId": "{{{e43d6499-c4bc-4a83-a4de-73f0f8a3456a}}}",
+                                    "timeoutMinutes": 15,
+                                    "failIfNotSucceeded": true
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "b045ed77-521c-454b-86f4-05f405a6cfef": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 896,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "55785632-d8a3-4515-8abd-3be94c85c04a": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "55785632-d8a3-4515-8abd-3be94c85c04a": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "29e94ffd-de38-4006-b53b-e87aace4bedb": {
+                                            "variable": "$.55785632-d8a3-4515-8abd-3be94c85c04a.out.status",
+                                            "functions": []
+                                        },
+                                        "08cc2b93-f3b8-4a02-ad86-a3caab91ba98": {
+                                            "variable": "$.55785632-d8a3-4515-8abd-3be94c85c04a.out.succeeded",
+                                            "functions": []
+                                        },
+                                        "c5734a26-d5cd-440c-960e-715f68f7897f": {
+                                            "variable": "$.55785632-d8a3-4515-8abd-3be94c85c04a.out.appId",
+                                            "functions": []
+                                        },
+                                        "f1823842-4401-4d90-9ee5-131fa20620bf": {
+                                            "variable": "$.aaf12ad6-3c68-4d4b-8193-0a0975f53dd7.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{29e94ffd-de38-4006-b53b-e87aace4bedb}}}",
+                                                "assertion": "equal",
+                                                "expected": "SUCCEEDED"
+                                            },
+                                            {
+                                                "field": "{{{08cc2b93-f3b8-4a02-ad86-a3caab91ba98}}}",
+                                                "assertion": "equal",
+                                                "expected": "true"
+                                            },
+                                            {
+                                                "field": "{{{c5734a26-d5cd-440c-960e-715f68f7897f}}}",
+                                                "assertion": "equal",
+                                                "expected": "{{{f1823842-4401-4d90-9ee5-131fa20620bf}}}"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "5fff4576-4d21-4cd0-9c58-0906e58e74aa": {
+            "type": "appmixer.qliksense.core.GetReload",
+            "x": 896,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "55785632-d8a3-4515-8abd-3be94c85c04a": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "55785632-d8a3-4515-8abd-3be94c85c04a": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "reloadId": {
+                                        "80ea9e07-2ea8-4cd7-ab46-efd5cea8f47f": {
+                                            "variable": "$.55785632-d8a3-4515-8abd-3be94c85c04a.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "reloadId": "{{{80ea9e07-2ea8-4cd7-ab46-efd5cea8f47f}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "6f255dac-71ff-4808-8050-7ca8d81d65d6": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1104,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "5fff4576-4d21-4cd0-9c58-0906e58e74aa": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "5fff4576-4d21-4cd0-9c58-0906e58e74aa": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "bd6b3717-80b3-4cfe-872c-79ecd28b657e": {
+                                            "variable": "$.5fff4576-4d21-4cd0-9c58-0906e58e74aa.out.id",
+                                            "functions": []
+                                        },
+                                        "99f9657b-fe70-4ec9-833b-dcdb6bfbb952": {
+                                            "variable": "$.55785632-d8a3-4515-8abd-3be94c85c04a.out.id",
+                                            "functions": []
+                                        },
+                                        "ac1a447b-8765-4fca-ac4a-d7abee275ce0": {
+                                            "variable": "$.5fff4576-4d21-4cd0-9c58-0906e58e74aa.out.status",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{bd6b3717-80b3-4cfe-872c-79ecd28b657e}}}",
+                                                "assertion": "equal",
+                                                "expected": "{{{99f9657b-fe70-4ec9-833b-dcdb6bfbb952}}}"
+                                            },
+                                            {
+                                                "field": "{{{ac1a447b-8765-4fca-ac4a-d7abee275ce0}}}",
+                                                "assertion": "equal",
+                                                "expected": "SUCCEEDED"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "065d0463-50a1-4273-9bb5-6b12c63dcc53": {
+            "type": "appmixer.qliksense.core.FindReloads",
+            "x": 1104,
+            "y": 400,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "5fff4576-4d21-4cd0-9c58-0906e58e74aa": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "5fff4576-4d21-4cd0-9c58-0906e58e74aa": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "appId": {
+                                        "3574078e-d973-4b56-bfe5-c0e3ca488d8d": {
+                                            "variable": "$.aaf12ad6-3c68-4d4b-8193-0a0975f53dd7.out.id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "status": {},
+                                    "includeLog": {},
+                                    "outputType": {}
+                                },
+                                "lambda": {
+                                    "appId": "{{{3574078e-d973-4b56-bfe5-c0e3ca488d8d}}}",
+                                    "status": "SUCCEEDED",
+                                    "includeLog": true,
+                                    "outputType": "first"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "2467c435-7886-4980-ad17-b21e9f568493": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1312,
+            "y": 400,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "065d0463-50a1-4273-9bb5-6b12c63dcc53": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "065d0463-50a1-4273-9bb5-6b12c63dcc53": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "ac4d4060-5150-4ee9-83d3-fccdd702cc16": {
+                                            "variable": "$.065d0463-50a1-4273-9bb5-6b12c63dcc53.out.id",
+                                            "functions": []
+                                        },
+                                        "4dd0c976-b4a8-4f70-9c86-0c72f1622b5d": {
+                                            "variable": "$.55785632-d8a3-4515-8abd-3be94c85c04a.out.id",
+                                            "functions": []
+                                        },
+                                        "42fae00f-76b6-4651-91b8-32295f7048e1": {
+                                            "variable": "$.065d0463-50a1-4273-9bb5-6b12c63dcc53.out.log",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{ac4d4060-5150-4ee9-83d3-fccdd702cc16}}}",
+                                                "assertion": "equal",
+                                                "expected": "{{{4dd0c976-b4a8-4f70-9c86-0c72f1622b5d}}}"
+                                            },
+                                            {
+                                                "field": "{{{42fae00f-76b6-4651-91b8-32295f7048e1}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "0e030d47-d0a8-4168-9302-0263b8ad6a28": {
+            "type": "appmixer.qliksense.core.MakeApiCall",
+            "x": 1312,
+            "y": 528,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "065d0463-50a1-4273-9bb5-6b12c63dcc53": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "065d0463-50a1-4273-9bb5-6b12c63dcc53": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "url": {},
+                                    "method": {},
+                                    "body": {
+                                        "fb60e8a4-a56f-433f-868f-de62b4da181f": {
+                                            "variable": "$.aaf12ad6-3c68-4d4b-8193-0a0975f53dd7.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "url": "/api/v1/reloads",
+                                    "method": "POST",
+                                    "body": "{\"appId\": \"{{{fb60e8a4-a56f-433f-868f-de62b4da181f}}}\"}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "f9908cb6-0144-4b71-ae97-2c763577e592": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1520,
+            "y": 528,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "0e030d47-d0a8-4168-9302-0263b8ad6a28": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "0e030d47-d0a8-4168-9302-0263b8ad6a28": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "cb0d7c54-bd13-44a6-bbd0-518db8ed5896": {
+                                            "variable": "$.0e030d47-d0a8-4168-9302-0263b8ad6a28.out.statusCode",
+                                            "functions": []
+                                        },
+                                        "66c4d38a-f0e5-4875-b45d-1cdce6c322b3": {
+                                            "variable": "$.0e030d47-d0a8-4168-9302-0263b8ad6a28.out.body",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$.id"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{cb0d7c54-bd13-44a6-bbd0-518db8ed5896}}}",
+                                                "assertion": "equal",
+                                                "expected": "201"
+                                            },
+                                            {
+                                                "field": "{{{66c4d38a-f0e5-4875-b45d-1cdce6c322b3}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "658822fe-cec2-4652-a7cd-4bbd21c7bd28": {
+            "type": "appmixer.qliksense.core.CancelReload",
+            "x": 1520,
+            "y": 656,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "0e030d47-d0a8-4168-9302-0263b8ad6a28": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "0e030d47-d0a8-4168-9302-0263b8ad6a28": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "reloadId": {
+                                        "376a18a4-9f74-45fc-927f-ca0f8729bc64": {
+                                            "variable": "$.0e030d47-d0a8-4168-9302-0263b8ad6a28.out.body",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$.id"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "reloadId": "{{{376a18a4-9f74-45fc-927f-ca0f8729bc64}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "a3740b38-3cdf-4ce1-8ddb-f710d24d2924": {
+            "type": "appmixer.qliksense.core.ReloadFinished",
+            "x": 480,
+            "y": 912,
+            "version": "1.0.0",
+            "source": {},
+            "config": {
+                "properties": {}
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "32064dad-cc80-4261-ad5e-e74f99f1179b": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 688,
+            "y": 912,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "a3740b38-3cdf-4ce1-8ddb-f710d24d2924": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "a3740b38-3cdf-4ce1-8ddb-f710d24d2924": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "656d69dc-16d9-4467-bfe3-2358287ae8af": {
+                                            "variable": "$.a3740b38-3cdf-4ce1-8ddb-f710d24d2924.out.id",
+                                            "functions": []
+                                        },
+                                        "222424bb-8b38-4135-804d-4d923157e442": {
+                                            "variable": "$.a3740b38-3cdf-4ce1-8ddb-f710d24d2924.out.appId",
+                                            "functions": []
+                                        },
+                                        "76b694ec-989e-48ad-83e4-6960807caeba": {
+                                            "variable": "$.a3740b38-3cdf-4ce1-8ddb-f710d24d2924.out.status",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{656d69dc-16d9-4467-bfe3-2358287ae8af}}}",
+                                                "assertion": "notEmpty"
+                                            },
+                                            {
+                                                "field": "{{{222424bb-8b38-4135-804d-4d923157e442}}}",
+                                                "assertion": "notEmpty"
+                                            },
+                                            {
+                                                "field": "{{{76b694ec-989e-48ad-83e4-6960807caeba}}}",
+                                                "assertion": "regex",
+                                                "regex": "^(SUCCEEDED|CANCELED|FAILED)$"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "134e038c-58f0-4547-a146-f597a6e17b31": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 1936,
+            "y": 784,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "717a13ce-1d65-4fec-998f-193cf094b386": [
+                        "out"
+                    ],
+                    "b045ed77-521c-454b-86f4-05f405a6cfef": [
+                        "out"
+                    ],
+                    "6f255dac-71ff-4808-8050-7ca8d81d65d6": [
+                        "out"
+                    ],
+                    "2467c435-7886-4980-ad17-b21e9f568493": [
+                        "out"
+                    ],
+                    "f9908cb6-0144-4b71-ae97-2c763577e592": [
+                        "out"
+                    ],
+                    "658822fe-cec2-4652-a7cd-4bbd21c7bd28": [
+                        "out"
+                    ],
+                    "32064dad-cc80-4261-ad5e-e74f99f1179b": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 420
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "f8e4bcc5-a553-467f-925c-b6692aed652a": {
+            "type": "appmixer.qliksense.core.DeleteApp",
+            "x": 2144,
+            "y": 784,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "134e038c-58f0-4547-a146-f597a6e17b31": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "134e038c-58f0-4547-a146-f597a6e17b31": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "appId": {
+                                        "7fa1e4a2-0e15-458c-9dcb-4bf9b7076ff7": {
+                                            "variable": "$.aaf12ad6-3c68-4d4b-8193-0a0975f53dd7.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "appId": "{{{7fa1e4a2-0e15-458c-9dcb-4bf9b7076ff7}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "b78e3307-0ddb-4e20-9e64-faedc8bbd31c": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 2352,
+            "y": 784,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "f8e4bcc5-a553-467f-925c-b6692aed652a": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "successStoreId": "64f6f1f9193228000754082f",
+                    "failedStoreId": "64f6f1f0193228000754082e"
+                },
+                "transform": {
+                    "in": {
+                        "f8e4bcc5-a553-467f-925c-b6692aed652a": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "83bcf300-86bf-4250-806e-27e5d30a4fad": {
+                                            "variable": "$.134e038c-58f0-4547-a146-f597a6e17b31.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E Qlik Sense - reloads",
+                                    "result": "{{{83bcf300-86bf-4250-806e-27e5d30a4fad}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        }
+    },
+    "notes": {
+        "0afd44fb-f1c4-43a2-bdc8-b520d92788a1": {
+            "x": 64,
+            "y": -280,
+            "width": 672,
+            "height": 224,
+            "content": "## ⚠️ Timing assumptions\n\n1. **Reload App** polls once a minute, so this flow takes a few minutes.\n2. **Cancel Reload** cancels a reload started a moment earlier with Make API Call. An empty app reloads in seconds; if the reload already finished, Qlik answers 409 and Cancel Reload fails. Keep Cancel Reload directly after the Make API Call.\n3. **Reload Finished** registers a user-level webhook at flow start; the Wait lets the subscription settle before the first reload. Webhook deliveries can take a few minutes."
+        }
+    }
+}

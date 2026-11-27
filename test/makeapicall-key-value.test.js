@@ -41,6 +41,8 @@ const CONFIG = {
 const AUTH_OVERRIDES = {
     // lib.js accepts only a *.workday.com / *.myworkday.com hostname.
     workday: { host: 'kv-test.workday.com' },
+    // Qlik Sense accepts only a *.qlikcloud.com / *.qlikcloudgov.com tenant hostname.
+    qliksense: { tenant: 'kv-test.eu.qlikcloud.com' },
     // lib.js accepts only a plain subdomain ("acme" for https://acme.gorgias.com); the placeholder
     // above would read 'subdomain' as a URL because the name ends in "domain".
     gorgias: { subdomain: 'kv-test' }
