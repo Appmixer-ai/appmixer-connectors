@@ -10,6 +10,7 @@ const NewOrder = require('../../core/NewOrder/NewOrder');
 const TicketUpdated = require('../../core/TicketUpdated/TicketUpdated');
 const ActivityUpdated = require('../../core/ActivityUpdated/ActivityUpdated');
 const FindTickets = require('../../core/FindTickets/FindTickets');
+const CreateTicket = require('../../core/CreateTicket/CreateTicket');
 const UpdateTicket = require('../../core/UpdateTicket/UpdateTicket');
 const AddTicketComment = require('../../core/AddTicketComment/AddTicketComment');
 const UpdateActivity = require('../../core/UpdateActivity/UpdateActivity');
@@ -371,6 +372,19 @@ describe('upsales Updated triggers: changed fields and previous values', functio
 });
 
 describe('upsales tickets', function() {
+
+    it('CreateTicket sends the description the API requires', async function() {
+        const context = createContext({
+            responder: async () => ({ data: { error: null, data: { id: 101 } } }),
+            content: { title: 'Login', description: 'Cannot log in', statusId: '1', typeId: '1' }
+        });
+        await CreateTicket.receive(context);
+        assert.deepStrictEqual(context.requests[0].data, {
+            title: 'Login', description: 'Cannot log in', status: { id: 1 }, type: { id: 1 }
+        });
+        const missing = createContext({ responder: async () => ({ data: {} }), content: { title: 'x', statusId: '1', typeId: '1' } });
+        await assert.rejects(CreateTicket.receive(missing), CancelError);
+    });
 
     it('FindTickets sends the filters and goes to notFound on an empty result', async function() {
         const context = createContext({

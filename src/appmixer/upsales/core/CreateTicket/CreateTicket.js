@@ -8,6 +8,7 @@ module.exports = {
 
         const {
             title,
+            description,
             statusId,
             typeId,
             companyId,
@@ -20,6 +21,9 @@ module.exports = {
         if (!title) {
             throw new context.CancelError('Title is required!');
         }
+        if (!description) {
+            throw new context.CancelError('Description is required!');
+        }
         if (!statusId) {
             throw new context.CancelError('Status ID is required!');
         }
@@ -29,6 +33,7 @@ module.exports = {
 
         const body = lib.compact({
             title,
+            description,
             status: lib.ref(statusId),
             type: lib.ref(typeId),
             client: lib.ref(companyId),
