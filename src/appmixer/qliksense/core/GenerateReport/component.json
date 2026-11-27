@@ -1,0 +1,209 @@
+{
+    "name": "appmixer.qliksense.core.GenerateReport",
+    "label": "Generate Report",
+    "description": "Export a sheet or a visualization of a Qlik Sense app as a PDF, PowerPoint or PNG file and wait for it. Qlik is checked once a minute; the file is saved when the report is done. Report generation is limited to 10 requests per minute and needs the reporting entitlement of your subscription.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:qliksense"
+    },
+    "quota": {
+        "manager": "appmixer:qliksense",
+        "resources": "reports",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "appId": {
+                        "type": "string"
+                    },
+                    "objectType": {
+                        "type": "string"
+                    },
+                    "objectId": {
+                        "type": "string"
+                    },
+                    "format": {
+                        "type": "string"
+                    },
+                    "widthPx": {
+                        "type": "integer"
+                    },
+                    "heightPx": {
+                        "type": "integer"
+                    },
+                    "fileName": {
+                        "type": "string"
+                    },
+                    "timeoutMinutes": {
+                        "type": "integer",
+                        "default": 30
+                    }
+                },
+                "required": [
+                    "appId",
+                    "objectType",
+                    "objectId",
+                    "format"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "appId": {
+                        "type": "text",
+                        "index": 1,
+                        "label": "App",
+                        "tooltip": "Pick an app, or type the App ID (a UUID, for example <code>f34b2a1e-5c7d-4e8f-9a0b-1c2d3e4f5a6b</code>). The App ID is in the app URL: <code>/sense/app/&lt;appId&gt;</code>.",
+                        "source": {
+                            "url": "/component/appmixer/qliksense/core/FindApps?outPort=out",
+                            "data": {
+                                "messages": {
+                                    "in/outputType": "array"
+                                },
+                                "properties": {
+                                    "isSource": true
+                                },
+                                "transform": "./FindApps#toSelectArray"
+                            }
+                        }
+                    },
+                    "objectType": {
+                        "type": "select",
+                        "index": 2,
+                        "label": "Export",
+                        "defaultValue": "sheet",
+                        "tooltip": "Export a whole sheet or a single visualization (chart, table, KPI).",
+                        "options": [
+                            {
+                                "label": "Sheet",
+                                "value": "sheet"
+                            },
+                            {
+                                "label": "Visualization",
+                                "value": "visualization"
+                            }
+                        ]
+                    },
+                    "objectId": {
+                        "type": "text",
+                        "index": 3,
+                        "label": "Sheet or Visualization ID",
+                        "tooltip": "The object ID of the sheet or visualization. Open the sheet in Qlik: the sheet ID follows <code>/sheet/</code> in the URL; a visualization ID is shown under Developer mode (<code>?qlikdev=true</code>) or in the object properties."
+                    },
+                    "format": {
+                        "type": "select",
+                        "index": 4,
+                        "label": "Format",
+                        "defaultValue": "pdf",
+                        "tooltip": "The file format. PNG is available for visualizations only.",
+                        "options": [
+                            {
+                                "label": "PDF",
+                                "value": "pdf"
+                            },
+                            {
+                                "label": "PowerPoint (PPTX)",
+                                "value": "pptx"
+                            },
+                            {
+                                "label": "PNG image",
+                                "value": "png"
+                            }
+                        ]
+                    },
+                    "widthPx": {
+                        "type": "number",
+                        "index": 5,
+                        "label": "Width (px)",
+                        "min": 5,
+                        "max": 4000,
+                        "tooltip": "Width of the rendered sheet or visualization in pixels. Required for a visualization (default 1280)."
+                    },
+                    "heightPx": {
+                        "type": "number",
+                        "index": 6,
+                        "label": "Height (px)",
+                        "min": 5,
+                        "max": 4000,
+                        "tooltip": "Height of the rendered sheet or visualization in pixels. Required for a visualization (default 720)."
+                    },
+                    "fileName": {
+                        "type": "text",
+                        "index": 7,
+                        "label": "File Name",
+                        "tooltip": "Name of the saved file, without extension. Defaults to the object ID."
+                    },
+                    "timeoutMinutes": {
+                        "type": "number",
+                        "index": 8,
+                        "label": "Timeout (minutes)",
+                        "defaultValue": 30,
+                        "min": 2,
+                        "max": 240,
+                        "tooltip": "How long to wait for the report, in minutes (2 to 240)."
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "schema": {
+                "type": "object",
+                "required": [
+                    "fileId",
+                    "fileName",
+                    "reportId",
+                    "appId",
+                    "objectId",
+                    "format"
+                ],
+                "properties": {
+                    "fileId": {
+                        "type": "string",
+                        "title": "File ID",
+                        "example": "5f0c1d2e3f4a5b6c7d8e9f0a"
+                    },
+                    "fileName": {
+                        "type": "string",
+                        "title": "File Name",
+                        "example": "sales-overview.pdf"
+                    },
+                    "fileSize": {
+                        "type": "integer",
+                        "title": "File Size",
+                        "example": 184320
+                    },
+                    "reportId": {
+                        "type": "string",
+                        "title": "Report ID",
+                        "example": "0b1c2d3e-4f5a-4b6c-8d7e-9f0a1b2c3d4e"
+                    },
+                    "appId": {
+                        "type": "string",
+                        "title": "App ID",
+                        "example": "f34b2a1e-5c7d-4e8f-9a0b-1c2d3e4f5a6b"
+                    },
+                    "objectId": {
+                        "type": "string",
+                        "title": "Object ID",
+                        "example": "pJmZsT"
+                    },
+                    "format": {
+                        "type": "string",
+                        "title": "Format",
+                        "example": "pdf"
+                    }
+                }
+            }
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB2aWV3Qm94PSIwIDAgMjQgMjQiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZmlsbD0iIzAwOTg0NSIgZD0ibTIzLjc1MTUgMjAuMTM2Ny0zLjEzLTIuNjMyNmMxLjA4NjItMS43MzA3IDEuNzMwMy0zLjc3NDUgMS43MzAzLTUuOTY1NSAwLTYuMTY4NC01LjAwOC0xMS4xNzY0LTExLjE3Ni0xMS4xNzY0UzAgNS4zNzAyIDAgMTEuNTM4NmMwIDYuMTY4IDUuMDA4IDExLjE3NiAxMS4xNzU5IDExLjE3NiAyLjM5MzQgMCA0LjYyMTYtLjc1NTIgNi40NDQzLTIuMDQzOGwzLjMzMjQgMi43OTg4cy40OTc0LjQyMzYuOTIxLS4wNzM4bDEuOTg4NC0yLjM1NjhjLS4wMTg2IDAgLjM4NjQtLjQ5NjgtLjExMDUtLjkwMjN6bS01LjcwNzgtOC41OThjMCAzLjc5MjYtMy4wNzQ3IDYuODY3Mi02Ljg2NzggNi44NjcyLTMuNzkyNiAwLTYuODY3OC0zLjA3NDYtNi44Njc4LTYuODY3MyAwLTMuNzkzIDMuMDc1Mi02Ljg2NzggNi44Njc4LTYuODY3OCAzLjc5MzEgMCA2Ljg2NzggMy4wNzQ3IDYuODY3OCA2Ljg2Nzh6bS0xMS4yODcgMGMwLTIuNDMwNCAxLjk3MDItNC40MDA2IDQuNDAwNi00LjQwMDYgMi40MzAzIDAgNC40MDA1IDEuOTcwMiA0LjQwMDUgNC40MDA1IDAgMi40MzA0LTEuOTcwMiA0LjQwMDYtNC40MDA1IDQuNDAwNi0yLjQzMDQgMC00LjQwMDUtMS45NzAyLTQuNDAwNS00LjQwMDZ6Ii8+PC9zdmc+"
+}

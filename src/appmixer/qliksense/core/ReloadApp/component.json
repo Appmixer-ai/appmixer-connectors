@@ -1,0 +1,207 @@
+{
+    "name": "appmixer.qliksense.core.ReloadApp",
+    "label": "Reload App",
+    "description": "Reload the data of a Qlik Sense app and wait until the reload finishes. Qlik is checked once a minute. By default the component fails when the reload ends with any status other than succeeded (failed, canceled or exceeded limit); turn off Fail If the Reload Doesn't Succeed to get every final status on the output. If the reload does not finish within the timeout, the component fails.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:qliksense"
+    },
+    "quota": {
+        "manager": "appmixer:qliksense",
+        "resources": "reloads",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "appId": {
+                        "type": "string"
+                    },
+                    "partial": {
+                        "type": "boolean"
+                    },
+                    "variables": {
+                        "type": "string"
+                    },
+                    "timeoutMinutes": {
+                        "type": "integer",
+                        "default": 60
+                    },
+                    "failIfNotSucceeded": {
+                        "type": "boolean",
+                        "default": true
+                    }
+                },
+                "required": [
+                    "appId"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "appId": {
+                        "type": "text",
+                        "index": 1,
+                        "label": "App",
+                        "tooltip": "Pick an app, or type the App ID (a UUID, for example <code>f34b2a1e-5c7d-4e8f-9a0b-1c2d3e4f5a6b</code>). The App ID is in the app URL: <code>/sense/app/&lt;appId&gt;</code>.",
+                        "source": {
+                            "url": "/component/appmixer/qliksense/core/FindApps?outPort=out",
+                            "data": {
+                                "messages": {
+                                    "in/outputType": "array"
+                                },
+                                "properties": {
+                                    "isSource": true
+                                },
+                                "transform": "./FindApps#toSelectArray"
+                            }
+                        }
+                    },
+                    "partial": {
+                        "type": "toggle",
+                        "index": 2,
+                        "label": "Partial Reload",
+                        "defaultValue": false,
+                        "tooltip": "Run a partial reload (only the statements marked for partial reload in the load script)."
+                    },
+                    "variables": {
+                        "type": "key-value",
+                        "index": 3,
+                        "label": "Variables",
+                        "keyLabel": "Variable",
+                        "valueLabel": "Value",
+                        "addLabel": "Add variable",
+                        "removeLabel": "Remove variable",
+                        "tooltip": "Variables passed to the load script, up to 20 (values up to 256 characters)."
+                    },
+                    "timeoutMinutes": {
+                        "type": "number",
+                        "index": 4,
+                        "label": "Timeout (minutes)",
+                        "defaultValue": 60,
+                        "min": 2,
+                        "max": 1440,
+                        "tooltip": "How long to wait for the reload to finish, in minutes (2 to 1440)."
+                    },
+                    "failIfNotSucceeded": {
+                        "type": "toggle",
+                        "index": 5,
+                        "label": "Fail If the Reload Doesn't Succeed",
+                        "defaultValue": true,
+                        "tooltip": "On (default): the component fails when the reload ends with FAILED, CANCELED or EXCEEDED_LIMIT, with the reload ID, Qlik's error code and the end of the reload log in the error. Off: every final status is sent to the output; check <b>Succeeded</b> or <b>Status</b> in the next step."
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "schema": {
+                "type": "object",
+                "required": [
+                    "id",
+                    "appId",
+                    "status",
+                    "type",
+                    "userId",
+                    "tenantId",
+                    "creationTime",
+                    "succeeded"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "title": "Reload ID",
+                        "example": "6577e2d1c3a5f40001a1b2c3"
+                    },
+                    "appId": {
+                        "type": "string",
+                        "title": "App ID",
+                        "example": "f34b2a1e-5c7d-4e8f-9a0b-1c2d3e4f5a6b"
+                    },
+                    "status": {
+                        "type": "string",
+                        "title": "Status",
+                        "example": "SUCCEEDED"
+                    },
+                    "succeeded": {
+                        "type": "boolean",
+                        "title": "Succeeded",
+                        "example": true
+                    },
+                    "type": {
+                        "type": "string",
+                        "title": "Type",
+                        "example": "external"
+                    },
+                    "partial": {
+                        "type": "boolean",
+                        "title": "Partial",
+                        "example": false
+                    },
+                    "userId": {
+                        "type": "string",
+                        "title": "User ID",
+                        "example": "5f8a1c2b3d4e5f6a7b8c9d0e"
+                    },
+                    "tenantId": {
+                        "type": "string",
+                        "title": "Tenant ID",
+                        "example": "xqGQ0k66vSR8f9G7J-vYtHZQkiYrCpct"
+                    },
+                    "weight": {
+                        "type": "integer",
+                        "title": "Weight",
+                        "example": 0
+                    },
+                    "creationTime": {
+                        "type": "string",
+                        "title": "Creation Time",
+                        "example": "2026-11-16T10:01:40.120Z",
+                        "format": "date-time"
+                    },
+                    "startTime": {
+                        "type": "string",
+                        "title": "Start Time",
+                        "example": "2026-11-16T10:01:41.002Z",
+                        "format": "date-time"
+                    },
+                    "endTime": {
+                        "type": "string",
+                        "title": "End Time",
+                        "example": "2026-11-16T10:01:58.940Z",
+                        "format": "date-time"
+                    },
+                    "engineTime": {
+                        "type": "string",
+                        "title": "Engine Time",
+                        "example": "2026-11-16T10:01:58.901Z",
+                        "format": "date-time"
+                    },
+                    "errorCode": {
+                        "type": "string",
+                        "title": "Error Code",
+                        "example": "EngineReloadFailed"
+                    },
+                    "errorMessage": {
+                        "type": "string",
+                        "title": "Error Message",
+                        "example": "The data load script failed: Field not found."
+                    },
+                    "log": {
+                        "type": "string",
+                        "title": "Log",
+                        "example": "Started loading data\nData has been loaded."
+                    }
+                }
+            }
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB2aWV3Qm94PSIwIDAgMjQgMjQiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZmlsbD0iIzAwOTg0NSIgZD0ibTIzLjc1MTUgMjAuMTM2Ny0zLjEzLTIuNjMyNmMxLjA4NjItMS43MzA3IDEuNzMwMy0zLjc3NDUgMS43MzAzLTUuOTY1NSAwLTYuMTY4NC01LjAwOC0xMS4xNzY0LTExLjE3Ni0xMS4xNzY0UzAgNS4zNzAyIDAgMTEuNTM4NmMwIDYuMTY4IDUuMDA4IDExLjE3NiAxMS4xNzU5IDExLjE3NiAyLjM5MzQgMCA0LjYyMTYtLjc1NTIgNi40NDQzLTIuMDQzOGwzLjMzMjQgMi43OTg4cy40OTc0LjQyMzYuOTIxLS4wNzM4bDEuOTg4NC0yLjM1NjhjLS4wMTg2IDAgLjM4NjQtLjQ5NjgtLjExMDUtLjkwMjN6bS01LjcwNzgtOC41OThjMCAzLjc5MjYtMy4wNzQ3IDYuODY3Mi02Ljg2NzggNi44NjcyLTMuNzkyNiAwLTYuODY3OC0zLjA3NDYtNi44Njc4LTYuODY3MyAwLTMuNzkzIDMuMDc1Mi02Ljg2NzggNi44Njc4LTYuODY3OCAzLjc5MzEgMCA2Ljg2NzggMy4wNzQ3IDYuODY3OCA2Ljg2Nzh6bS0xMS4yODcgMGMwLTIuNDMwNCAxLjk3MDItNC40MDA2IDQuNDAwNi00LjQwMDYgMi40MzAzIDAgNC40MDA1IDEuOTcwMiA0LjQwMDUgNC40MDA1IDAgMi40MzA0LTEuOTcwMiA0LjQwMDYtNC40MDA1IDQuNDAwNi0yLjQzMDQgMC00LjQwMDUtMS45NzAyLTQuNDAwNS00LjQwMDZ6Ii8+PC9zdmc+"
+}
