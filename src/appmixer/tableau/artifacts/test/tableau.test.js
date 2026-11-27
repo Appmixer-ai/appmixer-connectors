@@ -245,6 +245,30 @@ describe('tableau', function() {
             assert.strictEqual(context.sent.length, 0);
         });
 
+        it('puts the reason of a failed extract refresh (extractRefreshJob.notes) in the error', async function() {
+
+            // The shape Tableau Cloud returns for a refresh that failed on the database login (seen live).
+            const handler = options => {
+                if (options.url.endsWith('/auth/signin')) return signInResponse('token-1');
+                if (options.method === 'POST') return { data: { job: { id: 'job-1', type: 'RefreshExtract' } } };
+                return { data: { job: {
+                    id: 'job-1', type: 'RefreshExtract', progress: '100', finishCode: '1',
+                    completedAt: '2026-11-27T13:24:59Z',
+                    extractRefreshJob: {
+                        notes: 'FATAL: password authentication failed for user "reader"\nInvalid username or password.',
+                        datasource: { id: 'ds-1', name: 'Sales' }
+                    }
+                } } };
+            };
+            const context = createContext({ handler, content: { datasourceId: 'ds-1' } });
+            await RefreshDataSourceExtract.receive(context);
+            context.messages = { timeout: { content: context.timeouts[0].data } };
+            await assert.rejects(
+                RefreshDataSourceExtract.receive(context),
+                /job-1 finished with status Failed .*password authentication failed/s
+            );
+        });
+
         it('fails on a cancelled task run too', async function() {
 
             const context = await runRefresh(RunExtractRefreshTask, { taskId: 't-1', failOnUnsuccessfulJob: true }, 2);

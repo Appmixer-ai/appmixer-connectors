@@ -475,7 +475,8 @@ function mapJob(j = {}) {
     const finishCode = toInt(j.finishCode);
     const finished = Boolean(j.completedAt);
     const refresh = j.extractRefreshJob || {};
-    const notes = toList(j.statusNotes, 'statusNote').map(note => note.text).filter(Boolean);
+    // A failed extract refresh carries its reason in extractRefreshJob.notes, not in statusNotes.
+    const notes = toList(j.statusNotes, 'statusNote').map(note => note.text).concat(refresh.notes).filter(Boolean);
     return pick({
         id: j.id,
         type: j.type,
